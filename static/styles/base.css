@@ -1,0 +1,8 @@
+/* this file will be compiled to base.css.min using postcss */
+
+@import "tailwindcss/base";
+@import "tailwindcss/components";
+
+/* @import "./your-custom-import.css"; */
+
+@import "tailwindcss/utilities";

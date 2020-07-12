@@ -1,0 +1,20 @@
+{
+    "name": "ecobasa",
+    "version": "0.0.1",
+    "description": "gift-economy network for sustainable communities",
+    "author": "Arne Bollinger",
+    "license": "none",
+    "scripts": {
+        "build:css": "postcss static/styles/base.css -o static/styles/base.min.css",
+        "watch:css": "onchange -i '**/*.*' tailwind.config.js -e 'static/styles/base.min.css' -- npm run build:css",
+        "build": "npm run build:css"
+    },
+    "devDependencies": {
+        "cssnano": "^4.1.10",
+        "onchange": "^7.0.2",
+        "postcss-cli": "^7.1.1",
+        "postcss-import": "^12.0.1",
+        "tailwindcss": "^1.4.6"
+    },
+    "dependencies": {}
+}

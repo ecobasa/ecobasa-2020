@@ -139,3 +139,6 @@ dmypy.json
 
 
 .vscode/settings.json
+node_modules
+
+static/styles/base.min.css
