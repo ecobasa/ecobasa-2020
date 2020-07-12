@@ -16,5 +16,7 @@
         "postcss-import": "^12.0.1",
         "tailwindcss": "^1.4.6"
     },
-    "dependencies": {}
+    "dependencies": {
+        "typeface-bree-serif": "0.0.72"
+    }
 }

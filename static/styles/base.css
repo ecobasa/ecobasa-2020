@@ -1,5 +1,7 @@
 /* this file will be compiled to base.css.min using postcss */
 
+@import "./fonts.css";
+
 @import "tailwindcss/base";
 @import "tailwindcss/components";
 

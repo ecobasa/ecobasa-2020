@@ -1,0 +1,11 @@
+@font-face {
+    font-family: 'Bree Serif';
+    font-style: normal;
+    font-display: swap;
+    font-weight: 400;
+    src:
+      local('Bree Serif Regular '),
+      local('Bree Serif-Regular'),
+      url('/static/typeface-bree-serif/files/bree-serif-latin-400.woff2') format('woff2'), /* Super Modern Browsers */
+      url('/static/typeface-bree-serif/files/bree-serif-latin-400.woff') format('woff'); /* Modern Browsers */
+  }
