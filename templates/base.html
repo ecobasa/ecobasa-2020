@@ -1,0 +1,41 @@
+{% load static i18n %}<!DOCTYPE html>
+<html lang="de" class="h-full">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <title>{% block head_title %}{% endblock head_title %} - Ecobasa</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="{% block meta_description %}The sustainable gift-economy community{% endblock %}">
+    <link rel="shortcut icon" href="{% static "images/favicon.ico" %}">
+
+    {% block css %}
+      <link href="{% static 'styles/base.min.css' %}" rel="stylesheet">
+    {% endblock %}
+    {% block extrahead %}{% endblock %}
+  </head>
+
+  <body class="font-sans bg-gray-100 text-gray-800 antialiased min-h-full flex flex-col">
+
+    <div class="flex-auto">
+      {% include "_navbar.html" %}
+
+      <div class="flex items-stretch justify-between">
+
+        <div class="w-full">
+          {% include "_messages.html" %}
+
+          <div class="px-4 mt-10">
+            {% block content %}{% endblock content %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {% include "_footer.html" %}
+
+    {% block javascript %}
+      <script type="text/javascript" src="{% static 'scripts/scripts.js' %}"></script>
+    {% endblock javascript %}
+  </body>
+
+</html>
