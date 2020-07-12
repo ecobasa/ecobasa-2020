@@ -4,7 +4,11 @@ from django.conf import settings
 from django.views import defaults as default_views
 
 
-urlpatterns = [path("admin/", admin.site.urls), path("", include("homepage.urls"))]
+urlpatterns = [
+    path("admin/", admin.site.urls),
+    path("", include("homepage.urls")),
+    path("users/", include("users.urls")),
+]
 
 if settings.DEBUG:
     # This allows the error pages to be debugged during development, just visit

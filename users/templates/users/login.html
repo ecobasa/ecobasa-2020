@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<form method="POST">
+  {% csrf_token %}
+  {{ form }}
+
+  <button class="px-4 py-2 bg-orange-500 rounded-md font-bold text-white">Login</button>
+</form>
+{% endblock content %}
