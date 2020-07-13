@@ -14,6 +14,7 @@ pylint-django = "*"
 django = "*"
 django-environ = "*"
 argon2-cffi = "*"
+django-filter = "*"
 
 [requires]
 python_version = "3.8"

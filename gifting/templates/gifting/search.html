@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="mx-auto max-w-6xl">
+  <h1 class="text-2xl font-bree">Find &amp; share resources and abilities</h1>
+
+  <form method="get" class="flex items-center">
+    {{ f.form.as_p }}
+    <button class="bg-orange-500 px-2 py-1 text-white rounded mx-4" type="submit">Filtern</button>
+  </form>
+
+  {% for ad in ads %}
+    {% include "./_ad.html" %}
+  {% endfor %}
+</div>
+{% endblock content %}

@@ -62,9 +62,9 @@ DJANGO_APPS = [
     "django.forms",
 ]
 
-THIRD_PARTY_APPS = []
+THIRD_PARTY_APPS = ["django_filters"]
 
-LOCAL_APPS = ["users", "homepage"]
+LOCAL_APPS = ["users", "homepage", "gifting"]
 
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
