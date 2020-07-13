@@ -11,3 +11,8 @@ npm install
 npm build
 python manage.py migrate
 ```
+
+## Tests
+```
+pytest
+```
