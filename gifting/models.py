@@ -1,4 +1,5 @@
 from django.db import models
+from django.urls import reverse
 from django.utils.translation import ugettext_lazy as _
 
 from .mixins import RandomIdMixin
@@ -20,6 +21,9 @@ class Ad(RandomIdMixin, models.Model):
 
     def __str__(self):
         return self.title
+
+    def get_absolute_url(self) -> str:
+        return reverse("gifting:detail", kwargs={"pk": self.pk})
 
     class Meta:
         verbose_name = _("Ad")
