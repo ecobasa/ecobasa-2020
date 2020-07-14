@@ -3,7 +3,7 @@ module.exports = (ctx) => ({
     plugins: {
         "postcss-import": {},
         "tailwindcss": {},
-        "autoprefixer": ctx.env === 'production' ? {} : false,
+        "autoprefixer": {},
         "cssnano": ctx.env === 'production' ? {} : false
     }
 })
