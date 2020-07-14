@@ -12,4 +12,4 @@ class TestAd:
     def test_short_random_id(self):
         ad = Ad(title="Test", type="offer")
         ad.save()
-        assert ad.length == 8
+        assert len(ad.pk) == 8
