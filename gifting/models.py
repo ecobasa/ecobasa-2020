@@ -15,6 +15,8 @@ class Ad(RandomIdMixin, models.Model):
     title = models.CharField(_("Title"), max_length=255)
     type = models.CharField(_("Type"), choices=TYPE_CHOICES, max_length=5)
     description = models.TextField(_("Description"), blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return self.title
@@ -22,3 +24,4 @@ class Ad(RandomIdMixin, models.Model):
     class Meta:
         verbose_name = _("Ad")
         verbose_name_plural = _("Ads")
+        ordering = ["-created_at"]
