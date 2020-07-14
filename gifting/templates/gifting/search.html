@@ -1,16 +1,29 @@
 {% extends 'base.html' %}
+{% load crispy_forms_tags i18n %}
 
 {% block content %}
-<div class="mx-auto max-w-6xl">
-  <h1 class="text-2xl font-bree">Find &amp; share resources and abilities</h1>
+<div class="mx-auto max-w-4xl">
 
-  <form method="get" class="flex items-center">
-    {{ f.form.as_p }}
-    <button class="bg-orange-500 px-2 py-1 text-white rounded mx-4" type="submit">Filtern</button>
+  <form method="get" class="js-submit-on-input">
+    <input type="text" class="form-input w-full my-4" autofocus name="search" placeholder="{% trans "Your Searchterm" %}">
+    {{ f.form.type | as_crispy_field }}
   </form>
 
-  {% for ad in ads %}
+  <div class="my-10">
+    <a href="{% url "gifting:create" %}" class="inline-flex items-center px-2 py-2 border bg-white shadow rounded">
+      <svg class="h-5 w-5 mr-2" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="3" viewBox="0 0 24 24" stroke="currentColor"><path d="M12 4v16m8-8H4"></path></svg>
+      {% trans "Add your Wish or Offer" %}
+    </a>
+  </div>
+
+
+  <p class="text-gray-700 text-sm">{% blocktrans with count=page_obj.paginator.count %}{{ count }} found{% endblocktrans %}</p>
+  
+  {% for ad in page_obj %}
     {% include "./_ad.html" %}
   {% endfor %}
+
+  {% include "./_pagination.html" %}
+
 </div>
 {% endblock content %}
