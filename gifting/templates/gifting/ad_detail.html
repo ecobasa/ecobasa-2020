@@ -1,8 +1,17 @@
 {% extends 'base.html' %}
+{% load i18n %}
 
 {% block content %}
-<div class="mx-auto max-w-6xl">
-  <h1 class="font-bree text-2xl">{{ ad.title }}</h1>
+<div class="mx-auto max-w-4xl">
+  <a class="inline-flex items-center mb-6" href="{% url "gifting:search" %}">
+    <svg class="h-5 w-5 mr-2" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" stroke="currentColor"><path d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+    {% trans "Back to All Wishes / Offers" %}
+  </a>
+
+  <div class="flex justify-between">
+    <h1 class="font-bree text-2xl">{{ ad.title }}</h1>
+    <a href="{% url "gifting:edit" ad.pk %}">{% trans "Edit" %}</a>
+  </div>
 
   <p>{{ ad.description }}</p>
 </div>

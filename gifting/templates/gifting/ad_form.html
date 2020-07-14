@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags i18n %}
+
+{% block content %}
+<div class="mx-auto max-w-4xl">
+
+  {% if ad.pk %}
+    <a class="inline-flex items-center mb-6" href="{% url "gifting:detail" ad.pk %}">
+      <svg class="h-5 w-5 mr-2" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" stroke="currentColor"><path d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+      {% trans "Back" %}
+    </a>
+    <h1 class="text-2xl font-bree">Edit {{ ad.get_type_display }}</h1>
+  {% else %}
+    <a class="inline-flex items-center mb-6" href="{% url "gifting:search" %}">
+      <svg class="h-5 w-5 mr-2" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" stroke="currentColor"><path d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+      {% trans "Back to All Wishes / Offers" %}
+    </a>
+    <h1 class="text-2xl font-bree">Create new Offer or Wish</h1>
+  {% endif %}
+
+  <form method="post" class="">
+    {% csrf_token %}
+    {{ form | crispy }}
+    <button class="bg-orange-500 px-2 py-1 text-white rounded" type="submit">{% trans "Save" %}</button>
+  </form>
+
+  
+</div>
+{% endblock content %}
