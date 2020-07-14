@@ -10,6 +10,7 @@
         "build": "npm run build:css"
     },
     "devDependencies": {
+        "@tailwindcss/custom-forms": "^0.2.1",
         "cssnano": "^4.1.10",
         "onchange": "^7.0.2",
         "postcss-cli": "^7.1.1",

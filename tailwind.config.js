@@ -6,15 +6,23 @@ module.exports = {
     "./**/*.js"
   ],
   theme: {
+    customForms: function (theme) {
+      return ({
+
+      })
+    },
     extend: {
       fontFamily: {
         "bree": ["Bree Serif", "serif"]
       },
       color: {
         "orange-500": "#da6136"
+      },
+      boxShadow: {
+        outline: '0 0 0 3px #da6136',
       }
     },
   },
   variants: {},
-  plugins: [],
+  plugins: [require("@tailwindcss/custom-forms")],
 }
