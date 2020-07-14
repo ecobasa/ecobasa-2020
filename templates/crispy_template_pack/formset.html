@@ -1,0 +1,30 @@
+{% load crispy_forms_tags %}
+
+<div class="js-formset">
+  {{ formset.management_form|crispy }}
+  <div class="formset-list">
+    {% for form in formset.forms %}
+      <div class="formset-row flex flex-wrap justify-between items-center border-b mt-4">
+        {{ form|crispy }}
+        <button type="button" class="formset-django-delete rounded-full">
+          <svg class="h-6 w-6 fill-current text-gray-600" viewBox="0 0 20 20"><path d="M10 20a10 10 0 1 1 0-20 10 10 0 0 1 0 20zm0-2a8 8 0 1 0 0-16 8 8 0 0 0 0 16zm5-9v2H5V9h10z"/></svg>
+        </button>
+      </div>
+    {% endfor %}
+  </div>
+
+  <div class="flex justify-end my-5">
+    <button class="formset-add rounded-full focus:shadow-outline focus:outline-none" type="button">
+      <svg class="fill-current text-gray-600 h-6 w-6" viewBox="0 0 20 20"><path d="M11 9h4v2h-4v4H9v-4H5V9h4V5h2v4zm-1 11a10 10 0 1 1 0-20 10 10 0 0 1 0 20zm0-2a8 8 0 1 0 0-16 8 8 0 0 0 0 16z"/></svg>
+    </button>
+  </div>
+
+  <script type="text/html" class="formset-template">
+    <div class="formset-row flex flex-wrap justify-between items-center border-b mt-4">
+      {{ formset.empty_form|crispy }}
+      <button type="button" class="formset-delete rounded-full">
+        <svg class="h-6 w-6 fill-current text-gray-600" viewBox="0 0 20 20"><path d="M10 20a10 10 0 1 1 0-20 10 10 0 0 1 0 20zm0-2a8 8 0 1 0 0-16 8 8 0 0 0 0 16zm5-9v2H5V9h10z"/></svg>
+      </button>
+    </div>
+  </script>
+</div>

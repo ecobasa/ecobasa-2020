@@ -1,0 +1,8 @@
+<div class="card-header card-tabs-header">
+  <ul{% if tabs.css_id %} id="{{ tabs.css_id }}"{% endif %} class="nav nav-tabs card-header-tabs" role="tablist">
+      {{ links|safe }}
+  </ul>
+</div>
+<div class="tab-content card-body">
+    {{ content|safe }}
+</div>

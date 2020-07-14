@@ -1,0 +1,18 @@
+{% load crispy_forms_filters %}
+{% load l10n %}
+
+<div class="{% if inline_class %}form-check{% endif %}{% if field_class %} {{ field_class }}{% endif %}"{% if flat_attrs %} {{ flat_attrs|safe }}{% endif %}>
+    {% include './field_errors_block.html' %}
+
+    {% include './help_text.html' %}
+    <div class="checkboxselectmultiple">
+        {% for choice in field.field.choices %}
+            {% if not inline_class %}<div class="form-check">{% endif %}
+            <label id="id_{{ field.id_for_label }}_{{ forloop.counter }}" class="block mb-1 form-check-{% if inline_class %}{{ inline_class }}{% else %}label{% endif %}" for="id_{{ field.html_name }}_{{ forloop.counter }}">
+                <input type="checkbox" class="form-checkbox"{% if choice.0 in field.value or choice.0|stringformat:"s" in field.value or choice.0|stringformat:"s" == field.value|default_if_none:""|stringformat:"s" %} checked="checked"{% endif %} name="{{ field.html_name }}" id="id_{{ field.html_name }}_{{ forloop.counter }}" value="{{ choice.0|unlocalize }}" {{ field.field.widget.attrs|flatatt }}>
+                <span class="ml-1 select-none">{{ choice.1|unlocalize }}</span>
+            </label>
+        {% if not inline_class %}</div>{% endif %}
+        {% endfor %}
+    </div>
+</div>

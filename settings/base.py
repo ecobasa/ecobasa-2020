@@ -62,7 +62,10 @@ DJANGO_APPS = [
     "django.forms",
 ]
 
-THIRD_PARTY_APPS = ["django_filters"]
+THIRD_PARTY_APPS = [
+    "django_filters",
+    "crispy_forms",
+]
 
 LOCAL_APPS = ["users", "homepage", "gifting"]
 
@@ -148,6 +151,7 @@ TEMPLATES = [
         "DIRS": [APPS_DIR / "templates"],
         "OPTIONS": {
             "debug": DEBUG,
+            "libraries": {"my_crispy_helpers": "templatetags.my_crispy_helpers",},
             "loaders": [
                 "django.template.loaders.filesystem.Loader",
                 "django.template.loaders.app_directories.Loader",
@@ -199,6 +203,11 @@ EMAIL_TIMEOUT = 5
 # ADMIN_URL = r"^admin/"
 # ADMINS = [("Name", "admin@example.com")]
 # MANAGERS = ADMINS
+
+# CRISPY FORMS
+# ------------------------------------------------------------------------------
+CRISPY_ALLOWED_TEMPLATE_PACKS = "crispy_template_pack"
+CRISPY_TEMPLATE_PACK = "crispy_template_pack"
 
 # APP SETTINGS
 # ------------------------------------------------------------------------------
