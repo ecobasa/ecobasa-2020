@@ -5,6 +5,11 @@
 @import "tailwindcss/base";
 @import "tailwindcss/components";
 
-/* @import "./your-custom-import.css"; */
+@import "./forms.css";
 
 @import "tailwindcss/utilities";
+
+
+.bg-image-background {
+    background-image: url("/static/images/background.jpg");
+}
