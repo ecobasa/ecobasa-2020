@@ -6,11 +6,6 @@ module.exports = {
     "./**/*.js"
   ],
   theme: {
-    customForms: function (theme) {
-      return ({
-
-      })
-    },
     extend: {
       fontFamily: {
         "bree": ["Bree Serif", "serif"]
@@ -24,5 +19,5 @@ module.exports = {
     },
   },
   variants: {},
-  plugins: [require("@tailwindcss/custom-forms")],
+  plugins: [require('@tailwindcss/ui')]
 }

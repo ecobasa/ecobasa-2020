@@ -14,17 +14,19 @@
     {% block extrahead %}{% endblock %}
   </head>
 
-  <body class="font-sans bg-image-background text-gray-800 antialiased min-h-full flex flex-col">
+  <body class="font-sans bg-orange-50 text-gray-800 antialiased min-h-full flex flex-col">
 
     <div class="flex-auto">
-      {% include "_navbar.html" %}
+      {% block navbar %}
+        {% include "_navbar.html" %}
+      {% endblock navbar %}
 
       <div class="flex items-stretch justify-between">
 
         <div class="w-full">
           {% include "_messages.html" %}
 
-          <div class="px-4 mt-10">
+          <div class="">
             {% block content %}{% endblock content %}
           </div>
         </div>
@@ -34,7 +36,7 @@
     {% include "_footer.html" %}
 
     {% block javascript %}
-      <script type="text/javascript" src="{% static 'scripts/scripts.js' %}"></script>
+      <script type="text/javascript" src="{% static 'alpinejs/dist/alpine.js' %}"></script>
     {% endblock javascript %}
   </body>
 
