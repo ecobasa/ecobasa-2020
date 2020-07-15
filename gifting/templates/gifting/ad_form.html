@@ -2,23 +2,29 @@
 {% load crispy_forms_tags i18n %}
 
 {% block content %}
-<div class="mx-auto max-w-4xl">
+<div class="mx-auto max-w-4xl px-4 mt-10">
 
-  {% if ad.pk %}
-    <a class="inline-flex items-center mb-6" href="{% url "gifting:detail" ad.pk %}">
-      <svg class="h-5 w-5 mr-2" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" stroke="currentColor"><path d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-      {% trans "Back" %}
-    </a>
-    <h1 class="text-2xl font-bree">Edit {{ ad.get_type_display }}</h1>
-  {% else %}
-    <a class="inline-flex items-center mb-6" href="{% url "gifting:search" %}">
-      <svg class="h-5 w-5 mr-2" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" stroke="currentColor"><path d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-      {% trans "Back to All Wishes / Offers" %}
-    </a>
-    <h1 class="text-2xl font-bree">Create new Offer or Wish</h1>
-  {% endif %}
+  {% comment %} backlink {% endcomment %}
+  <a href="{% if ad.pk %}{% url "gifting:detail" ad.pk %}{% else %}{% url "gifting:search" %}{% endif %}" class="flex items-center text-sm leading-5 font-medium text-gray-500 hover:text-gray-700 transition duration-150 ease-in-out">
+    <svg class="flex-shrink-0 -ml-1 mr-1 h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+      <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+    </svg>
+    {% trans "Back" %}
+  </a>
 
-  <form method="post" class="">
+  {% comment %} heading {% endcomment %}
+  <div class="mt-2 md:flex md:items-center md:justify-between">
+    <h1 class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:leading-9 sm:truncatess">
+      {% if ad.pk %}
+        Edit {{ ad.get_type_display }}
+      {% else %}
+        Create new Offer or Wish
+      {% endif %}
+    </h1>
+  </div>
+  
+  {% comment %} form {% endcomment %}
+  <form method="post" class="w-full">
     {% csrf_token %}
     {{ form | crispy }}
     <button class="bg-orange-500 px-2 py-1 text-white rounded" type="submit">{% trans "Save" %}</button>

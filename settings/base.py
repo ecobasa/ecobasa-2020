@@ -86,8 +86,9 @@ AUTHENTICATION_BACKENDS = [
 AUTH_USER_MODEL = "users.User"
 # https://docs.djangoproject.com/en/dev/ref/settings/#login-redirect-url
 # LOGIN_REDIRECT_URL = "dashboard:dashboard"
+LOGOUT_REDIRECT_URL = "homepage:homepage"
 # https://docs.djangoproject.com/en/dev/ref/settings/#login-url
-# LOGIN_URL = "account_login"
+LOGIN_URL = "users:login"
 # https://docs.djangoproject.com/en/dev/ref/settings/#session-expire-at-browser-close
 # SESSION_EXPIRE_AT_BROWSER_CLOSE = False
 

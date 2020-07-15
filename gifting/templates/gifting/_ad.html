@@ -1,8 +1,10 @@
-<a href="{% url "gifting:detail" ad.pk %}" class="flex bg-white shadow hover:shadow-md my-10 rounded">
-  <div class="h-32 w-48 bg-orange-300">
-  </div>
-  <div class="p-2">
-    <div class="text-xs">{{ ad.get_type_display }}</div>
-    <div class="font-bree text-lg">{{ ad.title }}</div>
-  </div>
-</a>
+<div class="">
+  <a href="{% url "gifting:detail" ad.pk %}" class="group inline-flex my-5 sm:my-10">
+    <div class="flex-shrink-0 h-20 w-20 sm:h-32 sm:w-48 bg-orange-300">
+    </div>
+    <div class="pl-2 sm:pl-6">
+      <div class="text-xs">{{ ad.get_type_display }}</div>
+      <div class="font-bree sm:text-lg group-hover:text-orange-500">{{ ad.title }}</div>
+    </div>
+  </a>
+</div>
