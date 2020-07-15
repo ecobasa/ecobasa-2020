@@ -7,9 +7,10 @@ This is a work-in-progress attempt of a redesign.
 ## Setup
 ```
 pipenv install
-npm install
-npm build
+pipenv shell
 python manage.py migrate
+npm install
+npm run build
 ```
 
 ## Tests
