@@ -82,7 +82,14 @@
   </div>
 
   {% comment %} mobile menu {% endcomment %}
-  <div x-show="mobileMenuOpen" class="sm:hidden">
+  <div x-show="mobileMenuOpen"
+      x-transition:enter="transition ease-out duration-200"
+      x-transition:enter-start="opacity-0 transform scale-y-95"
+      x-transition:enter-end="opacity-100 transform scale-y-100"
+      x-transition:leave="transition ease-in duration-75"
+      x-transition:leave-start="opacity-100 transform scale-y-100"
+      x-transition:leave-end="opacity-0 transform scale-y-95"
+      class="sm:hidden origin-top-right">
     <div class="pt-2 pb-3">
       <a href="{% url "homepage:homepage" %}" class="block pl-3 pr-4 py-2 border-l-4 border-transparent {% if view_name == "homepage:homepage" %}border-orange-500 text-orange-700 bg-orange-50 focus:text-orange-800 focus:bg-orange-100 focus:border-orange-700{% else %}text-gray-600 hover:text-gray-800 hover:bg-gray-50 hover:border-gray-300 focus:text-gray-800 focus:bg-gray-50 focus:border-gray-300{% endif %} text-base font-medium focus:outline-none transition duration-150 ease-in-out">{% trans "Homepage" %}</a>
       <a href="{% url "gifting:search" %}" class="mt-1 block pl-3 pr-4 py-2 border-l-4 border-transparent {% if namespace == "gifting" %}border-orange-500 text-orange-700 bg-orange-50 focus:text-orange-800 focus:bg-orange-100 focus:border-orange-700{% else %}text-gray-600 hover:text-gray-800 hover:bg-gray-50 hover:border-gray-300 focus:text-gray-800 focus:bg-gray-50 focus:border-gray-300{% endif %} text-base font-medium focus:outline-none transition duration-150 ease-in-out">{% trans "Gifting" %}</a>
