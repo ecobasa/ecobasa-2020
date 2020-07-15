@@ -15,6 +15,7 @@ django = "*"
 django-environ = "*"
 argon2-cffi = "*"
 django-filter = "*"
+django-crispy-forms = "*"
 
 [requires]
 python_version = "3.8"
