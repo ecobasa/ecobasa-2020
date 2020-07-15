@@ -46,9 +46,7 @@ class User(AbstractUser):
      * name is used instead of first_name and last_name
     """
 
-    username = models.CharField(
-        _("username"), max_length=150, unique=True, blank=True, null=True
-    )
+    username = models.CharField(_("username"), max_length=150, unique=True, blank=True)
     email = models.EmailField(_("email address"), unique=True)
     first_name = None
     last_name = None
