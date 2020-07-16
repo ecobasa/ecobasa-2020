@@ -26,10 +26,11 @@
   </nav>
 
   {% comment %} header {% endcomment %}
-  <div class="mt-2 md:flex md:items-center md:justify-between">
+  <div class="mt-4 md:mt-10 md:flex md:items-center md:justify-between">
     <div class="flex-1 min-w-0">
+      <div class="text-gray-600">{{ ad.get_type_display }}:</div>
       <h1 class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:leading-9 sm:truncate">
-        <span class="text-gray-500">{{ ad.get_type_display }}:</span> {{ ad.title }}
+        {{ ad.title }}
       </h1>
     </div>
     <div class="mt-4 flex-shrink-0 flex md:mt-0 md:ml-4">

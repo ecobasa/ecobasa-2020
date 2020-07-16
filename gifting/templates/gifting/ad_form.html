@@ -13,10 +13,10 @@
   </a>
 
   {% comment %} heading {% endcomment %}
-  <div class="mt-2 md:flex md:items-center md:justify-between">
+  <div class="mt-2 md:flex md:items-center md:justify-between border-b pb-4">
     <h1 class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:leading-9 sm:truncatess">
       {% if ad.pk %}
-        Edit {{ ad.get_type_display }}
+        Edit {{ ad.get_type_display }} {{ ad.title }}
       {% else %}
         Create new Offer or Wish
       {% endif %}
@@ -24,10 +24,15 @@
   </div>
   
   {% comment %} form {% endcomment %}
-  <form method="post" class="w-full">
+  <form method="post" class="w-full my-10 form-control-w-full">
     {% csrf_token %}
-    {{ form | crispy }}
-    <button class="bg-orange-500 px-2 py-1 text-white rounded" type="submit">{% trans "Save" %}</button>
+    {% crispy form %}
+    <div class="flex items-center justify-end -mx-5 my-5">
+      <a class="mx-5 text-gray-600 hover:text-gray-700" href="{% if ad.pk %}{% url "gifting:detail" ad.pk %}{% else %}{% url "gifting:search" %}{% endif %}">{% trans "Cancel" %}</a>
+      <button class="mx-5 bg-orange-500 hover:bg-orange-400 px-4 py-2 text-white rounded-md font-bold" type="submit">
+        {% trans "Save" %}
+      </button>
+    </div>
   </form>
 
   

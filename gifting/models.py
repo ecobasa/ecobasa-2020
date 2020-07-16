@@ -14,7 +14,9 @@ class Ad(RandomIdMixin, models.Model):
         _("Random Id"), max_length=8, primary_key=True, editable=False
     )
     title = models.CharField(_("Title"), max_length=255)
-    type = models.CharField(_("Type"), choices=TYPE_CHOICES, max_length=5)
+    type = models.CharField(
+        _("Type"), choices=TYPE_CHOICES, max_length=5, default="offer"
+    )
     description = models.TextField(_("Description"), blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
