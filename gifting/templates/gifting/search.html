@@ -15,8 +15,13 @@
       <button class="hidden sm:block mx-4 py-2 px-5 rounded bg-orange-500 text-white">{% trans "Search" %}</button>
     </div>
 
-    <div x-on:input="$event.target.form.submit()">
-      {{ f.form.type | as_crispy_field }}
+    <div x-on:input="$event.target.form.submit()" class="space-x-2">
+      {% for t in f.form.type %}
+        <label class="inline-flex items-center">
+          <input type="checkbox" name="{{ t.data.name }}" value="{{ t.data.value }}" {% if t.data.selected %}checked{% endif %} class="form-checkbox border-gray-400 h-5 w-5">
+          <span class="ml-2">{{ t.choice_label }}</span>
+        </label>
+      {% endfor %}
     </div>
   </form>
 
