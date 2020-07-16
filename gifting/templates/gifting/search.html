@@ -37,14 +37,18 @@
     </a>
   </div>
 
-  <p class="text-gray-700 text-sm">{% blocktrans with count=page_obj.paginator.count %}{{ count }} found{% endblocktrans %}</p>
-  
-  {% comment %} results {% endcomment %}
-  {% for ad in page_obj %}
-    {% include "./_ad.html" %}
-  {% endfor %}
+  {% if page_obj %}
+    <p class="text-gray-700 text-sm">{% blocktrans with count=page_obj.paginator.count %}{{ count }} found{% endblocktrans %}</p>
+    
+    {% comment %} results {% endcomment %}
+    {% for ad in page_obj %}
+      {% include "./_ad.html" %}
+    {% endfor %}
 
-  {% include "./_pagination.html" %}
+    {% include "./_pagination.html" %}
+  {% else %}
+    <p>{% trans "No results found" %}</p>
+  {% endif %}
 
 </div>
 {% endblock content %}
