@@ -29,7 +29,7 @@ class AdFilter(django_filters.FilterSet):
         )
 
     def filter_by_me(self, queryset, name, value):
-        if value:
+        if value and self.request and self.request.user.is_authenticated:
             return queryset.filter(owner=self.request.user)
         return queryset
 
