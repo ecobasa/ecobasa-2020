@@ -10,7 +10,7 @@
         <div class="absolute ml-3 inset-y-0 flex items-center text-gray-500">
           <svg class="h-5 w-5" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" stroke="currentColor"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
         </div>
-        <input type="text" class="pl-10 form-input border-gray-400 w-full max-w-2xl focus:shadow-outline-orange" autocomplete="off" autofocus name="search">
+        <input type="text" value="{{ f.form.search.data|default:"" }}" class="pl-10 form-input border-gray-400 w-full max-w-2xl focus:shadow-outline-orange" autocomplete="off" autofocus name="search">
       </div>
       <button class="hidden sm:block mx-4 py-2 px-5 rounded bg-orange-500 text-white">{% trans "Search" %}</button>
     </div>
