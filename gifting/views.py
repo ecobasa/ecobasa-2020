@@ -1,5 +1,7 @@
-from django.shortcuts import render, get_object_or_404, redirect
+from django.shortcuts import render, get_object_or_404, redirect, reverse
 from django.core.paginator import Paginator
+from django.contrib import messages
+from django.utils.translation import gettext_lazy as _
 
 from .models import Ad
 from .filters import AdFilter
@@ -45,3 +47,13 @@ def edit(request, pk):
             form.save()
             return redirect(form.instance.get_absolute_url())
     return render(request, "gifting/ad_form.html", {"form": form, "ad": ad})
+
+
+def delete(request, pk):
+    ad = get_object_or_404(Ad, pk=pk)
+    if request.method == "POST":
+        ad.delete()
+        # messages.success(request, _("deleted"))
+        return redirect(reverse("gifting:search"))
+    else:
+        return render(request, "gifting/ad_delete_confirm.html", {"ad": ad})

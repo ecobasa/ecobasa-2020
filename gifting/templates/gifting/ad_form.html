@@ -21,6 +21,9 @@
         Create new Offer or Wish
       {% endif %}
     </h1>
+    {% if ad.pk %}
+      <a href="{% url "gifting:delete" ad.pk %}" class="text-gray-700 hover:text-gray-900 text-sm">{% trans "Delete" %}</a>
+    {% endif %}
   </div>
   
   {% comment %} form {% endcomment %}

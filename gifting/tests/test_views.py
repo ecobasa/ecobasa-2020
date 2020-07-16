@@ -1,6 +1,7 @@
 import pytest
 
 from django.test import Client
+from django.shortcuts import reverse
 from pytest_django.asserts import assertRedirects
 
 from ..models import Ad
@@ -53,7 +54,7 @@ class TestSearch:
 @pytest.mark.django_db
 class TestDetail:
     def test_get(self, client: Client, ad: Ad):
-        response = client.get(f"/gifting/{ad.pk}")
+        response = client.get(f"/gifting/{ad.pk}/")
         assert response.status_code == 200
         assert "test" in str(response.content)
 
@@ -113,3 +114,25 @@ class TestEdit:
             target_status_code=200,
         )
         assert "new test offer" in str(response.content)
+
+
+@pytest.mark.django_db
+class TestDelete:
+    def test_404(self, client: Client):
+        response = client.get("/gifting/abcdefgh/delete")
+        assert response.status_code == 404
+
+    def test_get(self, client: Client, ad: Ad):
+        response = client.get(f"/gifting/{ad.pk}/delete")
+        assert response.status_code == 200
+
+    def test_post(self, client: Client, ad: Ad):
+        response = client.post(f"/gifting/{ad.pk}/delete", follow=True)
+        assertRedirects(
+            response,
+            reverse("gifting:search"),
+            status_code=302,
+            target_status_code=200,
+        )
+        assert Ad.objects.all().exists() == False
+        # assert "deleted" in str(response.content)

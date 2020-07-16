@@ -21,7 +21,7 @@ class AdForm(forms.ModelForm):
         self.helper.layout = Layout(
             Fieldset("", "type"),
             Fieldset(
-                "Inhalt",
+                _("Content"),
                 Field("title"),
                 Field("description"),
                 header_text=_("Describe your wish or offer here"),

@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 {% load crispy_forms_tags i18n %}
 
+{% comment %} dont show navbar {% endcomment %}
 {% block navbar %}
 {% endblock navbar %}
 
@@ -22,7 +23,7 @@
       </p>
     </div>
 
-    <form method="POST" class=" bg-white shadow rounded-md px-8 py-8 mt-10">
+    <form method="POST" class="bg-white shadow rounded-md px-8 py-8 mt-10">
       {% csrf_token %}
 
       {% if form.errors %}
