@@ -1,10 +1,22 @@
-<div class="">
-  <a href="{% url "gifting:detail" ad.pk %}" class="group inline-flex my-5 sm:my-10">
+<a href="{% url "gifting:detail" ad.pk %}" class="w-full max-w-2xl group flex items-stretch justify-between my-5 sm:my-10 md:mb-20">
+  <div class="flex">
     <div class="flex-shrink-0 h-20 w-20 sm:h-32 sm:w-48 bg-orange-300">
     </div>
-    <div class="pl-2 sm:pl-6">
-      <div class="text-xs">{{ ad.get_type_display }}</div>
+
+    <div class="pl-2 sm:pl-6 flex flex-col">
+      <div class="text-xs">
+        {{ ad.get_type_display }}
+      </div>
+
       <div class="font-bree sm:text-lg group-hover:text-orange-500">{{ ad.title }}</div>
+
+      <div class="mt-auto">
+        <time class="text-xs text-gray-500">{{ ad.created_at }}</time>
+        {% if ad.owner == request.user %}
+          <span class="border py-px ml-10 px-1 rounded text-xs text-gray-500">from me</span>
+        {% endif %}
+      </div>
     </div>
-  </a>
-</div>
+  </div>
+
+</a>

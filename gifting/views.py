@@ -11,7 +11,7 @@ from .forms import AdForm
 
 def search(request):
     """Show all ads with filter ability"""
-    f = AdFilter(request.GET, queryset=Ad.objects.all())
+    f = AdFilter(request.GET, queryset=Ad.objects.all(), request=request)
 
     # pagination
     paginator = Paginator(f.qs, 50)

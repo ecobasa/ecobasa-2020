@@ -15,6 +15,9 @@ class AdFilter(django_filters.FilterSet):
     categories = django_filters.ModelMultipleChoiceFilter(
         queryset=AdCategory.objects.all(), widget=forms.CheckboxSelectMultiple
     )
+    from_me = django_filters.BooleanFilter(
+        label=_("From Me"), method="filter_by_me", widget=forms.CheckboxInput
+    )
 
     class Meta:
         model = Ad
@@ -24,3 +27,9 @@ class AdFilter(django_filters.FilterSet):
         return queryset.filter(
             Q(title__icontains=value) | Q(description__icontains=value)
         )
+
+    def filter_by_me(self, queryset, name, value):
+        if value:
+            return queryset.filter(owner=self.request.user)
+        return queryset
+

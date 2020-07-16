@@ -24,13 +24,19 @@
           </label>
         {% endfor %}
       </div>
-      <div class="space-x-2">
+      <div class="space-x-2 mb-2">
         {% for t in f.form.categories %}
           <label class="inline-flex items-center">
             <input type="checkbox" name="{{ t.data.name }}" value="{{ t.data.value }}" {% if t.data.selected %}checked{% endif %} class="form-checkbox border-gray-400 h-5 w-5">
             <span class="ml-2">{{ t.choice_label }}</span>
           </label>
         {% endfor %}
+      </div>
+      <div>
+        <label class="inline-flex items-center">
+          <input type="checkbox" name="{{ f.form.from_me.name }}" value="on" {% if f.form.from_me.data %}checked{% endif %} class="form-checkbox border-gray-400 h-5 w-5">
+          <span class="ml-2">{{ f.form.from_me.label }}</span>
+        </label>
       </div>
     </div>
   </form>
