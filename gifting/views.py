@@ -33,6 +33,10 @@ def create(request):
         form = AdForm(request.POST)
         if form.is_valid():
             form.save()
+            ad = form.instance
+            messages.success(
+                request, _("%(ad_type)s created") % {"ad_type": ad.get_type_display()}
+            )
             return redirect(form.instance.get_absolute_url())
     return render(request, "gifting/ad_form.html", {"form": form})
 
@@ -45,6 +49,8 @@ def edit(request, pk):
         form = AdForm(request.POST, instance=ad)
         if form.is_valid():
             form.save()
+            ad = form.instance
+            messages.success(request, _("changes saved"))
             return redirect(form.instance.get_absolute_url())
     return render(request, "gifting/ad_form.html", {"form": form, "ad": ad})
 
@@ -53,7 +59,9 @@ def delete(request, pk):
     ad = get_object_or_404(Ad, pk=pk)
     if request.method == "POST":
         ad.delete()
-        # messages.success(request, _("deleted"))
+        messages.success(
+            request, _("%(ad_type)s deleted") % {"ad_type": ad.get_type_display()}
+        )
         return redirect(reverse("gifting:search"))
     else:
         return render(request, "gifting/ad_delete_confirm.html", {"ad": ad})

@@ -24,7 +24,6 @@
       <div class="flex items-stretch justify-between">
 
         <div class="w-full">
-          {% include "_messages.html" %}
 
           <div class="">
             {% block content %}{% endblock content %}
@@ -33,6 +32,8 @@
       </div>
     </div>
 
+    {% include "_messages.html" %}
+    
     {% include "_footer.html" %}
 
     {% block javascript %}
