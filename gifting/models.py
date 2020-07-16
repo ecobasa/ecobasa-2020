@@ -2,6 +2,7 @@ from django.db import models
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
+from users.models import User
 from .mixins import RandomIdMixin
 
 
@@ -20,6 +21,13 @@ class Ad(RandomIdMixin, models.Model):
     description = models.TextField(_("Description"), blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    owner = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        related_name="ads",
+        verbose_name=_("Owner"),
+        null=True,
+    )
 
     def __str__(self):
         return self.title
