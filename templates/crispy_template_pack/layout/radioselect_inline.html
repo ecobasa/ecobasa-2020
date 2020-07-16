@@ -1,3 +1,6 @@
+{% load crispy_forms_filters %}
+{% load l10n %}
+
 {% if field.is_hidden %}
     {{ field }}
 {% else %}
@@ -5,10 +8,22 @@
 
         {% if field.label %}
             <label for="{{ field.auto_id }}"  class="{{ label_class }}{% if not inline_class %} col-form-label{% endif %}{% if field.field.required %} requiredField{% endif %}">
-                {{ field.label|safe }}{% if not field.field.required %} <small class="text-secondary optionalField">(optional)</small>{% endif %}{% endif %}
+                {{ field.label|safe }}{% if not field.field.required %} <small class="text-secondary optionalField">(optional)</small>{% endif %}
             </label>
         {% endif %}
 
-        {% include './radioselect.html' %}
+        <div class="{% if inline_class %}form-check{% endif %}{% if field_class %} {{ field_class }}{% endif %}"{% if flat_attrs %} {{ flat_attrs|safe }}{% endif %}>
+            {% include './help_text.html' %}
+            <div class="-mx-1">
+            {% for choice in field.field.choices %}
+                <label for="id_{{ field.id_for_label }}_{{ forloop.counter }}" class="mx-1 inline-flex items-center">
+                    <input type="radio" class="form-radio"{% if choice.0|stringformat:"s" == field.value|default_if_none:""|stringformat:"s" %} checked="checked"{% endif %} name="{{ field.html_name }}" id="id_{{ field.id_for_label }}_{{ forloop.counter }}" value="{{ choice.0|unlocalize }}" {{ field.field.widget.attrs|flatatt }}>
+                    <span class="ml-2">{{ choice.1|unlocalize }}</span>
+                </label>
+            {% endfor %}
+            </div>
+            {% include './field_errors_block.html' %}
+        </div>
+
     </div>
 {% endif %}

@@ -3,7 +3,7 @@
 
 <div class="{% if inline_class %}form-check{% endif %}{% if field_class %} {{ field_class }}{% endif %}"{% if flat_attrs %} {{ flat_attrs|safe }}{% endif %}>
     {% include './help_text.html' %}
-    <div class="mt-4">
+    <div>
       {% for choice in field.field.choices %}
         <div>
           <label for="id_{{ field.id_for_label }}_{{ forloop.counter }}" class="inline-flex items-center">

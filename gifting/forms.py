@@ -2,7 +2,8 @@ from django import forms
 from django.utils.translation import gettext_lazy as _
 
 from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Layout, HTML, Field, Div, Fieldset as CrispyFieldset
+from crispy_forms.bootstrap import InlineRadios, InlineCheckboxes
+from crispy_forms.layout import Layout, Field, Fieldset as CrispyFieldset
 
 from .models import Ad
 
@@ -19,7 +20,7 @@ class AdForm(forms.ModelForm):
         self.helper = FormHelper()
         self.helper.form_tag = False
         self.helper.layout = Layout(
-            Fieldset("", "type"),
+            Fieldset("", InlineRadios("type"), InlineCheckboxes("categories")),
             Fieldset(
                 _("Content"),
                 Field("title"),
@@ -30,6 +31,9 @@ class AdForm(forms.ModelForm):
 
     class Meta:
         model = Ad
-        fields = ("type", "title", "description")
-        widgets = {"type": forms.RadioSelect}
+        fields = ("type", "title", "description", "categories")
+        widgets = {
+            "type": forms.RadioSelect,
+            "categories": forms.CheckboxSelectMultiple,
+        }
 

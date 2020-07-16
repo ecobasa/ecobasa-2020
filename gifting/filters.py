@@ -4,7 +4,7 @@ from django.db.models import Q
 
 import django_filters
 
-from .models import Ad
+from .models import Ad, AdCategory
 
 
 class AdFilter(django_filters.FilterSet):
@@ -12,10 +12,13 @@ class AdFilter(django_filters.FilterSet):
     type = django_filters.MultipleChoiceFilter(
         choices=Ad.TYPE_CHOICES, widget=forms.CheckboxSelectMultiple
     )
+    categories = django_filters.ModelMultipleChoiceFilter(
+        queryset=AdCategory.objects.all(), widget=forms.CheckboxSelectMultiple
+    )
 
     class Meta:
         model = Ad
-        fields = ["search", "type"]
+        fields = ["search", "type", "categories"]
 
     def do_search(self, queryset, name, value):
         return queryset.filter(
