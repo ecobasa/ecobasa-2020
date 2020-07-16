@@ -6,6 +6,17 @@ module.exports = {
     "./**/*.js"
   ],
   theme: {
+    // https://github.com/tailwindcss/custom-forms/blob/master/src/defaultOptions.js
+    customForms: theme => ({
+      default: {
+        checkbox: {
+          color: theme('colors.orange.500'),
+        },
+        radio: {
+          color: theme('colors.orange.500'),
+        },
+      },
+    }),
     extend: {
       fontFamily: {
         "bree": ["Bree Serif", "serif"]
