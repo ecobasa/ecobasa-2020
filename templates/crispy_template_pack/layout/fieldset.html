@@ -1,12 +1,12 @@
 <fieldset {% if fieldset.css_id %}id="{{ fieldset.css_id }}"{% endif %}
-        {% if fieldset.css_class or form_style %}class="{{ fieldset.css_class }} {{ form_style }}"{% endif %}
+        class="{{ fieldset.css_class }} {{ form_style }}"
         {{ fieldset.flat_attrs|safe }}>
-    <div class="fieldset">
-        <div class="fieldset-header">
-            {% if legend %}<legend class="fieldset-heading">{{ legend|safe }}</legend>{% endif %}
+    <div class="fieldset flex flex-wrap py-5 mb-5">
+        <div class="fieldset-header block w-full text-sm text-gray-700 pr-5 mb-2 md:w-1/3">
+            {% if legend %}<legend class="fieldset-heading text-gray-800 mb-2 text-lg">{{ legend|safe }}</legend>{% endif %}
             {{ fieldset.text|safe }}
         </div>
-        <div class="fieldset-content">
+        <div class="fieldset-content block w-full bg-white rounded-md shadow px-6 py-5 md:w-2/3">
             {{ fields|safe }}
         </div>
     </div>
