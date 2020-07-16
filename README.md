@@ -4,16 +4,16 @@ Ecobasa is a gift-economy network for sustainable communities
 This is a work-in-progress attempt of a redesign.
 
 
-## Setup
+## Setup for dev
 ```
-pipenv install
+pipenv install --dev
 pipenv shell
 python manage.py migrate
 npm install
 npm run build
 ```
 
-## Tests
+## Run Tests
 ```
 pytest
 ```
