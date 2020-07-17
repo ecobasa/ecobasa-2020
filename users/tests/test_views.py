@@ -1,7 +1,13 @@
+import re
+from urllib.parse import urlparse
+
 import pytest
 from pytest_django.asserts import assertRedirects
 
 from django.test import Client
+from django.shortcuts import reverse
+from django.urls import resolve
+from django.contrib.auth import authenticate
 
 from ..models import User
 
@@ -82,3 +88,53 @@ class TestRegister:
             response, "/", status_code=302, target_status_code=200,
         )
         assert User.objects.all().exists()
+
+
+@pytest.mark.django_db
+class TestPasswordReset:
+    def test_pw_reset(self, client: Client, user: User, mailoutbox: list):
+        # get
+        res = client.get(reverse("users:password_reset"))
+        assert res.status_code == 200
+        assert "Forgotten" in str(res.content)
+
+        # post email address
+        res = client.post(
+            reverse("users:password_reset"), {"email": user.email}, follow=True
+        )
+        assertRedirects(
+            res,
+            reverse("users:password_reset_done"),
+            status_code=302,
+            target_status_code=200,
+        )
+
+        # email send with correct link
+        assert len(mailoutbox) == 1
+        m = mailoutbox[0]
+        assert "Password reset" in m.subject
+        url = re.search(r"(?P<url>https?://[^\s]+)", m.body).group("url")
+        path = urlparse(url).path
+        assert resolve(path).url_name == "password_reset_confirm"
+
+        # get url from email
+        res = client.get(path, follow=True)
+        assert res.status_code == 200
+        assert "form" in str(res.content)
+
+        # post new password to url from email
+        url, _ = res.redirect_chain[-1]
+        new_password = "aseij0984ca0ara98h"
+        res = client.post(
+            url, {"new_password1": new_password, "new_password2": new_password}
+        )
+        assertRedirects(
+            res,
+            reverse("users:password_reset_complete"),
+            status_code=302,
+            target_status_code=200,
+        )
+
+        # check that new pw works
+        newuser = authenticate(email=user.email, password=new_password)
+        assert newuser == user
