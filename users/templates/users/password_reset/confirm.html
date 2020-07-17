@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags i18n %}
+
+{% comment %} dont show navbar {% endcomment %}
+{% block navbar %}
+{% endblock navbar %}
+
+{% block content %}
+<div class="min-h-screen flex items-center justify-center bg-orange-50 py-12 px-4 sm:px-6 lg:px-8">
+  <div class="max-w-md w-full">
+
+    <h2 class="mt-6 text-center text-3xl leading-9 font-bree text-gray-900">
+      {% trans 'Reset your password' %}
+    </h2>
+
+    <div class="bg-white shadow rounded-md px-8 py-8 mt-10 form-control-w-full">
+      {% if validlink %}
+        <p>{% trans "Please enter your new password twice so we can verify you typed it in correctly." %}</p>
+
+        <form method="post" class="mt-5">
+          {% csrf_token %}
+          {{ form | crispy }}
+          <button class="text-sm px-4 py-2 bg-orange-500 rounded-md font-bold text-white w-full my-5">{% trans 'Change my password' %}</button>
+        </form>
+
+      {% else %}
+        <h3 class="mb-4 font-bold text-xl">{% trans "Invalid Link" %}</h3>
+        <p>{% trans "The password reset link was invalid, possibly because it has already been used.  Please request a new password reset." %}</p>
+        <a class="block text-center text-sm px-4 py-2 bg-orange-500 rounded-md font-bold text-white w-full mt-6" href="{% url 'users:password_reset' %}">{% trans 'Reenter your email' %}</a>
+      {% endif %}
+    </div>
+
+  </div>
+</div>
+{% endblock %}

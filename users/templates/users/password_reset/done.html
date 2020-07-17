@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags i18n %}
+
+{% comment %} dont show navbar {% endcomment %}
+{% block navbar %}
+{% endblock navbar %}
+
+{% block content %}
+<div class="min-h-screen flex items-center justify-center bg-orange-50 py-12 px-4 sm:px-6 lg:px-8">
+  <div class="max-w-md w-full">
+
+    <h2 class="mt-6 text-center text-3xl leading-9 font-bree text-gray-900">
+      {% trans 'Check your mail' %}
+    </h2>
+
+    <div class="bg-white shadow rounded-md px-8 py-8 mt-10 form-control-w-full">
+      <p class="mb-4">{% trans 'We’ve emailed you instructions for setting your password, if an account exists with the email you entered. You should receive them shortly.' %}</p>
+      <p>{% trans 'If you don’t receive an email, please make sure you’ve entered the address you registered with, and check your spam folder.' %}</p>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

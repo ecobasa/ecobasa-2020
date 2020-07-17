@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags i18n %}
+
+{% comment %} dont show navbar {% endcomment %}
+{% block navbar %}
+{% endblock navbar %}
+
+{% block content %}
+<div class="min-h-screen flex items-center justify-center bg-orange-50 py-12 px-4 sm:px-6 lg:px-8">
+  <div class="max-w-md w-full">
+
+    <h2 class="mt-6 text-center text-3xl leading-9 font-bree text-gray-900">
+      {% trans 'Password was reset' %}
+    </h2>
+
+    <div class="bg-white shadow rounded-md px-8 py-8 mt-10 form-control-w-full">
+      <p>{% trans "Your password has been set.  You may go ahead and log in now." %}</p>
+
+      <a class="block text-center text-sm px-4 py-2 bg-orange-500 rounded-md font-bold text-white w-full mt-5" href="{{ login_url }}">{% trans 'Log in' %}</a>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

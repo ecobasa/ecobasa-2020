@@ -3,7 +3,7 @@
 }
 
 .col-form-label {
-  @apply block mb-1 text-sm text-gray-800;
+  @apply block mb-1 text-sm font-bold text-gray-800;
 }
 
 .form-control-w-full .form-input, .form-control-w-full .form-textarea {

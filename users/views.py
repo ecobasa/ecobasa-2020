@@ -1,13 +1,14 @@
-from django.contrib.auth.views import LoginView as DjangoLoginView
+from django.contrib.auth import views as django_views
 from django.utils.translation import gettext_lazy as _
 from django.shortcuts import redirect, reverse, render
+from django.urls import reverse_lazy
 from django.contrib import messages
 from django.contrib.auth import logout as auth_logout, login as auth_login, authenticate
 
 from .forms import RegisterForm, LoginForm
 
 
-class LoginView(DjangoLoginView):
+class LoginView(django_views.LoginView):
     template_name = "users/login.html"
     form_class = LoginForm
 
@@ -37,3 +38,23 @@ def register(request):
     else:
         form = RegisterForm()
     return render(request, "users/register.html", {"form": form})
+
+
+class PasswordResetView(django_views.PasswordResetView):
+    email_template_name = "users/password_reset/email.html"
+    template_name = "users/password_reset/form.html"
+    success_url = reverse_lazy("users:password_reset_done")
+
+
+class PasswordResetDoneView(django_views.PasswordResetDoneView):
+    template_name = "users/password_reset/done.html"
+
+
+class PasswordResetConfirmView(django_views.PasswordResetConfirmView):
+    success_url = reverse_lazy("users:password_reset_complete")
+    template_name = "users/password_reset/confirm.html"
+
+
+class PasswordResetCompleteView(django_views.PasswordResetCompleteView):
+    template_name = "users/password_reset/complete.html"
+
