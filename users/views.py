@@ -4,11 +4,12 @@ from django.shortcuts import redirect, reverse, render
 from django.contrib import messages
 from django.contrib.auth import logout as auth_logout, login as auth_login, authenticate
 
-from .forms import RegisterForm
+from .forms import RegisterForm, LoginForm
 
 
 class LoginView(DjangoLoginView):
     template_name = "users/login.html"
+    form_class = LoginForm
 
 
 def logout(request):

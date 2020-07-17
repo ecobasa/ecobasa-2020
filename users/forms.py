@@ -1,6 +1,7 @@
 from django import forms
 from django.core.exceptions import ValidationError
 from django.contrib.auth import password_validation
+from django.contrib.auth.forms import AuthenticationForm
 from django.utils.translation import gettext_lazy as _
 
 from crispy_forms.helper import FormHelper
@@ -9,6 +10,13 @@ from crispy_forms.layout import Layout, Field
 from gifting.forms import Fieldset
 
 from .models import User
+
+
+class LoginForm(AuthenticationForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["username"].label = _("email address or username")
+        self.error_messages["invalid_login"] = _("Credentials are not correct.")
 
 
 class RegisterForm(forms.ModelForm):
