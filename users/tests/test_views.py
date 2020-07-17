@@ -26,14 +26,14 @@ class TestLogin:
     def test_get(self, client: Client):
         response = client.get("/users/login/")
         assert response.status_code == 200
-        assert "Login" in str(response.content)
+        assert "Log in" in str(response.content)
 
     def test_fail(self, client: Client, user: User):
         response = client.post(
             "/users/login/", {"username": user.email, "password": "blabla"}, follow=True
         )
         assert response.status_code == 200
-        assert "Sorry" in str(response.content)
+        assert "Credentials are not correct." in str(response.content)
 
     def test_login_email(self, client: Client, user: User):
         response = client.post(
