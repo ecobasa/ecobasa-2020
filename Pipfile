@@ -16,6 +16,8 @@ django-environ = "*"
 argon2-cffi = "*"
 django-filter = "*"
 django-crispy-forms = "*"
+gunicorn = "*"
+whitenoise = "*"
 
 [requires]
 python_version = "3.8"

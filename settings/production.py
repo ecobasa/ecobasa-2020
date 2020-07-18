@@ -34,6 +34,10 @@ DATABASES["default"]["CONN_MAX_AGE"] = env.int("CONN_MAX_AGE", default=60)  # no
 # https://docs.djangoproject.com/en/dev/ref/settings/#static-root
 STATIC_ROOT = str(ROOT_DIR / "static-collected")
 
+# https://docs.djangoproject.com/en/dev/ref/settings/#std:setting-STATICFILES_STORAGE
+# http://whitenoise.evans.io/en/stable/django.html
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+
 
 # SECURITY
 # ------------------------------------------------------------------------------
