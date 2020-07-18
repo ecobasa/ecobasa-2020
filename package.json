@@ -5,7 +5,7 @@
     "author": "Arne Bollinger",
     "license": "none",
     "scripts": {
-        "build:css": "postcss static/styles/base.css -o static/styles/base.min.css",
+        "build:css": "postcss static_src/styles/base.css -o static/styles/base.min.css",
         "watch:css": "onchange -i '**/*.*' tailwind.config.js -e 'static/styles/base.min.css' -- npm run build:css",
         "build": "npm run build:css"
     },
