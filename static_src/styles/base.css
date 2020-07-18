@@ -8,8 +8,3 @@
 @import "./forms.css";
 
 @import "tailwindcss/utilities";
-
-
-.bg-image-background {
-    background-image: url("/static/images/background.jpg");
-}
