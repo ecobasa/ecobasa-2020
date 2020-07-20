@@ -17,3 +17,8 @@ npm run build
 ```
 pytest
 ```
+
+## Continous Deployment
+https://ecobasa.herokuapp.com/
+
+(auto deploys master branch)
