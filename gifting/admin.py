@@ -1,9 +1,9 @@
-from django.contrib import admin
+from django.contrib.gis import admin
 from .models import Ad, AdCategory
 
 
 @admin.register(Ad)
-class AdAdmin(admin.ModelAdmin):
+class AdAdmin(admin.OSMGeoAdmin):
     list_display = (
         "title",
         "type",

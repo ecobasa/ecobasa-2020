@@ -1,5 +1,6 @@
 from django import forms
 from django.utils.translation import gettext_lazy as _
+from django.contrib.gis.forms.widgets import OSMWidget
 
 from crispy_forms.helper import FormHelper
 from crispy_forms.bootstrap import InlineRadios, InlineCheckboxes
@@ -21,6 +22,7 @@ class AdForm(forms.ModelForm):
         self.helper.form_tag = False
         self.helper.layout = Layout(
             Fieldset("", InlineRadios("type"), InlineCheckboxes("categories")),
+            Fieldset("", Field("location")),
             Fieldset(
                 _("Content"),
                 Field("title"),
@@ -31,9 +33,10 @@ class AdForm(forms.ModelForm):
 
     class Meta:
         model = Ad
-        fields = ("type", "title", "description", "categories")
+        fields = ("type", "title", "description", "categories", "location")
         widgets = {
             "type": forms.RadioSelect,
             "categories": forms.CheckboxSelectMultiple,
+            "location": OSMWidget,
         }
 

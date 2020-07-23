@@ -1,4 +1,4 @@
-from django.db import models
+from django.contrib.gis.db import models
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
@@ -46,6 +46,7 @@ class Ad(RandomIdMixin, models.Model):
     categories = models.ManyToManyField(
         AdCategory, related_name="ads", verbose_name=_("Categories"), blank=True
     )
+    location = models.PointField(_("Location"), null=True, blank=True, geography=True)
 
     def __str__(self):
         return self.title
