@@ -4,3 +4,4 @@ gdal-bin
 libgdal-dev
 libproj-dev
 libgeos-dev
+libblas-dev
