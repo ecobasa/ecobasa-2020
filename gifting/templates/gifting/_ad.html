@@ -22,6 +22,7 @@
           {% if ad.distance != None %}
             <span class="mx-px py-px px-1 text-xs text-gray-500">{{ ad.distance.km|floatformat:1 }} km</span>
           {% endif %}
+          <span class="text-xs text-gray-600">{{ ad.location_name }}</span>
         </span>
       </div>
     </div>

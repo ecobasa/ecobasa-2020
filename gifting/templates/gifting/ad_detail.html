@@ -39,6 +39,7 @@
         {% for cat in ad.categories.all %}
           <span class="border mx-px py-px px-1 rounded text-xs text-gray-500">{{ cat.name }}</span>
         {% endfor %}
+        <span class="text-sm mx-2">{{ ad.location_name }}</span>
       </div>
     </div>
 
@@ -55,10 +56,6 @@
         </span>
       </div>
     {% endif %}
-  </div>
-
-  <div class="my-10">
-    {{ ad.location }}
   </div>
 
   {% comment %} content {% endcomment %}
