@@ -1,0 +1,6 @@
+# This is a list of extra apt packages to install on heroku
+# https://github.com/heroku/heroku-buildpack-apt
+gdal-bin
+libgdal-dev
+libproj-dev
+libgeos-dev
