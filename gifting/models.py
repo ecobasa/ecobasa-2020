@@ -46,7 +46,12 @@ class Ad(RandomIdMixin, models.Model):
     categories = models.ManyToManyField(
         AdCategory, related_name="ads", verbose_name=_("Categories"), blank=True
     )
-    location = models.PointField(_("Location"), null=True, blank=True, geography=True)
+    location_name = models.CharField(
+        _("Location"), null=True, blank=True, max_length=255
+    )
+    location = models.PointField(
+        _("Geo Location"), null=True, blank=True, geography=True
+    )
 
     def __str__(self):
         return self.title

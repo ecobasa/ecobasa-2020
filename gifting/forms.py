@@ -1,16 +1,12 @@
 from django import forms
 from django.utils.translation import gettext_lazy as _
-from django.contrib.gis.forms.widgets import OpenLayersWidget
 
 from crispy_forms.helper import FormHelper
 from crispy_forms.bootstrap import InlineRadios, InlineCheckboxes
 from crispy_forms.layout import Layout, Field, Fieldset as CrispyFieldset
 
+from .widgets import LocationWidget
 from .models import Ad
-
-
-class MyOpenLayersWidget(OpenLayersWidget):
-    map_srid = 4326
 
 
 class Fieldset(CrispyFieldset):
@@ -26,7 +22,7 @@ class AdForm(forms.ModelForm):
         self.helper.form_tag = False
         self.helper.layout = Layout(
             Fieldset("", InlineRadios("type"), InlineCheckboxes("categories")),
-            Fieldset("", Field("location")),
+            Fieldset(_("Location"), Field("location_name"), Field("location")),
             Fieldset(
                 _("Content"),
                 Field("title"),
@@ -37,10 +33,18 @@ class AdForm(forms.ModelForm):
 
     class Meta:
         model = Ad
-        fields = ("type", "title", "description", "categories", "location")
+        fields = (
+            "type",
+            "title",
+            "description",
+            "categories",
+            "location_name",
+            "location",
+        )
         widgets = {
             "type": forms.RadioSelect,
             "categories": forms.CheckboxSelectMultiple,
-            "location": MyOpenLayersWidget,
+            "location_name": LocationWidget,
+            "location": forms.TextInput,
         }
 
