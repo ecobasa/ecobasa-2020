@@ -1,12 +1,16 @@
 from django import forms
 from django.utils.translation import gettext_lazy as _
-from django.contrib.gis.forms.widgets import OSMWidget
+from django.contrib.gis.forms.widgets import OpenLayersWidget
 
 from crispy_forms.helper import FormHelper
 from crispy_forms.bootstrap import InlineRadios, InlineCheckboxes
 from crispy_forms.layout import Layout, Field, Fieldset as CrispyFieldset
 
 from .models import Ad
+
+
+class MyOpenLayersWidget(OpenLayersWidget):
+    map_srid = 4326
 
 
 class Fieldset(CrispyFieldset):
@@ -37,6 +41,6 @@ class AdForm(forms.ModelForm):
         widgets = {
             "type": forms.RadioSelect,
             "categories": forms.CheckboxSelectMultiple,
-            "location": OSMWidget,
+            "location": MyOpenLayersWidget,
         }
 

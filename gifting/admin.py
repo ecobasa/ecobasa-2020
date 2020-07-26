@@ -3,7 +3,7 @@ from .models import Ad, AdCategory
 
 
 @admin.register(Ad)
-class AdAdmin(admin.OSMGeoAdmin):
+class AdAdmin(admin.GeoModelAdmin):
     list_display = (
         "title",
         "type",

@@ -2,17 +2,61 @@
 {% load crispy_forms_tags i18n %}
 
 {% block content %}
+
 {% comment %} filter bar {% endcomment %}
 <div class="bg-white shadow py-4">
-  <form x-data="" method="get" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 js-submit-on-input">
-    <div class="flex items-center -mx-4">
-      <div class="relative w-full max-w-2xl my-4 mx-4">
+  <form id="searchForm" x-data="" method="get" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 js-submit-on-input">
+    <div class="flex items-center flex-wrap -mx-2">
+
+      {% comment %} search field {% endcomment %}
+      <div class="relative w-full max-w-2xl my-2 mx-2">
         <div class="absolute ml-3 inset-y-0 flex items-center text-gray-500">
           <svg class="h-5 w-5" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" stroke="currentColor"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
         </div>
         <input type="text" value="{{ f.form.search.data|default:"" }}" class="pl-10 form-input border-gray-400 w-full max-w-2xl" autocomplete="off" autofocus name="search">
       </div>
-      <button class="hidden sm:block mx-4 py-2 px-5 rounded bg-orange-500 text-white">{% trans "Search" %}</button>
+
+      {% comment %} location field {% endcomment %}
+      <div class="relative my-2 mx-2" x-data="locationDropdown()">
+        <div class="relative w-full max-w-2xl">
+          <div class="absolute ml-3 inset-y-0 flex items-center text-gray-500">
+            <svg class="h-5 w-5" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" stroke="currentColor"><path d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+          </div>
+          <input x-ref="input" type="text" @input="onInput($event.target.value)" value="{{ f.form.location_name.data|default:"" }}" placeholder="Sort by Location" class="form-input text-sm border-gray-400 w-full max-w-2xl pl-10" autocomplete="off" autofocus name="location_name">
+        </div>
+        <input x-ref="location" type="hidden" value="{{ f.form.location.data|default:"" }}" name="location">
+        <div x-show.transition="open" @click.away="open = false" class="absolute inset-x-0 bg-white shadow-lg text-xs py-3 rounded-b border-gray-400 border-b border-l border-r">
+          <ul>
+            <template x-for="res in results" :key="res">
+              <li><a @click.prevent="onSelect(res)" href="#" class="block px-2 py-2 hover:bg-gray-200" x-text="res.properties.name + ', ' + res.properties.country"></a></li>
+            </template>
+          </ul>
+        </div>
+      </div>
+      <script>
+        function locationDropdown() {
+          return {
+            results: [],
+            open: false,
+            onSelect(res) {
+              var latlng = res.geometry.coordinates[0] + ',' + res.geometry.coordinates[1]
+              this.$refs.location.value = latlng
+              this.$refs.input.value = res.properties.name + ', ' + res.properties.country
+              this.open = false
+              document.getElementById("searchForm").submit()
+            },
+            onInput(input) {
+              if (input.length < 3) { results = []; return }
+              fetch(`http://photon.komoot.de/api/?limit=5&q=${input}`).then(res => res.json()).then(json => {
+                this.open = true
+                this.results = json.features
+              })
+            }
+          }
+        }
+      </script>
+
+      <button class="hidden sm:block mx-2 my-2 py-2 px-5 rounded bg-orange-500 text-white">{% trans "Search" %}</button>
     </div>
 
     <div x-on:input="$event.target.form.submit()">
@@ -43,6 +87,7 @@
     </div>
   </form>
 
+
 </div>
 
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -69,4 +114,7 @@
   {% endif %}
 
 </div>
+
+
+
 {% endblock content %}
