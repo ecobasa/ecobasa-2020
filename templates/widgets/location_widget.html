@@ -24,7 +24,7 @@
       },
       onInput(input) {
         if (input.length < 3) { results = []; return }
-        fetch(`http://photon.komoot.de/api/?limit=5&q=${input}`).then(res => res.json()).then(json => {
+        fetch(`https://photon.komoot.de/api/?limit=5&q=${input}`).then(res => res.json()).then(json => {
           this.open = true
           this.results = json.features
         })
