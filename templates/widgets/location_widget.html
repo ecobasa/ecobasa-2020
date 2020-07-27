@@ -4,7 +4,7 @@
   <div x-show.transition="open" @click.away="open = false" class="absolute inset-x-0 bg-white shadow-lg text-xs py-3 rounded-b border-gray-400 border-b border-l border-r">
     <ul>
       <template x-for="res in results" :key="res">
-        <li><a @click.prevent="onSelect(res)" href="#" class="block px-2 py-2 hover:bg-gray-200" x-text="res.properties.name + ', ' + res.properties.country"></a></li>
+        <li><a @click.prevent="onSelect(res)" href="#" class="block px-2 py-2 hover:bg-gray-200" x-text="res.display_name"></a></li>
       </template>
     </ul>
   </div>
@@ -15,18 +15,16 @@
       results: [],
       open: false,
       onSelect(res) {
-        var x = res.geometry.coordinates[0]
-        var y = res.geometry.coordinates[1]
-        var latlng = `POINT (${x} ${y})`
+        var latlng = `POINT (${res.lat} ${res.lon})`
         document.getElementById("id_location").value = latlng
-        this.$refs.input.value = res.properties.name + ', ' + res.properties.country
+        this.$refs.input.value = res.display_name
         this.open = false
       },
       onInput(input) {
         if (input.length < 3) { results = []; return }
-        fetch(`https://photon.komoot.de/api/?limit=5&q=${input}`).then(res => res.json()).then(json => {
+        fetch(`https://nominatim.openstreetmap.org/search/?format=json&limit=5&q=${input}`).then(res => res.json()).then(json => {
           this.open = true
-          this.results = json.features
+          this.results = json
         })
       }
     }
