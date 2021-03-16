@@ -1,0 +1,49 @@
+version: '2'
+
+networks:
+  backend:
+    driver: bridge
+
+services:
+  
+  database:
+    image: kartoza/postgis
+    env_file:
+      - ./postgres.env
+    networks:
+      - backend
+    logging:
+        driver: none
+  
+  django:
+    build:
+      context: .
+      dockerfile: dockerfile.production
+    volumes:
+      - .:/opt/services/ecobasa
+      - ./media:/opt/services/ecobasa/media
+      - ./static-collected:/opt/services/ecobasa/static-collected
+      - ./whoosh_index:/opt/services/ecobasa/whoosh_index
+    depends_on:
+      - database
+    networks:
+      - backend
+    logging:
+        driver: none
+
+  nginx:
+      image: nginx
+      expose: ["80"]
+      env_file:
+        - ./frontend.env
+      volumes:
+        - ./nginx.conf:/etc/nginx/conf.d/default.conf
+        - ./static-collected:/opt/services/ecobasa/static-collected
+        - ./media:/opt/services/ecobasa/media
+      depends_on:
+        - django
+      networks:
+        - backend
+        - frontend-web
+      logging:
+        driver: none
