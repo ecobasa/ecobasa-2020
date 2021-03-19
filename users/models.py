@@ -50,14 +50,16 @@ class User(AbstractUser):
     """user model
 
      * email is used for logging in
-     * username is only used for legacy user accounts
+     * username is only used for legacy users, so they can still log in like on the old site
      * name is used instead of first_name and last_name
     """
 
-    username = models.CharField(_("username"), max_length=150, unique=True, blank=True)
+    # username is only for legacy users and None/null by default, but unique for non-null values
+    username = models.CharField(_("username"), unique=True, default=None, max_length=150, blank=True, null=True)
+
     email = models.EmailField(_("email address"), unique=True)
-    first_name = models.CharField(_("First Name"), default='Firstname', max_length=150)
-    last_name = models.CharField(_("Last Name"), default='Lastname', max_length=150)
+    first_name = models.CharField(_("First Name"), max_length=150)
+    last_name = models.CharField(_("Last Name"), max_length=150)
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = ["first_name", "last_name"]
