@@ -82,7 +82,7 @@ class TestRegister:
     def test_post(self, client: Client):
         response = client.post(
             "/users/register/",
-            {"name": "Max", "email": "max@mustermann.com", "password": "asdaogfisgaf"},
+            {"first_name": "Max", "last_name": "Mustermann", "email": "max@mustermann.com", "password": "asdaogfisgaf"},
         )
         assertRedirects(
             response, "/", status_code=302, target_status_code=200,
