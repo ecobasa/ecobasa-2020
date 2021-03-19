@@ -39,6 +39,14 @@ npm run build
 ```
 
 ## Run Tests
+
+The database user must have permission to create a new test database and add postgis extensions:
+```
+su postgres
+psql
+ALTER_ROLE ecobasa SUPERUSER;
+```
+
 ```
 pytest
 ```
