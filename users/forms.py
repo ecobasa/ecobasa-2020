@@ -15,7 +15,7 @@ from .models import User
 class LoginForm(AuthenticationForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["username"].label = _("email address or username")
+        self.fields["username"].label = _("email address or name")
         self.error_messages["invalid_login"] = _("Credentials are not correct.")
 
 
@@ -29,16 +29,17 @@ class RegisterForm(forms.ModelForm):
 
     class Meta:
         model = User
-        fields = ["name", "email"]
+        fields = ["first_name", "last_name", "email"]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["name"].required = True
-        self.fields["name"].widget.attrs["autofocus"] = True
+        self.fields["first_name"].required = True
+        self.fields["first_name"].widget.attrs["autofocus"] = True
+        self.fields["last_name"].required = True
         self.helper = FormHelper()
         self.helper.form_tag = False
         self.helper.layout = Layout(
-            Fieldset(_("Personal Info"), Field("name")),
+            Fieldset(_("Personal Info"), Field("first_name"), Field("last_name"), header_text=_("Trust is the only currency in our gift-economy network, real names help to build trust"),),
             Fieldset(
                 _("Account"),
                 Field("email"),
