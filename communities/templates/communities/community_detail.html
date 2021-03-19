@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block content %}
+<div class="mx-auto max-w-4xl mt-10 px-4">
+
+  <h1>{{ community.name }}</h1>
+
+  <p>
+      {{ community.description }}
+  </p>
+
+</div>
+{% endblock content %}
