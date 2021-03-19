@@ -4,6 +4,7 @@ module.exports = (ctx) => ({
         "postcss-import": {},
         "tailwindcss": {},
         "autoprefixer": {},
+        "postcss-nested":{},
         "cssnano": ctx.env === 'production' ? {} : false
     }
 })

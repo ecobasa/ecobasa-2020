@@ -9,12 +9,14 @@
     <link rel="shortcut icon" href="{% static "images/favicon.ico" %}">
 
     {% block css %}
-      <link href="{% static 'styles/base.min.css' %}" rel="stylesheet">
+      <link rel="stylesheet" href="{% static 'styles/base.min.css' %}">
+      <link rel="stylesheet" href="{% static '@fortawesome/fontawesome-free/css/all.css' %}">
     {% endblock %}
+
     {% block extrahead %}{% endblock %}
   </head>
 
-  <body class="font-sans bg-orange-50 text-gray-800 antialiased min-h-full flex flex-col">
+  <body class="font-sans text-brown antialiased min-h-full flex flex-col">
 
     <div class="flex-auto">
       {% block navbar %}

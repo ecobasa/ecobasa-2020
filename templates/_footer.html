@@ -1,0 +1,26 @@
+{% load static i18n %}
+<footer class="flex justify-between items-center bg-primary bg-opacity-75 text-secondary font-bold px-4 shadow-sm border-b h-12">
+	<div class="w-1/5">
+		<a class="mr-4" href="/newsletter"><i class="fa fa-envelope mr-2"></i>{% trans "Newsletter" %}</a>
+		<a href="/contact"><i class="fa fa-envelope mr-2"></i>{% trans "Contact ecobasa" %}</a>
+	</div>
+	<div class="w-1/5 text-center">
+
+		<div x-data="{ tooltip: false }" class="relative z-30 inline-flex">
+		    <div id="license" class="cursor-pointer" rel="license" x-on:click="tooltip = true" x-on:click.away="tooltip = false"><img class="mx-auto" alt="Creative Commons License BY-NC-SA 4.0" style="border-width:0;" src="{% static "images/cc-license-bright.png" %}" /></div>
+		    <div class="relative" x-cloak x-show.transition.origin.top="tooltip">
+				<div class="absolute top-0 z-50 w-64 p-2 -mt-1 text-sm text-brown transform -translate-x-1/2 -translate-y-full bg-secondary bg-opacity-75 rounded-lg shadow-lg">
+					<span xmlns:dct='http://purl.org/dc/terms/' href='http://purl.org/dc/dcmitype/StillImage' property='dct:title' rel='dct:type'><a class="text-yellow"xmlns:cc='http://creativecommons.org/ns#' href='https://ecobasa.org' property='cc:attributionName' rel='cc:attributionURL'>ecobasa.org</a></span> is licensed under a <a class="text-yellow" rel='license' href='http://creativecommons.org/licenses/by-nc-sa/4.0/'>Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License</a>
+				</div>
+				<svg class="absolute z-10 w-6 h-6 text-orange-500 transform -translate-x-12 -translate-y-3 fill-current stroke-current" width="8" height="8">
+					<rect x="12" y="-10" width="8" height="8" transform="rotate(45)" />
+				</svg>
+			</div>
+		</div>
+	</div>
+	<div class="w-1/5">
+		<a class="float-right" href="https://www.facebook.com/ecobasa/"><i class="fab fa-facebook text-3xl"></i></a>
+		<a class="float-right" href="https://www.youtube.com/channel/UC9P0vCR7DDPHly81cNQ_vyw"><i class="fab fa-youtube mx-6 text-3xl"></i></a>
+		<a class="float-right" href="https://github.com/ecobasa/ecobasa/"><i class="fab fa-github text-3xl"></i></a>
+	</div>
+</footer>

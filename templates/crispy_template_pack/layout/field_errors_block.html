@@ -1,10 +1,10 @@
 {% if form_show_errors and field.errors %}
   {% if field.errors|length_is:"1" %}
-    <p id="error_{{ field.auto_id }}" class="mt-2 text-sm text-red-700 font-semibold">{{ field.errors.0 }}</p>
+    <p id="error_{{ field.auto_id }}" class="mt-2 text-sm text-red font-semibold">{{ field.errors.0 }}</p>
   {% else %}
     <ul class="mt-2 list-disc ml-4">
       {% for error in field.errors %}
-        <li id="error_{{ forloop.counter }}_{{ field.auto_id }}" class="text-sm text-red-700 font-semibold">{{ error }}</li>
+        <li id="error_{{ forloop.counter }}_{{ field.auto_id }}" class="text-sm text-red font-semibold">{{ error }}</li>
       {% endfor %}
     </ul>
   {% endif %}

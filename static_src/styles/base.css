@@ -8,3 +8,94 @@
 @import "./forms.css";
 
 @import "tailwindcss/utilities";
+
+
+body {
+	background: url('../images/back.jpg') repeat;
+}
+
+h1, h2, h3 {
+  @apply font-serif ;
+}
+
+h1 {
+  @apply text-primary text-5xl;
+}
+
+h2 {
+  @apply text-purple text-4xl mt-12 mb-6;
+}
+
+h3 {
+	@apply text-3xl;
+}
+
+h3, h4, h5, h6 {
+  @apply text-xl font-bold mt-8 mb-4;
+ }
+
+::selection {
+ 	background-color: rgba(218, 97, 55, 0.7);
+ }
+
+a {
+	@apply text-yellow;
+	&:hover, &:focus, &:active {
+	 	@apply text-purple transition ease-in-out duration-150;
+	 }
+}
+
+nav {
+	a {
+		@apply text-secondary;
+		&:hover,&:focus,&:active {
+			@apply text-brown;
+		}
+	}
+}
+
+ footer {
+ 	a {
+ 		@apply text-secondary;
+ 		&:hover {
+ 			@apply text-brown;
+ 		}
+ 	}
+ }
+
+.btn {
+ 	@apply px-5 rounded border-2 border-solid box-border h-10 font-bold bg-primary text-secondary border-primary;
+ 	&:hover, &:focus {
+		@apply bg-transparent border-primary text-primary transition duration-150 ease-in-out;
+	}
+	a& {
+		@apply cursor-pointer text-center items-center;
+	}
+ 	&-disabled {
+ 		@apply bg-transparent text-brown border-brown;
+ 	}
+ 	&-red {
+ 		@apply bg-red text-secondary border-red;
+ 		&:hover, &:focus {
+ 			@apply bg-transparent border-red text-red;
+ 		}
+ 	}
+ 	&-yellow {
+ 		@apply bg-yellow text-secondary border-yellow;
+ 		&:hover, &:focus {
+ 			@apply bg-transparent border-yellow text-yellow;
+ 		}
+ 	}
+ 	&-purple {
+ 		@apply bg-purple text-secondary border-purple;
+ 		&:hover, &:focus {
+ 			@apply bg-transparent border-purple text-purple;
+ 		}
+ 	}
+ 	&-green {
+ 		@apply bg-green text-secondary border-green;
+ 		&:hover, &:focus {
+ 			@apply bg-transparent border-green text-green;
+ 		}
+ 	}
+ }

@@ -3,7 +3,7 @@
 }
 
 .col-form-label {
-  @apply block mb-1 text-sm font-bold text-gray-800;
+  @apply block mb-1 text-sm font-bold text-primary;
 }
 
 .form-control-w-full .form-input, .form-control-w-full .form-textarea {
@@ -12,23 +12,42 @@
 
 /* hide "(optional)" by default */
 .optionalField {
-  @apply text-gray-700 text-xs hidden font-normal;
+  @apply text-primary text-xs hidden font-normal;
 }
 .show-optional .optionalField {
   @apply inline-block !important;
 }
 
+/* Inputs */
+.form-input, .form-textarea {
+  @apply bg-transparent border-brown border-opacity-50 text-brown; 
+  &::placeholder {
+    @apply text-brown text-opacity-50;
+  }
+  &:focus {
+    @apply border-primary border;
+    box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075), 0 0 8px rgba(227, 74, 38, 0.6);
+  }
+}
 
 /* right align numbers */
 input[type="number"] {
   @apply text-right;
 }
 
+.form-checkbox, input[type="checkbox"] {
+  @apply border-brown bg-transparent;
+}
+
+.form-radio {
+  @apply border-brown bg-transparent;
+}
+
 /* for gray button in invalid forms */
-form:invalid .form-invalid\:bg-gray-400,
-form:invalid .form-invalid\:bg-gray-400:hover,
-form:invalid .form-invalid\:bg-gray-400:focus,
-form:invalid .form-invalid\:bg-gray-400:active {
+form:invalid .form-invalid\:bg-gray,
+form:invalid .form-invalid\:bg-gray:hover,
+form:invalid .form-invalid\:bg-gray:focus,
+form:invalid .form-invalid\:bg-gray:active {
   @apply bg-gray-400 !important;
 }
   
@@ -51,9 +70,9 @@ form:invalid .form-invalid\:bg-gray-400:active {
 }
 
 .linkwidget .selected {
-  @apply font-bold border-l-4 border-green-500;
+  @apply font-bold border-l-4 border-green;
 }
 
 .linkwidget.horizontal .selected {
-  @apply font-bold border-l-0 border-b-2 border-green-500;
+  @apply font-bold border-l-0 border-b-2 border-green;
 }
