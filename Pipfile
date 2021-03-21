@@ -19,6 +19,7 @@ django-crispy-forms = "*"
 gunicorn = "*"
 whitenoise = "*"
 psycopg2-binary = "*"
+django-osm-field ="*"
 
 [requires]
 python_version = "3.8"

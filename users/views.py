@@ -30,8 +30,7 @@ def register(request):
         if form.is_valid():
             form.save()
             email = form.cleaned_data.get("email")
-            first_name = form.cleaned_data.get("first_name")
-            last_name = form.cleaned_data.get("last_name")
+            first_name = form.cleaned_data.get("name")
             raw_password = form.cleaned_data.get("password")
             user = authenticate(username=email, password=raw_password)
             auth_login(request, user)

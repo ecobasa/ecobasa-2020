@@ -29,17 +29,16 @@ class RegisterForm(forms.ModelForm):
 
     class Meta:
         model = User
-        fields = ["first_name", "last_name", "email"]
+        fields = ["name", "email"]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["first_name"].required = True
-        self.fields["first_name"].widget.attrs["autofocus"] = True
-        self.fields["last_name"].required = True
+        self.fields["name"].required = True
+        self.fields["name"].widget.attrs["autofocus"] = True
         self.helper = FormHelper()
         self.helper.form_tag = False
         self.helper.layout = Layout(
-            Fieldset(_("Personal Info"), Field("first_name"), Field("last_name"), header_text=_("Trust is the only currency in our gift-economy network, real names help to build trust"),),
+            Fieldset(_("Personal Info"), Field("name"), header_text=_("Trust is the only currency in our gift-economy network, real names help to build trust"),),
             Fieldset(
                 _("Account"),
                 Field("email"),
