@@ -64,38 +64,29 @@ nav {
  }
 
 .btn {
- 	@apply px-5 rounded border-2 border-solid box-border h-10 font-bold bg-primary text-secondary border-primary;
+ 	@apply px-5 rounded border border-solid box-border h-10 font-bold bg-primary bg-opacity-75 text-secondary border-primary;
  	&:hover, &:focus {
-		@apply bg-transparent border-primary text-primary transition duration-150 ease-in-out;
+		@apply bg-opacity-100 transition duration-300 ease-in-out;
 	}
 	a& {
 		@apply cursor-pointer text-center items-center;
+		&:hover {
+			text-secondary;
+		}
 	}
  	&-disabled {
- 		@apply bg-transparent text-brown border-brown;
+ 		@apply bg-transparent text-brown border-2 border-brown;
  	}
  	&-red {
- 		@apply bg-red text-secondary border-red;
- 		&:hover, &:focus {
- 			@apply bg-transparent border-red text-red;
- 		}
+ 		@apply bg-opacity-75 bg-red border-red;
  	}
  	&-yellow {
- 		@apply bg-yellow text-secondary border-yellow;
- 		&:hover, &:focus {
- 			@apply bg-transparent border-yellow text-yellow;
- 		}
+ 		@apply bg-opacity-75 bg-yellow border-yellow;
  	}
  	&-purple {
- 		@apply bg-purple text-secondary border-purple;
- 		&:hover, &:focus {
- 			@apply bg-transparent border-purple text-purple;
- 		}
+ 		@apply bg-opacity-75 bg-purple border-purple;
  	}
  	&-green {
- 		@apply bg-green text-secondary border-green;
- 		&:hover, &:focus {
- 			@apply bg-transparent border-green text-green;
- 		}
+ 		@apply bg-opacity-75 bg-green border-green;
  	}
  }
