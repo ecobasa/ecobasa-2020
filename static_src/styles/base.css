@@ -64,29 +64,29 @@ nav {
  }
 
 .btn {
- 	@apply px-5 rounded border border-solid box-border h-10 font-bold bg-primary bg-opacity-75 text-secondary border-primary;
+ 	@apply p-2 rounded border border-solid box-border font-bold bg-primary bg-opacity-75 text-secondary border-primary;
  	&:hover, &:focus {
 		@apply bg-opacity-100 transition duration-300 ease-in-out;
 	}
 	a& {
-		@apply cursor-pointer text-center items-center;
+		@apply cursor-pointer text-center items-center bg-opacity-75;
 		&:hover {
-			text-secondary;
+			@apply text-secondary;
 		}
 	}
  	&-disabled {
  		@apply bg-transparent text-brown border-2 border-brown;
  	}
  	&-red {
- 		@apply bg-opacity-75 bg-red border-red;
+ 		@apply bg-red border-red;
  	}
  	&-yellow {
- 		@apply bg-opacity-75 bg-yellow border-yellow;
+ 		@apply bg-yellow border-yellow;
  	}
  	&-purple {
- 		@apply bg-opacity-75 bg-purple border-purple;
+ 		@apply bg-purple border-purple;
  	}
  	&-green {
- 		@apply bg-opacity-75 bg-green border-green;
+ 		@apply bg-green border-green;
  	}
  }

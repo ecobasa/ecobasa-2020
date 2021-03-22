@@ -23,7 +23,7 @@
       {% else %}
         <h2 class="mb-4 font-bold text-xl">{% trans "Invalid Link" %}</h2>
         <p>{% trans "The password reset link was invalid, possibly because it has already been used.  Please request a new password reset." %}</p>
-        <a class="btn w-full mt-6" href="{% url 'users:password_reset' %}">{% trans 'Reenter your email' %}</a>
+        <a class="btn block w-full mt-6" href="{% url 'users:password_reset' %}">{% trans 'Reenter your email' %}</a>
       {% endif %}
     </div>
 
