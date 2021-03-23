@@ -11,7 +11,7 @@
       {% comment %} search field {% endcomment %}
       <div class="relative w-full max-w-2xl my-2 mx-2">
         <div class="absolute ml-3 inset-y-0 flex items-center text-brown">
-          <svg class="h-5 w-5" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" stroke="currentColor"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+          <i class="fa fa-search text-primary opacity-75"></i>
         </div>
         <input type="text" value="{{ f.form.search.data|default:"" }}" class="pl-10 form-input w-full max-w-2xl" autocomplete="off" autofocus name="search">
       </div>
@@ -20,9 +20,9 @@
       <div class="relative my-2 mx-2" x-data="locationDropdown()">
         <div class="relative w-full max-w-2xl">
           <div class="absolute ml-3 inset-y-0 flex items-center text-primary">
-            <svg class="h-5 w-5" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" stroke="currentColor"><path d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+            <i class="fa fa-map-marker-alt mr-1 text-primary opacity-75"></i>
           </div>
-          <input x-ref="input" type="text" @input.debounce="onInput($event.target.value)" value="{{ f.form.location_name.data|default:"" }}" placeholder="Sort by Location" class="form-input text-sm w-full max-w-2xl pl-10" autocomplete="off" autofocus name="location_name">
+          <input x-ref="input" type="text" @input.debounce="onInput($event.target.value)" value="{{ f.form.location_name.data|default:"" }}" placeholder="Sort by Location" class="form-input w-full max-w-2xl pl-10" autocomplete="off" autofocus name="location_name">
         </div>
         <input x-ref="location" type="hidden" value="{{ f.form.location.data|default:"" }}" name="location">
         <div x-show.transition="open" @click.away="open = false" class="absolute inset-x-0 bg-secondary bg-opacity-50 shadow-lg text-xs py-3 rounded-b border-brown border-opacity-50 border-b border-l border-r">
@@ -55,7 +55,7 @@
         }
       </script>
 
-      <button class="btn m-2 hidden sm:block">{% trans "Search" %}</button>
+      <button class="btn m-2 hidden sm:block"><i class="fa fa-search mr-1"></i>{% trans "Search" %}</button>
     </div>
 
     <div x-on:input="$event.target.form.submit()">
@@ -94,7 +94,7 @@
   <div class="my-10">
     {% comment %} Add button {% endcomment %}
     <a href="{% url "gifting:create" %}" class="btn inline-flex items-center shadow">
-      <svg class="h-5 w-5 mr-2" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="3" viewBox="0 0 24 24" stroke="currentColor"><path d="M12 4v16m8-8H4"></path></svg>
+      <i class="fa fa-plus mr-1"></i>
       {% trans "Add your Wish or Offer" %}
     </a>
   </div>
