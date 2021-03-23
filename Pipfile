@@ -20,6 +20,8 @@ gunicorn = "*"
 whitenoise = "*"
 psycopg2-binary = "*"
 django-osm-field ="*"
+django-embed-video = "*"
+django-taggit ="*"
 
 [requires]
 python_version = "3.8"

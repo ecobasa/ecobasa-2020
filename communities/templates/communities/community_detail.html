@@ -1,14 +1,83 @@
 {% extends 'base.html' %}
-{% load i18n %}
+{% load i18n embed_video_tags %}
 
 {% block content %}
-<div class="mx-auto max-w-4xl mt-10 px-4">
-
-  <h1>{{ community.name }}</h1>
-
-  <p>
-      {{ community.description }}
-  </p>
+<div class="mx-auto max-w-7xl mt-10 px-4 pb-10">
+<div class="grid grid-cols-4 gap-6">
+	<div>
+		<h2>{% trans "Statistics" %}</h2>
+		<span class="block text-primary mb-2">
+      {% if community.community_type == "e" %}
+        <i class="mr-1 fa fa-home"></i> {% trans "Ecovillage" %}
+      {% elif community.community_type == "p" %}
+        <i class="mr-1 fa fa-tag"></i>{% trans "Planning Initiative" %}
+      {% elif community.community_type == "c" %}
+        <i class="mr-1 fa fa-home"></i>{% trans "Commune" %}
+      {% elif community.community_type == "h" %}
+        <i class="mr-1 fa fa-home"></i>{% trans "Houseproject" %}
+      {% elif community.community_type == "f" %}
+        <i class="mr-1 fa fa-home"></i>{% trans "Permaculture Farm" %}
+      {% endif %}
+    </span>
+    <span class="block text-primary mb-2">
+      {% if community.community_status == "s" %}
+        <i class="mr-1 fa fa-hand-rock"></i>{% trans "Starting Project (first years)" %}
+      {% elif community.community_status == "e" %}
+        <i class="mr-1 fa fa-thumbs-up"></i>{% trans "Established (+4 years)" %}
+      {% elif community.community_status == "l" %}
+        <i class="mr-1 fa fa-map-marker"></i>{% trans "Land Offer" %}
+      {% endif %}
+  	</span>
+    <span class="block text-primary mb-2"><i class="mr-1 fa fa-users"></i>{{ community.inhabitants }} {% trans "people living there" %}</span>
+    <span class="block text-primary mb-2"><i class="mr-1 fa fa-child"></i>{{ community.children }} {% trans "children" %}</span>
+    <h2>{% trans "Contact Info" %}</h2>
+    <div class="w-20 sm:w-32">
+    	<div class="flex flex-shrink-0 h-20 w-20 sm:h-32 sm:w-32 mb-2 bg-primary rounded-full mx-auto text-center" src="#"><i class="fa fa-user text-6xl text-secondary mx-auto object-bottom h-16"></i></div>
+    	<span class="block text-primary mb-4 font-bold text-xl text-center"><a href="#"></a>{{ community.owner.name }}</span>
+    	<a class="btn block mb-10" href="#"><i class="fa fa-envelope mr-1"></i>{% trans "Contact" %}</a>
+    </div>
+  	<span class="block text-primary mb-2"><a href="{{ community.website }}"  target="_blank"><i class="fa fa-globe mr-1"></i>{% trans "Website" %}</a></span>
+  	<span class="block text-primary mb-2"><a href="tel:{{ community.telephone }}"  target="_blank"><i class="fa fa-phone mr-1"></i>{{ community.telephone }}</a></span>
+	</div>
+	<div class="col-span-3">
+		<div class="flex justify-between">
+			<div>
+			<ul>
+			{% for tag in community.tags.all %}
+				<li class="rounded-full bg-primary text-secondary px-3 py-1 text-xs inline mr-2"><i class="mr-1 fa fa-tag"></i>{{ tag }}</li>
+			{% endfor %}
+			</ul>
+		</div>
+		<div class="float-right">
+			<ul>
+			{% for skill in community.skills.all %}
+				<li class="rounded-full bg-primary text-secondary px-3 py-1 text-xs inline ml-2"><i class="mr-1 fa fa-graduation-cap"></i>{{ skill }}</li>
+			{% endfor %}
+			</ul>
+		</div>
+	</div>
+		<h1>{{ community.name }}</h1>
+	  <p>
+	      {{ community.description }}
+	  </p>
+	  <h2>{% trans "What brings this community together?" %}</h2>
+	  <p>
+	      {{ community.vision }}
+	  </p>
+	  <h2>{% trans "Accomodation for guests" %}</h2>
+	  <p>
+	      {{ community.accomodation }}
+	  </p>
+	  {% if community.video %}
+	  <h2>{% trans "Video" %}</h2>
+		<div class="relative pb-1/2 pt-0 h-0 overflow-hidden video-container">
+				{% video community.video is_secure=True %}	
+			</div>	
+	  {% endif %}
+		</div>
+	</div>
+  
+  
 
 </div>
 {% endblock content %}

@@ -90,3 +90,8 @@ nav {
  		@apply bg-green border-green;
  	}
  }
+
+ .video-container iframe,
+ .video-container embed {
+ 	@apply absolute top-0 left-0 w-full h-full;
+ }

@@ -70,7 +70,8 @@ DJANGO_APPS = [
 THIRD_PARTY_APPS = [
     "django_filters",
     "crispy_forms",
-    "osm_field",
+    "embed_video",
+    "taggit",
 ]
 
 LOCAL_APPS = ["users", "homepage", "gifting", "communities"]
@@ -223,14 +224,3 @@ CRISPY_TEMPLATE_PACK = "crispy_template_pack"
 
 # APP SETTINGS
 # ------------------------------------------------------------------------------
-
-AWESOME_AVATAR = {
-    'width': 100,
-    'height': 100,
-
-    'select_area_width': 400,
-    'select_area_height': 300,
-
-    'save_quality': 90,
-    'save_format': 'png',
-}
