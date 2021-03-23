@@ -1,6 +1,11 @@
 {% extends 'base.html' %}
 {% load crispy_forms_tags i18n %}
 
+{% block extrahead %}
+  <link href="{% static "css/vendor/leaflet.css" %}" type="text/css" media="screen" rel="stylesheet" />
+  <link href="{% static "css/osm_field.css" %}" type="text/css" media="screen" rel="stylesheet" />
+{% endblock extrahead %}
+
 {% block content %}
 
 {% comment %} filter bar {% endcomment %}
@@ -114,6 +119,10 @@
 
 </div>
 
-
-
 {% endblock content %}
+
+{% block javascript %}
+  <script type="text/javascript" src="{% static "js/vendor/jquery-2.1.0.min.js" %}"></script>
+  <script type="text/javascript" src="{% static "js/vendor/leaflet.js" %}"></script>
+  <script type="text/javascript" src="{% static "js/osm_field.js" %}"></script>
+{% endblock javascript %}

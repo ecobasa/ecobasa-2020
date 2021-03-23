@@ -10,14 +10,16 @@
 
       <div class="font-serif sm:text-lg group-hover:text-primary">{{ ad.title }}</div>
 
-      <div class="mt-auto">
+      <div>
         <time class="text-xs text-gray-500">{{ ad.created_at }}</time>
         <span class="ml-10">
           {% if ad.owner == request.user %}
-            <span class="border mx-px py-px px-1 rounded text-xs text-gray-500">from me</span>
+            <span class="border mx-px py-px px-1 rounded text-xs text-secondary bg-purple">from me</span>
+          {% else %}
+            {{ request.user.full_name }}
           {% endif %}
           {% for cat in ad.categories.all %}
-            <span class="border mx-px py-px px-1 rounded text-xs text-gray-500">{{ cat.name }}</span>
+            <span class="border mx-px py-px px-1 rounded text-xs text-secondary bg-primary">{{ cat.name }}</span>
           {% endfor %}
           {% if ad.distance != None %}
             <span class="mx-px py-px px-1 text-xs text-gray-500">{{ ad.distance.km|floatformat:1 }} km</span>
