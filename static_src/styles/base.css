@@ -64,7 +64,7 @@ nav {
  }
 
 .btn {
- 	@apply p-2 rounded border border-solid box-border font-bold bg-primary bg-opacity-75 text-secondary border-primary;
+ 	@apply py-2 px-4 rounded border border-solid box-border font-bold bg-primary bg-opacity-75 text-secondary border-primary;
  	&:hover, &:focus {
 		@apply bg-opacity-100 transition duration-300 ease-in-out;
 	}
@@ -75,7 +75,7 @@ nav {
 		}
 	}
  	&-disabled {
- 		@apply bg-transparent text-brown border-2 border-brown;
+ 		@apply bg-transparent text-brown border-2 border-brown cursor-not-allowed;
  	}
  	&-red {
  		@apply bg-red border-red;
@@ -87,7 +87,7 @@ nav {
  		@apply bg-purple border-purple;
  	}
  	&-green {
- 		@apply bg-green border-green;
+ 		@apply bg-green bg-opacity-75 border-green;
  	}
  }
 

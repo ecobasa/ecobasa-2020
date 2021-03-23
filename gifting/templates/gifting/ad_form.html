@@ -21,9 +21,6 @@
         Create new Offer or Wish
       {% endif %}
     </h1>
-    {% if ad.pk %}
-      <a href="{% url "gifting:delete" ad.pk %}" class="text-sm">{% trans "Delete" %}</a>
-    {% endif %}
   </div>
   
   {% comment %} form {% endcomment %}
@@ -31,9 +28,12 @@
     {% csrf_token %}
     {% crispy form %}
     <div class="flex items-center justify-end -mx-5 my-5">
-      <a class="mx-5 btn btn-purple flex" href="{% if ad.pk %}{% url "gifting:detail" ad.pk %}{% else %}{% url "gifting:search" %}{% endif %}">{% trans "Cancel" %}</a>
-      <button class="mx-5 btn" type="submit">
-        {% trans "Save" %}
+      <a class="mx-5 btn btn-red flex" href="{% if ad.pk %}{% url "gifting:detail" ad.pk %}{% else %}{% url "gifting:search" %}{% endif %}"><i class="fa fa-ban mr-1"></i>{% trans "Cancel" %}</a>
+      {% if ad.pk %}
+        <a href="{% url "gifting:delete" ad.pk %}" class="btn btn-purple"><i class="fa fa-recycle mr-1"></i>{% trans "Delete" %}</a>
+      {% endif %}
+      <button class="mx-5 btn btn-green" type="submit">
+        <i class="fa fa-check mr-1"></i>{% trans "Save" %}
       </button>
     </div>
   </form>
