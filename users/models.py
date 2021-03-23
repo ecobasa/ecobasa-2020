@@ -3,7 +3,6 @@ from django.core.mail import send_mail
 from django.urls import reverse
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.utils.translation import gettext_lazy as _
-from osm_field.fields import LatitudeField, LongitudeField, OSMField
 
 
 class UserManager(BaseUserManager):
@@ -62,9 +61,6 @@ class User(AbstractUser):
     first_name = None
     last_name = None
     name = models.CharField(_("name"), blank=True, max_length=255)
-    location = OSMField(_('Location'), blank=True, null=True)
-    location_lat = LatitudeField(blank=True,  null=True)
-    location_lon = LongitudeField(blank=True,  null=True)
     about = models.TextField(_('About you'),  blank=True, null=True)
     ecobasa_what = models.TextField(_('What would you like to use ecobasa mainly for?'), blank=True, null=True)
     world = models.TextField(_('What do you do to make the world a better place?'), blank=True, null=True)

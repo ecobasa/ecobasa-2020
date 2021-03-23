@@ -19,7 +19,6 @@ django-crispy-forms = "*"
 gunicorn = "*"
 whitenoise = "*"
 psycopg2-binary = "*"
-django-osm-field ="*"
 django-embed-video = "*"
 django-taggit ="*"
 
