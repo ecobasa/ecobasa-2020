@@ -17,12 +17,14 @@
       {% endif %}
       <div class="text-xs inline">{{ ad.location_name }}</div>
       <time class="text-xs text-gray-500 float-right mt-1"><i class="fa fa-calendar mr-2"></i>{{ ad.created_at }}</time>
-      <div class="font-serif sm:text-lg group-hover:text-primary">{{ ad.title }}</div>
-      <div class="text-sm text-brown">{{ ad.description|truncatewords:20 }}</div>
       <div>
         {% for cat in ad.categories.all %}
-          <span class="border mx-px py-px px-1 rounded text-xs text-secondary bg-primary">{{ cat.name }}</span>
+          <span class="border mx-px py-px px-1 rounded-full text-xs text-secondary bg-primary">{{ cat.name }}</span>
         {% endfor %}
+        <span class="font-serif sm:text-lg group-hover:text-primary">{{ ad.title }}</span>
+      </div>
+      <p class="text-sm text-brown">{{ ad.description|truncatewords:20 }}</p>
+      <div>
         {% if ad.owner == request.user %}
           <span class="absolute bottom-5 border mx-px py-1 px-2 rounded text-xs text-secondary bg-purple"><i class="fa fa-user mr-2"></i>from me</span>
         {% else %}
