@@ -34,6 +34,7 @@ class Ad(RandomIdMixin, models.Model):
         _("Type"), choices=TYPE_CHOICES, max_length=5, default="offer"
     )
     description = models.TextField(_("Description"), blank=True)
+    image = models.ImageField(_('image'), upload_to='gifting-images', null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     owner = models.ForeignKey(

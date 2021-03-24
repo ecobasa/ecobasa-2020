@@ -73,7 +73,6 @@ class RegisterForm(forms.ModelForm):
 
     def save(self, commit=True):
         user = super().save(commit=False)
-        user.image = self.cleaned_data["image"]
         user.set_password(self.cleaned_data["password"])
         if commit:
             user.save()
