@@ -72,6 +72,7 @@ THIRD_PARTY_APPS = [
     "crispy_forms",
     "embed_video",
     "taggit",
+    "croppie",
 ]
 
 LOCAL_APPS = ["users", "homepage", "gifting", "communities"]

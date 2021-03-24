@@ -6,9 +6,9 @@ from django.utils.translation import gettext_lazy as _
 
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Field
+from croppie.fields import CroppieField
 
 from gifting.forms import Fieldset
-
 from .models import User
 
 
@@ -26,7 +26,19 @@ class RegisterForm(forms.ModelForm):
         strip=False,
         help_text=password_validation.password_validators_help_text_html(),
     )
-    image = forms.ImageField(required = False)
+    image = CroppieField(
+        options={
+            "enableExif": True,
+            "viewport": {
+                "width": 200,
+                "height": 200,
+                "type": 'circle'
+            },
+            "boundary": {
+                "width": 300,
+                "height": 300
+            }
+        })
 
     class Meta:
         model = User
