@@ -29,6 +29,10 @@
             <i class="fa fa-home mr-2"></i>
             {% trans "Communities" %}
           </a>
+          <a href="{% url "homepage:support" %}" class="{% if namespace == "support" %}border-brown text-brown{% else %}border-transparent hover:border-brown{% endif %} ml-8 inline-flex items-center px-1 pt-1 border-b-2 border-transparent leading-5 focus:outline-none focus:text-brown focus:border-brown transition duration-150 ease-in-out">
+            <i class="fa fa-heart mr-2"></i>
+            {% trans "Support" %}
+          </a>
         </div>
       </div>
       {% if user.is_authenticated %}

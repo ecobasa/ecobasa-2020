@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block content %}
+<div class="mx-auto max-w-7xl mt-10 md:mt-20 px-4">
+  <div class="grid grid-cols-2 gap-5 justify-between">
+    <div>
+      {% blocktrans %}
+        <h1>We need your help!</h1>
+        <a href="/contact" target="_blank">Get in contact with us</a>, if you want to help with written communication and social media, design, programming or legal counceling, organising of events or your own creative ideas.
+        <p>The gift-economy network and this online platform are all run by <a href="/team/">volunteers</a>. 
+          You can help developing this open-source project on <a href="http://github.com/ecobasa/ecobasa-2020/" target="_blank">github</a> and translate the platform on <a href="http://translate.ecobasa.org" target="_blank">crowdin</a>. Thanks for your support!</p>
+        <h2>Your gifts keep us giving</h2>
+        <p><strong>We try to cover running costs through donations:</strong></p>
+        <ul>
+          <li>First we will try to cover external costs for the webserver and domain: 120€ (Green-hosting by ecobytes.net) <a href="/contact" target="_blank">Alternatively you can help us with free hosting!</a></li>
+          <li>Additional donations we will put to our most urgent needs, like legal counseling.</li>
+          <li>Monthly donations make it possible for us to plan ahead and to spend more time away from day jobs to follow our passion.</li>
+        </ul>
+
+        <p><i>Happy giving!</i></p>
+      {% endblocktrans %}
+      <a class="btn inline-block mt-4" href="https://commerce.coinbase.com/checkout/0ae56c46-901d-48bf-8b2a-5e51f6a7637e">
+        <span>{% trans "Donate with Crypto" %}</span>
+      </a>
+      <script src="https://commerce.coinbase.com/v1/checkout.js?version=201807"></script>
+      <a href="https://flattr.com/@ecobasa.org" class="btn inline-block mt-4 ml-4" target="_blank">{% trans "Flattr us" %}</a>
+    </div>
+    <div>
+      <script src="https://donorbox.org/widget.js" paypalExpress="true"></script><iframe allowpaymentrequest="" frameborder="0" height="900px" name="donorbox" scrolling="no" seamless="seamless" src="https://donorbox.org/embed/ecobasa-hosting-2021" class="float-right" style="max-width: 500px; min-width: 250px; max-height:none!important" width="100%"></iframe>
+    </div>
+  </div>
+</div>
+{% endblock content %}

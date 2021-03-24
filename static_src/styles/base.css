@@ -45,6 +45,24 @@ a {
 	 }
 }
 
+p {
+	@apply mb-2;
+}
+
+ul {
+	@apply list-disc list-inside mb-4;
+	li {
+		@apply mb-2;
+	}
+}
+
+ol {
+	@apply list-decimal list-inside;
+	li {
+		@apply mb-2;
+	}
+}
+
 nav {
 	a {
 		@apply text-secondary;
