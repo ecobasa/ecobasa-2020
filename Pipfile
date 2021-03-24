@@ -21,6 +21,7 @@ whitenoise = "*"
 psycopg2-binary = "*"
 django-embed-video = "*"
 django-taggit ="*"
+Pillow = "*"
 
 [requires]
 python_version = "3.8"

@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "043154fd6ebc93af016be4092a4c02a78f50efd31dbecada42623980d5bd6618"
+            "sha256": "2f71c910d04d85e4959df7c971d48bed04f5f11135583e5ac8456c6cc9dbf7e1"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -120,14 +120,6 @@
             ],
             "index": "pypi",
             "version": "==1.11.2"
-        },
-        "django-cropperjs": {
-            "hashes": [
-                "sha256:5b1a301d0840999f51a43750897514252878e91a98a9a85c0cb54103e28e38f0",
-                "sha256:b98d00492483490106e2ae1980f1b9e736ac5c9b0469bd58de2b42fd510312c3"
-            ],
-            "index": "pypi",
-            "version": "==0.0.5"
         },
         "django-embed-video": {
             "hashes": [
