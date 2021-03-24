@@ -24,21 +24,6 @@ class Migration(migrations.Migration):
         ),
         migrations.AddField(
             model_name='user',
-            name='location',
-            field=osm_field.fields.OSMField(blank=True, lat_field='location_lat', lon_field='location_lon', null=True, verbose_name='Location'),
-        ),
-        migrations.AddField(
-            model_name='user',
-            name='location_lat',
-            field=osm_field.fields.LatitudeField(blank=True, null=True, validators=[osm_field.validators.validate_latitude]),
-        ),
-        migrations.AddField(
-            model_name='user',
-            name='location_lon',
-            field=osm_field.fields.LongitudeField(blank=True, null=True, validators=[osm_field.validators.validate_longitude]),
-        ),
-        migrations.AddField(
-            model_name='user',
             name='world',
             field=models.TextField(blank=True, null=True, verbose_name='What do you do to make the world a better place?'),
         ),
