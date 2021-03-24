@@ -1,5 +1,5 @@
 {% load i18n %}
-<a href="{% url "gifting:detail" ad.pk %}" class="relative w-full max-w-4xl group flex items-stretch justify-between my-5 sm:my-10 md:mb-20 bg-secondary bg-opacity-25 p-5 rounded-md">
+<a href="{% url "gifting:detail" ad.pk %}" class="relative w-full max-w-4xl group flex items-stretch justify-between my-5 sm:my-10 md:mb-20 bg-secondary bg-opacity-50 p-5 rounded-md hover:text-primary hover:shadow-lg">
   <div class="text-xs absolute bottom-0 right-0 rounded-full p-2 text-secondary{% if ad.get_type_display == "Offer" %} bg-primary{% else %} bg-purple{% endif %}">
         {{ ad.get_type_display }}
   </div>
@@ -15,7 +15,7 @@
       {% if ad.distance != None %}
         <span class="text-xs">{{ ad.distance.km|floatformat:1 }} km {% trans "to" %}</span>
       {% endif %}
-      <div class="text-xs inline">{{ ad.location_name }}</div>
+      <div class="text-xs inline hover:text-pr">{{ ad.location_name }}</div>
       <time class="text-xs text-gray-500 float-right mt-1"><i class="fa fa-calendar mr-2"></i>{{ ad.created_at }}</time>
       <div>
         {% for cat in ad.categories.all %}
