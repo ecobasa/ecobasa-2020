@@ -7,7 +7,6 @@ class AdAdmin(admin.OSMGeoAdmin):
     list_display = (
         "title",
         "type",
-        "location",
     )
     search_fields = ("title",)
     ordering = ("title",)
