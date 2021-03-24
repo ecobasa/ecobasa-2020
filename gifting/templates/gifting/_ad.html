@@ -1,4 +1,5 @@
-<a href="{% url "gifting:detail" ad.pk %}" class="relative w-full max-w-3xl group flex items-stretch justify-between my-5 sm:my-10 md:mb-20 bg-secondary bg-opacity-25 p-5 rounded-md">
+{% load i18n %}
+<a href="{% url "gifting:detail" ad.pk %}" class="relative w-full max-w-4xl group flex items-stretch justify-between my-5 sm:my-10 md:mb-20 bg-secondary bg-opacity-25 p-5 rounded-md">
   <div class="text-xs absolute bottom-0 right-0 rounded-full p-2 text-secondary{% if ad.get_type_display == "Offer" %} bg-primary{% else %} bg-purple{% endif %}">
         {{ ad.get_type_display }}
   </div>
@@ -10,10 +11,11 @@
     {% endif %}
 
     <div class="pl-2 sm:pl-6 w-full">
+      <i class="fa fa-map-marker text-primary"></i>
       {% if ad.distance != None %}
-        <span class="mx-px py-px px-1 text-xs text-gray-500">{{ ad.distance.km|floatformat:1 }} km</span>
+        <span class="text-xs">{{ ad.distance.km|floatformat:1 }} km {% trans "to" %}</span>
       {% endif %}
-      <div class="text-xs inline"><i class="fa fa-map-marker text-primary mr-2"></i>{{ ad.location_name }}</div>
+      <div class="text-xs inline">{{ ad.location_name }}</div>
       <time class="text-xs text-gray-500 float-right mt-1"><i class="fa fa-calendar mr-2"></i>{{ ad.created_at }}</time>
       <div class="font-serif sm:text-lg group-hover:text-primary">{{ ad.title }}</div>
       <div class="text-sm text-brown">{{ ad.description|truncatewords:20 }}</div>

@@ -25,10 +25,10 @@
           <input x-ref="input" type="text" @input.debounce="onInput($event.target.value)" value="{{ f.form.location_name.data|default:"" }}" placeholder="Sort by Location" class="form-input w-full max-w-2xl pl-10" autocomplete="off" autofocus name="location_name">
         </div>
         <input x-ref="location" type="hidden" value="{{ f.form.location.data|default:"" }}" name="location">
-        <div x-show.transition="open" @click.away="open = false" class="absolute inset-x-0 bg-secondary bg-opacity-50 shadow-lg text-xs py-3 rounded-b border-brown border-opacity-50 border-b border-l border-r">
-          <ul>
+        <div x-show.transition="open" @click.away="open = false" class="absolute inset-x-0 bg-primary bg-opacity-50 shadow-lg text-xs py-3 rounded-b border-brown border-opacity-50 border-b border-l border-r">
+          <ul class="list-none">
             <template x-for="res in results" :key="res">
-              <li><a @click.prevent="onSelect(res)" href="#" class="block px-2 py-2 text-brown hover:bg-primary hover:text-secondary" x-text="res.display_name"></a></li>
+              <li class="m-0"><a @click.prevent="onSelect(res)" href="#" class="block px-2 py-2 text-secondary hover:bg-secondary hover:text-primary" x-text="res.display_name"></a></li>
             </template>
           </ul>
         </div>
