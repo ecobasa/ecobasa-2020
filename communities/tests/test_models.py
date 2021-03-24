@@ -9,10 +9,13 @@ class TestCommunity:
         community = Community(name="Test")
         community.save()
 
-    def test_random_slug(self):
+    def test_unique_slug(self):
         community1 = Community(name="Test")
         community1.save()
         community2 = Community(name="Test")
         community2.save()
-        assert len(community1.slug) == 8+1+4
-        assert community1.slug != community2.slug
+        community3 = Community(name="Test")
+        community3.save()
+        assert community1.slug == "test"
+        assert community2.slug == "test-2"
+        assert community3.slug == "test-3"
