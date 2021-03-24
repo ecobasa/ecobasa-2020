@@ -15,7 +15,7 @@
 
   <h1 class="text-2xl">{% trans "Register for an account at ecobasa" %}</h1>
 
-  <form method="post" class="w-full my-10 form-control-w-full">
+  <form enctype="multipart/form-data" method="post" class="w-full my-10 form-control-w-full">
     
     {% crispy form %}
     <div class="flex items-center justify-end -mx-5 my-5">

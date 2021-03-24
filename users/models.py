@@ -61,6 +61,7 @@ class User(AbstractUser):
     first_name = None
     last_name = None
     name = models.CharField(_("name"), blank=True, max_length=255)
+    image = models.ImageField(_('image'), upload_to='user-images', null=True, blank=True)
     about = models.TextField(_('About you'),  blank=True, null=True)
     ecobasa_what = models.TextField(_('What would you like to use ecobasa mainly for?'), blank=True, null=True)
     world = models.TextField(_('What do you do to make the world a better place?'), blank=True, null=True)

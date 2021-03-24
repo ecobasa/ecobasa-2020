@@ -26,10 +26,11 @@ class RegisterForm(forms.ModelForm):
         strip=False,
         help_text=password_validation.password_validators_help_text_html(),
     )
+    image = forms.ImageField(required = False)
 
     class Meta:
         model = User
-        fields = ["name", "email"]
+        fields = ["name", "email", "image"]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -38,7 +39,7 @@ class RegisterForm(forms.ModelForm):
         self.helper = FormHelper()
         self.helper.form_tag = False
         self.helper.layout = Layout(
-            Fieldset(_("Personal Info"), Field("name"), header_text=_("Trust is the only currency in our gift-economy network, real names help to build trust"),),
+            Fieldset(_("Personal Info"), Field("name"), Field("image"), header_text=_("Trust is the only currency in our gift-economy network, real names help to build trust"), ),
             Fieldset(
                 _("Account"),
                 Field("email"),
@@ -60,6 +61,7 @@ class RegisterForm(forms.ModelForm):
 
     def save(self, commit=True):
         user = super().save(commit=False)
+        user.image = self.cleaned_data["image"]
         user.set_password(self.cleaned_data["password"])
         if commit:
             user.save()

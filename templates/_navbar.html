@@ -44,7 +44,11 @@
           <div class="ml-3 relative" x-data="{ open: false }">
             <div>
               <button @click="open = true" class="flex text-sm border-2 border-transparent rounded-full focus:outline-none focus:border-gray-300 transition duration-150 ease-in-out" id="user-menu" aria-label="User menu" aria-haspopup="true">
-                <img class="h-8 w-8 rounded-full" src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80" alt="">
+               {% if user.image %}
+                <img class="h-8 w-8 rounded-full" src="{{ user.image.url }}" alt="">
+               {% else %}
+                <i class="fa fa-user text-xl text-primary rounded-full bg-secondary p-3"></i>
+               {% endif %}
               </button>
             </div>
             {% comment %} dropdown {% endcomment %}
@@ -57,7 +61,7 @@
                   x-transition:leave-end="opacity-0 transform scale-95"
                   class="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg z-40">
               <div class="py-1 rounded-md bg-primary bg-opacity-75 shadow-xs">
-                <a href="#" class="block px-4 py-2 text-sm leading-5 text-secondary hover:bg-secondary focus:outline-none focus:bg-secondary transition duration-150 ease-in-out">
+                <a href="{% url "users:detail" slug=user.name %}" class="block px-4 py-2 text-sm leading-5 text-secondary hover:bg-secondary focus:outline-none focus:bg-secondary transition duration-150 ease-in-out">
                   <i class="fa fa-user mr-2"></i>
                   {% trans "Your Profile" %}
                 </a>
@@ -117,7 +121,11 @@
       <div class="pt-4 pb-3 border-t border-gray-200">
         <div class="flex items-center px-4">
           <div class="flex-shrink-0">
-            <img class="h-10 w-10 rounded-full" src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80" alt="">
+             {% if user.image %}
+              <img class="h-8 w-8 rounded-full" src="{{ user.image.url }}" alt="">
+             {% else %}
+              <i class="fa fa-user text-3xl text-primary rounded-full bg-secondary p-3"></i>
+             {% endif %}
           </div>
           <div class="ml-3">
             <div class="text-base font-bold leading-6">{{ user.name }}</div>
