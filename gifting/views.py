@@ -32,7 +32,7 @@ def create(request):
     """Create a new Ad"""
     form = AdForm()
     if request.method == "POST":
-        form = AdForm(request.POST)
+        form = AdForm(request.POST, request.FILES)
         if form.is_valid():
             ad = form.save(commit=False)
             ad.owner = request.user
@@ -52,7 +52,7 @@ def edit(request, pk):
 
     form = AdForm(instance=ad)
     if request.method == "POST":
-        form = AdForm(request.POST, instance=ad)
+        form = AdForm(request.POST, request.FILES, instance=ad)
         if form.is_valid():
             form.save()
             ad = form.instance

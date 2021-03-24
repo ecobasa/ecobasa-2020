@@ -24,7 +24,7 @@
   </div>
   
   {% comment %} form {% endcomment %}
-  <form method="post" class="w-full my-10 form-control-w-full">
+  <form enctype="multipart/form-data" method="post" class="w-full my-10 form-control-w-full">
     {% csrf_token %}
     {% crispy form %}
     <div class="flex items-center justify-end -mx-5 my-5">
