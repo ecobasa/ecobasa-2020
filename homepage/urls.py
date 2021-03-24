@@ -5,4 +5,5 @@ app_name = "homepage"
 
 urlpatterns = [
     path("", views.homepage, name="homepage"),
+    path("support/", views.support, name="support"),
 ]

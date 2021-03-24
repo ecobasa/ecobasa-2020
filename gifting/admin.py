@@ -3,10 +3,11 @@ from .models import Ad, AdCategory
 
 
 @admin.register(Ad)
-class AdAdmin(admin.GeoModelAdmin):
+class AdAdmin(admin.OSMGeoAdmin):
     list_display = (
         "title",
         "type",
+        "location",
     )
     search_fields = ("title",)
     ordering = ("title",)

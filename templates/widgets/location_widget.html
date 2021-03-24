@@ -1,10 +1,10 @@
 <div class="relative my-2" x-data="locationDropdown()">
   <input x-ref="input" type="{{ widget.type }}" @input.debounce="onInput($event.target.value)" name="{{ widget.name }}"{% if widget.value != None %} value="{{ widget.value|stringformat:'s' }}"{% endif %}{% include "django/forms/widgets/attrs.html" %}>
 
-  <div x-show.transition="open" @click.away="open = false" class="absolute inset-x-0 bg-white shadow-lg text-xs py-3 rounded-b border-gray-400 border-b border-l border-r">
-    <ul>
+  <div x-show.transition="open" @click.away="open = false" class="absolute z-20 inset-x-0 bg-primary bg-opacity-75 text-secondary shadow-lg text-xs py-3 rounded-b border-b border-l border-r">
+    <ul class="list-none m-0">
       <template x-for="res in results" :key="res">
-        <li><a @click.prevent="onSelect(res)" href="#" class="block px-2 py-2 hover:bg-gray-200" x-text="res.display_name"></a></li>
+        <li class="m-0"><a @click.prevent="onSelect(res)" href="#" class="block px-2 py-2 text-secondary hover:bg-secondary hover:text-primary" x-text="res.display_name"></a></li>
       </template>
     </ul>
   </div>
@@ -15,7 +15,7 @@
       results: [],
       open: false,
       onSelect(res) {
-        var latlng = `POINT (${res.lat} ${res.lon})`
+        var latlng = `SRID=4326;POINT (${res.lat} ${res.lon})`
         document.getElementById("id_location").value = latlng
         this.$refs.input.value = res.display_name
         this.open = false

@@ -6,7 +6,7 @@
 
   {% comment %} backlink {% endcomment %}
   <a href="{% if ad.pk %}{% url "gifting:detail" ad.pk %}{% else %}{% url "gifting:search" %}{% endif %}" class="btn flex items-center text-sm leading-5 font-medium">
-    <svg class="flex-shrink-0 -ml-1 mr-1 h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+    <svg class="flex-shrink-0 -ml-1 mr-1 h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
       <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
     </svg>
     {% trans "Back" %}
@@ -21,9 +21,6 @@
         Create new Offer or Wish
       {% endif %}
     </h1>
-    {% if ad.pk %}
-      <a href="{% url "gifting:delete" ad.pk %}" class="text-sm">{% trans "Delete" %}</a>
-    {% endif %}
   </div>
   
   {% comment %} form {% endcomment %}
@@ -31,9 +28,12 @@
     {% csrf_token %}
     {% crispy form %}
     <div class="flex items-center justify-end -mx-5 my-5">
-      <a class="mx-5 btn btn-purple flex" href="{% if ad.pk %}{% url "gifting:detail" ad.pk %}{% else %}{% url "gifting:search" %}{% endif %}">{% trans "Cancel" %}</a>
-      <button class="mx-5 btn" type="submit">
-        {% trans "Save" %}
+      <a class="mx-5 btn btn-red flex" href="{% if ad.pk %}{% url "gifting:detail" ad.pk %}{% else %}{% url "gifting:search" %}{% endif %}"><i class="fa fa-ban mr-1"></i>{% trans "Cancel" %}</a>
+      {% if ad.pk %}
+        <a href="{% url "gifting:delete" ad.pk %}" class="btn btn-purple"><i class="fa fa-recycle mr-1"></i>{% trans "Delete" %}</a>
+      {% endif %}
+      <button class="mx-5 btn btn-green" type="submit">
+        <i class="fa fa-check mr-1"></i>{% trans "Save" %}
       </button>
     </div>
   </form>

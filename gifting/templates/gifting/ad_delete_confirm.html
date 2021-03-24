@@ -7,12 +7,12 @@
 
 {% block content %}
 
-<div class="min-h-screen flex items-center justify-center bg-orange-50 py-12 px-4 sm:px-6 lg:px-8">
+<div class="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
   <div class="max-w-md w-full">
-    <form method="POST" class="bg-white shadow rounded-md px-8 py-8 -mt-10">
+    <form method="POST" class="bg-secondary bg-opacity-75 shadow rounded-md px-8 py-8 -mt-10">
       {% csrf_token %}
 
-      <h1 class="text-xl text-red-800 font-bold mb-6">
+      <h1 class="text-xl text-purple font-bold mb-6">
         {% blocktrans with ad_type=ad.get_type_display %}
           Delete {{ ad_type }}?
         {% endblocktrans %}
@@ -25,8 +25,8 @@
       </p>
 
       <div class="flex items-center justify-end -mx-5 mt-8">
-        <a class="mx-5 py-2 px-4 rounded border bg-white hover:bg-gray-100" href="{{ ad.get_absolute_url }}">Cancel</a>
-        <button class="mx-5 py-2 px-4 bg-red-200 text-red-900 hover:bg-red-300 rounded">Delete</button>
+        <a class="mx-5 btn flex" href="{{ ad.get_absolute_url }}"><i class="fa fa-ban mr-1"></i>{% trans "Cancel" %}</a>
+        <button class="mx-5 btn btn-purple"><i class="fa fa-recycle mr-1"></i>{% trans "Delete" %}</button>
       </div>
     </form>
   </div>

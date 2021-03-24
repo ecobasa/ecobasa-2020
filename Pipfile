@@ -19,6 +19,10 @@ django-crispy-forms = "*"
 gunicorn = "*"
 whitenoise = "*"
 psycopg2-binary = "*"
+django-embed-video = "*"
+django-taggit ="*"
+Pillow = "*"
+django-croppie = "*"
 
 [requires]
 python_version = "3.8"

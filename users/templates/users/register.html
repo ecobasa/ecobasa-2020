@@ -15,12 +15,13 @@
 
   <h1 class="text-2xl">{% trans "Register for an account at ecobasa" %}</h1>
 
-  <form method="post" class="w-full my-10 form-control-w-full">
-    
+  <form enctype="multipart/form-data" method="post" class="w-full my-10 form-control-w-full">
+    <div id="cropper" class="ml-3"></div>
     {% crispy form %}
     <div class="flex items-center justify-end -mx-5 my-5">
-      <a class="mx-5 btn btn-purple flex" href="{% url "users:login" %}">{% trans "Cancel" %}</a>
+      <a class="mx-5 btn btn-purple flex" href="{% url "users:login" %}"><i class="fa fa-ban mr-1"></i>{% trans "Cancel" %}</a>
       <button class="btn mx-5" type="submit">
+        <i class="fa fa-user-check mr-1"></i>
         {% trans "Register" %}
       </button>
     </div>
@@ -28,3 +29,7 @@
 
 </div>
 {% endblock content %}
+
+{% block javascript %}
+  {{ form.media }}
+{% endblock javascript %}

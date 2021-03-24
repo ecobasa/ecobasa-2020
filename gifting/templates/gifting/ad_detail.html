@@ -34,7 +34,7 @@
       </h1>
       <div class="my-1">
         {% if ad.owner == request.user %}
-          <span class="border mx-px py-px px-1 rounded text-xs text-secondary bg-primary">from me</span>
+          <span class="border mx-px py-px px-1 rounded text-xs text-secondary bg-purple">from me</span>
         {% endif %}
         {% for cat in ad.categories.all %}
           <span class="border mx-px py-px px-1 rounded text-xs text-secondary bg-primary">{{ cat.name }}</span>
@@ -45,12 +45,14 @@
 
     {% if ad.owner == request.user %}
       <a href="{% url "gifting:delete" ad.pk %}" class="btn btn-purple flex mx-5">
+        <i class="fa fa-recycle mr-1"></i>
         {% trans "Delete" %}
       </a>
 
       <div class="mt-4 flex-shrink-0 flex md:mt-0 md:ml-4">
         <span class="shadow-sm rounded-md">
-          <a href="{% url "gifting:edit" ad.pk %}" class="btn inline-flex items-center focus:outline-none focus:shadow-outline-brown focus:border-brown">
+          <a href="{% url "gifting:edit" ad.pk %}" class="btn inline-flex items-center">
+            <i class="fa fa-edit mr-1"></i>
             {% trans "Edit" %}
           </a>
         </span>

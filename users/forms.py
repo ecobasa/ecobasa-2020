@@ -6,9 +6,9 @@ from django.utils.translation import gettext_lazy as _
 
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Field
+from croppie.fields import CroppieField
 
 from gifting.forms import Fieldset
-
 from .models import User
 
 
@@ -26,20 +26,32 @@ class RegisterForm(forms.ModelForm):
         strip=False,
         help_text=password_validation.password_validators_help_text_html(),
     )
+    image = CroppieField(
+        options={
+            "enableExif": True,
+            "viewport": {
+                "width": 200,
+                "height": 200,
+                "type": 'circle'
+            },
+            "boundary": {
+                "width": 300,
+                "height": 300
+            }
+        })
 
     class Meta:
         model = User
-        fields = ["first_name", "last_name", "email"]
+        fields = ["name", "email", "image"]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["first_name"].required = True
-        self.fields["first_name"].widget.attrs["autofocus"] = True
-        self.fields["last_name"].required = True
+        self.fields["name"].required = True
+        self.fields["name"].widget.attrs["autofocus"] = True
         self.helper = FormHelper()
         self.helper.form_tag = False
         self.helper.layout = Layout(
-            Fieldset(_("Personal Info"), Field("first_name"), Field("last_name"), header_text=_("Trust is the only currency in our gift-economy network, real names help to build trust"),),
+            Fieldset(_("Personal Info"), Field("name"), Field("image"), header_text=_("Trust is the only currency in our gift-economy network, real names help to build trust"), ),
             Fieldset(
                 _("Account"),
                 Field("email"),

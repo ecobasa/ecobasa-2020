@@ -4,6 +4,8 @@ from django.shortcuts import redirect, reverse, render
 from django.urls import reverse_lazy
 from django.contrib import messages
 from django.contrib.auth import logout as auth_logout, login as auth_login, authenticate
+from django.views.generic.detail import DetailView
+from .models import User
 
 from .forms import RegisterForm, LoginForm
 
@@ -11,6 +13,11 @@ from .forms import RegisterForm, LoginForm
 class LoginView(django_views.LoginView):
     template_name = "users/login.html"
     form_class = LoginForm
+
+class DetailView(DetailView):
+    model = User
+    template_name = "users/detail.html"
+    slug_field = "name"
 
 
 def logout(request):
@@ -26,12 +33,12 @@ def register(request):
     if request.user.is_authenticated:
         return redirect(reverse("homepage:homepage"))
     if request.method == "POST":
-        form = RegisterForm(request.POST)
+        form = RegisterForm(request.POST, request.FILES)
         if form.is_valid():
             form.save()
             email = form.cleaned_data.get("email")
-            first_name = form.cleaned_data.get("first_name")
-            last_name = form.cleaned_data.get("last_name")
+            name = form.cleaned_data.get("name")
+            image = form.cleaned_data.get("image")
             raw_password = form.cleaned_data.get("password")
             user = authenticate(username=email, password=raw_password)
             auth_login(request, user)

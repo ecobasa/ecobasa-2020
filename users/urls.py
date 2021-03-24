@@ -24,4 +24,5 @@ urlpatterns = [
         views.PasswordResetCompleteView.as_view(),
         name="password_reset_complete",
     ),
+    path("<slug>/", views.DetailView.as_view(), name="detail"),
 ]

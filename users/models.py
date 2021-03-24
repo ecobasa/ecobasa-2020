@@ -58,29 +58,21 @@ class User(AbstractUser):
     username = models.CharField(_("username"), unique=True, default=None, max_length=150, blank=True, null=True)
 
     email = models.EmailField(_("email address"), unique=True)
-    first_name = models.CharField(_("First Name"), max_length=150)
-    last_name = models.CharField(_("Last Name"), max_length=150)
+    first_name = None
+    last_name = None
+    name = models.CharField(_("name"), blank=True, max_length=255)
+    image = models.ImageField(_('image'), upload_to='user-images', null=True, blank=True)
+    about = models.TextField(_('About you'),  blank=True, null=True)
+    ecobasa_what = models.TextField(_('What would you like to use ecobasa mainly for?'), blank=True, null=True)
+    world = models.TextField(_('What do you do to make the world a better place?'), blank=True, null=True)
 
     USERNAME_FIELD = "email"
-    REQUIRED_FIELDS = ["first_name", "last_name"]
+    REQUIRED_FIELDS = ["name"]
 
     objects = UserManager()
 
     def get_absolute_url(self) -> str:
         return reverse("users:detail", kwargs={"email": self.email})
-
-    def get_full_name(self):
-        '''
-        Returns the first_name plus the last_name, with a space in between.
-        '''
-        full_name = '%s %s' % (self.first_name, self.last_name)
-        return full_name.strip()
-
-    def get_short_name(self):
-        '''
-        Returns the short name for the user.
-        '''
-        return self.first_name
 
     def email_user(self, subject, message, from_email=None, **kwargs):
         '''

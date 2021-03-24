@@ -45,6 +45,24 @@ a {
 	 }
 }
 
+p {
+	@apply mb-2;
+}
+
+ul {
+	@apply list-disc list-inside mb-4;
+	li {
+		@apply mb-2;
+	}
+}
+
+ol {
+	@apply list-decimal list-inside;
+	li {
+		@apply mb-2;
+	}
+}
+
 nav {
 	a {
 		@apply text-secondary;
@@ -64,38 +82,34 @@ nav {
  }
 
 .btn {
- 	@apply px-5 rounded border-2 border-solid box-border h-10 font-bold bg-primary text-secondary border-primary;
+ 	@apply py-2 px-4 rounded border border-solid box-border font-bold bg-primary bg-opacity-75 text-secondary border-primary;
  	&:hover, &:focus {
-		@apply bg-transparent border-primary text-primary transition duration-150 ease-in-out;
+		@apply bg-opacity-100 transition duration-300 ease-in-out;
 	}
 	a& {
-		@apply cursor-pointer text-center items-center;
+		@apply cursor-pointer text-center items-center bg-opacity-75;
+		&:hover {
+			@apply text-secondary;
+		}
 	}
  	&-disabled {
- 		@apply bg-transparent text-brown border-brown;
+ 		@apply bg-transparent text-brown border-2 border-brown cursor-not-allowed;
  	}
  	&-red {
- 		@apply bg-red text-secondary border-red;
- 		&:hover, &:focus {
- 			@apply bg-transparent border-red text-red;
- 		}
+ 		@apply bg-red border-red;
  	}
  	&-yellow {
- 		@apply bg-yellow text-secondary border-yellow;
- 		&:hover, &:focus {
- 			@apply bg-transparent border-yellow text-yellow;
- 		}
+ 		@apply bg-yellow border-yellow;
  	}
  	&-purple {
- 		@apply bg-purple text-secondary border-purple;
- 		&:hover, &:focus {
- 			@apply bg-transparent border-purple text-purple;
- 		}
+ 		@apply bg-purple border-purple;
  	}
  	&-green {
- 		@apply bg-green text-secondary border-green;
- 		&:hover, &:focus {
- 			@apply bg-transparent border-green text-green;
- 		}
+ 		@apply bg-green bg-opacity-75 border-green;
  	}
+ }
+
+ .video-container iframe,
+ .video-container embed {
+ 	@apply absolute top-0 left-0 w-full h-full;
  }
