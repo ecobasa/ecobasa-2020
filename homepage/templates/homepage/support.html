@@ -3,7 +3,7 @@
 
 {% block content %}
 <div class="mx-auto max-w-7xl mt-10 md:mt-20 px-4">
-  <div class="grid grid-cols-2 gap-5 justify-between">
+  <div class="sm:grid sm:grid-cols-2 sm:gap-5">
     <div>
       {% blocktrans %}
         <h1>We need your help!</h1>
@@ -20,11 +20,11 @@
 
         <p><i>Happy giving!</i></p>
       {% endblocktrans %}
-      <a class="btn inline-block mt-4" href="https://commerce.coinbase.com/checkout/0ae56c46-901d-48bf-8b2a-5e51f6a7637e">
+      <a class="btn inline-block my-4" href="https://commerce.coinbase.com/checkout/0ae56c46-901d-48bf-8b2a-5e51f6a7637e">
         <span>{% trans "Donate with Crypto" %}</span>
       </a>
       <script src="https://commerce.coinbase.com/v1/checkout.js?version=201807"></script>
-      <a href="https://flattr.com/@ecobasa.org" class="btn inline-block mt-4 ml-4" target="_blank">{% trans "Flattr us" %}</a>
+      <a href="https://flattr.com/@ecobasa.org" class="btn inline-block my-4 ml-4" target="_blank">{% trans "Flattr us" %}</a>
     </div>
     <div>
       <script src="https://donorbox.org/widget.js" paypalExpress="true"></script><iframe allowpaymentrequest="" frameborder="0" height="900px" name="donorbox" scrolling="no" seamless="seamless" src="https://donorbox.org/embed/ecobasa-hosting-2021" class="float-right" style="max-width: 500px; min-width: 250px; max-height:none!important" width="100%"></iframe>

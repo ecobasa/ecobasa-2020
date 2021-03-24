@@ -29,7 +29,7 @@
             <i class="fa fa-home mr-2"></i>
             {% trans "Communities" %}
           </a>
-          <a href="{% url "homepage:support" %}" class="{% if namespace == "support" %}border-brown text-brown{% else %}border-transparent hover:border-brown{% endif %} ml-8 inline-flex items-center px-1 pt-1 border-b-2 border-transparent leading-5 focus:outline-none focus:text-brown focus:border-brown transition duration-150 ease-in-out">
+          <a href="{% url "homepage:support" %}" class="{% if request.path == "/support/" %}border-brown text-brown{% else %}border-transparent hover:border-brown{% endif %} ml-8 inline-flex items-center px-1 pt-1 border-b-2 border-transparent leading-5 focus:outline-none focus:text-brown focus:border-brown transition duration-150 ease-in-out">
             <i class="fa fa-heart mr-2"></i>
             {% trans "Support" %}
           </a>
@@ -119,6 +119,7 @@
     <div class="pt-2 pb-3">
       <a href="{% url "gifting:search" %}" class="mt-1 block pl-3 pr-4 py-2 border-l-4 border-transparent {% if namespace == "gifting" %}border-brown text-brown focus:text-brown focus:border-brown{% else %}text-secondary hover:text-primary hover:bg-secondary hover:border-brown focus:text-brown focus:bg-secondary focus:border-brown{% endif %} text-base focus:outline-none"><i class="fa fa-recycle mr-2"></i>{% trans "Free Market" %}</a>
       <a href="#" class="mt-1 block pl-3 pr-4 py-2 border-l-4 border-transparent {% if namespace == "gifting" %}border-brown text-brown focus:text-brown focus:border-brown{% else %}text-secondary hover:text-primary hover:bg-secondary hover:border-brown focus:text-brown focus:bg-secondary focus:border-brown{% endif %} text-base focus:outline-none"><i class="fa fa-home mr-2"></i>{% trans "Communities" %}</a>
+      <a href="{% url "homepage:support" %}" class="mt-1 block pl-3 pr-4 py-2 border-l-4 border-transparent {% if request.path == "/support/" %}border-brown text-brown focus:text-brown focus:border-brown{% else %}text-secondary hover:text-primary hover:bg-secondary hover:border-brown focus:text-brown focus:bg-secondary focus:border-brown{% endif %} text-base focus:outline-none"><i class="fa fa-recycle mr-2"></i>{% trans "Support" %}</a>
     </div>
 
     {% if user.is_authenticated %}
@@ -142,6 +143,11 @@
           <a href="{% url "users:logout" %}" class="mt-1 block px-4 py-2 text-base text-secondary hover:text-primary hover:bg-secondary focus:text-primary focus:bg-secondary" role="menuitem"><i class="fa fa-sign-out-alt mr-2"></i>{% trans "Log out" %}</a>
         </div>
       </div>
+    {% else %}
+      <a href="{% url "users:login" %}?next={{ request.path }}" class="mt-1 block px-4 py-2 text-base text-secondary hover:text-primary hover:bg-secondary focus:text-primary focus:bg-secondary">
+            <i class="fa fa-sign-in-alt mr-2"></i>
+            <span>{% trans "Log in" %}</span>
+          </a>
     {% endif %}
   </div>
 </nav>
