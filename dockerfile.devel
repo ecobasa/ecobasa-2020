@@ -1,18 +1,21 @@
 # start from an official image
 FROM python:3.8
 
-ENV PYTHONUNBUFFERED=1
+ENV PYTHONUNBUFFERED 1
 
 # arbitrary location choice: you can change the directory
-RUN mkdir -p /opt/services/ecobasa
-WORKDIR /opt/services/ecobasa
+ENV PROJECT_DIR /opt/services/ecobasa
+RUN mkdir -p ${PROJECT_DIR}
+WORKDIR ${PROJECT_DIR}
 
 # copy our project code
-COPY ./ /opt/services/ecobasa/
+COPY ./ ${PROJECT_DIR}
 
 # install our dependencies
 RUN pip install pipenv
-RUN pipenv install --dev --system
+RUN pipenv requirements > requirements.txt
+RUN pip install -r requirements.txt
+# RUN pipenv install --dev --system --deploy
 RUN apt-get update && apt-get install -y \
 	binutils\ 
 	libproj-dev\ 
