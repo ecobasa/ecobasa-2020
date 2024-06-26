@@ -46,7 +46,7 @@
             },
             onInput(input) {
               if (input.length < 3) { results = []; return }
-              fetch(`https://nominatim.openstreetmap.org/search/?format=json&limit=5&q=${input}`).then(res => res.json()).then(json => {
+              fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=5&q=${input}`).then(res => res.json()).then(json => {
                 this.open = true
                 this.results = json
               })
