@@ -20,15 +20,15 @@
       <div class="relative my-2 mx-2" x-data="locationDropdown()">
         <div class="relative w-full max-w-2xl">
           <div class="absolute ml-3 inset-y-0 flex items-center text-primary">
-            <i class="fa fa-map-marker-alt mr-1 text-primary opacity-75"></i>
+            <i class="fa fa-map-marker-alt mr-1 text-primary opacity-75" onclick="getLocation()"></i>
           </div>
-          <input x-ref="input" type="text" @input.debounce="onInput($event.target.value)" value="{{ f.form.location_name.data|default:"" }}" placeholder="Sort by Location" class="form-input w-full max-w-2xl pl-10" autocomplete="off" autofocus name="location_name">
+          <input id="location_name" x-ref="input" type="text" @input.debounce="onInput($event.target.value)" value="{{ f.form.location_name.data|default:"" }}" placeholder="Sort by Location" class="form-input w-full max-w-2xl pl-10" autocomplete="off" autofocus name="location_name">
         </div>
         <input x-ref="location" type="hidden" value="{{ f.form.location.data|default:"" }}" name="location">
-        <div x-show.transition="open" @click.away="open = false" class="absolute inset-x-0 bg-primary bg-opacity-50 shadow-lg text-xs py-3 rounded-b border-brown border-opacity-50 border-b border-l border-r">
+        <div x-show.transition="open" @click.away="open = false" class="absolute inset-x-0 bg-secondary bg-opacity-50 shadow-lg text-xs py-3 rounded-b border-brown border-opacity-50 border-b border-l border-r">
           <ul class="list-none">
             <template x-for="res in results" :key="res">
-              <li class="m-0"><a @click.prevent="onSelect(res)" href="#" class="block px-2 py-2 text-secondary hover:bg-secondary hover:text-primary" x-text="res.display_name"></a></li>
+              <li class="m-0"><a @click.prevent="onSelect(res)" href="#" class="block px-2 py-2 text-brown hover:bg-primary hover:text-secondary" x-text="res.display_name"></a></li>
             </template>
           </ul>
         </div>
@@ -52,6 +52,32 @@
               })
             }
           }
+        }
+        
+        var x = document.getElementById("location_name");
+
+        function getLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    // Success function
+                    showPosition, 
+                    // Error function
+                    null, 
+                    // Options. See MDN for details.
+                    {
+                       enableHighAccuracy: true,
+                       timeout: 5000,
+                       maximumAge: 0
+                    });
+            } else { 
+                x.value = "{%trans 'Geolocation is not supported by this browser.' %}";
+            }
+        }
+
+        function showPosition(position) {
+            this.location.value=position.coords.latitude + "," + position.coords.longitude;
+            x.value = "{%trans 'Current Location' %}";
+              document.getElementById("searchForm").submit()
         }
       </script>
 
