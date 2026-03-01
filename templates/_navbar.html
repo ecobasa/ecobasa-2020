@@ -65,7 +65,7 @@
                   x-transition:leave-end="opacity-0 transform scale-95"
                   class="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg z-40">
               <div class="py-1 rounded-md bg-primary bg-opacity-75 shadow-xs">
-                <a href="{% url "users:detail" slug=user.name %}" class="block px-4 py-2 text-sm leading-5 text-secondary hover:bg-secondary focus:outline-none focus:bg-secondary transition duration-150 ease-in-out">
+                <a href="{% url "users:detail" slug=user.username|default:user.pk|slugify %}" class="block px-4 py-2 text-sm leading-5 text-secondary hover:bg-secondary focus:outline-none focus:bg-secondary transition duration-150 ease-in-out">
                   <i class="fa fa-user mr-2"></i>
                   {% trans "Your Profile" %}
                 </a>

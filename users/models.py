@@ -1,6 +1,7 @@
 from django.db import models
 from django.core.mail import send_mail
 from django.urls import reverse
+from django.utils.text import slugify
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.utils.translation import gettext_lazy as _
 
@@ -72,7 +73,9 @@ class User(AbstractUser):
     objects = UserManager()
 
     def get_absolute_url(self) -> str:
-        return reverse("users:detail", kwargs={"email": self.email})
+        # Prefer username slug; fall back to name slug or pk for uniqueness
+        slug = self.username or slugify(self.name) or self.pk
+        return reverse("users:detail", kwargs={"slug": slug})
 
     def email_user(self, subject, message, from_email=None, **kwargs):
         '''

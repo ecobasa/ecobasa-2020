@@ -3,6 +3,7 @@ from django.core.exceptions import ValidationError
 from django.contrib.auth import password_validation
 from django.contrib.auth.forms import AuthenticationForm
 from django.utils.translation import gettext_lazy as _
+from django.utils.text import slugify
 
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Field
@@ -27,6 +28,7 @@ class RegisterForm(forms.ModelForm):
         help_text=password_validation.password_validators_help_text_html(),
     )
     image = CroppieField(
+        required=False,
         options={
             "enableExif": True,
             "viewport": {
@@ -48,6 +50,7 @@ class RegisterForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields["name"].required = True
         self.fields["name"].widget.attrs["autofocus"] = True
+        self.fields["image"].required = False
         self.helper = FormHelper()
         self.helper.form_tag = False
         self.helper.layout = Layout(
@@ -74,6 +77,10 @@ class RegisterForm(forms.ModelForm):
     def save(self, commit=True):
         user = super().save(commit=False)
         user.set_password(self.cleaned_data["password"])
+        if not user.username:
+            # derive a safe username slug from name or email prefix
+            base = self.cleaned_data.get("name") or user.email.split("@")[0]
+            user.username = slugify(base)
         if commit:
             user.save()
         return user
