@@ -41,3 +41,229 @@
   
 </div>
 {% endblock content %}
+
+{% block javascript %}
+  {{ block.super }}
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const mapWidget = window.geodjango_location || window.geodjango_id_location; // injected by Django OSMWidget
+      const valueInput = document.getElementById('id_location');
+      const nameInput = document.getElementById('id_location_name');
+      if (!mapWidget || !valueInput) return;
+
+      const map = mapWidget.map;
+      const source = mapWidget.featureOverlay.getSource();
+      const geojson = new ol.format.GeoJSON();
+      const contactEmail = 'info@ecobasa.org';
+
+      // Base layers (switchable)
+      const baseLayers = {
+        ecobasa: [
+          new ol.layer.Tile({
+            visible: false,
+            opacity: 0.6,
+            source: new ol.source.XYZ({
+              url: 'https://tiles.stadiamaps.com/tiles/stamen_watercolor/{z}/{x}/{y}.jpg',
+              maxZoom: 18,
+              attributions: []
+            })
+          }),
+          new ol.layer.Tile({
+            visible: false,
+            opacity: 0.3,
+            source: new ol.source.XYZ({
+              url: 'https://tiles.stadiamaps.com/tiles/stamen_toner_lite/{z}/{x}/{y}@2x.png',
+              tilePixelRatio: 2,
+              maxZoom: 20,
+              attributions: [
+                '&copy; <a href="https://stadiamaps.com/" target="_blank">Stadia Maps</a>',
+                '&copy; <a href="https://stamen.com/" target="_blank">Stamen Design</a>',
+                '&copy; <a href="https://openmaptiles.org/" target="_blank">OpenMapTiles</a>',
+                '&copy; <a href="https://www.openstreetmap.org/copyright/" target="_blank">OpenStreetMap</a>'
+              ]
+            })
+          })
+        ],
+        satellite: [
+          new ol.layer.Tile({
+            visible: false,
+            source: new ol.source.XYZ({
+              url: 'https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+              maxZoom: 19,
+              attributions: ['Tiles © Esri — Source: Esri, Maxar, Earthstar Geographics, USDA FSA, USGS, Aerogrid, IGN, and the GIS User Community']
+            })
+          }),
+          new ol.layer.Tile({
+            visible: false,
+            opacity: 0.6,
+            source: new ol.source.XYZ({
+              url: 'https://tiles.stadiamaps.com/tiles/stamen_toner_labels/{z}/{x}/{y}@2x.png',
+              tilePixelRatio: 2,
+              maxZoom: 20,
+              attributions: [
+                '&copy; <a href="https://stadiamaps.com/" target="_blank">Stadia Maps</a>',
+                '&copy; <a href="https://stamen.com/" target="_blank">Stamen Design</a>',
+                '&copy; <a href="https://openmaptiles.org/" target="_blank">OpenMapTiles</a>',
+                '&copy; <a href="https://www.openstreetmap.org/copyright/" target="_blank">OpenStreetMap</a>'
+              ]
+            })
+          })
+        ]
+      };
+
+      // Hide the widget's default base layer and add ours
+      const widgetBase = map.getLayers().item(0);
+      if (widgetBase) widgetBase.setVisible(false);
+      Object.values(baseLayers).flat().forEach(layer => map.addLayer(layer));
+
+      const setBaseLayer = (key) => {
+        Object.entries(baseLayers).forEach(([name, layers]) => {
+          layers.forEach(layer => {
+            const on = name === key;
+            layer.setVisible(on);
+            layer.setZIndex(on ? 0 : -1);
+          });
+        });
+      };
+
+      // Simple layer switcher control
+      const controlEl = document.createElement('div');
+      controlEl.style.cssText = 'position:absolute;top:10px;right:10px;z-index:1000;background:rgba(69,41,18,0.8);color:#fcf3e5;padding:6px 8px;border-radius:6px;font-size:12px;display:flex;gap:6px;';
+      const makeBtn = (label, key) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.textContent = label;
+        btn.style.cssText = 'background:#da6137;color:#fcf3e5;border:1px solid #b4502c;border-radius:4px;padding:4px 6px;cursor:pointer;';
+        btn.addEventListener('click', () => setBaseLayer(key));
+        return btn;
+      };
+      controlEl.appendChild(makeBtn('Ecobasa map', 'ecobasa'));
+      controlEl.appendChild(makeBtn('Satellite', 'satellite'));
+      const ctrl = new ol.control.Control({ element: controlEl });
+      map.addControl(ctrl);
+      setBaseLayer('ecobasa');
+
+      const debounce = (fn, delay = 500) => {
+        let t;
+        return (...args) => {
+          clearTimeout(t);
+          t = setTimeout(() => fn(...args), delay);
+        };
+      };
+
+      let updating = false;
+      let userEditingName = false;
+
+      const updateName = (lon, lat, { skipReverse = false } = {}) => {
+        if (!nameInput || userEditingName) return;
+        nameInput.value = `${lat.toFixed(5)}, ${lon.toFixed(5)}`;
+        if (skipReverse) return;
+        reverseDebounced(lon, lat);
+      };
+
+      const reverseDebounced = debounce((lon, lat) => {
+        fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lon=${lon}&lat=${lat}&zoom=18&addressdetails=1&email=${encodeURIComponent(contactEmail)}`)
+          .then(res => res.json())
+          .then(data => {
+            if (data && data.display_name && !updating && !userEditingName && nameInput) {
+              nameInput.value = data.display_name;
+            }
+          })
+          .catch(() => {});
+      }, 400);
+
+      const setPoint = (lon, lat, { skipReverse = false, skipZoom = false } = {}) => {
+        updating = true;
+        const point = new ol.geom.Point(ol.proj.fromLonLat([lon, lat]));
+        source.clear();
+        source.addFeature(new ol.Feature(point));
+        map.getView().setCenter(point.getCoordinates());
+        if (!skipZoom) {
+          map.getView().setZoom(16);
+        }
+        valueInput.value = geojson.writeGeometry(point);
+        updateName(lon, lat, { skipReverse });
+        updating = false;
+      };
+
+      const parseExisting = () => {
+        const raw = (valueInput.value || '').trim();
+        if (!raw) return null;
+        try {
+          const geom = geojson.readGeometry(raw);
+          const [lon, lat] = ol.proj.toLonLat(geom.getCoordinates());
+          return [lon, lat];
+        } catch (e) {
+          const stripped = raw.replace(/^SRID=\d+;\s*/i, '');
+          try {
+            const geom = geojson.readGeometry(stripped);
+            const [lon, lat] = ol.proj.toLonLat(geom.getCoordinates());
+            return [lon, lat];
+          } catch (err) {}
+          const m = raw.match(/POINT\s*\(([-0-9.]+)\s+([-0-9.]+)\)/i);
+          if (m) {
+            const lon = parseFloat(m[1]);
+            const lat = parseFloat(m[2]);
+            if (!Number.isNaN(lat) && !Number.isNaN(lon)) return [lon, lat];
+          }
+        }
+        return null;
+      };
+
+      const initial = parseExisting();
+      if (initial) setPoint(initial[0], initial[1]);
+
+      map.on('click', (evt) => {
+        const [lon, lat] = ol.proj.toLonLat(evt.coordinate);
+        setPoint(lon, lat, { skipZoom: true });
+      });
+
+      source.on('changefeature', (evt) => {
+        if (updating) return;
+        const geom = evt.feature.getGeometry();
+        const [lon, lat] = ol.proj.toLonLat(geom.getCoordinates());
+        valueInput.value = geojson.writeGeometry(geom);
+        updateName(lon, lat);
+      });
+
+      const syncFromValueInput = () => {
+        if (updating) return;
+        const parsed = parseExisting();
+        if (parsed) setPoint(parsed[0], parsed[1]);
+      };
+
+      valueInput.addEventListener('change', syncFromValueInput);
+      valueInput.addEventListener('input', syncFromValueInput);
+
+      if (nameInput) {
+        nameInput.addEventListener('focus', () => { userEditingName = true; });
+        nameInput.addEventListener('blur', () => { userEditingName = false; });
+
+        const geocodeName = () => {
+          const q = (nameInput.value || '').trim();
+          if (!q || updating) return;
+          fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(q)}&email=${encodeURIComponent(contactEmail)}`)
+            .then(res => res.json())
+            .then(json => {
+              if (!Array.isArray(json) || !json[0]) return;
+              const { lon, lat } = json[0];
+              if (lon && lat) setPoint(parseFloat(lon), parseFloat(lat), { skipReverse: true });
+            })
+            .catch(() => {});
+        };
+
+        const geocodeDebounced = debounce(geocodeName, 500);
+
+        nameInput.addEventListener('input', geocodeDebounced);
+        nameInput.addEventListener('change', geocodeName);
+        nameInput.addEventListener('blur', geocodeName);
+        nameInput.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            geocodeName();
+          }
+        });
+      }
+    });
+  </script>
+{% endblock javascript %}

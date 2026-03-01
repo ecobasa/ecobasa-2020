@@ -37,6 +37,17 @@ input[type="number"] {
   @apply text-right;
 }
 
+#id_location_div_map,
+.map-widget {
+  width: 100% !important;
+  max-width: 100%;
+}
+
+#id_location_map .ol-viewport,
+.map-widget .ol-viewport {
+  width: 100% !important;
+}
+
 .form-checkbox, input[type="checkbox"] {
   @apply border-2 border-brown bg-transparent shadow-none;
 }

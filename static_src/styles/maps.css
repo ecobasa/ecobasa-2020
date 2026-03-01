@@ -1,0 +1,11 @@
+/* OpenLayers controls (OSMWidget) */
+.dj_map_wrapper .ol-control button {
+	background-color: rgba(218, 97, 55, 0.8) !important;
+	border: 1px solid #b4502c !important;
+	color: #fcf3e5 !important;
+}
+
+.dj_map_wrapper .ol-control button:hover,
+.dj_map_wrapper .ol-control button:focus {
+	background-color: rgba(218, 97, 55, 1) !important;
+}

@@ -6,6 +6,7 @@
 @import "tailwindcss/components";
 
 @import "./forms.css";
+@import "./maps.css";
 
 @import "tailwindcss/utilities";
 
