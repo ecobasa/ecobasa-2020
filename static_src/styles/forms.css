@@ -38,11 +38,11 @@ input[type="number"] {
 }
 
 .form-checkbox, input[type="checkbox"] {
-  @apply appearance-none align-middle border-2 border-brown bg-transparent shadow-none ring-0 rounded-none;
+  @apply border-2 border-brown bg-transparent shadow-none;
 }
 
 .form-radio, input[type="radio"] {
-  @apply appearance-none align-middle border-2 border-brown bg-transparent shadow-none ring-0 rounded-full;
+  @apply border-2 border-brown bg-transparent shadow-none ring-0 rounded-full;
 }
 
 .form-checkbox:focus,
