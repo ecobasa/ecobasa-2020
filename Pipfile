@@ -4,28 +4,28 @@ url = "https://pypi.org/simple"
 verify_ssl = true
 
 [dev-packages]
-pylint = "*"
-black = "==20.8b1"
-pytest = "*"
-pytest-django = "*"
-pylint-django = "*"
+pylint = "~=2.17"
+black = "~=24.8"
+pytest = "~=8.1"
+pytest-django = "~=4.8"
+pylint-django = "~=2.5"
 
 [packages]
-django = "*"
-django-environ = "*"
-argon2-cffi = "*"
-django-filter = "*"
-django-crispy-forms = "*"
-gunicorn = "*"
-whitenoise = "*"
-psycopg2-binary = "*"
-django-embed-video = "*"
-django-taggit ="*"
-Pillow = "*"
-django-croppie = "*"
+django = "~=4.2"
+django-environ = "~=0.11"
+argon2-cffi = "~=23.1"
+django-filter = "~=24.1"
+django-crispy-forms = "~=2.1"
+gunicorn = "~=21.2"
+whitenoise = "~=6.6"
+psycopg2-binary = "~=2.9"
+django-embed-video = "~=1.4"
+django-taggit ="~=4.0"
+Pillow = "~=10.3"
+django-croppie = "==1.3"
 
 [requires]
-python_version = "3.8"
+python_version = "3.12"
 
 [pipenv]
 allow_prereleases = false

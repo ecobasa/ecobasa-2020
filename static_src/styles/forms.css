@@ -1,3 +1,5 @@
+@layer components {
+
 .form-group {
   @apply mb-5;
 }
@@ -36,11 +38,40 @@ input[type="number"] {
 }
 
 .form-checkbox, input[type="checkbox"] {
-  @apply border-brown bg-transparent;
+  @apply appearance-none align-middle border-2 border-brown bg-transparent shadow-none ring-0 rounded-none;
 }
 
-.form-radio {
-  @apply border-brown bg-transparent;
+.form-radio, input[type="radio"] {
+  @apply appearance-none align-middle border-2 border-brown bg-transparent shadow-none ring-0 rounded-full;
+}
+
+.form-checkbox:focus,
+input[type="checkbox"]:focus,
+.form-radio:focus,
+input[type="radio"]:focus {
+  @apply border-secondary ring-0 outline-none bg-transparent;
+  box-shadow: 0 0 0 3px rgba(218, 97, 55, 0.7);
+  background-color: rgba(218, 97, 55, 0.7);
+}
+
+.form-checkbox:checked,
+input[type="checkbox"]:checked,
+.form-radio:checked,
+input[type="radio"]:checked {
+  @apply bg-primary bg-opacity-70;
+  box-shadow: 0 0 0 3px rgba(218, 97, 55, 0.7);
+}
+
+.form-checkbox:checked:hover,
+input[type="checkbox"]:checked:hover,
+.form-checkbox:checked:focus,
+input[type="checkbox"]:checked:focus,
+.form-radio:checked:hover,
+input[type="radio"]:checked:hover,
+.form-radio:checked:focus,
+input[type="radio"]:checked:focus {
+  @apply bg-primary bg-opacity-70;
+  box-shadow: 0 0 0 3px rgba(218, 97, 55, 0.7);
 }
 
 /* for gray button in invalid forms */
@@ -75,4 +106,6 @@ form:invalid .form-invalid\:bg-gray:active {
 
 .linkwidget.horizontal .selected {
   @apply font-bold border-l-0 border-b-2 border-green;
+}
+
 }

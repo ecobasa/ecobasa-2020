@@ -28,7 +28,6 @@ SITE_ID = env("DJANGO_SITE_ID", default=1)
 TIME_ZONE = "Europe/Berlin"
 LANGUAGE_CODE = "en"
 USE_I18N = True
-USE_L10N = True
 USE_TZ = True
 
 LANGUAGES = [
@@ -79,6 +78,9 @@ LOCAL_APPS = ["users", "homepage", "gifting", "communities"]
 
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
+
+# Use BigAutoField by default to avoid implicit primary key warnings on Django 4+
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # MIGRATIONS
 # ------------------------------------------------------------------------------
