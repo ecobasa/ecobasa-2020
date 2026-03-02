@@ -11,7 +11,7 @@ from .forms import CommunityForm
 
 def index(request):
     """Map-first list of communities."""
-    communities = Community.objects.all().order_by("name")
+    communities = Community.objects.all().prefetch_related("photos", "skills").order_by("name")
     q = (request.GET.get("q") or "").strip()
     if q:
         communities = communities.filter(
@@ -24,6 +24,8 @@ def index(request):
     for c in communities:
         if not c.location:
             continue
+        first_photo = c.photos.first()
+        photo_url = first_photo.image.url if first_photo and first_photo.image else None
         map_communities.append(
             {
                 "name": c.name,
@@ -35,6 +37,11 @@ def index(request):
                 "lat": c.location.y,
                 "lon": c.location.x,
                 "url": reverse("communities:detail", kwargs={"slug": c.slug}),
+                "image": photo_url,
+                "members": c.inhabitants,
+                "children": c.children,
+                "visitors": c.max_guests,
+                "skills": [s.name for s in c.skills.all()],
             }
         )
 
@@ -126,9 +133,8 @@ def update(request, slug):
             for image_file in images:
                 CommunityPhoto.objects.create(community=community, image=image_file)
             if images:
-                messages.success(request, _(f"Uploaded {len(images)} image(s)."))
-            else:
-                messages.warning(request, _("No gallery images were received."))
+                messages.success(request, _("Uploaded %(count)s image(s).") % {"count": len(images)})
+            messages.success(request, _("Community updated."))
             return redirect(community.get_absolute_url())
         else:
             messages.error(

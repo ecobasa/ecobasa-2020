@@ -10,12 +10,6 @@ from taggit.models import TaggedItemBase
 
 from .mixins import UniqueSlugMixin
 
-class TaggedCommunity(TaggedItemBase):
-    content_object = models.ForeignKey('Community', on_delete=models.CASCADE)
-
-    class Meta:
-        app_label = 'communities'
-
 class TaggedSkills(TaggedItemBase):
     content_object = models.ForeignKey('Community', on_delete=models.CASCADE)
 
@@ -25,9 +19,6 @@ class TaggedSkills(TaggedItemBase):
 class Community(UniqueSlugMixin, models.Model):
     name = models.CharField(_("Name"), max_length=255)
     slug = models.SlugField(_("Slug"), null=False, blank=True, unique=True) # populated by UniqueSlugMixin
-    tags = TaggableManager(_('Tags'),
-        through=TaggedCommunity, related_name='_tags', blank=True,
-        help_text=_('Add some keywords that define your community. This way your profile can be found by in the search. People might be interested in your technologies, structures or experiences.'))
     skills = TaggableManager(_('Skills'),
         through=TaggedSkills, related_name='_skills', blank=True,
         help_text=_('Skills that people can learn by volunteering or staying in your community'))

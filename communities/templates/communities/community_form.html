@@ -419,21 +419,12 @@
       // Tagify for skills (chip-style tags)
       const skillsInput = document.getElementById('id_skills');
       if (skillsInput) {
-        const tagify = new Tagify(skillsInput, {
+        new Tagify(skillsInput, {
           editTags: false,
           dropdown: { enabled: 0 },
+          // Write comma-separated values (not JSON) so django-taggit can parse them
+          originalInputValueFormat: vals => vals.map(v => v.value).join(', '),
         });
-
-        const syncSkillsValue = () => {
-          const values = tagify.getCleanValue().map(item => item.value || '').filter(Boolean);
-          skillsInput.value = values.join(',');
-        };
-
-        tagify.on('add', syncSkillsValue);
-        tagify.on('remove', syncSkillsValue);
-        tagify.on('blur', syncSkillsValue);
-        tagify.on('edit:updated', syncSkillsValue);
-        syncSkillsValue();
       }
     });
   </script>

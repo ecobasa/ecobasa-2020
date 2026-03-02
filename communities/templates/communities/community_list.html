@@ -5,105 +5,144 @@
   {{ block.super }}
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v7.2.2/ol.css">
   <style>
+    /* ── Map chrome ── */
     .ol-zoom { top: auto; left: 1rem; bottom: 1rem; right: auto; }
     .ol-zoom button { width: 2.75rem; height: 2.75rem; font-size: 1.25rem; border-radius: 0.75rem; }
     .freemarket-shell { height: calc(100vh - 113px); max-height: calc(100vh - 113px); padding-bottom: 48px; box-sizing: border-box; overflow: hidden; }
-    .freemarket-popup { position: relative; background: rgba(252, 243, 229, 0.8); color: #452912; border-radius: 10px; padding: 15px 20px; box-shadow: 0 3px 14px rgba(0,0,0,0.4); font-size: 13px; line-height: 1.4; min-width: 180px; top: -10px; }
-    .freemarket-popup:before { content: ''; position: absolute; bottom: -10px; left: 50%; transform: translateX(-50%); border-width: 10px 10px 0 10px; border-style: solid; border-color: #b4502c transparent transparent transparent; }
-    .freemarket-popup:after { content: ''; position: absolute; bottom: -9px; left: 50%; transform: translateX(-50%); border-width: 9px 9px 0 9px; border-style: solid; border-color: rgba(252, 243, 229, 0.8) transparent transparent transparent; }
-    .popup-type-pill { display: inline-flex; align-items: center; padding: 4px 10px; border-radius: 9999px; background: #da6137; color: #fcf3e5; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; }
-    .freemarket-popup h3 { font-size: 1.1rem; font-weight: 700; line-height: 1.3; margin: 0 0 0.35rem 0; color: #452912; }
+
+    /* ── Popup ── */
+    .freemarket-popup { position: relative; background: rgba(252,243,229,.8); color: #452912; border-radius: 10px; padding: 15px 20px; box-shadow: 0 3px 14px rgba(0,0,0,.4); font-size: 13px; line-height: 1.4; min-width: 180px; max-width: 300px; top: -10px; }
+    .freemarket-popup::before { content: ''; position: absolute; bottom: -10px; left: 50%; transform: translateX(-50%); border-width: 10px 10px 0; border-style: solid; border-color: #b4502c transparent transparent; }
+    .freemarket-popup::after  { content: ''; position: absolute; bottom: -9px;  left: 50%; transform: translateX(-50%); border-width: 9px 9px 0;   border-style: solid; border-color: rgba(252,243,229,.8) transparent transparent; }
+    .freemarket-popup h3 { font-size: 1.1rem; font-weight: 700; line-height: 1.3; margin: 0 0 .35rem; color: #452912; }
     .freemarket-popup .popup-type-pill { float: right; margin-left: 8px; margin-bottom: 4px; }
+    .popup-type-pill { display: inline-flex; align-items: center; padding: 4px 10px; border-radius: 9999px; background: #da6137; color: #fcf3e5; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
+    .popup-meta { font-size: 11px; color: #6b4226; margin-bottom: .4rem; }
   </style>
 {% endblock %}
 
+{# ───────────────────────────── HTML ───────────────────────────── #}
+
 {% block content %}
+{# ── Map container ── #}
 <div class="relative w-full freemarket-shell">
   <div id="community-map" class="absolute inset-0 w-full h-full rounded shadow bg-secondary bg-opacity-50"></div>
 
+  {# ── View toggle (top center) ── #}
+  <div class="absolute top-4 left-1/2 transform -translate-x-1/2 z-10">
+    <div class="inline-flex overflow-hidden rounded-full shadow-lg border bg-primary bg-opacity-20 backdrop-blur" style="border-color:#b4502c;">
+      <button id="community-toggle-map" type="button" aria-label="{% trans 'Show map view' %}"
+              class="px-4 py-2 text-sm font-semibold flex items-center gap-2 text-secondary bg-primary bg-opacity-40 hover:bg-primary hover:text-secondary transition-colors duration-150">
+        <i class="fa fa-globe"></i><span>{% trans "Map" %}</span>
+      </button>
+      <button id="community-toggle-list" type="button" aria-label="{% trans 'Show list view' %}"
+              class="px-4 py-2 text-sm font-semibold flex items-center gap-2 text-secondary bg-primary bg-opacity-40 hover:bg-primary hover:text-secondary transition-colors duration-150">
+        <i class="fa fa-list-alt"></i><span>{% trans "List" %}</span>
+      </button>
+    </div>
+  </div>
+
+  {# ── Left toolbar: search, add button ── #}
   <div class="absolute top-4 left-4 flex flex-col gap-3 w-full max-w-md">
     <form method="get" class="bg-secondary bg-opacity-60 backdrop-blur rounded-lg shadow p-4 flex items-center gap-3">
       <div class="relative flex-1">
-        <div class="absolute inset-y-0 left-3 flex items-center text-primary opacity-80">
-          <i class="fa fa-search"></i>
-        </div>
-        <input type="text" name="q" value="{{ q }}" placeholder="{% trans "Search communities" %}" class="form-input w-full pl-10" autocomplete="off">
+        <div class="absolute inset-y-0 left-3 flex items-center text-primary opacity-80"><i class="fa fa-search"></i></div>
+        <input type="text" name="q" value="{{ q }}" placeholder="{% trans 'Search by name, location or skills you want to learn' %}" class="form-input w-full pl-10" autocomplete="off">
       </div>
-      <button type="submit" class="btn inline-flex items-center">
-        <i class="fa fa-search mr-1"></i>
-        {% trans "Search" %}
-      </button>
+      <button type="submit" class="btn inline-flex items-center"><i class="fa fa-search mr-1"></i> {% trans "Search" %}</button>
     </form>
+
     {% if not communities %}
       <p class="text-sm text-brown bg-secondary bg-opacity-60 backdrop-blur rounded-lg shadow p-3 border" style="border-color:#b4502c;">
         {% trans "No communities yet." %}
       </p>
     {% endif %}
+
     <a href="{% url 'communities:create' %}" class="btn inline-flex items-center shadow self-start">
-      <i class="fa fa-plus mr-1"></i>
-      {% trans "Add your community" %}
+      <i class="fa fa-plus mr-1"></i> {% trans "Add your community" %}
     </a>
   </div>
 
+  {# ── Layer switcher (top-right) ── #}
   <div id="community-layer-wrap" class="absolute top-4 right-4">
     <div class="relative">
-      <button id="community-layer-toggle" type="button" class="flex items-center justify-center w-14 h-14 rounded-md bg-primary bg-opacity-60 text-secondary shadow-lg border backdrop-blur" style="border-color: #b4502c;">
+      <button id="community-layer-toggle" type="button"
+              class="flex items-center justify-center w-14 h-14 rounded-md bg-primary bg-opacity-60 text-secondary shadow-lg border backdrop-blur"
+              style="border-color:#b4502c;">
         <i class="fa fa-layer-group text-xl"></i>
       </button>
-      <div id="community-layer-menu" class="hidden absolute right-0 mt-2 w-48 bg-primary text-secondary bg-opacity-60 backdrop-blur rounded-lg shadow-xl border py-2" style="border-color: #b4502c;">
+      <div id="community-layer-menu"
+           class="hidden absolute right-0 mt-2 w-48 bg-primary text-secondary bg-opacity-60 backdrop-blur rounded-lg shadow-xl border py-2"
+           style="border-color:#b4502c;">
         <div class="px-3 pb-1 text-xs font-semibold uppercase">{% trans "Layers" %}</div>
         <ul class="list-none m-0 text-sm space-y-1 px-2">
-          <li>
-            <label class="inline-flex items-center w-full px-2 py-1 rounded hover:bg-secondary hover:text-primary cursor-pointer">
-              <input type="radio" name="community-layer-option" value="ecobasa" class="form-radio mr-2 text-secondary" checked>
-              <span>{% trans "ecobasa" %}</span>
-            </label>
-          </li>
-          <li>
-            <label class="inline-flex items-center w-full px-2 py-1 rounded hover:bg-secondary hover:text-primary cursor-pointer">
-              <input type="radio" name="community-layer-option" value="satellite" class="form-radio mr-2 text-secondary">
-              <span>{% trans "Satellite" %}</span>
-            </label>
-          </li>
-          <li>
-            <label class="inline-flex items-center w-full px-2 py-1 rounded hover:bg-secondary hover:text-primary cursor-pointer">
-              <input type="radio" name="community-layer-option" value="osm" class="form-radio mr-2 text-secondary">
-              <span>{% trans "OSM" %}</span>
-            </label>
-          </li>
+          <li><label class="inline-flex items-center w-full px-2 py-1 rounded hover:bg-secondary hover:text-primary cursor-pointer"><input type="radio" name="community-layer-option" value="ecobasa" class="form-radio mr-2 text-secondary" checked><span>{% trans "ecobasa" %}</span></label></li>
+          <li><label class="inline-flex items-center w-full px-2 py-1 rounded hover:bg-secondary hover:text-primary cursor-pointer"><input type="radio" name="community-layer-option" value="satellite" class="form-radio mr-2 text-secondary"><span>{% trans "Satellite" %}</span></label></li>
+          <li><label class="inline-flex items-center w-full px-2 py-1 rounded hover:bg-secondary hover:text-primary cursor-pointer"><input type="radio" name="community-layer-option" value="osm" class="form-radio mr-2 text-secondary"><span>{% trans "OSM" %}</span></label></li>
         </ul>
       </div>
     </div>
   </div>
 </div>
 
-<div class="max-w-6xl mx-auto px-4 py-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-  {% for community in communities %}
-    <div class="rounded-lg shadow bg-secondary bg-opacity-60 backdrop-blur p-4 border" style="border-color:#b4502c;">
-      <div class="flex items-start justify-between gap-3">
-        <div>
-          <div class="text-xs uppercase tracking-wide text-primary font-semibold">{{ community.get_type_display }}</div>
-          <h3 class="text-xl font-bold text-primary">{{ community.name }}</h3>
-          <div class="text-sm text-brown">{{ community.location_name }}</div>
+{# ── Community list modal ── #}
+<div id="community-modal" class="fixed inset-0 bg-black bg-opacity-70 z-50 hidden items-center justify-center p-4">
+  <div class="relative bg-secondary bg-opacity-95 backdrop-blur rounded-lg shadow-xl max-w-5xl w-full border" style="border-color:#b4502c;">
+    <button type="button" id="community-modal-close"
+            class="absolute top-3 right-3 h-10 w-10 rounded-full bg-black bg-opacity-50 hover:bg-opacity-70 text-secondary text-2xl flex items-center justify-center"
+            aria-label="Close">&times;</button>
+
+    <div class="p-5 space-y-4">
+      <div class="flex items-center gap-3">
+        <div class="relative flex-1">
+          <div class="absolute inset-y-0 left-3 flex items-center text-primary opacity-80"><i class="fa fa-search"></i></div>
+          <input id="community-modal-search" type="text" value="{{ q }}"
+                 placeholder="{% trans 'Search by name, location or skills that you want to learn' %}" class="form-input w-full pl-10" autocomplete="off">
         </div>
-        <span class="px-3 py-1 rounded-full bg-primary text-secondary text-xs font-semibold">{{ community.get_status_display }}</span>
+        <span class="text-xs text-brown" id="community-modal-count"></span>
       </div>
-      <p class="text-sm text-brown mt-3 line-clamp-3">{{ community.description }}</p>
-      <div class="mt-3 flex flex-wrap gap-2 text-xs">
-        {% for tag in community.tags.all %}
-          <span class="px-2 py-1 rounded-full bg-primary bg-opacity-70 text-secondary">{{ tag }}</span>
+
+      <div id="community-modal-list" class="max-h-[65vh] overflow-y-auto space-y-3 pr-1">
+        {% for community in communities %}
+          {% with community.photos.all|first as first_photo %}
+          <div class="rounded-lg shadow bg-secondary bg-opacity-80 backdrop-blur p-4 border" style="border-color:#b4502c;"
+               data-name="{{ community.name|lower }}" data-location="{{ community.location_name|default_if_none:''|lower }}">
+            {% if first_photo %}
+            <div class="mb-3 -mx-4 -mt-4">
+              <img src="{{ first_photo.image.url }}" alt="{{ community.name }}" class="w-full h-40 object-cover rounded-t-lg">
+            </div>
+            {% endif %}
+            <div class="flex items-start justify-between gap-3">
+              <div>
+                <div class="text-xs uppercase tracking-wide text-primary font-semibold">{{ community.get_type_display }}</div>
+                <h3 class="text-lg font-bold text-primary">{{ community.name }}</h3>
+                <div class="text-sm text-brown"><i class="fa fa-map-marker-alt mr-1"></i>{{ community.location_name }}</div>
+              </div>
+              <span class="px-3 py-1 rounded-full bg-primary text-secondary text-xs font-semibold">{{ community.get_status_display }}</span>
+            </div>
+            <p class="text-sm text-brown mt-2 line-clamp-2">{{ community.description }}</p>
+            {% if community.skills.all %}
+            <div class="mt-2 flex flex-wrap gap-1">
+              {% for skill in community.skills.all %}
+                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold text-secondary" style="background:#6b4226;"><i class="fa fa-graduation-cap mr-1"></i>{{ skill }}</span>
+              {% endfor %}
+            </div>
+            {% endif %}
+            <a href="{{ community.get_absolute_url }}" class="mt-3 inline-flex items-center text-primary font-semibold hover:underline">
+              {% trans "Open" %} <i class="fa fa-arrow-right ml-2"></i>
+            </a>
+          </div>
+          {% endwith %}
+        {% empty %}
+          <p class="text-primary">{% trans "No communities yet." %}</p>
         {% endfor %}
       </div>
-      <a href="{{ community.get_absolute_url }}" class="mt-4 inline-flex items-center text-primary font-semibold hover:underline">
-        {% trans "Open" %}
-        <i class="fa fa-arrow-right ml-2"></i>
-      </a>
     </div>
-  {% empty %}
-    <p class="text-primary">{% trans "No communities yet." %}</p>
-  {% endfor %}
+  </div>
 </div>
 {% endblock %}
+
+{# ─────────────────────────── JavaScript ─────────────────────────── #}
 
 {% block javascript %}
   {{ block.super }}
@@ -113,37 +152,104 @@
   {% else %}
     <script id="community-map-data" type="application/json">[]</script>
   {% endif %}
+
   <script>
-    const initCommunityMap = () => {
-      const mapEl = document.getElementById('community-map');
-      const layerWrap = document.getElementById('community-layer-wrap');
-      const layerToggle = document.getElementById('community-layer-toggle');
-      const layerMenu = document.getElementById('community-layer-menu');
-      const layerRadios = document.querySelectorAll('input[name="community-layer-option"]');
-      const dataEl = document.getElementById('community-map-data');
-      if (!mapEl || !dataEl) return;
+  /* ================================================================
+     Community Map Page
+     Sections: Modal · Tile layers · Map init · Popups · View toggle
+     ================================================================ */
+  (function () {
+    'use strict';
 
-      const mapCommunities = JSON.parse(dataEl.textContent || '[]');
-      let mapInstance = null;
-      let vectorLayer = null;
-      let popupOverlay = null;
+    // ── Shared refs ──
+    var communityModal = { open: null, close: null };
 
-      const stamenWatercolor = new ol.layer.Tile({
+    // ── Helpers ──
+    function $(id)  { return document.getElementById(id); }
+    function $$(sel) { return document.querySelectorAll(sel); }
+
+    function truncate(text, charLimit) {
+      if (!text) return '';
+      if (text.length <= charLimit) return text;
+      return text.slice(0, charLimit).replace(/\s+\S*$/, '') + '\u2026';
+    }
+
+    function waitForSize(el, maxAttempts) {
+      maxAttempts = maxAttempts || 30;
+      return new Promise(function (resolve, reject) {
+        (function check(n) {
+          var rect = el.getBoundingClientRect();
+          if (rect.width && rect.height) return resolve(rect);
+          if (n >= maxAttempts) return reject(new Error('Element never gained size'));
+          requestAnimationFrame(function () { check(n + 1); });
+        })(0);
+      });
+    }
+
+    // ────────────────────────────────────────────────────────────────
+    // List modal
+    // ────────────────────────────────────────────────────────────────
+    function initModal() {
+      var modal      = $('community-modal');
+      if (!modal) return;
+      var closeBtn   = $('community-modal-close');
+      var searchIn   = $('community-modal-search');
+      var list       = $('community-modal-list');
+      var countLabel = $('community-modal-count');
+      var items      = Array.from(list.querySelectorAll('[data-name]'));
+
+      function update() {
+        var term = (searchIn.value || '').toLowerCase().trim();
+        var visible = 0;
+        items.forEach(function (item) {
+          var hay = (item.dataset.name || '') + ' ' + (item.dataset.location || '');
+          var show = !term || hay.includes(term);
+          item.style.display = show ? '' : 'none';
+          if (show) visible++;
+        });
+        if (countLabel) {
+          countLabel.textContent = visible
+            ? visible + ' {% trans "result" %}' + (visible === 1 ? '' : 's')
+            : '{% trans "No results" %}';
+        }
+      }
+
+      communityModal.open = function () {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        document.body.classList.add('overflow-hidden');
+        update();
+      };
+      communityModal.close = function () {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+        document.body.classList.remove('overflow-hidden');
+      };
+
+      if (closeBtn) closeBtn.addEventListener('click', communityModal.close);
+      modal.addEventListener('click', function (e) { if (e.target === modal) communityModal.close(); });
+      searchIn.addEventListener('input', update);
+      update();
+    }
+
+    // ────────────────────────────────────────────────────────────────
+    // Tile layers
+    // ────────────────────────────────────────────────────────────────
+    function createTileLayers() {
+      var watercolor = new ol.layer.Tile({
         source: new ol.source.XYZ({
           url: 'https://tiles.stadiamaps.com/tiles/stamen_watercolor/{z}/{x}/{y}.jpg?api_key=cb8069a3-9585-4989-a6a8-572b5c3f4ffb',
           crossOrigin: 'anonymous'
         })
       });
-
-      const stamenTonerLabels = new ol.layer.Tile({
+      var tonerLabels = new ol.layer.Tile({
         source: new ol.source.XYZ({
           url: 'https://tiles.stadiamaps.com/tiles/stamen_toner_lite/{z}/{x}/{y}.png?api_key=cb8069a3-9585-4989-a6a8-572b5c3f4ffb',
           crossOrigin: 'anonymous'
         }),
         opacity: 0.35
       });
-
-      const satellite = new ol.layer.Tile({
+      var satellite = new ol.layer.Tile({
         source: new ol.source.XYZ({
           url: 'https://mt{0-3}.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}',
           attributions: '&copy; Google',
@@ -152,132 +258,228 @@
         }),
         visible: false
       });
-
-      const osmBase = new ol.layer.Tile({
-        source: new ol.source.OSM({
+      var osm = new ol.layer.Tile({
+        source: new ol.source.XYZ({
           url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-          crossOrigin: 'anonymous'
+          crossOrigin: 'anonymous',
+          maxZoom: 19,
+          tileSize: 256,
+          wrapX: true,
+          attributions: '\u00a9 OpenStreetMap contributors',
+          tileGrid: ol.tilegrid.createXYZ({ maxZoom: 19, tileSize: 256 })
         }),
         visible: false
       });
+      return { watercolor: watercolor, tonerLabels: tonerLabels, satellite: satellite, osm: osm,
+               all: [watercolor, tonerLabels, satellite, osm] };
+    }
 
-      const enableOsmFallback = () => {
-        if (!osmBase.getVisible()) {
-          osmBase.setVisible(true);
-        }
-      };
-      stamenWatercolor.getSource().on('tileloaderror', enableOsmFallback);
-      stamenTonerLabels.getSource().on('tileloaderror', enableOsmFallback);
+    function makeLayerSwitcher(tiles, radios, map) {
+      var fallbackFired = false;
 
-      const setLayerMode = (mode) => {
-        stamenWatercolor.setVisible(false);
-        stamenTonerLabels.setVisible(false);
-        satellite.setVisible(false);
-        osmBase.setVisible(false);
-        const target = (mode || 'ecobasa').toLowerCase();
-        switch (target) {
-          case 'satellite':
-            satellite.setVisible(true);
-            break;
-          case 'osm':
-            osmBase.setVisible(true);
-            break;
-          default:
-            stamenWatercolor.setVisible(true);
-            stamenTonerLabels.setVisible(true);
-            break;
-        }
-        layerRadios.forEach(r => { r.checked = (r.value === target); });
-      };
+      function setMode(mode) {
+        var target = (mode || 'ecobasa').toLowerCase();
+        tiles.watercolor.setVisible(target === 'ecobasa');
+        tiles.tonerLabels.setVisible(target === 'ecobasa');
+        tiles.satellite.setVisible(target === 'satellite');
+        tiles.osm.setVisible(target === 'osm');
+        radios.forEach(function (r) { r.checked = (r.value === target); });
+        if (map) map.renderSync();
+      }
 
-      vectorLayer = new ol.layer.Vector({
-        source: new ol.source.Vector()
-      });
-
-      mapInstance = new ol.Map({
-        target: mapEl,
-        layers: [stamenWatercolor, stamenTonerLabels, satellite, osmBase, vectorLayer],
-        view: new ol.View({
-          center: ol.proj.fromLonLat([0, 20]),
-          zoom: 1,
-          minZoom: 0,
-          maxZoom: 18
-        })
-      });
-
-      const iconStyle = new ol.style.Style({
-        image: new ol.style.Icon({
-          src: '{% static "map/images/marker-icon.png" %}',
-          anchor: [0.5, 1]
-        })
-      });
-
-      const features = mapCommunities
-        .filter(c => typeof c.lat === 'number' && typeof c.lon === 'number')
-        .map(c => {
-          const feature = new ol.Feature({
-            geometry: new ol.geom.Point(ol.proj.fromLonLat([c.lon, c.lat])),
-            data: c
-          });
-          feature.setStyle(iconStyle);
-          return feature;
+      // Fall back to OSM if the Stadia tiles fail
+      function enableFallback(layer) {
+        var src = layer && layer.getSource && layer.getSource();
+        if (!src || !src.on) return;
+        src.on('tileloaderror', function () {
+          if (fallbackFired) return;
+          fallbackFired = true;
+          setMode('osm');
         });
-      vectorLayer.getSource().addFeatures(features);
-
-      if (features.length) {
-        const extent = vectorLayer.getSource().getExtent();
-        mapInstance.getView().fit(extent, { padding: [48, 48], maxZoom: 10 });
       }
+      enableFallback(tiles.watercolor);
+      enableFallback(tiles.tonerLabels);
 
-      const popupEl = document.createElement('div');
-      popupEl.className = 'freemarket-popup';
-      popupOverlay = new ol.Overlay({ element: popupEl, positioning: 'bottom-center', offset: [0, -12], stopEvent: false });
-      mapInstance.addOverlay(popupOverlay);
+      return setMode;
+    }
 
-      const truncateWords = (text, limit) => {
-        if (!text || typeof text !== 'string') return '';
-        const words = text.split(/\s+/);
-        if (words.length <= limit) return text;
-        return words.slice(0, limit).join(' ') + '…';
-      };
+    // ────────────────────────────────────────────────────────────────
+    // Popup builder
+    // ────────────────────────────────────────────────────────────────
+    function buildPopupHTML(feature) {
+      var name     = feature.get('name') || '';
+      var type     = feature.get('type') || '';
+      var status   = feature.get('status') || '';
+      var image    = feature.get('image');
+      var desc     = truncate(feature.get('description'), 150);
+      var url      = feature.get('url') || '';
+      var members  = feature.get('members');
+      var children = feature.get('children');
+      var visitors = feature.get('visitors');
 
-      mapInstance.on('singleclick', (evt) => {
-        const feature = mapInstance.forEachFeatureAtPixel(evt.pixel, f => f);
-        if (!feature) {
-          popupOverlay.setPosition(undefined);
-          return;
+      var html = '';
+      if (type)     html += '<span class="popup-type-pill">' + type + '</span>';
+      if (name)     html += url ? '<h3><a href="' + url + '" class="hover:underline">' + name + '</a></h3>' : '<h3>' + name + '</h3>';
+      html += '<div class="popup-meta">'
+            + '<span><i class="fa fa-users mr-1"></i>' + (members  != null ? members  : '\u2013') + '</span> | '
+            + '<span><i class="fa fa-child mr-1"></i>' + (children != null ? children : '\u2013') + '</span> | '
+            + '<span><i class="fa fa-suitcase mr-1"></i>' + (visitors != null ? visitors : '\u2013') + '</span>'
+            + '</div>';
+      if (image)    html += '<div class="mb-2">' + (url ? '<a href="' + url + '">' : '') + '<img src="' + image + '" alt="' + name + '" class="w-full max-w-xs rounded shadow">' + (url ? '</a>' : '') + '</div>';
+      if (desc)     html += '<div class="text-sm text-brown mt-2">' + desc + '</div>';
+      var skills = (feature.get('skills') || []).slice(0, 4);
+      if (skills.length) {
+        html += '<div class="mt-2 flex flex-wrap gap-1">';
+        skills.forEach(function (t) { html += '<span class="popup-type-pill" style="font-size:10px;padding:2px 7px;background:#6b4226;"><i class="fa fa-graduation-cap mr-1"></i>' + t + '</span>'; });
+        html += '</div>';
+      }
+      if (status)   html += '<div class="mt-1"><span class="popup-type-pill">' + status + '</span></div>';
+      if (url)      html += '<a class="text-primary underline" href="' + url + '">{% trans "Open" %}</a>';
+      return html;
+    }
+
+    // ────────────────────────────────────────────────────────────────
+    // Map initialisation
+    // ────────────────────────────────────────────────────────────────
+    function initMap() {
+      var mapEl  = $('community-map');
+      var dataEl = $('community-map-data');
+      if (!mapEl || !dataEl || !window.ol) return;
+
+      var data   = JSON.parse(dataEl.textContent || '[]');
+      var tiles  = createTileLayers();
+      var radios = Array.from($$('input[name="community-layer-option"]'));
+
+      waitForSize(mapEl).then(function () {
+        // Vector layer with community markers
+        var iconStyle = new ol.style.Style({
+          image: new ol.style.Icon({ src: '{% static "map/images/marker-icon.png" %}', anchor: [0.5, 1] })
+        });
+
+        var features = data
+          .filter(function (c) { return typeof c.lat === 'number' && typeof c.lon === 'number'; })
+          .map(function (c) {
+            var f = new ol.Feature({
+              geometry: new ol.geom.Point(ol.proj.fromLonLat([c.lon, c.lat])),
+              name: c.name, description: c.description, image: c.image,
+              location: c.location_name, status: c.status, type: c.type,
+              url: c.url, members: c.members, children: c.children, visitors: c.visitors,
+              skills: c.skills || []
+            });
+            f.setStyle(iconStyle);
+            return f;
+          });
+
+        var vectorSource = new ol.source.Vector();
+        vectorSource.addFeatures(features);
+        var vectorLayer = new ol.layer.Vector({ source: vectorSource });
+
+        // Map instance
+        var map = new ol.Map({
+          target: mapEl,
+          layers: tiles.all.concat([vectorLayer]),
+          view: new ol.View({ center: ol.proj.fromLonLat([0, 20]), zoom: 2, minZoom: 0, maxZoom: 18 })
+        });
+
+        // Fit to markers (zoom clamped 1–3)
+        if (features.length) {
+          map.getView().fit(vectorSource.getExtent(), { padding: [48, 48, 48, 48], maxZoom: 3 });
+          if (map.getView().getZoom() < 1) map.getView().setZoom(1);
         }
-        const c = feature.get('data') || {};
-        const desc = truncateWords(c.description, 120);
-        const locLabel = c.location_name || '';
-        const parts = [
-          c.type ? `<span class="popup-type-pill">${c.type}</span>` : '',
-          c.name ? `<h3>${c.name}</h3>` : '',
-          desc ? `<div class="text-sm text-brown mt-2">${desc}</div>` : '',
-          locLabel ? `<div class="text-sm mt-1"><i class="fa fa-map-marker-alt mr-1 text-brown"></i>${locLabel}</div>` : '',
-          c.status ? `<div class="text-xs uppercase text-brown mt-1">${c.status}</div>` : '',
-          c.url ? `<a class="text-primary underline" href="${c.url}">{% trans "Open" %}</a>` : ''
-        ].filter(Boolean);
-        popupEl.innerHTML = parts.join('');
-        popupOverlay.setPosition(evt.coordinate);
-      });
 
-      if (layerWrap && layerMenu && layerToggle) {
-        const showMenu = () => { layerMenu.classList.remove('hidden'); layerToggle.classList.add('hidden'); };
-        const hideMenu = () => { layerMenu.classList.add('hidden'); layerToggle.classList.remove('hidden'); };
-        layerToggle.addEventListener('mouseenter', showMenu);
-        layerToggle.addEventListener('click', (e) => { e.stopPropagation(); showMenu(); });
-        layerMenu.addEventListener('mouseleave', hideMenu);
-        document.addEventListener('click', (e) => { if (!layerWrap.contains(e.target)) hideMenu(); });
-        layerRadios.forEach(r => { r.addEventListener('change', (e) => { if (e.target.checked) setLayerMode(e.target.value); }); });
+        // Keep map sized correctly on layout shifts
+        function syncSize() {
+          var rect = mapEl.getBoundingClientRect();
+          if (rect.width && rect.height) { map.updateSize(); map.renderSync(); }
+          else { requestAnimationFrame(syncSize); }
+        }
+        setTimeout(syncSize, 50);
+        window.addEventListener('resize', function () { map.updateSize(); });
+
+        // Popup overlay
+        var popupEl = document.createElement('div');
+        popupEl.className = 'freemarket-popup';
+        var overlay = new ol.Overlay({ element: popupEl, positioning: 'bottom-center', offset: [0, -12], stopEvent: false });
+        map.addOverlay(overlay);
+
+        map.on('singleclick', function (evt) {
+          var feature = map.forEachFeatureAtPixel(evt.pixel, function (f) { return f; });
+          if (!feature) { overlay.setPosition(undefined); return; }
+          popupEl.innerHTML = buildPopupHTML(feature);
+          overlay.setPosition(evt.coordinate);
+        });
+
+        // Layer switcher
+        var setMode = makeLayerSwitcher(tiles, radios, map);
+        initLayerMenu(radios, setMode);
+        setMode('ecobasa');
+      }).catch(function () { /* map element never got a size */ });
+    }
+
+    // ────────────────────────────────────────────────────────────────
+    // Layer menu hover / click
+    // ────────────────────────────────────────────────────────────────
+    function initLayerMenu(radios, setMode) {
+      var wrap   = $('community-layer-wrap');
+      var toggle = $('community-layer-toggle');
+      var menu   = $('community-layer-menu');
+      if (!wrap || !toggle || !menu) return;
+
+      function show() { menu.classList.remove('hidden'); toggle.classList.add('hidden'); }
+      function hide() { menu.classList.add('hidden');    toggle.classList.remove('hidden'); }
+
+      toggle.addEventListener('mouseenter', show);
+      toggle.addEventListener('click', function (e) { e.stopPropagation(); show(); });
+      menu.addEventListener('mouseleave', hide);
+      document.addEventListener('click', function (e) { if (!wrap.contains(e.target)) hide(); });
+
+      radios.forEach(function (r) {
+        r.addEventListener('change', function (e) { if (e.target.checked) setMode(e.target.value); });
+      });
+    }
+
+    // ────────────────────────────────────────────────────────────────
+    // Map / List toggle buttons
+    // ────────────────────────────────────────────────────────────────
+    function initViewToggle() {
+      var mapBtn  = $('community-toggle-map');
+      var listBtn = $('community-toggle-list');
+      if (!mapBtn || !listBtn) return;
+
+      var activeClasses  = ['bg-primary', 'bg-opacity-90', 'text-secondary', 'shadow-inner'];
+      var inactiveClasses = ['bg-primary', 'bg-opacity-40', 'text-secondary'];
+
+      function setPillState(btn, active) {
+        if (!btn) return;
+        btn.classList.remove.apply(btn.classList, activeClasses.concat(inactiveClasses));
+        (active ? activeClasses : inactiveClasses).forEach(function (c) { btn.classList.add(c); });
       }
-      setLayerMode('ecobasa');
-    };
+
+      function setActive(mode) {
+        var isMap = mode === 'map';
+        setPillState(mapBtn, isMap);
+        setPillState(listBtn, !isMap);
+      }
+
+      mapBtn.addEventListener('click',  function () { if (communityModal.close) communityModal.close(); setActive('map'); });
+      listBtn.addEventListener('click', function () { if (communityModal.open)  communityModal.open();  setActive('list'); });
+      setActive('map');
+    }
+
+    // ────────────────────────────────────────────────────────────────
+    // Boot
+    // ────────────────────────────────────────────────────────────────
+    function boot() {
+      initModal();
+      initMap();
+      initViewToggle();
+    }
 
     if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', initCommunityMap);
+      document.addEventListener('DOMContentLoaded', boot);
     } else {
-      initCommunityMap();
+      boot();
     }
+  })();
   </script>
 {% endblock %}
