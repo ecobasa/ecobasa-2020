@@ -25,6 +25,7 @@ def search(request):
             "type": ad.get_type_display(),
             "url": ad.get_absolute_url(),
             "description": ad.description,
+            "image": (ad.image.url if ad.image else None),
             "lat": ad.location.y,
             "lon": ad.location.x,
             "location_name": ad.location_name or "",

@@ -87,6 +87,12 @@
       margin-left: 8px;
       margin-bottom: 4px;
     }
+    
+    /* Low-profile suggestions dropdown (shared with communities) */
+    .suggestions-dropdown { position: absolute; left: 0; right: 0; background: rgba(252,243,229,.75); -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(5px); border: 1px solid rgba(0,0,0,0.06); box-shadow: 0 6px 18px rgba(0,0,0,0.08); z-index: 60; border-radius: 6px; overflow: hidden; }
+    .suggestions-dropdown ul { list-style: none; margin: 0; padding: 0; }
+    .suggestions-dropdown li { padding: 8px 10px; font-size: 13px; color: #452912; cursor: pointer; }
+    .suggestions-dropdown li:hover, .suggestions-dropdown li.is-active { background: rgba(218,97,55,0.6); }
 
   </style>
 {% endblock %}
@@ -150,7 +156,8 @@
           <div class="absolute ml-3 inset-y-0 flex items-center text-brown">
             <i class="fa fa-search text-primary opacity-75"></i>
           </div>
-          <input type="text" value="{{ f.form.search.data|default:"" }}" class="pl-10 form-input w-full" autocomplete="off" name="search" @keydown.enter.prevent="$event.target.form.submit()">
+          <input id="freemarket-search-input" type="text" value="{{ f.form.search.data|default:"" }}" class="pl-10 form-input w-full" autocomplete="off" name="search" @keydown.enter.prevent="$event.target.form.submit()">
+          <div class="suggestions-dropdown hidden" aria-hidden="true"></div>
         </div>
 
         <div class="relative my-2 mx-2 w-full">
@@ -233,7 +240,8 @@
           <div class="absolute ml-3 inset-y-0 flex items-center text-brown">
             <i class="fa fa-search text-primary opacity-75"></i>
           </div>
-          <input type="text" value="{{ f.form.search.data|default:"" }}" class="pl-10 form-input w-full max-w-2xl" autocomplete="off" autofocus name="search">
+          <input id="freemarket-modal-search" type="text" value="{{ f.form.search.data|default:"" }}" class="pl-10 form-input w-full max-w-2xl" autocomplete="off" autofocus name="search">
+          <div class="suggestions-dropdown hidden" aria-hidden="true"></div>
         </div>
 
         {% comment %} location field {% endcomment %}
@@ -408,6 +416,75 @@
     <script id="freemarket-map-data" type="application/json">[]</script>
   {% endif %}
   <script>
+    /* ================================================================
+       Low-profile search suggestions (shared implementation)
+       ================================================================ */
+    function buildSuggestionIndex(raw) {
+      var seen = new Map();
+      var add = function(value) {
+        if (!value) return;
+        var key = (''+value).trim();
+        if (!key) return;
+        var k = key.toLowerCase();
+        if (!seen.has(k)) seen.set(k, { type: 'name', value: key });
+      };
+      raw.forEach(function (item) {
+        // only suggest names/titles for gifting search
+        add(item.title || item.name || item.ad_title || item.heading);
+      });
+      return Array.from(seen.values());
+    }
+
+    function initSuggestions(input, index, opts) {
+      opts = opts || {};
+      var wrap = input.parentElement;
+      var box = wrap.querySelector('.suggestions-dropdown');
+      if (!box) {
+        box = document.createElement('div');
+        box.className = 'suggestions-dropdown hidden';
+        wrap.appendChild(box);
+      }
+      var list = document.createElement('ul');
+      box.appendChild(list);
+      var items = [];
+      var active = -1;
+
+      function renderMatches(term) {
+        term = (term || '').toLowerCase().trim();
+        list.innerHTML = '';
+        active = -1;
+        if (!term) { box.classList.add('hidden'); return; }
+        items = index.filter(function (it) { return it.value.toLowerCase().indexOf(term) !== -1; }).slice(0, 8);
+        if (!items.length) { box.classList.add('hidden'); return; }
+        items.forEach(function (it, i) {
+          var li = document.createElement('li');
+          li.dataset.index = i;
+          li.innerHTML = (it.type === 'skill' ? '<i class="fa fa-graduation-cap mr-2"></i>' : '') + it.value;
+          li.addEventListener('mousedown', function (e) { e.preventDefault(); choose(i); });
+          list.appendChild(li);
+        });
+        box.classList.remove('hidden');
+      }
+
+      function clear() { box.classList.add('hidden'); list.innerHTML = ''; items = []; active = -1; }
+
+      function choose(i) { var chosen = items[i]; if (!chosen) return; input.value = chosen.value; if (typeof opts.onSelect === 'function') opts.onSelect(chosen.value, chosen.type); clear(); input.focus(); }
+
+      input.addEventListener('input', function (e) { renderMatches(input.value); });
+      input.addEventListener('keydown', function (e) {
+        if (box.classList.contains('hidden')) return;
+        if (e.key === 'ArrowDown') { e.preventDefault(); active = Math.min(active + 1, items.length - 1); updateActive(); }
+        else if (e.key === 'ArrowUp') { e.preventDefault(); active = Math.max(active - 1, 0); updateActive(); }
+        else if (e.key === 'Enter') { if (active >= 0) { e.preventDefault(); choose(active); } }
+        else if (e.key === 'Escape') { clear(); }
+      });
+
+      function updateActive() { Array.from(list.children).forEach(function (li) { li.classList.remove('is-active'); }); if (active >= 0 && list.children[active]) list.children[active].classList.add('is-active'); }
+
+      document.addEventListener('click', function (e) { if (!wrap.contains(e.target)) clear(); });
+      return { render: renderMatches, clear: clear };
+    }
+
     const initFreemarket = () => {
       const listBtn = document.getElementById('freemarket-toggle-list');
       const mapBtn = document.getElementById('freemarket-toggle-map');
@@ -424,6 +501,18 @@
       if (!listBtn || !mapBtn || !modal || !modalClose || !mapEl || !dataEl) return;
 
       const mapAds = JSON.parse(dataEl.textContent || '[]');
+      // attach shared suggestion index to overlay and modal search inputs
+      try {
+        const sharedIndex = buildSuggestionIndex(mapAds);
+        const overlayInput = document.getElementById('freemarket-search-input');
+        if (overlayInput) {
+          initSuggestions(overlayInput, sharedIndex, { onSelect: (val) => { overlayInput.value = val; const form = overlayInput.closest('form'); if (form) form.submit(); } });
+        }
+        const modalInput = document.getElementById('freemarket-modal-search');
+        if (modalInput) {
+          initSuggestions(modalInput, sharedIndex, { onSelect: (val) => { modalInput.value = val; const form = document.getElementById('searchForm'); if (form) form.submit(); } });
+        }
+      } catch (err) { /* ignore */ }
       let mapInstance = null;
       let vectorLayer = null;
       let popupOverlay = null;
@@ -634,12 +723,12 @@
           }
           const ad = feature.get('data') || {};
           const desc = truncateWords(ad.description || ad.text || ad.body, 150);
-          const locLabel = ad.location_name ? (ad.location_name.split(',').slice(0, 2).join(', ').trim() || ad.location_name) : '';
+          const img = ad.image || '';
           const parts = [
             ad.type ? `<span class="popup-type-pill">${ad.type}</span>` : '',
-            ad.title ? `<h3>${ad.title}</h3>` : '',
+            ad.title ? (ad.url ? `<h3><a href="${ad.url}" class="hover:underline">${ad.title}</a></h3>` : `<h3>${ad.title}</h3>`) : '',
+            img ? `<div class="mb-2">${ad.url ? '<a href="' + ad.url + '">' : ''}<img src="${img}" alt="${ad.title || ''}" class="w-full max-w-xs rounded shadow">${ad.url ? '</a>' : ''}</div>` : '',
             desc ? `<div class="text-sm text-brown mt-2">${desc}</div>` : '',
-            locLabel ? `<div class="text-sm mt-1"><i class="fa fa-map-marker-alt mr-1 text-brown"></i>${locLabel}</div>` : '',
             ad.url ? `<a class="text-primary underline" href="${ad.url}">{% trans "Open" %}</a>` : ''
           ].filter(Boolean);
           popupEl.innerHTML = parts.join('');
