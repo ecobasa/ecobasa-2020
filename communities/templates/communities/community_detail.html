@@ -1,7 +1,52 @@
 {% extends 'base.html' %}
-{% load i18n embed_video_tags %}
+{% load i18n embed_video_tags static %}
 
 {% block content %}
+<style>
+	/* Slow fade for hero slides */
+	.hero-slide {
+		transition: opacity 1.3s ease;
+		will-change: opacity;
+	}
+</style>
+{% if photos %}
+<div class="relative w-full" style="height: 340px;">
+	{% for photo in photos %}
+	<div class="absolute inset-0 bg-center bg-cover opacity-0 transition-opacity duration-700 hero-slide" data-index="{{ forloop.counter0 }}" style="background-image: url('{{ photo.image.url }}');"></div>
+	{% endfor %}
+	<div class="absolute inset-0" aria-hidden="true"></div>
+	<div class="absolute left-0 right-0 z-10" style="bottom: 100px;">
+		<div style="color: #fcf3e5; padding-top: 20px; padding-bottom: 30px; background: rgba(14, 7, 0, 0.4); text-align: center; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);">
+			<h1 class="text-5xl text-secondary">{{ community.name }}</h1>
+		</div>
+	</div>
+	{% if photos|length > 1 %}
+		<button type="button" class="hero-arrow hero-prev absolute left-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-20 hover:bg-opacity-90 text-primary rounded-full w-10 h-10 flex items-center justify-center shadow z-10">
+			<img src="{% static 'img/arrow-left.png' %}" alt="Prev" class="w-full h-full object-contain">
+		</button>
+		<button type="button" class="hero-arrow hero-next absolute right-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-20 hover:bg-opacity-90 text-primary rounded-full w-10 h-10 flex items-center justify-center shadow z-10">
+			<img src="{% static 'img/arrow-right.png' %}" alt="Next" class="w-full h-full object-contain">
+		</button>
+		<div class="absolute left-0 right-0 z-10" style="bottom: 16px;">
+			<div class="text-center space-x-2">
+				{% for photo in photos %}
+					<button type="button" class="inline-block w-3 h-3 rounded-full bg-secondary bg-opacity-60 hero-dot" data-index="{{ forloop.counter0 }}"></button>
+				{% endfor %}
+			</div>
+		</div>
+	{% endif %}
+</div>
+{% elif hero_image %}
+<div class="relative w-full" style="height: 340px;">
+	<div class="absolute inset-0 bg-center bg-cover" style="background-image: url('{{ hero_image }}');"></div>
+	<div class="absolute inset-0" aria-hidden="true"></div>
+	<div class="absolute left-0 right-0" style="bottom: 100px;">
+		<div style="color: #fcf3e5; padding-top: 20px; padding-bottom: 20px; background: rgba(14, 7, 0, 0.4); text-align: center; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);">
+			<h1 class="text-3xl font-bold">{{ community.name }}</h1>
+		</div>
+	</div>
+</div>
+{% endif %}
 <div class="mx-auto max-w-7xl mt-10 px-4 pb-10">
 <div class="grid grid-cols-4 gap-6">
 	<div>
@@ -28,16 +73,31 @@
         <i class="mr-1 fa fa-map-marker"></i>{% trans "Land Offer" %}
       {% endif %}
   	</span>
-    <span class="block text-primary mb-2"><i class="mr-1 fa fa-users"></i>{{ community.inhabitants }} {% trans "people living there" %}</span>
-    <span class="block text-primary mb-2"><i class="mr-1 fa fa-child"></i>{{ community.children }} {% trans "children" %}</span>
+		{% with community.people_count|default:community.inhabitants as people_total %}
+			{% if people_total %}
+				<span class="block text-primary mb-2"><i class="mr-1 fa fa-users"></i>{{ people_total }} {% trans "people living there" %}</span>
+			{% endif %}
+		{% endwith %}
+		{% with community.minors_count|default:community.children as minor_total %}
+			{% if minor_total %}
+				<span class="block text-primary mb-2"><i class="mr-1 fa fa-child"></i>{{ minor_total }} {% trans "children" %}</span>
+			{% endif %}
+		{% endwith %}
     <h2>{% trans "Contact Info" %}</h2>
     <div class="w-20 sm:w-32">
     	<div class="flex flex-shrink-0 h-20 w-20 sm:h-32 sm:w-32 mb-2 bg-primary rounded-full mx-auto text-center" src="#"><i class="fa fa-user text-6xl text-secondary mx-auto object-bottom h-16"></i></div>
     	<span class="block text-primary mb-4 font-bold text-xl text-center"><a href="#"></a>{{ community.owner.name }}</span>
     	<a class="btn block mb-10" href="#"><i class="fa fa-envelope mr-1"></i>{% trans "Contact" %}</a>
     </div>
-  	<span class="block text-primary mb-2"><a href="{{ community.website }}"  target="_blank"><i class="fa fa-globe mr-1"></i>{% trans "Website" %}</a></span>
-  	<span class="block text-primary mb-2"><a href="tel:{{ community.telephone }}"  target="_blank"><i class="fa fa-phone mr-1"></i>{{ community.telephone }}</a></span>
+    {% if community.website %}
+    	<span class="block text-primary mb-2"><a href="{{ community.website }}"  target="_blank" rel="noopener"><i class="fa fa-globe mr-1"></i>{{ community.website }}</a></span>
+    {% endif %}
+    {% if community.telephone %}
+    	<span class="block text-primary mb-2"><a href="tel:{{ community.telephone }}"  target="_blank" rel="noopener"><i class="fa fa-phone mr-1"></i>{{ community.telephone }}</a></span>
+    {% endif %}
+		{% if request.user.is_authenticated and request.user.is_staff or request.user.is_authenticated and community.owner and request.user == community.owner %}
+			<a class="btn btn-green mt-4 inline-flex items-center" href="{% url 'communities:update' slug=community.slug %}"><i class="fa fa-edit mr-2"></i>{% trans "Edit" %}</a>
+		{% endif %}
 	</div>
 	<div class="col-span-3">
 		<div class="flex justify-between">
@@ -56,7 +116,7 @@
 			</ul>
 		</div>
 	</div>
-		<h1>{{ community.name }}</h1>
+		<h2 class="text-2xl font-bold text-primary">{{ community.name }}</h2>
 	  <p>
 	      {{ community.description }}
 	  </p>
@@ -81,3 +141,54 @@
 
 </div>
 {% endblock content %}
+
+{% block javascript %}
+{{ block.super }}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+	const slides = Array.from(document.querySelectorAll('.hero-slide'));
+	const dots = Array.from(document.querySelectorAll('.hero-dot'));
+	const prevBtn = document.querySelector('.hero-prev');
+	const nextBtn = document.querySelector('.hero-next');
+	if (!slides.length) return;
+
+	let current = 0;
+	let timer;
+
+	const setActive = (index) => {
+		current = index;
+		slides.forEach((slide, i) => {
+			slide.style.opacity = i === index ? '1' : '0';
+		});
+		dots.forEach((dot, i) => {
+			dot.classList.toggle('bg-primary', i === index);
+			dot.classList.toggle('bg-secondary', i !== index);
+		});
+	};
+
+	const next = () => setActive((current + 1) % slides.length);
+	const prev = () => setActive((current - 1 + slides.length) % slides.length);
+
+	dots.forEach(dot => {
+		dot.addEventListener('click', () => {
+			const idx = Number(dot.dataset.index) || 0;
+			setActive(idx);
+			restart();
+		});
+	});
+
+	if (prevBtn) prevBtn.addEventListener('click', () => { prev(); restart(); });
+	if (nextBtn) nextBtn.addEventListener('click', () => { next(); restart(); });
+
+	const restart = () => {
+		if (timer) clearInterval(timer);
+		if (slides.length > 1) {
+			timer = setInterval(next, 5000);
+		}
+	};
+
+	setActive(0);
+	restart();
+});
+</script>
+{% endblock javascript %}

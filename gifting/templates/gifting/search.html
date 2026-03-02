@@ -218,9 +218,6 @@
       <button id="freemarket-modal-close" type="button" class="absolute top-3 right-3 text-secondary text-xl leading-none px-3 py-1 bg-black bg-opacity-30 rounded-full hover:bg-opacity-50">×</button>
 
       <div class="flex items-center gap-3 flex-wrap mb-4">
-        {% if map_ads %}
-          <span class="text-sm text-primary">{% blocktrans with count=map_ads|length %}{{ count }} on this page with locations{% endblocktrans %}</span>
-        {% endif %}
         <a href="{% url "gifting:create" %}" class="btn inline-flex items-center shadow ml-auto">
           <i class="fa fa-plus mr-1"></i>
           {% trans "Add your Wish or Offer" %}

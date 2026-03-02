@@ -33,7 +33,7 @@ class Community(UniqueSlugMixin, models.Model):
         help_text=_('Skills that people can learn by volunteering or staying in your community'))
     description = models.TextField(_("Description"), blank=True)
     vision = models.TextField(_("What brings this community together?"), blank=True)
-    accomodation = models.TextField(_("Accomodation for Guests"),  help_text=_('Where can your visitors sleep? Do you have space for a bus, tents? How is the indoor sleeping situation? Do you have matresses, a couch? Do you have a donations or a pricing model? Required daily working amount or epxeriences?'), blank=True)
+    accomodation = models.TextField(_("Accomodation for Guests"),  help_text=_('Where can your visitors sleep? Do you have space for a bus, tents? How is the indoor sleeping situation? Do you have mattresses, a couch? Donations or pricing model? Required daily work or experience?'), blank=True)
     website = models.URLField(_('link of your communities website'), max_length=250,
         blank=True, null=True)
     telephone = models.CharField(_('telephone'),
@@ -55,11 +55,26 @@ class Community(UniqueSlugMixin, models.Model):
         verbose_name=_("Owner"),
         null=True,
     )
-    inhabitants = models.CharField(
-        _('how many people live in your community?'),
-        max_length=255, null=True, blank=True)
+    inhabitants = models.PositiveIntegerField(
+        _('How many people live in your community?'),
+        null=True, blank=True)
     children = models.PositiveIntegerField(
         _('how many children live at your place?'), null=True, blank=True, default=0)
+    people_count = models.CharField(
+        _('How many people live in your community?'), max_length=20, null=True, blank=True)
+    minors_count = models.PositiveIntegerField(
+        _('How many of them are under 18?'), null=True, blank=True)
+    max_guests = models.PositiveIntegerField(
+        _('Maximum number of people you can host'), null=True, blank=True)
+    has_workshop_space = models.TextField(
+        _('Do you have workshop spaces where people can build/construct/manufacture things?'), blank=True,
+        help_text=_('Describe your workshop spaces and what people can build/construct/manufacture.'))
+    offers_seminars = models.TextField(
+        _('Do you offer any seminars that visitors could attend?'), blank=True,
+        help_text=_('List seminars, topics, and how visitors can join.'))
+    visitor_requirements = models.TextField(
+        _('Requirements for visitors'), blank=True,
+        help_text=_('Anything guests must know before arriving: expectations, minimum length of stay, costs, working hours, house rules.'))
     COMMUNITY_STATUS_PLANNING = 'p'
     COMMUNITY_STATUS_STARTING = 's'
     COMMUNITY_STATUS_ESTABLISHED = 'e'
@@ -92,12 +107,12 @@ class Community(UniqueSlugMixin, models.Model):
         blank=True,
         choices=COMMUNITY_TYPE_CHOICES,
         default=COMMUNITY_TYPE_ECOVILLAGE)
-    # location_name = models.CharField(
-    #     _("Location"), null=True, blank=True, max_length=255
-    # )
-    # location = models.PointField(
-    #     _("Geo Location"), null=True, blank=True, geography=True
-    # )
+    location_name = models.CharField(
+        _("Location"), null=True, blank=True, max_length=255
+    )
+    location = models.PointField(
+        _("Geo Location"), null=True, blank=True, geography=True
+    )
 
     def __str__(self):
         return self.name
@@ -109,3 +124,19 @@ class Community(UniqueSlugMixin, models.Model):
         verbose_name = _("Community")
         verbose_name_plural = _("Communities")
         ordering = ["name"]
+
+
+class CommunityPhoto(models.Model):
+    community = models.ForeignKey(
+        Community,
+        on_delete=models.CASCADE,
+        related_name="photos",
+    )
+    image = models.ImageField(_('Image'), upload_to='community-images/')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["created_at"]
+
+    def __str__(self):
+        return f"Photo for {self.community.name}"

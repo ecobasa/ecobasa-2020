@@ -1,0 +1,440 @@
+{% extends 'base.html' %}
+{% load i18n static %}
+
+{% block extrahead %}
+  {{ block.super }}
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v7.2.2/ol.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.css">
+  <style>
+    .community-field,
+    .community-field textarea,
+    .community-field input,
+    .community-field select,
+    input.community-field,
+    textarea.community-field,
+    select.community-field {
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 4px;
+      border: 1px solid #ccc;
+      width: 100%;
+      display: block;
+      padding: 0.6rem 0.75rem;
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+<div class="mx-auto max-w-4xl px-4 mt-10 mb-12">
+  <div class="flex items-center justify-between mb-4">
+    <h1 class="text-2xl font-bold text-primary">{% trans "Add your community" %}</h1>
+    <a href="{% url 'communities:list' %}" class="btn inline-flex items-center">
+      <i class="fa fa-arrow-left mr-2"></i>
+      {% trans "Back to list" %}
+    </a>
+  </div>
+
+  <form method="post" enctype="multipart/form-data" class="space-y-6">
+    {% csrf_token %}
+    {% if form.non_field_errors %}
+      <div class="p-3 rounded bg-red-100 text-red-800 text-sm">
+        {% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
+      </div>
+    {% endif %}
+
+    <div>
+      <label class="block mb-1 text-sm font-semibold text-primary" for="id_name">{{ form.name.label }}</label>
+      {{ form.name }}
+      {% for error in form.name.errors %}<p class="text-xs text-red-600">{{ error }}</p>{% endfor %}
+    </div>
+
+    <div>
+      <label class="block mb-1 text-sm font-semibold text-primary" for="id_type">{{ form.type.label }}</label>
+      {{ form.type }}
+      {% for error in form.type.errors %}<p class="text-xs text-red-600">{{ error }}</p>{% endfor %}
+    </div>
+
+    <div>
+      <label class="block mb-1 text-sm font-semibold text-primary" for="id_status">{{ form.status.label }}</label>
+      {{ form.status }}
+      {% for error in form.status.errors %}<p class="text-xs text-red-600">{{ error }}</p>{% endfor %}
+    </div>
+
+    <div>
+      <label class="block mb-1 text-sm font-semibold text-primary" for="id_description">{{ form.description.label }}</label>
+      {{ form.description }}
+      {% for error in form.description.errors %}<p class="text-xs text-red-600">{{ error }}</p>{% endfor %}
+    </div>
+
+    <div>
+      <label class="block mb-1 text-sm font-semibold text-primary" for="id_vision">{{ form.vision.label }}</label>
+      {{ form.vision }}
+      {% for error in form.vision.errors %}<p class="text-xs text-red-600">{{ error }}</p>{% endfor %}
+    </div>
+
+    <div>
+      <label class="block mb-1 text-sm font-semibold text-primary" for="id_gallery">{% trans "Gallery images" %}</label>
+      {{ form.gallery }}
+      {% if form.gallery.help_text %}<p class="text-xs text-brown">{{ form.gallery.help_text }}</p>{% endif %}
+      {% for error in form.gallery.errors %}<p class="text-xs text-red-600">{{ error }}</p>{% endfor %}
+      {% if community and community.photos.all %}
+        <div class="mt-3 space-y-2">
+          <p class="text-sm font-semibold text-primary">{% trans "Existing photos" %}</p>
+          <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+            {% for photo in community.photos.all %}
+              <label class="block border rounded shadow-sm bg-white bg-opacity-70 p-2 cursor-pointer">
+                <img src="{{ photo.image.url }}" alt="" class="w-full h-28 object-cover rounded mb-2">
+                <span class="inline-flex items-center text-sm text-brown"><input type="checkbox" name="delete_photos" value="{{ photo.id }}" class="mr-2">{% trans "Delete" %}</span>
+              </label>
+            {% endfor %}
+          </div>
+        </div>
+      {% endif %}
+    </div>
+
+    <div class="grid md:grid-cols-3 gap-4">
+      <div>
+        <label class="block mb-1 text-sm font-semibold text-primary" for="id_people_count">{{ form.people_count.label }}</label>
+        {{ form.people_count }}
+        {% for error in form.people_count.errors %}<p class="text-xs text-red-600">{{ error }}</p>{% endfor %}
+      </div>
+      <div>
+        <label class="block mb-1 text-sm font-semibold text-primary" for="id_minors_count">{{ form.minors_count.label }}</label>
+        {{ form.minors_count }}
+        {% for error in form.minors_count.errors %}<p class="text-xs text-red-600">{{ error }}</p>{% endfor %}
+      </div>
+      <div>
+        <label class="block mb-1 text-sm font-semibold text-primary" for="id_max_guests">{{ form.max_guests.label }}</label>
+        {{ form.max_guests }}
+        {% for error in form.max_guests.errors %}<p class="text-xs text-red-600">{{ error }}</p>{% endfor %}
+      </div>
+    </div>
+
+    <div x-data="communityLocationDropdown()" class="relative">
+      <label class="block mb-1 text-sm font-semibold text-primary" for="id_location_name">{{ form.location_name.label }}</label>
+      <input type="text" name="location_name" id="id_location_name" value="{{ form.location_name.value|default_if_none:'' }}" class="community-field" @input.debounce="onInput($event.target.value)" autocomplete="off">
+      <div x-show.transition="open" @click.away="open = false" class="absolute z-20 inset-x-0 bg-secondary bg-opacity-80 shadow-lg text-xs py-3 rounded-b border-b border-l border-r">
+        <ul class="list-none m-0">
+          <template x-for="res in results" :key="res.place_id">
+            <li class="m-0"><a @click.prevent="onSelect(res)" href="#" class="block px-2 py-2 text-brown hover:bg-primary hover:text-secondary" x-text="res.display_name"></a></li>
+          </template>
+        </ul>
+      </div>
+      {% for error in form.location_name.errors %}<p class="text-xs text-red-600">{{ error }}</p>{% endfor %}
+    </div>
+
+    {{ form.location }}
+    <div class="rounded shadow overflow-hidden community-map-wrapper" style="height: 320px;">
+      <div id="community-location-map" class="w-full h-full bg-secondary bg-opacity-40"></div>
+    </div>
+    <p class="text-xs text-brown">{% trans "Click or drag the pin to set your exact location." %}</p>
+    {% for error in form.location.errors %}<p class="text-xs text-red-600">{{ error }}</p>{% endfor %}
+
+    <div>
+      <label class="block mb-1 text-sm font-semibold text-primary" for="id_accomodation">{{ form.accomodation.label }}</label>
+      {{ form.accomodation }}
+      {% if form.accomodation.help_text %}<p class="text-xs text-brown">{{ form.accomodation.help_text }}</p>{% endif %}
+      {% for error in form.accomodation.errors %}<p class="text-xs text-red-600">{{ error }}</p>{% endfor %}
+    </div>
+
+    <div>
+      <label class="block mb-1 text-sm font-semibold text-primary" for="id_visitor_requirements">{{ form.visitor_requirements.label }}</label>
+      {{ form.visitor_requirements }}
+      {% if form.visitor_requirements.help_text %}<p class="text-xs text-brown">{{ form.visitor_requirements.help_text }}</p>{% endif %}
+      {% for error in form.visitor_requirements.errors %}<p class="text-xs text-red-600">{{ error }}</p>{% endfor %}
+    </div>
+
+    <div>
+      <label class="block mb-1 text-sm font-semibold text-primary" for="id_has_workshop_space">{{ form.has_workshop_space.label }}</label>
+      {{ form.has_workshop_space }}
+      {% if form.has_workshop_space.help_text %}<p class="text-xs text-brown">{{ form.has_workshop_space.help_text }}</p>{% endif %}
+      {% for error in form.has_workshop_space.errors %}<p class="text-xs text-red-600">{{ error }}</p>{% endfor %}
+    </div>
+
+    <div>
+      <label class="block mb-1 text-sm font-semibold text-primary" for="id_offers_seminars">{{ form.offers_seminars.label }}</label>
+      {{ form.offers_seminars }}
+      {% if form.offers_seminars.help_text %}<p class="text-xs text-brown">{{ form.offers_seminars.help_text }}</p>{% endif %}
+      {% for error in form.offers_seminars.errors %}<p class="text-xs text-red-600">{{ error }}</p>{% endfor %}
+    </div>
+
+    <div>
+      <label class="block mb-1 text-sm font-semibold text-primary" for="id_website">{{ form.website.label }}</label>
+      {{ form.website }}
+      {% for error in form.website.errors %}<p class="text-xs text-red-600">{{ error }}</p>{% endfor %}
+    </div>
+
+    <div>
+      <label class="block mb-1 text-sm font-semibold text-primary" for="id_telephone">{{ form.telephone.label }}</label>
+      {{ form.telephone }}
+      {% for error in form.telephone.errors %}<p class="text-xs text-red-600">{{ error }}</p>{% endfor %}
+    </div>
+
+    <div>
+      <label class="block mb-1 text-sm font-semibold text-primary" for="id_skills">{{ form.skills.label }}</label>
+      {{ form.skills }}
+      {% if form.skills.help_text %}<p class="text-xs text-brown">{{ form.skills.help_text }}</p>{% endif %}
+      {% for error in form.skills.errors %}<p class="text-xs text-red-600">{{ error }}</p>{% endfor %}
+    </div>
+
+    <button type="submit" class="btn btn-green inline-flex items-center">
+      <i class="fa fa-check mr-2"></i>
+      {% trans "Save" %}
+    </button>
+  </form>
+</div>
+{% endblock %}
+
+{% block javascript %}
+  {{ block.super }}
+  <script src="https://cdn.jsdelivr.net/npm/ol@v7.2.2/dist/ol.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.min.js"></script>
+  <script>
+    function communityLocationDropdown() {
+      return {
+        results: [],
+        open: false,
+        loading: false,
+        async onInput(query) {
+          const term = (query || '').trim();
+          if (!term) {
+            this.results = [];
+            this.open = false;
+            return;
+          }
+          this.loading = true;
+          try {
+            const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&q=${encodeURIComponent(term)}`);
+            const data = await response.json();
+            this.results = data.slice(0, 5);
+            this.open = this.results.length > 0;
+          } catch (e) {
+            this.results = [];
+            this.open = false;
+          } finally {
+            this.loading = false;
+          }
+        },
+        onSelect(res) {
+          const lon = parseFloat(res.lon);
+          const lat = parseFloat(res.lat);
+          if (Number.isFinite(lon) && Number.isFinite(lat) && window.setCommunityPoint) {
+            window.setCommunityPoint(lon, lat, res.display_name || '');
+          }
+          this.results = [];
+          this.open = false;
+        }
+      };
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const style = document.createElement('style');
+      style.textContent = `
+        .ol-control.ol-zoom {
+          position: absolute !important;
+          inset: auto auto 1.1rem 1.1rem !important;
+          margin: 0 !important;
+          padding: 0 !important;
+          background: rgba(69, 41, 18, 0.5);
+          overflow: hidden;
+        }
+        .ol-control.ol-zoom button {
+          width: 2.3rem;
+          height: 2.3rem;
+          font-size: 1.4rem;
+          border-radius: 0;
+          background: rgba(218, 97, 55, 0.8);
+          color: #fcf3e5;
+          border: 1px solid #b4502c;
+        }
+        .ol-control.ol-zoom button:last-child { border-bottom: 0; }
+        .ol-control.ol-zoom button:hover { background: rgba(218, 97, 55, 1); }
+        .ol-control.ol-zoom button:focus { outline: none; }
+      `;
+      document.head.appendChild(style);
+
+      const locationInput = document.getElementById('id_location');
+      const nameInput = document.getElementById('id_location_name');
+      const mapTarget = document.getElementById('community-location-map');
+      if (!locationInput || !mapTarget) return;
+
+      const vectorSource = new ol.source.Vector();
+      const markerStyle = new ol.style.Style({
+        image: new ol.style.Icon({
+          src: '{% static "map/images/marker-icon.png" %}',
+          anchor: [0.5, 1]
+        })
+      });
+
+      const vectorLayer = new ol.layer.Vector({
+        source: vectorSource,
+        style: markerStyle
+      });
+
+      const stamenWatercolor = new ol.layer.Tile({
+        visible: false,
+        source: new ol.source.XYZ({
+          url: 'https://tiles.stadiamaps.com/tiles/stamen_watercolor/{z}/{x}/{y}.jpg?api_key=cb8069a3-9585-4989-a6a8-572b5c3f4ffb',
+          crossOrigin: 'anonymous'
+        })
+      });
+
+      const stamenTonerLabels = new ol.layer.Tile({
+        visible: false,
+        opacity: 0.35,
+        source: new ol.source.XYZ({
+          url: 'https://tiles.stadiamaps.com/tiles/stamen_toner_lite/{z}/{x}/{y}.png?api_key=cb8069a3-9585-4989-a6a8-572b5c3f4ffb',
+          crossOrigin: 'anonymous'
+        })
+      });
+
+      const satellite = new ol.layer.Tile({
+        visible: false,
+        source: new ol.source.XYZ({
+          url: 'https://mt{0-3}.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}',
+          attributions: '&copy; Google',
+          maxZoom: 20,
+          crossOrigin: 'anonymous'
+        })
+      });
+
+      const osmBase = new ol.layer.Tile({
+        visible: false,
+        source: new ol.source.OSM({
+          url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+          crossOrigin: 'anonymous'
+        })
+      });
+
+      const baseLayers = {
+        ecobasa: [stamenWatercolor, stamenTonerLabels],
+        satellite: [satellite],
+        osm: [osmBase]
+      };
+
+      const setBaseLayer = (key) => {
+        Object.entries(baseLayers).forEach(([name, layers]) => {
+          layers.forEach(layer => {
+            const on = name === key;
+            layer.setVisible(on);
+            layer.setZIndex(on ? 0 : -1);
+          });
+        });
+      };
+
+      const map = new ol.Map({
+        target: mapTarget,
+        layers: [stamenWatercolor, stamenTonerLabels, satellite, osmBase, vectorLayer],
+        view: new ol.View({
+          center: ol.proj.fromLonLat([0, 20]),
+          zoom: 2,
+          maxZoom: 18
+        })
+      });
+      setBaseLayer('ecobasa');
+
+      const feature = new ol.Feature();
+      vectorSource.addFeature(feature);
+
+      const setPoint = (lon, lat, { skipZoom = false, label = '' } = {}) => {
+        feature.setGeometry(new ol.geom.Point(ol.proj.fromLonLat([lon, lat])));
+        if (!skipZoom) {
+          map.getView().setCenter(ol.proj.fromLonLat([lon, lat]));
+          map.getView().setZoom(12);
+        }
+        locationInput.value = `SRID=4326;POINT (${lon} ${lat})`;
+        if (nameInput && (!nameInput.value || label)) {
+          nameInput.value = label || `${lat.toFixed(5)}, ${lon.toFixed(5)}`;
+        }
+      };
+
+      window.setCommunityPoint = (lon, lat, label) => setPoint(lon, lat, { skipZoom: false, label });
+
+      const parseExisting = () => {
+        const raw = (locationInput.value || '').trim();
+        if (!raw) return null;
+        const cleaned = raw.replace(/^SRID=\d+;\s*/i, '');
+        try {
+          const geom = new ol.format.WKT().readGeometry(cleaned);
+          const [lon, lat] = ol.proj.toLonLat(geom.getCoordinates());
+          return [lon, lat];
+        } catch (e) {
+          return null;
+        }
+      };
+
+      const existing = parseExisting();
+      if (existing) {
+        setPoint(existing[0], existing[1]);
+      }
+
+      map.on('click', (evt) => {
+        const [lon, lat] = ol.proj.toLonLat(evt.coordinate);
+        setPoint(lon, lat, { skipZoom: true });
+      });
+
+      const modify = new ol.interaction.Modify({ source: vectorSource });
+      modify.on('modifyend', () => {
+        const geom = feature.getGeometry();
+        if (!geom) return;
+        const [lon, lat] = ol.proj.toLonLat(geom.getCoordinates());
+        setPoint(lon, lat, { skipZoom: true });
+      });
+      map.addInteraction(modify);
+
+      // Layer toggle control similar to ad form
+      const layerWrap = document.createElement('div');
+      layerWrap.style.cssText = 'position:absolute;top:10px;right:10px;z-index:1000;';
+
+      const layerToggle = document.createElement('button');
+      layerToggle.type = 'button';
+      layerToggle.className = 'flex items-center justify-center w-12 h-12 rounded-md bg-primary bg-opacity-70 text-secondary shadow-lg border backdrop-blur';
+      layerToggle.style.borderColor = '#b4502c';
+      layerToggle.innerHTML = '<i class="fa fa-layer-group text-lg"></i>';
+
+      const layerMenu = document.createElement('div');
+      layerMenu.className = 'hidden absolute right-0 mt-2 w-44 bg-primary text-secondary bg-opacity-60 backdrop-blur rounded-lg shadow-xl border py-2';
+      layerMenu.style.borderColor = '#b4502c';
+      layerMenu.innerHTML = `
+        <div class="px-3 pb-1 text-xs font-semibold uppercase">{% trans "Layers" %}</div>
+        <ul class="list-none m-0 text-sm space-y-1 px-2">
+          <li><label class="inline-flex items-center w-full px-2 py-1 rounded hover:bg-secondary hover:text-primary cursor-pointer"><input type="radio" name="community-layer-option" value="ecobasa" class="form-radio mr-2 text-secondary" checked><span>{% trans "Ecobasa" %}</span></label></li>
+          <li><label class="inline-flex items-center w-full px-2 py-1 rounded hover:bg-secondary hover:text-primary cursor-pointer"><input type="radio" name="community-layer-option" value="satellite" class="form-radio mr-2 text-secondary"><span>{% trans "Satellite" %}</span></label></li>
+          <li><label class="inline-flex items-center w-full px-2 py-1 rounded hover:bg-secondary hover:text-primary cursor-pointer"><input type="radio" name="community-layer-option" value="osm" class="form-radio mr-2 text-secondary"><span>{% trans "OSM" %}</span></label></li>
+        </ul>
+      `;
+
+      layerWrap.appendChild(layerToggle);
+      layerWrap.appendChild(layerMenu);
+      map.getViewport().appendChild(layerWrap);
+
+      const layerRadios = () => layerMenu.querySelectorAll('input[name="community-layer-option"]');
+      const showMenu = () => { layerMenu.classList.remove('hidden'); layerToggle.classList.add('hidden'); };
+      const hideMenu = () => { layerMenu.classList.add('hidden'); layerToggle.classList.remove('hidden'); };
+      layerToggle.addEventListener('mouseenter', showMenu);
+      layerToggle.addEventListener('click', (e) => { e.stopPropagation(); showMenu(); });
+      layerMenu.addEventListener('mouseleave', hideMenu);
+      document.addEventListener('click', (e) => { if (!layerWrap.contains(e.target)) hideMenu(); });
+      layerRadios().forEach(r => { r.addEventListener('change', (e) => { if (e.target.checked) setBaseLayer(e.target.value); }); });
+
+      // Tagify for skills (chip-style tags)
+      const skillsInput = document.getElementById('id_skills');
+      if (skillsInput) {
+        const tagify = new Tagify(skillsInput, {
+          editTags: false,
+          dropdown: { enabled: 0 },
+        });
+
+        const syncSkillsValue = () => {
+          const values = tagify.getCleanValue().map(item => item.value || '').filter(Boolean);
+          skillsInput.value = values.join(',');
+        };
+
+        tagify.on('add', syncSkillsValue);
+        tagify.on('remove', syncSkillsValue);
+        tagify.on('blur', syncSkillsValue);
+        tagify.on('edit:updated', syncSkillsValue);
+        syncSkillsValue();
+      }
+    });
+  </script>
+{% endblock %}

@@ -46,7 +46,6 @@
   {{ block.super }}
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      // Reposition OL zoom controls bottom-left
       const style = document.createElement('style');
       style.textContent = `
         .ol-control.ol-zoom {
@@ -88,7 +87,6 @@
       const geojson = new ol.format.GeoJSON();
       const contactEmail = 'info@ecobasa.org';
 
-      // Base layers (switchable) aligned with freemarket map
       const stamenWatercolor = new ol.layer.Tile({
         visible: false,
         source: new ol.source.XYZ({
@@ -138,7 +136,6 @@
         osm: [osmBase]
       };
 
-      // Hide the widget's default base layer and add ours
       const widgetBase = map.getLayers().item(0);
       if (widgetBase) widgetBase.setVisible(false);
       Object.values(baseLayers).flat().forEach(layer => map.addLayer(layer));
@@ -153,7 +150,6 @@
         });
       };
 
-      // Layer switcher (hover/click expand) matching freemarket style
       const layerWrap = document.createElement('div');
       layerWrap.style.cssText = 'position:absolute;top:10px;right:10px;z-index:1000;';
 
