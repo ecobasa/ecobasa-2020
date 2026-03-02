@@ -16,7 +16,8 @@ from .models import User
 class LoginForm(AuthenticationForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["username"].label = _("email address or name")
+        self.fields["username"].label = _("Email (use your account email to log in)")
+        self.fields["username"].widget.attrs.setdefault("placeholder", _("email@example.com"))
         self.error_messages["invalid_login"] = _("Credentials are not correct.")
 
 
