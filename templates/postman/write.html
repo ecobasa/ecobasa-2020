@@ -146,10 +146,10 @@
                   li.className = 'px-3 py-2 cursor-pointer hover:bg-primary hover:text-secondary';
                   // create styled content: username/name bold, email small
                   const title = document.createElement('div');
-                  title.className = 'font-semibold';
+                  title.className = 'font-semibold font-serif';
                   title.textContent = nameLabel || usernameVal || emailValue;
                   const subtitle = document.createElement('div');
-                  subtitle.className = 'text-sm text-gray-200';
+                  subtitle.className = 'text-sm';
                   subtitle.textContent = (emailValue && nameLabel) ? emailValue : '';
                   li.appendChild(title);
                   if (subtitle.textContent) li.appendChild(subtitle);
