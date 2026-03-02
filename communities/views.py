@@ -11,7 +11,17 @@ from .forms import CommunityForm
 
 def index(request):
     """Map-first list of communities."""
-    communities = Community.objects.all().prefetch_related("photos", "skills").order_by("name")
+    # base queryset (used to derive country options)
+    base_qs = Community.objects.all().prefetch_related("photos", "skills").order_by("name")
+
+    # compute available countries from location_name (last comma-separated part)
+    countries = sorted({
+        loc.split(',')[-1].strip()
+        for loc in base_qs.values_list('location_name', flat=True)
+        if loc
+    })
+
+    communities = base_qs
     q = (request.GET.get("q") or "").strip()
     if q:
         communities = communities.filter(
@@ -19,6 +29,10 @@ def index(request):
             | Q(description__icontains=q)
             | Q(location_name__icontains=q)
         ).distinct()
+    # optional country filter
+    country = (request.GET.get('country') or '').strip()
+    if country:
+        communities = communities.filter(location_name__icontains=country)
 
     map_communities = []
     for c in communities:
@@ -52,6 +66,8 @@ def index(request):
             "communities": communities,
             "map_communities": map_communities,
             "q": q,
+            "countries": countries,
+            "selected_country": country,
         },
     )
 

@@ -44,12 +44,14 @@
 
   {# ── Left toolbar: search, add button ── #}
   <div class="absolute top-4 left-4 flex flex-col gap-3 w-full max-w-md">
-    <form method="get" class="bg-secondary bg-opacity-60 backdrop-blur rounded-lg shadow p-4 flex items-center gap-3">
-      <div class="relative flex-1">
+    <form method="get" class="bg-secondary bg-opacity-60 backdrop-blur rounded-lg shadow p-4 flex flex-col gap-3">
+      <div class="relative">
         <div class="absolute inset-y-0 left-3 flex items-center text-primary opacity-80"><i class="fa fa-search"></i></div>
         <input type="text" name="q" value="{{ q }}" placeholder="{% trans 'Search by name, location or skills you want to learn' %}" class="form-input w-full pl-10" autocomplete="off">
       </div>
-      <button type="submit" class="btn inline-flex items-center"><i class="fa fa-search mr-1"></i> {% trans "Search" %}</button>
+      <div class="flex">
+        <button type="submit" class="btn inline-flex items-center"><i class="fa fa-search mr-1"></i> {% trans "Search" %}</button>
+      </div>
     </form>
 
     {% if not communities %}
@@ -93,13 +95,24 @@
             aria-label="Close">&times;</button>
 
     <div class="p-5 space-y-4">
-      <div class="flex items-center gap-3">
-        <div class="relative flex-1">
-          <div class="absolute inset-y-0 left-3 flex items-center text-primary opacity-80"><i class="fa fa-search"></i></div>
-          <input id="community-modal-search" type="text" value="{{ q }}"
-                 placeholder="{% trans 'Search by name, location or skills that you want to learn' %}" class="form-input w-full pl-10" autocomplete="off">
+      <div class="flex flex-col gap-3">
+        <div class="flex items-center gap-3">
+          <div class="relative flex-1">
+            <div class="absolute inset-y-0 left-3 flex items-center text-primary opacity-80"><i class="fa fa-search"></i></div>
+            <input id="community-modal-search" type="text" value="{{ q }}"
+                   placeholder="{% trans 'Search by name, location or skills that you want to learn' %}" class="form-input w-full pl-10 rounded" autocomplete="off">
+          </div>
+          <span class="text-xs text-brown" id="community-modal-count"></span>
         </div>
-        <span class="text-xs text-brown" id="community-modal-count"></span>
+        <div>
+          <label class="sr-only">{% trans 'Country' %}</label>
+          <select name="country" id="community-modal-country" class="form-select w-full rounded bg-transparent">
+            <option value="">{% trans 'All countries' %}</option>
+            {% for c in countries %}
+              <option value="{{ c }}" {% if c == selected_country %}selected{% endif %}>{{ c }}</option>
+            {% endfor %}
+          </select>
+        </div>
       </div>
 
       <div id="community-modal-list" class="max-h-[65vh] overflow-y-auto space-y-3 pr-1">
