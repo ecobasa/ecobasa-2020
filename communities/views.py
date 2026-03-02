@@ -28,6 +28,7 @@ def index(request):
             Q(name__icontains=q)
             | Q(description__icontains=q)
             | Q(location_name__icontains=q)
+            | Q(skills__name__icontains=q)
         ).distinct()
     # optional country filter
     country = (request.GET.get('country') or '').strip()

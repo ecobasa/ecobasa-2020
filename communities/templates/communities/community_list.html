@@ -18,6 +18,11 @@
     .freemarket-popup .popup-type-pill { float: right; margin-left: 8px; margin-bottom: 4px; }
     .popup-type-pill { display: inline-flex; align-items: center; padding: 4px 10px; border-radius: 9999px; background: #da6137; color: #fcf3e5; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
     .popup-meta { font-size: 11px; color: #6b4226; margin-bottom: .4rem; }
+    /* Low-profile suggestions dropdown */
+    .suggestions-dropdown { position: absolute; left: 0; right: 0; background: rgba(252,243,229,.75); -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(5px); border: 1px solid rgba(0,0,0,0.06); box-shadow: 0 6px 18px rgba(0,0,0,0.08); z-index: 60; border-radius: 6px; overflow: hidden; }
+    .suggestions-dropdown ul { list-style: none; margin: 0; padding: 0; }
+    .suggestions-dropdown li { padding: 8px 10px; font-size: 13px; color: #452912; cursor: pointer; }
+    .suggestions-dropdown li:hover, .suggestions-dropdown li.is-active { background: rgba(218,97,55,0.6); }
   </style>
 {% endblock %}
 
@@ -45,9 +50,10 @@
   {# ── Left toolbar: search, add button ── #}
   <div class="absolute top-4 left-4 flex flex-col gap-3 w-full max-w-md">
     <form method="get" class="bg-secondary bg-opacity-60 backdrop-blur rounded-lg shadow p-4 flex flex-col gap-3">
-      <div class="relative">
+        <div class="relative">
         <div class="absolute inset-y-0 left-3 flex items-center text-primary opacity-80"><i class="fa fa-search"></i></div>
-        <input type="text" name="q" value="{{ q }}" placeholder="{% trans 'Search by name, location or skills you want to learn' %}" class="form-input w-full pl-10" autocomplete="off">
+        <input id="community-search-input" type="text" name="q" value="{{ q }}" placeholder="{% trans 'Search by name, location or skills you want to learn' %}" class="form-input w-full pl-10" autocomplete="off">
+        <div class="suggestions-dropdown hidden" aria-hidden="true"></div>
       </div>
       <div class="flex">
         <button type="submit" class="btn inline-flex items-center"><i class="fa fa-search mr-1"></i> {% trans "Search" %}</button>
@@ -118,17 +124,22 @@
       <div id="community-modal-list" class="max-h-[65vh] overflow-y-auto space-y-3 pr-1">
         {% for community in communities %}
           {% with community.photos.all|first as first_photo %}
+          {% with community.skills.all|join:", " as skilllist %}
           <div class="rounded-lg shadow bg-secondary bg-opacity-80 backdrop-blur p-4 border" style="border-color:#b4502c;"
-               data-name="{{ community.name|lower }}" data-location="{{ community.location_name|default_if_none:''|lower }}">
+            data-name="{{ community.name|lower }}" data-location="{{ community.location_name|default_if_none:''|lower }}" data-skills="{{ skilllist|lower }}">
             {% if first_photo %}
             <div class="mb-3 -mx-4 -mt-4">
-              <img src="{{ first_photo.image.url }}" alt="{{ community.name }}" class="w-full h-40 object-cover rounded-t-lg">
+              <a href="{{ community.get_absolute_url }}">
+                <img src="{{ first_photo.image.url }}" alt="{{ community.name }}" class="w-full h-40 object-cover rounded-t-lg">
+              </a>
             </div>
             {% endif %}
             <div class="flex items-start justify-between gap-3">
               <div>
                 <div class="text-xs uppercase tracking-wide text-primary font-semibold">{{ community.get_type_display }}</div>
-                <h3 class="text-lg font-bold text-primary">{{ community.name }}</h3>
+                <a href="{{ community.get_absolute_url }}">
+                  <h3 class="text-lg font-bold text-primary my-2">{{ community.name }}</h3>
+                </a>
                 <div class="text-sm text-brown"><i class="fa fa-map-marker-alt mr-1"></i>{{ community.location_name }}</div>
               </div>
               <span class="px-3 py-1 rounded-full bg-primary text-secondary text-xs font-semibold">{{ community.get_status_display }}</span>
@@ -145,6 +156,7 @@
               {% trans "Open" %} <i class="fa fa-arrow-right ml-2"></i>
             </a>
           </div>
+          {% endwith %}
           {% endwith %}
         {% empty %}
           <p class="text-primary">{% trans "No communities yet." %}</p>
@@ -200,6 +212,88 @@
     }
 
     // ────────────────────────────────────────────────────────────────
+    // Low-profile search suggestions
+    // Build a compact index of names, locations and skills from the map data
+    // and attach suggestion dropdowns to inputs.
+    function buildSuggestionIndex(raw) {
+      var seen = new Map();
+      var add = function(type, value) {
+        if (!value) return;
+        var key = (''+value).trim();
+        var k = key.toLowerCase();
+        if (!seen.has(k)) seen.set(k, { type: type, value: key });
+      };
+      raw.forEach(function (c) {
+        add('name', c.name);
+        if (c.location_name) {
+          c.location_name.split(',').map(function (p) { return p.trim(); }).forEach(function (part) { add('location', part); });
+        }
+        (c.skills || []).forEach(function (s) { add('skill', s); });
+      });
+      return Array.from(seen.values());
+    }
+
+    function initSuggestions(input, index, opts) {
+      opts = opts || {};
+      var wrap = input.parentElement;
+      var box = wrap.querySelector('.suggestions-dropdown');
+      if (!box) {
+        box = document.createElement('div');
+        box.className = 'suggestions-dropdown hidden';
+        wrap.appendChild(box);
+      }
+      var list = document.createElement('ul');
+      box.appendChild(list);
+      var items = [];
+      var active = -1;
+
+      function renderMatches(term) {
+        term = (term || '').toLowerCase().trim();
+        list.innerHTML = '';
+        active = -1;
+        if (!term) { box.classList.add('hidden'); return; }
+        items = index.filter(function (it) { return it.value.toLowerCase().indexOf(term) !== -1; }).slice(0, 8);
+        if (!items.length) { box.classList.add('hidden'); return; }
+        items.forEach(function (it, i) {
+          var li = document.createElement('li');
+          li.dataset.index = i;
+          li.innerHTML = (it.type === 'skill' ? '<i class="fa fa-graduation-cap mr-2"></i>' : '') + it.value;
+          li.addEventListener('mousedown', function (e) {
+            e.preventDefault();
+            choose(i);
+          });
+          list.appendChild(li);
+        });
+        box.classList.remove('hidden');
+      }
+
+      function clear() { box.classList.add('hidden'); list.innerHTML = ''; items = []; active = -1; }
+
+      function choose(i) {
+        var chosen = items[i]; if (!chosen) return; input.value = chosen.value;
+        if (typeof opts.onSelect === 'function') opts.onSelect(chosen.value, chosen.type);
+        clear(); input.focus();
+      }
+
+      input.addEventListener('input', function (e) { renderMatches(input.value); });
+      input.addEventListener('keydown', function (e) {
+        if (box.classList.contains('hidden')) return;
+        if (e.key === 'ArrowDown') { e.preventDefault(); active = Math.min(active + 1, items.length - 1); updateActive(); }
+        else if (e.key === 'ArrowUp') { e.preventDefault(); active = Math.max(active - 1, 0); updateActive(); }
+        else if (e.key === 'Enter') { if (active >= 0) { e.preventDefault(); choose(active); } }
+        else if (e.key === 'Escape') { clear(); }
+      });
+
+      function updateActive() {
+        Array.from(list.children).forEach(function (li) { li.classList.remove('is-active'); });
+        if (active >= 0 && list.children[active]) list.children[active].classList.add('is-active');
+      }
+
+      document.addEventListener('click', function (e) { if (!wrap.contains(e.target)) clear(); });
+      return { render: renderMatches, clear: clear };
+    }
+
+    // ────────────────────────────────────────────────────────────────
     // List modal
     // ────────────────────────────────────────────────────────────────
     function initModal() {
@@ -215,7 +309,7 @@
         var term = (searchIn.value || '').toLowerCase().trim();
         var visible = 0;
         items.forEach(function (item) {
-          var hay = (item.dataset.name || '') + ' ' + (item.dataset.location || '');
+          var hay = (item.dataset.name || '') + ' ' + (item.dataset.location || '') + ' ' + (item.dataset.skills || '');
           var show = !term || hay.includes(term);
           item.style.display = show ? '' : 'none';
           if (show) visible++;
@@ -243,6 +337,13 @@
       modal.addEventListener('click', function (e) { if (e.target === modal) communityModal.close(); });
       searchIn.addEventListener('input', update);
       update();
+
+      // attach low-profile suggestions to modal search
+      try {
+        var raw = JSON.parse((document.getElementById('community-map-data')||{textContent:'[]'}).textContent || '[]');
+        var idx = buildSuggestionIndex(raw);
+        initSuggestions(searchIn, idx, { onSelect: function (val) { searchIn.value = val; update(); } });
+      } catch (err) { /* ignore */ }
     }
 
     // ────────────────────────────────────────────────────────────────
@@ -483,6 +584,16 @@
     // Boot
     // ────────────────────────────────────────────────────────────────
     function boot() {
+      // build a shared suggestion index from map data and attach to overlay search
+      try {
+        var raw = JSON.parse((document.getElementById('community-map-data')||{textContent:'[]'}).textContent || '[]');
+        var sharedIndex = buildSuggestionIndex(raw);
+        var overlayInput = document.getElementById('community-search-input');
+        if (overlayInput) {
+          initSuggestions(overlayInput, sharedIndex, { onSelect: function (val) { var form = overlayInput.closest('form'); if (form) { overlayInput.value = val; form.submit(); } } });
+        }
+      } catch (err) { /* ignore */ }
+
       initModal();
       initMap();
       initViewToggle();
