@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% load crispy_forms_tags i18n %}
+{% load crispy_forms_tags i18n static %}
 
 {% block content %}
 <div class="mx-auto max-w-4xl px-4 mt-10">
@@ -46,6 +46,38 @@
   {{ block.super }}
   <script>
     document.addEventListener('DOMContentLoaded', () => {
+      // Reposition OL zoom controls bottom-left
+      const style = document.createElement('style');
+      style.textContent = `
+        .ol-control.ol-zoom {
+          position: absolute !important;
+          inset: auto auto 1.1rem 1.1rem !important;
+          margin: 0 !important;
+          padding: 0 !important;
+          background: rgba(69, 41, 18, 0.5);
+          overflow: hidden;
+        }
+        .ol-control.ol-zoom button {
+          width: 2.3rem;
+          height: 2.3rem;
+          font-size: 1.4rem;
+          border-radius: 0;
+          background: transparent;
+          color: #fcf3e5;
+          border: none;
+        }
+        .ol-control.ol-zoom button:last-child {
+          border-bottom: 0;
+        }
+        .ol-control.ol-zoom button:hover {
+          background: rgba(218, 97, 55, 0.95);
+        }
+        .ol-control.ol-zoom button:focus {
+          outline: none;
+        }
+      `;
+      document.head.appendChild(style);
+
       const mapWidget = window.geodjango_location || window.geodjango_id_location; // injected by Django OSMWidget
       const valueInput = document.getElementById('id_location');
       const nameInput = document.getElementById('id_location_name');
@@ -56,59 +88,54 @@
       const geojson = new ol.format.GeoJSON();
       const contactEmail = 'info@ecobasa.org';
 
-      // Base layers (switchable)
+      // Base layers (switchable) aligned with freemarket map
+      const stamenWatercolor = new ol.layer.Tile({
+        visible: false,
+        source: new ol.source.XYZ({
+          url: 'https://tiles.stadiamaps.com/tiles/stamen_watercolor/{z}/{x}/{y}.jpg?api_key=cb8069a3-9585-4989-a6a8-572b5c3f4ffb',
+          crossOrigin: 'anonymous'
+        })
+      });
+
+      const stamenTonerLabels = new ol.layer.Tile({
+        visible: false,
+        opacity: 0.35,
+        source: new ol.source.XYZ({
+          url: 'https://tiles.stadiamaps.com/tiles/stamen_toner_lite/{z}/{x}/{y}.png?api_key=cb8069a3-9585-4989-a6a8-572b5c3f4ffb',
+          crossOrigin: 'anonymous'
+        })
+      });
+
+      const satellite = new ol.layer.Tile({
+        visible: false,
+        source: new ol.source.XYZ({
+          url: 'https://mt{0-3}.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}',
+          attributions: '&copy; Google',
+          maxZoom: 20,
+          crossOrigin: 'anonymous'
+        })
+      });
+
+      const osmBase = new ol.layer.Tile({
+        visible: false,
+        source: new ol.source.OSM({
+          url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+          crossOrigin: 'anonymous'
+        })
+      });
+
+      const enableOsmFallback = () => {
+        if (!osmBase.getVisible()) {
+          osmBase.setVisible(true);
+        }
+      };
+      stamenWatercolor.getSource().on('tileloaderror', enableOsmFallback);
+      stamenTonerLabels.getSource().on('tileloaderror', enableOsmFallback);
+
       const baseLayers = {
-        ecobasa: [
-          new ol.layer.Tile({
-            visible: false,
-            opacity: 0.6,
-            source: new ol.source.XYZ({
-              url: 'https://tiles.stadiamaps.com/tiles/stamen_watercolor/{z}/{x}/{y}.jpg',
-              maxZoom: 18,
-              attributions: []
-            })
-          }),
-          new ol.layer.Tile({
-            visible: false,
-            opacity: 0.3,
-            source: new ol.source.XYZ({
-              url: 'https://tiles.stadiamaps.com/tiles/stamen_toner_lite/{z}/{x}/{y}@2x.png',
-              tilePixelRatio: 2,
-              maxZoom: 20,
-              attributions: [
-                '&copy; <a href="https://stadiamaps.com/" target="_blank">Stadia Maps</a>',
-                '&copy; <a href="https://stamen.com/" target="_blank">Stamen Design</a>',
-                '&copy; <a href="https://openmaptiles.org/" target="_blank">OpenMapTiles</a>',
-                '&copy; <a href="https://www.openstreetmap.org/copyright/" target="_blank">OpenStreetMap</a>'
-              ]
-            })
-          })
-        ],
-        satellite: [
-          new ol.layer.Tile({
-            visible: false,
-            source: new ol.source.XYZ({
-              url: 'https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-              maxZoom: 19,
-              attributions: ['Tiles © Esri — Source: Esri, Maxar, Earthstar Geographics, USDA FSA, USGS, Aerogrid, IGN, and the GIS User Community']
-            })
-          }),
-          new ol.layer.Tile({
-            visible: false,
-            opacity: 0.6,
-            source: new ol.source.XYZ({
-              url: 'https://tiles.stadiamaps.com/tiles/stamen_toner_labels/{z}/{x}/{y}@2x.png',
-              tilePixelRatio: 2,
-              maxZoom: 20,
-              attributions: [
-                '&copy; <a href="https://stadiamaps.com/" target="_blank">Stadia Maps</a>',
-                '&copy; <a href="https://stamen.com/" target="_blank">Stamen Design</a>',
-                '&copy; <a href="https://openmaptiles.org/" target="_blank">OpenMapTiles</a>',
-                '&copy; <a href="https://www.openstreetmap.org/copyright/" target="_blank">OpenStreetMap</a>'
-              ]
-            })
-          })
-        ]
+        ecobasa: [stamenWatercolor, stamenTonerLabels],
+        satellite: [satellite],
+        osm: [osmBase]
       };
 
       // Hide the widget's default base layer and add ours
@@ -126,22 +153,84 @@
         });
       };
 
-      // Simple layer switcher control
-      const controlEl = document.createElement('div');
-      controlEl.style.cssText = 'position:absolute;top:10px;right:10px;z-index:1000;background:rgba(69,41,18,0.8);color:#fcf3e5;padding:6px 8px;border-radius:6px;font-size:12px;display:flex;gap:6px;';
-      const makeBtn = (label, key) => {
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.textContent = label;
-        btn.style.cssText = 'background:#da6137;color:#fcf3e5;border:1px solid #b4502c;border-radius:4px;padding:4px 6px;cursor:pointer;';
-        btn.addEventListener('click', () => setBaseLayer(key));
-        return btn;
+      // Layer switcher (hover/click expand) matching freemarket style
+      const layerWrap = document.createElement('div');
+      layerWrap.style.cssText = 'position:absolute;top:10px;right:10px;z-index:1000;';
+
+      const layerToggle = document.createElement('button');
+      layerToggle.id = 'ad-form-layer-toggle';
+      layerToggle.type = 'button';
+      layerToggle.className = 'flex items-center justify-center w-12 h-12 rounded-md bg-primary bg-opacity-70 text-secondary shadow-lg border backdrop-blur';
+      layerToggle.style.borderColor = '#b4502c';
+      layerToggle.innerHTML = '<i class="fa fa-layer-group text-lg"></i>';
+
+      const layerMenu = document.createElement('div');
+      layerMenu.id = 'ad-form-layer-menu';
+      layerMenu.className = 'hidden absolute right-0 mt-2 w-44 bg-primary text-secondary bg-opacity-60 backdrop-blur rounded-lg shadow-xl border py-2';
+      layerMenu.style.borderColor = '#b4502c';
+      layerMenu.innerHTML = `
+        <div class="px-3 pb-1 text-xs font-semibold uppercase">{% trans "Layers" %}</div>
+        <ul class="list-none m-0 text-sm space-y-1 px-2">
+          <li>
+            <label class="inline-flex items-center w-full px-2 py-1 rounded hover:bg-secondary hover:text-primary cursor-pointer">
+              <input type="radio" name="ad-form-layer-option" value="ecobasa" class="form-radio mr-2 text-secondary" checked>
+              <span>{% trans "ecobasa" %}</span>
+            </label>
+          </li>
+          <li>
+            <label class="inline-flex items-center w-full px-2 py-1 rounded hover:bg-secondary hover:text-primary cursor-pointer">
+              <input type="radio" name="ad-form-layer-option" value="satellite" class="form-radio mr-2 text-secondary">
+              <span>{% trans "Satellite" %}</span>
+            </label>
+          </li>
+          <li>
+            <label class="inline-flex items-center w-full px-2 py-1 rounded hover:bg-secondary hover:text-primary cursor-pointer">
+              <input type="radio" name="ad-form-layer-option" value="osm" class="form-radio mr-2 text-secondary">
+              <span>{% trans "OSM" %}</span>
+            </label>
+          </li>
+        </ul>
+      `;
+
+      layerWrap.appendChild(layerToggle);
+      layerWrap.appendChild(layerMenu);
+      map.getViewport().appendChild(layerWrap);
+
+      const layerRadios = () => layerMenu.querySelectorAll('input[name="ad-form-layer-option"]');
+
+      const showMenu = () => {
+        layerMenu.classList.remove('hidden');
+        layerToggle.classList.add('hidden');
       };
-      controlEl.appendChild(makeBtn('Ecobasa map', 'ecobasa'));
-      controlEl.appendChild(makeBtn('Satellite', 'satellite'));
-      const ctrl = new ol.control.Control({ element: controlEl });
-      map.addControl(ctrl);
+      const hideMenu = () => {
+        layerMenu.classList.add('hidden');
+        layerToggle.classList.remove('hidden');
+      };
+
+      layerToggle.addEventListener('mouseenter', showMenu);
+      layerToggle.addEventListener('click', (e) => { e.stopPropagation(); showMenu(); });
+      layerMenu.addEventListener('mouseleave', hideMenu);
+      document.addEventListener('click', (e) => {
+        if (!layerWrap.contains(e.target)) hideMenu();
+      });
+
+      layerRadios().forEach(r => {
+        r.addEventListener('change', (e) => {
+          if (e.target.checked) setBaseLayer(e.target.value);
+        });
+      });
       setBaseLayer('ecobasa');
+
+      // Custom marker icon style
+      const markerStyle = new ol.style.Style({
+        image: new ol.style.Icon({
+          src: '{% static "map/images/marker-icon.png" %}',
+          anchor: [0.5, 1]
+        })
+      });
+      if (mapWidget.featureOverlay && mapWidget.featureOverlay.setStyle) {
+        mapWidget.featureOverlay.setStyle(markerStyle);
+      }
 
       const debounce = (fn, delay = 500) => {
         let t;
