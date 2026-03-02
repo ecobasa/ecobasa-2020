@@ -1,145 +1,717 @@
 {% extends 'base.html' %}
-{% load crispy_forms_tags i18n %}
+{% load static crispy_forms_tags i18n %}
+
+{% block extrahead %}
+  {{ block.super }}
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v7.2.2/ol.css">
+  <style>
+    /* Place OL zoom controls bottom-left to avoid overlay collisions */
+    .ol-zoom {
+      top: auto;
+      left: 1rem;
+      bottom: 1rem;
+      right: auto;
+    }
+    .ol-zoom button {
+      width: 2.75rem;
+      height: 2.75rem;
+      font-size: 1.25rem;
+      border-radius: 0.75rem;
+    }
+
+    .freemarket-shell {
+      height: calc(100vh - 113px);
+      max-height: calc(100vh - 113px);
+      padding-bottom: 48px;
+      box-sizing: border-box;
+      overflow: hidden;
+    }
+
+    /* Map popup styling to echo Leaflet tooltips */
+    .freemarket-popup {
+      position: relative;
+      background: rgba(252, 243, 229, 0.8);
+      color: #452912;
+      border-radius: 10px;
+      padding: 15px 20px;
+      box-shadow: 0 3px 14px rgba(0,0,0,0.4);
+      font-size: 13px;
+      line-height: 1.4;
+      min-width: 180px;
+      top: -10px;
+    }
+    .freemarket-popup:before {
+      content: '';
+      position: absolute;
+      bottom: -10px;
+      left: 50%;
+      transform: translateX(-50%);
+      border-width: 10px 10px 0 10px;
+      border-style: solid;
+      border-color: #b4502c transparent transparent transparent;
+    }
+    .freemarket-popup:after {
+      content: '';
+      position: absolute;
+      bottom: -9px;
+      left: 50%;
+      transform: translateX(-50%);
+      border-width: 9px 9px 0 9px;
+      border-style: solid;
+      border-color: rgba(252, 243, 229, 0.8) transparent transparent transparent;
+    }
+
+    .popup-type-pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 10px;
+      border-radius: 9999px;
+      background: #da6137;
+      color: #fcf3e5;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .freemarket-popup h3 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      line-height: 1.3;
+      margin: 0 0 0.35rem 0;
+      color: #452912;
+    }
+
+    .freemarket-popup .popup-type-pill {
+      float: right;
+      margin-left: 8px;
+      margin-bottom: 4px;
+    }
+
+  </style>
+{% endblock %}
 
 {% block content %}
 
-{% comment %} filter bar {% endcomment %}
-<div class="bg-secondary bg-opacity-50 shadow py-4">
-  <form id="searchForm" x-data="" method="get" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 js-submit-on-input">
-    <div class="flex items-center flex-wrap -mx-2">
+<div class="relative w-full freemarket-shell">
+  <div id="freemarket-map" class="absolute inset-0 w-full h-full rounded shadow bg-secondary bg-opacity-50"></div>
 
-      {% comment %} search field {% endcomment %}
-      <div class="relative w-full max-w-2xl my-2 mx-2">
-        <div class="absolute ml-3 inset-y-0 flex items-center text-brown">
-          <i class="fa fa-search text-primary opacity-75"></i>
-        </div>
-        <input type="text" value="{{ f.form.search.data|default:"" }}" class="pl-10 form-input w-full max-w-2xl" autocomplete="off" autofocus name="search">
+  {% comment %} overlay controls {% endcomment %}
+  <div class="absolute top-4 left-1/2 transform -translate-x-1/2">
+    <div class="inline-flex overflow-hidden rounded-full shadow-lg border bg-primary bg-opacity-20 backdrop-blur" style="border-color: #b4502c;">
+      <button id="freemarket-toggle-map" type="button" aria-label="{% trans "Show map view" %}" class="px-4 py-2 text-sm font-semibold flex items-center gap-2 text-secondary bg-primary bg-opacity-40 hover:bg-primary hover:text-secondary transition-colors duration-150">
+        <i class="fa fa-globe"></i>
+        {% trans "Map" %}
+      </button>
+      <button id="freemarket-toggle-list" type="button" aria-label="{% trans "Show list view" %}" class="px-4 py-2 text-sm font-semibold flex items-center gap-2 text-secondary bg-primary bg-opacity-40 hover:bg-primary hover:text-secondary transition-colors duration-150">
+        <i class="fa fa-list-alt"></i>
+        {% trans "List" %}
+      </button>
+    </div>
+  </div>
+
+  <div id="freemarket-layer-wrap" class="absolute top-4 right-4">
+    <div class="relative">
+      <button id="freemarket-layer-toggle" type="button" class="flex items-center justify-center w-14 h-14 rounded-md bg-primary bg-opacity-60 text-secondary shadow-lg border backdrop-blur" style="border-color: #b4502c;">
+        <i class="fa fa-layer-group text-xl"></i>
+      </button>
+      <div id="freemarket-layer-menu" class="hidden absolute right-0 mt-2 w-48 bg-primary text-secondary bg-opacity-60 backdrop-blur rounded-lg shadow-xl border py-2" style="border-color: #b4502c;">
+        <div class="px-3 pb-1 text-xs font-semibold uppercase">{% trans "Layers" %}</div>
+        <ul class="list-none m-0 text-sm space-y-1 px-2">
+          <li>
+            <label class="inline-flex items-center w-full px-2 py-1 rounded hover:bg-secondary hover:text-primary cursor-pointer">
+              <input type="radio" name="freemarket-layer-option" value="ecobasa" class="form-radio mr-2 text-secondary" checked>
+              <span>{% trans "ecobasa" %}</span>
+            </label>
+          </li>
+          <li>
+            <label class="inline-flex items-center w-full px-2 py-1 rounded hover:bg-secondary hover:text-primary cursor-pointer">
+              <input type="radio" name="freemarket-layer-option" value="satellite" class="form-radio mr-2 text-secondary">
+              <span>{% trans "Satellite" %}</span>
+            </label>
+          </li>
+          <li>
+            <label class="inline-flex items-center w-full px-2 py-1 rounded hover:bg-secondary hover:text-primary cursor-pointer">
+              <input type="radio" name="freemarket-layer-option" value="osm" class="form-radio mr-2 text-secondary">
+              <span>{% trans "OSM" %}</span>
+            </label>
+          </li>
+        </ul>
       </div>
+    </div>
+  </div>
 
-      {% comment %} location field {% endcomment %}
-      <div class="relative my-2 mx-2" x-data="locationDropdown()">
-        <div class="relative w-full max-w-2xl">
-          <div class="absolute ml-3 inset-y-0 flex items-center text-primary">
-            <i class="fa fa-map-marker-alt mr-1 text-primary opacity-75" onclick="getLocation()"></i>
+  {% comment %} add button and map overlay filters {% endcomment %}
+  <div class="absolute top-4 left-4 flex flex-col gap-3 w-full max-w-md">
+    <form id="searchFormMap" x-data="locationDropdownMap()" method="get" class="js-submit-on-input bg-secondary bg-opacity-50 backdrop-blur rounded-lg shadow p-4">
+      <input type="hidden" name="view" value="map">
+      <div class="flex items-center flex-wrap -mx-2">
+        <div class="relative w-full my-2 mx-2">
+          <div class="absolute ml-3 inset-y-0 flex items-center text-brown">
+            <i class="fa fa-search text-primary opacity-75"></i>
           </div>
-          <input id="location_name" x-ref="input" type="text" @input.debounce="onInput($event.target.value)" value="{{ f.form.location_name.data|default:"" }}" placeholder="Sort by Location" class="form-input w-full max-w-2xl pl-10" autocomplete="off" autofocus name="location_name">
+          <input type="text" value="{{ f.form.search.data|default:"" }}" class="pl-10 form-input w-full" autocomplete="off" name="search" @keydown.enter.prevent="$event.target.form.submit()">
         </div>
-        <input x-ref="location" type="hidden" value="{{ f.form.location.data|default:"" }}" name="location">
-        <div x-show.transition="open" @click.away="open = false" class="absolute inset-x-0 bg-secondary bg-opacity-50 shadow-lg text-xs py-3 rounded-b border-brown border-opacity-50 border-b border-l border-r">
-          <ul class="list-none">
-            <template x-for="res in results" :key="res">
-              <li class="m-0"><a @click.prevent="onSelect(res)" href="#" class="block px-2 py-2 text-brown hover:bg-primary hover:text-secondary" x-text="res.display_name"></a></li>
-            </template>
-          </ul>
+
+        <div class="relative my-2 mx-2 w-full">
+          <div class="absolute ml-3 inset-y-0 flex items-center text-primary">
+            <i class="fa fa-map-marker-alt mr-1 text-primary opacity-75" onclick="getLocationMap()"></i>
+          </div>
+          <input id="location_name_map" x-ref="input" type="text" @input.debounce="onInput($event.target.value)" value="{{ f.form.location_name.data|default:"" }}" placeholder="Sort by Location" class="form-input w-full pl-10" autocomplete="off" name="location_name" @keydown.enter.prevent="$event.target.form.submit()">
+          <input x-ref="location" type="hidden" value="{{ f.form.location.data|default:"" }}" name="location">
+          <div x-show.transition="open" @click.away="open = false" class="absolute z-50 inset-x-0 bg-secondary bg-opacity-80 shadow-lg text-xs py-3 rounded-b border-brown border-opacity-50 border-b border-l border-r">
+            <ul class="list-none">
+              <template x-for="res in results" :key="res">
+                <li class="m-0"><a @click.prevent="onSelect(res)" href="#" class="block px-2 py-2 text-brown hover:bg-primary hover:text-secondary" x-text="res.display_name"></a></li>
+              </template>
+            </ul>
+          </div>
+        </div>
+
+        <div class="w-full px-2 flex flex-wrap items-center gap-4" x-on:input="$event.target.form.submit()">
+          {% for t in f.form.type %}
+            <label class="inline-flex items-center">
+              <input type="checkbox" name="{{ t.data.name }}" value="{{ t.data.value }}" {% if t.data.selected %}checked{% endif %} class="form-checkbox h-5 w-5">
+              <span class="ml-2">{{ t.choice_label }}</span>
+            </label>
+          {% endfor %}
+          {% for t in f.form.categories %}
+            <label class="inline-flex items-center">
+              <input type="checkbox" name="{{ t.data.name }}" value="{{ t.data.value }}" {% if t.data.selected %}checked{% endif %} class="form-checkbox h-5 w-5">
+              <span class="ml-2">{{ t.choice_label }}</span>
+            </label>
+          {% endfor %}
+          {% if user.is_authenticated %}
+            <label class="inline-flex items-center">
+              <input type="checkbox" name="{{ f.form.from_me.name }}" value="on" {% if f.form.from_me.data %}checked{% endif %} class="form-checkbox h-5 w-5">
+              <span class="ml-2">{{ f.form.from_me.label }}</span>
+            </label>
+          {% endif %}
+        </div>
+        <div class="w-full flex items-center justify-between mt-2 px-2">
+          <div class="text-sm text-brown whitespace-nowrap">
+            {% if page_obj %}
+              {% blocktrans count count=page_obj.paginator.count %}{{ count }} result{% plural %}{{ count }} results{% endblocktrans %}
+            {% else %}
+              {% trans "No results found" %}
+            {% endif %}
+          </div>
+          <button type="submit" class="btn inline-flex items-center">
+            <i class="fa fa-search mr-2"></i>
+            {% trans "Search" %}
+          </button>
         </div>
       </div>
-      <script>
-        function locationDropdown() {
-          return {
-            results: [],
-            open: false,
-            onSelect(res) {
-              this.$refs.location.value = res.lat + ',' + res.lon
-              this.$refs.input.value = res.display_name
-              this.open = false
-              document.getElementById("searchForm").submit()
-            },
-            onInput(input) {
-              if (input.length < 3) { results = []; return }
-              fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=5&q=${input}`).then(res => res.json()).then(json => {
-                this.open = true
-                this.results = json
-              })
-            }
-          }
-        }
-        
-        var x = document.getElementById("location_name");
+    </form>
 
-        function getLocation() {
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(
-                    // Success function
-                    showPosition, 
-                    // Error function
-                    null, 
-                    // Options. See MDN for details.
-                    {
-                       enableHighAccuracy: true,
-                       timeout: 5000,
-                       maximumAge: 0
-                    });
-            } else { 
-                x.value = "{%trans 'Geolocation is not supported by this browser.' %}";
-            }
-        }
-
-        function showPosition(position) {
-            this.location.value=position.coords.latitude + "," + position.coords.longitude;
-            x.value = "{%trans 'Current Location' %}";
-              document.getElementById("searchForm").submit()
-        }
-      </script>
-
-      <button class="btn m-2 hidden sm:block"><i class="fa fa-search mr-1"></i>{% trans "Search" %}</button>
-    </div>
-
-    <div x-on:input="$event.target.form.submit()">
-      <div class="space-x-2 mb-2">
-        {% for t in f.form.type %}
-          <label class="inline-flex items-center">
-            <input type="checkbox" name="{{ t.data.name }}" value="{{ t.data.value }}" {% if t.data.selected %}checked{% endif %} class="form-checkbox h-5 w-5">
-            <span class="ml-2">{{ t.choice_label }}</span>
-          </label>
-        {% endfor %}
-      </div>
-      <div class="space-x-2 mb-2">
-        {% for t in f.form.categories %}
-          <label class="inline-flex items-center">
-            <input type="checkbox" name="{{ t.data.name }}" value="{{ t.data.value }}" {% if t.data.selected %}checked{% endif %} class="form-checkbox h-5 w-5">
-            <span class="ml-2">{{ t.choice_label }}</span>
-          </label>
-        {% endfor %}
-      </div>
-      {% if user.is_authenticated %}
-        <div>
-          <label class="inline-flex items-center">
-            <input type="checkbox" name="{{ f.form.from_me.name }}" value="on" {% if f.form.from_me.data %}checked{% endif %} class="form-checkbox h-5 w-5">
-            <span class="ml-2">{{ f.form.from_me.label }}</span>
-          </label>
-        </div>
-      {% endif %}
-    </div>
-  </form>
-
-
-</div>
-
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-
-  <div class="my-10">
-    {% comment %} Add button {% endcomment %}
-    <a href="{% url "gifting:create" %}" class="btn inline-flex items-center shadow">
+    <a href="{% url "gifting:create" %}" class="btn inline-flex items-center shadow self-start">
       <i class="fa fa-plus mr-1"></i>
       {% trans "Add your Wish or Offer" %}
     </a>
   </div>
+</div>
 
-  {% if page_obj %}
-    <p>{% blocktrans with count=page_obj.paginator.count %}{{ count }} found{% endblocktrans %}</p>
-    
-    {% comment %} results {% endcomment %}
-    {% for ad in page_obj %}
-      {% include "./_ad.html" %}
-    {% endfor %}
+<div id="freemarket-modal" class="fixed inset-0 z-30 hidden">
+  <div class="absolute inset-0 bg-black bg-opacity-60 backdrop-blur-sm"></div>
+  <div class="absolute inset-0 overflow-auto flex justify-center items-start pt-12 pb-12 px-4">
+    <div class="relative w-full max-w-5xl bg-secondary bg-opacity-95 backdrop-blur rounded-xl shadow-2xl p-6">
+      <button id="freemarket-modal-close" type="button" class="absolute top-3 right-3 text-secondary text-xl leading-none px-3 py-1 bg-black bg-opacity-30 rounded-full hover:bg-opacity-50">×</button>
 
-    {% include "./_pagination.html" %}
-  {% else %}
-    <p>{% trans "No results found" %}</p>
-  {% endif %}
+      <div class="flex items-center gap-3 flex-wrap mb-4">
+        {% if map_ads %}
+          <span class="text-sm text-primary">{% blocktrans with count=map_ads|length %}{{ count }} on this page with locations{% endblocktrans %}</span>
+        {% endif %}
+        <a href="{% url "gifting:create" %}" class="btn inline-flex items-center shadow ml-auto">
+          <i class="fa fa-plus mr-1"></i>
+          {% trans "Add your Wish or Offer" %}
+        </a>
+      </div>
 
+      <form id="searchForm" x-data="" method="get" class="js-submit-on-input bg-secondary bg-opacity-70 backdrop-blur rounded-lg shadow p-4 sm:p-6 mb-4">
+        <input type="hidden" id="freemarket-view-mode" name="view" value="{{ request.GET.view|default:'map' }}">
+        <div class="flex items-center flex-wrap -mx-2">
+
+        {% comment %} search field {% endcomment %}
+        <div class="relative w-full max-w-2xl my-2 mx-2">
+          <div class="absolute ml-3 inset-y-0 flex items-center text-brown">
+            <i class="fa fa-search text-primary opacity-75"></i>
+          </div>
+          <input type="text" value="{{ f.form.search.data|default:"" }}" class="pl-10 form-input w-full max-w-2xl" autocomplete="off" autofocus name="search">
+        </div>
+
+        {% comment %} location field {% endcomment %}
+        <div class="relative my-2 mx-2" x-data="locationDropdown()">
+          <div class="relative w-full max-w-2xl">
+            <div class="absolute ml-3 inset-y-0 flex items-center text-primary">
+              <i class="fa fa-map-marker-alt mr-1 text-primary opacity-75" onclick="getLocation()"></i>
+            </div>
+            <input id="location_name" x-ref="input" type="text" @input.debounce="onInput($event.target.value)" value="{{ f.form.location_name.data|default:"" }}" placeholder="Sort by Location" class="form-input w-full max-w-2xl pl-10" autocomplete="off" autofocus name="location_name">
+          </div>
+          <input x-ref="location" type="hidden" value="{{ f.form.location.data|default:"" }}" name="location">
+          <div x-show.transition="open" @click.away="open = false" class="absolute z-50 inset-x-0 bg-secondary bg-opacity-80 shadow-lg text-xs py-3 rounded-b border-brown border-opacity-50 border-b border-l border-r">
+            <ul class="list-none">
+              <template x-for="res in results" :key="res">
+                <li class="m-0"><a @click.prevent="onSelect(res)" href="#" class="block px-2 py-2 text-brown hover:bg-primary hover:text-secondary" x-text="res.display_name"></a></li>
+              </template>
+            </ul>
+          </div>
+        </div>
+        <script>
+          function locationDropdown() {
+            return {
+              results: [],
+              open: false,
+              onSelect(res) {
+                this.$refs.location.value = res.lat + ',' + res.lon
+                this.$refs.input.value = res.display_name
+                this.open = false
+                document.getElementById("searchForm").submit()
+              },
+              onInput(input) {
+                if (input.length < 3) { this.results = []; return }
+                fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=5&q=${input}`).then(res => res.json()).then(json => {
+                  this.open = true
+                  this.results = json
+                })
+              }
+            }
+          }
+          
+          var x = document.getElementById("location_name");
+
+          function getLocation() {
+              if (navigator.geolocation) {
+                  navigator.geolocation.getCurrentPosition(
+                      // Success function
+                      showPosition, 
+                      // Error function
+                      null, 
+                      // Options. See MDN for details.
+                      {
+                         enableHighAccuracy: true,
+                         timeout: 5000,
+                         maximumAge: 0
+                      });
+              } else { 
+                  x.value = "{%trans 'Geolocation is not supported by this browser.' %}";
+              }
+          }
+
+          function showPosition(position) {
+              this.location.value=position.coords.latitude + "," + position.coords.longitude;
+              x.value = "{%trans 'Current Location' %}";
+                document.getElementById("searchForm").submit()
+          }
+
+          function locationDropdownMap() {
+            return {
+              results: [],
+              open: false,
+              onSelect(res) {
+                this.$refs.location.value = res.lat + ',' + res.lon
+                this.$refs.input.value = res.display_name
+                this.open = false
+                document.getElementById("searchFormMap").submit()
+              },
+              onInput(input) {
+                if (input.length < 3) { this.results = []; return }
+                fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=5&q=${input}`).then(res => res.json()).then(json => {
+                  this.open = true
+                  this.results = json
+                })
+              }
+            }
+          }
+
+          const xMap = document.getElementById("location_name_map");
+
+          function getLocationMap() {
+              if (navigator.geolocation) {
+                  navigator.geolocation.getCurrentPosition(
+                      showPositionMap,
+                      null,
+                      {
+                         enableHighAccuracy: true,
+                         timeout: 5000,
+                         maximumAge: 0
+                      });
+              } else {
+                  xMap.value = "{%trans 'Geolocation is not supported by this browser.' %}";
+              }
+          }
+
+          function showPositionMap(position) {
+              const hiddenLocation = document.querySelector('#searchFormMap input[name="location"]');
+              if (hiddenLocation) hiddenLocation.value = position.coords.latitude + "," + position.coords.longitude;
+              xMap.value = "{%trans 'Current Location' %}";
+              document.getElementById("searchFormMap").submit()
+          }
+        </script>
+
+        <button class="btn m-2 hidden sm:block"><i class="fa fa-search mr-1"></i>{% trans "Search" %}</button>
+        </div>
+
+        <div class="w-full px-2 flex flex-wrap items-center gap-4" x-on:input="$event.target.form.submit()">
+          {% for t in f.form.type %}
+            <label class="inline-flex items-center">
+              <input type="checkbox" name="{{ t.data.name }}" value="{{ t.data.value }}" {% if t.data.selected %}checked{% endif %} class="form-checkbox h-5 w-5">
+              <span class="ml-2">{{ t.choice_label }}</span>
+            </label>
+          {% endfor %}
+          {% for t in f.form.categories %}
+            <label class="inline-flex items-center">
+              <input type="checkbox" name="{{ t.data.name }}" value="{{ t.data.value }}" {% if t.data.selected %}checked{% endif %} class="form-checkbox h-5 w-5">
+              <span class="ml-2">{{ t.choice_label }}</span>
+            </label>
+          {% endfor %}
+          {% if user.is_authenticated %}
+            <label class="inline-flex items-center">
+              <input type="checkbox" name="{{ f.form.from_me.name }}" value="on" {% if f.form.from_me.data %}checked{% endif %} class="form-checkbox h-5 w-5">
+              <span class="ml-2">{{ f.form.from_me.label }}</span>
+            </label>
+          {% endif %}
+        </div>
+        <div class="w-full flex justify-end mt-2 px-2 text-sm text-brown">
+          {% if page_obj %}
+            {% blocktrans count count=page_obj.paginator.count %}{{ count }} result{% plural %}{{ count }} results{% endblocktrans %}
+          {% else %}
+            {% trans "No results found" %}
+          {% endif %}
+        </div>
+      </form>
+
+      <div id="freemarket-list-view">
+
+      {% if page_obj %}
+        {% comment %} results {% endcomment %}
+        {% for ad in page_obj %}
+          {% include "./_ad.html" %}
+        {% endfor %}
+
+        {% include "./_pagination.html" %}
+      {% else %}
+        <p>{% trans "No results found" %}</p>
+      {% endif %}
+
+      </div>
+    </div>
+  </div>
 </div>
 
 
 
 {% endblock content %}
+
+{% block javascript %}
+  {{ block.super }}
+  <script src="https://cdn.jsdelivr.net/npm/ol@v7.2.2/dist/ol.js"></script>
+  {% if map_ads %}
+    {{ map_ads|json_script:"freemarket-map-data" }}
+  {% else %}
+    <script id="freemarket-map-data" type="application/json">[]</script>
+  {% endif %}
+  <script>
+    const initFreemarket = () => {
+      const listBtn = document.getElementById('freemarket-toggle-list');
+      const mapBtn = document.getElementById('freemarket-toggle-map');
+      const layerWrap = document.getElementById('freemarket-layer-wrap');
+      const layerToggle = document.getElementById('freemarket-layer-toggle');
+      const layerMenu = document.getElementById('freemarket-layer-menu');
+      const layerRadios = document.querySelectorAll('input[name="freemarket-layer-option"]');
+      const modal = document.getElementById('freemarket-modal');
+      const modalClose = document.getElementById('freemarket-modal-close');
+      const mapEl = document.getElementById('freemarket-map');
+      const dataEl = document.getElementById('freemarket-map-data');
+      const viewInput = document.getElementById('freemarket-view-mode');
+      const mapForm = document.getElementById('searchFormMap');
+      if (!listBtn || !mapBtn || !modal || !modalClose || !mapEl || !dataEl) return;
+
+      const mapAds = JSON.parse(dataEl.textContent || '[]');
+      let mapInstance = null;
+      let vectorLayer = null;
+      let popupOverlay = null;
+      let satellite = null;
+
+      const setPillState = (btn, active) => {
+        if (!btn) return;
+        const activeClasses = ['bg-primary', 'bg-opacity-90', 'text-secondary', 'shadow-inner'];
+        const inactiveClasses = ['bg-primary', 'bg-opacity-40', 'text-secondary'];
+        btn.classList.remove(...activeClasses, ...inactiveClasses);
+        if (active) {
+          btn.classList.add(...activeClasses);
+        } else {
+          btn.classList.add(...inactiveClasses);
+        }
+      };
+
+      const activate = (showMap) => {
+        if (showMap) {
+          modal.classList.add('hidden');
+          setPillState(mapBtn, true);
+          setPillState(listBtn, false);
+          if (layerWrap) layerWrap.classList.remove('hidden');
+          if (viewInput) viewInput.value = 'map';
+          if (!mapInstance) {
+            requestAnimationFrame(() => initMap());
+          } else {
+            mapInstance.updateSize();
+          }
+        } else {
+          modal.classList.remove('hidden');
+          setPillState(mapBtn, false);
+          setPillState(listBtn, true);
+          if (layerWrap) layerWrap.classList.add('hidden');
+          if (viewInput) viewInput.value = 'list';
+          if (!mapInstance) {
+            requestAnimationFrame(() => initMap());
+          }
+        }
+      };
+
+      const initMap = () => {
+        const stamenWatercolor = new ol.layer.Tile({
+          source: new ol.source.XYZ({
+            url: 'https://tiles.stadiamaps.com/tiles/stamen_watercolor/{z}/{x}/{y}.jpg?api_key=cb8069a3-9585-4989-a6a8-572b5c3f4ffb',
+            crossOrigin: 'anonymous'
+          })
+        });
+
+        const stamenTonerLabels = new ol.layer.Tile({
+          source: new ol.source.XYZ({
+            url: 'https://tiles.stadiamaps.com/tiles/stamen_toner_lite/{z}/{x}/{y}.png?api_key=cb8069a3-9585-4989-a6a8-572b5c3f4ffb',
+            crossOrigin: 'anonymous'
+          }),
+          opacity: 0.35
+        });
+
+        satellite = new ol.layer.Tile({
+          source: new ol.source.XYZ({
+            url: 'https://mt{0-3}.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}',
+            attributions: '&copy; Google',
+            maxZoom: 20,
+            crossOrigin: 'anonymous'
+          }),
+          visible: false
+        });
+
+        const osmBase = new ol.layer.Tile({
+          source: new ol.source.OSM({
+            url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+            crossOrigin: 'anonymous'
+          }),
+          visible: false
+        });
+
+        const enableOsmFallback = () => {
+          if (!osmBase.getVisible()) {
+            osmBase.setVisible(true);
+          }
+        };
+        stamenWatercolor.getSource().on('tileloaderror', enableOsmFallback);
+        stamenTonerLabels.getSource().on('tileloaderror', enableOsmFallback);
+
+        const setLayerMode = (mode) => {
+          stamenWatercolor.setVisible(false);
+          stamenTonerLabels.setVisible(false);
+          satellite.setVisible(false);
+          osmBase.setVisible(false);
+          const target = (mode || 'ecobasa').toLowerCase();
+          switch ((mode || 'ecobasa').toLowerCase()) {
+            case 'satellite':
+              satellite.setVisible(true);
+              break;
+            case 'osm':
+              osmBase.setVisible(true);
+              break;
+            default:
+              stamenWatercolor.setVisible(true);
+              stamenTonerLabels.setVisible(true);
+              break;
+          }
+          layerRadios.forEach(r => { r.checked = (r.value === target); });
+        };
+
+        vectorLayer = new ol.layer.Vector({
+          source: new ol.source.Vector()
+        });
+
+        mapInstance = new ol.Map({
+          target: mapEl,
+          layers: [stamenWatercolor, stamenTonerLabels, satellite, osmBase, vectorLayer],
+          view: new ol.View({
+            center: ol.proj.fromLonLat([0, 20]),
+            zoom: 1,
+            minZoom: 0,
+            maxZoom: 18
+          })
+        });
+
+        const normalizeView = () => {
+          const view = mapInstance.getView();
+          let center = view.getCenter();
+          const zoom = view.getZoom();
+          if (!center || !isFinite(center[0]) || !isFinite(center[1])) {
+            center = ol.proj.fromLonLat([0, 20]);
+            view.setCenter(center);
+          }
+          if (!isFinite(zoom)) {
+            view.setZoom(1);
+          }
+          return { view, center: view.getCenter(), zoom: view.getZoom() };
+        };
+        normalizeView();
+
+        // Force resize after the view becomes visible to trigger tile loading
+        const forceRender = () => {
+          mapInstance.updateSize();
+          mapInstance.renderSync();
+          const v = mapInstance.getView();
+          v.setCenter(v.getCenter());
+          v.setZoom(v.getZoom());
+        };
+
+        const iconStyle = new ol.style.Style({
+          image: new ol.style.Icon({
+            src: '{% static "map/images/marker-icon.png" %}',
+            anchor: [0.5, 1]
+          })
+        });
+
+        const features = mapAds
+          .filter(ad => typeof ad.lat === 'number' && typeof ad.lon === 'number')
+          .map(ad => {
+            const feature = new ol.Feature({
+              geometry: new ol.geom.Point(ol.proj.fromLonLat([ad.lon, ad.lat])),
+              data: ad
+            });
+            feature.setStyle(iconStyle);
+            return feature;
+          });
+
+        vectorLayer.getSource().addFeatures(features);
+
+        if (features.length) {
+          const extent = vectorLayer.getSource().getExtent();
+          mapInstance.getView().fit(extent, { padding: [48, 48], maxZoom: 10 });
+          const view = mapInstance.getView();
+          const z = view.getZoom();
+          if (z > 2) view.setZoom(2);
+          if (z < 0) view.setZoom(0);
+        }
+        normalizeView();
+
+        const ensureSize = () => {
+          const rect = mapEl.getBoundingClientRect();
+          if (!rect.width || !rect.height) {
+            requestAnimationFrame(ensureSize);
+            return;
+          }
+          mapInstance.updateSize();
+          forceRender();
+        };
+        setTimeout(() => mapInstance.updateSize(), 50);
+        requestAnimationFrame(ensureSize);
+
+        const popupEl = document.createElement('div');
+        popupEl.className = 'freemarket-popup';
+        popupOverlay = new ol.Overlay({
+          element: popupEl,
+          positioning: 'bottom-center',
+          offset: [0, -12],
+          stopEvent: false
+        });
+        mapInstance.addOverlay(popupOverlay);
+
+        const truncateWords = (text, limit) => {
+          if (!text || typeof text !== 'string') return '';
+          const words = text.split(/\s+/);
+          if (words.length <= limit) return text;
+          return words.slice(0, limit).join(' ') + '…';
+        };
+
+        mapInstance.on('singleclick', (evt) => {
+          const feature = mapInstance.forEachFeatureAtPixel(evt.pixel, f => f);
+          if (!feature) {
+            popupOverlay.setPosition(undefined);
+            return;
+          }
+          const ad = feature.get('data') || {};
+          const desc = truncateWords(ad.description || ad.text || ad.body, 150);
+          const locLabel = ad.location_name ? (ad.location_name.split(',').slice(0, 2).join(', ').trim() || ad.location_name) : '';
+          const parts = [
+            ad.type ? `<span class="popup-type-pill">${ad.type}</span>` : '',
+            ad.title ? `<h3>${ad.title}</h3>` : '',
+            desc ? `<div class="text-sm text-brown mt-2">${desc}</div>` : '',
+            locLabel ? `<div class="text-sm mt-1"><i class="fa fa-map-marker-alt mr-1 text-brown"></i>${locLabel}</div>` : '',
+            ad.url ? `<a class="text-primary underline" href="${ad.url}">{% trans "Open" %}</a>` : ''
+          ].filter(Boolean);
+          popupEl.innerHTML = parts.join('');
+          popupOverlay.setPosition(evt.coordinate);
+        });
+
+        if (layerWrap && layerMenu && layerToggle) {
+          const showMenu = () => {
+            layerMenu.classList.remove('hidden');
+            layerToggle.classList.add('hidden');
+          };
+          const hideMenu = () => {
+            layerMenu.classList.add('hidden');
+            layerToggle.classList.remove('hidden');
+          };
+
+          layerToggle.addEventListener('mouseenter', showMenu);
+          layerToggle.addEventListener('click', (e) => { e.stopPropagation(); showMenu(); });
+          layerMenu.addEventListener('mouseleave', hideMenu);
+          document.addEventListener('click', (e) => {
+            if (!layerWrap.contains(e.target)) {
+              hideMenu();
+            }
+          });
+
+          layerRadios.forEach(r => {
+            r.addEventListener('change', (e) => {
+              if (e.target.checked) {
+                setLayerMode(e.target.value);
+              }
+            });
+          });
+          setLayerMode('ecobasa');
+        } else {
+          setLayerMode('ecobasa');
+        }
+      };
+
+      listBtn.addEventListener('click', () => activate(false));
+      mapBtn.addEventListener('click', () => activate(true));
+      modalClose.addEventListener('click', () => activate(true));
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) activate(true);
+      });
+
+      // show map or list based on query state
+      const qs = new URLSearchParams(window.location.search);
+      const startView = (qs.get('view') || (viewInput ? viewInput.value : '') || 'map').toLowerCase();
+      activate(startView === 'list' ? false : true);
+
+      const form = document.getElementById('searchForm');
+      if (form) {
+        form.addEventListener('input', () => {
+          if (!modal.classList.contains('hidden') && viewInput) {
+            viewInput.value = 'list';
+          }
+        });
+      }
+      if (mapForm) {
+        mapForm.addEventListener('input', () => {
+          if (viewInput) viewInput.value = 'map';
+        });
+      }
+    };
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initFreemarket);
+    } else {
+      initFreemarket();
+    }
+  </script>
+{% endblock javascript %}

@@ -18,7 +18,27 @@ def search(request):
     page_number = request.GET.get("page")
     page_obj = paginator.get_page(page_number)
 
-    return render(request, "gifting/search.html", {"page_obj": page_obj, "f": f})
+    map_ads = [
+        {
+            "id": ad.pk,
+            "title": ad.title,
+            "type": ad.get_type_display(),
+            "url": ad.get_absolute_url(),
+            "description": ad.description,
+            "lat": ad.location.y,
+            "lon": ad.location.x,
+            "location_name": ad.location_name or "",
+            "categories": [c.name for c in ad.categories.all()],
+        }
+        for ad in page_obj
+        if ad.location
+    ]
+
+    return render(
+        request,
+        "gifting/search.html",
+        {"page_obj": page_obj, "f": f, "map_ads": map_ads},
+    )
 
 
 def detail(request, pk):
