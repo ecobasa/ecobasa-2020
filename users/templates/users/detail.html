@@ -3,12 +3,23 @@
 
 {% block content %}
 <div class="mx-auto max-w-7xl mt-10 px-4 pb-10">
-	<h1>{{ user.name }}</h1>
+	<div class="flex items-start justify-between mb-8">
+		<h1 class="text-5xl font-semibold">{{ user.name }}</h1>
+		{% if request.user.is_authenticated and request.user.pk == user.pk %}
+			<a href="{% url 'users:update' %}" class="btn btn-green inline-flex items-center">
+				<i class="fa fa-edit mr-2"></i>{% trans "Edit profile" %}
+			</a>
+		{% endif %}
+	</div>
 	<div class="sm:grid sm:grid-cols-4 sm:gap-6">
 		<div>
 			{% if user.image %}
-	        	<img class="object-fill rounded-full mt-15" src="{{ user.image.url }}" alt="">
-	        {% else %}
+	        	<button type="button" class="block mx-auto" data-profile-modal="open">
+	        		<div class="relative inline-block mt-15">
+	        			<img class="object-cover rounded-full h-48 w-48 sm:h-56 sm:w-56 mx-auto shadow border border-dashed border-primary p-1" src="{{ user.image.url }}" alt="{{ user.name }}">
+	        		</div>
+	        	</button>
+		        {% else %}
 	        	<i class="fa fa-user text-6xl text-primary rounded-full border border-dashed border-primary p-10 mt-15"></i>
 	        {% endif %}
 	        <a class="btn block mt-10" href="#"><i class="fa fa-envelope mr-2"></i>{% trans "Message" %}</a>
@@ -23,4 +34,31 @@
 		</div>
 	</div>
 </div>
+{% if user.image %}
+<div id="profile-image-modal" class="fixed inset-0 bg-black bg-opacity-80 z-50 hidden items-center justify-center p-4">
+	<div class="relative max-w-5xl w-full flex justify-center">
+		<button type="button" class="absolute top-3 right-3 text-secondary text-2xl h-10 w-10 rounded-full bg-black bg-opacity-50 hover:bg-opacity-70 flex items-center justify-center" data-profile-modal="close" aria-label="Close">
+			&times;
+		</button>
+		<img src="{{ user.image.url }}" alt="{{ user.name }}" class="max-h-[80vh] max-w-full rounded-lg shadow-lg">
+	</div>
+</div>
+{% endif %}
 {% endblock content %}
+
+{% block javascript %}
+{{ block.super }}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+	const modal = document.getElementById('profile-image-modal');
+	if (!modal) return;
+	const openers = document.querySelectorAll('[data-profile-modal="open"]');
+	const closer = modal.querySelector('[data-profile-modal="close"]');
+	const closeModal = () => { modal.classList.add('hidden'); document.body.classList.remove('overflow-hidden'); };
+	const openModal = () => { modal.classList.remove('hidden'); modal.classList.add('flex'); document.body.classList.add('overflow-hidden'); };
+	openers.forEach(btn => btn.addEventListener('click', openModal));
+	if (closer) closer.addEventListener('click', closeModal);
+	modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+});
+</script>
+{% endblock javascript %}

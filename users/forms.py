@@ -1,4 +1,5 @@
 from django import forms
+from django.forms import ClearableFileInput
 from django.core.exceptions import ValidationError
 from django.contrib.auth import password_validation
 from django.contrib.auth.forms import AuthenticationForm
@@ -85,3 +86,21 @@ class RegisterForm(forms.ModelForm):
         if commit:
             user.save()
         return user
+
+
+class ProfileUpdateForm(forms.ModelForm):
+    image = forms.ImageField(required=False, widget=ClearableFileInput)
+
+    class Meta:
+        model = User
+        fields = ["name", "image", "about", "world", "ecobasa_what"]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["name"].required = True
+        self.helper = FormHelper()
+        self.helper.form_tag = False
+        self.helper.layout = Layout(
+            Fieldset(_("Profile"), Field("name"), Field("image")),
+            Fieldset(_("About"), Field("about"), Field("world"), Field("ecobasa_what")),
+        )

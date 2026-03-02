@@ -73,8 +73,8 @@ class User(AbstractUser):
     objects = UserManager()
 
     def get_absolute_url(self) -> str:
-        # Prefer username slug; fall back to name slug or pk for uniqueness
-        slug = self.username or slugify(self.name) or self.pk
+        # Prefer username; otherwise slugified name; finally primary key
+        slug = self.username or slugify(self.name) or str(self.pk)
         return reverse("users:detail", kwargs={"slug": slug})
 
     def email_user(self, subject, message, from_email=None, **kwargs):

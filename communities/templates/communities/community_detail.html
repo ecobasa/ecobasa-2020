@@ -84,11 +84,27 @@
 			{% endif %}
 		{% endwith %}
     <h2>{% trans "Contact Info" %}</h2>
-    <div class="w-20 sm:w-32">
-    	<div class="flex flex-shrink-0 h-20 w-20 sm:h-32 sm:w-32 mb-2 bg-primary rounded-full mx-auto text-center" src="#"><i class="fa fa-user text-6xl text-secondary mx-auto object-bottom h-16"></i></div>
-    	<span class="block text-primary mb-4 font-bold text-xl text-center"><a href="#"></a>{{ community.owner.name }}</span>
-    	<a class="btn block mb-10" href="#"><i class="fa fa-envelope mr-1"></i>{% trans "Contact" %}</a>
-    </div>
+		<div class="w-20 sm:w-32 text-center">
+			{% if community.owner and community.owner.image %}
+				<a href="{{ community.owner.get_absolute_url }}">
+					<img class="h-20 w-20 sm:h-32 sm:w-32 rounded-full mx-auto mb-2 object-cover" src="{{ community.owner.image.url }}" alt="{{ community.owner.name }}">
+				</a>
+			{% else %}
+				<a href="{{ community.owner.get_absolute_url }}" class="block">
+					<div class="flex flex-shrink-0 h-20 w-20 sm:h-32 sm:w-32 mb-2 bg-primary rounded-full mx-auto text-center" aria-hidden="true">
+						<i class="fa fa-user text-6xl text-secondary mx-auto object-bottom h-16"></i>
+					</div>
+				</a>
+			{% endif %}
+			{% if community.owner %}
+				<span class="block text-primary mb-4 font-bold text-xl text-center" style="font-family: 'Bree Serif', serif;">
+					<a href="{{ community.owner.get_absolute_url }}" class="hover:underline">{{ community.owner.name }}</a>
+				</span>
+			{% endif %}
+			<a class="btn block mb-10" href="{% url 'users:login' %}?next={{ request.path }}">
+				<i class="fa fa-envelope mr-1"></i>{% trans "Contact" %}
+			</a>
+		</div>
     {% if community.website %}
     	<span class="block text-primary mb-2"><a href="{{ community.website }}"  target="_blank" rel="noopener"><i class="fa fa-globe mr-1"></i>{{ community.website }}</a></span>
     {% endif %}

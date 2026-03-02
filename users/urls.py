@@ -7,6 +7,7 @@ urlpatterns = [
     path("login/", views.LoginView.as_view(), name="login"),
     path("logout/", views.logout, name="logout"),
     path("register/", views.register, name="register"),
+    path("edit/", views.UpdateView.as_view(), name="update"),
     # password reset:
     path("password_reset/", views.PasswordResetView.as_view(), name="password_reset",),
     path(

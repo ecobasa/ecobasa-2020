@@ -1,14 +1,16 @@
 from django.contrib.auth import views as django_views
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.utils.translation import gettext_lazy as _
 from django.http import QueryDict
 from django.shortcuts import redirect, reverse, render
+from django.http import Http404
 from django.urls import reverse_lazy
 from django.contrib import messages
 from django.contrib.auth import logout as auth_logout, login as auth_login, authenticate
 from django.views.generic.detail import DetailView
 from .models import User
 
-from .forms import RegisterForm, LoginForm
+from .forms import RegisterForm, LoginForm, ProfileUpdateForm
 
 
 class LoginView(django_views.LoginView):
@@ -20,6 +22,33 @@ class DetailView(DetailView):
     template_name = "users/detail.html"
     slug_field = "username"
     slug_url_kwarg = "slug"
+
+    def get_object(self, queryset=None):
+        slug = self.kwargs.get(self.slug_url_kwarg)
+        if not slug:
+            raise Http404("No user found matching the query")
+        if queryset is None:
+            queryset = self.get_queryset()
+
+        # Try username match first (legacy behavior)
+        try:
+            return queryset.get(username=slug)
+        except self.model.DoesNotExist:
+            pass
+
+        # Try matching slugified name
+        try:
+            return queryset.get(name__isnull=False, name__iexact=slug.replace("-", " "))
+        except self.model.DoesNotExist:
+            pass
+
+        # Fallback to primary key for users without a username
+        try:
+            return queryset.get(pk=slug)
+        except (self.model.DoesNotExist, ValueError, TypeError):
+            pass
+
+        raise Http404("No user found matching the query")
 
 
 def logout(request):
@@ -76,4 +105,26 @@ class PasswordResetConfirmView(django_views.PasswordResetConfirmView):
 
 class PasswordResetCompleteView(django_views.PasswordResetCompleteView):
     template_name = "users/password_reset/complete.html"
+
+
+class UpdateView(LoginRequiredMixin, django_views.FormView):
+    template_name = "users/update.html"
+    form_class = ProfileUpdateForm
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["instance"] = self.request.user
+        return kwargs
+
+    def form_valid(self, form):
+        self.object = form.save()
+        return redirect(self.get_success_url())
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx["user_obj"] = self.request.user
+        return ctx
+
+    def get_success_url(self):
+        return self.object.get_absolute_url() if hasattr(self, "object") else self.request.user.get_absolute_url()
 
