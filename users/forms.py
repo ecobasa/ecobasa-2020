@@ -90,17 +90,57 @@ class RegisterForm(forms.ModelForm):
 
 class ProfileUpdateForm(forms.ModelForm):
     image = forms.ImageField(required=False, widget=ClearableFileInput)
+    # comma-separated skills input for Taggit (editable via Tagify in the template)
+    skills = forms.CharField(required=False, label=_("Skills"), help_text=_("Comma-separated list of skills."))
 
     class Meta:
         model = User
-        fields = ["name", "image", "about", "world", "ecobasa_what"]
+        fields = ["name", "image", "about", "world", "ecobasa_what", "skills"]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["name"].required = True
+        # Prefill skills from Taggit manager when editing an existing user
+        instance = kwargs.get('instance')
+        if instance is not None:
+            skills_initial = ', '.join([t.name for t in instance.skills.all()])
+            self.fields['skills'].initial = skills_initial
+            # also set form initial and widget value to avoid accidental queryset reprs
+            self.initial['skills'] = skills_initial
+            self.fields['skills'].widget.attrs.update({'value': skills_initial})
+        # Apply Tailwind-ish classes to widgets so the form matches site styling
+        text_input_class = "block w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+        textarea_class = "block w-full rounded-md border border-gray-300 px-3 py-2 text-sm h-32"
+        # Single-line inputs
+        for fname in ('name', 'skills'):
+            if fname in self.fields:
+                self.fields[fname].widget.attrs.update({'class': text_input_class})
+        # Textareas
+        for fname in ('about', 'world', 'ecobasa_what'):
+            if fname in self.fields:
+                self.fields[fname].widget.attrs.update({'class': textarea_class})
         self.helper = FormHelper()
         self.helper.form_tag = False
+        # Use a simple stacked layout (no fieldset wrappers) so styling matches other forms
         self.helper.layout = Layout(
-            Fieldset(_("Profile"), Field("name"), Field("image")),
-            Fieldset(_("About"), Field("about"), Field("world"), Field("ecobasa_what")),
+            Field("name"),
+            Field("image"),
+            Field("skills"),
+            Field("about"),
+            Field("world"),
+            Field("ecobasa_what"),
         )
+
+    def save(self, commit=True):
+        # Save user fields then update Taggit skills from the comma-separated input
+        user = super().save(commit=commit)
+        skills_val = self.cleaned_data.get('skills', '')
+        if skills_val is not None:
+            # split on commas and strip whitespace
+            tags = [s.strip() for s in skills_val.split(',') if s.strip()]
+            if commit:
+                user.skills.set(tags)
+            else:
+                # Defer tag setting for callers that save(commit=False)
+                self._skills_to_set = tags
+        return user

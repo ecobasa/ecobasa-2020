@@ -1,6 +1,11 @@
 {% extends "base.html" %}
 {% load crispy_forms_tags i18n %}
 
+{% block extrahead %}
+{{ block.super }}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.css">
+{% endblock %}
+
 {% block content %}
 <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 mt-10">
   <div class="flex items-start justify-between mb-6">
@@ -24,4 +29,24 @@
 
 {% block javascript %}
 {{ form.media }}
+<script src="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const skillsInput = document.getElementById('id_skills');
+  if (!skillsInput) return;
+  if (window.Tagify) {
+    new Tagify(skillsInput, {
+      editTags: false,
+      dropdown: { enabled: 0 },
+      originalInputValueFormat: vals => vals.map(v => v.value).join(', '),
+    });
+    return;
+  }
+  // Fallback: dynamically load Tagify then initialize
+  const s = document.createElement('script');
+  s.src = 'https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.min.js';
+  s.onload = () => { new Tagify(skillsInput, { editTags: false, dropdown: { enabled: 0 }, originalInputValueFormat: vals => vals.map(v => v.value).join(', ') }); };
+  document.body.appendChild(s);
+});
+</script>
 {% endblock javascript %}

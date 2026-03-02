@@ -1,6 +1,11 @@
 {% extends 'base.html' %}
 {% load i18n embed_video_tags static %}
 
+{% block extrahead %}
+	{{ block.super }}
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.css">
+{% endblock extrahead %}
+
 {% block content %}
 <style>
 	/* Slow fade for hero slides */
@@ -104,6 +109,17 @@
 			<a class="btn block mb-10" href="{% url 'users:login' %}?next={{ request.path }}">
 				<i class="fa fa-envelope mr-1"></i>{% trans "Contact" %}
 			</a>
+			{% if community.owner %}
+			  {% if request.user.is_authenticated %}
+			    <button type="button" id="volunteer-request-open" class="btn block mb-6 bg-yellow text-dark-brown">
+			      <i class="fa fa-hands-helping mr-1"></i>{% trans "Request volunteering stay" %}
+			    </button>
+			  {% else %}
+			    <a class="btn block mb-6" href="{% url 'users:login' %}?next={{ request.path }}">
+			      <i class="fa fa-hands-helping mr-1"></i>{% trans "Request volunteering stay" %}
+			    </a>
+			  {% endif %}
+			{% endif %}
 		</div>
     {% if community.website %}
     	<span class="block text-primary mb-2"><a href="{{ community.website }}"  target="_blank" rel="noopener"><i class="fa fa-globe mr-1"></i>{{ community.website }}</a></span>
@@ -200,6 +216,88 @@ document.addEventListener('DOMContentLoaded', () => {
 
 	setActive(0);
 	restart();
+});
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+	const openBtn = document.getElementById('volunteer-request-open');
+	if (!openBtn) return;
+	// create modal markup
+	const modal = document.createElement('div');
+	modal.id = 'volunteer-request-modal';
+	modal.className = 'fixed inset-0 bg-black bg-opacity-70 z-50 hidden items-center justify-center p-4';
+	modal.innerHTML = `
+		<div class="bg-secondary rounded-lg max-w-2xl w-full p-6 relative">
+			<button type="button" id="volunteer-request-close" class="absolute top-3 right-3 text-2xl">&times;</button>
+			<h2 class="text-xl font-semibold mb-4">{% trans "Request volunteering stay" %}</h2>
+			<form id="volunteer-request-form" method="post" action="{% url 'postman:write' %}">
+				{% csrf_token %}
+				<input type="hidden" name="recipients" value="{% if community.owner %}{{ community.owner.email }}{% endif %}">
+				<input type="hidden" name="subject" value="{% trans "Request volunteering stay" %}">
+				<div class="grid grid-cols-1 gap-3">
+                    <label class="text-sm">{% trans "Your skills (comma separated)" %}
+                        <input type="text" name="sender_skills" id="volunteer-sender-skills" class="form-input w-full mt-1" value="{% if request.user and request.user.is_authenticated %}{{ request.user.skills.all|join:', ' }}{% endif %}">
+                    </label>
+					<label class="text-sm">{% trans "From" %}
+						<input type="datetime-local" name="stay_from" class="form-input w-full mt-1">
+					</label>
+					<label class="text-sm">{% trans "To" %}
+						<input type="datetime-local" name="stay_to" class="form-input w-full mt-1">
+					</label>
+					<label class="text-sm">{% trans "Message" %}
+						<textarea name="body" id="volunteer-body" rows="6" class="form-textarea w-full mt-1" placeholder="{% trans "Write a short message explaining your motivation and skills" %}"></textarea>
+					</label>
+				</div>
+				<div class="mt-4 flex justify-end gap-3">
+					<button type="button" id="volunteer-cancel" class="btn">{% trans "Cancel" %}</button>
+					<button type="submit" class="btn bg-primary text-secondary">{% trans "Send request" %}</button>
+				</div>
+			</form>
+		</div>`;
+	document.body.appendChild(modal);
+
+	// Initialize Tagify on the skills input in the modal (prefilled server-side)
+	const modalSkillsInput = modal.querySelector('#volunteer-sender-skills');
+	if (modalSkillsInput) {
+		if (window.Tagify) {
+			new Tagify(modalSkillsInput, {
+				editTags: false,
+				dropdown: { enabled: 0 },
+				originalInputValueFormat: vals => vals.map(v => v.value).join(', '),
+			});
+		} else {
+			// Fallback: dynamically load Tagify then initialize
+			const s = document.createElement('script');
+			s.src = 'https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.min.js';
+			s.onload = () => { new Tagify(modalSkillsInput, { editTags: false, dropdown: { enabled: 0 }, originalInputValueFormat: vals => vals.map(v => v.value).join(', ') }); };
+			document.head.appendChild(s);
+		}
+	}
+
+	const openModal = () => { modal.classList.remove('hidden'); modal.classList.add('flex'); document.body.classList.add('overflow-hidden'); };
+	const closeModal = () => { modal.classList.add('hidden'); modal.classList.remove('flex'); document.body.classList.remove('overflow-hidden'); };
+
+	openBtn.addEventListener('click', openModal);
+	modal.querySelector('#volunteer-request-close').addEventListener('click', closeModal);
+	modal.querySelector('#volunteer-cancel').addEventListener('click', closeModal);
+
+	// on submit, append date range to body if provided
+	const form = modal.querySelector('#volunteer-request-form');
+	form.addEventListener('submit', function(e){
+		const bodyEl = modal.querySelector('#volunteer-body');
+		const from = form.querySelector('[name="stay_from"]').value;
+		const to = form.querySelector('[name="stay_to"]').value;
+		let extra = '';
+		if (from || to) {
+			extra += '\n\n' + '{% trans "Requested stay:" %}' + '\n';
+			if (from) extra += '{% trans "From" %} ' + from + '\n';
+			if (to) extra += '{% trans "To" %} ' + to + '\n';
+		}
+		if (extra) bodyEl.value = (bodyEl.value || '') + extra;
+		// allow form to submit normally
+	});
+	// close when clicking outside
+	modal.addEventListener('click', function(e){ if (e.target === modal) closeModal(); });
 });
 </script>
 {% endblock javascript %}

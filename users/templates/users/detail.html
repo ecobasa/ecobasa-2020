@@ -5,7 +5,13 @@
 <div class="mx-auto max-w-7xl mt-10 px-4 pb-10">
 	<div class="flex items-start justify-between mb-8">
 		<h1 class="text-5xl font-semibold">{{ user.name }}</h1>
+		{% if request.user.is_authenticated and request.user.is_staff or request.user.is_authenticated and request.user.pk == user.pk %}
+			<a href="{% url 'users:update' %}" class="btn inline-flex items-center">
+				<i class="fa fa-pencil mr-2"></i>{% trans "Edit profile" %}
+			</a>
+		{% endif %}
 	</div>
+
 	<div class="sm:grid sm:grid-cols-4 sm:gap-6">
 		<div>
 			{% if user.image %}
@@ -28,6 +34,14 @@
 			<p>{{ user.world }}</p>
 			<h2>{% trans "What would you like to use ecobasa mainly for?" %}</h2>
 			<p>{{ user.ecobasa_what }}</p>
+			{% if user.skills.exists %}
+				<h2>{% trans "Skills" %}</h2>
+				<div class="flex flex-wrap gap-2">
+					{% for tag in user.skills.all %}
+						<span class="inline-flex items-center bg-primary text-secondary px-3 py-1 rounded-full text-sm font-medium">{{ tag.name }}</span>
+					{% endfor %}
+				</div>
+			{% endif %}
 		</div>
 	</div>
 

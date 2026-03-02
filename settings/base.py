@@ -226,5 +226,10 @@ EMAIL_TIMEOUT = 5
 CRISPY_ALLOWED_TEMPLATE_PACKS = "crispy_template_pack"
 CRISPY_TEMPLATE_PACK = "crispy_template_pack"
 
+# POSTMAN SETTINGS
+# ------------------------------------------------------------------------------
+POSTMAN_AUTO_MODERATE_AS = True
+POSTMAN_DISALLOW_ANONYMOUS = True
+
 # APP SETTINGS
 # ------------------------------------------------------------------------------
