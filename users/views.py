@@ -11,6 +11,9 @@ from django.views.generic.detail import DetailView
 from .models import User
 
 from .forms import RegisterForm, LoginForm, ProfileUpdateForm
+from django.http import JsonResponse
+from django.views.decorators.http import require_GET
+from django.db.models import Q
 
 
 class LoginView(django_views.LoginView):
@@ -50,6 +53,16 @@ class DetailView(DetailView):
 
         raise Http404("No user found matching the query")
 
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        # Provide the user's gifting ads (if any) to the template
+        try:
+            user = self.get_object()
+            ctx["ads"] = user.ads.all()
+        except Exception:
+            ctx["ads"] = []
+        return ctx
+
 
 def logout(request):
     """Logout user on POST requests only (more secure)"""
@@ -57,6 +70,20 @@ def logout(request):
         auth_logout(request)
         messages.success(request, _("You have been logged out."))
     return redirect(reverse("homepage:homepage"))
+
+
+@require_GET
+def autocomplete(request):
+    """Simple user autocomplete for recipients (returns JSON)."""
+    q = request.GET.get("q", "").strip()
+    results = []
+    if q:
+        # Match by username or email (helps when users type an email address)
+        qs = User.objects.filter(Q(username__istartswith=q) | Q(email__istartswith=q)).order_by('username', 'email')[:20]
+        for u in qs:
+            # return the user's email as the canonical value (matches USERNAME_FIELD)
+            results.append({"value": u.email, "name": u.name or u.username, "username": u.username})
+    return JsonResponse(results, safe=False)
 
 
 def register(request):

@@ -5,24 +5,21 @@
 <div class="mx-auto max-w-7xl mt-10 px-4 pb-10">
 	<div class="flex items-start justify-between mb-8">
 		<h1 class="text-5xl font-semibold">{{ user.name }}</h1>
-		{% if request.user.is_authenticated and request.user.pk == user.pk %}
-			<a href="{% url 'users:update' %}" class="btn btn-green inline-flex items-center">
-				<i class="fa fa-edit mr-2"></i>{% trans "Edit profile" %}
-			</a>
-		{% endif %}
 	</div>
 	<div class="sm:grid sm:grid-cols-4 sm:gap-6">
 		<div>
 			{% if user.image %}
-	        	<button type="button" class="block mx-auto" data-profile-modal="open">
-	        		<div class="relative inline-block mt-15">
-	        			<img class="object-cover rounded-full h-48 w-48 sm:h-56 sm:w-56 mx-auto shadow border border-dashed border-primary p-1" src="{{ user.image.url }}" alt="{{ user.name }}">
-	        		</div>
-	        	</button>
-		        {% else %}
-	        	<i class="fa fa-user text-6xl text-primary rounded-full border border-dashed border-primary p-10 mt-15"></i>
-	        {% endif %}
-	        <a class="btn block mt-10" href="#"><i class="fa fa-envelope mr-2"></i>{% trans "Message" %}</a>
+				<button type="button" class="block mx-auto" data-profile-modal="open">
+					<div class="relative inline-block mt-15">
+						<img class="object-cover rounded-full h-48 w-48 sm:h-56 sm:w-56 mx-auto shadow border border-dashed border-primary p-1" src="{{ user.image.url }}" alt="{{ user.name }}">
+					</div>
+				</button>
+			{% else %}
+				<i class="fa fa-user text-6xl text-primary rounded-full border border-dashed border-primary p-10 mt-15"></i>
+			{% endif %}
+			{% if request.user.is_authenticated and request.user.pk != user.pk %}
+				<a class="btn block mt-10" href="{% url 'postman:write' user.username %}"><i class="fa fa-envelope mr-2"></i>{% trans "Message" %}</a>
+			{% endif %}
 		</div>
 		<div class="sm:col-span-3">
 			<h2>{% trans "About me" %}</h2>
@@ -32,6 +29,26 @@
 			<h2>{% trans "What would you like to use ecobasa mainly for?" %}</h2>
 			<p>{{ user.ecobasa_what }}</p>
 		</div>
+	</div>
+
+	{% if ads %}
+	<div class="mx-auto max-w-7xl px-4 mt-8">
+		<h2 class="text-2xl font-semibold mb-4">{% trans "Gift ads" %}</h2>
+		<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+			{% for ad in ads %}
+			<div class="border drop-shadow border-primary rounded-lg p-3 bg-secondary bg-opacity-60 shadow-sm">
+				<a href="{{ ad.get_absolute_url }}" class="block">
+					{% if ad.image %}
+						<img src="{{ ad.image.url }}" alt="{{ ad.title }}" class="w-full h-40 object-cover rounded mb-2">
+					{% endif %}
+					<h3 class="text-lg font-medium">{{ ad.title }}</h3>
+				</a>
+				<p class="text-sm text-muted">{{ ad.get_type_display }}</p>
+			</div>
+			{% endfor %}
+		</div>
+	</div>
+	{% endif %}
 	</div>
 </div>
 {% if user.image %}

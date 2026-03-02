@@ -11,7 +11,7 @@ class UserAdmin(DjangoUserAdmin):
 
     fieldsets = (
         (None, {"fields": ("email", "password")}),
-        (_("Personal info"), {"fields": ("name", "image", "about", "ecobasa_what", "world")}),
+        (_("Personal info"), {"fields": ("username", "name", "image", "about", "ecobasa_what", "world")}),
         (
             _("Permissions"),
             {
@@ -27,8 +27,8 @@ class UserAdmin(DjangoUserAdmin):
         (_("Important dates"), {"fields": ("last_login", "date_joined")}),
     )
     add_fieldsets = (
-        (None, {"classes": ("wide",), "fields": ("email", "password1", "password2"),}),
+        (None, {"classes": ("wide",), "fields": ("email", "username", "password1", "password2"),}),
     )
     list_display = ("email", "name", "is_staff")
-    search_fields = ("email", "name")
+    search_fields = ("email", "name", "username")
     ordering = ("email",)

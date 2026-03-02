@@ -11,6 +11,7 @@ urlpatterns = [
     path("users/", include("users.urls")),
     path("gifting/", include("gifting.urls")),
     path("communities/", include("communities.urls")),
+    path("messages/", include(("postman_urls", "postman"), namespace="postman")),
 ]
 
 if settings.DEBUG:

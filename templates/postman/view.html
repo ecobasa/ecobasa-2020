@@ -1,0 +1,103 @@
+{% extends 'postman/base.html' %}
+{% load i18n %}
+
+{% block postman_content %}
+  <div class="flex items-center justify-between mb-4">
+    <h1 class="text-2xl font-semibold">{% trans "Conversation" %}</h1>
+    <a href="{% url 'postman:inbox' %}" class="btn border rounded bg-primary inline-flex items-center"><i class="fa fa-arrow-left mr-2"></i>{% trans "Inbox" %}</a>
+  </div>
+
+  {% load postman_extras %}
+  {% with m=pm_messages.0 %}
+    {% if not m %}
+      <div class="text-brown">{% trans "Message not found." %}</div>
+    {% else %}
+      {% conversation_messages m as convo %}
+      <div class="space-y-6">
+        {% for part in convo %}
+          {% if request.user and part.sender and part.sender.pk == request.user.pk %}
+          <div class="flex items-start gap-4 justify-end">
+              <div class="flex-1 max-w-3xl">
+                <div class="bg-secondary bg-opacity-25 p-4 rounded-xl relative border border-brown">
+                  <div class="absolute right-4 top-3 text-xs text-brown">{% if part.sent_at %}{{ part.sent_at|date:"SHORT_DATETIME_FORMAT" }}{% endif %}</div>
+                  {% if forloop.first and part.subject %}
+                    <h3 class="font-semibold font-serif m-0">{{ part.subject }}</h3>
+                  {% endif %}
+                  <div class="whitespace-pre-wrap mt-2">{{ part.body }}</div>
+                </div>
+              </div>
+              <div class="flex-none flex flex-col items-center">
+                {% if part.sender and part.sender.image %}
+                  <a href="{{ part.sender.get_absolute_url }}">
+                    <img class="w-10 h-10 rounded-full object-cover" src="{{ part.sender.image.url }}" alt="{{ part.sender.get_username }}">
+                  </a>
+                {% else %}
+                  <i class="fa fa-user text-3xl text-primary rounded-full border border-dashed border-primary p-3"></i>
+                {% endif %}
+                <div class="text-xs text-secondary mt-2 font-serif text-center">
+                  {% if part.sender %}
+                    <a href="{{ part.sender.get_absolute_url }}" class="hover:underline">
+                      {% if part.sender.name %}{{ part.sender.name }}{% elif part.sender.get_full_name %}{{ part.sender.get_full_name }}{% else %}{{ part.sender.get_username }}{% endif %}
+                    </a>
+                  {% else %}
+                    {% trans "(system)" %}
+                  {% endif %}
+                </div>
+              </div>
+          </div>
+          {% else %}
+          <div class="flex items-start gap-4">
+              <div class="flex-none flex flex-col items-center">
+                {% if part.sender and part.sender.image %}
+                  <a href="{{ part.sender.get_absolute_url }}">
+                    <img class="w-10 h-10 rounded-full object-cover" src="{{ part.sender.image.url }}" alt="{{ part.sender.get_username }}">
+                  </a>
+                {% else %}
+                  <i class="fa fa-user text-3xl text-primary rounded-full border border-dashed border-primary p-3"></i>
+                {% endif %}
+                <div class="text-xs text-secondary mt-2 font-serif text-center">
+                  {% if part.sender %}
+                    <a href="{{ part.sender.get_absolute_url }}" class="hover:underline">
+                      {% if part.sender.name %}{{ part.sender.name }}{% elif part.sender.get_full_name %}{{ part.sender.get_full_name }}{% else %}{{ part.sender.get_username }}{% endif %}
+                    </a>
+                  {% else %}
+                    {% trans "(system)" %}
+                  {% endif %}
+                </div>
+              </div>
+              <div class="flex-1 max-w-3xl">
+                <div class="bg-primary text-secondary p-4 rounded-xl relative">
+                  <div class="absolute right-4 top-3 text-xs text-brown">{% if part.sent_at %}{{ part.sent_at|date:"SHORT_DATETIME_FORMAT" }}{% endif %}</div>
+                  {% if forloop.first and part.subject %}
+                    <h3 class="font-semibold font-serif m-0">{{ part.subject }}</h3>
+                  {% endif %}
+                  <div class="whitespace-pre-wrap mt-2">{{ part.body }}</div>
+                </div>
+              </div>
+          </div>
+          {% endif %}
+        {% endfor %}
+
+        {# Quick reply form #}
+        {% if form %}
+          <form method="post" class="mt-4 flex items-end gap-3">
+            {% csrf_token %}
+            {{ form.non_field_errors }}
+            {% if reply_to_pk %}<input type="hidden" name="reply_to_pk" value="{{ reply_to_pk }}">{% endif %}
+            {% if m.subject %}<input type="hidden" name="subject" value="{{ m.subject }}">{% endif %}
+            {% if next_url %}<input type="hidden" name="next" value="{{ next_url }}">{% endif %}
+            <div class="flex-1">
+              <label for="id_body" class="sr-only">{% trans "Your message" %}</label>
+              {{ form.body.errors }}
+              <textarea name="{{ form.body.name }}" id="{{ form.body.id_for_label }}" rows="3" class="w-full rounded-xl p-3 border border-brown bg-transparent" placeholder="{% trans "Write a reply..." %}">{{ form.body.value|default_if_none:"" }}</textarea>
+            </div>
+            <div>
+              <button type="submit" class="inline-flex items-center justify-center bg-primary hover:opacity-95 text-secondary rounded-full p-3 shadow"><i class="fa fa-paper-plane"></i></button>
+            </div>
+          </form>
+        {% endif %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
+{% endblock postman_content %}

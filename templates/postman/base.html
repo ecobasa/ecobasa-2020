@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block content %}
+<div id="postman" class="mx-auto max-w-5xl px-4 py-8 grid grid-cols-1 md:grid-cols-4 gap-6">
+  <aside class="md:col-span-1">
+    <div class="bg-primary bg-opacity-75 p-4 rounded">
+      <nav class="space-y-2">
+        <a href="{% url 'postman:inbox' %}" @click="$dispatch('close-user-menu')" class="block px-3 py-2 rounded text-secondary hover:bg-secondary"> <i class="fa fa-envelope mr-2"></i> {% trans "Inbox" %}</a>
+        <a href="{% url 'postman:sent' %}" @click="$dispatch('close-user-menu')" class="block px-3 py-2 rounded text-secondary hover:bg-secondary"> <i class="fa fa-paper-plane mr-2"></i> {% trans "Sent" %}</a>
+        <a href="{% url 'postman:write' %}" @click="$dispatch('close-user-menu')" class="block px-3 py-2 rounded text-secondary hover:bg-secondary"> <i class="fa fa-pencil-alt mr-2"></i> {% trans "Compose" %}</a>
+      </nav>
+    </div>
+  </aside>
+
+  <main class="md:col-span-3">
+    <div class="p-6 rounded text-brown">
+      {% block postman_content %}{% endblock postman_content %}
+    </div>
+  </main>
+</div>
+{% endblock content %}

@@ -23,6 +23,7 @@ django-embed-video = "~=1.4"
 django-taggit ="~=4.0"
 Pillow = "~=10.3"
 django-croppie = "==1.3"
+django-postman = "*"
 
 [requires]
 python_version = "3.12"
