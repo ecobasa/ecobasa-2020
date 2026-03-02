@@ -30,6 +30,26 @@
     <span class="text-primary">{{ ad.title }}</span>
   </nav>
 
+  {% comment %} inline image that opens modal {% endcomment %}
+  {% if ad.image %}
+  <div class="mt-6 flex justify-center">
+    <button type="button" data-ad-image-modal="open" aria-label="Open image" class="inline-block w-full">
+      <img src="{{ ad.image.url }}" alt="{{ ad.title }}" class="w-full h-52 object-cover rounded-lg shadow mb-4">
+    </button>
+  </div>
+  {% endif %}
+
+  {% if ad.image %}
+  <div id="ad-image-modal" class="fixed inset-0 bg-black bg-opacity-80 z-50 hidden items-center justify-center p-4">
+    <div class="relative max-w-5xl w-full flex justify-center">
+      <button type="button" class="absolute top-3 right-3 text-secondary text-2xl h-10 w-10 rounded-full bg-black bg-opacity-50 hover:bg-opacity-70 flex items-center justify-center" data-ad-image-modal="close" aria-label="Close">
+        &times;
+      </button>
+      <img src="{{ ad.image.url }}" alt="{{ ad.title }}" class="max-h-[80vh] max-w-full rounded-lg shadow-lg">
+    </div>
+  </div>
+  {% endif %}
+
   {% comment %} header {% endcomment %}
   <div class="mt-4 md:mt-10 md:flex md:items-center md:justify-between">
     <div class="flex-1 min-w-0">
@@ -294,4 +314,17 @@
       }
     </script>
   {% endif %}
+  <script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const modal = document.getElementById('ad-image-modal');
+    if (!modal) return;
+    const openers = document.querySelectorAll('[data-ad-image-modal="open"]');
+    const closer = modal.querySelector('[data-ad-image-modal="close"]');
+    const closeModal = () => { modal.classList.add('hidden'); document.body.classList.remove('overflow-hidden'); };
+    const openModal = () => { modal.classList.remove('hidden'); modal.classList.add('flex'); document.body.classList.add('overflow-hidden'); };
+    openers.forEach(btn => btn.addEventListener('click', openModal));
+    if (closer) closer.addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+  });
+  </script>
 {% endblock javascript %}
