@@ -77,13 +77,19 @@ def postman_write_wrapper(request, recipients=None):
         return WriteView.as_view()(request, recipients=recipients) if recipients else WriteView.as_view()(request)
 
     if request.method == "POST":
-        # if sender authenticated and this looks like a volunteer request, append skills
+        # Normalize a mutable copy and append special metadata (skills, ad id)
         try:
+            new_post = request.POST.copy()
             user = request.user
-            is_volunteer = bool(request.POST.get('stay_from') or request.POST.get('stay_to') or (request.POST.get('subject') and 'Request volunteering stay' in request.POST.get('subject')))
+
+            # Append skills block when this is a volunteer request and user is authenticated
+            try:
+                is_volunteer = bool(new_post.get('stay_from') or new_post.get('stay_to') or (new_post.get('subject') and 'Request volunteering stay' in new_post.get('subject')))
+            except Exception:
+                is_volunteer = False
+
             if user.is_authenticated and is_volunteer:
-                # prefer posted sender_skills (user-edited) if provided, else fallback to stored tags
-                posted = (request.POST.get('sender_skills') or '').strip()
+                posted = (new_post.get('sender_skills') or '').strip()
                 if posted:
                     skills_list = posted
                 else:
@@ -94,13 +100,22 @@ def postman_write_wrapper(request, recipients=None):
                         skills_list = ''
 
                 if skills_list:
-                    new_post = request.POST.copy()
                     body = new_post.get('body', '') or ''
-                    # append skills block
                     body = body + "\n\nSkills: " + skills_list
                     new_post['body'] = body
-                    # replace request._post so downstream view sees modified data
-                    request._post = new_post
+
+            # If an ad id was posted, append it to the body so we can link back later
+            try:
+                ad_id = (new_post.get('ad_random_id') or '').strip()
+                if ad_id:
+                    body = new_post.get('body', '') or ''
+                    body = body + "\n\nAd-ID: " + ad_id
+                    new_post['body'] = body
+            except Exception:
+                pass
+
+            # replace request._post so downstream view sees modified data
+            request._post = new_post
         except Exception:
             # best-effort: if anything fails, continue to delegate
             pass

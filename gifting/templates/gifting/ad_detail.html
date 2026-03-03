@@ -90,6 +90,41 @@
     <p>{{ ad.description }}</p>
   </div>
 
+  {% comment %} Offer / wish from - owner stacked block {% endcomment %}
+  {% if ad.owner %}
+  <div class="mt-8">
+    <h2 class="text-lg font-semibold mb-4">
+      {% if ad.type == 'offer' %}
+        {% trans "Offer from" %}
+      {% else %}
+        {% trans "Wish from" %}
+      {% endif %}
+    </h2>
+    <div class="flex flex-col items-center gap-3 p-4 border rounded bg-primary bg-opacity-5">
+      <a href="{{ ad.owner.get_absolute_url }}" class="block">
+        {% if ad.owner.image %}
+          <img src="{{ ad.owner.image.url }}" alt="{% if ad.owner.name %}{{ ad.owner.name }}{% else %}{{ ad.owner.username }}{% endif %}" class="w-20 h-20 rounded-full object-cover mx-auto">
+        {% else %}
+          <div class="w-20 h-20 rounded-full bg-primary flex items-center justify-center text-secondary mx-auto"><i class="fa fa-user text-3xl"></i></div>
+        {% endif %}
+      </a>
+      <a href="{{ ad.owner.get_absolute_url }}" class="font-semibold text-primary hover:underline">
+        {% if ad.owner.name %}{{ ad.owner.name }}{% elif ad.owner.get_full_name %}{{ ad.owner.get_full_name }}{% else %}{{ ad.owner.username }}{% endif %}
+      </a>
+      {% if ad.owner.location_name %}
+        <div class="text-sm text-secondary">{{ ad.owner.location_name }}</div>
+      {% endif %}
+      <div>
+        {% if request.user.is_authenticated %}
+          <button type="button" data-ad-contact-modal="open" class="btn inline-flex items-center"><i class="fa fa-envelope mr-2"></i>{% if ad.type == 'offer' %}{% trans "Request offer" %}{% else %}{% trans "Fulfill wish" %}{% endif %}</button>
+        {% else %}
+          <a class="btn inline-flex items-center" href="{% url 'users:login' %}?next={{ request.path }}"><i class="fa fa-envelope mr-2"></i>{% if ad.type == 'offer' %}{% trans "Request offer" %}{% else %}{% trans "Fulfill wish" %}{% endif %}</a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
   {% if ad.location %}
     <div class="mt-10">
       <h2 class="text-lg font-semibold mb-3">{% trans "Location" %}</h2>
@@ -128,6 +163,31 @@
       </div>
     </div>
   {% endif %}
+
+    <!-- Contact modal -->
+    {% if ad.owner %}
+    <div id="ad-contact-modal" class="fixed inset-0 bg-black bg-opacity-70 z-50 hidden items-center justify-center p-4">
+      <div class="bg-secondary rounded-lg max-w-2xl w-full p-6 relative max-h-[90vh] overflow-y-auto" style="-webkit-overflow-scrolling: touch;">
+        <button type="button" data-ad-contact-modal="close" class="absolute top-3 right-3 text-2xl">&times;</button>
+        <h2 class="text-xl font-semibold mb-4">{% trans "Contact" %} - {{ ad.title }}</h2>
+        <form id="ad-contact-form" method="post" action="{% url 'postman:write' %}">
+          {% csrf_token %}
+          <input type="hidden" name="recipients" value="{{ ad.owner.email }}">
+          <input type="hidden" name="subject" value="{{ ad.title }}">
+          <input type="hidden" name="ad_random_id" value="{{ ad.random_id }}">
+          <div class="grid grid-cols-1 gap-3">
+            <label class="text-sm">{% trans "Message" %}
+              <textarea name="body" rows="6" class="form-textarea w-full mt-1" placeholder="{% trans "Write a short message about why you're interested" %}"></textarea>
+            </label>
+          </div>
+          <div class="mt-4 flex justify-end gap-3">
+            <button type="button" data-ad-contact-modal="close" class="btn">{% trans "Cancel" %}</button>
+            <button type="submit" class="btn bg-primary text-secondary">{% trans "Send" %}</button>
+          </div>
+        </form>
+      </div>
+    </div>
+    {% endif %}
 </div>
 {% endblock content %}
 
@@ -320,6 +380,19 @@
     if (!modal) return;
     const openers = document.querySelectorAll('[data-ad-image-modal="open"]');
     const closer = modal.querySelector('[data-ad-image-modal="close"]');
+    const closeModal = () => { modal.classList.add('hidden'); document.body.classList.remove('overflow-hidden'); };
+    const openModal = () => { modal.classList.remove('hidden'); modal.classList.add('flex'); document.body.classList.add('overflow-hidden'); };
+    openers.forEach(btn => btn.addEventListener('click', openModal));
+    if (closer) closer.addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+  });
+  </script>
+  <script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const modal = document.getElementById('ad-contact-modal');
+    if (!modal) return;
+    const openers = document.querySelectorAll('[data-ad-contact-modal="open"]');
+    const closer = modal.querySelector('[data-ad-contact-modal="close"]');
     const closeModal = () => { modal.classList.add('hidden'); document.body.classList.remove('overflow-hidden'); };
     const openModal = () => { modal.classList.remove('hidden'); modal.classList.add('flex'); document.body.classList.add('overflow-hidden'); };
     openers.forEach(btn => btn.addEventListener('click', openModal));

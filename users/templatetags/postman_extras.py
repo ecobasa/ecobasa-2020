@@ -53,6 +53,9 @@ def format_message_body(body):
     from django.utils.formats import date_format
     import datetime
 
+    # remove any trailing Ad-ID line added by server-side wrappers
+    body = re.sub(r"\n?Ad-ID:\s*[A-Za-z0-9-_]+\s*$", "", body, flags=re.IGNORECASE)
+
     parts = re.split(r"Requested stay:\s*", body, maxsplit=1)
 
     skills_list = []
@@ -184,6 +187,8 @@ def strip_requested_block(body):
     cleaned = re.sub(r"Requested stay:\s*.*$", "", body, flags=re.IGNORECASE | re.DOTALL).strip()
     # Also strip any trailing 'Skills: ...' line (in case it's not inside the Requested block)
     cleaned, _ = _extract_skills_from_text(cleaned)
+    # Remove any trailing Ad-ID line
+    cleaned = re.sub(r"\n?Ad-ID:\s*[A-Za-z0-9-_]+\s*$", "", cleaned, flags=re.IGNORECASE).strip()
     return cleaned
 
 
