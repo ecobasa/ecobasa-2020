@@ -10,4 +10,5 @@ urlpatterns = [
     # intercept write routes so we can append sender skills server-side
     path("write/", postman_wrappers.postman_write_wrapper, name="write"),
     path("write/<path:recipients>/", postman_wrappers.postman_write_wrapper, name="write_with_recipients"),
+    path("inbox/", postman_wrappers.inbox_wrapper, name="inbox"),
 ] + getattr(_postman_urls, "urlpatterns", [])

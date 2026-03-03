@@ -3,14 +3,30 @@
 {% load postman_extras %}
 
 {% block postman_content %}
-  <h1 class="text-2xl font-semibold mb-4">{% trans "Inbox" %}</h1>
-
+  <div class="flex items-start justify-between mb-4">
+    <h1 class="text-2xl font-semibold">{% trans "Inbox" %}</h1>
+    {% if pm_messages and has_requested_dates %}
+      <div id="inbox-sort-wrap" class="text-right">
+        <form method="get">
+          <label class="block text-sm text-secondary mb-1">{% trans "Sort" %}</label>
+          <select name="sort" onchange="this.form.submit()" class="form-select text-sm rounded bg-secondary bg-opacity-50">
+            <option value="sent_desc" {% if request.GET.sort == 'sent_desc' or not request.GET.sort %}selected{% endif %}>{% trans "Sent (newest)" %}</option>
+            <option value="sent_asc" {% if request.GET.sort == 'sent_asc' %}selected{% endif %}>{% trans "Sent (oldest)" %}</option>
+            <option value="from_asc" {% if request.GET.sort == 'from_asc' %}selected{% endif %}>{% trans "Requested From (earliest)" %}</option>
+            <option value="from_desc" {% if request.GET.sort == 'from_desc' %}selected{% endif %}>{% trans "Requested From (latest)" %}</option>
+            <option value="to_asc" {% if request.GET.sort == 'to_asc' %}selected{% endif %}>{% trans "Requested To (earliest)" %}</option>
+            <option value="to_desc" {% if request.GET.sort == 'to_desc' %}selected{% endif %}>{% trans "Requested To (latest)" %}</option>
+          </select>
+        </form>
+      </div>
+    {% endif %}
+  </div>
   {% if pm_messages %}
-    <div class="space-y-3">
+    <div id="inbox-list" class="space-y-3">
       {% for m in pm_messages %}
         {% parse_requested_dates m.body as rd %}
         {% extract_skills m.body as skills %}
-        <div class="flex items-start gap-4">
+        <div class="flex items-start gap-4 inbox-item" data-sent="{{ m.sent_at|date:'c' }}" data-from="{{ rd.from_iso }}" data-to="{{ rd.to_iso }}">
           <div class="flex-1">
             <div class="p-3 bg-primary rounded flex items-start gap-4 items-center">
               <div class="flex-none flex flex-col items-center">
@@ -81,5 +97,7 @@
   {% else %}
     <div class="text-brown">{% trans "No messages to display." %}</div>
   {% endif %}
+
+<!-- Sorting is now handled server-side via GET param `sort` -->
 
 {% endblock postman_content %}
