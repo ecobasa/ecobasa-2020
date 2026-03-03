@@ -1,51 +1,74 @@
 {% extends 'postman/base.html' %}
 {% load i18n %}
+{% load postman_extras %}
 
 {% block postman_content %}
   <h1 class="text-2xl font-semibold mb-4">{% trans "Inbox" %}</h1>
 
   {% if pm_messages %}
-    <ul class="space-y-3">
+    <div class="space-y-3">
       {% for m in pm_messages %}
-        <li class="p-3 bg-primary rounded flex items-start gap-4">
-          <div class="flex-none flex flex-col items-center">
-            {% if m.sender and m.sender.image %}
-              <a href="{{ m.sender.get_absolute_url }}">
-                <img class="w-10 h-10 rounded-full object-cover" src="{{ m.sender.image.url }}" alt="{% if m.sender.name %}{{ m.sender.name }}{% elif m.sender.get_full_name %}{{ m.sender.get_full_name }}{% elif m.sender.get_username %}{{ m.sender.get_username }}{% else %}{{ m.sender.email }}{% endif %}">
-              </a>
-            {% else %}
-              <a href="{{ m.sender.get_absolute_url }}">
-                <i class="fa fa-user text-3xl text-primary rounded-full border border-dashed border-primary p-3" title="{% if m.sender.name %}{{ m.sender.name }}{% elif m.sender.get_full_name %}{{ m.sender.get_full_name }}{% elif m.sender.get_username %}{{ m.sender.get_username }}{% else %}{{ m.sender.email }}{% endif %}"></i>
-              </a>
-            {% endif %}
-            <div class="text-xs text-secondary mt-2 font-serif text-center">
-              {% if m.sender %}
-                <a href="{{ m.sender.get_absolute_url }}" class="text-secondary hover:underline">
-                  {% if m.sender.name %}
-                    {{ m.sender.name }}
-                  {% elif m.sender.get_full_name %}
-                    {{ m.sender.get_full_name }}
-                  {% elif m.sender.get_username %}
-                    {{ m.sender.get_username }}
-                  {% else %}
-                    {{ m.sender.email }}
-                  {% endif %}
-                </a>
-              {% else %}
-                {% trans "(no sender)" %}
-              {% endif %}
-            </div>
-          </div>
+        {% parse_requested_dates m.body as rd %}
+        {% extract_skills m.body as skills %}
+        <div class="flex items-start gap-4">
           <div class="flex-1">
-            <div class="font-bold">
-              <a class="text-secondary font-serif hover:underline" href="{% url 'postman:view' m.pk %}">{% if m.subject %}{{ m.subject }}{% else %}{% trans "(no subject)" %}{% endif %}</a>
+            <div class="p-3 bg-primary rounded flex items-start gap-4 items-center">
+              <div class="flex-none flex flex-col items-center">
+                {% if m.sender and m.sender.image %}
+                  <a href="{{ m.sender.get_absolute_url }}">
+                    <img class="w-10 h-10 rounded-full object-cover" src="{{ m.sender.image.url }}" alt="{% if m.sender.name %}{{ m.sender.name }}{% elif m.sender.get_full_name %}{{ m.sender.get_full_name }}{% elif m.sender.get_username %}{{ m.sender.get_username }}{% else %}{{ m.sender.email }}{% endif %}">
+                  </a>
+                {% else %}
+                  <a href="{{ m.sender.get_absolute_url }}">
+                    <i class="fa fa-user text-3xl text-primary rounded-full border border-dashed border-primary p-3" title="{% if m.sender.name %}{{ m.sender.name }}{% elif m.sender.get_full_name %}{{ m.sender.get_full_name }}{% elif m.sender.get_username %}{{ m.sender.get_username }}{% else %}{{ m.sender.email }}{% endif %}"></i>
+                  </a>
+                {% endif %}
+                <div class="text-xs text-secondary mt-2 font-serif text-center">
+                  {% if m.sender %}
+                    <a href="{{ m.sender.get_absolute_url }}" class="text-secondary hover:underline">
+                      {% if m.sender.name %}
+                        {{ m.sender.name }}
+                      {% elif m.sender.get_full_name %}
+                        {{ m.sender.get_full_name }}
+                      {% elif m.sender.get_username %}
+                        {{ m.sender.get_username }}
+                      {% else %}
+                        {{ m.sender.email }}
+                      {% endif %}
+                    </a>
+                  {% else %}
+                    {% trans "(no sender)" %}
+                  {% endif %}
+                </div>
+              </div>
+              <div class="flex-1">
+                <div class="font-bold">
+                  <a class="text-secondary font-serif hover:underline" href="{% url 'postman:view' m.pk %}">{% if m.subject %}{{ m.subject }}{% else %}{% trans "(no subject)" %}{% endif %}</a>
+                </div>
+                <div class="text-sm text-secondary mt-1">{{ m.body|strip_requested_block|truncatechars:200 }}</div>
+                {% if skills %}
+                <div class="mt-2 flex flex-wrap gap-2">
+                {% for s in skills %}
+                    <span class="inline-flex items-center bg-secondary text-primary px-3 py-1 rounded-full text-sm font-medium"><i class="fa fa-graduation-cap mr-1"></i>{{ s }}</span>
+                {% endfor %}
+                </div>
+              {% endif %}
+              </div>
+              <div class="flex-none text-xs text-brown">{% if m.sent_at %}{{ m.sent_at }}{% endif %}</div>
             </div>
-            <div class="text-sm text-secondary mt-1">{{ m.body|truncatechars:200 }}</div>
           </div>
-          <div class="flex-none text-xs text-brown">{% if m.sent_at %}{{ m.sent_at }}{% endif %}</div>
-        </li>
+          {% if rd.from_display or rd.to_display %}
+            <div class="flex-none ml-3 p-2 rounded border border-brown bg-secondary bg-opacity-80 text-sm text-brown">
+              <div class="font-semibold text-xs mb-1">{% trans "Requested stay" %}</div>
+              <div class="text-xs">
+                {% if rd.from_display %}<div><strong>{% trans "From" %}:</strong> {{ rd.from_display }}</div>{% endif %}
+                {% if rd.to_display %}<div><strong>{% trans "To" %}:</strong> {{ rd.to_display }}</div>{% endif %}
+              </div>
+            </div>
+          {% endif %}
+        </div>
       {% endfor %}
-    </ul>
+    </div>
   {% elif object_list %}
     <ul class="space-y-3">
       {% for m in object_list %}

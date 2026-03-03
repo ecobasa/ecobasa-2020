@@ -38,7 +38,7 @@
 				<h2>{% trans "Skills" %}</h2>
 				<div class="flex flex-wrap gap-2">
 					{% for tag in user.skills.all %}
-						<span class="inline-flex items-center bg-primary text-secondary px-3 py-1 rounded-full text-sm font-medium">{{ tag.name }}</span>
+						<span class="inline-flex items-center bg-primary text-secondary px-3 py-1 rounded-full text-sm font-medium"><i class="fa fa-graduation-cap mr-1"></i>{{ tag.name }}</span>
 					{% endfor %}
 				</div>
 			{% endif %}

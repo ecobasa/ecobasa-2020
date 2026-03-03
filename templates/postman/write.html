@@ -90,15 +90,22 @@
               .catch(() => { if (hidden) hidden.value = name; });
           } catch(e) { if (hidden) hidden.value = name; }
 
-          const target = document.getElementById('id_recipients') || document.querySelector('[name="recipients"]');
-          const display = document.createElement('div'); display.className = 'message-field'; display.style.paddingTop = '0.6rem'; display.style.paddingBottom = '0.6rem'; display.textContent = name;
-          if (target && target.parentNode) target.parentNode.insertBefore(display, target.nextSibling);
-          if (target) { try { target.removeAttribute('name'); target.style.display = 'none'; target.disabled = true; } catch(e) {} }
+            // prefer the visible recipients input id/name variants
+            const target = document.getElementById('id_recipients_input') || document.getElementById('id_recipients') || document.querySelector('[name="recipients_display"]') || document.querySelector('[name="recipients"]');
+            const display = document.createElement('div'); display.className = 'message-field'; display.style.paddingTop = '0.6rem'; display.style.paddingBottom = '0.6rem'; display.textContent = name;
+            if (target && target.parentNode) {
+              // insert a non-editable display and remove the editable input to avoid autocomplete
+              target.parentNode.insertBefore(display, target);
+              try { target.parentNode.removeChild(target); } catch(e) {}
+            }
+            // mark global flag so autocomplete script can skip setup
+            window.RECIPIENTS_FIXED = true;
         }
       } catch(e) {}
 
       // Postman-style autocomplete using users.autocomplete
       (function(){
+        if (window.RECIPIENTS_FIXED) return;
         const input = document.getElementById('id_recipients_input') || document.getElementById('id_recipients') || document.querySelector('[name="recipients"]');
         const hidden = document.getElementById('id_recipients_hidden');
         const datalist = document.getElementById('recipients-list');

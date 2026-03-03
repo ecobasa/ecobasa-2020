@@ -46,8 +46,8 @@
                 
               </div>
           </div>
-          {% else %}
-          <div class="flex items-start gap-4">
+            {% else %}
+            <div class="flex items-start gap-4">
               <div class="flex-none flex flex-col items-center">
                 {% if part.sender and part.sender.image %}
                   <a href="{{ part.sender.get_absolute_url }}">
@@ -79,6 +79,7 @@
           </div>
           {% endif %}
         {% endfor %}
+      </div>
 
         {# Quick reply form #}
         {% if form %}

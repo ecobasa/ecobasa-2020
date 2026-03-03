@@ -5,6 +5,20 @@ from postman.models import Message
 register = template.Library()
 
 
+def _extract_skills_from_text(text):
+    """Return tuple (text_without_skills, [skills...]) by extracting trailing 'Skills: ...' line."""
+    if not text:
+        return text, []
+    import re
+    m = re.search(r"Skills:\s*(.+)$", text, flags=re.IGNORECASE | re.DOTALL)
+    if not m:
+        return text, []
+    skills_text = m.group(1).strip()
+    cleaned = re.sub(r"\n?Skills:\s*.+$", "", text, flags=re.IGNORECASE | re.DOTALL).strip()
+    skills = [s.strip() for s in re.split(r",\s*", skills_text) if s.strip()]
+    return cleaned, skills
+
+
 @register.simple_tag
 def conversation_messages(message):
     """Return queryset of messages in the same thread as `message`, ordered by `sent_at`.
@@ -43,21 +57,9 @@ def format_message_body(body):
 
     skills_list = []
 
-    # Helper to extract a trailing "Skills: ..." line from some text.
-    def _extract_skills(text):
-        m = re.search(r"Skills:\s*(.+)$", text, flags=re.IGNORECASE | re.DOTALL)
-        if not m:
-            return text, []
-        skills_text = m.group(1).strip()
-        # remove the skills portion from the text
-        text = re.sub(r"\n?Skills:\s*.+$", "", text, flags=re.IGNORECASE | re.DOTALL).strip()
-        # split by commas
-        skills = [s.strip() for s in re.split(r",\s*", skills_text) if s.strip()]
-        return text, skills
-
     if len(parts) == 1:
         # no special block; still check for appended Skills: line
-        main, skills_list = _extract_skills(body.strip())
+        main, skills_list = _extract_skills_from_text(body.strip())
         # preserve whitespace
         html_main = template.defaultfilters.linebreaksbr(template.defaultfilters.force_escape(main))
         html = ["<div class=\"whitespace-pre-wrap\">%s</div>" % html_main]
@@ -71,7 +73,7 @@ def format_message_body(body):
 
     main, stay = parts[0].strip(), parts[1].strip()
     # extract skills from the stay block if present
-    stay, skills_list = _extract_skills(stay)
+    stay, skills_list = _extract_skills_from_text(stay)
 
     # find From and To lines
     from_dt = None
@@ -123,3 +125,72 @@ def format_message_body(body):
         html.append('</div>')
 
     return mark_safe(''.join(html))
+
+
+@register.simple_tag
+def parse_requested_dates(body):
+    """Return a dict with parsed requested-from/to datetimes (ISO and display).
+
+    Usage in template: {% parse_requested_dates part.body as rd %}
+    rd will be a dict-like object with keys: from_iso, to_iso, from_display, to_display
+    """
+    import re
+    from django.utils import timezone
+    from django.utils.formats import date_format
+    import datetime
+
+    result = {"from_iso": "", "to_iso": "", "from_display": "", "to_display": ""}
+    if not body:
+        return result
+
+    m_from = re.search(r"From\s+(.+)", body)
+    m_to = re.search(r"To\s+(.+)", body)
+
+    def _parse_iso(s):
+        try:
+            dt = datetime.datetime.fromisoformat(s.strip())
+            if timezone.is_naive(dt):
+                dt = timezone.make_aware(dt, timezone.get_current_timezone())
+            return timezone.localtime(dt)
+        except Exception:
+            return None
+
+    if m_from:
+        dt = _parse_iso(m_from.group(1))
+        if dt:
+            result["from_iso"] = dt.isoformat()
+            result["from_display"] = date_format(dt, "SHORT_DATETIME_FORMAT")
+        else:
+            result["from_display"] = m_from.group(1).strip()
+
+    if m_to:
+        dt = _parse_iso(m_to.group(1))
+        if dt:
+            result["to_iso"] = dt.isoformat()
+            result["to_display"] = date_format(dt, "SHORT_DATETIME_FORMAT")
+        else:
+            result["to_display"] = m_to.group(1).strip()
+
+    return result
+
+
+@register.filter(is_safe=False)
+def strip_requested_block(body):
+    """Remove a trailing 'Requested stay:' block (and following skills) from message body."""
+    if not body:
+        return ""
+    import re
+    # Remove 'Requested stay:' and everything that follows it
+    cleaned = re.sub(r"Requested stay:\s*.*$", "", body, flags=re.IGNORECASE | re.DOTALL).strip()
+    # Also strip any trailing 'Skills: ...' line (in case it's not inside the Requested block)
+    cleaned, _ = _extract_skills_from_text(cleaned)
+    return cleaned
+
+
+@register.simple_tag
+def extract_skills(body, limit=5):
+    """Extract a comma-separated 'Skills: ...' trailing line from the message body and return up to `limit` skills as a list."""
+    if not body:
+        return []
+    _, skills = _extract_skills_from_text(body)
+    return skills[:int(limit)]
