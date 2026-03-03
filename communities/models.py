@@ -51,10 +51,6 @@ class Community(UniqueSlugMixin, models.Model):
         null=True, blank=True)
     children = models.PositiveIntegerField(
         _('how many children live at your place?'), null=True, blank=True, default=0)
-    people_count = models.CharField(
-        _('How many people live in your community?'), max_length=20, null=True, blank=True)
-    minors_count = models.PositiveIntegerField(
-        _('How many of them are under 18?'), null=True, blank=True)
     max_guests = models.PositiveIntegerField(
         _('Maximum number of people you can host'), null=True, blank=True)
     has_workshop_space = models.TextField(

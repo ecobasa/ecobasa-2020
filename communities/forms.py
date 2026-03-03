@@ -1,5 +1,3 @@
-import re
-
 from django import forms
 from django.forms.widgets import ClearableFileInput
 from django.utils.translation import gettext_lazy as _
@@ -31,7 +29,6 @@ class MultiImageField(forms.ImageField):
 
 
 class CommunityForm(forms.ModelForm):
-    PEOPLE_COUNT_PATTERN = re.compile(r"^\d+(?:-\d+)?$")
     gallery = MultiImageField(
         required=False,
         widget=MultiFileInput(attrs={"multiple": True}),
@@ -44,22 +41,15 @@ class CommunityForm(forms.ModelForm):
         for field in self.fields.values():
             css = field.widget.attrs.get("class", "")
             field.widget.attrs["class"] = f"{css} community-field".strip()
-        if "people_count" in self.fields:
-            self.fields["people_count"].widget.attrs.setdefault(
-                "placeholder", _("e.g. 25 or 25-30")
+        if "inhabitants" in self.fields:
+            self.fields["inhabitants"].widget.attrs.setdefault(
+                "placeholder", _("e.g. 25")
             )
         if "gallery" in self.fields:
             css = self.fields["gallery"].widget.attrs.get("class", "")
             self.fields["gallery"].widget.attrs["class"] = f"{css} community-field".strip()
 
-    def clean_people_count(self):
-        value = self.cleaned_data.get("people_count")
-        if not value:
-            return value
-        text = str(value).strip()
-        if not self.PEOPLE_COUNT_PATTERN.match(text):
-            raise forms.ValidationError(_("Use a whole number or a range like 25-30."))
-        return text
+    # inhabitants is an integer field on the model; no custom cleaning required.
 
     def clean_gallery(self):
         files = self.cleaned_data.get("gallery") or []
@@ -73,8 +63,9 @@ class CommunityForm(forms.ModelForm):
             "status",
             "location_name",
             "location",
-            "people_count",
-            "minors_count",
+            "inhabitants",
+            "children",
+            "video",
             "max_guests",
             "has_workshop_space",
             "offers_seminars",
@@ -94,13 +85,14 @@ class CommunityForm(forms.ModelForm):
             "description": forms.Textarea(attrs={"rows": 4}),
             "vision": forms.Textarea(attrs={"rows": 3}),
             "accomodation": forms.Textarea(attrs={"rows": 3}),
+            "video": forms.URLInput(attrs={"placeholder": _("YouTube or Vimeo link")}),
             "skills": TagWidget(attrs={"placeholder": _("Add skills, comma separated")}),
         }
         labels = {
             "location_name": _("Location"),
             "location": _("Geo location"),
-            "people_count": _("How many people live in your community?"),
-            "minors_count": _("How many of them are under 18?"),
+            "inhabitants": _("How many people live in your community?"),
+            "children": _("How many of them are under 18?"),
             "max_guests": _("Maximum number of people you can host"),
             "has_workshop_space": _("Do you have workshop spaces where people can build/construct/manufacture things?"),
             "offers_seminars": _("Do you offer any seminars that visitors could attend?"),

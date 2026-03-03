@@ -99,23 +99,6 @@ class Migration(migrations.Migration):
                     ),
                 ),
                 (
-                    "people_count",
-                    models.CharField(
-                        blank=True,
-                        max_length=20,
-                        null=True,
-                        verbose_name="How many people live in your community?",
-                    ),
-                ),
-                (
-                    "minors_count",
-                    models.PositiveIntegerField(
-                        blank=True,
-                        null=True,
-                        verbose_name="How many of them are under 18?",
-                    ),
-                ),
-                (
                     "max_guests",
                     models.PositiveIntegerField(
                         blank=True,

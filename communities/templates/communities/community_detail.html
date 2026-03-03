@@ -4,24 +4,25 @@
 {% block extrahead %}
 	{{ block.super }}
 	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.css">
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v7.2.2/ol.css">
 {% endblock extrahead %}
 
 {% block content %}
 <style>
-	/* Slow fade for hero slides */
-	.hero-slide {
-		transition: opacity 1.3s ease;
-		will-change: opacity;
-	}
+	/* Only custom rules that Tailwind can't express easily */
+	.hero-slide { will-change: opacity; }
+	.video-container iframe,
+	.video-container object,
+	.video-container embed { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
 </style>
 {% if photos %}
 <div class="relative w-full" style="height: 340px;">
 	{% for photo in photos %}
-	<div class="absolute inset-0 bg-center bg-cover opacity-0 transition-opacity duration-700 hero-slide" data-index="{{ forloop.counter0 }}" style="background-image: url('{{ photo.image.url }}');"></div>
+		<div class="absolute inset-0 bg-center bg-cover opacity-0 transition-opacity duration-700 hero-slide" data-index="{{ forloop.counter0 }}" style="background-image: url('{{ photo.image.url }}');"></div>
 	{% endfor %}
 	<div class="absolute inset-0" aria-hidden="true"></div>
-	<div class="absolute left-0 right-0 z-10" style="bottom: 100px;">
-		<div style="color: #fcf3e5; padding-top: 20px; padding-bottom: 30px; background: rgba(14, 7, 0, 0.4); text-align: center; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);">
+		<div class="absolute left-0 right-0 z-10" style="bottom: 100px;">
+		<div class="text-amber-100 py-10 bg-black bg-opacity-40 text-center drop-shadow-md">
 			<h1 class="text-5xl text-secondary">{{ community.name }}</h1>
 		</div>
 	</div>
@@ -32,7 +33,7 @@
 		<button type="button" class="hero-arrow hero-next absolute right-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-20 hover:bg-opacity-90 text-primary rounded-full w-10 h-10 flex items-center justify-center shadow z-10">
 			<img src="{% static 'img/arrow-right.png' %}" alt="Next" class="w-full h-full object-contain">
 		</button>
-		<div class="absolute left-0 right-0 z-10" style="bottom: 16px;">
+		<div class="absolute left-0 right-0 z-10 bottom-0">
 			<div class="text-center space-x-2">
 				{% for photo in photos %}
 					<button type="button" class="inline-block w-3 h-3 rounded-full bg-secondary bg-opacity-60 hero-dot" data-index="{{ forloop.counter0 }}"></button>
@@ -47,152 +48,200 @@
 	<div class="absolute inset-0" aria-hidden="true"></div>
 </div>
 {% endif %}
-<div class="mx-auto max-w-7xl mt-10 px-4 pb-10">
-<div class="grid grid-cols-4 gap-6">
-	<div>
-		<h2>{% trans "Statistics" %}</h2>
-		<span class="block text-primary mb-2">
-      {% if community.community_type == "e" %}
-        <i class="mr-1 fa fa-home"></i> {% trans "Ecovillage" %}
-      {% elif community.community_type == "p" %}
-        <i class="mr-1 fa fa-tag"></i>{% trans "Planning Initiative" %}
-      {% elif community.community_type == "c" %}
-        <i class="mr-1 fa fa-home"></i>{% trans "Commune" %}
-      {% elif community.community_type == "h" %}
-        <i class="mr-1 fa fa-home"></i>{% trans "Houseproject" %}
-      {% elif community.community_type == "f" %}
-        <i class="mr-1 fa fa-home"></i>{% trans "Permaculture Farm" %}
-      {% endif %}
-    </span>
-    <span class="block text-primary mb-2">
-      {% if community.community_status == "s" %}
-        <i class="mr-1 fa fa-hand-rock"></i>{% trans "Starting Project (first years)" %}
-      {% elif community.community_status == "e" %}
-        <i class="mr-1 fa fa-thumbs-up"></i>{% trans "Established (+4 years)" %}
-      {% elif community.community_status == "l" %}
-        <i class="mr-1 fa fa-map-marker"></i>{% trans "Land Offer" %}
-      {% endif %}
-  	</span>
-		{% with community.people_count|default:community.inhabitants as people_total %}
-			{% if people_total %}
-				<span class="block text-primary mb-2"><i class="mr-1 fa fa-users"></i>{{ people_total }} {% trans "people living there" %}</span>
-			{% endif %}
-		{% endwith %}
-		{% with community.minors_count|default:community.children as minor_total %}
-			{% if minor_total %}
-				<span class="block text-primary mb-2"><i class="mr-1 fa fa-child"></i>{{ minor_total }} {% trans "children" %}</span>
-			{% endif %}
-		{% endwith %}
-    <h2>{% trans "Contact Info" %}</h2>
-		<div class="w-20 sm:w-32 text-center">
-			{% if community.owner and community.owner.image %}
-				<a href="{{ community.owner.get_absolute_url }}">
-					<img class="h-20 w-20 sm:h-32 sm:w-32 rounded-full mx-auto mb-2 object-cover" src="{{ community.owner.image.url }}" alt="{{ community.owner.name }}">
-				</a>
-			{% else %}
-				<a href="{{ community.owner.get_absolute_url }}" class="block">
-					<div class="flex flex-shrink-0 h-20 w-20 sm:h-32 sm:w-32 mb-2 bg-primary rounded-full mx-auto text-center" aria-hidden="true">
-						<i class="fa fa-user text-6xl text-secondary mx-auto object-bottom h-16"></i>
-					</div>
-				</a>
-			{% endif %}
-			{% if community.owner %}
-				<span class="block text-primary mb-4 font-bold text-xl text-center" style="font-family: 'Bree Serif', serif;">
-					<a href="{{ community.owner.get_absolute_url }}" class="hover:underline">{{ community.owner.name }}</a>
-				</span>
-			{% endif %}
-			{% if request.user.is_authenticated and community.owner %}
-				<a class="btn block mb-10" href="{% url 'postman:write' community.owner.name %}">
-					<i class="fa fa-envelope mr-1"></i>{% trans "Contact" %}
-				</a>
-			{% endif %}
-			{% if community.owner %}
-			  {% if request.user.is_authenticated %}
-			    <button type="button" id="volunteer-request-open" class="btn block mb-6 bg-yellow text-dark-brown">
-			      <i class="fa fa-hands-helping mr-1"></i>{% trans "Request volunteering stay" %}
-			    </button>
-			  {% else %}
-			    <a class="btn block mb-6" href="{% url 'users:login' %}?next={{ request.path }}">
-			      <i class="fa fa-hands-helping mr-1"></i>{% trans "Request volunteering stay" %}
-			    </a>
-			  {% endif %}
-			{% endif %}
+<div class="mx-auto max-w-7xl mt-10 px-4 pb-10 relative">
+	{% if request.user.is_authenticated and request.user.is_staff or request.user.is_authenticated and community.owner and request.user == community.owner %}
+		<a class="btn btn-green absolute right-4 -top-10 bg-opacity-70" href="{% url 'communities:update' slug=community.slug %}"><i class="fa fa-edit mr-2"></i>{% trans "Edit" %}</a>
+	{% endif %}
+<div class="grid grid-cols-1 sm:grid-cols-12 gap-6">
+	<!-- Main content: description, vision, skills, accommodation summary (appears first on mobile) -->
+	<div class="order-1 sm:order-1 sm:col-span-8">
+		<div class="sm:pr-24 pr-0">
+			<p class="mt-0">{{ community.description }}</p>
 		</div>
-		<!-- Volunteer Request Modal -->
-		<div id="volunteer-request-modal" class="fixed inset-0 bg-black bg-opacity-70 z-50 hidden items-center justify-center p-4 overflow-y-auto">
-			<div class="bg-secondary rounded-lg max-w-2xl w-full p-6 relative max-h-[90vh] overflow-y-auto" style="-webkit-overflow-scrolling: touch;">
-				<button type="button" id="volunteer-request-close" class="absolute top-3 right-3 text-2xl">&times;</button>
-				<h2 class="text-xl font-semibold mb-4">{% trans "Request volunteering stay" %}</h2>
-				<form id="volunteer-request-form" method="post" action="{% url 'postman:write' %}">
-					{% csrf_token %}
-					<input type="hidden" name="recipients" value="{% if community.owner %}{{ community.owner.email }}{% endif %}">
-					<input type="hidden" name="subject" value="{% trans "Request volunteering stay" %}">
-					<div class="grid grid-cols-1 gap-3">
-						<label class="text-sm">{% trans "Your skills (comma separated)" %}
-							<input type="text" name="sender_skills" id="volunteer-sender-skills" class="form-input w-full mt-1" value="{% if request.user and request.user.is_authenticated %}{{ request.user.skills.all|join:', ' }}{% endif %}">
-						</label>
-						<label class="text-sm">{% trans "From" %}
-							<input type="datetime-local" name="stay_from" class="form-input w-full mt-1">
-						</label>
-						<label class="text-sm">{% trans "To" %}
-							<input type="datetime-local" name="stay_to" class="form-input w-full mt-1">
-						</label>
-						<label class="text-sm">{% trans "Message" %}
-							<textarea name="body" id="volunteer-body" rows="6" class="form-textarea w-full mt-1" placeholder="{% trans "Write a short message explaining your motivation and skills" %}"></textarea>
-						</label>
-					</div>
-					<div class="mt-4 flex justify-end gap-3">
-						<button type="button" id="volunteer-cancel" class="btn">{% trans "Cancel" %}</button>
-						<button type="submit" class="btn bg-primary text-secondary">{% trans "Send request" %}</button>
-					</div>
-				</form>
+		<h2>{% trans "What brings this community together?" %}</h2>
+		<p>{{ community.vision }}</p>
+		<h2>{% trans "Skills you can learn here" %}</h2>
+		<ul>
+		{% for skill in community.skills.all %}
+			<li class="rounded-full bg-primary text-secondary px-3 py-1 text-xs inline ml-2"><i class="mr-1 fa fa-graduation-cap"></i>{{ skill }}</li>
+		{% endfor %}
+		</ul>
+	</div>
+
+	<!-- Sidebar: order controlled via Tailwind order utilities -->
+	<aside class="order-2 sm:order-2 sm:col-span-4">
+		<div class="flex flex-col space-y-4">
+			<!-- Stats (mobile: appears first in sidebar after main content; desktop: first in sidebar) -->
+			<div class="order-1 sm:order-1">
+				<h2 class="mt-0">{% trans "Statistics" %}</h2>
+				<span class="block text-primary mb-2">
+					{% if community.type == "e" %}
+						<i class="mr-1 fa fa-home"></i> {% trans "Ecovillage" %}
+					{% elif community.type == "p" %}
+						<i class="mr-1 fa fa-tag"></i>{% trans "Planning Initiative" %}
+					{% elif community.type == "c" %}
+						<i class="mr-1 fa fa-home"></i>{% trans "Commune" %}
+					{% elif community.type == "h" %}
+						<i class="mr-1 fa fa-home"></i>{% trans "Houseproject" %}
+					{% elif community.type == "f" %}
+						<i class="mr-1 fa fa-home"></i>{% trans "Permaculture Farm" %}
+					{% endif %}
+				</span>
+				<span class="block text-primary mb-2">
+					{% if community.status == "s" %}
+						<i class="mr-1 fa fa-hand-rock"></i>{% trans "Starting Project (first years)" %}
+					{% elif community.status == "e" %}
+						<i class="mr-1 fa fa-thumbs-up"></i>{% trans "Established (+4 years)" %}
+					{% elif community.status == "l" %}
+						<i class="mr-1 fa fa-map-marker"></i>{% trans "Land Offer" %}
+					{% endif %}
+				</span>
+				{% with community.inhabitants as inhabitants %}
+					{% if inhabitants %}
+						<span class="block text-primary mb-2"><i class="mr-1 fa fa-users"></i>{% blocktrans count inhabitants as count %}{{ count }} person living there{% plural %}{{ count }} people living there{% endblocktrans %}</span>
+					{% endif %}
+				{% endwith %}
+				{% with community.children as children %}
+					{% if children %}
+						<span class="block text-primary mb-2"><i class="mr-1 fa fa-child"></i>{% blocktrans count children as count %}{{ count }} child{% plural %}{{ count }} children{% endblocktrans %}</span>
+					{% endif %}
+				{% endwith %}
+			</div>
+
+			<!-- Accommodation (mobile: after stats; desktop: second in sidebar) -->
+			<div class="order-2 sm:order-2">
+				<h3 class="mt-0">{% trans "Accomodation for guests" %}</h3>
+				<p>{{ community.accomodation }}</p>
+			</div>
+
+			<!-- Website -->
+			{% if community.website %}
+			<div class="order-3 sm:order-3">
+				<a href="{{ community.website }}" target="_blank" rel="noopener" class="text-primary"><i class="fa fa-globe mr-1"></i>{{ community.website }}</a>
+			</div>
+			{% endif %}
+
+			<!-- Telephone (mobile should show it earlier; on desktop it appears later) -->
+			{% if community.telephone %}
+			<div class="order-5 sm:order-100">
+				<a href="tel:{{ community.telephone }}" class="text-primary"><i class="fa fa-phone mr-1"></i>{{ community.telephone }}</a>
+			</div>
+			{% endif %}
+
+			<!-- Volunteer request button (mobile later, desktop mid-sidebar) -->
+			<div class="order-8 sm:order-5">
+				{% if community.owner %}
+					{% if request.user.is_authenticated %}
+						<button type="button" id="volunteer-request-open" class="btn w-full"><i class="fa fa-hands-helping mr-1"></i>{% trans "Request volunteering stay" %}</button>
+					{% else %}
+						<a class="btn w-full" href="{% url 'users:login' %}?next={{ request.path }}"><i class="fa fa-hands-helping mr-1"></i>{% trans "Request volunteering stay" %}</a>
+					{% endif %}
+				{% endif %}
+			</div>
+
+			<!-- Volunteer Request Modal -->
+			<div id="volunteer-request-modal" class="fixed inset-0 bg-black bg-opacity-70 z-50 hidden items-center justify-center p-4 overflow-y-auto">
+				<div class="bg-secondary rounded-lg max-w-2xl w-full p-6 relative max-h-[90vh] overflow-y-auto" style="-webkit-overflow-scrolling: touch;">
+					<button type="button" id="volunteer-request-close" class="absolute top-3 right-3 text-2xl">&times;</button>
+					<h2 class="text-xl font-semibold mb-4">{% trans "Request volunteering stay" %}</h2>
+					<form id="volunteer-request-form" method="post" action="{% url 'postman:write' %}">
+						{% csrf_token %}
+						<input type="hidden" name="recipients" value="{% if community.owner %}{{ community.owner.email }}{% endif %}">
+						<input type="hidden" name="subject" value="{% trans "Request volunteering stay" %}">
+						<div class="grid grid-cols-1 gap-3">
+							<label class="text-sm">{% trans "Your skills (comma separated)" %}
+								<input type="text" name="sender_skills" id="volunteer-sender-skills" class="form-input w-full mt-1" value="{% if request.user and request.user.is_authenticated %}{{ request.user.skills.all|join:', ' }}{% endif %}">
+							</label>
+							<label class="text-sm">{% trans "From" %}
+								<input type="datetime-local" name="stay_from" class="form-input w-full mt-1">
+							</label>
+							<label class="text-sm">{% trans "To" %}
+								<input type="datetime-local" name="stay_to" class="form-input w-full mt-1">
+							</label>
+							<label class="text-sm">{% trans "Message" %}
+								<textarea name="body" id="volunteer-body" rows="6" class="form-textarea w-full mt-1" placeholder="{% trans "Write a short message explaining your motivation and skills" %}"></textarea>
+							</label>
+						</div>
+						<div class="mt-4 flex justify-end gap-3">
+							<button type="button" id="volunteer-cancel" class="btn">{% trans "Cancel" %}</button>
+							<button type="submit" class="btn bg-primary text-secondary">{% trans "Send request" %}</button>
+						</div>
+					</form>
+				</div>
+			</div>
+
+			<!-- Address / Location name + OpenLayers map -->
+			<div class="order-4 sm:order-4">
+				{% if community.location %}
+				<h3>{% trans "Location" %}</h3>
+					{% with lat=community.location.y lon=community.location.x %}
+						<p class="text-sm"><i class="fa fa-map-marker mr-1"></i>{{ community.location_name }}</p>
+						<div class="relative mt-2">
+							<div class="absolute top-2 right-2 z-10">
+								<div class="relative">
+									<button id="community-layer-toggle" type="button" class="flex items-center justify-center w-10 h-10 rounded-md bg-primary bg-opacity-50 text-secondary shadow-lg border backdrop-blur">
+										<i class="fa fa-layer-group text-lg"></i>
+									</button>
+									<div id="community-layer-menu" class="hidden absolute right-0 mt-2 w-44 bg-primary text-secondary bg-opacity-50 backdrop-blur rounded-lg shadow-xl border py-2">
+										<div class="px-3 pb-1 text-xs font-semibold uppercase">{% trans "Layers" %}</div>
+										<ul class="list-none m-0 text-sm space-y-1 px-2">
+											<li>
+												<label class="inline-flex items-center w-full px-2 py-1 rounded hover:bg-secondary hover:text-primary cursor-pointer">
+													<input type="radio" name="community-layer-option" value="ecobasa" class="form-radio mr-2 text-secondary" checked>
+													<span>{% trans "ecobasa" %}</span>
+												</label>
+											</li>
+											<li>
+												<label class="inline-flex items-center w-full px-2 py-1 rounded hover:bg-secondary hover:text-primary cursor-pointer">
+													<input type="radio" name="community-layer-option" value="satellite" class="form-radio mr-2 text-secondary">
+													<span>{% trans "Satellite" %}</span>
+												</label>
+											</li>
+											<li>
+												<label class="inline-flex items-center w-full px-2 py-1 rounded hover:bg-secondary hover:text-primary cursor-pointer">
+													<input type="radio" name="community-layer-option" value="osm" class="form-radio mr-2 text-secondary">
+													<span>{% trans "OSM" %}</span>
+												</label>
+											</li>
+										</ul>
+									</div>
+								</div>
+							</div>
+							<div id="community-detail-map" class="w-full rounded shadow overflow-hidden h-96"></div>
+						</div>
+					{% endwith %}
+				{% else %}
+					{% if community.location_name %}<p class="text-sm">{{ community.location_name }}</p>{% endif %}
+				{% endif %}
+			</div>
+
+			<!-- Video (desktop positioned earlier than map; mobile appears near end) -->
+			{% if community.video %}
+				<div class="order-9 sm:order-6">
+					<h3>{% trans "Video" %}</h3>
+					<div class="video-container" style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;">{% video community.video is_secure=True %}</div>
+				</div>
+			{% endif %}
+
+
+
+			<!-- Ambassador / owner -->
+			<div class="order-11 sm:order-8 text-center">
+				{% if community.owner %}
+					<h3>{% trans "Gift-economy Ambassador" %}</h3>
+					<a href="{{ community.owner.get_absolute_url }}">
+						{% if community.owner.image %}
+							<img src="{{ community.owner.image.url }}" class="rounded-full h-20 w-20 mx-auto mb-2 object-cover" alt="{{ community.owner.name }}">
+						{% endif %}
+						<div class="font-serif font-bold">{{ community.owner.name }}</div>
+					</a>
+					{% if request.user.is_authenticated %}
+						<a class="btn block mt-2" href="{% url 'postman:write' community.owner.name %}"><i class="fa fa-paper-plane  mr-1"></i>{% trans "Contact" %}</a>
+					{% endif %}
+				{% endif %}
 			</div>
 		</div>
-    {% if community.website %}
-    	<span class="block text-primary mb-2"><a href="{{ community.website }}"  target="_blank" rel="noopener"><i class="fa fa-globe mr-1"></i>{{ community.website }}</a></span>
-    {% endif %}
-    {% if community.telephone %}
-    	<span class="block text-primary mb-2"><a href="tel:{{ community.telephone }}"  target="_blank" rel="noopener"><i class="fa fa-phone mr-1"></i>{{ community.telephone }}</a></span>
-    {% endif %}
-		{% if request.user.is_authenticated and request.user.is_staff or request.user.is_authenticated and community.owner and request.user == community.owner %}
-			<a class="btn btn-green mt-4 inline-flex items-center" href="{% url 'communities:update' slug=community.slug %}"><i class="fa fa-edit mr-2"></i>{% trans "Edit" %}</a>
-		{% endif %}
-	</div>
-	<div class="col-span-3">
-		<div class="flex justify-between">
-			<div>
-		</div>
-		<div class="float-right">
-			<ul>
-			{% for skill in community.skills.all %}
-				<li class="rounded-full bg-primary text-secondary px-3 py-1 text-xs inline ml-2"><i class="mr-1 fa fa-graduation-cap"></i>{{ skill }}</li>
-			{% endfor %}
-			</ul>
-		</div>
-	</div>
-		<h2 class="text-2xl font-bold text-primary">{{ community.name }}</h2>
-	  <p>
-	      {{ community.description }}
-	  </p>
-	  <h2>{% trans "What brings this community together?" %}</h2>
-	  <p>
-	      {{ community.vision }}
-	  </p>
-	  <h2>{% trans "Accomodation for guests" %}</h2>
-	  <p>
-	      {{ community.accomodation }}
-	  </p>
-	  {% if community.video %}
-	  <h2>{% trans "Video" %}</h2>
-		<div class="relative pb-1/2 pt-0 h-0 overflow-hidden video-container">
-				{% video community.video is_secure=True %}	
-			</div>	
-	  {% endif %}
-		</div>
-	</div>
-  
-  
-
+	</aside>
 </div>
 {% endblock content %}
 
@@ -244,8 +293,6 @@ document.addEventListener('DOMContentLoaded', () => {
 	setActive(0);
 	restart();
 });
-</script>
-<script>
 document.addEventListener('DOMContentLoaded', () => {
 	const openBtn = document.getElementById('volunteer-request-open');
 	const modal = document.getElementById('volunteer-request-modal');
@@ -291,4 +338,104 @@ document.addEventListener('DOMContentLoaded', () => {
 	modal.addEventListener('click', function(e){ if (e.target === modal) closeModal(); });
 });
 </script>
+{% if community.location %}
+	<script src="https://cdn.jsdelivr.net/npm/ol@v7.2.2/dist/ol.js"></script>
+	<script>
+		const initCommunityMap = () => {
+			const mapEl = document.getElementById('community-detail-map');
+			if (!mapEl) return;
+			const data = {
+				lat: {{ community.location.y|floatformat:"6" }},
+				lon: {{ community.location.x|floatformat:"6" }},
+				title: "{{ community.name|escapejs }}",
+				location_name: "{{ community.location_name|default:""|escapejs }}"
+			};
+
+			const stamenWatercolor = new ol.layer.Tile({
+				source: new ol.source.XYZ({
+					url: 'https://tiles.stadiamaps.com/tiles/stamen_watercolor/{z}/{x}/{y}.jpg?api_key=cb8069a3-9585-4989-a6a8-572b5c3f4ffb',
+					crossOrigin: 'anonymous'
+				})
+			});
+
+			const stamenTonerLabels = new ol.layer.Tile({
+				source: new ol.source.XYZ({
+					url: 'https://tiles.stadiamaps.com/tiles/stamen_toner_lite/{z}/{x}/{y}.png?api_key=cb8069a3-9585-4989-a6a8-572b5c3f4ffb',
+					crossOrigin: 'anonymous'
+				}),
+				opacity: 0.35
+			});
+
+			const satellite = new ol.layer.Tile({
+				source: new ol.source.XYZ({
+					url: 'https://mt{0-3}.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}',
+					attributions: '&copy; Google',
+					maxZoom: 20,
+					crossOrigin: 'anonymous'
+				}),
+				visible: false
+			});
+
+			const osmBase = new ol.layer.Tile({
+				source: new ol.source.OSM({
+					url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+					crossOrigin: 'anonymous'
+				}),
+				visible: false
+			});
+
+			const enableOsmFallback = () => { if (!osmBase.getVisible()) osmBase.setVisible(true); };
+			stamenWatercolor.getSource().on('tileloaderror', enableOsmFallback);
+			stamenTonerLabels.getSource().on('tileloaderror', enableOsmFallback);
+
+			const map = new ol.Map({
+				target: mapEl,
+				layers: [stamenWatercolor, stamenTonerLabels, satellite, osmBase],
+				view: new ol.View({
+					center: ol.proj.fromLonLat([data.lon, data.lat]),
+					zoom: 13
+				})
+			});
+
+			const forceRender = () => { map.updateSize(); map.renderSync(); const v = map.getView(); v.setCenter(v.getCenter()); v.setZoom(v.getZoom()); };
+			const ensureSize = () => { const rect = mapEl.getBoundingClientRect(); if (!rect.width || !rect.height) { requestAnimationFrame(ensureSize); return; } map.updateSize(); forceRender(); };
+			setTimeout(() => map.updateSize(), 50);
+			ensureSize();
+
+			const layerWrap = document.getElementById('community-layer-toggle')?.parentElement?.parentElement;
+			const layerToggle = document.getElementById('community-layer-toggle');
+			const layerMenu = document.getElementById('community-layer-menu');
+			const layerRadios = document.querySelectorAll('input[name="community-layer-option"]');
+
+			const setLayerMode = (mode) => {
+				stamenWatercolor.setVisible(false); stamenTonerLabels.setVisible(false); satellite.setVisible(false); osmBase.setVisible(false);
+				const target = (mode || 'ecobasa').toLowerCase();
+				switch (target) {
+					case 'satellite': satellite.setVisible(true); break;
+					case 'osm': osmBase.setVisible(true); break;
+					default: stamenWatercolor.setVisible(true); stamenTonerLabels.setVisible(true); break;
+				}
+				layerRadios.forEach(r => { r.checked = (r.value === target); });
+			};
+
+			if (layerWrap && layerMenu && layerToggle) {
+				const showMenu = () => { layerMenu.classList.remove('hidden'); layerToggle.classList.add('hidden'); };
+				const hideMenu = () => { layerMenu.classList.add('hidden'); layerToggle.classList.remove('hidden'); };
+				layerToggle.addEventListener('mouseenter', showMenu);
+				layerToggle.addEventListener('click', (e) => { e.stopPropagation(); showMenu(); });
+				layerMenu.addEventListener('mouseleave', hideMenu);
+				document.addEventListener('click', (e) => { if (!layerWrap.contains(e.target)) hideMenu(); });
+				layerRadios.forEach(r => { r.addEventListener('change', (e) => { if (e.target.checked) setLayerMode(e.target.value); }); });
+				setLayerMode('ecobasa');
+			} else { setLayerMode('ecobasa'); }
+
+			const feature = new ol.Feature({ geometry: new ol.geom.Point(ol.proj.fromLonLat([data.lon, data.lat])) });
+			feature.setStyle(new ol.style.Style({ image: new ol.style.Icon({ src: '{% static "map/images/marker-icon.png" %}', anchor: [0.5, 1] }) }));
+			const vectorLayer = new ol.layer.Vector({ source: new ol.source.Vector({ features: [feature] }) });
+			map.addLayer(vectorLayer);
+		};
+
+		if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', initCommunityMap); } else { initCommunityMap(); }
+	</script>
+{% endif %}
 {% endblock javascript %}

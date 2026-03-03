@@ -53,7 +53,7 @@ def index(request):
                 "lon": c.location.x,
                 "url": reverse("communities:detail", kwargs={"slug": c.slug}),
                 "image": photo_url,
-                "members": c.inhabitants,
+                "inhabitants": c.inhabitants,
                 "children": c.children,
                 "visitors": c.max_guests,
                 "skills": [s.name for s in c.skills.all()],

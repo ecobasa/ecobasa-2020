@@ -59,6 +59,28 @@
       {% for error in form.status.errors %}<p class="text-xs text-red-600">{{ error }}</p>{% endfor %}
     </div>
 
+    <!-- Location: moved above description -->
+    <div x-data="communityLocationDropdown()" class="relative">
+      <label class="block mb-1 text-sm font-semibold text-primary" for="id_location_name">{{ form.location_name.label }}</label>
+      <input type="text" name="location_name" id="id_location_name" value="{{ form.location_name.value|default_if_none:'' }}" class="community-field" @input.debounce="onInput($event.target.value)" autocomplete="off">
+      <div x-show.transition="open" @click.away="open = false" class="absolute z-20 inset-x-0 bg-secondary bg-opacity-80 shadow-lg text-xs py-3 rounded-b border-b border-l border-r">
+        <ul class="list-none m-0">
+          <template x-for="res in results" :key="res.place_id">
+            <li class="m-0"><a @click.prevent="onSelect(res)" href="#" class="block px-2 py-2 text-brown hover:bg-primary hover:text-secondary" x-text="res.display_name"></a></li>
+          </template>
+        </ul>
+      </div>
+      {% for error in form.location_name.errors %}<p class="text-xs text-red-600">{{ error }}</p>{% endfor %}
+    </div>
+
+    {{ form.location }}
+    <div class="rounded shadow overflow-hidden community-map-wrapper" style="height: 320px;">
+      <div id="community-location-map" class="w-full h-full bg-secondary bg-opacity-40"></div>
+    </div>
+    <p class="text-xs text-brown">{% trans "Click or drag the pin to set your exact location." %}</p>
+    {% for error in form.location.errors %}<p class="text-xs text-red-600">{{ error }}</p>{% endfor %}
+
+
     <div>
       <label class="block mb-1 text-sm font-semibold text-primary" for="id_description">{{ form.description.label }}</label>
       {{ form.description }}
@@ -91,44 +113,27 @@
       {% endif %}
     </div>
 
-    <div class="grid md:grid-cols-3 gap-4">
+    <div class="grid md:grid-cols-2 gap-4">
       <div>
-        <label class="block mb-1 text-sm font-semibold text-primary" for="id_people_count">{{ form.people_count.label }}</label>
-        {{ form.people_count }}
-        {% for error in form.people_count.errors %}<p class="text-xs text-red-600">{{ error }}</p>{% endfor %}
+        <label class="block mb-1 text-sm font-semibold text-primary" for="id_inhabitants">{{ form.inhabitants.label }}</label>
+        {{ form.inhabitants }}
+        {% for error in form.inhabitants.errors %}<p class="text-xs text-red-600">{{ error }}</p>{% endfor %}
       </div>
       <div>
-        <label class="block mb-1 text-sm font-semibold text-primary" for="id_minors_count">{{ form.minors_count.label }}</label>
-        {{ form.minors_count }}
-        {% for error in form.minors_count.errors %}<p class="text-xs text-red-600">{{ error }}</p>{% endfor %}
-      </div>
-      <div>
-        <label class="block mb-1 text-sm font-semibold text-primary" for="id_max_guests">{{ form.max_guests.label }}</label>
-        {{ form.max_guests }}
-        {% for error in form.max_guests.errors %}<p class="text-xs text-red-600">{{ error }}</p>{% endfor %}
+        <label class="block mb-1 text-sm font-semibold text-primary" for="id_children">{{ form.children.label }}</label>
+        {{ form.children }}
+        {% for error in form.children.errors %}<p class="text-xs text-red-600">{{ error }}</p>{% endfor %}
       </div>
     </div>
 
-    <div x-data="communityLocationDropdown()" class="relative">
-      <label class="block mb-1 text-sm font-semibold text-primary" for="id_location_name">{{ form.location_name.label }}</label>
-      <input type="text" name="location_name" id="id_location_name" value="{{ form.location_name.value|default_if_none:'' }}" class="community-field" @input.debounce="onInput($event.target.value)" autocomplete="off">
-      <div x-show.transition="open" @click.away="open = false" class="absolute z-20 inset-x-0 bg-secondary bg-opacity-80 shadow-lg text-xs py-3 rounded-b border-b border-l border-r">
-        <ul class="list-none m-0">
-          <template x-for="res in results" :key="res.place_id">
-            <li class="m-0"><a @click.prevent="onSelect(res)" href="#" class="block px-2 py-2 text-brown hover:bg-primary hover:text-secondary" x-text="res.display_name"></a></li>
-          </template>
-        </ul>
-      </div>
-      {% for error in form.location_name.errors %}<p class="text-xs text-red-600">{{ error }}</p>{% endfor %}
+    <!-- Visitor-related fields grouped together -->
+    <div>
+      <label class="block mb-1 text-sm font-semibold text-primary" for="id_telephone">{{ form.telephone.label }}</label>
+      {{ form.telephone }}
+      {% for error in form.telephone.errors %}<p class="text-xs text-red-600">{{ error }}</p>{% endfor %}
     </div>
 
-    {{ form.location }}
-    <div class="rounded shadow overflow-hidden community-map-wrapper" style="height: 320px;">
-      <div id="community-location-map" class="w-full h-full bg-secondary bg-opacity-40"></div>
-    </div>
-    <p class="text-xs text-brown">{% trans "Click or drag the pin to set your exact location." %}</p>
-    {% for error in form.location.errors %}<p class="text-xs text-red-600">{{ error }}</p>{% endfor %}
-
+    <h3 class="text-lg font-semibold text-primary">{% trans "Visitor information" %}</h3>
     <div>
       <label class="block mb-1 text-sm font-semibold text-primary" for="id_accomodation">{{ form.accomodation.label }}</label>
       {{ form.accomodation }}
@@ -157,6 +162,21 @@
       {% for error in form.offers_seminars.errors %}<p class="text-xs text-red-600">{{ error }}</p>{% endfor %}
     </div>
 
+    <!-- Move max_guests and skills into visitor section -->
+    <div class="grid md:grid-cols-2 gap-4">
+      <div>
+        <label class="block mb-1 text-sm font-semibold text-primary" for="id_max_guests">{{ form.max_guests.label }}</label>
+        {{ form.max_guests }}
+        {% for error in form.max_guests.errors %}<p class="text-xs text-red-600">{{ error }}</p>{% endfor %}
+      </div>
+      <div>
+        <label class="block mb-1 text-sm font-semibold text-primary" for="id_skills">{% trans "What skills can people learn by volunteering or staying in your community?" %}</label>
+        {{ form.skills }}
+        {% for error in form.skills.errors %}<p class="text-xs text-red-600">{{ error }}</p>{% endfor %}
+      </div>
+    </div>
+
+    
     <div>
       <label class="block mb-1 text-sm font-semibold text-primary" for="id_website">{{ form.website.label }}</label>
       {{ form.website }}
@@ -164,16 +184,9 @@
     </div>
 
     <div>
-      <label class="block mb-1 text-sm font-semibold text-primary" for="id_telephone">{{ form.telephone.label }}</label>
-      {{ form.telephone }}
-      {% for error in form.telephone.errors %}<p class="text-xs text-red-600">{{ error }}</p>{% endfor %}
-    </div>
-
-    <div>
-      <label class="block mb-1 text-sm font-semibold text-primary" for="id_skills">{{ form.skills.label }}</label>
-      {{ form.skills }}
-      {% if form.skills.help_text %}<p class="text-xs text-brown">{{ form.skills.help_text }}</p>{% endif %}
-      {% for error in form.skills.errors %}<p class="text-xs text-red-600">{{ error }}</p>{% endfor %}
+      <label class="block mb-1 text-sm font-semibold text-primary" for="id_video">{{ form.video.label }}</label>
+      {{ form.video }}
+      {% for error in form.video.errors %}<p class="text-xs text-red-600">{{ error }}</p>{% endfor %}
     </div>
 
     <button type="submit" class="btn btn-green inline-flex items-center">
