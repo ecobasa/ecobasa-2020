@@ -35,7 +35,7 @@
           </a>
         </div>
       </div>
-      {% if user.is_authenticated %}
+      {% if request.user.is_authenticated %}
         <div class="hidden sm:ml-6 sm:flex sm:items-center">
           {% comment %} Notification Bell {% endcomment %}
           <button class="p-1 border-2 border-transparent rounded-full hover:text-brown focus:outline-none focus:text-brown transition duration-150 ease-in-out" aria-label="Notifications">
@@ -45,11 +45,11 @@
           </button>
 
           {% comment %} Profile dropdown {% endcomment %}
-          <div class="ml-3 relative" x-data="{ open: false }">
+          <div class="ml-3 mt-3 relative" x-data="{ open: false }" @close-user-menu.window="open = false">
             <div>
-              <button @click="open = true" class="flex text-sm border-2 border-transparent rounded-full focus:outline-none focus:border-gray-300 transition duration-150 ease-in-out" id="user-menu" aria-label="User menu" aria-haspopup="true">
-               {% if user.image %}
-                <img class="h-8 w-8 rounded-full" src="{{ user.image.url }}" alt="">
+                <button @click="open = !open" @keydown.escape="open = false" :aria-expanded="open" class="flex text-sm border-2 border-transparent rounded-full focus:outline-none focus:border-gray-300 transition duration-150 ease-in-out" id="user-menu" aria-label="User menu" aria-haspopup="true">
+               {% if request.user.image %}
+                <img class="h-8 w-8 rounded-full" src="{{ request.user.image.url }}" alt="">
                {% else %}
                 <i class="fa fa-user text-xl text-primary rounded-full bg-secondary p-3"></i>
                {% endif %}
@@ -65,7 +65,7 @@
                   x-transition:leave-end="opacity-0 transform scale-95"
                   class="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg z-40">
               <div class="py-1 rounded-md bg-primary bg-opacity-75 shadow-xs">
-                <a href="{{ user.get_absolute_url }}" class="block px-4 py-2 text-sm leading-5 text-secondary hover:bg-secondary focus:outline-none focus:bg-secondary transition duration-150 ease-in-out">
+                <a href="{{ request.user.get_absolute_url }}" class="block px-4 py-2 text-sm leading-5 text-secondary hover:bg-secondary focus:outline-none focus:bg-secondary transition duration-150 ease-in-out">
                   <i class="fa fa-user mr-2"></i>
                   {% trans "Your Profile" %}
                 </a>
@@ -126,23 +126,23 @@
       <a href="{% url "homepage:support" %}" class="mt-1 block pl-3 pr-4 py-2 border-l-4 border-transparent {% if request.path == "/support/" %}border-brown text-brown focus:text-brown focus:border-brown{% else %}text-secondary hover:text-primary hover:bg-secondary hover:border-brown focus:text-brown focus:bg-secondary focus:border-brown{% endif %} text-base focus:outline-none"><i class="fa fa-recycle mr-2"></i>{% trans "Support" %}</a>
     </div>
 
-    {% if user.is_authenticated %}
+    {% if request.user.is_authenticated %}
       <div class="pt-4 pb-3 border-t border-gray-200">
         <div class="flex items-center px-4">
           <div class="flex-shrink-0">
-             {% if user.image %}
-              <img class="h-8 w-8 rounded-full" src="{{ user.image.url }}" alt="">
+             {% if request.user.image %}
+              <img class="h-8 w-8 rounded-full" src="{{ request.user.image.url }}" alt="">
              {% else %}
               <i class="fa fa-user text-3xl text-primary rounded-full bg-secondary p-3"></i>
              {% endif %}
           </div>
           <div class="ml-3">
-            <div class="text-base font-bold leading-6">{{ user.name }}</div>
-            <div class="text-sm font-medium leading-5">{{ user.email }}</div>
+            <div class="text-base font-bold leading-6">{{ request.user.name }}</div>
+            <div class="text-sm font-medium leading-5">{{ request.user.email }}</div>
           </div>
         </div>
         <div class="mt-3" role="menu" aria-orientation="vertical" aria-labelledby="user-menu">
-          <a href="{{ user.get_absolute_url }}" class="block px-4 py-2 text-base text-secondary hover:text-primary hover:bg-secondary focus:text-primary focus:bg-secondary" role="menuitem"><i class="fa fa-user mr-2"></i>{% trans "Your Profile" %}</a>
+          <a href="{{ request.user.get_absolute_url }}" class="block px-4 py-2 text-base text-secondary hover:text-primary hover:bg-secondary focus:text-primary focus:bg-secondary" role="menuitem"><i class="fa fa-user mr-2"></i>{% trans "Your Profile" %}</a>
           <a href="{% url 'postman:inbox' %}" class="mt-1 block px-4 py-2 text-base text-secondary hover:text-primary hover:bg-secondary focus:text-primary focus:bg-secondary" role="menuitem"><i class="fa fa-envelope mr-2"></i>{% trans "Inbox" %}</a>
           <a href="#" class="mt-1 block px-4 py-2 text-base text-secondary hover:text-primary hover:bg-secondary focus:text-primary focus:bg-secondary" role="menuitem"><i class="fa fa-cog mr-2"></i>{% trans "Settings" %}</a>
           <a href="{% url "users:logout" %}" class="mt-1 block px-4 py-2 text-base text-secondary hover:text-primary hover:bg-secondary focus:text-primary focus:bg-secondary" role="menuitem"><i class="fa fa-sign-out-alt mr-2"></i>{% trans "Log out" %}</a>
