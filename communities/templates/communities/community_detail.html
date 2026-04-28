@@ -141,7 +141,7 @@
 
 			<!-- Volunteer Request Modal -->
 			<div id="volunteer-request-modal" class="fixed inset-0 bg-black bg-opacity-70 z-50 hidden items-center justify-center p-4 overflow-y-auto">
-				<div class="bg-secondary rounded-lg max-w-2xl w-full p-6 relative max-h-[90vh] overflow-y-auto" style="-webkit-overflow-scrolling: touch;">
+				<div class="modal-content" style="-webkit-overflow-scrolling: touch;">
 					<button type="button" id="volunteer-request-close" class="absolute top-3 right-3 text-2xl">&times;</button>
 					<h2 class="text-xl font-semibold mb-4">{% trans "Request volunteering stay" %}</h2>
 					<form id="volunteer-request-form" method="post" action="{% url 'postman:write' %}">
@@ -186,19 +186,19 @@
 										<div class="px-3 pb-1 text-xs font-semibold uppercase">{% trans "Layers" %}</div>
 										<ul class="list-none m-0 text-sm space-y-1 px-2">
 											<li>
-												<label class="inline-flex items-center w-full px-2 py-1 rounded hover:bg-secondary hover:text-primary cursor-pointer">
+												<label class="dropdown-item">
 													<input type="radio" name="community-layer-option" value="ecobasa" class="form-radio mr-2 text-secondary" checked>
 													<span>{% trans "ecobasa" %}</span>
 												</label>
 											</li>
 											<li>
-												<label class="inline-flex items-center w-full px-2 py-1 rounded hover:bg-secondary hover:text-primary cursor-pointer">
+												<label class="dropdown-item">
 													<input type="radio" name="community-layer-option" value="satellite" class="form-radio mr-2 text-secondary">
 													<span>{% trans "Satellite" %}</span>
 												</label>
 											</li>
 											<li>
-												<label class="inline-flex items-center w-full px-2 py-1 rounded hover:bg-secondary hover:text-primary cursor-pointer">
+												<label class="dropdown-item">
 													<input type="radio" name="community-layer-option" value="osm" class="form-radio mr-2 text-secondary">
 													<span>{% trans "OSM" %}</span>
 												</label>

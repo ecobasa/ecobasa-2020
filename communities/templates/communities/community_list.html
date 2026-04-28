@@ -5,24 +5,19 @@
   {{ block.super }}
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v7.2.2/ol.css">
   <style>
-    /* ── Map chrome ── */
-    .ol-zoom { top: auto; left: 1rem; bottom: 1rem; right: auto; }
-    .ol-zoom button { width: 2.75rem; height: 2.75rem; font-size: 1.25rem; border-radius: 0.75rem; }
-    .freemarket-shell { height: calc(100vh - 113px); max-height: calc(100vh - 113px); padding-bottom: 48px; box-sizing: border-box; overflow: hidden; }
-
-    /* ── Popup ── */
-    .freemarket-popup { position: relative; background: rgba(252,243,229,.8); color: #452912; border-radius: 10px; padding: 15px 20px; box-shadow: 0 3px 14px rgba(0,0,0,.4); font-size: 13px; line-height: 1.4; min-width: 180px; max-width: 300px; top: -10px; }
-    .freemarket-popup::before { content: ''; position: absolute; bottom: -10px; left: 50%; transform: translateX(-50%); border-width: 10px 10px 0; border-style: solid; border-color: #b4502c transparent transparent; }
-    .freemarket-popup::after  { content: ''; position: absolute; bottom: -9px;  left: 50%; transform: translateX(-50%); border-width: 9px 9px 0;   border-style: solid; border-color: rgba(252,243,229,.8) transparent transparent; }
-    .freemarket-popup h3 { font-size: 1.1rem; font-weight: 700; line-height: 1.3; margin: 0 0 .35rem; color: #452912; }
-    .freemarket-popup .popup-type-pill { float: right; margin-left: 8px; margin-bottom: 4px; }
-    .popup-type-pill { display: inline-flex; align-items: center; padding: 4px 10px; border-radius: 9999px; background: #da6137; color: #fcf3e5; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
-    .popup-meta { font-size: 11px; color: #6b4226; margin-bottom: .4rem; }
-    /* Low-profile suggestions dropdown */
-    .suggestions-dropdown { position: absolute; left: 0; right: 0; background: rgba(252,243,229,.75); -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(5px); border: 1px solid rgba(0,0,0,0.06); box-shadow: 0 6px 18px rgba(0,0,0,0.08); z-index: 60; border-radius: 6px; overflow: hidden; }
-    .suggestions-dropdown ul { list-style: none; margin: 0; padding: 0; }
-    .suggestions-dropdown li { padding: 8px 10px; font-size: 13px; color: #452912; cursor: pointer; }
-    .suggestions-dropdown li:hover, .suggestions-dropdown li.is-active { background: rgba(218,97,55,0.6); }
+    /* Place OL zoom controls bottom-left to avoid overlay collisions */
+    .ol-zoom {
+      top: auto;
+      left: 1rem;
+      bottom: 1rem;
+      right: auto;
+    }
+    .ol-zoom button {
+      width: 2.75rem;
+      height: 2.75rem;
+      font-size: 1.25rem;
+      border-radius: 0.75rem;
+    }
   </style>
 {% endblock %}
 
@@ -35,13 +30,13 @@
 
   {# ── View toggle (top center) ── #}
   <div class="absolute top-4 left-1/2 transform -translate-x-1/2 z-10">
-    <div class="inline-flex overflow-hidden rounded-full shadow-lg border bg-primary bg-opacity-20 backdrop-blur" style="border-color:#b4502c;">
+    <div class="inline-flex overflow-hidden rounded-full shadow-lg border bg-primary bg-opacity-20 backdrop-blur border-red">
       <button id="community-toggle-map" type="button" aria-label="{% trans 'Show map view' %}"
-              class="px-4 py-2 text-sm font-semibold flex items-center gap-2 text-secondary bg-primary bg-opacity-40 hover:bg-primary hover:text-secondary transition-colors duration-150">
+        class="btn-pill-select bg-primary bg-opacity-40">
         <i class="fa fa-globe"></i><span>{% trans "Map" %}</span>
       </button>
       <button id="community-toggle-list" type="button" aria-label="{% trans 'Show list view' %}"
-              class="px-4 py-2 text-sm font-semibold flex items-center gap-2 text-secondary bg-primary bg-opacity-40 hover:bg-primary hover:text-secondary transition-colors duration-150">
+        class="btn-pill-select bg-primary bg-opacity-40">
         <i class="fa fa-list-alt"></i><span>{% trans "List" %}</span>
       </button>
     </div>
@@ -52,21 +47,21 @@
     <form method="get" class="bg-secondary bg-opacity-60 backdrop-blur rounded-lg shadow p-4 flex flex-col gap-3">
         <div class="relative">
         <div class="absolute inset-y-0 left-3 flex items-center text-primary opacity-80"><i class="fa fa-search"></i></div>
-        <input id="community-search-input" type="text" name="q" value="{{ q }}" placeholder="{% trans 'Search by name, location or skills you want to learn' %}" class="form-input w-full pl-10" autocomplete="off">
+        <input id="community-search-input" class="form-input icon-input" type="text" name="q" value="{{ q }}" placeholder="{% trans 'Search by name, location or skills you want to learn' %}" autocomplete="off">
         <div class="suggestions-dropdown hidden" aria-hidden="true"></div>
       </div>
       <div class="flex">
-        <button type="submit" class="btn inline-flex items-center"><i class="fa fa-search mr-1"></i> {% trans "Search" %}</button>
+        <button type="submit" class="btn btn-icon"><i class="fa fa-search mr-1"></i> {% trans "Search" %}</button>
       </div>
     </form>
 
     {% if not communities %}
-      <p class="text-sm text-brown bg-secondary bg-opacity-60 backdrop-blur rounded-lg shadow p-3 border" style="border-color:#b4502c;">
+      <p class="text-sm text-brown bg-secondary bg-opacity-60 backdrop-blur rounded-lg shadow p-3 border border-red">
         {% trans "No communities yet." %}
       </p>
     {% endif %}
 
-    <a href="{% url 'communities:create' %}" class="btn inline-flex items-center shadow self-start">
+    <a href="{% url 'communities:create' %}" class="btn btn-icon shadow self-start">
       <i class="fa fa-plus mr-1"></i> {% trans "Add your community" %}
     </a>
   </div>
@@ -75,18 +70,16 @@
   <div id="community-layer-wrap" class="absolute top-4 right-4">
     <div class="relative">
       <button id="community-layer-toggle" type="button"
-              class="flex items-center justify-center w-14 h-14 rounded-md bg-primary bg-opacity-60 text-secondary shadow-lg border backdrop-blur"
-              style="border-color:#b4502c;">
+        class="flex items-center justify-center w-14 h-14 rounded-md bg-primary bg-opacity-60 text-secondary shadow-lg border backdrop-blur border-red">
         <i class="fa fa-layer-group text-xl"></i>
       </button>
       <div id="community-layer-menu"
-           class="hidden absolute right-0 mt-2 w-48 bg-primary text-secondary bg-opacity-60 backdrop-blur rounded-lg shadow-xl border py-2"
-           style="border-color:#b4502c;">
+        class="hidden absolute right-0 mt-2 w-48 bg-primary text-secondary bg-opacity-60 backdrop-blur rounded-lg shadow-xl border py-2 border-red">
         <div class="px-3 pb-1 text-xs font-semibold uppercase">{% trans "Layers" %}</div>
         <ul class="list-none m-0 text-sm space-y-1 px-2">
-          <li><label class="inline-flex items-center w-full px-2 py-1 rounded hover:bg-secondary hover:text-primary cursor-pointer"><input type="radio" name="community-layer-option" value="ecobasa" class="form-radio mr-2 text-secondary" checked><span>{% trans "ecobasa" %}</span></label></li>
-          <li><label class="inline-flex items-center w-full px-2 py-1 rounded hover:bg-secondary hover:text-primary cursor-pointer"><input type="radio" name="community-layer-option" value="satellite" class="form-radio mr-2 text-secondary"><span>{% trans "Satellite" %}</span></label></li>
-          <li><label class="inline-flex items-center w-full px-2 py-1 rounded hover:bg-secondary hover:text-primary cursor-pointer"><input type="radio" name="community-layer-option" value="osm" class="form-radio mr-2 text-secondary"><span>{% trans "OSM" %}</span></label></li>
+          <li><label class="dropdown-item"><input type="radio" name="community-layer-option" value="ecobasa" class="form-radio mr-2 text-secondary" checked><span>{% trans "ecobasa" %}</span></label></li>
+          <li><label class="dropdown-item"><input type="radio" name="community-layer-option" value="satellite" class="form-radio mr-2 text-secondary"><span>{% trans "Satellite" %}</span></label></li>
+          <li><label class="dropdown-item"><input type="radio" name="community-layer-option" value="osm" class="form-radio mr-2 text-secondary"><span>{% trans "OSM" %}</span></label></li>
         </ul>
       </div>
     </div>
@@ -94,11 +87,12 @@
 </div>
 
 {# ── Community list modal ── #}
-<div id="community-modal" class="fixed inset-0 bg-black bg-opacity-70 z-50 hidden items-center justify-center p-4">
-  <div class="relative bg-secondary bg-opacity-95 backdrop-blur rounded-lg shadow-xl max-w-5xl w-full border" style="border-color:#b4502c;">
+<div id="community-modal" class="modal-overlay hidden">
+  <div class="relative bg-secondary bg-opacity-95 backdrop-blur rounded-lg shadow-xl max-w-5xl w-full border">
     <button type="button" id="community-modal-close"
-            class="absolute top-3 right-3 h-10 w-10 rounded-full bg-black bg-opacity-50 hover:bg-opacity-70 text-secondary text-2xl flex items-center justify-center"
-            aria-label="Close">&times;</button>
+      class="absolute top-3 right-3 h-10 w-10 rounded-full bg-black bg-opacity-50 hover:bg-opacity-70 text-secondary text-2xl flex items-center justify-center"
+      aria-label="Close">&times;
+    </button>
 
     <div class="p-5 space-y-4">
       <div class="flex flex-col gap-3">
@@ -106,7 +100,7 @@
           <div class="relative flex-1">
             <div class="absolute inset-y-0 left-3 flex items-center text-primary opacity-80"><i class="fa fa-search"></i></div>
             <input id="community-modal-search" type="text" value="{{ q }}"
-                   placeholder="{% trans 'Search by name, location or skills that you want to learn' %}" class="form-input w-full pl-10 rounded" autocomplete="off">
+              placeholder="{% trans 'Search by name, location or skills that you want to learn' %}" class="form-input icon-input w-full pl-10 rounded" autocomplete="off">
           </div>
           <span class="text-xs text-brown" id="community-modal-count"></span>
         </div>
@@ -125,7 +119,7 @@
         {% for community in communities %}
           {% with community.photos.all|first as first_photo %}
           {% with community.skills.all|join:", " as skilllist %}
-          <div class="rounded-lg shadow bg-secondary bg-opacity-80 backdrop-blur p-4 border" style="border-color:#b4502c;"
+          <div class="rounded-lg shadow bg-secondary bg-opacity-80 backdrop-blur p-4 border border-red"
             data-name="{{ community.name|lower }}" data-location="{{ community.location_name|default_if_none:''|lower }}" data-skills="{{ skilllist|lower }}">
             {% if first_photo %}
             <div class="mb-3 -mx-4 -mt-4">
@@ -142,13 +136,20 @@
                 </a>
                 <div class="text-sm text-brown"><i class="fa fa-map-marker-alt mr-1"></i>{{ community.location_name }}</div>
               </div>
-              <span class="px-3 py-1 rounded-full bg-primary text-secondary text-xs font-semibold">{{ community.get_status_display }}</span>
+              <div>
+                <span class="pill bg-primary text-secondary">{{ community.get_status_display }}</span>
+                <div class="mt-2 flex justify-end gap-4">
+                  {% if community.inhabitants %}<span><i class="fa fa-users mr-1"></i>{{ community.inhabitants  }}</span>{% endif %}
+                  {% if community.children %}<span><i class="fa fa-child mr-1"></i>{{ community.children }}</span>{% endif %}
+                  {% if community.max_guests %}<span><i class="fa fa-suitcase mr-1"></i>{{ community.max_guests }}</span>{% endif %}
+                </div>
+              </div>
             </div>
             <p class="text-sm text-brown mt-2 line-clamp-2">{{ community.description }}</p>
             {% if community.skills.all %}
             <div class="mt-2 flex flex-wrap gap-1">
               {% for skill in community.skills.all %}
-                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold text-secondary" style="background:#6b4226;"><i class="fa fa-graduation-cap mr-1"></i>{{ skill }}</span>
+                <span class="pill text-secondary bg-purple"><i class="fa fa-graduation-cap mr-1"></i>{{ skill }}</span>
               {% endfor %}
             </div>
             {% endif %}
@@ -427,27 +428,27 @@
       var image    = feature.get('image');
       var desc     = truncate(feature.get('description'), 150);
       var url      = feature.get('url') || '';
-      var members  = feature.get('members');
+      var inhabitants  = feature.get('inhabitants');
       var children = feature.get('children');
-      var visitors = feature.get('visitors');
+      var max_guests = feature.get('max_guests');
 
       var html = '';
-      if (type)     html += '<span class="popup-type-pill">' + type + '</span>';
+      if (type)     html += '<span class="pill bg-primary text-secondary">' + type + '</span>';
+      if (status)   html += '<span class="pill bg-primary text-secondary">' + status + '</span>';
       if (name)     html += url ? '<h3><a href="' + url + '" class="hover:underline">' + name + '</a></h3>' : '<h3>' + name + '</h3>';
       html += '<div class="popup-meta">'
-            + '<span><i class="fa fa-users mr-1"></i>' + (members  != null ? members  : '\u2013') + '</span> | '
+            + '<span><i class="fa fa-users mr-1"></i>' + (inhabitants  != null ? inhabitants  : '\u2013') + '</span> | '
             + '<span><i class="fa fa-child mr-1"></i>' + (children != null ? children : '\u2013') + '</span> | '
-            + '<span><i class="fa fa-suitcase mr-1"></i>' + (visitors != null ? visitors : '\u2013') + '</span>'
+            + '<span><i class="fa fa-suitcase mr-1"></i>' + (max_guests != null ? max_guests : '\u2013') + '</span>'
             + '</div>';
       if (image)    html += '<div class="mb-2">' + (url ? '<a href="' + url + '">' : '') + '<img src="' + image + '" alt="' + name + '" class="w-full max-w-xs rounded shadow">' + (url ? '</a>' : '') + '</div>';
       if (desc)     html += '<div class="text-sm text-brown mt-2">' + desc + '</div>';
       var skills = (feature.get('skills') || []).slice(0, 4);
       if (skills.length) {
         html += '<div class="mt-2 flex flex-wrap gap-1">';
-        skills.forEach(function (t) { html += '<span class="popup-type-pill" style="font-size:10px;padding:2px 7px;background:#6b4226;"><i class="fa fa-graduation-cap mr-1"></i>' + t + '</span>'; });
+        skills.forEach(function (t) { html += '<span class="pill bg-purple text-secondary"><i class="fa fa-graduation-cap mr-1"></i>' + t + '</span>'; });
         html += '</div>';
       }
-      if (status)   html += '<div class="mt-1"><span class="popup-type-pill">' + status + '</span></div>';
       if (url)      html += '<a class="text-primary underline" href="' + url + '">{% trans "Open" %}</a>';
       return html;
     }
@@ -477,7 +478,7 @@
               geometry: new ol.geom.Point(ol.proj.fromLonLat([c.lon, c.lat])),
               name: c.name, description: c.description, image: c.image,
               location: c.location_name, status: c.status, type: c.type,
-              url: c.url, members: c.members, children: c.children, visitors: c.visitors,
+              url: c.url, inhabitants: c.inhabitants, children: c.children, max_guests: c.max_guests,
               skills: c.skills || []
             });
             f.setStyle(iconStyle);
@@ -558,10 +559,11 @@
     function initViewToggle() {
       var mapBtn  = $('community-toggle-map');
       var listBtn = $('community-toggle-list');
+      var closeBtn   = $('community-modal-close');
       if (!mapBtn || !listBtn) return;
 
-      var activeClasses  = ['bg-primary', 'bg-opacity-90', 'text-secondary', 'shadow-inner'];
-      var inactiveClasses = ['bg-primary', 'bg-opacity-40', 'text-secondary'];
+      var activeClasses  = ['bg-opacity-90', 'shadow-inner'];
+      var inactiveClasses = ['bg-opacity-40'];
 
       function setPillState(btn, active) {
         if (!btn) return;
@@ -576,6 +578,7 @@
       }
 
       mapBtn.addEventListener('click',  function () { if (communityModal.close) communityModal.close(); setActive('map'); });
+      closeBtn.addEventListener('click', function () { if (communityModal.close) communityModal.close(); setActive('map'); });
       listBtn.addEventListener('click', function () { if (communityModal.open)  communityModal.open();  setActive('list'); });
       setActive('map');
     }

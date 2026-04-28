@@ -80,7 +80,7 @@ nav {
  			@apply text-brown;
  		}
  	}
- }
+}
 
 .btn {
  	@apply py-2 px-4 rounded border border-solid box-border font-bold bg-primary bg-opacity-75 text-secondary border-primary;
@@ -108,9 +108,120 @@ nav {
  	&-green {
  		@apply bg-green bg-opacity-75 border-green;
  	}
- }
+}
 
- .video-container iframe,
- .video-container embed {
- 	@apply absolute top-0 left-0 w-full h-full;
- }
+.btn-icon {
+	@apply inline-flex items-center;
+}
+
+.btn-pill-select {
+	@apply px-4 py-2 text-sm font-semibold flex items-center gap-2 text-secondary hover:bg-primary hover:text-secondary transition-colors duration-150;
+}
+
+.pill {
+	@apply px-3 py-1 rounded-full text-xs font-semibold inline-flex items-center;
+}
+
+.form-label {
+	@apply block mb-1 text-sm font-semibold text-primary;
+}
+
+.form-input {
+	@apply rounded-md w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition duration-150 ease-in-out;
+}
+
+.icon-input {
+	@apply pl-10;
+}
+
+.field-error {
+	@apply text-xs text-red;
+}
+
+.panel-card {
+	@apply bg-secondary bg-opacity-75 shadow rounded-md px-8 py-8 mt-10 form-control-w-full;
+}
+
+.dropdown-link {
+	@apply block px-4 py-2 text-sm leading-5 text-secondary hover:bg-secondary focus:outline-none focus:bg-secondary transition duration-150 ease-in-out;
+}
+
+.dropdown-item {
+	@apply inline-flex items-center w-full px-2 py-1 rounded hover:bg-secondary hover:text-primary cursor-pointer;
+}
+
+.modal-overlay {
+	@apply fixed inset-0 bg-black bg-opacity-70 z-50 items-center justify-center p-4;
+}
+
+.modal-content {
+	@apply bg-secondary rounded-lg max-w-2xl w-full p-6 relative max-h-[90vh] overflow-y-auto;
+}
+
+.modal-close {
+	@apply absolute top-3 right-3 text-secondary text-2xl h-10 w-10 rounded-full bg-black bg-opacity-50 hover:bg-opacity-70 flex items-center justify-center;
+}
+
+.video-container iframe,
+.video-container embed {
+	@apply absolute top-0 left-0 w-full h-full;
+}
+
+
+
+/* MAPS */
+
+.freemarket-shell {
+	@apply h-[calc(100vh-113px)] max-h-[calc(100vh-113px)] pb-12 box-border overflow-hidden;
+}
+
+.freemarket-popup {
+	@apply relative bg-secondary bg-opacity-80 text-brown rounded-xl p-4 shadow-lg text-xs leading-relaxed min-w-[180px] -top-2.5;
+}
+
+.freemarket-popup:before {
+	content: '';
+	position: absolute;
+	bottom: -10px;
+	left: 50%;
+	transform: translateX(-50%);
+	border-width: 10px 10px 0 10px;
+	border-style: solid;
+	border-color: #b4502c transparent transparent transparent;
+}
+
+.freemarket-popup:after {
+	content: '';
+	position: absolute;
+	bottom: -9px;
+	left: 50%;
+	transform: translateX(-50%);
+	border-width: 9px 9px 0 9px;
+	border-style: solid;
+	border-color: rgba(252, 243, 229, 0.8) transparent transparent transparent;
+}
+
+.freemarket-popup h3 {
+	@apply text-lg font-bold leading-tight mb-1 text-brown;
+}
+
+.freemarket-popup .popup-type-pill {
+	@apply float-right ml-2 mb-1;
+}
+
+/* Low-profile suggestions dropdown (shared with communities) */
+.suggestions-dropdown {
+	@apply absolute left-0 right-0 bg-secondary bg-opacity-75 backdrop-blur-sm border border-gray-200 shadow-lg z-50 rounded-md overflow-hidden;
+}
+
+.suggestions-dropdown ul {
+	@apply list-none m-0 p-0;
+}
+
+.suggestions-dropdown li {
+	@apply p-2 text-xs text-brown cursor-pointer;
+}
+
+.suggestions-dropdown li:hover, .suggestions-dropdown li.is-active {
+	@apply bg-primary bg-opacity-60;
+}

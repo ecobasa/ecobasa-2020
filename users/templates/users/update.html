@@ -13,7 +13,7 @@
       <p class="text-sm text-brown"><a href="{{ user_obj.get_absolute_url }}" class="hover:underline">{% trans "Back to profile" %}</a></p>
       <h1 class="text-2xl font-semibold">{% trans "Edit profile" %}</h1>
     </div>
-    <a href="{{ user_obj.get_absolute_url }}" class="btn inline-flex items-center"><i class="fa fa-times mr-2"></i>{% trans "Close" %}</a>
+    <a href="{{ user_obj.get_absolute_url }}" class="btn btn-icon"><i class="fa fa-times mr-2"></i>{% trans "Close" %}</a>
   </div>
 
   <form method="post" enctype="multipart/form-data" class="w-full space-y-6">

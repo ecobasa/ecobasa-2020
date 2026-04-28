@@ -18,82 +18,6 @@
       font-size: 1.25rem;
       border-radius: 0.75rem;
     }
-
-    .freemarket-shell {
-      height: calc(100vh - 113px);
-      max-height: calc(100vh - 113px);
-      padding-bottom: 48px;
-      box-sizing: border-box;
-      overflow: hidden;
-    }
-
-    /* Map popup styling to echo Leaflet tooltips */
-    .freemarket-popup {
-      position: relative;
-      background: rgba(252, 243, 229, 0.8);
-      color: #452912;
-      border-radius: 10px;
-      padding: 15px 20px;
-      box-shadow: 0 3px 14px rgba(0,0,0,0.4);
-      font-size: 13px;
-      line-height: 1.4;
-      min-width: 180px;
-      top: -10px;
-    }
-    .freemarket-popup:before {
-      content: '';
-      position: absolute;
-      bottom: -10px;
-      left: 50%;
-      transform: translateX(-50%);
-      border-width: 10px 10px 0 10px;
-      border-style: solid;
-      border-color: #b4502c transparent transparent transparent;
-    }
-    .freemarket-popup:after {
-      content: '';
-      position: absolute;
-      bottom: -9px;
-      left: 50%;
-      transform: translateX(-50%);
-      border-width: 9px 9px 0 9px;
-      border-style: solid;
-      border-color: rgba(252, 243, 229, 0.8) transparent transparent transparent;
-    }
-
-    .popup-type-pill {
-      display: inline-flex;
-      align-items: center;
-      padding: 4px 10px;
-      border-radius: 9999px;
-      background: #da6137;
-      color: #fcf3e5;
-      font-size: 11px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-    }
-
-    .freemarket-popup h3 {
-      font-size: 1.1rem;
-      font-weight: 700;
-      line-height: 1.3;
-      margin: 0 0 0.35rem 0;
-      color: #452912;
-    }
-
-    .freemarket-popup .popup-type-pill {
-      float: right;
-      margin-left: 8px;
-      margin-bottom: 4px;
-    }
-    
-    /* Low-profile suggestions dropdown (shared with communities) */
-    .suggestions-dropdown { position: absolute; left: 0; right: 0; background: rgba(252,243,229,.75); -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(5px); border: 1px solid rgba(0,0,0,0.06); box-shadow: 0 6px 18px rgba(0,0,0,0.08); z-index: 60; border-radius: 6px; overflow: hidden; }
-    .suggestions-dropdown ul { list-style: none; margin: 0; padding: 0; }
-    .suggestions-dropdown li { padding: 8px 10px; font-size: 13px; color: #452912; cursor: pointer; }
-    .suggestions-dropdown li:hover, .suggestions-dropdown li.is-active { background: rgba(218,97,55,0.6); }
-
   </style>
 {% endblock %}
 
@@ -105,11 +29,13 @@
   {% comment %} overlay controls {% endcomment %}
   <div class="absolute top-4 left-1/2 transform -translate-x-1/2">
     <div class="inline-flex overflow-hidden rounded-full shadow-lg border bg-primary bg-opacity-20 backdrop-blur" style="border-color: #b4502c;">
-      <button id="freemarket-toggle-map" type="button" aria-label="{% trans "Show map view" %}" class="px-4 py-2 text-sm font-semibold flex items-center gap-2 text-secondary bg-primary bg-opacity-40 hover:bg-primary hover:text-secondary transition-colors duration-150">
+      <button id="freemarket-toggle-map" type="button" aria-label="{% trans "Show map view" %}" class="btn-pill-select bg-opacity-40">
+         <i class="fa fa-globe
         <i class="fa fa-globe"></i>
         {% trans "Map" %}
       </button>
-      <button id="freemarket-toggle-list" type="button" aria-label="{% trans "Show list view" %}" class="px-4 py-2 text-sm font-semibold flex items-center gap-2 text-secondary bg-primary bg-opacity-40 hover:bg-primary hover:text-secondary transition-colors duration-150">
+      <button id="freemarket-toggle-list" type="button" aria-label="{% trans "Show list view" %}" class="btn-pill-select bg-opacity-40">
+         <i class="fa fa-globe
         <i class="fa fa-list-alt"></i>
         {% trans "List" %}
       </button>
@@ -125,19 +51,19 @@
         <div class="px-3 pb-1 text-xs font-semibold uppercase">{% trans "Layers" %}</div>
         <ul class="list-none m-0 text-sm space-y-1 px-2">
           <li>
-            <label class="inline-flex items-center w-full px-2 py-1 rounded hover:bg-secondary hover:text-primary cursor-pointer">
+            <label class="dropdown-item">
               <input type="radio" name="freemarket-layer-option" value="ecobasa" class="form-radio mr-2 text-secondary" checked>
               <span>{% trans "ecobasa" %}</span>
             </label>
           </li>
           <li>
-            <label class="inline-flex items-center w-full px-2 py-1 rounded hover:bg-secondary hover:text-primary cursor-pointer">
+            <label class="dropdown-item">
               <input type="radio" name="freemarket-layer-option" value="satellite" class="form-radio mr-2 text-secondary">
               <span>{% trans "Satellite" %}</span>
             </label>
           </li>
           <li>
-            <label class="inline-flex items-center w-full px-2 py-1 rounded hover:bg-secondary hover:text-primary cursor-pointer">
+            <label class="dropdown-item">
               <input type="radio" name="freemarket-layer-option" value="osm" class="form-radio mr-2 text-secondary">
               <span>{% trans "OSM" %}</span>
             </label>
@@ -156,7 +82,7 @@
           <div class="absolute ml-3 inset-y-0 flex items-center text-brown">
             <i class="fa fa-search text-primary opacity-75"></i>
           </div>
-          <input id="freemarket-search-input" type="text" value="{{ f.form.search.data|default:"" }}" class="pl-10 form-input w-full" autocomplete="off" name="search" @keydown.enter.prevent="$event.target.form.submit()">
+          <input id="freemarket-search-input" type="text" value="{{ f.form.search.data|default:"" }}" class="form-input icon-input" autocomplete="off" name="search" @keydown.enter.prevent="$event.target.form.submit()">
           <div class="suggestions-dropdown hidden" aria-hidden="true"></div>
         </div>
 
@@ -164,7 +90,7 @@
           <div class="absolute ml-3 inset-y-0 flex items-center text-primary">
             <i class="fa fa-map-marker-alt mr-1 text-primary opacity-75" onclick="getLocationMap()"></i>
           </div>
-          <input id="location_name_map" x-ref="input" type="text" @input.debounce="onInput($event.target.value)" value="{{ f.form.location_name.data|default:"" }}" placeholder="Sort by Location" class="form-input w-full pl-10" autocomplete="off" name="location_name" @keydown.enter.prevent="$event.target.form.submit()">
+          <input id="location_name_map" x-ref="input" type="text" @input.debounce="onInput($event.target.value)" value="{{ f.form.location_name.data|default:"" }}" placeholder="Sort by Location" class="form-input icon-input" autocomplete="off" name="location_name" @keydown.enter.prevent="$event.target.form.submit()">
           <input x-ref="location" type="hidden" value="{{ f.form.location.data|default:"" }}" name="location">
           <div x-show.transition="open" @click.away="open = false" class="absolute z-50 inset-x-0 bg-secondary bg-opacity-80 shadow-lg text-xs py-3 rounded-b border-brown border-opacity-50 border-b border-l border-r">
             <ul class="list-none">
@@ -203,7 +129,7 @@
               {% trans "No results found" %}
             {% endif %}
           </div>
-          <button type="submit" class="btn inline-flex items-center">
+          <button type="submit" class="btn btn-icon">
             <i class="fa fa-search mr-2"></i>
             {% trans "Search" %}
           </button>
@@ -211,7 +137,7 @@
       </div>
     </form>
 
-    <a href="{% url "gifting:create" %}" class="btn inline-flex items-center shadow self-start">
+    <a href="{% url "gifting:create" %}" class="btn btn-icon shadow self-start">
       <i class="fa fa-plus mr-1"></i>
       {% trans "Add your Wish or Offer" %}
     </a>
@@ -225,7 +151,7 @@
       <button id="freemarket-modal-close" type="button" class="absolute top-3 right-3 text-secondary text-xl leading-none w-10 h-10 flex items-center justify-center bg-black bg-opacity-30 rounded-full hover:bg-opacity-50">×</button>
 
       <div class="flex items-center gap-3 flex-wrap mb-4">
-        <a href="{% url "gifting:create" %}" class="btn inline-flex items-center shadow ml-auto">
+        <a href="{% url "gifting:create" %}" class="btn btn-icon shadow ml-auto">
           <i class="fa fa-plus mr-1"></i>
           {% trans "Add your Wish or Offer" %}
         </a>
@@ -240,7 +166,7 @@
           <div class="absolute ml-3 inset-y-0 flex items-center text-brown">
             <i class="fa fa-search text-primary opacity-75"></i>
           </div>
-          <input id="freemarket-modal-search" type="text" value="{{ f.form.search.data|default:"" }}" class="pl-10 form-input w-full max-w-2xl" autocomplete="off" autofocus name="search">
+          <input id="freemarket-modal-search" type="text" value="{{ f.form.search.data|default:"" }}" class="form-input icon-input max-w-2xl" autocomplete="off" autofocus name="search">
           <div class="suggestions-dropdown hidden" aria-hidden="true"></div>
         </div>
 
@@ -250,7 +176,7 @@
             <div class="absolute ml-3 inset-y-0 flex items-center text-primary">
               <i class="fa fa-map-marker-alt mr-1 text-primary opacity-75" onclick="getLocation()"></i>
             </div>
-            <input id="location_name" x-ref="input" type="text" @input.debounce="onInput($event.target.value)" value="{{ f.form.location_name.data|default:"" }}" placeholder="Sort by Location" class="form-input w-full max-w-2xl pl-10" autocomplete="off" autofocus name="location_name">
+            <input id="location_name" x-ref="input" type="text" @input.debounce="onInput($event.target.value)" value="{{ f.form.location_name.data|default:"" }}" placeholder="Sort by Location" class="form-input icon-input max-w-2xl" autocomplete="off" autofocus name="location_name">
           </div>
           <input x-ref="location" type="hidden" value="{{ f.form.location.data|default:"" }}" name="location">
           <div x-show.transition="open" @click.away="open = false" class="absolute z-50 inset-x-0 bg-secondary bg-opacity-80 shadow-lg text-xs py-3 rounded-b border-brown border-opacity-50 border-b border-l border-r">

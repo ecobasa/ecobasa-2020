@@ -65,15 +65,15 @@
                   x-transition:leave-end="opacity-0 transform scale-95"
                   class="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg z-40">
               <div class="py-1 rounded-md bg-primary bg-opacity-75 shadow-xs">
-                <a href="{{ request.user.get_absolute_url }}" class="block px-4 py-2 text-sm leading-5 text-secondary hover:bg-secondary focus:outline-none focus:bg-secondary transition duration-150 ease-in-out">
+                <a href="{{ request.user.get_absolute_url }}" class="dropdown-link">
                   <i class="fa fa-user mr-2"></i>
                   {% trans "Your Profile" %}
                 </a>
-                <a href="{% url 'postman:inbox' %}" class="block px-4 py-2 text-sm leading-5 text-secondary hover:bg-secondary focus:outline-none focus:bg-secondary transition duration-150 ease-in-out">
+                <a href="{% url 'postman:inbox' %}" class="dropdown-link">
                   <i class="fa fa-envelope mr-2"></i>
                   {% trans "Inbox" %}
                 </a>
-                <a href="#" class="block px-4 py-2 text-sm leading-5 text-secondary hover:bg-secondary focus:outline-none focus:bg-secondary transition duration-150 ease-in-out">
+                <a href="#" class="dropdown-link">
                   <i class="fa fa-cog mr-2"></i>
                   {% trans "Settings" %}
                 </a>

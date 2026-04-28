@@ -6,7 +6,7 @@
 	<div class="flex items-start justify-between mb-8">
 		<h1 class="text-5xl font-semibold">{{ user.name }}</h1>
 		{% if request.user.is_authenticated and request.user.is_staff or request.user.is_authenticated and request.user.pk == user.pk %}
-			<a href="{% url 'users:update' %}" class="btn inline-flex items-center">
+			<a href="{% url 'users:update' %}" class="btn btn-icon">
 				<i class="fa fa-pencil mr-2"></i>{% trans "Edit profile" %}
 			</a>
 		{% endif %}
@@ -68,7 +68,7 @@
 {% if user.image %}
 <div id="profile-image-modal" class="fixed inset-0 bg-black bg-opacity-80 z-50 hidden items-center justify-center p-4">
 	<div class="relative max-w-5xl w-full flex justify-center">
-		<button type="button" class="absolute top-3 right-3 text-secondary text-2xl h-10 w-10 rounded-full bg-black bg-opacity-50 hover:bg-opacity-70 flex items-center justify-center" data-profile-modal="close" aria-label="Close">
+		<button type="button" class="modal-close" data-profile-modal="close" aria-label="Close">
 			&times;
 		</button>
 		<img src="{{ user.image.url }}" alt="{{ user.name }}" class="max-h-[80vh] max-w-full rounded-lg shadow-lg">
