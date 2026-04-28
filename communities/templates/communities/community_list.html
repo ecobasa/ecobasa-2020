@@ -433,9 +433,9 @@
       var max_guests = feature.get('max_guests');
 
       var html = '';
+      if (name)     html += url ? '<h3><a href="' + url + '" class="hover:underline">' + name + '</a></h3>' : '<h3>' + name + '</h3>';
       if (type)     html += '<span class="pill bg-primary text-secondary">' + type + '</span>';
       if (status)   html += '<span class="pill bg-primary text-secondary">' + status + '</span>';
-      if (name)     html += url ? '<h3><a href="' + url + '" class="hover:underline">' + name + '</a></h3>' : '<h3>' + name + '</h3>';
       html += '<div class="popup-meta">'
             + '<span><i class="fa fa-users mr-1"></i>' + (inhabitants  != null ? inhabitants  : '\u2013') + '</span> | '
             + '<span><i class="fa fa-child mr-1"></i>' + (children != null ? children : '\u2013') + '</span> | '

@@ -202,11 +202,15 @@ nav {
 }
 
 .freemarket-popup h3 {
-	@apply text-lg font-bold leading-tight mb-1 text-brown;
+	@apply text-2xl mb-3 font-bold leading-tight mt-0 text-brown;
 }
 
 .freemarket-popup .popup-type-pill {
 	@apply float-right ml-2 mb-1;
+}
+
+.freemarket-popup .popup-meta {
+	@apply mt-2;
 }
 
 /* Low-profile suggestions dropdown (shared with communities) */
