@@ -15,6 +15,10 @@ body {
 	background: url('../images/back.jpg') repeat;
 }
 
+.modal {
+	background: url('../images/back.jpg') repeat;
+}
+
 h1, h2, h3 {
   @apply font-serif ;
 }

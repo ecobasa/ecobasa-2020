@@ -88,7 +88,7 @@
 
 {# ── Community list modal ── #}
 <div id="community-modal" class="modal-overlay hidden">
-  <div class="relative bg-secondary bg-opacity-95 backdrop-blur rounded-lg shadow-xl max-w-5xl w-full border">
+  <div class="modal relative bg-secondary bg-opacity-95 backdrop-blur rounded-lg shadow-xl max-w-5xl w-full border">
     <button type="button" id="community-modal-close"
       class="absolute top-3 right-3 h-10 w-10 rounded-full bg-black bg-opacity-50 hover:bg-opacity-70 text-secondary text-2xl flex items-center justify-center"
       aria-label="Close">&times;
@@ -119,7 +119,7 @@
         {% for community in communities %}
           {% with community.photos.all|first as first_photo %}
           {% with community.skills.all|join:", " as skilllist %}
-          <div class="rounded-lg shadow bg-secondary bg-opacity-80 backdrop-blur p-4 border border-red"
+          <div class="rounded-lg bg-secondary bg-opacity-80 backdrop-blur p-4 hover:shadow-lg"
             data-name="{{ community.name|lower }}" data-location="{{ community.location_name|default_if_none:''|lower }}" data-skills="{{ skilllist|lower }}">
             {% if first_photo %}
             <div class="mb-3 -mx-4 -mt-4">
