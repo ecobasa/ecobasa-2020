@@ -1,0 +1,81 @@
+{% load i18n %}
+
+{# OOB swap — updates the count badge without re-rendering the modal #}
+<span id="community-modal-count" hx-swap-oob="true" class="text-xs text-brown whitespace-nowrap">
+  {% if total %}
+    {{ total }} {% trans "result" %}{% if total != 1 %}s{% endif %}
+  {% else %}
+    {% trans "No results" %}
+  {% endif %}
+</span>
+
+{# Community cards #}
+{% for community in communities %}
+  {% with community.photos.all|first as first_photo %}
+  {% with community.skills.all|join:", " as skilllist %}
+  <div class="rounded-lg bg-secondary bg-opacity-30 backdrop-blur p-4 shadow-md hover:shadow-lg mb-8">
+
+    {% if first_photo %}
+    <div class="mb-3 -mx-4 -mt-4">
+      <a href="{{ community.get_absolute_url }}">
+        <img src="{{ first_photo.image.url }}" alt="{{ community.name }}"
+          class="w-full h-40 object-cover rounded-t-lg" loading="lazy">
+      </a>
+    </div>
+    {% endif %}
+
+    <div class="flex items-start justify-between gap-3">
+      <div>
+        <div class="text-xs uppercase tracking-wide text-primary font-semibold">
+          {{ community.get_type_display }}
+        </div>
+        <a href="{{ community.get_absolute_url }}">
+          <h3 class="text-lg font-bold text-primary my-2">{{ community.name }}</h3>
+        </a>
+        <div class="text-sm text-brown">
+          <i class="fa fa-map-marker-alt mr-1"></i>{{ community.location_name }}
+        </div>
+      </div>
+      <div>
+        <span class="pill bg-primary text-secondary">{{ community.get_status_display }}</span>
+        <div class="mt-2 flex justify-end gap-4 text-sm">
+          {% if community.inhabitants %}<span><i class="fa fa-users mr-1"></i>{{ community.inhabitants }}</span>{% endif %}
+          {% if community.children %}<span><i class="fa fa-child mr-1"></i>{{ community.children }}</span>{% endif %}
+          {% if community.max_guests %}<span><i class="fa fa-suitcase mr-1"></i>{{ community.max_guests }}</span>{% endif %}
+        </div>
+      </div>
+    </div>
+
+    <p class="text-sm text-brown mt-2 line-clamp-2">{{ community.description }}</p>
+
+    {% if community.skills.all %}
+    <div class="mt-2 flex flex-wrap gap-1">
+      {% for skill in community.skills.all %}
+        <span class="pill text-secondary bg-purple">
+          <i class="fa fa-graduation-cap mr-1"></i>{{ skill }}
+        </span>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <a href="{{ community.get_absolute_url }}"
+      class="mt-3 inline-flex items-center text-primary font-semibold hover:underline">
+      {% trans "Open" %} <i class="fa fa-arrow-right ml-2"></i>
+    </a>
+  </div>
+  {% endwith %}
+  {% endwith %}
+{% empty %}
+  <p class="text-primary py-8 text-center">{% trans "No communities found." %}</p>
+{% endfor %}
+
+{# ── Infinite scroll sentinel ── #}
+{% if has_next %}
+<div class="py-4 text-center"
+  hx-get="{% url 'communities:api-list' %}?q={{ q|urlencode }}&country={{ country|urlencode }}&page={{ next_page }}"
+  hx-target="#community-modal-list"
+  hx-swap="beforeend"
+  hx-trigger="revealed">
+  <i class="fa fa-spinner fa-spin text-brown"></i>
+</div>
+{% endif %}
