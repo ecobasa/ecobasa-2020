@@ -114,10 +114,6 @@ nav {
  	}
 }
 
-.btn-icon {
-	@apply inline-flex items-center;
-}
-
 .btn-pill-select {
 	@apply px-4 py-2 text-sm font-semibold flex items-center gap-2 text-secondary hover:bg-primary hover:text-secondary transition-colors duration-150;
 }
@@ -175,15 +171,15 @@ nav {
 
 /* MAPS */
 
-.freemarket-shell {
+.map-shell {
 	@apply h-[calc(100vh-113px)] max-h-[calc(100vh-113px)] pb-12 box-border overflow-hidden;
 }
 
-.freemarket-popup {
-	@apply relative bg-secondary bg-opacity-80 text-brown rounded-xl p-4 shadow-lg text-xs leading-relaxed min-w-[180px] -top-2.5;
+.map-popup {
+	@apply relative bg-secondary bg-opacity-80 text-brown rounded-xl p-4 shadow-lg text-xs leading-snug min-w-[180px] max-w-[400px] -top-2.5;
 }
 
-.freemarket-popup:before {
+.map-popup:before {
 	content: '';
 	position: absolute;
 	bottom: -10px;
@@ -194,7 +190,7 @@ nav {
 	border-color: #b4502c transparent transparent transparent;
 }
 
-.freemarket-popup:after {
+.map-popup:after {
 	content: '';
 	position: absolute;
 	bottom: -9px;
@@ -205,15 +201,15 @@ nav {
 	border-color: rgba(252, 243, 229, 0.8) transparent transparent transparent;
 }
 
-.freemarket-popup h3 {
+.map-popup h3 {
 	@apply text-2xl mb-3 font-bold leading-tight mt-0 text-brown;
 }
 
-.freemarket-popup .popup-type-pill {
+.map-popup .popup-type-pill {
 	@apply float-right ml-2 mb-1;
 }
 
-.freemarket-popup .popup-meta {
+.map-popup .popup-meta {
 	@apply mt-2;
 }
 
@@ -232,4 +228,46 @@ nav {
 
 .suggestions-dropdown li:hover, .suggestions-dropdown li.is-active {
 	@apply bg-primary bg-opacity-60;
+}
+
+@layer components {
+  .tagify {
+    --tags-border-color: theme('colors.purple');
+    --tags-hover-border-color: theme('colors.third');
+    --tag-bg: theme('colors.purple');
+    --tag-text-color: theme('colors.secondary');
+    --tag-hover: theme('colors.primary');
+    --tag-border-radius: 9999px;
+    --tag-pad: 0.3rem 0.6rem;
+  }
+
+  /* Style the dropdown suggestions to match your theme */
+  .tagify__dropdown__wrapper {
+    background: theme('colors.secondary');
+    border-color: theme('colors.primary');
+  }
+
+  .tagify__dropdown__item--active {
+    background: theme('colors.primary');
+    color: theme('colors.secondary');
+  }
+
+  .tagify__tag {
+    @apply font-bold bg-purple rounded-full pl-2 pb-1;
+  }
+
+  .tagify__tag-text {
+    @apply text-secondary;
+  }
+
+  .tagify__tag > div {
+    /* This removes the default inset shadow Tagify uses for borders */
+    --tag-inset-shadow-size: 0;
+  }
+
+  .tagify__tag__removeBtn {
+    /* Make the 'x' look cleaner */
+    @apply ml-2 text-secondary hover:bg-red hover:text-white rounded-full;
+    --tag-remove-btn-color: #fcf3e5;
+  }
 }

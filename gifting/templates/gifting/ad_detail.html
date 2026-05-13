@@ -3,63 +3,73 @@
 
 {% block extrahead %}
   {{ block.super }}
+  {% if ad.location %}
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v7.2.2/ol.css">
+  {% endif %}
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 {% endblock %}
 
-{% block content %}
-<div class="mx-auto max-w-4xl mt-10 px-4 pb-16">
 
-  {% comment %} breadcrumbs {% endcomment %}
+{% block content %}
+{# Root Alpine scope — manages image modal, contact modal, and layer switcher state #}
+<div class="mx-auto max-w-4xl mt-10 px-4 pb-16"
+  x-data="{
+    imageOpen:   false,
+    contactOpen: false,
+    layer:       'ecobasa',
+    layerMenuOpen: false,
+  }">
+
+  {# ── Breadcrumbs ── #}
   <nav class="sm:hidden">
-    <a href="{% url "gifting:search" %}" class="flex items-center text-sm leading-5 font-medium text-yellow hover:text-purple transition duration-150 ease-in-out">
+    <a href="{% url 'gifting:search' %}"
+      class="flex items-center text-sm font-medium text-yellow hover:text-purple transition">
       <svg class="flex-shrink-0 -ml-1 mr-1 h-5 w-5 text-yellow" viewBox="0 0 20 20" fill="currentColor">
-        <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+        <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd"/>
       </svg>
       {% trans "Back" %}
     </a>
   </nav>
-  <nav class="hidden sm:flex items-center text-sm leading-5 font-medium">
-    <a href="{% url "gifting:search" %}" class="text-yellow hover:text-purple transition duration-150 ease-in-out">{% trans "Free Market" %}</a>
-    <svg class="flex-shrink-0 mx-2 h-5 w-5 text-yellow" viewBox="0 0 20 20" fill="currentColor">
-      <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
-    </svg>
-    <a href="{% url "gifting:search" %}?type={{ ad.type }}" class="text-yellow hover:text-purple transition duration-150 ease-in-out">{{ ad.get_type_display }}</a>
-    <svg class="flex-shrink-0 mx-2 h-5 w-5 text-yellow" viewBox="0 0 20 20" fill="currentColor">
-      <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
-    </svg>
+  <nav class="hidden sm:flex items-center text-sm font-medium gap-2">
+    <a href="{% url 'gifting:search' %}" class="text-yellow hover:text-purple transition">{% trans "Free Market" %}</a>
+    <svg class="h-5 w-5 text-yellow" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/></svg>
+    <a href="{% url 'gifting:search' %}?type={{ ad.type }}" class="text-yellow hover:text-purple transition">{{ ad.get_type_display }}</a>
+    <svg class="h-5 w-5 text-yellow" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/></svg>
     <span class="text-primary">{{ ad.title }}</span>
   </nav>
 
-  {% comment %} inline image that opens modal {% endcomment %}
+  {# ── Hero image (opens lightbox) ── #}
   {% if ad.image %}
   <div class="mt-6 flex justify-center">
-    <button type="button" data-ad-image-modal="open" aria-label="Open image" class="inline-block w-full">
-      <img src="{{ ad.image.url }}" alt="{{ ad.title }}" class="w-full h-52 object-cover rounded-lg shadow mb-4">
+    <button type="button" @click="imageOpen = true" aria-label="{% trans 'Open image' %}" class="inline-block w-full">
+      <img src="{{ ad.image.url }}" alt="{{ ad.title }}"
+        class="w-full h-52 object-cover rounded-lg shadow mb-4">
     </button>
   </div>
-  {% endif %}
 
-  {% if ad.image %}
-  <div id="ad-image-modal" class="fixed inset-0 bg-black bg-opacity-80 z-50 hidden items-center justify-center p-4">
+  {# ── Image lightbox modal ── #}
+  <div x-show="imageOpen" x-cloak
+    class="fixed inset-0 bg-black bg-opacity-80 z-50 flex items-center justify-center p-4"
+    @click.self="imageOpen = false"
+    @keydown.escape.window="imageOpen = false">
     <div class="relative max-w-5xl w-full flex justify-center">
-      <button type="button" class="modal-close" data-ad-image-modal="close" aria-label="Close">
-        &times;
-      </button>
-      <img src="{{ ad.image.url }}" alt="{{ ad.title }}" class="max-h-[80vh] max-w-full rounded-lg shadow-lg">
+      <button type="button" @click="imageOpen = false"
+        class="modal-close absolute top-0 right-0"
+        aria-label="{% trans 'Close' %}">&times;</button>
+      <img src="{{ ad.image.url }}" alt="{{ ad.title }}"
+        class="max-h-[80vh] max-w-full rounded-lg shadow-lg">
     </div>
   </div>
   {% endif %}
 
-  {% comment %} header {% endcomment %}
+  {# ── Header ── #}
   <div class="mt-4 md:mt-10 md:flex md:items-center md:justify-between">
     <div class="flex-1 min-w-0">
       <div class="text-primary font-bold">{{ ad.get_type_display }}</div>
-      <h1 class="sm:text-3xl sm:leading-9 sm:truncate">
-        {{ ad.title }}
-      </h1>
+      <h1 class="sm:text-3xl sm:leading-9 sm:truncate">{{ ad.title }}</h1>
       <div class="my-1">
         {% if ad.owner == request.user %}
-          <span class="border mx-px py-px px-1 rounded text-xs text-secondary bg-purple">from me</span>
+          <span class="border mx-px py-px px-1 rounded text-xs text-secondary bg-purple">{% trans "from me" %}</span>
         {% endif %}
         {% for cat in ad.categories.all %}
           <span class="border mx-px py-px px-1 rounded text-xs text-secondary bg-primary">{{ cat.name }}</span>
@@ -69,335 +79,246 @@
     </div>
 
     {% if ad.owner == request.user %}
-      <a href="{% url "gifting:delete" ad.pk %}" class="btn btn-purple flex mx-5">
-        <i class="fa fa-recycle mr-1"></i>
-        {% trans "Delete" %}
+      <a href="{% url 'gifting:delete' ad.pk %}" class="btn btn-purple flex mx-5">
+        <i class="fa fa-recycle mr-1"></i> {% trans "Delete" %}
       </a>
-
       <div class="mt-4 flex-shrink-0 flex md:mt-0 md:ml-4">
-        <span class="shadow-sm rounded-md">
-          <a href="{% url "gifting:edit" ad.pk %}" class="btn btn-icon">
-            <i class="fa fa-edit mr-1"></i>
-            {% trans "Edit" %}
-          </a>
-        </span>
+        <a href="{% url 'gifting:edit' ad.pk %}" class="btn">
+          <i class="fa fa-edit mr-1"></i> {% trans "Edit" %}
+        </a>
       </div>
     {% endif %}
   </div>
 
-  {% comment %} content {% endcomment %}
+  {# ── Description ── #}
   <div class="mt-10">
     <p>{{ ad.description }}</p>
   </div>
 
-  {% comment %} Offer / wish from - owner stacked block {% endcomment %}
+  {# ── Owner block ── #}
   {% if ad.owner %}
   <div class="mt-8">
     <h2 class="text-lg font-semibold mb-4">
-      {% if ad.type == 'offer' %}
-        {% trans "Offer from" %}
-      {% else %}
-        {% trans "Wish from" %}
-      {% endif %}
+      {% if ad.type == 'offer' %}{% trans "Offer from" %}{% else %}{% trans "Wish from" %}{% endif %}
     </h2>
     <div class="flex flex-col items-center gap-3 p-4 border rounded bg-primary bg-opacity-5">
       <a href="{{ ad.owner.get_absolute_url }}" class="block">
         {% if ad.owner.image %}
-          <img src="{{ ad.owner.image.url }}" alt="{% if ad.owner.name %}{{ ad.owner.name }}{% else %}{{ ad.owner.username }}{% endif %}" class="w-20 h-20 rounded-full object-cover mx-auto">
+          <img src="{{ ad.owner.image.url }}"
+            alt="{% if ad.owner.name %}{{ ad.owner.name }}{% else %}{{ ad.owner.username }}{% endif %}"
+            class="w-20 h-20 rounded-full object-cover mx-auto">
         {% else %}
-          <div class="w-20 h-20 rounded-full bg-primary flex items-center justify-center text-secondary mx-auto"><i class="fa fa-user text-3xl"></i></div>
+          <div class="w-20 h-20 rounded-full bg-primary flex items-center justify-center text-secondary mx-auto">
+            <i class="fa fa-user text-3xl"></i>
+          </div>
         {% endif %}
       </a>
       <a href="{{ ad.owner.get_absolute_url }}" class="font-semibold text-primary hover:underline">
-        {% if ad.owner.name %}{{ ad.owner.name }}{% elif ad.owner.get_full_name %}{{ ad.owner.get_full_name }}{% else %}{{ ad.owner.username }}{% endif %}
+        {% if ad.owner.name %}{{ ad.owner.name }}
+        {% elif ad.owner.get_full_name %}{{ ad.owner.get_full_name }}
+        {% else %}{{ ad.owner.username }}{% endif %}
       </a>
       {% if ad.owner.location_name %}
         <div class="text-sm text-secondary">{{ ad.owner.location_name }}</div>
       {% endif %}
       <div>
         {% if request.user.is_authenticated %}
-          <button type="button" data-ad-contact-modal="open" class="btn btn-icon"><i class="fa fa-envelope mr-2"></i>{% if ad.type == 'offer' %}{% trans "Request offer" %}{% else %}{% trans "Fulfill wish" %}{% endif %}</button>
+          <button type="button" @click="contactOpen = true" class="btn">
+            <i class="fa fa-envelope mr-2"></i>
+            {% if ad.type == 'offer' %}{% trans "Request offer" %}{% else %}{% trans "Fulfill wish" %}{% endif %}
+          </button>
         {% else %}
-          <a class="btn btn-icon" href="{% url 'users:login' %}?next={{ request.path }}"><i class="fa fa-envelope mr-2"></i>{% if ad.type == 'offer' %}{% trans "Request offer" %}{% else %}{% trans "Fulfill wish" %}{% endif %}</a>
+          <a class="btn" href="{% url 'users:login' %}?next={{ request.path }}">
+            <i class="fa fa-envelope mr-2"></i>
+            {% if ad.type == 'offer' %}{% trans "Request offer" %}{% else %}{% trans "Fulfill wish" %}{% endif %}
+          </a>
         {% endif %}
       </div>
     </div>
   </div>
   {% endif %}
 
+  {# ── Location map ── #}
   {% if ad.location %}
-    <div class="mt-10">
-      <h2 class="text-lg font-semibold mb-3">{% trans "Location" %}</h2>
-      <div class="relative">
-        <div class="absolute top-2 right-2 z-10">
-          <div class="relative">
-            <button id="ad-layer-toggle" type="button" class="flex items-center justify-center w-12 h-12 rounded-md bg-primary bg-opacity-50 text-secondary shadow-lg border backdrop-blur" style="border-color: #b4502c;">
-              <i class="fa fa-layer-group text-lg"></i>
-            </button>
-            <div id="ad-layer-menu" class="hidden absolute right-0 mt-2 w-44 bg-primary text-secondary bg-opacity-50 backdrop-blur rounded-lg shadow-xl border py-2" style="border-color: #b4502c;">
-              <div class="px-3 pb-1 text-xs font-semibold uppercase">{% trans "Layers" %}</div>
-              <ul class="list-none m-0 text-sm space-y-1 px-2">
-                <li>
-                  <label class="dropdown-item">
-                    <input type="radio" name="ad-layer-option" value="ecobasa" class="form-radio mr-2 text-secondary" checked>
-                    <span>{% trans "ecobasa" %}</span>
-                  </label>
-                </li>
-                <li>
-                  <label class="dropdown-item">
-                    <input type="radio" name="ad-layer-option" value="satellite" class="form-radio mr-2 text-secondary">
-                    <span>{% trans "Satellite" %}</span>
-                  </label>
-                </li>
-                <li>
-                  <label class="dropdown-item">
-                    <input type="radio" name="ad-layer-option" value="osm" class="form-radio mr-2 text-secondary">
-                    <span>{% trans "OSM" %}</span>
-                  </label>
-                </li>
-              </ul>
-            </div>
-          </div>
+  <div class="mt-10">
+    <h2 class="text-lg font-semibold mb-3">{% trans "Location" %}</h2>
+    <div class="relative">
+
+      {# Layer switcher — Alpine state, same pattern as search page #}
+      <div class="absolute top-2 right-2 z-10"
+        @mouseleave="layerMenuOpen = false">
+        <button type="button"
+          x-show="!layerMenuOpen"
+          @mouseenter="layerMenuOpen = true"
+          @click="layerMenuOpen = true"
+          class="flex items-center justify-center w-12 h-12 rounded-md bg-primary bg-opacity-50 text-secondary shadow-lg border backdrop-blur border-red"
+          aria-label="{% trans 'Switch layer' %}">
+          <i class="fa fa-layer-group text-lg"></i>
+        </button>
+        <div x-show="layerMenuOpen" x-cloak
+          class="absolute right-0 mt-2 w-44 bg-primary text-secondary bg-opacity-80 backdrop-blur rounded-lg shadow-xl border py-2 border-red">
+          <div class="px-3 pb-1 text-xs font-semibold uppercase">{% trans "Layers" %}</div>
+          <ul class="list-none m-0 text-sm space-y-1 px-2">
+            {% for value, label in layer_choices %}
+            <li>
+              <label class="dropdown-item flex items-center gap-2 cursor-pointer">
+                <input type="radio" name="ad-layer-option" value="{{ value }}"
+                  class="form-radio text-secondary"
+                  :checked="layer === '{{ value }}'"
+                  @change="layer = '{{ value }}'; window._adMapSetLayer && window._adMapSetLayer('{{ value }}')">
+                <span>{{ label }}</span>
+              </label>
+            </li>
+            {% endfor %}
+          </ul>
         </div>
-        <div id="ad-detail-map" class="w-full rounded shadow overflow-hidden" style="height:24rem;"></div>
       </div>
+
+      <div id="ad-detail-map" class="w-full rounded shadow overflow-hidden" style="height:24rem;"></div>
     </div>
+  </div>
   {% endif %}
 
-    <!-- Contact modal -->
-    {% if ad.owner %}
-    <div id="ad-contact-modal" class="modal-overlay">
-      <div class="modal-content" style="-webkit-overflow-scrolling: touch;">
-        <button type="button" data-ad-contact-modal="close" class="absolute top-3 right-3 text-2xl">&times;</button>
-        <h2 class="text-xl font-semibold mb-4">{% trans "Contact" %} - {{ ad.title }}</h2>
-        <form id="ad-contact-form" method="post" action="{% url 'postman:write' %}">
+  {# ── Contact modal ── #}
+  {% if ad.owner %}
+  <div x-show="contactOpen" x-cloak
+    class="modal-overlay flex"
+    @click.self="contactOpen = false"
+    @keydown.escape.window="contactOpen = false">
+    <div class="modal relative bg-secondary bg-opacity-95 backdrop-blur rounded-lg shadow-xl w-full max-w-lg">
+      <button type="button" @click="contactOpen = false"
+        class="absolute top-3 right-3 text-2xl w-10 h-10 flex items-center justify-center bg-black bg-opacity-30 rounded-full"
+        aria-label="{% trans 'Close' %}">&times;</button>
+      <div class="p-6">
+        <h2 class="text-xl font-semibold mb-4">{% trans "Contact" %} — {{ ad.title }}</h2>
+        <form method="post" action="{% url 'postman:write' %}">
           {% csrf_token %}
-          <input type="hidden" name="recipients" value="{{ ad.owner.email }}">
-          <input type="hidden" name="subject" value="{{ ad.title }}">
-          <input type="hidden" name="ad_random_id" value="{{ ad.random_id }}">
+          <input type="hidden" name="recipients"    value="{{ ad.owner.email }}">
+          <input type="hidden" name="subject"       value="{{ ad.title }}">
+          <input type="hidden" name="ad_random_id"  value="{{ ad.random_id }}">
           <div class="grid grid-cols-1 gap-3">
             <label class="text-sm">{% trans "Message" %}
-              <textarea name="body" rows="6" class="form-textarea w-full mt-1" placeholder="{% trans "Write a short message about why you're interested" %}"></textarea>
+              <textarea name="body" rows="6" class="form-textarea w-full mt-1"
+                placeholder="{% trans 'Write a short message about why you\'re interested' %}"></textarea>
             </label>
           </div>
           <div class="mt-4 flex justify-end gap-3">
-            <button type="button" data-ad-contact-modal="close" class="btn">{% trans "Cancel" %}</button>
+            <button type="button" @click="contactOpen = false" class="btn">{% trans "Cancel" %}</button>
             <button type="submit" class="btn bg-primary text-secondary">{% trans "Send" %}</button>
           </div>
         </form>
       </div>
     </div>
-    {% endif %}
-</div>
+  </div>
+  {% endif %}
+
+</div>{# /x-data #}
 {% endblock content %}
+
 
 {% block javascript %}
   {{ block.super }}
   {% if ad.location %}
-    <script src="https://cdn.jsdelivr.net/npm/ol@v7.2.2/dist/ol.js"></script>
-    <script>
-      const initAdMap = () => {
-        const mapEl = document.getElementById('ad-detail-map');
-        if (!mapEl) return;
-        const data = {
-          lat: {{ ad.location.y|floatformat:"6" }},
-          lon: {{ ad.location.x|floatformat:"6" }},
-          title: "{{ ad.title|escapejs }}",
-          type: "{{ ad.get_type_display|escapejs }}",
-          location_name: "{{ ad.location_name|default:""|escapejs }}"
-        };
+  <script src="https://cdn.jsdelivr.net/npm/ol@v7.2.2/dist/ol.js"></script>
+  <script>
+  /* ================================================================
+     Ad detail map — single marker, layer switcher wired to Alpine.
+     ================================================================ */
+  (function () {
+    const LAT  = {{ ad.location.y|floatformat:"6" }};
+    const LON  = {{ ad.location.x|floatformat:"6" }};
+    const ICON = '{% static "map/images/marker-icon.png" %}';
 
-        const stamenWatercolor = new ol.layer.Tile({
-          source: new ol.source.XYZ({
-            url: 'https://tiles.stadiamaps.com/tiles/stamen_watercolor/{z}/{x}/{y}.jpg?api_key=cb8069a3-9585-4989-a6a8-572b5c3f4ffb',
-            crossOrigin: 'anonymous'
-          })
+    function createTileLayers() {
+      const watercolor = new ol.layer.Tile({
+        source: new ol.source.XYZ({
+          url: 'https://tiles.stadiamaps.com/tiles/stamen_watercolor/{z}/{x}/{y}.jpg?api_key=cb8069a3-9585-4989-a6a8-572b5c3f4ffb',
+          crossOrigin: 'anonymous'
+        })
+      });
+      const tonerLabels = new ol.layer.Tile({
+        source: new ol.source.XYZ({
+          url: 'https://tiles.stadiamaps.com/tiles/stamen_toner_lite/{z}/{x}/{y}.png?api_key=cb8069a3-9585-4989-a6a8-572b5c3f4ffb',
+          crossOrigin: 'anonymous'
+        }),
+        opacity: 0.35
+      });
+      const satellite = new ol.layer.Tile({
+        source: new ol.source.XYZ({
+          url: 'https://mt{0-3}.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}',
+          attributions: '&copy; Google', maxZoom: 20, crossOrigin: 'anonymous'
+        }),
+        visible: false
+      });
+      const osm = new ol.layer.Tile({
+        source: new ol.source.XYZ({
+          url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+          crossOrigin: 'anonymous', maxZoom: 19, wrapX: true,
+          attributions: '\u00a9 OpenStreetMap contributors'
+        }),
+        visible: false
+      });
+      return { watercolor, tonerLabels, satellite, osm,
+               all: [watercolor, tonerLabels, satellite, osm] };
+    }
+
+    function applyLayer(tiles, mode) {
+      tiles.watercolor.setVisible(mode === 'ecobasa');
+      tiles.tonerLabels.setVisible(mode === 'ecobasa');
+      tiles.satellite.setVisible(mode === 'satellite');
+      tiles.osm.setVisible(mode === 'osm');
+    }
+
+    document.addEventListener('alpine:initialized', function () {
+      const mapEl = document.getElementById('ad-detail-map');
+      if (!mapEl) return;
+
+      const tiles = createTileLayers();
+      const center = ol.proj.fromLonLat([LON, LAT]);
+
+      const marker = new ol.Feature({ geometry: new ol.geom.Point(center) });
+      marker.setStyle(new ol.style.Style({
+        image: new ol.style.Icon({ src: ICON, anchor: [0.5, 1] })
+      }));
+
+      const map = new ol.Map({
+        target: mapEl,
+        layers: tiles.all.concat([
+          new ol.layer.Vector({ source: new ol.source.Vector({ features: [marker] }) })
+        ]),
+        view: new ol.View({ center, zoom: 13 })
+      });
+
+      // Expose layer setter to Alpine radio @change handler
+      window._adMapSetLayer = mode => { applyLayer(tiles, mode); map.renderSync(); };
+
+      // Stadia fallback
+      let fallbackFired = false;
+      [tiles.watercolor, tiles.tonerLabels].forEach(layer => {
+        layer.getSource().on('tileloaderror', () => {
+          if (fallbackFired) return;
+          fallbackFired = true;
+          applyLayer(tiles, 'osm');
         });
+      });
 
-        const stamenTonerLabels = new ol.layer.Tile({
-          source: new ol.source.XYZ({
-            url: 'https://tiles.stadiamaps.com/tiles/stamen_toner_lite/{z}/{x}/{y}.png?api_key=cb8069a3-9585-4989-a6a8-572b5c3f4ffb',
-            crossOrigin: 'anonymous'
-          }),
-          opacity: 0.35
-        });
+      applyLayer(tiles, 'ecobasa');
 
-        const satellite = new ol.layer.Tile({
-          source: new ol.source.XYZ({
-            url: 'https://mt{0-3}.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}',
-            attributions: '&copy; Google',
-            maxZoom: 20,
-            crossOrigin: 'anonymous'
-          }),
-          visible: false
-        });
+      // Simple popup showing title + location
+      const popupEl = document.createElement('div');
+      popupEl.className = 'freemarket-popup';
+      popupEl.innerHTML = '<strong>{{ ad.title|escapejs }}</strong>'
+        + '{% if ad.location_name %}<div>{{ ad.location_name|escapejs }}</div>{% endif %}';
+      const overlay = new ol.Overlay({
+        element: popupEl, positioning: 'bottom-center', offset: [0, -12], stopEvent: false
+      });
+      map.addOverlay(overlay);
+      overlay.setPosition(center);
 
-        const osmBase = new ol.layer.Tile({
-          source: new ol.source.OSM({
-            url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-            crossOrigin: 'anonymous'
-          }),
-          visible: false
-        });
-
-        const enableOsmFallback = () => {
-          if (!osmBase.getVisible()) {
-            osmBase.setVisible(true);
-          }
-        };
-        stamenWatercolor.getSource().on('tileloaderror', enableOsmFallback);
-        stamenTonerLabels.getSource().on('tileloaderror', enableOsmFallback);
-
-        const map = new ol.Map({
-          target: mapEl,
-          layers: [stamenWatercolor, stamenTonerLabels, satellite, osmBase],
-          view: new ol.View({
-            center: ol.proj.fromLonLat([data.lon, data.lat]),
-            zoom: 13
-          })
-        });
-
-        // Keep poking the size until the element actually has dimensions
-        const forceRender = () => {
-          map.updateSize();
-          map.renderSync();
-          const v = map.getView();
-          v.setCenter(v.getCenter());
-          v.setZoom(v.getZoom());
-        };
-
-        const ensureSize = () => {
-          const rect = mapEl.getBoundingClientRect();
-          if (!rect.width || !rect.height) {
-            requestAnimationFrame(ensureSize);
-            return;
-          }
-          map.updateSize();
-          forceRender();
-        };
-        setTimeout(() => map.updateSize(), 50);
-        ensureSize();
-
-        const layerWrap = document.getElementById('ad-layer-toggle')?.parentElement?.parentElement;
-        const layerToggle = document.getElementById('ad-layer-toggle');
-        const layerMenu = document.getElementById('ad-layer-menu');
-        const layerRadios = document.querySelectorAll('input[name="ad-layer-option"]');
-
-        const setLayerMode = (mode) => {
-          stamenWatercolor.setVisible(false);
-          stamenTonerLabels.setVisible(false);
-          satellite.setVisible(false);
-          osmBase.setVisible(false);
-          const target = (mode || 'ecobasa').toLowerCase();
-          switch (target) {
-            case 'satellite':
-              satellite.setVisible(true);
-              break;
-            case 'osm':
-              osmBase.setVisible(true);
-              break;
-            default:
-              stamenWatercolor.setVisible(true);
-              stamenTonerLabels.setVisible(true);
-              break;
-          }
-          layerRadios.forEach(r => { r.checked = (r.value === target); });
-        };
-
-        if (layerWrap && layerMenu && layerToggle) {
-          const showMenu = () => {
-            layerMenu.classList.remove('hidden');
-            layerToggle.classList.add('hidden');
-          };
-          const hideMenu = () => {
-            layerMenu.classList.add('hidden');
-            layerToggle.classList.remove('hidden');
-          };
-
-          layerToggle.addEventListener('mouseenter', showMenu);
-          layerToggle.addEventListener('click', (e) => { e.stopPropagation(); showMenu(); });
-          layerMenu.addEventListener('mouseleave', hideMenu);
-          document.addEventListener('click', (e) => {
-            if (!layerWrap.contains(e.target)) {
-              hideMenu();
-            }
-          });
-
-          layerRadios.forEach(r => {
-            r.addEventListener('change', (e) => {
-              if (e.target.checked) {
-                setLayerMode(e.target.value);
-              }
-            });
-          });
-          setLayerMode('ecobasa');
-        } else {
-          setLayerMode('ecobasa');
-        }
-
-        const feature = new ol.Feature({
-          geometry: new ol.geom.Point(ol.proj.fromLonLat([data.lon, data.lat]))
-        });
-        feature.setStyle(new ol.style.Style({
-          image: new ol.style.Icon({
-            src: '{% static "map/images/marker-icon.png" %}',
-            anchor: [0.5, 1]
-          })
-        }));
-
-        const vectorLayer = new ol.layer.Vector({
-          source: new ol.source.Vector({ features: [feature] })
-        });
-        map.addLayer(vectorLayer);
-
-        const popupEl = document.createElement('div');
-        popupEl.style.cssText = 'background:#fff;padding:6px 8px;border-radius:6px;box-shadow:0 2px 6px rgba(0,0,0,0.25);font-size:13px;color:#432;';
-        popupEl.innerHTML = [
-          `<strong>${data.title}</strong>`,
-          data.location_name ? `<div>${data.location_name}</div>` : ''
-        ].filter(Boolean).join('');
-
-        const overlay = new ol.Overlay({
-          element: popupEl,
-          positioning: 'bottom-center',
-          offset: [0, -12],
-          stopEvent: false
-        });
-        map.addOverlay(overlay);
-        overlay.setPosition(ol.proj.fromLonLat([data.lon, data.lat]));
-      };
-
-      if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initAdMap);
-      } else {
-        initAdMap();
-      }
-    </script>
+      window.addEventListener('resize', () => map.updateSize());
+      requestAnimationFrame(() => { map.updateSize(); map.renderSync(); });
+    });
+  })();
+  </script>
   {% endif %}
-  <script>
-  document.addEventListener('DOMContentLoaded', () => {
-    const modal = document.getElementById('ad-image-modal');
-    if (!modal) return;
-    const openers = document.querySelectorAll('[data-ad-image-modal="open"]');
-    const closer = modal.querySelector('[data-ad-image-modal="close"]');
-    const closeModal = () => { modal.classList.add('hidden'); document.body.classList.remove('overflow-hidden'); };
-    const openModal = () => { modal.classList.remove('hidden'); modal.classList.add('flex'); document.body.classList.add('overflow-hidden'); };
-    openers.forEach(btn => btn.addEventListener('click', openModal));
-    if (closer) closer.addEventListener('click', closeModal);
-    modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
-  });
-  </script>
-  <script>
-  document.addEventListener('DOMContentLoaded', () => {
-    const modal = document.getElementById('ad-contact-modal');
-    if (!modal) return;
-    const openers = document.querySelectorAll('[data-ad-contact-modal="open"]');
-    const closer = modal.querySelector('[data-ad-contact-modal="close"]');
-    const closeModal = () => { modal.classList.add('hidden'); document.body.classList.remove('overflow-hidden'); };
-    const openModal = () => { modal.classList.remove('hidden'); modal.classList.add('flex'); document.body.classList.add('overflow-hidden'); };
-    openers.forEach(btn => btn.addEventListener('click', openModal));
-    if (closer) closer.addEventListener('click', closeModal);
-    modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
-  });
-  </script>
 {% endblock javascript %}

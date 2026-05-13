@@ -4,7 +4,7 @@
 
 {% block css %}
 <script type="text/css">
-  
+
 </script>
 {% endblock %}
 
@@ -21,15 +21,15 @@
         </div>
         {% comment %} Desktop Menu {% endcomment %}
         <div class="hidden sm:ml-6 sm:flex">
-          <a href="{% url "gifting:search" %}" class="{% if namespace == "gifting" %}border-brown text-brown{% else %}border-transparent hover:border-brown{% endif %} ml-8 inline-flex items-center px-1 pt-1 border-b-2 border-transparent leading-5 focus:outline-none focus:text-brown focus:border-brown transition duration-150 ease-in-out">
+          <a href="{% url "gifting:search" %}" class="{% if namespace == "gifting" %}text-brown{% endif %} ml-8 inline-flex items-center px-1 pt-1 border-b-2 border-transparent leading-5 focus:outline-none focus:text-brown transition duration-150 ease-in-out">
             <i class="fa fa-recycle mr-2"></i>
             {% trans "Free Market" %}
           </a>
-          <a href="{% url "communities:list" %}" class="{% if namespace == "communities" %}border-brown text-brown{% else %}border-transparent hover:border-brown{% endif %} ml-8 inline-flex items-center px-1 pt-1 border-b-2 border-transparent leading-5 focus:outline-none focus:text-brown focus:border-brown transition duration-150 ease-in-out">
+          <a href="{% url "communities:list" %}" class="{% if namespace == "communities" %}text-brown{% endif %} ml-8 inline-flex items-center px-1 pt-1 border-b-2 border-transparent leading-5 focus:outline-none focus:text-brown transition duration-150 ease-in-out">
             <i class="fa fa-home mr-2"></i>
             {% trans "Communities" %}
           </a>
-          <a href="{% url "homepage:support" %}" class="{% if request.path == "/support/" %}border-brown text-brown{% else %}border-transparent hover:border-brown{% endif %} ml-8 inline-flex items-center px-1 pt-1 border-b-2 border-transparent leading-5 focus:outline-none focus:text-brown focus:border-brown transition duration-150 ease-in-out">
+          <a href="{% url "homepage:support" %}" class="{% if request.path == "/support/" %}text-brown{% endif %} ml-8 inline-flex items-center px-1 pt-1 border-b-2 border-transparent leading-5 focus:outline-none focus:text-brown transition duration-150 ease-in-out">
             <i class="fa fa-heart mr-2"></i>
             {% trans "Support" %}
           </a>
@@ -45,13 +45,13 @@
           </button>
 
           {% comment %} Profile dropdown {% endcomment %}
-          <div class="ml-3 mt-3 relative" x-data="{ open: false }" @close-user-menu.window="open = false">
+          <div class="ml-3 relative" x-data="{ open: false }" @close-user-menu.window="open = false">
             <div>
-                <button @click="open = !open" @keydown.escape="open = false" :aria-expanded="open" class="flex text-sm border-2 border-transparent rounded-full focus:outline-none focus:border-gray-300 transition duration-150 ease-in-out" id="user-menu" aria-label="User menu" aria-haspopup="true">
+                <button @click="open = !open" @keydown.escape="open = false" :aria-expanded="open" class="flex text-sm rounded-full transition duration-150 ease-in-out" id="user-menu" aria-label="User menu" aria-haspopup="true">
                {% if request.user.image %}
                 <img class="h-8 w-8 rounded-full" src="{{ request.user.image.url }}" alt="">
                {% else %}
-                <i class="fa fa-user text-xl text-primary rounded-full bg-secondary p-3"></i>
+                <i class="fa fa-user text-lg text-primary rounded-full bg-secondary p-3"></i>
                {% endif %}
               </button>
             </div>
@@ -63,7 +63,7 @@
                   x-transition:leave="transition ease-in duration-75"
                   x-transition:leave-start="opacity-100 transform scale-100"
                   x-transition:leave-end="opacity-0 transform scale-95"
-                  class="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg z-40">
+                  class="origin-top-right absolute right-0 mt-3 w-48 rounded-md shadow-lg z-40">
               <div class="py-1 rounded-md bg-primary bg-opacity-75 shadow-xs">
                 <a href="{{ request.user.get_absolute_url }}" class="dropdown-link">
                   <i class="fa fa-user mr-2"></i>
@@ -91,7 +91,7 @@
       {% else %}
         {% comment %} Login button {% endcomment %}
         <div class="flex-shrink-0 hidden sm:ml-6 sm:flex sm:items-center">
-          <a href="{% url "users:login" %}?next={{ request.path }}" class="relative inline-flex items-center px-4 py-2 border border-transparent border-secondary text-sm leading-5 rounded-md hover:text-primary shadow-sm hover:bg-secondary focus:outline-none focus:border-secondary focus:shadow-outline-brown active:bg-secondary transition ease-in-out duration-150">
+          <a href="{% url "users:login" %}?next={{ request.path }}" class="hover:border-brown px-1 py-5 border-b-2 border-transparent leading-5 focus:outline-none focus:text-brown focus:border-brown transition duration-150 ease-in-out">
             <i class="fa fa-sign-in-alt mr-2"></i>
             <span>{% trans "Log in" %}</span>
           </a>

@@ -63,7 +63,7 @@
 		<h2>{% trans "Skills you can learn here" %}</h2>
 		<ul>
 		{% for skill in community.skills.all %}
-			<li class="rounded-full bg-primary text-secondary px-3 py-1 text-xs inline ml-2"><i class="mr-1 fa fa-graduation-cap"></i>{{ skill }}</li>
+			<li class="pill bg-purple text-secondary mr-2"><i class="mr-1 fa fa-graduation-cap"></i>{{ skill }}</li>
 		{% endfor %}
 		</ul>
 	</div>

@@ -21,13 +21,51 @@
       padding: 0.6rem 0.75rem;
     }
   </style>
+  <script>
+    function communityLocationDropdown() {
+      return {
+        results: [],
+        open: false,
+        loading: false,
+        async onInput(query) {
+          const term = (query || '').trim();
+          if (!term) {
+            this.results = [];
+            this.open = false;
+            return;
+          }
+          this.loading = true;
+          try {
+            const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&q=${encodeURIComponent(term)}`);
+            const data = await response.json();
+            this.results = data.slice(0, 5);
+            this.open = this.results.length > 0;
+          } catch (e) {
+            this.results = [];
+            this.open = false;
+          } finally {
+            this.loading = false;
+          }
+        },
+        onSelect(res) {
+          const lon = parseFloat(res.lon);
+          const lat = parseFloat(res.lat);
+          if (Number.isFinite(lon) && Number.isFinite(lat) && window.setCommunityPoint) {
+            window.setCommunityPoint(lon, lat, res.display_name || '');
+          }
+          this.results = [];
+          this.open = false;
+        }
+      };
+    }
+  </script>
 {% endblock %}
 
 {% block content %}
 <div class="mx-auto max-w-4xl px-4 mt-10 mb-12">
   <div class="flex items-center justify-between mb-4">
     <h1 class="text-2xl font-bold text-primary">{% trans "Add your community" %}</h1>
-    <a href="{% url 'communities:list' %}" class="btn btn-icon">
+    <a href="{% url 'communities:list' %}" class="btn">
       <i class="fa fa-arrow-left mr-2"></i>
       {% trans "Back to list" %}
     </a>
@@ -59,9 +97,16 @@
       {% for error in form.status.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
     </div>
 
-    <!-- Location: moved above description -->
+    <!-- Location -->
     <div x-data="communityLocationDropdown()" class="relative">
       <label class="form-label" for="id_location_name">{{ form.location_name.label }}</label>
+      <button type="button"
+        onclick="window.locateUser()"
+        class="btn absolute right-0"
+        title="{% trans 'Find my location' %}
+      ">
+        <i class="fa fa-crosshairs text-secondary"></i>
+      </button>
       <input type="text" name="location_name" id="id_location_name" value="{{ form.location_name.value|default_if_none:'' }}" class="community-field" @input.debounce="onInput($event.target.value)" autocomplete="off">
       <div x-show.transition="open" @click.away="open = false" class="absolute z-20 inset-x-0 bg-secondary bg-opacity-80 shadow-lg text-xs py-3 rounded-b border-b border-l border-r">
         <ul class="list-none m-0">
@@ -73,9 +118,12 @@
       {% for error in form.location_name.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
     </div>
 
-    {{ form.location }}
+    <div class="hidden">
+      {{ form.location }}
+    </div>
     <div class="rounded shadow overflow-hidden community-map-wrapper" style="height: 320px;">
-      <div id="community-location-map" class="w-full h-full bg-secondary bg-opacity-40"></div>
+      <div id="community-location-map" class="w-full h-full bg-secondary bg-opacity-40">
+      </div>
     </div>
     <p class="text-xs text-brown">{% trans "Click or drag the pin to set your exact location." %}</p>
     {% for error in form.location.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
@@ -176,7 +224,7 @@
       </div>
     </div>
 
-    
+
     <div>
       <label class="form-label" for="id_website">{{ form.website.label }}</label>
       {{ form.website }}
@@ -202,43 +250,6 @@
   <script src="https://cdn.jsdelivr.net/npm/ol@v7.2.2/dist/ol.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.min.js"></script>
   <script>
-    function communityLocationDropdown() {
-      return {
-        results: [],
-        open: false,
-        loading: false,
-        async onInput(query) {
-          const term = (query || '').trim();
-          if (!term) {
-            this.results = [];
-            this.open = false;
-            return;
-          }
-          this.loading = true;
-          try {
-            const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&q=${encodeURIComponent(term)}`);
-            const data = await response.json();
-            this.results = data.slice(0, 5);
-            this.open = this.results.length > 0;
-          } catch (e) {
-            this.results = [];
-            this.open = false;
-          } finally {
-            this.loading = false;
-          }
-        },
-        onSelect(res) {
-          const lon = parseFloat(res.lon);
-          const lat = parseFloat(res.lat);
-          if (Number.isFinite(lon) && Number.isFinite(lat) && window.setCommunityPoint) {
-            window.setCommunityPoint(lon, lat, res.display_name || '');
-          }
-          this.results = [];
-          this.open = false;
-        }
-      };
-    }
-
     document.addEventListener('DOMContentLoaded', () => {
       const style = document.createElement('style');
       style.textContent = `
@@ -271,6 +282,9 @@
       if (!locationInput || !mapTarget) return;
 
       const vectorSource = new ol.source.Vector();
+      const feature = new ol.Feature();
+      vectorSource.addFeature(feature);
+
       const markerStyle = new ol.style.Style({
         image: new ol.style.Icon({
           src: '{% static "map/images/marker-icon.png" %}',
@@ -345,39 +359,38 @@
       });
       setBaseLayer('ecobasa');
 
-      const feature = new ol.Feature();
-      vectorSource.addFeature(feature);
-
       const setPoint = (lon, lat, { skipZoom = false, label = '' } = {}) => {
-        feature.setGeometry(new ol.geom.Point(ol.proj.fromLonLat([lon, lat])));
+        const coords = ol.proj.fromLonLat([parseFloat(lon), parseFloat(lat)]);
+        feature.setGeometry(new ol.geom.Point(coords));
+
         if (!skipZoom) {
-          map.getView().setCenter(ol.proj.fromLonLat([lon, lat]));
-          map.getView().setZoom(12);
+            map.getView().animate({ center: coords, zoom: 14 });
         }
-        locationInput.value = `SRID=4326;POINT (${lon} ${lat})`;
-        if (nameInput && (!nameInput.value || label)) {
-          nameInput.value = label || `${lat.toFixed(5)}, ${lon.toFixed(5)}`;
+
+        // Write back to Django's hidden field in WKT format
+        locationInput.value = `POINT (${lon} ${lat})`;
+
+        // Only update the address text if a label was provided (from Nominatim)
+        if (label) {
+            nameInput.value = label;
         }
       };
 
       window.setCommunityPoint = (lon, lat, label) => setPoint(lon, lat, { skipZoom: false, label });
 
-      const parseExisting = () => {
-        const raw = (locationInput.value || '').trim();
-        if (!raw) return null;
-        const cleaned = raw.replace(/^SRID=\d+;\s*/i, '');
-        try {
-          const geom = new ol.format.WKT().readGeometry(cleaned);
-          const [lon, lat] = ol.proj.toLonLat(geom.getCoordinates());
-          return [lon, lat];
-        } catch (e) {
-          return null;
+      const rawValue = locationInput.value;
+      if (rawValue && rawValue.includes('POINT')) {
+        // Extract numbers from "POINT (lon lat)" or "SRID=4326;POINT (lon lat)"
+        const match = rawValue.match(/POINT\s*\(\s*(-?\d+\.?\d*)\s+(-?\d+\.?\d*)\s*\)/i);
+        if (match) {
+            const lon = parseFloat(match[1]);
+            const lat = parseFloat(match[2]);
+            // Small timeout to ensure map container has dimensions
+            setTimeout(() => {
+                setPoint(lon, lat, { skipZoom: false });
+                map.updateSize();
+            }, 80);
         }
-      };
-
-      const existing = parseExisting();
-      if (existing) {
-        setPoint(existing[0], existing[1]);
       }
 
       map.on('click', (evt) => {
@@ -393,6 +406,14 @@
         setPoint(lon, lat, { skipZoom: true });
       });
       map.addInteraction(modify);
+
+      // Locate User Helper
+      window.locateUser = () => {
+          if (!navigator.geolocation) return;
+          navigator.geolocation.getCurrentPosition((pos) => {
+              setPoint(pos.coords.longitude, pos.coords.latitude);
+          });
+      };
 
       // Layer toggle control similar to ad form
       const layerWrap = document.createElement('div');

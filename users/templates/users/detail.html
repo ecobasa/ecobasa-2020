@@ -6,7 +6,7 @@
 	<div class="flex items-start justify-between mb-8">
 		<h1 class="text-5xl font-semibold">{{ user.name }}</h1>
 		{% if request.user.is_authenticated and request.user.is_staff or request.user.is_authenticated and request.user.pk == user.pk %}
-			<a href="{% url 'users:update' %}" class="btn btn-icon">
+			<a href="{% url 'users:update' %}" class="btn">
 				<i class="fa fa-pencil mr-2"></i>{% trans "Edit profile" %}
 			</a>
 		{% endif %}

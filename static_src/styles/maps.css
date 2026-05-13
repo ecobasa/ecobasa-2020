@@ -1,11 +1,22 @@
 /* OpenLayers controls (OSMWidget) */
-.dj_map_wrapper .ol-control button {
-	background-color: rgba(218, 97, 55, 0.8) !important;
-	border: 1px solid #b4502c !important;
-	color: #fcf3e5 !important;
+.ol-zoom.ol-control button {
+	background-color: rgba(218, 97, 55, 0.8);
+	border: 1px solid #b4502c;
+	color: #fcf3e5;
+	width: 2.75rem;
+  height: 2.75rem;
+  font-size: 1.25rem;
+  border-radius: 0.25rem;
 }
 
-.dj_map_wrapper .ol-control button:hover,
-.dj_map_wrapper .ol-control button:focus {
-	background-color: rgba(218, 97, 55, 1) !important;
+.ol-control.ol-zoom {
+  top: auto;
+  left: 1rem;
+  bottom: 1rem;
+  right: auto;
+}
+
+.ol-control.ol-control button:hover {
+	background-color: rgba(218, 97, 55, 1);
+	color: rgb(69 41 18);
 }

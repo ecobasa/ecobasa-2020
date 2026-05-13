@@ -1,729 +1,803 @@
 {% extends 'base.html' %}
-{% load static crispy_forms_tags i18n %}
+{% load static i18n %}
 
 {% block extrahead %}
   {{ block.super }}
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v7.2.2/ol.css">
-  <style>
-    /* Place OL zoom controls bottom-left to avoid overlay collisions */
-    .ol-zoom {
-      top: auto;
-      left: 1rem;
-      bottom: 1rem;
-      right: auto;
+  <script src="https://unpkg.com/htmx.org@1.9.10/dist/htmx.min.js"></script>
+  <script>
+    /* ================================================================
+      Reusable Alpine components
+      ================================================================ */
+
+    /**
+    * suggestions(endpoint)
+    * Attach to any input wrapper. Fetches [{value, type}] from endpoint?q=term.
+    * Shared between map overlay and modal search inputs.
+    */
+    function suggestions(endpoint) {
+      return {
+        items: [], active: -1, open: false, _timer: null,
+
+        suggest(term) {
+          clearTimeout(this._timer);
+          if (!term || term.length < 2) { this.close(); return; }
+          const self = this;
+          this._timer = setTimeout(function () {
+            fetch(endpoint + '?q=' + encodeURIComponent(term))
+              .then(r => r.json())
+              .then(data => { self.items = data.slice(0, 8); self.open = self.items.length > 0; self.active = -1; })
+              .catch(() => self.close());
+          }, 200);
+        },
+
+        moveDown() { if (this.open) this.active = Math.min(this.active + 1, this.items.length - 1); },
+        moveUp()   { if (this.open) this.active = Math.max(this.active - 1, 0); },
+
+        choose() {
+          if (this.active >= 0 && this.items[this.active]) {
+            this.selectItem(this.items[this.active]);
+            return true;
+          }
+          return false;
+        },
+
+        selectItem(item) {
+        // 1. Update store
+        Alpine.store('fm').q = item.value;
+        this.close();
+
+        // 2. Wait for Alpine to sync the hidden input's :value, then trigger HTMX
+        this.$nextTick(() => {
+          if (Alpine.store('fm').view === 'list') {
+            // Trigger the search input in the modal to fire its hx-get
+            document.body.dispatchEvent(new CustomEvent('filter-updated'));
+          }
+          window._fmReloadMarkers && window._fmReloadMarkers();
+        });
+      },
+
+        triggerSearch() {
+          window._fmReloadMarkers && window._fmReloadMarkers();
+        },
+
+        close() { this.open = false; this.items = []; this.active = -1; }
+      };
     }
-    .ol-zoom button {
-      width: 2.75rem;
-      height: 2.75rem;
-      font-size: 1.25rem;
-      border-radius: 0.75rem;
+
+    /**
+    * locationDropdown(listEndpoint)
+    * Unified location autocomplete via Nominatim.
+    * Updates Alpine store so both map fetch and HTMX list stay in sync.
+    * Pass listEndpoint to trigger an HTMX list reload after picking.
+    */
+    function locationDropdown(listEndpoint) {
+      return {
+        results: [], open: false,
+
+        geocode(input) {
+          if (!input || input.length < 3) { this.results = []; this.open = false; return; }
+          fetch('https://nominatim.openstreetmap.org/search?format=json&limit=5&q=' + encodeURIComponent(input))
+            .then(r => r.json())
+            .then(json => { this.results = json; this.open = json.length > 0; })
+            .catch(() => { this.open = false; });
+        },
+
+        pick(res) {
+          const point = res.lat + ',' + res.lon;
+
+          // 1. Update the Store (Source of Truth)
+          Alpine.store('fm').locationName = res.display_name;
+          Alpine.store('fm').location = point;
+
+          this.closeDropdown();
+
+          // 2. Wait for DOM sync, then trigger
+          this.$nextTick(() => {
+            if (window._fmZoomTo) window._fmZoomTo(res.lat, res.lon, res.boundingbox);
+            if (window._fmReloadMarkers) window._fmReloadMarkers();
+
+            // This wakes up the HTMX input in the modal
+            document.body.dispatchEvent(new CustomEvent('filter-updated'));
+          });
+        },
+
+        useGPS() {
+          if (!navigator.geolocation) return;
+          navigator.geolocation.getCurrentPosition(pos => {
+            const point = pos.coords.latitude + ',' + pos.coords.longitude;
+            this.$refs.nameInput.value = '{% trans "Current Location" %}';
+            this.$refs.pointInput.value = point;
+            Alpine.store('fm').locationName = '{% trans "Current Location" %}';
+            Alpine.store('fm').location     = point;
+            this.closeDropdown();
+            window._fmReloadMarkers && window._fmReloadMarkers();
+          });
+        },
+
+        closeDropdown() { this.open = false; this.results = []; }
+      };
     }
-  </style>
+    document.addEventListener('alpine:init', function () {
+      Alpine.store('fm', {
+        view:          'map',    // 'map' | 'list'
+        layerMenuOpen: false,
+        layer:         'ecobasa',
+        loading:       false,
+        q:             '{{ f.form.search.data|default:""|escapejs }}',
+        locationName:  '{{ f.form.location_name.data|default:""|escapejs }}',
+        location:      '{{ f.form.location.data|default:""|escapejs }}',
+
+        showMap:  function () { this.view = 'map'; },
+        showList: function () { this.view = 'list'; },
+
+        // Called by the map after a successful marker fetch
+        markerCount: 0,
+
+        clearLocation() {
+          this.location = '';
+          this.locationName = '';
+          // Trigger HTMX to refresh the list without location filters
+          document.body.dispatchEvent(new CustomEvent('filter-updated'));
+        }
+      });
+    });
+  </script>
 {% endblock %}
 
+
+{# ═══════════════════════════════════════════════════════════════════
+   HTML
+   ═══════════════════════════════════════════════════════════════════ #}
 {% block content %}
+<div x-data>
 
-<div class="relative w-full freemarket-shell">
-  <div id="freemarket-map" class="absolute inset-0 w-full h-full rounded shadow bg-secondary bg-opacity-50"></div>
+  {# ── Map shell ── #}
+  <div class="relative w-full map-shell">
+    <div id="freemarket-map" class="absolute inset-0 w-full h-full rounded shadow bg-secondary bg-opacity-50"></div>
 
-  {% comment %} overlay controls {% endcomment %}
-  <div class="absolute top-4 left-1/2 transform -translate-x-1/2">
-    <div class="inline-flex overflow-hidden rounded-full shadow-lg border bg-primary bg-opacity-20 backdrop-blur" style="border-color: #b4502c;">
-      <button id="freemarket-toggle-map" type="button" aria-label="{% trans "Show map view" %}" class="btn-pill-select bg-opacity-40">
-         <i class="fa fa-globe
-        <i class="fa fa-globe"></i>
-        {% trans "Map" %}
-      </button>
-      <button id="freemarket-toggle-list" type="button" aria-label="{% trans "Show list view" %}" class="btn-pill-select bg-opacity-40">
-         <i class="fa fa-globe
-        <i class="fa fa-list-alt"></i>
-        {% trans "List" %}
-      </button>
-    </div>
-  </div>
+    {# ── View toggle (top center) ── #}
+    <div class="absolute top-4 left-1/2 -translate-x-1/2 z-10">
+      <div class="inline-flex overflow-hidden rounded-full shadow-lg border bg-primary bg-opacity-20 backdrop-blur border-red">
 
-  <div id="freemarket-layer-wrap" class="absolute top-4 right-4">
-    <div class="relative">
-      <button id="freemarket-layer-toggle" type="button" class="flex items-center justify-center w-14 h-14 rounded-md bg-primary bg-opacity-60 text-secondary shadow-lg border backdrop-blur" style="border-color: #b4502c;">
-        <i class="fa fa-layer-group text-xl"></i>
-      </button>
-      <div id="freemarket-layer-menu" class="hidden absolute right-0 mt-2 w-48 bg-primary text-secondary bg-opacity-60 backdrop-blur rounded-lg shadow-xl border py-2" style="border-color: #b4502c;">
-        <div class="px-3 pb-1 text-xs font-semibold uppercase">{% trans "Layers" %}</div>
-        <ul class="list-none m-0 text-sm space-y-1 px-2">
-          <li>
-            <label class="dropdown-item">
-              <input type="radio" name="freemarket-layer-option" value="ecobasa" class="form-radio mr-2 text-secondary" checked>
-              <span>{% trans "ecobasa" %}</span>
-            </label>
-          </li>
-          <li>
-            <label class="dropdown-item">
-              <input type="radio" name="freemarket-layer-option" value="satellite" class="form-radio mr-2 text-secondary">
-              <span>{% trans "Satellite" %}</span>
-            </label>
-          </li>
-          <li>
-            <label class="dropdown-item">
-              <input type="radio" name="freemarket-layer-option" value="osm" class="form-radio mr-2 text-secondary">
-              <span>{% trans "OSM" %}</span>
-            </label>
-          </li>
-        </ul>
+        <button type="button" aria-label="{% trans 'Show map view' %}"
+          :class="$store.fm.view === 'map' ? 'bg-opacity-90 shadow-inner' : 'bg-opacity-40'"
+          class="btn-pill-select bg-primary transition-all"
+          @click="$store.fm.showMap()">
+          <i class="fa fa-globe"></i><span>{% trans "Map" %}</span>
+        </button>
+
+        <button type="button" aria-label="{% trans 'Show list view' %}"
+          :class="$store.fm.view === 'list' ? 'bg-opacity-90 shadow-inner' : 'bg-opacity-40'"
+          class="btn-pill-select bg-primary transition-all"
+          @click="$store.fm.showList()"
+          hx-get="{% url 'gifting:api-list' %}"
+          hx-target="#freemarket-list-results"
+          hx-swap="innerHTML"
+          hx-include="#freemarket-filters"
+          hx-trigger="click once">
+          <i class="fa fa-list-alt"></i><span>{% trans "List" %}</span>
+        </button>
+
       </div>
     </div>
-  </div>
 
-  {% comment %} add button and map overlay filters {% endcomment %}
-  <div class="absolute top-4 left-4 flex flex-col gap-3 w-full max-w-md">
-    <form id="searchFormMap" x-data="locationDropdownMap()" method="get" class="js-submit-on-input bg-secondary bg-opacity-50 backdrop-blur rounded-lg shadow p-4">
-      <input type="hidden" name="view" value="map">
-      <div class="flex items-center flex-wrap -mx-2">
-        <div class="relative w-full my-2 mx-2">
-          <div class="absolute ml-3 inset-y-0 flex items-center text-brown">
-            <i class="fa fa-search text-primary opacity-75"></i>
-          </div>
-          <input id="freemarket-search-input" type="text" value="{{ f.form.search.data|default:"" }}" class="form-input icon-input" autocomplete="off" name="search" @keydown.enter.prevent="$event.target.form.submit()">
-          <div class="suggestions-dropdown hidden" aria-hidden="true"></div>
-        </div>
+    {# ── Left toolbar: search + filters + add ── #}
+    <div class="absolute top-4 left-4 flex flex-col gap-3 w-full max-w-40 md:max-w-60 lg:max-w-xs xl:max-w-md z-10">
+      <div id="freemarket-filters" class="bg-secondary bg-opacity-30 backdrop-blur rounded-lg shadow p-4 flex flex-col gap-3">
 
-        <div class="relative my-2 mx-2 w-full">
-          <div class="absolute ml-3 inset-y-0 flex items-center text-primary">
-            <i class="fa fa-map-marker-alt mr-1 text-primary opacity-75" onclick="getLocationMap()"></i>
-          </div>
-          <input id="location_name_map" x-ref="input" type="text" @input.debounce="onInput($event.target.value)" value="{{ f.form.location_name.data|default:"" }}" placeholder="Sort by Location" class="form-input icon-input" autocomplete="off" name="location_name" @keydown.enter.prevent="$event.target.form.submit()">
-          <input x-ref="location" type="hidden" value="{{ f.form.location.data|default:"" }}" name="location">
-          <div x-show.transition="open" @click.away="open = false" class="absolute z-50 inset-x-0 bg-secondary bg-opacity-80 shadow-lg text-xs py-3 rounded-b border-brown border-opacity-50 border-b border-l border-r">
-            <ul class="list-none">
-              <template x-for="res in results" :key="res">
-                <li class="m-0"><a @click.prevent="onSelect(res)" href="#" class="block px-2 py-2 text-brown hover:bg-primary hover:text-secondary" x-text="res.display_name"></a></li>
-              </template>
-            </ul>
-          </div>
-        </div>
-
-        <div class="w-full px-2 flex flex-wrap items-center gap-4" x-on:input="$event.target.form.submit()">
+        {# Hidden filter state shared by both map fetch and HTMX list fetch #}
+        <input type="hidden" name="q"             :value="$store.fm.q">
+        <input type="hidden" name="location_name" :value="$store.fm.locationName">
+        <input type="hidden" name="location"      :value="$store.fm.location">
+        {# Type checkboxes — named inputs travel with HTMX hx-include #}
+        <div class="flex flex-wrap gap-4"
+          @change="$store.fm.view === 'list' && htmx.trigger('#freemarket-list-results', 'filters:change');
+                 window._fmReloadMarkers && window._fmReloadMarkers();
+               ">
           {% for t in f.form.type %}
-            <label class="inline-flex items-center">
-              <input type="checkbox" name="{{ t.data.name }}" value="{{ t.data.value }}" {% if t.data.selected %}checked{% endif %} class="form-checkbox h-5 w-5">
-              <span class="ml-2">{{ t.choice_label }}</span>
+            <label class="inline-flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" name="{{ t.data.name }}" value="{{ t.data.value }}"
+                {% if t.data.selected %}checked{% endif %} class="form-checkbox h-5 w-5">
+              <span>{{ t.choice_label }}</span>
             </label>
           {% endfor %}
           {% for t in f.form.categories %}
-            <label class="inline-flex items-center">
-              <input type="checkbox" name="{{ t.data.name }}" value="{{ t.data.value }}" {% if t.data.selected %}checked{% endif %} class="form-checkbox h-5 w-5">
-              <span class="ml-2">{{ t.choice_label }}</span>
+            <label class="inline-flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" name="{{ t.data.name }}" value="{{ t.data.value }}"
+                {% if t.data.selected %}checked{% endif %} class="form-checkbox h-5 w-5">
+              <span>{{ t.choice_label }}</span>
             </label>
           {% endfor %}
           {% if user.is_authenticated %}
-            <label class="inline-flex items-center">
-              <input type="checkbox" name="{{ f.form.from_me.name }}" value="on" {% if f.form.from_me.data %}checked{% endif %} class="form-checkbox h-5 w-5">
-              <span class="ml-2">{{ f.form.from_me.label }}</span>
+            <label class="inline-flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" name="{{ f.form.from_me.name }}" value="on"
+                {% if f.form.from_me.data %}checked{% endif %} class="form-checkbox h-5 w-5">
+              <span>{{ f.form.from_me.label }}</span>
             </label>
           {% endif %}
         </div>
-        <div class="w-full flex items-center justify-between mt-2 px-2">
-          <div class="text-sm text-brown whitespace-nowrap">
-            {% if page_obj %}
-              {% blocktrans count count=page_obj.paginator.count %}{{ count }} result{% plural %}{{ count }} results{% endblocktrans %}
-            {% else %}
-              {% trans "No results found" %}
-            {% endif %}
+
+        {# Search input with Alpine suggestions component #}
+        <div class="relative"
+          x-data="suggestions('{% url 'gifting:api-suggest' %}')"
+          @click.outside="close()">
+          <div class="absolute inset-y-0 left-3 flex items-center text-primary opacity-80">
+            <i class="fa fa-search"></i>
           </div>
-          <button type="submit" class="btn btn-icon">
-            <i class="fa fa-search mr-2"></i>
-            {% trans "Search" %}
+          <input class="form-input icon-input bg-secondary w-full"
+            type="text" name="search"
+            :value="$store.fm.q"
+            placeholder="{% trans 'Search offers, wishes or skills…' %}"
+            autocomplete="off"
+            @input="$store.fm.q = $el.value; suggest($el.value)"
+            @keydown.arrow-down.prevent="moveDown()"
+            @keydown.arrow-up.prevent="moveUp()"
+            @keydown.enter.prevent="choose() || triggerSearch()"
+            @keydown.escape="close()">
+          <ul x-show="open" x-cloak
+            class="suggestions-dropdown absolute z-20 w-full mt-1 bg-secondary rounded shadow-lg border"
+            role="listbox">
+            <template x-for="(item, i) in items" :key="i">
+              <li :class="i === active ? 'is-active' : ''"
+                class="px-3 py-1 cursor-pointer hover:bg-primary hover:text-secondary text-sm"
+                @mousedown.prevent="selectItem(item)"
+                x-text="item.value" role="option">
+              </li>
+            </template>
+          </ul>
+        </div>
+
+        {# Location input — unified Alpine component #}
+        <div class="relative"
+          x-data="locationDropdown('{% url 'gifting:api-list' %}')">
+          <div class="absolute inset-y-0 left-3 flex items-center text-primary opacity-80 cursor-pointer"
+            @click="useGPS()">
+            <i class="fa fa-map-marker-alt"></i>
+          </div>
+          <input class="form-input icon-input bg-secondary w-full"
+            type="text"
+            x-ref="nameInput"
+            :value="$store.fm.locationName"
+            placeholder="{% trans 'Sort by location' %}"
+            autocomplete="off"
+            @input.debounce="geocode($el.value)"
+            @keydown.escape="closeDropdown()"
+            @input="
+              $store.fm.locationName = $el.value
+              if (!$el.value) { $store.fm.clearLocation() }
+            ">
+          <button x-show="$store.fm.locationName"
+            @click="$store.fm.clearLocation()"
+            class="absolute right-2 top-2 text-gray-400 hover:text-red-500"
+          >
+            <i class="fa fa-times"></i>
+          </button>
+          <input type="hidden" x-ref="pointInput" :value="$store.fm.location">
+          <ul x-show="open" x-cloak @click.outside="closeDropdown()"
+            class="absolute z-20 inset-x-0 mt-1 bg-secondary bg-opacity-95 rounded shadow-lg border text-sm">
+            <template x-for="res in results" :key="res.place_id">
+              <li><a href="#"
+                class="block px-3 py-2 hover:bg-primary hover:text-secondary"
+                @click.prevent="pick(res)"
+                x-text="res.display_name"></a></li>
+            </template>
+          </ul>
+        </div>
+
+        <div class="flex items-center justify-between">
+          <span class="text-sm text-brown" x-text="$store.fm.markerCount + ' {% trans "on map" %}'"></span>
+          <button type="button" class="btn"
+            @click="window._fmReloadMarkers && window._fmReloadMarkers()">
+            <i class="fa fa-search mr-1"></i> {% trans "Search" %}
           </button>
         </div>
       </div>
-    </form>
 
-    <a href="{% url "gifting:create" %}" class="btn btn-icon shadow self-start">
-      <i class="fa fa-plus mr-1"></i>
-      {% trans "Add your Wish or Offer" %}
-    </a>
-  </div>
-</div>
+      <a href="{% url 'gifting:create' %}" class="btn shadow self-start">
+        <i class="fa fa-plus mr-1"></i> {% trans "Add your Wish or Offer" %}
+      </a>
+    </div>
 
-<div id="freemarket-modal" class="fixed inset-0 z-30 hidden">
-  <div class="absolute inset-0 bg-black bg-opacity-60 backdrop-blur-sm"></div>
-  <div class="absolute inset-0 overflow-auto flex justify-center items-start pt-12 pb-12 px-4">
-    <div class="modal relative w-full max-w-5xl bg-secondary bg-opacity-95 backdrop-blur rounded-xl shadow-2xl p-6">
-      <button id="freemarket-modal-close" type="button" class="absolute top-3 right-3 text-secondary text-xl leading-none w-10 h-10 flex items-center justify-center bg-black bg-opacity-30 rounded-full hover:bg-opacity-50">×</button>
+    {# ── Layer switcher (top-right) ── #}
+    <div class="absolute top-4 right-4 z-10"
+      @mouseleave="$store.fm.layerMenuOpen = false">
 
-      <div class="flex items-center gap-3 flex-wrap mb-4">
-        <a href="{% url "gifting:create" %}" class="btn btn-icon shadow ml-auto">
-          <i class="fa fa-plus mr-1"></i>
-          {% trans "Add your Wish or Offer" %}
-        </a>
+      <button type="button"
+        x-show="!$store.fm.layerMenuOpen"
+        @mouseenter="$store.fm.layerMenuOpen = true"
+        @click="$store.fm.layerMenuOpen = true"
+        class="flex items-center justify-center w-14 h-14 rounded-md bg-primary bg-opacity-80 text-secondary shadow-lg border backdrop-blur border-red"
+        aria-label="{% trans 'Switch map layer' %}">
+        <i class="fa fa-layer-group text-xl"></i>
+      </button>
+
+      <div x-show="$store.fm.layerMenuOpen" x-cloak
+        class="w-48 bg-primary text-secondary bg-opacity-80 backdrop-blur rounded-lg shadow-xl border py-2 border-red">
+        <div class="px-3 pb-1 text-xs font-semibold uppercase">{% trans "Layers" %}</div>
+        <label class="flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-secondary hover:bg-opacity-10">
+          <input type="radio" name="map-layer" :checked="$store.fm.layer === 'ecobasa'"
+                  @change="$store.fm.layer = 'ecobasa'; window._fmSetLayer('ecobasa'); $store.fm.layerMenuOpen;">
+          <span class="text-sm">{% trans "Ecobasa" %}</span>
+        </label>
+
+        <label class="flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-secondary hover:bg-opacity-10">
+          <input type="radio" name="map-layer" :checked="$store.fm.layer === 'osm'"
+            @change="$store.fm.layer = 'osm'; window._fmSetLayer('osm'); $store.fm.layerMenuOpen;">
+          <span class="text-sm">{% trans "OpenStreetMap" %}</span>
+        </label>
+
+        <label class="flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-secondary hover:bg-opacity-10">
+          <input type="radio" name="map-layer" :checked="$store.fm.layer === 'satellite'"
+            @change="$store.fm.layer = 'satellite'; window._fmSetLayer('satellite'); $store.fm.layerMenuOpen;">
+          <span class="text-sm">{% trans "Satellite" %}</span>
+        </label>
+        </ul>
       </div>
+    </div>
 
-      <form id="searchForm" x-data="" method="get" class="js-submit-on-input bg-secondary bg-opacity-70 backdrop-blur rounded-lg shadow p-4 sm:p-6 mb-4">
-        <input type="hidden" id="freemarket-view-mode" name="view" value="{{ request.GET.view|default:'map' }}">
-        <div class="flex items-center flex-wrap -mx-2">
+    {# ── Loading indicator ── #}
+    <div x-show="$store.fm.loading" x-cloak
+      class="absolute bottom-16 left-1/2 -translate-x-1/2 z-10 bg-primary text-secondary px-3 py-1 rounded-full shadow opacity-80">
+      <i class="fa fa-spinner fa-spin mr-1"></i> {% trans "Loading…" %}
+    </div>
+  </div>{# /map shell #}
 
-        {% comment %} search field {% endcomment %}
-        <div class="relative w-full max-w-2xl my-2 mx-2">
-          <div class="absolute ml-3 inset-y-0 flex items-center text-brown">
-            <i class="fa fa-search text-primary opacity-75"></i>
+  <div x-show="$store.fm.view === 'list'" x-cloak
+    class="modal-overlay flex"
+    @click.self="$store.fm.showMap()">
+
+    <div class="modal relative bg-secondary bg-opacity-95 backdrop-blur rounded-lg shadow-xl max-w-5xl w-full border"
+      role="dialog" aria-modal="true">
+
+      <button type="button"
+        class="absolute top-3 right-3 h-10 w-10 rounded-full bg-black bg-opacity-50 hover:bg-opacity-70 text-secondary text-2xl flex items-center justify-center"
+        aria-label="{% trans 'Close' %}"
+        @click="$store.fm.showMap()">&times;
+      </button>
+
+      <div class="p-5 space-y-4">
+
+        <div class="flex items-center gap-3">
+          <a href="{% url 'gifting:create' %}" class="btn shadow ml-auto">
+            <i class="fa fa-plus mr-1"></i> {% trans "Add your Wish or Offer" %}
+          </a>
+        </div>
+
+        {# Modal search — triggers HTMX list reload #}
+        <div class="relative"
+          x-data="suggestions('{% url 'gifting:api-suggest' %}')"
+          @click.outside="close()">
+          <div class="absolute inset-y-0 left-3 flex items-center text-primary opacity-80">
+            <i class="fa fa-search"></i>
           </div>
-          <input id="freemarket-modal-search" type="text" value="{{ f.form.search.data|default:"" }}" class="form-input icon-input max-w-2xl" autocomplete="off" autofocus name="search">
-          <div class="suggestions-dropdown hidden" aria-hidden="true"></div>
+          <input class="form-input icon-input w-full"
+            type="text"
+            :value="$store.fm.q"
+            placeholder="{% trans 'Search offers, wishes or skills…' %}"
+            hx-get="{% url 'gifting:api-list' %}"
+            hx-target="#freemarket-list-results"
+            hx-swap="innerHTML"
+            hx-trigger="input changed delay:400ms, filter-updated from:body"
+            hx-include="#location-hidden-input, .type-checkboxes"
+            @input="$store.fm.q = $el.value; suggest($el.value)">
+          <ul x-show="open" x-cloak
+            class="suggestions-dropdown absolute z-20 w-full mt-1 bg-secondary rounded shadow-lg border"
+            role="listbox">
+            <template x-for="(item, i) in items" :key="i">
+              <li :class="i === active ? 'is-active' : ''"
+                class="px-3 py-1 cursor-pointer hover:bg-primary hover:text-secondary text-sm"
+                @mousedown.prevent="selectItem(item)"
+                x-text="item.value" role="option">
+              </li>
+            </template>
+          </ul>
         </div>
 
-        {% comment %} location field {% endcomment %}
-        <div class="relative my-2 mx-2" x-data="locationDropdown()">
-          <div class="relative w-full max-w-2xl">
-            <div class="absolute ml-3 inset-y-0 flex items-center text-primary">
-              <i class="fa fa-map-marker-alt mr-1 text-primary opacity-75" onclick="getLocation()"></i>
-            </div>
-            <input id="location_name" x-ref="input" type="text" @input.debounce="onInput($event.target.value)" value="{{ f.form.location_name.data|default:"" }}" placeholder="Sort by Location" class="form-input icon-input max-w-2xl" autocomplete="off" autofocus name="location_name">
+        {# Modal location input #}
+        <div class="relative"
+          x-data="locationDropdown('{% url 'gifting:api-list' %}')">
+          <div class="absolute inset-y-0 left-3 flex items-center text-primary opacity-80 cursor-pointer"
+            @click="useGPS()">
+            <i class="fa fa-map-marker-alt"></i>
           </div>
-          <input x-ref="location" type="hidden" value="{{ f.form.location.data|default:"" }}" name="location">
-          <div x-show.transition="open" @click.away="open = false" class="absolute z-50 inset-x-0 bg-secondary bg-opacity-80 shadow-lg text-xs py-3 rounded-b border-brown border-opacity-50 border-b border-l border-r">
-            <ul class="list-none">
-              <template x-for="res in results" :key="res">
-                <li class="m-0"><a @click.prevent="onSelect(res)" href="#" class="block px-2 py-2 text-brown hover:bg-primary hover:text-secondary" x-text="res.display_name"></a></li>
-              </template>
-            </ul>
+          <input class="form-input icon-input w-full"
+            type="text"
+            x-ref="nameInput"
+            :value="$store.fm.locationName"
+            placeholder="{% trans 'Sort by location' %}"
+            autocomplete="off"
+            @input.debounce="geocode($el.value)"
+            @keydown.escape="closeDropdown()">
+          <button x-show="$store.fm.locationName"
+            @click="$store.fm.clearLocation()"
+            class="absolute right-2 top-2 text-gray-400 hover:text-red-500"
+          >
+            <i class="fa fa-times"></i>
+          </button>
+          <input type="hidden"
+            id="location-hidden-input"
+            name="location"
+            :value="$store.fm.location">
+          <ul x-show="open" x-cloak @click.outside="closeDropdown()"
+            class="absolute z-20 inset-x-0 mt-1 bg-secondary bg-opacity-95 rounded shadow-lg border text-sm">
+            <template x-for="res in results" :key="res.place_id">
+              <li><a href="#"
+                class="block px-3 py-2 hover:bg-primary hover:text-secondary"
+                @click.prevent="pick(res)"
+                x-text="res.display_name"></a></li>
+            </template>
+          </ul>
+        </div>
+
+        {# Result count (OOB-swapped by partial) #}
+        <div class="flex justify-between items-center text-sm text-brown">
+          <span id="freemarket-result-count" hx-swap-oob="true"></span>
+        </div>
+
+        {# HTMX list target #}
+        <div id="freemarket-list-results"
+          class="max-h-[65vh] overflow-y-auto space-y-3 pr-1"
+          hx-get="{% url 'gifting:api-list' %}"
+          hx-target="this"
+          hx-swap="innerHTML"
+          hx-include="#freemarket-filters"
+          hx-trigger="revealed">
+          <div class="text-center py-8 text-brown">
+            <i class="fa fa-spinner fa-spin text-2xl"></i>
           </div>
         </div>
-        <script>
-          function locationDropdown() {
-            return {
-              results: [],
-              open: false,
-              onSelect(res) {
-                this.$refs.location.value = res.lat + ',' + res.lon
-                this.$refs.input.value = res.display_name
-                this.open = false
-                document.getElementById("searchForm").submit()
-              },
-              onInput(input) {
-                if (input.length < 3) { this.results = []; return }
-                fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=5&q=${input}`).then(res => res.json()).then(json => {
-                  this.open = true
-                  this.results = json
-                })
-              }
-            }
-          }
-          
-          var x = document.getElementById("location_name");
-
-          function getLocation() {
-              if (navigator.geolocation) {
-                  navigator.geolocation.getCurrentPosition(
-                      // Success function
-                      showPosition, 
-                      // Error function
-                      null, 
-                      // Options. See MDN for details.
-                      {
-                         enableHighAccuracy: true,
-                         timeout: 5000,
-                         maximumAge: 0
-                      });
-              } else { 
-                  x.value = "{%trans 'Geolocation is not supported by this browser.' %}";
-              }
-          }
-
-          function showPosition(position) {
-              this.location.value=position.coords.latitude + "," + position.coords.longitude;
-              x.value = "{%trans 'Current Location' %}";
-                document.getElementById("searchForm").submit()
-          }
-
-          function locationDropdownMap() {
-            return {
-              results: [],
-              open: false,
-              onSelect(res) {
-                this.$refs.location.value = res.lat + ',' + res.lon
-                this.$refs.input.value = res.display_name
-                this.open = false
-                document.getElementById("searchFormMap").submit()
-              },
-              onInput(input) {
-                if (input.length < 3) { this.results = []; return }
-                fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=5&q=${input}`).then(res => res.json()).then(json => {
-                  this.open = true
-                  this.results = json
-                })
-              }
-            }
-          }
-
-          const xMap = document.getElementById("location_name_map");
-
-          function getLocationMap() {
-              if (navigator.geolocation) {
-                  navigator.geolocation.getCurrentPosition(
-                      showPositionMap,
-                      null,
-                      {
-                         enableHighAccuracy: true,
-                         timeout: 5000,
-                         maximumAge: 0
-                      });
-              } else {
-                  xMap.value = "{%trans 'Geolocation is not supported by this browser.' %}";
-              }
-          }
-
-          function showPositionMap(position) {
-              const hiddenLocation = document.querySelector('#searchFormMap input[name="location"]');
-              if (hiddenLocation) hiddenLocation.value = position.coords.latitude + "," + position.coords.longitude;
-              xMap.value = "{%trans 'Current Location' %}";
-              document.getElementById("searchFormMap").submit()
-          }
-        </script>
-
-        <button class="btn m-2 hidden sm:block"><i class="fa fa-search mr-1"></i>{% trans "Search" %}</button>
-        </div>
-
-        <div class="w-full px-2 flex flex-wrap items-center gap-4" x-on:input="$event.target.form.submit()">
-          {% for t in f.form.type %}
-            <label class="inline-flex items-center">
-              <input type="checkbox" name="{{ t.data.name }}" value="{{ t.data.value }}" {% if t.data.selected %}checked{% endif %} class="form-checkbox h-5 w-5">
-              <span class="ml-2">{{ t.choice_label }}</span>
-            </label>
-          {% endfor %}
-          {% for t in f.form.categories %}
-            <label class="inline-flex items-center">
-              <input type="checkbox" name="{{ t.data.name }}" value="{{ t.data.value }}" {% if t.data.selected %}checked{% endif %} class="form-checkbox h-5 w-5">
-              <span class="ml-2">{{ t.choice_label }}</span>
-            </label>
-          {% endfor %}
-          {% if user.is_authenticated %}
-            <label class="inline-flex items-center">
-              <input type="checkbox" name="{{ f.form.from_me.name }}" value="on" {% if f.form.from_me.data %}checked{% endif %} class="form-checkbox h-5 w-5">
-              <span class="ml-2">{{ f.form.from_me.label }}</span>
-            </label>
-          {% endif %}
-        </div>
-        <div class="w-full flex justify-end mt-2 px-2 text-sm text-brown">
-          {% if page_obj %}
-            {% blocktrans count count=page_obj.paginator.count %}{{ count }} result{% plural %}{{ count }} results{% endblocktrans %}
-          {% else %}
-            {% trans "No results found" %}
-          {% endif %}
-        </div>
-      </form>
-
-      <div id="freemarket-list-view">
-
-      {% if page_obj %}
-        {% comment %} results {% endcomment %}
-        {% for ad in page_obj %}
-          {% include "./_ad.html" %}
-        {% endfor %}
-
-        {% include "./_pagination.html" %}
-      {% else %}
-        <p>{% trans "No results found" %}</p>
-      {% endif %}
 
       </div>
     </div>
   </div>
-</div>
+
+</div>{# /x-data root #}
+{% endblock %}
 
 
-
-{% endblock content %}
-
+{# ═══════════════════════════════════════════════════════════════════
+   JavaScript — only OpenLayers + Alpine components
+   ═══════════════════════════════════════════════════════════════════ #}
 {% block javascript %}
-  {{ block.super }}
-  <script src="https://cdn.jsdelivr.net/npm/ol@v7.2.2/dist/ol.js"></script>
-  {% if map_ads %}
-    {{ map_ads|json_script:"freemarket-map-data" }}
-  {% else %}
-    <script id="freemarket-map-data" type="application/json">[]</script>
-  {% endif %}
-  <script>
-    /* ================================================================
-       Low-profile search suggestions (shared implementation)
-       ================================================================ */
-    function buildSuggestionIndex(raw) {
-      var seen = new Map();
-      var add = function(value) {
-        if (!value) return;
-        var key = (''+value).trim();
-        if (!key) return;
-        var k = key.toLowerCase();
-        if (!seen.has(k)) seen.set(k, { type: 'name', value: key });
-      };
-      raw.forEach(function (item) {
-        // only suggest names/titles for gifting search
-        add(item.title || item.name || item.ad_title || item.heading);
-      });
-      return Array.from(seen.values());
+{{ block.super }}
+<script src="https://cdn.jsdelivr.net/npm/ol@v7.2.2/dist/ol.js"></script>
+
+<script>
+/* ================================================================
+   OpenLayers map
+   Exposes window._fmReloadMarkers() and window._fmSetLayer(mode).
+   ================================================================ */
+(function () {
+  'use strict';
+
+  /**
+   * Generates a layered canvas: A marker pin background with an icon badge.
+   * @param {string} badgeIcon - The Unicode for the top icon (e.g., '\uf19d')
+   * @param {string} pinColor - The hex code for the marker body
+   * @param {string} badgeColor - The hex code for the small icon
+   */
+  function createLayeredIcon(badgeIcon, pinColor, badgeColor = '#fcf3e5') {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const size = 80;
+    canvas.width = size;
+    canvas.height = size;
+
+    // 1. Draw the Background Marker Pin (Map Marker Alt)
+    ctx.fillStyle = pinColor;
+    ctx.font = '900 60px "Font Awesome 5 Free"';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('\uf041', size / 2, size / 2);
+
+    // 2. Draw the Badge Icon (Cap, Gift, or Heart)
+    ctx.fillStyle = badgeColor;
+    // Hearts and Gifts can be a bit bulkier, so 18px works well
+    ctx.font = '600 25px "Font Awesome 5 Free"';
+
+    // Adjusted Y-axis (size / 2.9) to sit perfectly in the "head" of the pin
+    ctx.fillText(badgeIcon, size / 2, size / 2.5);
+
+    return canvas;
+  }
+
+  function getDynamicStyle(feature) {
+    const props = feature.getProperties();
+    const source = props.source; // "skill" or "ad"
+    const type_display = (props.type_display || "").toLowerCase();
+
+    let iconCode = '';
+    let color = '#da6137'; // Default purple
+
+    // Determine which icon and color to use based on the source
+    if (source === 'skill') {
+      // Skills get the Graduation Cap
+      iconCode = '\uf19d';
+      color = '#80143b';
+    } else if (source === 'ad') {
+      if (type_display.includes('offer')) {
+        iconCode = '\uf06b'; // Gift
+      } else if (type_display.includes('wish')) {
+        iconCode = '\uf004'; // Heart
+        color = '#5A5527';
+      } else {
+        iconCode = '\uf3c5'; // Plain marker if unknown
+      }
     }
 
-    function initSuggestions(input, index, opts) {
-      opts = opts || {};
-      var wrap = input.parentElement;
-      var box = wrap.querySelector('.suggestions-dropdown');
-      if (!box) {
-        box = document.createElement('div');
-        box.className = 'suggestions-dropdown hidden';
-        wrap.appendChild(box);
-      }
-      var list = document.createElement('ul');
-      box.appendChild(list);
-      var items = [];
-      var active = -1;
+    return new ol.style.Style({
+      image: new ol.style.Icon({
+        img: createLayeredIcon(iconCode, color),
+        imgSize: [80, 80],
+        anchor: [0.5, 0.85],
+        scale: 0.7
+      })
+    });
+  }
+  const MARKERS_URL = '{% url "gifting:api-markers" %}';
+  const MARKER_ICON = '{% static "map/images/marker-icon.png" %}';
+  const SKILL_ICON  = '{% static "map/images/marker-skill.png" %}';  // distinct icon for skill markers
 
-      function renderMatches(term) {
-        term = (term || '').toLowerCase().trim();
-        list.innerHTML = '';
-        active = -1;
-        if (!term) { box.classList.add('hidden'); return; }
-        items = index.filter(function (it) { return it.value.toLowerCase().indexOf(term) !== -1; }).slice(0, 8);
-        if (!items.length) { box.classList.add('hidden'); return; }
-        items.forEach(function (it, i) {
-          var li = document.createElement('li');
-          li.dataset.index = i;
-          li.innerHTML = (it.type === 'skill' ? '<i class="fa fa-graduation-cap mr-2"></i>' : '') + it.value;
-          li.addEventListener('mousedown', function (e) { e.preventDefault(); choose(i); });
-          list.appendChild(li);
-        });
-        box.classList.remove('hidden');
-      }
+  // ── Tile layers ──────────────────────────────────────────────────
+  function createTileLayers() {
+    const watercolor = new ol.layer.Tile({
+      source: new ol.source.XYZ({
+        url: 'https://tiles.stadiamaps.com/tiles/stamen_watercolor/{z}/{x}/{y}.jpg?api_key=cb8069a3-9585-4989-a6a8-572b5c3f4ffb',
+        crossOrigin: 'anonymous'
+      })
+    });
+    const tonerLabels = new ol.layer.Tile({
+      source: new ol.source.XYZ({
+        url: 'https://tiles.stadiamaps.com/tiles/stamen_toner_lite/{z}/{x}/{y}.png?api_key=cb8069a3-9585-4989-a6a8-572b5c3f4ffb',
+        crossOrigin: 'anonymous'
+      }),
+      opacity: 0.35
+    });
+    const satellite = new ol.layer.Tile({
+      source: new ol.source.XYZ({
+        url: 'https://mt{0-3}.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}',
+        attributions: '&copy; Google', maxZoom: 20, crossOrigin: 'anonymous'
+      }),
+      visible: false
+    });
+    const osm = new ol.layer.Tile({
+      source: new ol.source.XYZ({
+        url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+        crossOrigin: 'anonymous', maxZoom: 19, wrapX: true,
+        attributions: '\u00a9 OpenStreetMap contributors'
+      }),
+      visible: false
+    });
+    return { watercolor, tonerLabels, satellite, osm, all: [watercolor, tonerLabels, satellite, osm] };
+  }
 
-      function clear() { box.classList.add('hidden'); list.innerHTML = ''; items = []; active = -1; }
+  function applyLayer(tiles, mode) {
+    tiles.watercolor.setVisible(mode === 'ecobasa');
+    tiles.tonerLabels.setVisible(mode === 'ecobasa');
+    tiles.satellite.setVisible(mode === 'satellite');
+    tiles.osm.setVisible(mode === 'osm');
+  }
 
-      function choose(i) { var chosen = items[i]; if (!chosen) return; input.value = chosen.value; if (typeof opts.onSelect === 'function') opts.onSelect(chosen.value, chosen.type); clear(); input.focus(); }
+  // ── Popup ────────────────────────────────────────────────────────
+  function truncate(text, limit) {
+    if (!text || text.length <= limit) return text || '';
+    return text.slice(0, limit).replace(/\s+\S*$/, '') + '\u2026';
+  }
 
-      input.addEventListener('input', function (e) { renderMatches(input.value); });
-      input.addEventListener('keydown', function (e) {
-        if (box.classList.contains('hidden')) return;
-        if (e.key === 'ArrowDown') { e.preventDefault(); active = Math.min(active + 1, items.length - 1); updateActive(); }
-        else if (e.key === 'ArrowUp') { e.preventDefault(); active = Math.max(active - 1, 0); updateActive(); }
-        else if (e.key === 'Enter') { if (active >= 0) { e.preventDefault(); choose(active); } }
-        else if (e.key === 'Escape') { clear(); }
-      });
+  function buildPopupHTML(props) {
+    const isSkill = props.source === 'skill';
+    let html = '';
 
-      function updateActive() { Array.from(list.children).forEach(function (li) { li.classList.remove('is-active'); }); if (active >= 0 && list.children[active]) list.children[active].classList.add('is-active'); }
+    let badgeHtml = '';
+    const typeDisplay = (props.type_display || "").toLowerCase();
 
-      document.addEventListener('click', function (e) { if (!wrap.contains(e.target)) clear(); });
-      return { render: renderMatches, clear: clear };
+    if (props.source === 'skill') {
+        // Skill Badge (Purple)
+        badgeHtml += `
+            <span class="pill bg-purple text-secondary">
+                <i class="fa fa-graduation-cap mr-1"></i>${typeDisplay || 'Skill'}
+            </span>`;
+    } else if (props.source === 'ad') {
+        if (typeDisplay.includes('offer')) {
+            // Offer Badge (Greenish or your choice)
+            badgeHtml += `
+                <span class="pill bg-primary text-secondary">
+                    <i class="fa fa-gift mr-1"></i>${typeDisplay}
+                </span>`;
+        } else if (typeDisplay.includes('wish')) {
+            // Wish Badge (Reddish or your choice)
+            badgeHtml += `
+                <span class="pill bg-green text-secondary">
+                    <i class="fa fa-heart mr-1"></i>${typeDisplay}
+                </span>`;
+        } else {
+            // Fallback for other Ads (Primary color)
+            badgeHtml += `<span class="pill bg-primary text-secondary">${typeDisplay}</span>`;
+        }
     }
 
-    const initFreemarket = () => {
-      const listBtn = document.getElementById('freemarket-toggle-list');
-      const mapBtn = document.getElementById('freemarket-toggle-map');
-      const layerWrap = document.getElementById('freemarket-layer-wrap');
-      const layerToggle = document.getElementById('freemarket-layer-toggle');
-      const layerMenu = document.getElementById('freemarket-layer-menu');
-      const layerRadios = document.querySelectorAll('input[name="freemarket-layer-option"]');
-      const modal = document.getElementById('freemarket-modal');
-      const modalClose = document.getElementById('freemarket-modal-close');
-      const mapEl = document.getElementById('freemarket-map');
-      const dataEl = document.getElementById('freemarket-map-data');
-      const viewInput = document.getElementById('freemarket-view-mode');
-      const mapForm = document.getElementById('searchFormMap');
-      if (!listBtn || !mapBtn || !modal || !modalClose || !mapEl || !dataEl) return;
+    html += badgeHtml;
 
-      const mapAds = JSON.parse(dataEl.textContent || '[]');
-      // attach shared suggestion index to overlay and modal search inputs
-      try {
-        const sharedIndex = buildSuggestionIndex(mapAds);
-        const overlayInput = document.getElementById('freemarket-search-input');
-        if (overlayInput) {
-          initSuggestions(overlayInput, sharedIndex, { onSelect: (val) => { overlayInput.value = val; const form = overlayInput.closest('form'); if (form) form.submit(); } });
-        }
-        const modalInput = document.getElementById('freemarket-modal-search');
-        if (modalInput) {
-          initSuggestions(modalInput, sharedIndex, { onSelect: (val) => { modalInput.value = val; const form = document.getElementById('searchForm'); if (form) form.submit(); } });
-        }
-      } catch (err) { /* ignore */ }
-      let mapInstance = null;
-      let vectorLayer = null;
-      let popupOverlay = null;
-      let satellite = null;
+    // Title
+    if (props.title) {
+      html += props.url
+        ? `<h3><a href="${props.url}" class="hover:underline">${props.title}</a></h3>`
+        : `<h3>${props.title}</h3>`;
+    }
 
-      const setPillState = (btn, active) => {
-        if (!btn) return;
-        const activeClasses = ['bg-primary', 'bg-opacity-90', 'text-secondary', 'shadow-inner'];
-        const inactiveClasses = ['bg-primary', 'bg-opacity-40', 'text-secondary'];
-        btn.classList.remove(...activeClasses, ...inactiveClasses);
-        if (active) {
-          btn.classList.add(...activeClasses);
-        } else {
-          btn.classList.add(...inactiveClasses);
-        }
-      };
+    // Image
+    if (props.image) {
+      html += `<div class="mb-2">${props.url ? `<a href="${props.url}">` : ''}`
+             + `<img src="${props.image}" alt="${props.title || ''}" class="w-full max-w-xs rounded shadow">`
+             + `${props.url ? '</a>' : ''}</div>`;
+    }
 
-      const activate = (showMap) => {
-        if (showMap) {
-          modal.classList.add('hidden');
-          setPillState(mapBtn, true);
-          setPillState(listBtn, false);
-          if (layerWrap) layerWrap.classList.remove('hidden');
-          if (viewInput) viewInput.value = 'map';
-          if (!mapInstance) {
-            requestAnimationFrame(() => initMap());
-          } else {
-            mapInstance.updateSize();
-          }
-        } else {
-          modal.classList.remove('hidden');
-          setPillState(mapBtn, false);
-          setPillState(listBtn, true);
-          if (layerWrap) layerWrap.classList.add('hidden');
-          if (viewInput) viewInput.value = 'list';
-          if (!mapInstance) {
-            requestAnimationFrame(() => initMap());
-          }
-        }
-      };
+    // Description
+    const desc = truncate(props.description, 150);
+    if (desc) html += `<div class="text-sm text-brown mt-2">${desc}</div>`;
 
-      const initMap = () => {
-        const stamenWatercolor = new ol.layer.Tile({
-          source: new ol.source.XYZ({
-            url: 'https://tiles.stadiamaps.com/tiles/stamen_watercolor/{z}/{x}/{y}.jpg?api_key=cb8069a3-9585-4989-a6a8-572b5c3f4ffb',
-            crossOrigin: 'anonymous'
-          })
-        });
+    // Community link for skills
+    if (isSkill && props.community_name && props.url) {
+      html += `<div class="text-xs text-brown mt-1"><i class="fa fa-home mr-1"></i>${props.community_name}</div>`;
+    }
 
-        const stamenTonerLabels = new ol.layer.Tile({
-          source: new ol.source.XYZ({
-            url: 'https://tiles.stadiamaps.com/tiles/stamen_toner_lite/{z}/{x}/{y}.png?api_key=cb8069a3-9585-4989-a6a8-572b5c3f4ffb',
-            crossOrigin: 'anonymous'
-          }),
-          opacity: 0.35
-        });
+    if (props.url) html += `<a class="text-primary underline" href="${props.url}">{% trans "Open" %}</a>`;
+    return html;
+  }
 
-        satellite = new ol.layer.Tile({
-          source: new ol.source.XYZ({
-            url: 'https://mt{0-3}.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}',
-            attributions: '&copy; Google',
-            maxZoom: 20,
-            crossOrigin: 'anonymous'
-          }),
-          visible: false
-        });
+  // ── Marker styles ────────────────────────────────────────────────
+  let adStyle, skillStyle;
 
-        const osmBase = new ol.layer.Tile({
-          source: new ol.source.OSM({
-            url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-            crossOrigin: 'anonymous'
-          }),
-          visible: false
-        });
+  function getStyle(source) {
+    return source === 'skill' ? skillStyle : adStyle;
+  }
 
-        const enableOsmFallback = () => {
-          if (!osmBase.getVisible()) {
-            osmBase.setVisible(true);
-          }
-        };
-        stamenWatercolor.getSource().on('tileloaderror', enableOsmFallback);
-        stamenTonerLabels.getSource().on('tileloaderror', enableOsmFallback);
+  // ── Fetch markers ────────────────────────────────────────────────
+  function buildMarkersURL(map) {
+    const store = Alpine.store('fm');
+    const view  = map.getView();
+    const ext   = ol.proj.transformExtent(
+      view.calculateExtent(map.getSize()), 'EPSG:3857', 'EPSG:4326'
+    );
+    const bbox  = ext.map(v => v.toFixed(4)).join(',');
+    const params = new URLSearchParams({ bbox });
+    if (store.q)            params.set('q', store.q);
+    if (store.location)     params.set('location', store.location);
 
-        const setLayerMode = (mode) => {
-          stamenWatercolor.setVisible(false);
-          stamenTonerLabels.setVisible(false);
-          satellite.setVisible(false);
-          osmBase.setVisible(false);
-          const target = (mode || 'ecobasa').toLowerCase();
-          switch ((mode || 'ecobasa').toLowerCase()) {
-            case 'satellite':
-              satellite.setVisible(true);
-              break;
-            case 'osm':
-              osmBase.setVisible(true);
-              break;
-            default:
-              stamenWatercolor.setVisible(true);
-              stamenTonerLabels.setVisible(true);
-              break;
-          }
-          layerRadios.forEach(r => { r.checked = (r.value === target); });
-        };
-
-        vectorLayer = new ol.layer.Vector({
-          source: new ol.source.Vector()
-        });
-
-        mapInstance = new ol.Map({
-          target: mapEl,
-          layers: [stamenWatercolor, stamenTonerLabels, satellite, osmBase, vectorLayer],
-          view: new ol.View({
-            center: ol.proj.fromLonLat([0, 20]),
-            zoom: 1,
-            minZoom: 0,
-            maxZoom: 18
-          })
-        });
-
-        const normalizeView = () => {
-          const view = mapInstance.getView();
-          let center = view.getCenter();
-          const zoom = view.getZoom();
-          if (!center || !isFinite(center[0]) || !isFinite(center[1])) {
-            center = ol.proj.fromLonLat([0, 20]);
-            view.setCenter(center);
-          }
-          if (!isFinite(zoom)) {
-            view.setZoom(1);
-          }
-          return { view, center: view.getCenter(), zoom: view.getZoom() };
-        };
-        normalizeView();
-
-        // Force resize after the view becomes visible to trigger tile loading
-        const forceRender = () => {
-          mapInstance.updateSize();
-          mapInstance.renderSync();
-          const v = mapInstance.getView();
-          v.setCenter(v.getCenter());
-          v.setZoom(v.getZoom());
-        };
-
-        const iconStyle = new ol.style.Style({
-          image: new ol.style.Icon({
-            src: '{% static "map/images/marker-icon.png" %}',
-            anchor: [0.5, 1]
-          })
-        });
-
-        const features = mapAds
-          .filter(ad => typeof ad.lat === 'number' && typeof ad.lon === 'number')
-          .map(ad => {
-            const feature = new ol.Feature({
-              geometry: new ol.geom.Point(ol.proj.fromLonLat([ad.lon, ad.lat])),
-              data: ad
-            });
-            feature.setStyle(iconStyle);
-            return feature;
-          });
-
-        vectorLayer.getSource().addFeatures(features);
-
-        if (features.length) {
-          const extent = vectorLayer.getSource().getExtent();
-          mapInstance.getView().fit(extent, { padding: [48, 48], maxZoom: 10 });
-          const view = mapInstance.getView();
-          const z = view.getZoom();
-          if (z > 2) view.setZoom(2);
-          if (z < 0) view.setZoom(0);
-        }
-        normalizeView();
-
-        const ensureSize = () => {
-          const rect = mapEl.getBoundingClientRect();
-          if (!rect.width || !rect.height) {
-            requestAnimationFrame(ensureSize);
-            return;
-          }
-          mapInstance.updateSize();
-          forceRender();
-        };
-        setTimeout(() => mapInstance.updateSize(), 50);
-        requestAnimationFrame(ensureSize);
-
-        const popupEl = document.createElement('div');
-        popupEl.className = 'freemarket-popup';
-        popupOverlay = new ol.Overlay({
-          element: popupEl,
-          positioning: 'bottom-center',
-          offset: [0, -12],
-          stopEvent: false
-        });
-        mapInstance.addOverlay(popupOverlay);
-
-        const truncateWords = (text, limit) => {
-          if (!text || typeof text !== 'string') return '';
-          const words = text.split(/\s+/);
-          if (words.length <= limit) return text;
-          return words.slice(0, limit).join(' ') + '…';
-        };
-
-        mapInstance.on('singleclick', (evt) => {
-          const feature = mapInstance.forEachFeatureAtPixel(evt.pixel, f => f);
-          if (!feature) {
-            popupOverlay.setPosition(undefined);
-            return;
-          }
-          const ad = feature.get('data') || {};
-          const desc = truncateWords(ad.description || ad.text || ad.body, 150);
-          const img = ad.image || '';
-          const parts = [
-            ad.type ? `<span class="popup-type-pill">${ad.type}</span>` : '',
-            ad.title ? (ad.url ? `<h3><a href="${ad.url}" class="hover:underline">${ad.title}</a></h3>` : `<h3>${ad.title}</h3>`) : '',
-            img ? `<div class="mb-2">${ad.url ? '<a href="' + ad.url + '">' : ''}<img src="${img}" alt="${ad.title || ''}" class="w-full max-w-xs rounded shadow">${ad.url ? '</a>' : ''}</div>` : '',
-            desc ? `<div class="text-sm text-brown mt-2">${desc}</div>` : '',
-            ad.url ? `<a class="text-primary underline" href="${ad.url}">{% trans "Open" %}</a>` : ''
-          ].filter(Boolean);
-          popupEl.innerHTML = parts.join('');
-          popupOverlay.setPosition(evt.coordinate);
-        });
-
-        if (layerWrap && layerMenu && layerToggle) {
-          const showMenu = () => {
-            layerMenu.classList.remove('hidden');
-            layerToggle.classList.add('hidden');
-          };
-          const hideMenu = () => {
-            layerMenu.classList.add('hidden');
-            layerToggle.classList.remove('hidden');
-          };
-
-          layerToggle.addEventListener('mouseenter', showMenu);
-          layerToggle.addEventListener('click', (e) => { e.stopPropagation(); showMenu(); });
-          layerMenu.addEventListener('mouseleave', hideMenu);
-          document.addEventListener('click', (e) => {
-            if (!layerWrap.contains(e.target)) {
-              hideMenu();
-            }
-          });
-
-          layerRadios.forEach(r => {
-            r.addEventListener('change', (e) => {
-              if (e.target.checked) {
-                setLayerMode(e.target.value);
-              }
-            });
-          });
-          setLayerMode('ecobasa');
-        } else {
-          setLayerMode('ecobasa');
-        }
-      };
-
-      listBtn.addEventListener('click', () => activate(false));
-      mapBtn.addEventListener('click', () => activate(true));
-      modalClose.addEventListener('click', () => activate(true));
-      modal.addEventListener('click', (e) => {
-        if (e.target === modal) activate(true);
+    const filterDiv = document.getElementById('freemarket-filters');
+    if (filterDiv) {
+      const formData = new FormData();
+      // Gather all inputs (checkboxes) from the filter div
+      filterDiv.querySelectorAll('input[type="checkbox"]:checked').forEach(input => {
+        params.append(input.name, input.value);
       });
+    }
+    return MARKERS_URL + '?' + params.toString();
+  }
 
-      // show map or list based on query state
-      const qs = new URLSearchParams(window.location.search);
-      const startView = (qs.get('view') || (viewInput ? viewInput.value : '') || 'map').toLowerCase();
-      activate(startView === 'list' ? false : true);
+  function fetchMarkers(map, vectorSource) {
+    const store = Alpine.store('fm');
+    store.loading = true;
+    fetch(buildMarkersURL(map))
+      .then(r => r.json())
+      .then(geojson => {
+        vectorSource.clear();
+        const features = (geojson.features || []).map(feat => {
+          const props = feat.properties;
+          const f = new ol.Feature({
+            geometry: new ol.geom.Point(ol.proj.fromLonLat(feat.geometry.coordinates)),
+            ...props
+          });
+          f.setStyle(getDynamicStyle(f));
+          return f;
+        });
+        vectorSource.addFeatures(features);
+        store.markerCount = features.length;
+      })
+      .catch(err => console.error('Marker fetch failed', err))
+      .finally(() => { store.loading = false; });
+  }
 
-      const form = document.getElementById('searchForm');
-      if (form) {
-        form.addEventListener('input', () => {
-          if (!modal.classList.contains('hidden') && viewInput) {
-            viewInput.value = 'list';
-          }
-        });
-      }
-      if (mapForm) {
-        mapForm.addEventListener('input', () => {
-          if (viewInput) viewInput.value = 'map';
-        });
+  // ── Map init ─────────────────────────────────────────────────────
+  function waitForSize(el, maxTries = 30) {
+    return new Promise((resolve, reject) => {
+      (function check(n) {
+        const r = el.getBoundingClientRect();
+        if (r.width && r.height) return resolve(r);
+        if (n >= maxTries) return reject(new Error('Map never got a size'));
+        requestAnimationFrame(() => check(n + 1));
+      })(0);
+    });
+  }
+
+  function initMap() {
+    const mapEl = document.getElementById('freemarket-map');
+    if (!mapEl || !window.ol) return;
+
+    adStyle = new ol.style.Style({
+      image: new ol.style.Icon({ src: MARKER_ICON, anchor: [0.5, 1] })
+    });
+    skillStyle = new ol.style.Style({
+      image: new ol.style.Icon({ src: SKILL_ICON, anchor: [0.5, 1] })
+    });
+
+    const tiles        = createTileLayers();
+    const vectorSource = new ol.source.Vector();
+    const vectorLayer  = new ol.layer.Vector({ source: vectorSource });
+
+    const map = new ol.Map({
+      target: mapEl,
+      layers: tiles.all.concat([vectorLayer]),
+      view: new ol.View({ center: ol.proj.fromLonLat([0, 20]), zoom: 2, minZoom: 0, maxZoom: 18 })
+    });
+
+    // Expose to Alpine/HTMX
+    window._fmSetLayer = mode => { applyLayer(tiles, mode); map.renderSync(); };
+    window._fmReloadMarkers = () => fetchMarkers(map, vectorSource);
+
+    // Debounced fetch on pan/zoom
+    let fetchTimer;
+    map.on('moveend', () => {
+      clearTimeout(fetchTimer);
+      fetchTimer = setTimeout(() => fetchMarkers(map, vectorSource), 300);
+    });
+
+    // Stadia fallback → OSM
+    let fallbackFired = false;
+    [tiles.watercolor, tiles.tonerLabels].forEach(layer => {
+      layer.getSource().on('tileloaderror', () => {
+        if (fallbackFired) return;
+        fallbackFired = true;
+        window._fmSetLayer('osm');
+        Alpine.store('fm').layer = 'osm';
+      });
+    });
+
+    // Popup
+    const popupEl = document.createElement('div');
+    popupEl.className = 'map-popup';
+    const overlay = new ol.Overlay({
+      element: popupEl, positioning: 'bottom-center', offset: [0, -12], stopEvent: false
+    });
+    map.addOverlay(overlay);
+
+    map.on('singleclick', evt => {
+      const feature = map.forEachFeatureAtPixel(evt.pixel, f => f);
+      if (!feature) { overlay.setPosition(undefined); return; }
+      // Collect all OL properties into a plain object
+      const props = {};
+      feature.getKeys().forEach(k => { if (k !== 'geometry') props[k] = feature.get(k); });
+      popupEl.innerHTML = buildPopupHTML(props);
+      overlay.setPosition(evt.coordinate);
+    });
+
+    window.addEventListener('resize', () => map.updateSize());
+
+    waitForSize(mapEl).then(() => {
+      map.updateSize();
+      applyLayer(tiles, Alpine.store('fm').layer);
+      fetchMarkers(map, vectorSource);
+    });
+
+    // Expose a function to fly to a location
+    window._fmZoomTo = (lat, lon, bbox) => {
+      const center = ol.proj.fromLonLat([parseFloat(lon), parseFloat(lat)]);
+
+      if (bbox) {
+        // Convert Nominatim bbox [y1, y2, x1, x2] to OL extent [x1, y1, x2, y2]
+        const extent = ol.proj.transformExtent(
+          [parseFloat(bbox[2]), parseFloat(bbox[0]), parseFloat(bbox[3]), parseFloat(bbox[1])],
+          'EPSG:4326', 'EPSG:3857'
+        );
+        map.getView().fit(extent, { duration: 1000, padding: [50, 50, 50, 50] });
+      } else {
+        map.getView().animate({ center: center, zoom: 12, duration: 1000 });
       }
     };
+  }
 
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', initFreemarket);
-    } else {
-      initFreemarket();
-    }
-  </script>
-{% endblock javascript %}
+  document.addEventListener('DOMContentLoaded', initMap);
+})();
+</script>
+{% endblock %}

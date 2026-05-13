@@ -4,609 +4,675 @@
 {% block extrahead %}
   {{ block.super }}
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v7.2.2/ol.css">
-  <style>
-    /* Place OL zoom controls bottom-left to avoid overlay collisions */
-    .ol-zoom {
-      top: auto;
-      left: 1rem;
-      bottom: 1rem;
-      right: auto;
-    }
-    .ol-zoom button {
-      width: 2.75rem;
-      height: 2.75rem;
-      font-size: 1.25rem;
-      border-radius: 0.75rem;
-    }
-  </style>
-{% endblock %}
-
-{# ───────────────────────────── HTML ───────────────────────────── #}
-
-{% block content %}
-{# ── Map container ── #}
-<div class="relative w-full freemarket-shell">
-  <div id="community-map" class="absolute inset-0 w-full h-full rounded shadow bg-secondary bg-opacity-50"></div>
-
-  {# ── View toggle (top center) ── #}
-  <div class="absolute top-4 left-1/2 transform -translate-x-1/2 z-10">
-    <div class="inline-flex overflow-hidden rounded-full shadow-lg border bg-primary bg-opacity-20 backdrop-blur border-red">
-      <button id="community-toggle-map" type="button" aria-label="{% trans 'Show map view' %}"
-        class="btn-pill-select bg-primary bg-opacity-40">
-        <i class="fa fa-globe"></i><span>{% trans "Map" %}</span>
-      </button>
-      <button id="community-toggle-list" type="button" aria-label="{% trans 'Show list view' %}"
-        class="btn-pill-select bg-primary bg-opacity-40">
-        <i class="fa fa-list-alt"></i><span>{% trans "List" %}</span>
-      </button>
-    </div>
-  </div>
-
-  {# ── Left toolbar: search, add button ── #}
-  <div class="absolute top-4 left-4 flex flex-col gap-3 w-full max-w-md">
-    <form method="get" class="bg-secondary bg-opacity-60 backdrop-blur rounded-lg shadow p-4 flex flex-col gap-3">
-        <div class="relative">
-        <div class="absolute inset-y-0 left-3 flex items-center text-primary opacity-80"><i class="fa fa-search"></i></div>
-        <input id="community-search-input" class="form-input icon-input" type="text" name="q" value="{{ q }}" placeholder="{% trans 'Search by name, location or skills you want to learn' %}" autocomplete="off">
-        <div class="suggestions-dropdown hidden" aria-hidden="true"></div>
-      </div>
-      <div class="flex">
-        <button type="submit" class="btn btn-icon"><i class="fa fa-search mr-1"></i> {% trans "Search" %}</button>
-      </div>
-    </form>
-
-    {% if not communities %}
-      <p class="text-sm text-brown bg-secondary bg-opacity-60 backdrop-blur rounded-lg shadow p-3 border border-red">
-        {% trans "No communities yet." %}
-      </p>
-    {% endif %}
-
-    <a href="{% url 'communities:create' %}" class="btn btn-icon shadow self-start">
-      <i class="fa fa-plus mr-1"></i> {% trans "Add your community" %}
-    </a>
-  </div>
-
-  {# ── Layer switcher (top-right) ── #}
-  <div id="community-layer-wrap" class="absolute top-4 right-4">
-    <div class="relative">
-      <button id="community-layer-toggle" type="button"
-        class="flex items-center justify-center w-14 h-14 rounded-md bg-primary bg-opacity-60 text-secondary shadow-lg border backdrop-blur border-red">
-        <i class="fa fa-layer-group text-xl"></i>
-      </button>
-      <div id="community-layer-menu"
-        class="hidden absolute right-0 mt-2 w-48 bg-primary text-secondary bg-opacity-60 backdrop-blur rounded-lg shadow-xl border py-2 border-red">
-        <div class="px-3 pb-1 text-xs font-semibold uppercase">{% trans "Layers" %}</div>
-        <ul class="list-none m-0 text-sm space-y-1 px-2">
-          <li><label class="dropdown-item"><input type="radio" name="community-layer-option" value="ecobasa" class="form-radio mr-2 text-secondary" checked><span>{% trans "ecobasa" %}</span></label></li>
-          <li><label class="dropdown-item"><input type="radio" name="community-layer-option" value="satellite" class="form-radio mr-2 text-secondary"><span>{% trans "Satellite" %}</span></label></li>
-          <li><label class="dropdown-item"><input type="radio" name="community-layer-option" value="osm" class="form-radio mr-2 text-secondary"><span>{% trans "OSM" %}</span></label></li>
-        </ul>
-      </div>
-    </div>
-  </div>
-</div>
-
-{# ── Community list modal ── #}
-<div id="community-modal" class="modal-overlay hidden">
-  <div class="modal relative bg-secondary bg-opacity-95 backdrop-blur rounded-lg shadow-xl max-w-5xl w-full border">
-    <button type="button" id="community-modal-close"
-      class="absolute top-3 right-3 h-10 w-10 rounded-full bg-black bg-opacity-50 hover:bg-opacity-70 text-secondary text-2xl flex items-center justify-center"
-      aria-label="Close">&times;
-    </button>
-
-    <div class="p-5 space-y-4">
-      <div class="flex flex-col gap-3">
-        <div class="flex items-center gap-3">
-          <div class="relative flex-1">
-            <div class="absolute inset-y-0 left-3 flex items-center text-primary opacity-80"><i class="fa fa-search"></i></div>
-            <input id="community-modal-search" type="text" value="{{ q }}"
-              placeholder="{% trans 'Search by name, location or skills that you want to learn' %}" class="form-input icon-input w-full pl-10 rounded" autocomplete="off">
-          </div>
-          <span class="text-xs text-brown" id="community-modal-count"></span>
-        </div>
-        <div>
-          <label class="sr-only">{% trans 'Country' %}</label>
-          <select name="country" id="community-modal-country" class="form-select w-full rounded bg-transparent">
-            <option value="">{% trans 'All countries' %}</option>
-            {% for c in countries %}
-              <option value="{{ c }}" {% if c == selected_country %}selected{% endif %}>{{ c }}</option>
-            {% endfor %}
-          </select>
-        </div>
-      </div>
-
-      <div id="community-modal-list" class="max-h-[65vh] overflow-y-auto space-y-3 pr-1">
-        {% for community in communities %}
-          {% with community.photos.all|first as first_photo %}
-          {% with community.skills.all|join:", " as skilllist %}
-          <div class="rounded-lg bg-secondary bg-opacity-80 backdrop-blur p-4 hover:shadow-lg"
-            data-name="{{ community.name|lower }}" data-location="{{ community.location_name|default_if_none:''|lower }}" data-skills="{{ skilllist|lower }}">
-            {% if first_photo %}
-            <div class="mb-3 -mx-4 -mt-4">
-              <a href="{{ community.get_absolute_url }}">
-                <img src="{{ first_photo.image.url }}" alt="{{ community.name }}" class="w-full h-40 object-cover rounded-t-lg">
-              </a>
-            </div>
-            {% endif %}
-            <div class="flex items-start justify-between gap-3">
-              <div>
-                <div class="text-xs uppercase tracking-wide text-primary font-semibold">{{ community.get_type_display }}</div>
-                <a href="{{ community.get_absolute_url }}">
-                  <h3 class="text-lg font-bold text-primary my-2">{{ community.name }}</h3>
-                </a>
-                <div class="text-sm text-brown"><i class="fa fa-map-marker-alt mr-1"></i>{{ community.location_name }}</div>
-              </div>
-              <div>
-                <span class="pill bg-primary text-secondary">{{ community.get_status_display }}</span>
-                <div class="mt-2 flex justify-end gap-4">
-                  {% if community.inhabitants %}<span><i class="fa fa-users mr-1"></i>{{ community.inhabitants  }}</span>{% endif %}
-                  {% if community.children %}<span><i class="fa fa-child mr-1"></i>{{ community.children }}</span>{% endif %}
-                  {% if community.max_guests %}<span><i class="fa fa-suitcase mr-1"></i>{{ community.max_guests }}</span>{% endif %}
-                </div>
-              </div>
-            </div>
-            <p class="text-sm text-brown mt-2 line-clamp-2">{{ community.description }}</p>
-            {% if community.skills.all %}
-            <div class="mt-2 flex flex-wrap gap-1">
-              {% for skill in community.skills.all %}
-                <span class="pill text-secondary bg-purple"><i class="fa fa-graduation-cap mr-1"></i>{{ skill }}</span>
-              {% endfor %}
-            </div>
-            {% endif %}
-            <a href="{{ community.get_absolute_url }}" class="mt-3 inline-flex items-center text-primary font-semibold hover:underline">
-              {% trans "Open" %} <i class="fa fa-arrow-right ml-2"></i>
-            </a>
-          </div>
-          {% endwith %}
-          {% endwith %}
-        {% empty %}
-          <p class="text-primary">{% trans "No communities yet." %}</p>
-        {% endfor %}
-      </div>
-    </div>
-  </div>
-</div>
-{% endblock %}
-
-{# ─────────────────────────── JavaScript ─────────────────────────── #}
-
-{% block javascript %}
-  {{ block.super }}
-  <script src="https://cdn.jsdelivr.net/npm/ol@v7.2.2/dist/ol.js"></script>
-  {% if map_communities %}
-    {{ map_communities|json_script:"community-map-data" }}
-  {% else %}
-    <script id="community-map-data" type="application/json">[]</script>
-  {% endif %}
+  <script src="https://unpkg.com/htmx.org@1.9.10/dist/htmx.min.js"></script>
 
   <script>
-  /* ================================================================
-     Community Map Page
-     Sections: Modal · Tile layers · Map init · Popups · View toggle
-     ================================================================ */
-  (function () {
-    'use strict';
-
-    // ── Shared refs ──
-    var communityModal = { open: null, close: null };
-
-    // ── Helpers ──
-    function $(id)  { return document.getElementById(id); }
-    function $$(sel) { return document.querySelectorAll(sel); }
-
-    function truncate(text, charLimit) {
-      if (!text) return '';
-      if (text.length <= charLimit) return text;
-      return text.slice(0, charLimit).replace(/\s+\S*$/, '') + '\u2026';
-    }
-
-    function waitForSize(el, maxAttempts) {
-      maxAttempts = maxAttempts || 30;
-      return new Promise(function (resolve, reject) {
-        (function check(n) {
-          var rect = el.getBoundingClientRect();
-          if (rect.width && rect.height) return resolve(rect);
-          if (n >= maxAttempts) return reject(new Error('Element never gained size'));
-          requestAnimationFrame(function () { check(n + 1); });
-        })(0);
-      });
-    }
-
-    // ────────────────────────────────────────────────────────────────
-    // Low-profile search suggestions
-    // Build a compact index of names, locations and skills from the map data
-    // and attach suggestion dropdowns to inputs.
-    function buildSuggestionIndex(raw) {
-      var seen = new Map();
-      var add = function(type, value) {
-        if (!value) return;
-        var key = (''+value).trim();
-        var k = key.toLowerCase();
-        if (!seen.has(k)) seen.set(k, { type: type, value: key });
-      };
-      raw.forEach(function (c) {
-        add('name', c.name);
-        if (c.location_name) {
-          c.location_name.split(',').map(function (p) { return p.trim(); }).forEach(function (part) { add('location', part); });
+    document.addEventListener('alpine:init', () => {
+      Alpine.store('c', {
+        view: 'map',
+        layer: 'ecobasa',
+        layerMenuOpen: false,
+        q: '{{ q|escapejs }}',
+        locationName: '',
+        location: '',
+        loading: false,
+        markerCount: 0,
+        // Filter state — kept in sync so map fetch and HTMX list always agree
+        selectedTypes: [],
+        selectedStatuses: [],
+        showMap() { this.view = 'map'; },
+        showList() { this.view = 'list'; },
+        toggleType(val) {
+          this.selectedTypes = this.selectedTypes.includes(val)
+            ? this.selectedTypes.filter(v => v !== val)
+            : [...this.selectedTypes, val];
+          // 1. Update Map
+          if (window._mapReloadMarkers) window._mapReloadMarkers();
+          // 2. Update List (Trigger the event on the modal search input)
+          const modalInput = document.querySelector('input[name="q"]');
+          if (modalInput) htmx.trigger(modalInput, 'list:reload');
+        },
+        toggleStatus(val) {
+          this.selectedStatuses = this.selectedStatuses.includes(val)
+            ? this.selectedStatuses.filter(v => v !== val)
+            : [...this.selectedStatuses, val];
+          // 1. Update Map
+          if (window._mapReloadMarkers) window._mapReloadMarkers();
+          // 2. Update List (Trigger the event on the modal search input)
+          const modalInput = document.querySelector('input[name="q"]');
+          if (modalInput) htmx.trigger(modalInput, 'list:reload');
         }
-        (c.skills || []).forEach(function (s) { add('skill', s); });
       });
-      return Array.from(seen.values());
+    });
+
+    // ----------------------------------------------------------------
+    //    suggestions(endpoint)
+    //    Reusable Alpine component for search autocomplete.
+    //    - Debounces 350 ms so we don't hammer the server on every key
+    //    - Minimum 2 chars before fetching
+    // ----------------------------------------------------------------
+    function suggestions(endpoint) {
+      return {
+        items: [], active: -1, open: false, _timer: null,
+
+        suggest(term) {
+          clearTimeout(this._timer);
+          if (!term || term.length < 2) return this.close();
+          const self = this;
+          this._timer = setTimeout(function () {
+            fetch(endpoint + '?q=' + encodeURIComponent(term))
+              .then(r => r.json())
+              .then(data => {
+                self.items = data.slice(0, 8);
+                self.open = self.items.length > 0;
+                self.active = -1;
+              })
+              .catch(() => self.close());
+          }, 350);
+          // 350 ms debounce — good balance between responsiveness and request rate
+        },
+
+        selectItem(item) {
+          Alpine.store('c').q = item.value;  // fixed: was 'map'
+          this.$el.querySelector('input[type=text]').value = item.value;
+          this.close();
+          window._mapReloadMarkers && window._mapReloadMarkers();
+        },
+
+        moveDown() { if (this.open) this.active = Math.min(this.active + 1, this.items.length - 1); },
+        moveUp()   { if (this.open) this.active = Math.max(this.active - 1, 0); },
+        choose()   { if (this.active >= 0 && this.items[this.active]) this.selectItem(this.items[this.active]); },
+        close()    { this.open = false; this.items = []; this.active = -1; clearTimeout(this._timer); }
+      };
     }
 
-    function initSuggestions(input, index, opts) {
-      opts = opts || {};
-      var wrap = input.parentElement;
-      var box = wrap.querySelector('.suggestions-dropdown');
-      if (!box) {
-        box = document.createElement('div');
-        box.className = 'suggestions-dropdown hidden';
-        wrap.appendChild(box);
-      }
-      var list = document.createElement('ul');
-      box.appendChild(list);
-      var items = [];
-      var active = -1;
+    // ----------------------------------------------------------------
+    //    locationDropdown(listEndpoint)
+    //    Unified Nominatim autocomplete.
+    //    - Debounced at 400 ms (Nominatim recommends >= 1 req/sec per user)
+    //    - GPS fallback
+    //    - Updates Alpine store so map + HTMX list stay in sync
+    //    - Fixed: isolated from HTMX search triggers by using x-ref inputs
+    //      rather than named form inputs that HTMX could pick up accidentally
+    // ----------------------------------------------------------------
+    function locationDropdown(listEndpoint) {
+      return {
+        results: [], open: false, _timer: null,
 
-      function renderMatches(term) {
-        term = (term || '').toLowerCase().trim();
-        list.innerHTML = '';
-        active = -1;
-        if (!term) { box.classList.add('hidden'); return; }
-        items = index.filter(function (it) { return it.value.toLowerCase().indexOf(term) !== -1; }).slice(0, 8);
-        if (!items.length) { box.classList.add('hidden'); return; }
-        items.forEach(function (it, i) {
-          var li = document.createElement('li');
-          li.dataset.index = i;
-          li.innerHTML = (it.type === 'skill' ? '<i class="fa fa-graduation-cap mr-2"></i>' : '') + it.value;
-          li.addEventListener('mousedown', function (e) {
-            e.preventDefault();
-            choose(i);
+        geocode(input) {
+          clearTimeout(this._timer);
+          if (!input || input.length < 3) { this.results = []; this.open = false; return; }
+          const self = this;
+          this._timer = setTimeout(function () {
+            fetch('https://nominatim.openstreetmap.org/search?format=json&limit=5&q=' + encodeURIComponent(input))
+              .then(r => r.json())
+              .then(json => { self.results = json; self.open = json.length > 0; })
+              .catch(() => { self.open = false; });
+          }, 400);
+          // 400 ms debounce — Nominatim usage policy: max 1 req/sec TODO: Proxy through own Django view with django-ratelimit or a simple cache lock
+        },
+
+        pick(res) {
+          const point = res.lat + ',' + res.lon;
+          this.$refs.nameInput.value = res.display_name;
+          this.$refs.pointInput.value = point;
+          Alpine.store('c').locationName = res.display_name;
+          Alpine.store('c').location = point;
+          this.closeDropdown();
+          window._mapReloadMarkers && window._mapReloadMarkers();
+          // Reload HTMX list if open — trigger on the list container directly
+          if (Alpine.store('c').view === 'list') {
+            htmx.trigger(document.getElementById('community-modal-list'), 'list:reload');
+          }
+        },
+
+        useGPS() {
+          if (!navigator.geolocation) return;
+          navigator.geolocation.getCurrentPosition(pos => {
+            const point = pos.coords.latitude + ',' + pos.coords.longitude;
+            this.$refs.nameInput.value = '{% trans "Current Location" %}';
+            this.$refs.pointInput.value = point;
+            Alpine.store('c').locationName = '{% trans "Current Location" %}';
+            Alpine.store('c').location = point;
+            this.closeDropdown();
+            window._mapReloadMarkers && window._mapReloadMarkers();
           });
-          list.appendChild(li);
-        });
-        box.classList.remove('hidden');
-      }
+        },
 
-      function clear() { box.classList.add('hidden'); list.innerHTML = ''; items = []; active = -1; }
+        closeDropdown() { this.open = false; this.results = []; clearTimeout(this._timer); }
+      };
+    }
+  </script>
+{% endblock %}
 
-      function choose(i) {
-        var chosen = items[i]; if (!chosen) return; input.value = chosen.value;
-        if (typeof opts.onSelect === 'function') opts.onSelect(chosen.value, chosen.type);
-        clear(); input.focus();
-      }
 
-      input.addEventListener('input', function (e) { renderMatches(input.value); });
-      input.addEventListener('keydown', function (e) {
-        if (box.classList.contains('hidden')) return;
-        if (e.key === 'ArrowDown') { e.preventDefault(); active = Math.min(active + 1, items.length - 1); updateActive(); }
-        else if (e.key === 'ArrowUp') { e.preventDefault(); active = Math.max(active - 1, 0); updateActive(); }
-        else if (e.key === 'Enter') { if (active >= 0) { e.preventDefault(); choose(active); } }
-        else if (e.key === 'Escape') { clear(); }
-      });
+{% block content %}
+<div x-data>
 
-      function updateActive() {
-        Array.from(list.children).forEach(function (li) { li.classList.remove('is-active'); });
-        if (active >= 0 && list.children[active]) list.children[active].classList.add('is-active');
-      }
+  <!--Map shell-->
+  <div class="relative w-full map-shell">
+    <div id="community-map" class="absolute inset-0 w-full h-full rounded shadow bg-secondary bg-opacity-50"></div>
 
-      document.addEventListener('click', function (e) { if (!wrap.contains(e.target)) clear(); });
-      return { render: renderMatches, clear: clear };
+    <!--View toggle (top center)-->
+    <div class="absolute top-4 left-1/2 -translate-x-1/2 z-10">
+      <div class="inline-flex overflow-hidden rounded-full shadow-lg border bg-primary bg-opacity-20 backdrop-blur border-red">
+        <button type="button"
+          :class="$store.c.view === 'map' ? 'bg-opacity-90 shadow-inner' : 'bg-opacity-40'"
+          class="btn-pill-select bg-primary transition-all"
+          @click="$store.c.showMap()">
+          <i class="fa fa-globe"></i><span>{% trans "Map" %}</span>
+        </button>
+        <button type="button"
+          :class="$store.c.view === 'list' ? 'bg-opacity-90 shadow-inner' : 'bg-opacity-40'"
+          class="btn-pill-select bg-primary transition-all"
+          @click="$store.c.showList()"
+          hx-get="{% url 'communities:api-list' %}"
+          hx-target="#community-modal-list"
+          hx-swap="innerHTML"
+          hx-include="#community-hidden-filters"
+          hx-trigger="click once">
+          <i class="fa fa-list-alt"></i><span>{% trans "List" %}</span>
+        </button>
+      </div>
+    </div>
+
+    <!--Left toolbar: search + filters + add-->
+    <div class="absolute top-4 left-4 flex flex-col gap-3 z-10 w-full max-w-40 md:max-w-60 lg:max-w-xs xl:max-w-md">
+      <div class="bg-secondary bg-opacity-30 backdrop-blur rounded-lg shadow p-4 flex flex-col gap-3">
+
+        <!--Search input with suggestions-->
+        <div class="relative" x-data="suggestions('{% url 'communities:api-suggest' %}')">
+          <div class="absolute inset-y-0 left-3 flex items-center text-primary opacity-80">
+            <i class="fa fa-search"></i>
+          </div>
+          <input
+            class="form-input icon-input bg-secondary w-full"
+            type="text"
+            placeholder="{% trans 'Search by name, location or skills' %}"
+            :value="$store.c.q"
+            @input="$store.c.q = $el.value; suggest($el.value)"
+            @keydown.arrow-down.prevent="moveDown()"
+            @keydown.arrow-up.prevent="moveUp()"
+            @keydown.enter.prevent="choose()"
+            @keydown.escape="close()"
+            @blur="setTimeout(() => close(), 200)">
+          <ul x-show="open" x-cloak
+            class="absolute z-20 w-full mt-1 bg-secondary rounded shadow-lg border">
+            <template x-for="(item, i) in items" :key="i">
+              <li :class="i === active ? 'bg-primary text-secondary' : ''"
+                class="px-3 py-1 cursor-pointer text-sm"
+                @mousedown.prevent="selectItem(item)"
+                x-text="item.value">
+              </li>
+            </template>
+          </ul>
+        </div>
+
+        <!-- Mini Filter Toolbar -->
+        <div class="flex items-center gap-2" x-data="{ open: false }">
+          <button type="button" @click="open = !open"
+            class="flex-1 flex items-center justify-between px-3 py-2 bg-secondary rounded border text-xs font-semibold hover:bg-opacity-80 transition">
+            <span><i class="fa fa-filter mr-2"></i>{% trans "Filters" %}</span>
+            <i class="fa" :class="open ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+          </button>
+
+          <!-- The Popover -->
+          <div x-show="open" x-cloak @click.away="open = false"
+            class="absolute top-full left-0 mt-2 w-64 bg-secondary bg-opacity-80 backdrop-blur p-4 rounded-lg shadow-xl border border-primary border-opacity-20 flex flex-col gap-4 z-50">
+
+            <!-- Types -->
+            <div>
+              <span class="block text-brown font-bold mb-2 uppercase tracking-tighter text-[10px]">{% trans "Community Type" %}</span>
+              <div class="flex flex-col gap-1">
+                {% for value, label in community_types %}
+                <label class="flex items-center gap-2 cursor-pointer hover:text-primary transition">
+                  <input type="checkbox" value="{{ value }}" class="form-checkbox h-3.5 w-3.5"
+                    :checked="$store.c.selectedTypes.includes('{{ value|escapejs }}')"
+                    @change="$store.c.toggleType('{{ value|escapejs }}')">
+                  <span class="text-xs">{{ label }}</span>
+                </label>
+                {% endfor %}
+              </div>
+            </div>
+
+            <!-- Status -->
+            <div>
+              <span class="block text-brown font-bold mb-2 uppercase tracking-tighter text-[10px]">{% trans "Status" %}</span>
+              <div class="flex flex-col gap-1">
+                {% for value, label in community_statuses %}
+                <label class="flex items-center gap-2 cursor-pointer hover:text-primary transition">
+                  <input type="checkbox" value="{{ value }}" class="form-checkbox h-3.5 w-3.5"
+                    :checked="$store.c.selectedStatuses.includes('{{ value|escapejs }}')"
+                    @change="$store.c.toggleStatus('{{ value|escapejs }}')">
+                  <span class="text-xs">{{ label }}</span>
+                </label>
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <button type="button" class="btn"
+          @click="window._mapReloadMarkers && window._mapReloadMarkers()">
+          <i class="fa fa-search mr-2"></i> {% trans "Search" %}
+        </button>
+      </div>
+
+      <a href="{% url 'communities:create' %}" class="btn shadow self-start">
+        <i class="fa fa-plus"></i> {% trans "Add community" %}
+      </a>
+    </div>
+
+    <!--Layer switcher (top-right)-->
+    <div class="absolute top-4 right-4 z-10" x-data="{ open: false }">
+      <button type="button"
+        @click="open = !open"
+        class="w-14 h-14 rounded-md bg-primary text-secondary shadow-lg border border-red hover:bg-opacity-90 transition-colors">
+        <i class="fa fa-layer-group"></i>
+      </button>
+      <div x-show="open" x-cloak @click.away="open = false"
+        class="absolute right-0 mt-2 w-48 bg-primary text-secondary rounded-lg shadow-xl border py-2 border-red">
+        <div class="px-3 py-1 text-xs font-bold uppercase tracking-wider opacity-60">{% trans "Map Layers" %}</div>
+        <hr class="border-secondary opacity-20 my-1">
+        <label class="flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-secondary hover:bg-opacity-10">
+          <input type="radio" name="map-layer"
+            :checked="$store.c.layer === 'ecobasa'"
+            @change="$store.c.layer = 'ecobasa'; window._mapSetLayer('ecobasa'); open = false;">
+          <span class="text-sm">{% trans "Ecobasa" %}</span>
+        </label>
+        <label class="flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-secondary hover:bg-opacity-10">
+          <input type="radio" name="map-layer"
+            :checked="$store.c.layer === 'osm'"
+            @change="$store.c.layer = 'osm'; window._mapSetLayer('osm'); open = false;">
+          <span class="text-sm">{% trans "OpenStreetMap" %}</span>
+        </label>
+        <label class="flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-secondary hover:bg-opacity-10">
+          <input type="radio" name="map-layer"
+            :checked="$store.c.layer === 'satellite'"
+            @change="$store.c.layer = 'satellite'; window._mapSetLayer('satellite'); open = false;">
+          <span class="text-sm">{% trans "Satellite" %}</span>
+        </label>
+      </div>
+    </div>
+
+    <!-- Loading indicator -->
+    <div x-show="$store.c.loading" x-cloak
+      class="absolute bottom-16 left-1/2 -translate-x-1/2 z-10 bg-primary text-secondary px-3 py-1 rounded-full shadow text-xs">
+      <i class="fa fa-spinner fa-spin mr-1"></i> {% trans "Loading…" %}
+    </div>
+  </div>
+
+
+  <!-- ═══════════════════════════════════════════════════════════════
+     List modal — shown/hidden by Alpine store, content via HTMX
+     ═══════════════════════════════════════════════════════════════ -->
+  <div x-show="$store.c.view === 'list'" x-cloak
+    class="modal-overlay flex"
+    @click.self="$store.c.showMap()">
+
+    <div class="modal bg-secondary p-5 rounded-lg shadow-xl max-w-5xl w-full relative">
+      <button class="absolute top-3 right-3 text-2xl" @click="$store.c.showMap()">&times;</button>
+
+      <div class="space-y-3 mb-4">
+
+        <!-- Modal search — HTMX fires only on this input.
+           Location travels via #community-hidden-filters, not this field. -->
+        <div class="relative">
+          <div class="absolute inset-y-0 left-3 flex items-center text-primary opacity-80">
+            <i class="fa fa-search"></i>
+          </div>
+          <input
+            type="text"
+            name="q"
+            :value="$store.c.q"
+            class="form-input icon-input w-full"
+            placeholder="{% trans 'Search by name, location or skills' %}"
+            autocomplete="off"
+            hx-get="{% url 'communities:api-list' %}"
+            hx-target="#community-modal-list"
+            hx-swap="innerHTML"
+            hx-trigger="input changed delay:400ms, list:search, list:reload"
+            hx-include="#community-hidden-filters, [name='type'], [name='status']"
+            @input="$store.c.q = $el.value">
+        </div>
+
+        <!-- Location autocomplete — isolated from HTMX.
+           The visible text input has NO name attribute so HTMX ignores it.
+           It writes to $store.c.location which flows into #community-hidden-filters. -->
+        <div class="relative"
+          x-data="locationDropdown('{% url 'communities:api-list' %}')">
+          <div class="absolute inset-y-0 left-3 flex items-center text-primary opacity-80 cursor-pointer"
+            @click="useGPS()">
+            <i class="fa fa-map-marker-alt"></i>
+          </div>
+          <input
+            class="form-input icon-input w-full"
+            type="text"
+            x-ref="nameInput"
+            :value="$store.c.locationName"
+            placeholder="{% trans 'Sort by location' %}"
+            autocomplete="off"
+            @input.debounce.400ms="geocode($el.value)"
+            @keydown.escape="closeDropdown()">
+          <!--No name attribute — HTMX won't pick this up directly.
+             Store value mirrors to the hidden input in #community-hidden-filters.-->
+          <input type="hidden" x-ref="pointInput" :value="$store.c.location">
+          <ul x-show="open" x-cloak @click.outside="closeDropdown()"
+            class="absolute z-20 inset-x-0 mt-1 bg-secondary bg-opacity-95 rounded shadow-lg text-sm">
+            <template x-for="res in results" :key="res.place_id">
+              <li>
+                <a href="#"
+                  class="block px-3 py-2 hover:bg-primary hover:text-secondary"
+                  @click.prevent="pick(res)"
+                  x-text="res.display_name">
+                </a>
+              </li>
+            </template>
+          </ul>
+        </div>
+
+        <!--Type + Status filters — modal version.
+           These have name attributes so hx-include picks them up.
+           Alpine keeps them in sync with the map toolbar checkboxes.-->
+        <div class="flex flex-wrap gap-x-6 gap-y-2 text-xs">
+          <div class="flex flex-wrap gap-2 items-center">
+            <span class="text-brown font-semibold">{% trans "Type" %}</span>
+            {% for value, label in community_types %}
+            <label class="inline-flex items-center gap-1 cursor-pointer">
+              <input type="checkbox" name="type" value="{{ value }}"
+                class="form-checkbox h-3.5 w-3.5"
+                :checked="$store.c.selectedTypes.includes('{{ value|escapejs }}')"
+                @change="$store.c.toggleType('{{ value|escapejs }}')"
+              >
+              <span>{{ label }}</span>
+            </label>
+            {% endfor %}
+          </div>
+
+          <div class="flex flex-wrap gap-2 items-center">
+            <span class="text-brown font-semibold">{% trans "Status" %}</span>
+            {% for value, label in community_statuses %}
+            <label class="inline-flex items-center gap-1 cursor-pointer">
+              <input type="checkbox" name="status" value="{{ value }}"
+                class="form-checkbox h-3.5 w-3.5"
+                :checked="$store.c.selectedStatuses.includes('{{ value|escapejs }}')"
+                @change="$store.c.toggleStatus('{{ value|escapejs }}')"
+              >
+              <span>{{ label }}</span>
+            </label>
+            {% endfor %}
+          </div>
+        </div>
+
+        <!--Result count badge — OOB-swapped by the list partial-->
+        <div class="text-xs text-brown">
+          <span id="community-modal-count" hx-swap-oob="true"></span>
+        </div>
+      </div>
+
+      <!--HTMX list target — infinite scroll via revealed sentinel in partial-->
+      <div id="community-modal-list"
+        class="max-h-[60vh] overflow-y-auto space-y-3"
+        hx-get="{% url 'communities:api-list' %}"
+        hx-target="this"
+        hx-swap="innerHTML"
+        hx-include="#community-hidden-filters, [name='type'], [name='status']"
+        hx-trigger="revealed">
+        <div class="text-center py-8 text-brown">
+          <i class="fa fa-spinner fa-spin text-2xl"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!--Hidden filter inputs — shared source of truth for all HTMX requests.
+     hx-include="#community-hidden-filters" picks these up automatically.
+     q and location mirror the Alpine store values reactively.
+     type[] and status[] are included directly from the named checkboxes above.-->
+  <div id="community-hidden-filters" style="display:none" aria-hidden="true">
+    <input type="hidden" name="q" :value="$store.c.q">
+    <input type="hidden" name="location" :value="$store.c.location">
+  </div>
+
+</div>
+{% endblock %}
+
+
+{% block javascript %}
+{{ block.super }}
+<script src="https://cdn.jsdelivr.net/npm/ol@v7.2.2/dist/ol.js"></script>
+<script>
+  'use strict';
+
+  let map, vectorSource, layers;
+
+  // ----------------------------------------------------------------
+  //   Canvas-based layered marker icon
+  //   Draws a Font Awesome map-pin with a badge icon inside.
+  // ----------------------------------------------------------------
+  function createLayeredIcon(badgeIcon, pinColor, badgeColor) {
+    badgeColor = badgeColor || '#fcf3e5';
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const size = 80;
+    canvas.width = size;
+    canvas.height = size;
+    ctx.fillStyle = pinColor;
+    ctx.font = '900 60px "Font Awesome 5 Free"';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('\uf041', size / 2, size / 2);
+    ctx.fillStyle = badgeColor;
+    ctx.font = '600 25px "Font Awesome 5 Free"';
+    ctx.fillText(badgeIcon, size / 2, size / 2.5);
+    return canvas;
+  }
+
+  function getDynamicStyle(feature) {
+    const type = feature.get('type');
+    let iconCode = '\uf015';   // fa-home
+    let pinColor  = '#da6137'; // primary
+
+    if (type === 'Permaculture Farm') {
+      iconCode = '\uf06c'; // fa-leaf
+      pinColor  = '#5A5527';
+    } else if (type === 'Place for Projects') {
+      iconCode = '\uf3c5'; // fa-map-marker-alt
+      pinColor  = '#ff7800';
     }
 
-    // ────────────────────────────────────────────────────────────────
-    // List modal
-    // ────────────────────────────────────────────────────────────────
-    function initModal() {
-      var modal      = $('community-modal');
-      if (!modal) return;
-      var closeBtn   = $('community-modal-close');
-      var searchIn   = $('community-modal-search');
-      var list       = $('community-modal-list');
-      var countLabel = $('community-modal-count');
-      var items      = Array.from(list.querySelectorAll('[data-name]'));
+    return new ol.style.Style({
+      image: new ol.style.Icon({
+        img:     createLayeredIcon(iconCode, pinColor),
+        imgSize: [80, 80],
+        anchor:  [0.5, 0.85],
+        scale:   0.7
+      })
+    });
+  }
 
-      function update() {
-        var term = (searchIn.value || '').toLowerCase().trim();
-        var visible = 0;
-        items.forEach(function (item) {
-          var hay = (item.dataset.name || '') + ' ' + (item.dataset.location || '') + ' ' + (item.dataset.skills || '');
-          var show = !term || hay.includes(term);
-          item.style.display = show ? '' : 'none';
-          if (show) visible++;
-        });
-        if (countLabel) {
-          countLabel.textContent = visible
-            ? visible + ' {% trans "result" %}' + (visible === 1 ? '' : 's')
-            : '{% trans "No results" %}';
-        }
-      }
+  // ----------------------------------------------------------------
+  //   Popup HTML builder
+  // ----------------------------------------------------------------
+  function buildPopupHTML(f) {
+    const name   = f.get('name')   || '';
+    const url    = f.get('url')    || '';
+    const img    = f.get('image');
+    const skills = f.get('skills') || [];
+    const desc   = f.get('description') || '';
+    const vision = f.get('vision') || '';
+    const type   = f.get('type')   || '';
 
-      communityModal.open = function () {
-        modal.classList.remove('hidden');
-        modal.classList.add('flex');
-        document.body.classList.add('overflow-hidden');
-        update();
-      };
-      communityModal.close = function () {
-        modal.classList.add('hidden');
-        modal.classList.remove('flex');
-        document.body.classList.remove('overflow-hidden');
-      };
+    let html = '<div class="map-popup">';
 
-      if (closeBtn) closeBtn.addEventListener('click', communityModal.close);
-      modal.addEventListener('click', function (e) { if (e.target === modal) communityModal.close(); });
-      searchIn.addEventListener('input', update);
-      update();
-
-      // attach low-profile suggestions to modal search
-      try {
-        var raw = JSON.parse((document.getElementById('community-map-data')||{textContent:'[]'}).textContent || '[]');
-        var idx = buildSuggestionIndex(raw);
-        initSuggestions(searchIn, idx, { onSelect: function (val) { searchIn.value = val; update(); } });
-      } catch (err) { /* ignore */ }
+    if (type === 'Permaculture Farm') {
+      html += `<span class="pill bg-green text-secondary"><i class="fa fa-leaf mr-1"></i>${type}</span>`;
+    } else if (type === 'Place for Projects') {
+      html += `<span class="pill bg-orange text-secondary"><i class="fa fa-map-marker-alt mr-1"></i>${type}</span>`;
+    } else {
+      html += `<span class="pill bg-primary text-secondary"><i class="fa fa-home mr-1"></i>${type}</span>`;
     }
 
-    // ────────────────────────────────────────────────────────────────
-    // Tile layers
-    // ────────────────────────────────────────────────────────────────
-    function createTileLayers() {
-      var watercolor = new ol.layer.Tile({
+    if (name) html += `<h3 class="font-bold">${url ? `<a href="${url}">${name}</a>` : name}</h3>`;
+
+    const stats = [];
+    if (f.get('inhabitants')) stats.push(`<i class="fa fa-users"></i> ${f.get('inhabitants')}`);
+    if (f.get('children'))    stats.push(`<i class="fa fa-child"></i> ${f.get('children')}`);
+    if (f.get('max_guests'))  stats.push(`<i class="fa fa-suitcase"></i> ${f.get('max_guests')}`);
+    if (stats.length) html += `<div class="text-xs my-1">${stats.join(' | ')}</div>`;
+
+    if (img)        html += `<img src="${img}" class="w-full h-24 object-cover rounded my-2">`;
+    if (desc)       html += `<span class="line-clamp-4">${desc}</span>`;
+    else if (vision) html += `<span class="line-clamp-4">${vision}</span>`;
+
+    if (skills.length) {
+      html += '<div class="mt-2 truncate">';
+      skills.slice(0, 5).forEach(s => { html += `<span class="pill bg-purple text-secondary mr-2">${s}</span>`; });
+      html += '</div>';
+    }
+    html += '</div>';
+    return html;
+  }
+
+  // ----------------------------------------------------------------
+  //   Map init
+  //   Exposes:
+  //     window._mapReloadMarkers() — re-fetch markers from server
+  //     window._mapSetLayer(mode)  — switch tile layer
+
+  //   Debounce values:
+  //     suggestions endpoint  350 ms  (internal server, cheap)
+  //     Nominatim geocoding   400 ms  (external, usage policy: 1 req/s)
+  //     map pan/zoom refetch  300 ms  (balances responsiveness vs requests)
+  // ----------------------------------------------------------------
+  function initMap() {
+    const mapEl = document.getElementById('community-map');
+    if (!mapEl) return;
+
+    vectorSource = new ol.source.Vector();
+
+    layers = {
+      watercolor: new ol.layer.Tile({
         source: new ol.source.XYZ({
           url: 'https://tiles.stadiamaps.com/tiles/stamen_watercolor/{z}/{x}/{y}.jpg?api_key=cb8069a3-9585-4989-a6a8-572b5c3f4ffb',
           crossOrigin: 'anonymous'
         })
-      });
-      var tonerLabels = new ol.layer.Tile({
+      }),
+      osm: new ol.layer.Tile({
+        source: new ol.source.OSM(),
+        visible: false
+      }),
+      satellite: new ol.layer.Tile({
         source: new ol.source.XYZ({
-          url: 'https://tiles.stadiamaps.com/tiles/stamen_toner_lite/{z}/{x}/{y}.png?api_key=cb8069a3-9585-4989-a6a8-572b5c3f4ffb',
-          crossOrigin: 'anonymous'
-        }),
-        opacity: 0.35
-      });
-      var satellite = new ol.layer.Tile({
-        source: new ol.source.XYZ({
-          url: 'https://mt{0-3}.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}',
-          attributions: '&copy; Google',
-          maxZoom: 20,
+          url: 'https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',
           crossOrigin: 'anonymous'
         }),
         visible: false
-      });
-      var osm = new ol.layer.Tile({
-        source: new ol.source.XYZ({
-          url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-          crossOrigin: 'anonymous',
-          maxZoom: 19,
-          tileSize: 256,
-          wrapX: true,
-          attributions: '\u00a9 OpenStreetMap contributors',
-          tileGrid: ol.tilegrid.createXYZ({ maxZoom: 19, tileSize: 256 })
-        }),
-        visible: false
-      });
-      return { watercolor: watercolor, tonerLabels: tonerLabels, satellite: satellite, osm: osm,
-               all: [watercolor, tonerLabels, satellite, osm] };
-    }
+      }),
+      markers: new ol.layer.Vector({ source: vectorSource })
+    };
 
-    function makeLayerSwitcher(tiles, radios, map) {
-      var fallbackFired = false;
+    map = new ol.Map({
+      target: 'community-map',
+      layers: [layers.watercolor, layers.osm, layers.satellite, layers.markers],
+      view: new ol.View({ center: ol.proj.fromLonLat([10, 50]), zoom: 4 })
+    });
 
-      function setMode(mode) {
-        var target = (mode || 'ecobasa').toLowerCase();
-        tiles.watercolor.setVisible(target === 'ecobasa');
-        tiles.tonerLabels.setVisible(target === 'ecobasa');
-        tiles.satellite.setVisible(target === 'satellite');
-        tiles.osm.setVisible(target === 'osm');
-        radios.forEach(function (r) { r.checked = (r.value === target); });
-        if (map) map.renderSync();
+    // Popup overlay
+    const popupEl = document.createElement('div');
+    const overlay = new ol.Overlay({
+      element: popupEl,
+      positioning: 'bottom-center',
+      stopEvent: false,
+      offset: [0, -8]
+    });
+    map.addOverlay(overlay);
+
+    map.on('singleclick', e => {
+      const feature = map.forEachFeatureAtPixel(e.pixel, f => f);
+      if (feature) {
+        popupEl.innerHTML = buildPopupHTML(feature);
+        overlay.setPosition(e.coordinate);
+      } else {
+        overlay.setPosition(undefined);
+      }
+    });
+
+    // Layer switcher — called by Alpine radio @change handlers
+    window._mapSetLayer = function (mode) {
+      layers.watercolor.setVisible(mode === 'ecobasa');
+      layers.osm.setVisible(mode === 'osm');
+      layers.satellite.setVisible(mode === 'satellite');
+      map.renderSync();
+    };
+
+    // Marker fetch — reads all active filters from Alpine store
+    window._mapReloadMarkers = function () {
+      const store = Alpine.store('c');
+      if (!store) return;
+      store.loading = true;
+
+      const params = new URLSearchParams();
+      if (store.q)        params.set('q', store.q);
+      if (store.location) params.set('location', store.location);
+      // Send type and status as repeatable params matching Django's getlist()
+      store.selectedTypes.forEach(t    => params.append('type', t));
+      store.selectedStatuses.forEach(s => params.append('status', s));
+
+      // Add current viewport bbox for server-side spatial filtering
+      const view = map.getView();
+      const size = map.getSize();
+      if (size) {
+        const ext = ol.proj.transformExtent(
+          view.calculateExtent(size), 'EPSG:3857', 'EPSG:4326'
+        );
+        if (ext && ext.every(isFinite)) {
+          params.set('bbox', ext.map(v => v.toFixed(4)).join(','));
+        }
       }
 
-      // Fall back to OSM if the Stadia tiles fail
-      function enableFallback(layer) {
-        var src = layer && layer.getSource && layer.getSource();
-        if (!src || !src.on) return;
-        src.on('tileloaderror', function () {
-          if (fallbackFired) return;
-          fallbackFired = true;
-          setMode('osm');
-        });
-      }
-      enableFallback(tiles.watercolor);
-      enableFallback(tiles.tonerLabels);
-
-      return setMode;
-    }
-
-    // ────────────────────────────────────────────────────────────────
-    // Popup builder
-    // ────────────────────────────────────────────────────────────────
-    function buildPopupHTML(feature) {
-      var name     = feature.get('name') || '';
-      var type     = feature.get('type') || '';
-      var status   = feature.get('status') || '';
-      var image    = feature.get('image');
-      var desc     = truncate(feature.get('description'), 150);
-      var url      = feature.get('url') || '';
-      var inhabitants  = feature.get('inhabitants');
-      var children = feature.get('children');
-      var max_guests = feature.get('max_guests');
-
-      var html = '';
-      if (name)     html += url ? '<h3><a href="' + url + '" class="hover:underline">' + name + '</a></h3>' : '<h3>' + name + '</h3>';
-      if (type)     html += '<span class="pill bg-primary text-secondary">' + type + '</span>';
-      if (status)   html += '<span class="pill bg-primary text-secondary">' + status + '</span>';
-      html += '<div class="popup-meta">'
-            + '<span><i class="fa fa-users mr-1"></i>' + (inhabitants  != null ? inhabitants  : '\u2013') + '</span> | '
-            + '<span><i class="fa fa-child mr-1"></i>' + (children != null ? children : '\u2013') + '</span> | '
-            + '<span><i class="fa fa-suitcase mr-1"></i>' + (max_guests != null ? max_guests : '\u2013') + '</span>'
-            + '</div>';
-      if (image)    html += '<div class="mb-2">' + (url ? '<a href="' + url + '">' : '') + '<img src="' + image + '" alt="' + name + '" class="w-full max-w-xs rounded shadow">' + (url ? '</a>' : '') + '</div>';
-      if (desc)     html += '<div class="text-sm text-brown mt-2">' + desc + '</div>';
-      var skills = (feature.get('skills') || []).slice(0, 4);
-      if (skills.length) {
-        html += '<div class="mt-2 flex flex-wrap gap-1">';
-        skills.forEach(function (t) { html += '<span class="pill bg-purple text-secondary"><i class="fa fa-graduation-cap mr-1"></i>' + t + '</span>'; });
-        html += '</div>';
-      }
-      if (url)      html += '<a class="text-primary underline" href="' + url + '">{% trans "Open" %}</a>';
-      return html;
-    }
-
-    // ────────────────────────────────────────────────────────────────
-    // Map initialisation
-    // ────────────────────────────────────────────────────────────────
-    function initMap() {
-      var mapEl  = $('community-map');
-      var dataEl = $('community-map-data');
-      if (!mapEl || !dataEl || !window.ol) return;
-
-      var data   = JSON.parse(dataEl.textContent || '[]');
-      var tiles  = createTileLayers();
-      var radios = Array.from($$('input[name="community-layer-option"]'));
-
-      waitForSize(mapEl).then(function () {
-        // Vector layer with community markers
-        var iconStyle = new ol.style.Style({
-          image: new ol.style.Icon({ src: '{% static "map/images/marker-icon.png" %}', anchor: [0.5, 1] })
-        });
-
-        var features = data
-          .filter(function (c) { return typeof c.lat === 'number' && typeof c.lon === 'number'; })
-          .map(function (c) {
-            var f = new ol.Feature({
-              geometry: new ol.geom.Point(ol.proj.fromLonLat([c.lon, c.lat])),
-              name: c.name, description: c.description, image: c.image,
-              location: c.location_name, status: c.status, type: c.type,
-              url: c.url, inhabitants: c.inhabitants, children: c.children, max_guests: c.max_guests,
-              skills: c.skills || []
+      fetch('{% url "communities:api-markers" %}?' + params.toString())
+        .then(r => r.json())
+        .then(data => {
+          vectorSource.clear();
+          const features = (data.features || []).map(item => {
+            const props  = item.properties || item;
+            const coords = item.geometry
+              ? item.geometry.coordinates
+              : [item.longitude, item.latitude];
+            const f = new ol.Feature({
+              geometry: new ol.geom.Point(ol.proj.fromLonLat([
+                parseFloat(coords[0]),
+                parseFloat(coords[1])
+              ])),
+              ...props
             });
-            f.setStyle(iconStyle);
+            f.setStyle(getDynamicStyle(f));
             return f;
           });
+          vectorSource.addFeatures(features);
+          store.markerCount = features.length;
+        })
+        .catch(err => console.error('Marker fetch failed:', err))
+        .finally(() => { store.loading = false; });
+    };
 
-        var vectorSource = new ol.source.Vector();
-        vectorSource.addFeatures(features);
-        var vectorLayer = new ol.layer.Vector({ source: vectorSource });
+    // Reload markers on pan/zoom — 300 ms debounce
+    let fetchTimer;
+    map.on('moveend', () => {
+      clearTimeout(fetchTimer);
+      fetchTimer = setTimeout(() => window._mapReloadMarkers(), 300);
+    });
 
-        // Map instance
-        var map = new ol.Map({
-          target: mapEl,
-          layers: tiles.all.concat([vectorLayer]),
-          view: new ol.View({ center: ol.proj.fromLonLat([0, 20]), zoom: 2, minZoom: 0, maxZoom: 18 })
-        });
+    window.addEventListener('resize', () => map.updateSize());
 
-        // Fit to markers (zoom clamped 1–3)
-        if (features.length) {
-          map.getView().fit(vectorSource.getExtent(), { padding: [48, 48, 48, 48], maxZoom: 3 });
-          if (map.getView().getZoom() < 1) map.getView().setZoom(1);
-        }
+    // Initial load
+    window._mapReloadMarkers();
+  }
 
-        // Keep map sized correctly on layout shifts
-        function syncSize() {
-          var rect = mapEl.getBoundingClientRect();
-          if (rect.width && rect.height) { map.updateSize(); map.renderSync(); }
-          else { requestAnimationFrame(syncSize); }
-        }
-        setTimeout(syncSize, 50);
-        window.addEventListener('resize', function () { map.updateSize(); });
-
-        // Popup overlay
-        var popupEl = document.createElement('div');
-        popupEl.className = 'freemarket-popup';
-        var overlay = new ol.Overlay({ element: popupEl, positioning: 'bottom-center', offset: [0, -12], stopEvent: false });
-        map.addOverlay(overlay);
-
-        map.on('singleclick', function (evt) {
-          var feature = map.forEachFeatureAtPixel(evt.pixel, function (f) { return f; });
-          if (!feature) { overlay.setPosition(undefined); return; }
-          popupEl.innerHTML = buildPopupHTML(feature);
-          overlay.setPosition(evt.coordinate);
-        });
-
-        // Layer switcher
-        var setMode = makeLayerSwitcher(tiles, radios, map);
-        initLayerMenu(radios, setMode);
-        setMode('ecobasa');
-      }).catch(function () { /* map element never got a size */ });
-    }
-
-    // ────────────────────────────────────────────────────────────────
-    // Layer menu hover / click
-    // ────────────────────────────────────────────────────────────────
-    function initLayerMenu(radios, setMode) {
-      var wrap   = $('community-layer-wrap');
-      var toggle = $('community-layer-toggle');
-      var menu   = $('community-layer-menu');
-      if (!wrap || !toggle || !menu) return;
-
-      function show() { menu.classList.remove('hidden'); toggle.classList.add('hidden'); }
-      function hide() { menu.classList.add('hidden');    toggle.classList.remove('hidden'); }
-
-      toggle.addEventListener('mouseenter', show);
-      toggle.addEventListener('click', function (e) { e.stopPropagation(); show(); });
-      menu.addEventListener('mouseleave', hide);
-      document.addEventListener('click', function (e) { if (!wrap.contains(e.target)) hide(); });
-
-      radios.forEach(function (r) {
-        r.addEventListener('change', function (e) { if (e.target.checked) setMode(e.target.value); });
-      });
-    }
-
-    // ────────────────────────────────────────────────────────────────
-    // Map / List toggle buttons
-    // ────────────────────────────────────────────────────────────────
-    function initViewToggle() {
-      var mapBtn  = $('community-toggle-map');
-      var listBtn = $('community-toggle-list');
-      var closeBtn   = $('community-modal-close');
-      if (!mapBtn || !listBtn) return;
-
-      var activeClasses  = ['bg-opacity-90', 'shadow-inner'];
-      var inactiveClasses = ['bg-opacity-40'];
-
-      function setPillState(btn, active) {
-        if (!btn) return;
-        btn.classList.remove.apply(btn.classList, activeClasses.concat(inactiveClasses));
-        (active ? activeClasses : inactiveClasses).forEach(function (c) { btn.classList.add(c); });
-      }
-
-      function setActive(mode) {
-        var isMap = mode === 'map';
-        setPillState(mapBtn, isMap);
-        setPillState(listBtn, !isMap);
-      }
-
-      mapBtn.addEventListener('click',  function () { if (communityModal.close) communityModal.close(); setActive('map'); });
-      closeBtn.addEventListener('click', function () { if (communityModal.close) communityModal.close(); setActive('map'); });
-      listBtn.addEventListener('click', function () { if (communityModal.open)  communityModal.open();  setActive('list'); });
-      setActive('map');
-    }
-
-    // ────────────────────────────────────────────────────────────────
-    // Boot
-    // ────────────────────────────────────────────────────────────────
-    function boot() {
-      // build a shared suggestion index from map data and attach to overlay search
-      try {
-        var raw = JSON.parse((document.getElementById('community-map-data')||{textContent:'[]'}).textContent || '[]');
-        var sharedIndex = buildSuggestionIndex(raw);
-        var overlayInput = document.getElementById('community-search-input');
-        if (overlayInput) {
-          initSuggestions(overlayInput, sharedIndex, { onSelect: function (val) { var form = overlayInput.closest('form'); if (form) { overlayInput.value = val; form.submit(); } } });
-        }
-      } catch (err) { /* ignore */ }
-
-      initModal();
-      initMap();
-      initViewToggle();
-    }
-
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', boot);
-    } else {
-      boot();
-    }
-  })();
-  </script>
+  // Boot after Alpine store is ready, then give the map element time to size
+  document.addEventListener('DOMContentLoaded', function () {
+    setTimeout(initMap, 100);
+  });
+</script>
 {% endblock %}
