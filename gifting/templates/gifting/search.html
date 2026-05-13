@@ -314,7 +314,7 @@
 
       <div x-show="$store.fm.layerMenuOpen" x-cloak
         class="w-48 bg-primary text-secondary bg-opacity-80 backdrop-blur rounded-lg shadow-xl border py-2 border-red">
-        <div class="px-3 pb-1 text-xs font-semibold uppercase">{% trans "Layers" %}</div>
+        <div class="px-3 pb-1 text-xs font-semibold uppercase">{% trans "Map style" %}</div>
         <label class="flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-secondary hover:bg-opacity-10">
           <input type="radio" name="map-layer" :checked="$store.fm.layer === 'ecobasa'"
                   @change="$store.fm.layer = 'ecobasa'; window._fmSetLayer('ecobasa'); $store.fm.layerMenuOpen;">
@@ -729,7 +729,7 @@
     const map = new ol.Map({
       target: mapEl,
       layers: tiles.all.concat([vectorLayer]),
-      view: new ol.View({ center: ol.proj.fromLonLat([0, 20]), zoom: 2, minZoom: 0, maxZoom: 18 })
+      view: new ol.View({ center: ol.proj.fromLonLat([0, 20]), zoom: 2, maxZoom: 20 })
     });
 
     // Expose to Alpine/HTMX

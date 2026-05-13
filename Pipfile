@@ -24,6 +24,7 @@ django-taggit ="~=4.0"
 Pillow = "~=10.3"
 django-croppie = "==1.3"
 django-postman = "*"
+django-countries = "*"
 
 [requires]
 python_version = "3.12"

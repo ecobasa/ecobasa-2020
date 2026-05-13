@@ -63,7 +63,7 @@ DJANGO_APPS = [
     "django.contrib.staticfiles",
     "django.contrib.humanize",
     "django.contrib.gis",
-    "django.forms",
+    "django.forms"
 ]
 
 THIRD_PARTY_APPS = [
@@ -73,6 +73,7 @@ THIRD_PARTY_APPS = [
     "taggit",
     "croppie",
     "postman",
+    "django_countries",
 ]
 
 LOCAL_APPS = ["users", "homepage", "gifting", "communities"]

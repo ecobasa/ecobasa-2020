@@ -5,22 +5,6 @@
   {{ block.super }}
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v7.2.2/ol.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.css">
-  <style>
-    .community-field,
-    .community-field textarea,
-    .community-field input,
-    .community-field select,
-    input.community-field,
-    textarea.community-field,
-    select.community-field {
-      background: rgba(255, 255, 255, 0.3);
-      border-radius: 4px;
-      border: 1px solid #ccc;
-      width: 100%;
-      display: block;
-      padding: 0.6rem 0.75rem;
-    }
-  </style>
   <script>
     function communityLocationDropdown() {
       return {
@@ -50,12 +34,13 @@
         onSelect(res) {
           const lon = parseFloat(res.lon);
           const lat = parseFloat(res.lat);
+          const country = (res.address && res.address.country_code) ? res.address.country_code.toUpperCase() : '';
           if (Number.isFinite(lon) && Number.isFinite(lat) && window.setCommunityPoint) {
-            window.setCommunityPoint(lon, lat, res.display_name || '');
+            window.setCommunityPoint(lon, lat, res.display_name || '', country);
           }
           this.results = [];
           this.open = false;
-        }
+        },
       };
     }
   </script>
@@ -63,13 +48,7 @@
 
 {% block content %}
 <div class="mx-auto max-w-4xl px-4 mt-10 mb-12">
-  <div class="flex items-center justify-between mb-4">
-    <h1 class="text-2xl font-bold text-primary">{% trans "Add your community" %}</h1>
-    <a href="{% url 'communities:list' %}" class="btn">
-      <i class="fa fa-arrow-left mr-2"></i>
-      {% trans "Back to list" %}
-    </a>
-  </div>
+  <h1>{% trans "Add your community" %}</h1>
 
   <form method="post" enctype="multipart/form-data" class="space-y-6">
     {% csrf_token %}
@@ -107,7 +86,7 @@
       ">
         <i class="fa fa-crosshairs text-secondary"></i>
       </button>
-      <input type="text" name="location_name" id="id_location_name" value="{{ form.location_name.value|default_if_none:'' }}" class="community-field" @input.debounce="onInput($event.target.value)" autocomplete="off">
+      <input type="text" name="location_name" id="id_location_name" value="{{ form.location_name.value|default_if_none:'' }}" class="form-input" @input.debounce="onInput($event.target.value)" autocomplete="off">
       <div x-show.transition="open" @click.away="open = false" class="absolute z-20 inset-x-0 bg-secondary bg-opacity-80 shadow-lg text-xs py-3 rounded-b border-b border-l border-r">
         <ul class="list-none m-0">
           <template x-for="res in results" :key="res.place_id">
@@ -120,6 +99,7 @@
 
     <div class="hidden">
       {{ form.location }}
+      {{ form.country }}
     </div>
     <div class="rounded shadow overflow-hidden community-map-wrapper" style="height: 320px;">
       <div id="community-location-map" class="w-full h-full bg-secondary bg-opacity-40">
@@ -153,7 +133,7 @@
             {% for photo in community.photos.all %}
               <label class="block border rounded shadow-sm bg-white bg-opacity-70 p-2 cursor-pointer">
                 <img src="{{ photo.image.url }}" alt="" class="w-full h-28 object-cover rounded mb-2">
-                <span class="inline-flex items-center text-sm text-brown"><input type="checkbox" name="delete_photos" value="{{ photo.id }}" class="mr-2">{% trans "Delete" %}</span>
+                <span class="inline-flex items-center text-sm text-brown"><input type="checkbox" name="delete_photos" value="{{ photo.id }}" class="form-checkbox">{% trans "Delete" %}</span>
               </label>
             {% endfor %}
           </div>
@@ -237,7 +217,7 @@
       {% for error in form.video.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
     </div>
 
-    <button type="submit" class="btn btn-green inline-flex items-center">
+    <button type="submit" class="btn btn-green text-xl inline-flex items-center">
       <i class="fa fa-check mr-2"></i>
       {% trans "Save" %}
     </button>
@@ -251,32 +231,9 @@
   <script src="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.min.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      const style = document.createElement('style');
-      style.textContent = `
-        .ol-control.ol-zoom {
-          position: absolute !important;
-          inset: auto auto 1.1rem 1.1rem !important;
-          margin: 0 !important;
-          padding: 0 !important;
-          background: rgba(69, 41, 18, 0.5);
-          overflow: hidden;
-        }
-        .ol-control.ol-zoom button {
-          width: 2.3rem;
-          height: 2.3rem;
-          font-size: 1.4rem;
-          border-radius: 0;
-          background: rgba(218, 97, 55, 0.8);
-          color: #fcf3e5;
-          border: 1px solid #b4502c;
-        }
-        .ol-control.ol-zoom button:last-child { border-bottom: 0; }
-        .ol-control.ol-zoom button:hover { background: rgba(218, 97, 55, 1); }
-        .ol-control.ol-zoom button:focus { outline: none; }
-      `;
-      document.head.appendChild(style);
 
       const locationInput = document.getElementById('id_location');
+      const countryInput = document.getElementById('id_country');
       const nameInput = document.getElementById('id_location_name');
       const mapTarget = document.getElementById('community-location-map');
       if (!locationInput || !mapTarget) return;
@@ -359,59 +316,74 @@
       });
       setBaseLayer('ecobasa');
 
-      const setPoint = (lon, lat, { skipZoom = false, label = '' } = {}) => {
+      const setPoint = (lon, lat, { skipZoom = false, label = '', country = '' } = {}) => {
         const coords = ol.proj.fromLonLat([parseFloat(lon), parseFloat(lat)]);
         feature.setGeometry(new ol.geom.Point(coords));
 
         if (!skipZoom) {
-            map.getView().animate({ center: coords, zoom: 14 });
+          map.getView().animate({ center: coords, zoom: 14 });
         }
 
-        // Write back to Django's hidden field in WKT format
         locationInput.value = `POINT (${lon} ${lat})`;
 
-        // Only update the address text if a label was provided (from Nominatim)
         if (label) {
-            nameInput.value = label;
+          nameInput.value = label;
+        }
+        // Write country if provided; never blank it out (user may have typed custom location)
+        if (country && countryInput) {
+          countryInput.value = country;
         }
       };
 
-      window.setCommunityPoint = (lon, lat, label) => setPoint(lon, lat, { skipZoom: false, label });
+      window.setCommunityPoint = (lon, lat, label, country) =>
+        setPoint(lon, lat, { skipZoom: false, label, country: country || '' });
 
-      const rawValue = locationInput.value;
-      if (rawValue && rawValue.includes('POINT')) {
-        // Extract numbers from "POINT (lon lat)" or "SRID=4326;POINT (lon lat)"
-        const match = rawValue.match(/POINT\s*\(\s*(-?\d+\.?\d*)\s+(-?\d+\.?\d*)\s*\)/i);
-        if (match) {
-            const lon = parseFloat(match[1]);
-            const lat = parseFloat(match[2]);
-            // Small timeout to ensure map container has dimensions
-            setTimeout(() => {
-                setPoint(lon, lat, { skipZoom: false });
-                map.updateSize();
-            }, 80);
+      async function reverseGeocode(lon, lat) {
+        try {
+          const resp = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&addressdetails=1`);
+          return await resp.json();
+        } catch (e) { return null; }
+      }
+
+      function applyGeoToForm(geo) {
+        if (!geo || !geo.address) return;
+        if (geo.address.country_code && countryInput) {
+          countryInput.value = geo.address.country_code.toUpperCase();
+        }
+        // Build readable location name from most specific parts available
+        const place = geo.address.hamlet || geo.address.village || geo.address.town
+          || geo.address.city || geo.address.municipality || '';
+        const region = geo.address.state || geo.address.region || geo.address.county || '';
+        const country = geo.address.country || '';
+        const parts = [place, region, country].filter(Boolean);
+        if (parts.length && nameInput) {
+          nameInput.value = parts.slice(0, 3).join(', ');
         }
       }
 
-      map.on('click', (evt) => {
+      map.on('click', async (evt) => {
         const [lon, lat] = ol.proj.toLonLat(evt.coordinate);
         setPoint(lon, lat, { skipZoom: true });
+        applyGeoToForm(await reverseGeocode(lon, lat));
       });
 
       const modify = new ol.interaction.Modify({ source: vectorSource });
-      modify.on('modifyend', () => {
+      modify.on('modifyend', async () => {
         const geom = feature.getGeometry();
         if (!geom) return;
         const [lon, lat] = ol.proj.toLonLat(geom.getCoordinates());
         setPoint(lon, lat, { skipZoom: true });
+        applyGeoToForm(await reverseGeocode(lon, lat));
       });
       map.addInteraction(modify);
 
       // Locate User Helper
       window.locateUser = () => {
           if (!navigator.geolocation) return;
-          navigator.geolocation.getCurrentPosition((pos) => {
-              setPoint(pos.coords.longitude, pos.coords.latitude);
+          navigator.geolocation.getCurrentPosition(async (pos) => {
+              const { longitude: lon, latitude: lat } = pos.coords;
+              setPoint(lon, lat);
+              applyGeoToForm(await reverseGeocode(lon, lat));
           });
       };
 

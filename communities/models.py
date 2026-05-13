@@ -1,6 +1,7 @@
 from django.contrib.gis.db import models
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
+from django_countries.fields import CountryField
 
 from users.models import User
 
@@ -28,8 +29,8 @@ class Community(UniqueSlugMixin, models.Model):
     website = models.URLField(_('link of your communities website'), max_length=250,
         blank=True, null=True)
     telephone = models.CharField(_('telephone'),
-        max_length=255, 
-        blank=True, 
+        max_length=255,
+        blank=True,
         null=True)
     video = EmbedVideoField(
         verbose_name=_('Video'),
@@ -94,6 +95,8 @@ class Community(UniqueSlugMixin, models.Model):
         blank=True,
         choices=COMMUNITY_TYPE_CHOICES,
         default=COMMUNITY_TYPE_ECOVILLAGE)
+    country = CountryField(
+        _("Country"), null=True, blank=True)
     location_name = models.CharField(
         _("Location"), null=True, blank=True, max_length=255
     )

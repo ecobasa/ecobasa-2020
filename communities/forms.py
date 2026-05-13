@@ -40,14 +40,14 @@ class CommunityForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         for field in self.fields.values():
             css = field.widget.attrs.get("class", "")
-            field.widget.attrs["class"] = f"{css} community-field".strip()
+            field.widget.attrs["class"] = f"{css} form-input".strip()
         if "inhabitants" in self.fields:
             self.fields["inhabitants"].widget.attrs.setdefault(
                 "placeholder", _("e.g. 25")
             )
         if "gallery" in self.fields:
             css = self.fields["gallery"].widget.attrs.get("class", "")
-            self.fields["gallery"].widget.attrs["class"] = f"{css} community-field".strip()
+            self.fields["gallery"].widget.attrs["class"] = f"{css} form-input".strip()
 
     # inhabitants is an integer field on the model; no custom cleaning required.
 
@@ -63,6 +63,7 @@ class CommunityForm(forms.ModelForm):
             "status",
             "location_name",
             "location",
+            "country",
             "inhabitants",
             "children",
             "video",
@@ -79,6 +80,7 @@ class CommunityForm(forms.ModelForm):
         ]
         widgets = {
             "location": forms.HiddenInput(),
+            "country": forms.HiddenInput(),
             "has_workshop_space": forms.Textarea(attrs={"rows": 2}),
             "offers_seminars": forms.Textarea(attrs={"rows": 2}),
             "visitor_requirements": forms.Textarea(attrs={"rows": 3}),

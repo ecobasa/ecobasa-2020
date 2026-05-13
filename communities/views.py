@@ -7,7 +7,8 @@ from .models import Community
 from .models import CommunityPhoto
 from .forms import CommunityForm
 
-from django.contrib.gis.geos import Polygon
+from django.contrib.gis.geos import Polygon, Point
+from django.contrib.gis.db.models.functions import Distance
 from django.core.paginator import Paginator
 from django.http import JsonResponse
 from django.views.decorators.http import require_GET
@@ -15,15 +16,20 @@ from django.views.decorators.http import require_GET
 
 def index(request):
     """Map-first list of communities."""
-    # base queryset (used to derive country options)
+    from django_countries.fields import Country as DjangoCountry
     base_qs = Community.objects.all().prefetch_related("photos", "skills").order_by("name")
 
-    # compute available countries from location_name (last comma-separated part)
-    countries = sorted({
-        loc.split(',')[-1].strip()
-        for loc in base_qs.values_list('location_name', flat=True)
-        if loc
-    })
+    countries_raw = (
+        Community.objects
+        .filter(country__isnull=False)
+        .exclude(country='')
+        .values_list('country', flat=True)
+        .distinct()
+    )
+    countries = sorted(
+        [(str(c), DjangoCountry(str(c)).name) for c in countries_raw if c and DjangoCountry(str(c)).name],
+        key=lambda x: x[1]
+    )
 
     communities = base_qs
     q = (request.GET.get("q") or "").strip()
@@ -34,10 +40,10 @@ def index(request):
             | Q(location_name__icontains=q)
             | Q(skills__name__icontains=q)
         ).distinct()
-    # optional country filter
     country = (request.GET.get('country') or '').strip()
     if country:
-        communities = communities.filter(location_name__icontains=country)
+        communities = communities.filter(country=country)
+
 
 
     return render(
@@ -47,7 +53,6 @@ def index(request):
             "communities": communities,
             "q": q,
             "countries": countries,
-            "selected_country": country,
             "community_types": Community.COMMUNITY_TYPE_CHOICES,
             "community_statuses": Community.COMMUNITY_STATUS_CHOICES,
         },
@@ -82,7 +87,10 @@ def _collect_gallery_files(form, request):
 
 
 def create(request):
-    """Public community submission form."""
+    """Community submission form — login required."""
+    if not request.user.is_authenticated:
+        from django.contrib.auth.views import redirect_to_login
+        return redirect_to_login(request.get_full_path())
     if request.method == "POST":
         form = CommunityForm(request.POST, request.FILES)
         if form.is_valid():
@@ -163,6 +171,9 @@ def _base_qs(request):
             Q(location_name__icontains=q) |
             Q(skills__name__icontains=q)
         )
+    country = request.GET.get("country", "").strip()
+    if country:
+        qs = qs.filter(country=country)
     selected_types = request.GET.getlist("type")
     if selected_types:
         qs = qs.filter(type__in=selected_types)
@@ -209,6 +220,10 @@ def community_markers(request):
         except (ValueError, TypeError):
             pass  # ignore malformed bbox
 
+    country_param = request.GET.get("country", "").strip()
+    if country_param:
+        qs = qs.filter(country=country_param)
+
     features = []
     for c in qs[:500]:  # hard cap per request
         first_photo = c.hero_photos[0] if c.hero_photos else None
@@ -241,34 +256,51 @@ def community_markers(request):
 @require_GET
 def community_list_partial(request):
     """
-    HTML partial for the list modal, rendered server-side.
-    HTMX swaps this into #community-modal-list.
+    HTML partial for the list modal — HTMX swaps into #community-modal-list.
 
-    Query params:
-        q        search term   (optional)
-        country  country name  (optional)
-        page     page number   (default 1)
-
-    The response also includes an OOB swap for the result count badge.
+    Supports:
+        q         full-text search (name, description, location, skills)
+        country   ISO country code filter (exact, from CountryField)
+        type      community type filter (repeatable)
+        status    community status filter (repeatable)
+        location  lat,lon — when present, annotates with Distance and sorts
+                  by proximity. No hard radius cap; results are ordered
+                  nearest-first so the user naturally sees close ones first.
+        page      page number for infinite scroll (default 1)
     """
-    qs = _base_qs(request)
+    qs = _base_qs(request).prefetch_related("skills", "photos")
 
-    country = request.GET.get("country", "").strip()
-    if country:
-        qs = qs.filter(location_country=country)  # adjust field name
+    # ── Proximity sorting ─────────────────────────────────────────────
+    # When the user clicks "near me", the browser sends location=lat,lon.
+    # We annotate with PostGIS Distance and order by it so nearby
+    # communities float to the top without hiding distant ones entirely.
+    proximity_sort = False
+    location_param = request.GET.get("location", "").strip()
+    if location_param and ',' in location_param:
+        try:
+            lat_str, lon_str = location_param.split(',', 1)
+            user_point = Point(float(lon_str), float(lat_str), srid=4326)
+            qs = qs.annotate(
+                distance=Distance('location', user_point)
+            ).order_by('distance')
+            proximity_sort = True
+        except (ValueError, TypeError):
+            qs = qs.order_by('name')
+    else:
+        qs = qs.order_by('name')
 
-    paginator = Paginator(qs.prefetch_related("skills", "photos"), 20)
+    paginator = Paginator(qs, 20)
     page = paginator.get_page(request.GET.get("page", 1))
 
     return render(request, "communities/_community_list_modal.html", {
-        "communities": page,
-        "has_next":    page.has_next(),
-        "next_page":   page.next_page_number() if page.has_next() else None,
-        "total":       paginator.count,
-        "q":           request.GET.get("q", ""),
-        "country":     country,
+        "communities":    page,
+        "has_next":       page.has_next(),
+        "next_page":      page.next_page_number() if page.has_next() else None,
+        "total":          paginator.count,
+        "q":              request.GET.get("q", ""),
+        "country":        request.GET.get("country", ""),
+        "proximity_sort": proximity_sort,
     })
-
 
 @require_GET
 def community_suggest(request):
@@ -279,9 +311,7 @@ def community_suggest(request):
         q   partial search term (min 2 chars)
 
     Returns JSON list: [{value, type}]
-    where type is one of 'name' | 'location' | 'skill'.
-
-    Uses DISTINCT + LIMIT so it's fast without a search index.
+    where type is one of 'name' | 'location' | 'skill' | 'description' | 'vision'.
     """
     q = request.GET.get("q", "").strip()
     if len(q) < 2:
@@ -299,6 +329,10 @@ def community_suggest(request):
     for name in Community.objects.filter(name__icontains=q).values_list("name", flat=True)[:5]:
         add(name, "name")
 
+    # Description / vision — one entry if any community matches either field
+    if Community.objects.filter(Q(description__icontains=q) | Q(vision__icontains=q)).exists():
+        suggestions.append({"value": q, "type": "text"})
+
     # Locations (split on comma to surface city/country parts)
     for loc in Community.objects.filter(location_name__icontains=q).values_list("location_name", flat=True)[:10]:
         for part in (loc or "").split(","):
@@ -307,8 +341,7 @@ def community_suggest(request):
         if len(suggestions) >= 8:
             break
 
-    # Filter tags that are actually attached to a Community via the 'skills' manager
-
+    # Skills attached to a Community
     for skill in (
         Community.objects
         .filter(skills__name__icontains=q)
@@ -317,4 +350,4 @@ def community_suggest(request):
     ):
         add(skill, "skill")
 
-    return JsonResponse(suggestions[:10], safe=False)
+    return JsonResponse(suggestions[:12], safe=False)
