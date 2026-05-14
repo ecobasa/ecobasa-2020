@@ -14,6 +14,7 @@ from .forms import AdForm
 from .filters import AdFilter
 from .models import Ad
 from communities.models import Community
+from users.models import User
 
 
 def search(request):
@@ -125,6 +126,26 @@ def _skill_communities(request):
     return qs
 
 
+def _skill_users(request):
+    """
+    Users whose skills match ?q=, with a known location.
+    Suppressed when a type filter is active (skills aren't offers/wishes).
+    """
+    if request.GET.getlist("type"):
+        return User.objects.none()
+
+    qs = User.objects.filter(
+        location__isnull=False,
+        skills__isnull=False,
+    ).prefetch_related("skills").distinct()
+
+    q = request.GET.get("q", "").strip()
+    if q:
+        qs = qs.filter(skills__name__icontains=q)
+
+    return qs
+
+
 # ── Endpoints ────────────────────────────────────────────────────────
 
 @require_GET
@@ -190,6 +211,28 @@ def gifting_markers(request):
             },
         })
 
+    # ── User skill features ──────────────────────────────────────────
+    user_skill_qs = _apply_bbox(_skill_users(request), bbox_param)
+
+    for user in user_skill_qs[:200]:
+        skill_names = [s.name for s in user.skills.all()]
+        features.append({
+            "type": "Feature",
+            "geometry": {
+                "type":        "Point",
+                "coordinates": [user.location.x, user.location.y],
+            },
+            "properties": {
+                "source":       "user_skill",
+                "title":        ", ".join(skill_names[:3]),
+                "description":  user.about or "",
+                "image":        user.image.url if user.image else None,
+                "type_display": "User Skill",
+                "url":          user.get_absolute_url(),
+                "user_name":    user.name or user.email,
+            },
+        })
+
     return JsonResponse({"type": "FeatureCollection", "features": features})
 
 
@@ -220,12 +263,17 @@ def gifting_list_partial(request):
     page = paginator.get_page(page_num)
 
     skill_communities = []
+    skill_users = []
+
     if page_num == 1:
         skill_communities = list(_skill_communities(request)[:10])
+        skill_users = list(_skill_users
+        (request)[:10])
 
     return render(request, "gifting/_gifting_list_partial.html", {
         "ads":               page,
         "skill_communities": skill_communities,
+        "skill_users":       skill_users,
         "has_next":          page.has_next(),
         "next_page":         page.next_page_number() if page.has_next() else None,
         "total":             paginator.count,
@@ -264,6 +312,15 @@ def gifting_suggest(request):
     # Community skill names
     for skill in (
         Community.objects
+        .filter(skills__name__icontains=q)
+        .values_list("skills__name", flat=True)
+        .distinct()[:5]
+    ):
+        add(skill, "skill")
+
+    # User skill names
+    for skill in (
+        User.objects
         .filter(skills__name__icontains=q)
         .values_list("skills__name", flat=True)
         .distinct()[:5]

@@ -157,7 +157,7 @@
             </div>
             <input
               x-ref="searchInput"
-              class="form-input icon-input bg-secondary w-full"
+              class="form-input icon-input"
               type="text"
               placeholder="{% trans 'Name, location or skill…' %}"
               :value="$store.communityMap.q"
@@ -168,7 +168,7 @@
               @keydown.escape="close()"
               @blur="setTimeout(() => close(), 200)">
             <ul x-show="open" x-cloak
-              class="absolute z-30 w-full mt-1 bg-secondary rounded shadow-lg border text-sm">
+              class="absolute z-30 w-full mt-1 bg-secondary bg-opacity-85 rounded shadow-lg border text-sm">
               <template x-for="(item, i) in items" :key="i">
                 <li :class="i === active ? 'bg-primary text-secondary' : ''"
                   class="px-3 py-1 cursor-pointer flex items-center justify-between gap-2"
@@ -310,17 +310,20 @@
       </div>
 
       {% if user.is_authenticated %}
-      <a href="{% url 'communities:create' %}" class="btn shadow self-start text-sm">
-        <i class="fa fa-plus mr-1"></i> {% trans "Add community" %}
-      </a>
+        <a href="{% url 'communities:create' %}" class="btn shadow self-start text-sm">
+          <i class="fa fa-plus mr-1"></i> {% trans "Add community" %}
+        </a>
       {% endif %}
     </div>
 
-    {% comment %}Layer switcher — top right{% endcomment %}
+    {# ── Layer switcher – top-right ── #}
     <div class="absolute top-4 right-4 z-10" x-data="{ layerOpen: false }">
       <button type="button"
+        x-show="!layerOpen"
+        @mouseenter="layerOpen = !layerOpen"
         @click="layerOpen = !layerOpen"
-        class="w-14 h-14 rounded-md bg-primary bg-opacity-80 text-secondary shadow-lg border border-red backdrop-blur hover:bg-opacity-90 transition-colors">
+        class="w-14 h-14 rounded-md bg-primary bg-opacity-80 text-secondary shadow-lg border border-red backdrop-blur hover:bg-opacity-90 transition-colors"
+        aria-label="{% trans 'Switch map layer' %}">
         <i class="fa fa-layer-group"></i>
       </button>
       <div x-show="layerOpen" x-cloak @click.away="layerOpen = false"
@@ -328,14 +331,18 @@
         <div class="px-3 py-1 text-xs font-bold uppercase tracking-wider">{% trans "Map style" %}</div>
         <hr class="border-secondary opacity-20 my-1">
         <label class="flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-secondary hover:bg-opacity-10">
-          <input type="radio" name="community-map-layer"
+          <input
+            type="radio"
+            name="community-map-layer"
             class="light"
             :checked="$store.communityMap.layer === 'ecobasa'"
             @change="$store.communityMap.layer = 'ecobasa'; window._communityMapSetLayer('ecobasa'); layerOpen = false;">
-          <span class="text-sm">{% trans "Ecobasa" %}</span>
+          <span class="text-sm">{% trans "ecobasa" %}</span>
         </label>
         <label class="flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-secondary hover:bg-opacity-10">
-          <input type="radio" name="community-map-layer"
+          <input
+            type="radio"
+            name="community-map-layer"
             class="light"
             :checked="$store.communityMap.layer === 'osm'"
             @change="$store.communityMap.layer = 'osm'; window._communityMapSetLayer('osm'); layerOpen = false;">
@@ -625,8 +632,11 @@ function getDynamicStyle(feature) {
   const type = feature.get('type');
   let iconCode = '\uf015';
   let pinColor  = '#da6137';
-  if (type === 'Permaculture Farm')   { iconCode = '\uf06c'; pinColor = '#5A5527'; }
-  else if (type === 'Place for Projects') { iconCode = '\uf3c5'; pinColor = '#ff7800'; }
+  if (type === 'Permaculture Farm')   { iconCode = '\uf4d8'; pinColor = '#5A5527'; }
+  else if (type === 'Ecovillage') { iconCode = '\ue537'; pinColor = '#b4502c'; }
+  else if (type === 'Commune') { iconCode = '\ue3af'; pinColor = '#de7a08'; }
+  else if (type === 'Houseproject') { iconCode = '\ue3af'; pinColor = '#e34a26'; }
+  else if (type === 'Place for Projects') { iconCode = '\uf6e3'; pinColor = '#ff7800'; }
   return new ol.style.Style({
     image: new ol.style.Icon({
       img: createLayeredIcon(iconCode, pinColor), imgSize: [80, 80], anchor: [0.5, 0.85], scale: 0.7
@@ -673,15 +683,16 @@ function initCommunityMap() {
 
   communityVectorSource = new ol.source.Vector();
   communityLayers = {
-    watercolor: new ol.layer.Tile({ source: new ol.source.XYZ({ url: 'https://tiles.stadiamaps.com/tiles/stamen_watercolor/{z}/{x}/{y}.jpg?api_key=cb8069a3-9585-4989-a6a8-572b5c3f4ffb', crossOrigin: 'anonymous' }) }),
-    osm:        new ol.layer.Tile({ source: new ol.source.OSM(), visible: false }),
-    satellite:  new ol.layer.Tile({ source: new ol.source.XYZ({ url: 'https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', crossOrigin: 'anonymous' }), visible: false }),
-    markers:    new ol.layer.Vector({ source: communityVectorSource })
+    watercolor:  new ol.layer.Tile({ source: new ol.source.XYZ({ url: 'https://tiles.stadiamaps.com/tiles/stamen_watercolor/{z}/{x}/{y}.jpg?api_key=cb8069a3-9585-4989-a6a8-572b5c3f4ffb', crossOrigin: 'anonymous' }) }),
+    tonerLabels: new ol.layer.Tile({ source: new ol.source.XYZ({ url: 'https://tiles.stadiamaps.com/tiles/stamen_toner_lite/{z}/{x}/{y}.png?api_key=cb8069a3-9585-4989-a6a8-572b5c3f4ffb', crossOrigin: 'anonymous' }), opacity: 0.35 }),
+    osm:         new ol.layer.Tile({ source: new ol.source.OSM(), visible: false }),
+    satellite:   new ol.layer.Tile({ source: new ol.source.XYZ({ url: 'https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', crossOrigin: 'anonymous' }), visible: false }),
+    markers:     new ol.layer.Vector({ source: communityVectorSource })
   };
 
   communityOlMap = new ol.Map({
     target: 'community-map',
-    layers: [communityLayers.watercolor, communityLayers.osm, communityLayers.satellite, communityLayers.markers],
+    layers: [communityLayers.watercolor, communityLayers.tonerLabels, communityLayers.osm, communityLayers.satellite, communityLayers.markers],
     view: new ol.View({ center: ol.proj.fromLonLat([0, 20]), zoom: 2, maxZoom: 20 })
   });
 
@@ -697,6 +708,7 @@ function initCommunityMap() {
 
   window._communityMapSetLayer = function (mode) {
     communityLayers.watercolor.setVisible(mode === 'ecobasa');
+    communityLayers.tonerLabels.setVisible(mode === 'ecobasa');
     communityLayers.osm.setVisible(mode === 'osm');
     communityLayers.satellite.setVisible(mode === 'satellite');
     communityOlMap.renderSync();

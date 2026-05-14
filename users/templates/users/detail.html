@@ -1,5 +1,12 @@
 {% extends 'base.html' %}
-{% load i18n embed_video_tags %}
+{% load i18n embed_video_tags static %}
+
+{% block extrahead %}
+{{ block.super }}
+{% if user.location %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v7.2.2/ol.css">
+{% endif %}
+{% endblock %}
 
 {% block content %}
 <div class="mx-auto max-w-7xl mt-10 px-4 pb-10">
@@ -26,6 +33,23 @@
 			{% if request.user.is_authenticated and request.user.pk != user.pk %}
 				<a class="btn block mt-10" href="{% url 'postman:write' user.username %}"><i class="fa fa-envelope mr-2"></i>{% trans "Message" %}</a>
 			{% endif %}
+
+			{% if user.location or user.country %}
+			<div class="mt-8">
+				<h2>{% trans "Location" %}</h2>
+				{% if user.country and not user.location_name %}
+					<p><i class="fa fa-map-marker mr-1"></i>{{ user.country }}</p>
+				{% endif %}
+				{% if user.location_name %}
+					<p class="mb-2"><i class="fa fa-map-marker mr-1"></i>{{ user.location_name }}</p>
+				{% endif %}
+				<div class="rounded shadow overflow-hidden" style="height: 260px;">
+					<div id="user-profile-map" class="w-full h-full bg-secondary bg-opacity-40"
+						data-lon="{{ user.location.x }}" data-lat="{{ user.location.y }}"></div>
+				</div>
+			</div>
+			{% endif %}
+
 		</div>
 		<div class="sm:col-span-3">
 			<h2>{% trans "About me" %}</h2>
@@ -38,7 +62,7 @@
 				<h2>{% trans "Skills" %}</h2>
 				<div class="flex flex-wrap gap-2">
 					{% for tag in user.skills.all %}
-						<span class="inline-flex items-center bg-primary text-secondary px-3 py-1 rounded-full text-sm font-medium"><i class="fa fa-graduation-cap mr-1"></i>{{ tag.name }}</span>
+						<span class="inline-flex items-center bg-purple text-secondary px-3 py-1 rounded-full text-sm font-medium"><i class="fa fa-graduation-cap mr-1"></i>{{ tag.name }}</span>
 					{% endfor %}
 				</div>
 			{% endif %}
@@ -79,17 +103,78 @@
 
 {% block javascript %}
 {{ block.super }}
+{% if user.location %}
+<script src="https://cdn.jsdelivr.net/npm/ol@v7.2.2/dist/ol.js"></script>
+{% endif %}
 <script>
 document.addEventListener('DOMContentLoaded', () => {
+	// ── Profile image modal ──────────────────────────────────────────
 	const modal = document.getElementById('profile-image-modal');
-	if (!modal) return;
-	const openers = document.querySelectorAll('[data-profile-modal="open"]');
-	const closer = modal.querySelector('[data-profile-modal="close"]');
-	const closeModal = () => { modal.classList.add('hidden'); document.body.classList.remove('overflow-hidden'); };
-	const openModal = () => { modal.classList.remove('hidden'); modal.classList.add('flex'); document.body.classList.add('overflow-hidden'); };
-	openers.forEach(btn => btn.addEventListener('click', openModal));
-	if (closer) closer.addEventListener('click', closeModal);
-	modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+	if (modal) {
+		const openers = document.querySelectorAll('[data-profile-modal="open"]');
+		const closer = modal.querySelector('[data-profile-modal="close"]');
+		const closeModal = () => { modal.classList.add('hidden'); document.body.classList.remove('overflow-hidden'); };
+		const openModal = () => { modal.classList.remove('hidden'); modal.classList.add('flex'); document.body.classList.add('overflow-hidden'); };
+		openers.forEach(btn => btn.addEventListener('click', openModal));
+		if (closer) closer.addEventListener('click', closeModal);
+		modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+	}
+
+	// ── Location map (read-only) ─────────────────────────────────────
+	const mapEl = document.getElementById('user-profile-map');
+	if (!mapEl || !window.ol) return;
+
+	const lon = parseFloat(mapEl.dataset.lon);
+	const lat = parseFloat(mapEl.dataset.lat);
+	if (!Number.isFinite(lon) || !Number.isFinite(lat)) return;
+
+	function createLayeredIcon(badgeIcon, pinColor, badgeColor = '#fcf3e5') {
+		const canvas = document.createElement('canvas');
+		const ctx = canvas.getContext('2d');
+		const size = 80;
+		canvas.width = size; canvas.height = size;
+		ctx.fillStyle = pinColor;
+		ctx.font = '900 60px "Font Awesome 5 Free"';
+		ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+		ctx.fillText('', size / 2, size / 2);
+		ctx.fillStyle = badgeColor;
+		ctx.font = '600 22px "Font Awesome 5 Free"';
+		ctx.fillText(badgeIcon, size / 2, size / 2.5);
+		return canvas;
+	}
+
+	const coords = ol.proj.fromLonLat([lon, lat]);
+	const feature = new ol.Feature(new ol.geom.Point(coords));
+	feature.setStyle(new ol.style.Style({
+		image: new ol.style.Icon({
+			img: createLayeredIcon('', '#da6137'),
+			imgSize: [80, 80], anchor: [0.5, 0.85], scale: 0.7
+		})
+	}));
+
+	const vectorLayer = new ol.layer.Vector({
+		source: new ol.source.Vector({ features: [feature] })
+	});
+
+	const watercolor = new ol.layer.Tile({
+		source: new ol.source.XYZ({
+			url: 'https://tiles.stadiamaps.com/tiles/stamen_watercolor/{z}/{x}/{y}.jpg?api_key=cb8069a3-9585-4989-a6a8-572b5c3f4ffb',
+			crossOrigin: 'anonymous'
+		})
+	});
+	const tonerLabels = new ol.layer.Tile({
+		opacity: 0.35,
+		source: new ol.source.XYZ({
+			url: 'https://tiles.stadiamaps.com/tiles/stamen_toner_lite/{z}/{x}/{y}.png?api_key=cb8069a3-9585-4989-a6a8-572b5c3f4ffb',
+			crossOrigin: 'anonymous'
+		})
+	});
+
+	new ol.Map({
+		target: mapEl,
+		layers: [watercolor, tonerLabels, vectorLayer],
+		view: new ol.View({ center: coords, zoom: 10, maxZoom: 16 }),
+	});
 });
 </script>
 {% endblock javascript %}

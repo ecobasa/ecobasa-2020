@@ -87,7 +87,7 @@
         <i class="fa fa-crosshairs text-secondary"></i>
       </button>
       <input type="text" name="location_name" id="id_location_name" value="{{ form.location_name.value|default_if_none:'' }}" class="form-input" @input.debounce="onInput($event.target.value)" autocomplete="off">
-      <div x-show.transition="open" @click.away="open = false" class="absolute z-20 inset-x-0 bg-secondary bg-opacity-80 shadow-lg text-xs py-3 rounded-b border-b border-l border-r">
+      <div x-show="open" x-cloak @click.outside="open = false" class="absolute z-20 inset-x-0 bg-secondary bg-opacity-80 shadow-lg text-xs py-3 rounded-b border-b border-l border-r">
         <ul class="list-none m-0">
           <template x-for="res in results" :key="res.place_id">
             <li class="m-0"><a @click.prevent="onSelect(res)" href="#" class="block px-2 py-2 text-brown hover:bg-primary hover:text-secondary" x-text="res.display_name"></a></li>
@@ -97,16 +97,20 @@
       {% for error in form.location_name.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
     </div>
 
-    <div class="hidden">
-      {{ form.location }}
-      {{ form.country }}
-    </div>
+    {{ form.location }}
     <div class="rounded shadow overflow-hidden community-map-wrapper" style="height: 320px;">
       <div id="community-location-map" class="w-full h-full bg-secondary bg-opacity-40">
       </div>
     </div>
     <p class="text-xs text-brown">{% trans "Click or drag the pin to set your exact location." %}</p>
     {% for error in form.location.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+
+    <div>
+      <label class="form-label" for="id_country">{{ form.country.label }}</label>
+      {{ form.country }}
+      <p class="text-xs text-brown">{% trans "Auto-filled when you pick a location — you can also set it manually." %}</p>
+      {% for error in form.country.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+    </div>
 
 
     <div>
@@ -221,12 +225,12 @@
 
   <div class="flex justify-between gap-4 mt-12">
     <div class="flex gap-4">
-      <button type="submit" form="community-main-form" class="btn btn-lg btn-green inline-flex items-center">
+      <button type="submit" form="community-main-form" class="btn btn-lg btn-primary inline-flex items-center">
         <i class="fa fa-check mr-2"></i>
         {% trans "Save" %}
       </button>
       <a href="{% if community %}{{ community.get_absolute_url }}{% else %}{% url 'communities:list' %}{% endif %}"
-        class="btn btn-lg btn-yellow inline-flex items-center">
+        class="btn btn-lg btn-purple inline-flex items-center">
         <i class="fa fa-times mr-2"></i>
         {% trans "Cancel" %}
       </a>
@@ -235,11 +239,11 @@
     <form method="post" action="{% url 'communities:delete' community.slug %}"
       x-data="{ confirm: false }"
       @submit.prevent="confirm ? $el.submit() : (confirm = true)"
-      @click.away="confirm = false">
+      @click.outside="confirm = false">
       {% csrf_token %}
       <button type="submit" class="btn btn-lg btn-red inline-flex items-center">
         <i class="fa fa-trash mr-2"></i>
-        <span x-text="confirm ? '{% trans "Confirm?" %}' : '{% trans "Delete" %}'"></span>
+        <span x-text="confirm ? '{% trans "Sure?" %}' : '{% trans "Delete" %}'"></span>
       </button>
     </form>
     {% endif %}
@@ -264,16 +268,44 @@
       const feature = new ol.Feature();
       vectorSource.addFeature(feature);
 
-      const markerStyle = new ol.style.Style({
-        image: new ol.style.Icon({
-          src: '{% static "map/images/marker-icon.png" %}',
-          anchor: [0.5, 1]
-        })
-      });
+      function createLayeredIcon(badgeIcon, pinColor, badgeColor = '#fcf3e5') {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        const size = 80;
+        canvas.width = size; canvas.height = size;
+        ctx.fillStyle = pinColor;
+        ctx.font = '900 60px "Font Awesome 5 Free"';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText('', size / 2, size / 2);
+        ctx.fillStyle = badgeColor;
+        ctx.font = '900 22px "Font Awesome 5 Free"';
+        ctx.fillText(badgeIcon, size / 2, size / 2.5);
+        return canvas;
+      }
+
+      const TYPE_ICONS = {
+        e: { icon: '\ue537', color: '#b4502c' },  // ecovillage → fa-people-roof, third
+        c: { icon: '\ue3af', color: '#de7a08' },  // commune → fa-house-chimney, yellow
+        h: { icon: '\ue3af', color: '#e34a26' },  // houseproject → fa-house-chimney, red
+        f: { icon: '\uf4d8', color: '#5A5527' },  // permaculture farm → fa-seedling, green
+        p: { icon: '\uf6e3', color: '#ff7800' },  // place for projects → fa-hammer, orange
+      };
+
+      function buildTypeMarkerStyle() {
+        const sel = document.getElementById('id_type');
+        const val = sel ? sel.value : 'e';
+        const { icon, color } = TYPE_ICONS[val] || { icon: '', color: '#da6137' };
+        return new ol.style.Style({
+          image: new ol.style.Icon({
+            img: createLayeredIcon(icon, color),
+            imgSize: [80, 80], anchor: [0.5, 0.85], scale: 0.7
+          })
+        });
+      }
 
       const vectorLayer = new ol.layer.Vector({
         source: vectorSource,
-        style: markerStyle
+        style: buildTypeMarkerStyle()
       });
 
       const stamenWatercolor = new ol.layer.Tile({
@@ -451,6 +483,14 @@
       layerMenu.addEventListener('mouseleave', hideMenu);
       document.addEventListener('click', (e) => { if (!layerWrap.contains(e.target)) hideMenu(); });
       layerRadios().forEach(r => { r.addEventListener('change', (e) => { if (e.target.checked) setBaseLayer(e.target.value); }); });
+
+      // Update marker icon when community type changes
+      const typeSelect = document.getElementById('id_type');
+      if (typeSelect) {
+        typeSelect.addEventListener('change', () => {
+          vectorLayer.setStyle(buildTypeMarkerStyle());
+        });
+      }
 
       // Tagify for skills (chip-style tags)
       const skillsInput = document.getElementById('id_skills');

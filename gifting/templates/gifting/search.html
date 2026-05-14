@@ -196,23 +196,23 @@
                  window._fmReloadMarkers && window._fmReloadMarkers();
                ">
           {% for t in f.form.type %}
-            <label class="inline-flex items-center gap-2 cursor-pointer">
+            <label class="inline-flex text-primary items-center gap-2 cursor-pointer">
               <input type="checkbox" name="{{ t.data.name }}" value="{{ t.data.value }}"
-                {% if t.data.selected %}checked{% endif %} class="form-checkbox h-5 w-5">
+                {% if t.data.selected %}checked{% endif %} class="form-checkbox dark h-5 w-5">
               <span>{{ t.choice_label }}</span>
             </label>
           {% endfor %}
           {% for t in f.form.categories %}
-            <label class="inline-flex items-center gap-2 cursor-pointer">
+            <label class="inline-flex text-primary items-center gap-2 cursor-pointer">
               <input type="checkbox" name="{{ t.data.name }}" value="{{ t.data.value }}"
-                {% if t.data.selected %}checked{% endif %} class="form-checkbox h-5 w-5">
+                {% if t.data.selected %}checked{% endif %} class="form-checkbox dark h-5 w-5">
               <span>{{ t.choice_label }}</span>
             </label>
           {% endfor %}
           {% if user.is_authenticated %}
-            <label class="inline-flex items-center gap-2 cursor-pointer">
+            <label class="inline-flex text-primary items-center gap-2 cursor-pointer">
               <input type="checkbox" name="{{ f.form.from_me.name }}" value="on"
-                {% if f.form.from_me.data %}checked{% endif %} class="form-checkbox h-5 w-5">
+                {% if f.form.from_me.data %}checked{% endif %} class="form-checkbox dark h-5 w-5">
               <span>{{ f.form.from_me.label }}</span>
             </label>
           {% endif %}
@@ -286,7 +286,7 @@
         </div>
 
         <div class="flex items-center justify-between">
-          <span class="text-sm text-brown" x-text="$store.fm.markerCount + ' {% trans "on map" %}'"></span>
+          <span class="text-sm text-brown" x-text="$store.fm.markerCount + ' {% trans "results on map" %}'"></span>
           <button type="button" class="btn"
             @click="window._fmReloadMarkers && window._fmReloadMarkers()">
             <i class="fa fa-search mr-1"></i> {% trans "Search" %}
@@ -294,12 +294,14 @@
         </div>
       </div>
 
-      <a href="{% url 'gifting:create' %}" class="btn shadow self-start">
-        <i class="fa fa-plus mr-1"></i> {% trans "Add your Wish or Offer" %}
-      </a>
+      {% if user.is_authenticated %}
+        <a href="{% url 'gifting:create' %}" class="btn shadow self-start">
+          <i class="fa fa-plus mr-1"></i> {% trans "Add your Wish or Offer" %}
+        </a>
+      {% endif %}
     </div>
 
-    {# ── Layer switcher (top-right) ── #}
+    {# ── Layer switcher – top-right ── #}
     <div class="absolute top-4 right-4 z-10"
       @mouseleave="$store.fm.layerMenuOpen = false">
 
@@ -309,26 +311,39 @@
         @click="$store.fm.layerMenuOpen = true"
         class="flex items-center justify-center w-14 h-14 rounded-md bg-primary bg-opacity-80 text-secondary shadow-lg border backdrop-blur border-red"
         aria-label="{% trans 'Switch map layer' %}">
-        <i class="fa fa-layer-group text-xl"></i>
+        <i class="fa fa-layer-group"></i>
       </button>
 
       <div x-show="$store.fm.layerMenuOpen" x-cloak
         class="w-48 bg-primary text-secondary bg-opacity-80 backdrop-blur rounded-lg shadow-xl border py-2 border-red">
-        <div class="px-3 pb-1 text-xs font-semibold uppercase">{% trans "Map style" %}</div>
+        <div class="px-3 pb-1 text-xs font-semibold uppercase tracking-wider">{% trans "Map style" %}</div>
+        <hr class="border-secondary opacity-20 my-1">
         <label class="flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-secondary hover:bg-opacity-10">
-          <input type="radio" name="map-layer" :checked="$store.fm.layer === 'ecobasa'"
-                  @change="$store.fm.layer = 'ecobasa'; window._fmSetLayer('ecobasa'); $store.fm.layerMenuOpen;">
-          <span class="text-sm">{% trans "Ecobasa" %}</span>
+          <input
+            type="radio"
+            name="map-layer"
+            class="light"
+            :checked="$store.fm.layer === 'ecobasa'"
+            @change="$store.fm.layer = 'ecobasa'; window._fmSetLayer('ecobasa'); $store.fm.layerMenuOpen;">
+          <span class="text-sm">{% trans "ecobasa" %}</span>
         </label>
 
         <label class="flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-secondary hover:bg-opacity-10">
-          <input type="radio" name="map-layer" :checked="$store.fm.layer === 'osm'"
+          <input
+            type="radio"
+            name="map-layer"
+            class="light"
+            :checked="$store.fm.layer === 'osm'"
             @change="$store.fm.layer = 'osm'; window._fmSetLayer('osm'); $store.fm.layerMenuOpen;">
           <span class="text-sm">{% trans "OpenStreetMap" %}</span>
         </label>
 
         <label class="flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-secondary hover:bg-opacity-10">
-          <input type="radio" name="map-layer" :checked="$store.fm.layer === 'satellite'"
+          <input
+            type="radio"
+            name="map-layer"
+            class="light"
+            :checked="$store.fm.layer === 'satellite'"
             @change="$store.fm.layer = 'satellite'; window._fmSetLayer('satellite'); $store.fm.layerMenuOpen;">
           <span class="text-sm">{% trans "Satellite" %}</span>
         </label>
@@ -512,15 +527,17 @@
 
     // Determine which icon and color to use based on the source
     if (source === 'skill') {
-      // Skills get the Graduation Cap
-      iconCode = '\uf19d';
+      iconCode = '\uf19d'; // graduation-cap \u2014
+      color = '#80143b';
+    } else if (source === 'user_skill') {
+      iconCode = '\uf19d'; // graduation-cap \u2014
       color = '#80143b';
     } else if (source === 'ad') {
       if (type_display.includes('offer')) {
         iconCode = '\uf06b'; // Gift
       } else if (type_display.includes('wish')) {
         iconCode = '\uf004'; // Heart
-        color = '#5A5527';
+        color = '#de7a08';
       } else {
         iconCode = '\uf3c5'; // Plain marker if unknown
       }
@@ -586,17 +603,21 @@
   }
 
   function buildPopupHTML(props) {
-    const isSkill = props.source === 'skill';
+    const isSkill = props.source === 'skill' || props.source === 'user_skill';
     let html = '';
 
     let badgeHtml = '';
     const typeDisplay = (props.type_display || "").toLowerCase();
 
     if (props.source === 'skill') {
-        // Skill Badge (Purple)
         badgeHtml += `
             <span class="pill bg-purple text-secondary">
                 <i class="fa fa-graduation-cap mr-1"></i>${typeDisplay || 'Skill'}
+            </span>`;
+    } else if (props.source === 'user_skill') {
+        badgeHtml += `
+            <span class="pill bg-purple text-secondary">
+                <i class="fa fa-graduation-cap mr-1"></i>{% trans "skill / teaching" %}
             </span>`;
     } else if (props.source === 'ad') {
         if (typeDisplay.includes('offer')) {
@@ -606,9 +627,9 @@
                     <i class="fa fa-gift mr-1"></i>${typeDisplay}
                 </span>`;
         } else if (typeDisplay.includes('wish')) {
-            // Wish Badge (Reddish or your choice)
+            // Wish Badge (yellow)
             badgeHtml += `
-                <span class="pill bg-green text-secondary">
+                <span class="pill bg-yellow text-secondary">
                     <i class="fa fa-heart mr-1"></i>${typeDisplay}
                 </span>`;
         } else {
@@ -638,11 +659,16 @@
     if (desc) html += `<div class="text-sm text-brown mt-2">${desc}</div>`;
 
     // Community link for skills
-    if (isSkill && props.community_name && props.url) {
+    if (props.source === 'skill' && props.community_name && props.url) {
       html += `<div class="text-xs text-brown mt-1"><i class="fa fa-home mr-1"></i>${props.community_name}</div>`;
     }
 
-    if (props.url) html += `<a class="text-primary underline" href="${props.url}">{% trans "Open" %}</a>`;
+    // User name for user skill markers
+    if (props.source === 'user_skill' && props.user_name) {
+      html += `<div class="text-xs mt-1"><i class="fa fa-user mr-1"></i>${props.user_name}</div>`;
+    }
+
+    if (props.url) html += `<a class="text-primary underline" href="${props.url}">{% trans "Open profile" %}</a>`;
     return html;
   }
 

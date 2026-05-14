@@ -80,7 +80,6 @@ class CommunityForm(forms.ModelForm):
         ]
         widgets = {
             "location": forms.HiddenInput(),
-            "country": forms.HiddenInput(),
             "has_workshop_space": forms.Textarea(attrs={"rows": 2}),
             "offers_seminars": forms.Textarea(attrs={"rows": 2}),
             "visitor_requirements": forms.Textarea(attrs={"rows": 3}),

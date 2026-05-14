@@ -22,7 +22,7 @@
       {% endif %}
     </h1>
   </div>
-  
+
   {% comment %} form {% endcomment %}
   <form enctype="multipart/form-data" method="post" class="w-full my-10 form-control-w-full">
     {% csrf_token %}
@@ -38,7 +38,7 @@
     </div>
   </form>
 
-  
+
 </div>
 {% endblock content %}
 
@@ -46,37 +46,6 @@
   {{ block.super }}
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      const style = document.createElement('style');
-      style.textContent = `
-        .ol-control.ol-zoom {
-          position: absolute !important;
-          inset: auto auto 1.1rem 1.1rem !important;
-          margin: 0 !important;
-          padding: 0 !important;
-          background: rgba(69, 41, 18, 0.5);
-          overflow: hidden;
-        }
-        .ol-control.ol-zoom button {
-          width: 2.3rem;
-          height: 2.3rem;
-          font-size: 1.4rem;
-          border-radius: 0;
-          background: transparent;
-          color: #fcf3e5;
-          border: none;
-        }
-        .ol-control.ol-zoom button:last-child {
-          border-bottom: 0;
-        }
-        .ol-control.ol-zoom button:hover {
-          background: rgba(218, 97, 55, 0.95);
-        }
-        .ol-control.ol-zoom button:focus {
-          outline: none;
-        }
-      `;
-      document.head.appendChild(style);
-
       const mapWidget = window.geodjango_location || window.geodjango_id_location; // injected by Django OSMWidget
       const valueInput = document.getElementById('id_location');
       const nameInput = document.getElementById('id_location_name');
@@ -109,7 +78,6 @@
         source: new ol.source.XYZ({
           url: 'https://mt{0-3}.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}',
           attributions: '&copy; Google',
-          maxZoom: 20,
           crossOrigin: 'anonymous'
         })
       });
@@ -217,15 +185,54 @@
       });
       setBaseLayer('ecobasa');
 
-      // Custom marker icon style
-      const markerStyle = new ol.style.Style({
-        image: new ol.style.Icon({
-          src: '{% static "map/images/marker-icon.png" %}',
-          anchor: [0.5, 1]
-        })
-      });
-      if (mapWidget.featureOverlay && mapWidget.featureOverlay.setStyle) {
-        mapWidget.featureOverlay.setStyle(markerStyle);
+      // Canvas FA icon marker
+      function createLayeredIcon(badgeIcon, pinColor, badgeColor = '#fcf3e5') {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        const size = 80;
+        canvas.width = size;
+        canvas.height = size;
+        ctx.fillStyle = pinColor;
+        ctx.font = '900 60px "Font Awesome 5 Free"';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('', size / 2, size / 2);
+        ctx.fillStyle = badgeColor;
+        ctx.font = '600 25px "Font Awesome 5 Free"';
+        ctx.fillText(badgeIcon, size / 2, size / 2.5);
+        return canvas;
+      }
+
+      function getAdType() {
+        const sel = document.getElementById('id_type');
+        return sel ? sel.value : 'offer';
+      }
+
+      function buildMarkerStyle(adType) {
+        const isWish = adType === 'wish';
+        const pinColor = isWish ? '#5A5527' : '#da6137';
+        const icon     = isWish ? '' : ''; // heart : gift
+        return new ol.style.Style({
+          image: new ol.style.Icon({
+            img: createLayeredIcon(icon, pinColor),
+            imgSize: [80, 80],
+            anchor: [0.5, 0.85],
+            scale: 0.7
+          })
+        });
+      }
+
+      const applyMarkerStyle = () => {
+        if (mapWidget.featureOverlay && mapWidget.featureOverlay.setStyle) {
+          mapWidget.featureOverlay.setStyle(buildMarkerStyle(getAdType()));
+        }
+      };
+
+      applyMarkerStyle();
+
+      const typeSelect = document.getElementById('id_type');
+      if (typeSelect) {
+        typeSelect.addEventListener('change', applyMarkerStyle);
       }
 
       const debounce = (fn, delay = 500) => {

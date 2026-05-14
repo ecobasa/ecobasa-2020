@@ -1,9 +1,10 @@
-from django.db import models
+from django.contrib.gis.db import models
 from django.core.mail import send_mail
 from django.urls import reverse
 from django.utils.text import slugify
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.utils.translation import gettext_lazy as _
+from django_countries.fields import CountryField
 from taggit.managers import TaggableManager
 
 
@@ -67,6 +68,9 @@ class User(AbstractUser):
     about = models.TextField(_('About you'),  blank=True, null=True)
     # simple skill tags for quick matching and display (requires django-taggit)
     skills = TaggableManager(blank=True)
+    country = CountryField(_("Country"), null=True, blank=True)
+    location_name = models.CharField(_("Location"), null=True, blank=True, max_length=255)
+    location = models.PointField(_("Geo Location"), null=True, blank=True, geography=True)
     ecobasa_what = models.TextField(_('What would you like to use ecobasa mainly for?'), blank=True, null=True)
     world = models.TextField(_('What do you do to make the world a better place?'), blank=True, null=True)
 

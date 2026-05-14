@@ -46,7 +46,10 @@ class RegisterForm(forms.ModelForm):
 
     class Meta:
         model = User
-        fields = ["name", "email", "image"]
+        fields = ["name", "email", "image", "location_name", "location", "country"]
+        widgets = {
+            "location": forms.HiddenInput(),
+        }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -95,7 +98,11 @@ class ProfileUpdateForm(forms.ModelForm):
 
     class Meta:
         model = User
-        fields = ["name", "image", "about", "world", "ecobasa_what", "skills"]
+        fields = ["name", "image", "about", "world", "ecobasa_what", "skills",
+                  "location_name", "location", "country"]
+        widgets = {
+            "location": forms.HiddenInput(),
+        }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -105,23 +112,18 @@ class ProfileUpdateForm(forms.ModelForm):
         if instance is not None:
             skills_initial = ', '.join([t.name for t in instance.skills.all()])
             self.fields['skills'].initial = skills_initial
-            # also set form initial and widget value to avoid accidental queryset reprs
             self.initial['skills'] = skills_initial
             self.fields['skills'].widget.attrs.update({'value': skills_initial})
-        # Apply Tailwind-ish classes to widgets so the form matches site styling
         text_input_class = "block w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
         textarea_class = "block w-full rounded-md border border-gray-300 px-3 py-2 text-sm h-32"
-        # Single-line inputs
-        for fname in ('name', 'skills'):
+        for fname in ('name', 'skills', 'location_name'):
             if fname in self.fields:
                 self.fields[fname].widget.attrs.update({'class': text_input_class})
-        # Textareas
         for fname in ('about', 'world', 'ecobasa_what'):
             if fname in self.fields:
                 self.fields[fname].widget.attrs.update({'class': textarea_class})
         self.helper = FormHelper()
         self.helper.form_tag = False
-        # Use a simple stacked layout (no fieldset wrappers) so styling matches other forms
         self.helper.layout = Layout(
             Field("name"),
             Field("image"),

@@ -113,13 +113,13 @@
           </div>
         {% endif %}
       </a>
-      <a href="{{ ad.owner.get_absolute_url }}" class="font-semibold text-primary hover:underline">
+      <a href="{{ ad.owner.get_absolute_url }}" class="font-serif text-primary">
         {% if ad.owner.name %}{{ ad.owner.name }}
         {% elif ad.owner.get_full_name %}{{ ad.owner.get_full_name }}
         {% else %}{{ ad.owner.username }}{% endif %}
       </a>
       {% if ad.owner.location_name %}
-        <div class="text-sm text-secondary">{{ ad.owner.location_name }}</div>
+        <div class="text-sm"><i class="fa fa-map-marker mr-2"></i>{{ ad.owner.location_name }}</div>
       {% endif %}
       <div>
         {% if request.user.is_authenticated %}

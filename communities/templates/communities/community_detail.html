@@ -50,7 +50,7 @@
 {% endif %}
 <div class="mx-auto max-w-7xl mt-10 px-4 pb-10 relative">
 	{% if request.user.is_authenticated and request.user.is_staff or request.user.is_authenticated and community.owner and request.user == community.owner %}
-		<a class="btn btn-lg btn-green absolute right-4 top-10 bg-opacity-70" href="{% url 'communities:update' slug=community.slug %}"><i class="fa fa-edit mr-2"></i>{% trans "Edit" %}</a>
+		<a class="btn btn-lg btn-primary absolute right-4 top-0 bg-opacity-70" href="{% url 'communities:update' slug=community.slug %}"><i class="fa fa-edit mr-2"></i>{% trans "Edit" %}</a>
 	{% endif %}
 <div class="grid grid-cols-1 sm:grid-cols-12 gap-6">
 	<!-- Main content: description, vision, skills, accommodation summary (appears first on mobile) -->
