@@ -121,6 +121,17 @@ def create(request):
         {"form": form},
     )
 
+def delete(request, slug):
+    community = get_object_or_404(Community, slug=slug)
+    if not request.user.is_authenticated or (community.owner and request.user != community.owner and not request.user.is_staff):
+        return redirect(community.get_absolute_url())
+    if request.method == "POST":
+        community.delete()
+        messages.success(request, _("Community deleted."))
+        return redirect("communities:list")
+    return redirect(community.get_absolute_url())
+
+
 def update(request, slug):
     community = get_object_or_404(Community, slug=slug)
     if not request.user.is_authenticated or (community.owner and request.user != community.owner and not request.user.is_staff):

@@ -48,9 +48,9 @@
 
 {% block content %}
 <div class="mx-auto max-w-4xl px-4 mt-10 mb-12">
-  <h1>{% trans "Add your community" %}</h1>
+  <h1>{% if community %}{% blocktrans with name=community.name %}Edit {{ name }}{% endblocktrans %}{% else %}{% trans "Add your community" %}{% endif %}</h1>
 
-  <form method="post" enctype="multipart/form-data" class="space-y-6">
+  <form id="community-main-form" method="post" enctype="multipart/form-data" class="space-y-6">
     {% csrf_token %}
     {% if form.non_field_errors %}
       <div class="p-3 rounded bg-red-100 text-red-800 text-sm">
@@ -217,11 +217,33 @@
       {% for error in form.video.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
     </div>
 
-    <button type="submit" class="btn btn-green text-xl inline-flex items-center">
-      <i class="fa fa-check mr-2"></i>
-      {% trans "Save" %}
-    </button>
   </form>
+
+  <div class="flex justify-between gap-4 mt-12">
+    <div class="flex gap-4">
+      <button type="submit" form="community-main-form" class="btn btn-lg btn-green inline-flex items-center">
+        <i class="fa fa-check mr-2"></i>
+        {% trans "Save" %}
+      </button>
+      <a href="{% if community %}{{ community.get_absolute_url }}{% else %}{% url 'communities:list' %}{% endif %}"
+        class="btn btn-lg btn-yellow inline-flex items-center">
+        <i class="fa fa-times mr-2"></i>
+        {% trans "Cancel" %}
+      </a>
+    </div>
+    {% if community and user.is_authenticated %}
+    <form method="post" action="{% url 'communities:delete' community.slug %}"
+      x-data="{ confirm: false }"
+      @submit.prevent="confirm ? $el.submit() : (confirm = true)"
+      @click.away="confirm = false">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-lg btn-red inline-flex items-center">
+        <i class="fa fa-trash mr-2"></i>
+        <span x-text="confirm ? '{% trans "Confirm?" %}' : '{% trans "Delete" %}'"></span>
+      </button>
+    </form>
+    {% endif %}
+  </div>
 </div>
 {% endblock %}
 
@@ -350,14 +372,15 @@
         if (geo.address.country_code && countryInput) {
           countryInput.value = geo.address.country_code.toUpperCase();
         }
-        // Build readable location name from most specific parts available
-        const place = geo.address.hamlet || geo.address.village || geo.address.town
-          || geo.address.city || geo.address.municipality || '';
-        const region = geo.address.state || geo.address.region || geo.address.county || '';
-        const country = geo.address.country || '';
-        const parts = [place, region, country].filter(Boolean);
+        const a = geo.address;
+        const road    = [a.road, a.house_number].filter(Boolean).join(' ');
+        const postal  = a.postcode || '';
+        const city    = a.city || a.town || a.village || a.hamlet || a.municipality || '';
+        const state   = a.state || a.region || a.county || '';
+        const country = a.country || '';
+        const parts   = [road, [postal, city].filter(Boolean).join(' '), state, country].filter(Boolean);
         if (parts.length && nameInput) {
-          nameInput.value = parts.slice(0, 3).join(', ');
+          nameInput.value = parts.join(', ');
         }
       }
 
@@ -376,6 +399,13 @@
         applyGeoToForm(await reverseGeocode(lon, lat));
       });
       map.addInteraction(modify);
+
+      // Pre-populate map from existing location (edit mode)
+      const existingWkt = locationInput.value.trim();
+      if (existingWkt) {
+        const m = existingWkt.match(/POINT\s*\(\s*([\d.\-]+)\s+([\d.\-]+)\s*\)/i);
+        if (m) setPoint(parseFloat(m[1]), parseFloat(m[2]));
+      }
 
       // Locate User Helper
       window.locateUser = () => {

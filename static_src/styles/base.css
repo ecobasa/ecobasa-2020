@@ -112,6 +112,9 @@ nav {
  	&-green {
  		@apply bg-green bg-opacity-75 border-green;
  	}
+	&-lg {
+		@apply py-4 px-10 text-2xl;
+	}
 }
 
 .btn-pill-select {

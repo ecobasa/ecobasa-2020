@@ -50,7 +50,7 @@
 {% endif %}
 <div class="mx-auto max-w-7xl mt-10 px-4 pb-10 relative">
 	{% if request.user.is_authenticated and request.user.is_staff or request.user.is_authenticated and community.owner and request.user == community.owner %}
-		<a class="btn btn-green absolute right-4 -top-10 bg-opacity-70" href="{% url 'communities:update' slug=community.slug %}"><i class="fa fa-edit mr-2"></i>{% trans "Edit" %}</a>
+		<a class="btn btn-lg btn-green absolute right-4 top-10 bg-opacity-70" href="{% url 'communities:update' slug=community.slug %}"><i class="fa fa-edit mr-2"></i>{% trans "Edit" %}</a>
 	{% endif %}
 <div class="grid grid-cols-1 sm:grid-cols-12 gap-6">
 	<!-- Main content: description, vision, skills, accommodation summary (appears first on mobile) -->
@@ -110,7 +110,7 @@
 
 			<!-- Accommodation (mobile: after stats; desktop: second in sidebar) -->
 			<div class="order-2 sm:order-2">
-				<h3 class="mt-0">{% trans "Accomodation for guests" %}</h3>
+				<h2 class="mt-0">{% trans "Accomodation for guests" %}</h2>
 				<p>{{ community.accomodation }}</p>
 			</div>
 
@@ -173,7 +173,7 @@
 			<!-- Address / Location name + OpenLayers map -->
 			<div class="order-4 sm:order-4">
 				{% if community.location %}
-				<h3>{% trans "Location" %}</h3>
+				<h2>{% trans "Location" %}</h2>
 					{% with lat=community.location.y lon=community.location.x %}
 						<p class="text-sm"><i class="fa fa-map-marker mr-1"></i>{{ community.location_name }}</p>
 						<div class="relative mt-2">
@@ -228,12 +228,14 @@
 			<!-- Ambassador / owner -->
 			<div class="order-11 sm:order-8 text-center">
 				{% if community.owner %}
-					<h3>{% trans "Gift-economy Ambassador" %}</h3>
+					<h2>{% trans "Gift-economy Ambassador" %}</h2>
 					<a href="{{ community.owner.get_absolute_url }}">
 						{% if community.owner.image %}
 							<img src="{{ community.owner.image.url }}" class="rounded-full h-20 w-20 mx-auto mb-2 object-cover" alt="{{ community.owner.name }}">
+						{% else %}
+			        <i class="fa fa-user text-6xl text-primary rounded-full border border-dashed border-primary p-10 mt-15"></i>
 						{% endif %}
-						<div class="font-serif font-bold">{{ community.owner.name }}</div>
+						<div class="font-serif font-bold text-xl">{{ community.owner.name }}</div>
 					</a>
 					{% if request.user.is_authenticated %}
 						<a class="btn block mt-2" href="{% url 'postman:write' community.owner.name %}"><i class="fa fa-paper-plane  mr-1"></i>{% trans "Contact" %}</a>
