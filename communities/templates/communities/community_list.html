@@ -6,6 +6,9 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v7.2.2/ol.css">
   <script src="https://unpkg.com/htmx.org@1.9.10/dist/htmx.min.js"></script>
   <script>
+    const communityTypeLabels   = { {% for v, l in community_types %}'{{ v }}': '{{ l|escapejs }}',{% endfor %} };
+    const communityStatusLabels = { {% for v, l in community_statuses %}'{{ v }}': '{{ l|escapejs }}',{% endfor %} };
+
     document.addEventListener('alpine:init', () => {
       Alpine.store('communityMap', {
         view: 'map',
@@ -144,17 +147,17 @@
     <div class="absolute top-4 left-4 flex flex-col gap-3 z-10 w-full max-w-40 md:max-w-60 lg:max-w-xs xl:max-w-md">
       <div class="bg-secondary bg-opacity-30 backdrop-blur rounded-lg shadow p-3 flex flex-col gap-2">
 
-        {% comment %}Row: search input | filter button | near-me button{% endcomment %}
-        <div class="flex gap-2 items-stretch">
+        {% comment %}Search input (full width on mobile, row on md+){% endcomment %}
+        <div class="flex flex-col lg:flex-row gap-2 items-stretch">
 
           {% comment %}Search input with suggestions{% endcomment %}
           <div class="relative flex-1" x-data="suggestions('{% url 'communities:api-suggest' %}', true)">
             <div class="absolute inset-y-0 left-3 flex items-center text-primary opacity-80 pointer-events-none">
-              <i class="fa fa-search text-sm"></i>
+              <i class="fa fa-search"></i>
             </div>
             <input
               x-ref="searchInput"
-              class="form-input icon-input bg-secondary w-full text-sm"
+              class="form-input icon-input bg-secondary w-full"
               type="text"
               placeholder="{% trans 'Name, location or skill…' %}"
               :value="$store.communityMap.q"
@@ -180,8 +183,11 @@
             </ul>
           </div>
 
+          {% comment %}Filter + near-me buttons (inline on md+, own row on mobile){% endcomment %}
+          <div class="flex gap-2 flex-shrink-0">
+
           {% comment %}Filter popover button{% endcomment %}
-          <div class="relative flex-shrink-0" x-data="{ filterOpen: false }">
+          <div class="relative" x-data="{ filterOpen: false }">
             <button type="button"
               @click="filterOpen = !filterOpen"
               :class="($store.communityMap.selectedTypes.length + $store.communityMap.selectedStatuses.length) > 0 ? 'ring-2 ring-offset-1 ring-primary' : ''"
@@ -206,7 +212,7 @@
                   {% for value, label in community_types %}
                   <label class="flex items-center gap-2 cursor-pointer text-sm hover:bg-secondary hover:bg-opacity-10 rounded px-1 py-0.5">
                     <input type="checkbox" value="{{ value }}"
-                      class="form-checkbox h-4 w-4 flex-shrink-0"
+                      class="form-checkbox light h-4 w-4 flex-shrink-0"
                       :checked="$store.communityMap.selectedTypes.includes('{{ value }}')"
                       @change="
                         if ($el.checked) $store.communityMap.selectedTypes.push('{{ value }}');
@@ -225,7 +231,7 @@
                   {% for value, label in community_statuses %}
                   <label class="flex items-center gap-2 cursor-pointer text-sm hover:bg-secondary hover:bg-opacity-10 rounded px-1 py-0.5">
                     <input type="checkbox" value="{{ value }}"
-                      class="form-checkbox h-4 w-4 flex-shrink-0"
+                      class="form-checkbox light h-4 w-4 flex-shrink-0"
                       :checked="$store.communityMap.selectedStatuses.includes('{{ value }}')"
                       @change="
                         if ($el.checked) $store.communityMap.selectedStatuses.push('{{ value }}');
@@ -249,7 +255,7 @@
 
           {% comment %}Near me button{% endcomment %}
           <button type="button"
-            class="btn flex-shrink-0 px-3 h-full"
+            class="btn px-3"
             title="{% trans 'Show communities near me' %}"
             @click="
               if (!navigator.geolocation) return;
@@ -260,7 +266,9 @@
             ">
             <i class="fa fa-crosshairs"></i>
           </button>
-        </div>
+
+          </div>{# end buttons row #}
+        </div>{# end search+buttons flex #}
 
         {% comment %}Active filter pills — compact summary row{% endcomment %}
         <div x-show="($store.communityMap.selectedTypes.length + $store.communityMap.selectedStatuses.length) > 0"
@@ -268,16 +276,35 @@
           class="flex flex-wrap gap-1">
           <template x-for="t in $store.communityMap.selectedTypes" :key="t">
             <span class="inline-flex items-center gap-1 text-xs bg-primary text-secondary rounded-full px-2 py-0.5">
-              <span x-text="t"></span>
+              <span x-text="communityTypeLabels[t] || t"></span>
               <button @click="$store.communityMap.selectedTypes = $store.communityMap.selectedTypes.filter(v => v !== t); window._communityMapReload && window._communityMapReload();" class="opacity-70 hover:opacity-100">&times;</button>
             </span>
           </template>
           <template x-for="s in $store.communityMap.selectedStatuses" :key="s">
             <span class="inline-flex items-center gap-1 text-xs bg-primary text-secondary rounded-full px-2 py-0.5">
-              <span x-text="s"></span>
+              <span x-text="communityStatusLabels[s] || s"></span>
               <button @click="$store.communityMap.selectedStatuses = $store.communityMap.selectedStatuses.filter(v => v !== s); window._communityMapReload && window._communityMapReload();" class="opacity-70 hover:opacity-100">&times;</button>
             </span>
           </template>
+        </div>
+
+        {% comment %}Count + clear row{% endcomment %}
+        <div class="flex items-center justify-between text-brown">
+          <span x-text="$store.communityMap.markerCount + ' {% trans "results on map" %}'"></span>
+          <button type="button" x-cloak
+            x-show="$store.communityMap.selectedTypes.length + $store.communityMap.selectedStatuses.length + ($store.communityMap.selectedCountry ? 1 : 0) + ($store.communityMap.q ? 1 : 0) > 0"
+            class="underline opacity-70 hover:opacity-100"
+            @click="
+              $store.communityMap.selectedTypes = [];
+              $store.communityMap.selectedStatuses = [];
+              $store.communityMap.selectedCountry = '';
+              $store.communityMap.q = '';
+              $store.communityMap.location = '';
+              document.querySelector('[x-ref=searchInput]').value = '';
+              window._communityMapReload && window._communityMapReload();
+            ">
+            {% trans "Clear filters" %}
+          </button>
         </div>
 
       </div>
@@ -302,18 +329,21 @@
         <hr class="border-secondary opacity-20 my-1">
         <label class="flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-secondary hover:bg-opacity-10">
           <input type="radio" name="community-map-layer"
+            class="light"
             :checked="$store.communityMap.layer === 'ecobasa'"
             @change="$store.communityMap.layer = 'ecobasa'; window._communityMapSetLayer('ecobasa'); layerOpen = false;">
           <span class="text-sm">{% trans "Ecobasa" %}</span>
         </label>
         <label class="flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-secondary hover:bg-opacity-10">
           <input type="radio" name="community-map-layer"
+            class="light"
             :checked="$store.communityMap.layer === 'osm'"
             @change="$store.communityMap.layer = 'osm'; window._communityMapSetLayer('osm'); layerOpen = false;">
           <span class="text-sm">{% trans "OpenStreetMap" %}</span>
         </label>
         <label class="flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-secondary hover:bg-opacity-10">
           <input type="radio" name="community-map-layer"
+            class="light"
             :checked="$store.communityMap.layer === 'satellite'"
             @change="$store.communityMap.layer = 'satellite'; window._communityMapSetLayer('satellite'); layerOpen = false;">
           <span class="text-sm">{% trans "Satellite" %}</span>
@@ -409,7 +439,7 @@
                   {% for value, label in community_types %}
                   <label class="flex items-center gap-2 cursor-pointer text-sm hover:bg-secondary hover:bg-opacity-10 rounded px-1 py-0.5">
                     <input type="checkbox" name="type" value="{{ value }}"
-                      class="form-checkbox h-4 w-4 flex-shrink-0"
+                      class="form-checkbox light h-4 w-4 flex-shrink-0"
                       :checked="$store.communityMap.selectedTypes.includes('{{ value }}')"
                       @change="
                         if ($el.checked) $store.communityMap.selectedTypes.push('{{ value }}');
@@ -429,7 +459,7 @@
                   {% for value, label in community_statuses %}
                   <label class="flex items-center gap-2 cursor-pointer text-sm hover:bg-secondary hover:bg-opacity-10 rounded px-1 py-0.5">
                     <input type="checkbox" name="status" value="{{ value }}"
-                      class="form-checkbox h-4 w-4 flex-shrink-0"
+                      class="form-checkbox light h-4 w-4 flex-shrink-0"
                       :checked="$store.communityMap.selectedStatuses.includes('{{ value }}')"
                       @change="
                         if ($el.checked) $store.communityMap.selectedStatuses.push('{{ value }}');
@@ -495,7 +525,7 @@
           x-cloak class="flex flex-wrap gap-1">
           <template x-for="t in $store.communityMap.selectedTypes" :key="t">
             <span class="inline-flex items-center gap-1 text-xs bg-primary text-secondary rounded-full px-2 py-0.5">
-              <span x-text="t"></span>
+              <span x-text="communityTypeLabels[t] || t"></span>
               <button
                 @click="
                   $store.communityMap.selectedTypes = $store.communityMap.selectedTypes.filter(v => v !== t);
@@ -507,7 +537,7 @@
           </template>
           <template x-for="s in $store.communityMap.selectedStatuses" :key="s">
             <span class="inline-flex items-center gap-1 text-xs bg-primary text-secondary rounded-full px-2 py-0.5">
-              <span x-text="s"></span>
+              <span x-text="communityStatusLabels[s] || s"></span>
               <button
                 @click="
                   $store.communityMap.selectedStatuses = $store.communityMap.selectedStatuses.filter(v => v !== s);
