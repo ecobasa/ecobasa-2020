@@ -1,5 +1,4 @@
 from django import forms
-from django.forms import ClearableFileInput
 from django.core.exceptions import ValidationError
 from django.contrib.auth import password_validation
 from django.contrib.auth.forms import AuthenticationForm
@@ -12,6 +11,14 @@ from croppie.fields import CroppieField
 
 from gifting.forms import Fieldset
 from .models import User
+
+
+class SafeCroppieField(CroppieField):
+    """CroppieField that returns None instead of crashing when no image is uploaded."""
+    def compress(self, data_list):
+        if data_list and data_list[0]:
+            return super().compress(data_list)
+        return None
 
 
 class LoginForm(AuthenticationForm):
@@ -29,24 +36,24 @@ class RegisterForm(forms.ModelForm):
         strip=False,
         help_text=password_validation.password_validators_help_text_html(),
     )
-    image = CroppieField(
+    image = SafeCroppieField(
         required=False,
         options={
             "enableExif": True,
-            "viewport": {
-                "width": 200,
-                "height": 200,
-                "type": 'circle'
-            },
-            "boundary": {
-                "width": 300,
-                "height": 300
-            }
-        })
+            "viewport": {"width": 200, "height": 200, "type": "circle"},
+            "boundary": {"width": 300, "height": 300},
+        },
+    )
+    skills = forms.CharField(
+        required=False,
+        label=_("Skills"),
+        help_text=_("Comma-separated list of skills, e.g. carpentry, cooking, solar energy."),
+    )
 
     class Meta:
         model = User
-        fields = ["name", "email", "image", "location_name", "location", "country"]
+        fields = ["name", "email", "image", "skills", "about", "world", "ecobasa_what",
+                  "location_name", "location", "country"]
         widgets = {
             "location": forms.HiddenInput(),
         }
@@ -56,24 +63,38 @@ class RegisterForm(forms.ModelForm):
         self.fields["name"].required = True
         self.fields["name"].widget.attrs["autofocus"] = True
         self.fields["image"].required = False
-        if 'country' in self.fields:
-            self.fields['country'].widget.attrs.update({'class': 'form-select'})
+        if "country" in self.fields:
+            self.fields["country"].widget.attrs.update({"class": "form-select"})
+        for fname in ("about", "world", "ecobasa_what"):
+            if fname in self.fields:
+                self.fields[fname].widget.attrs.update({"class": "h-32"})
         self.helper = FormHelper()
         self.helper.form_tag = False
         self.helper.layout = Layout(
-            Fieldset(_("Personal Info"), Field("name"), Field("image"), header_text=_("Trust is the only currency in our gift-economy network, real names help to build trust"), ),
+            Fieldset(
+                _("Personal Info"),
+                Field("name"),
+                Field("image"),
+                header_text=_("Trust is the only currency in our gift-economy network — real names help to build trust."),
+            ),
             Fieldset(
                 _("Account"),
                 Field("email"),
                 Field("password"),
-                header_text=_("Nessecary to logging in"),
+                header_text=_("Required to log in."),
+            ),
+            Fieldset(
+                _("About you"),
+                Field("about"),
+                Field("world"),
+                Field("ecobasa_what"),
+                Field("skills"),
+                header_text=_("Tell communities you want to visit or join who you are and what you have to offer."),
             ),
         )
 
     def _post_clean(self):
         super()._post_clean()
-        # Validate the password after self.instance is updated with form data
-        # by super().
         password = self.cleaned_data.get("password")
         if password:
             try:
@@ -85,16 +106,26 @@ class RegisterForm(forms.ModelForm):
         user = super().save(commit=False)
         user.set_password(self.cleaned_data["password"])
         if not user.username:
-            # derive a safe username slug from name or email prefix
             base = self.cleaned_data.get("name") or user.email.split("@")[0]
             user.username = slugify(base)
         if commit:
             user.save()
+            skills_val = self.cleaned_data.get("skills", "")
+            if skills_val:
+                tags = [s.strip() for s in skills_val.split(",") if s.strip()]
+                user.skills.set(tags)
         return user
 
 
 class ProfileUpdateForm(forms.ModelForm):
-    image = forms.ImageField(required=False, widget=ClearableFileInput)
+    image = SafeCroppieField(
+        required=False,
+        options={
+            "enableExif": True,
+            "viewport": {"width": 200, "height": 200, "type": "circle"},
+            "boundary": {"width": 300, "height": 300},
+        },
+    )
     # comma-separated skills input for Taggit (editable via Tagify in the template)
     skills = forms.CharField(required=False, label=_("Skills"), help_text=_("Comma-separated list of skills."))
 
@@ -106,11 +137,13 @@ class ProfileUpdateForm(forms.ModelForm):
             "location": forms.HiddenInput(),
         }
 
+    clear_image = forms.BooleanField(required=False, label=_("Remove current photo"))
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["name"].required = True
-        # Prefill skills from Taggit manager when editing an existing user
         instance = kwargs.get('instance')
+        has_image = bool(instance and instance.image)
         if instance is not None:
             skills_initial = ', '.join([t.name for t in instance.skills.all()])
             self.fields['skills'].initial = skills_initial
@@ -126,27 +159,26 @@ class ProfileUpdateForm(forms.ModelForm):
         for fname in ('about', 'world', 'ecobasa_what'):
             if fname in self.fields:
                 self.fields[fname].widget.attrs.update({'class': textarea_class})
+        self.fields['image'].label = _("Upload new photo") if has_image else _("Photo")
         self.helper = FormHelper()
         self.helper.form_tag = False
         self.helper.layout = Layout(
             Field("name"),
             Field("image"),
-            Field("skills"),
             Field("about"),
             Field("world"),
             Field("ecobasa_what"),
+            Field("skills"),
         )
 
     def save(self, commit=True):
-        # Save user fields then update Taggit skills from the comma-separated input
-        user = super().save(commit=commit)
-        skills_val = self.cleaned_data.get('skills', '')
-        if skills_val is not None:
-            # split on commas and strip whitespace
+        user = super().save(commit=False)
+        new_image = self.cleaned_data.get('image')
+        if not new_image and self.cleaned_data.get('clear_image') and user.image:
+            user.image = None
+        if commit:
+            user.save()
+            skills_val = self.cleaned_data.get('skills', '') or ''
             tags = [s.strip() for s in skills_val.split(',') if s.strip()]
-            if commit:
-                user.skills.set(tags)
-            else:
-                # Defer tag setting for callers that save(commit=False)
-                self._skills_to_set = tags
+            user.skills.set(tags)
         return user

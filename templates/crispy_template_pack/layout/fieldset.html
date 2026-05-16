@@ -1,3 +1,4 @@
+<style>.fieldset-content:has(.is-invalid){outline:2px solid #ef4444;outline-offset:2px;border-radius:.375rem}</style>
 <fieldset {% if fieldset.css_id %}id="{{ fieldset.css_id }}"{% endif %}
         class="{{ fieldset.css_class }} {{ form_style }}"
         {{ fieldset.flat_attrs|safe }}>

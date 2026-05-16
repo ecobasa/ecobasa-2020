@@ -4,6 +4,7 @@
 {% block extrahead %}
 {{ block.super }}
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v7.2.2/ol.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.css">
 {% endblock %}
 
 {% block content %}
@@ -13,29 +14,29 @@
       <svg class="flex-shrink-0 -ml-1 mr-1 h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
         <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
       </svg>
-      {% trans "Login" %}
+      {% trans "Back to log in" %}
     </a>
   </nav>
 
   <h1 class="text-2xl">{% trans "Register for an account at ecobasa" %}</h1>
 
   <form enctype="multipart/form-data" method="post" class="w-full my-10 form-control-w-full">
-    <div id="cropper" class="ml-3"></div>
     {% crispy form %}
+    <div id="cropper" class="hidden"></div>
 
     <!-- Location section -->
-    <div class="relative space-y-2 mt-6">
+    <div class="relative space-y-2">
       <h3 class="text-lg font-semibold text-primary mt-0">
         {% trans "Your location" %} <span class="text-xs font-normal text-brown">({% trans "optional" %})</span>
       </h3>
-      <p class="text-xs text-brown">{% trans "Helps other ecobasa members find skills and communities near them." %}</p>
+      <p class="text-xs text-brown">{% trans "Enables other ecobasa members to find you with your skills and as a potential member of their community or community-tour." %}</p>
       {% include "maps/_location_picker.html" with map_id="user-location-map" set_point_fn="setUserPoint" locate_fn="locateUserProfile" map_height="h-60" no_label=True %}
     </div>
 
-    <div class="flex items-center justify-end -mx-5 my-5">
-      <a class="mx-5 btn btn-purple flex" href="{% url "users:login" %}"><i class="fa fa-ban mr-1"></i>{% trans "Cancel" %}</a>
-      <button class="btn mx-5" type="submit">
-        <i class="fa fa-user-check mr-1"></i>
+    <div class="flex items-center justify-end gap-4 my-5">
+      <a class="btn btn-lg btn-purple flex" href="{% url "users:login" %}"><i class="fa fa-times mr-2"></i>{% trans "Cancel" %}</a>
+      <button class="btn btn-lg" type="submit">
+        <i class="fa fa-user-check mr-2"></i>
         {% trans "Register" %}
       </button>
     </div>
@@ -45,10 +46,34 @@
 
 {% block javascript %}
 {{ block.super }}
+<script>
+var croppieFieldName = 'image';
+var croppieOptions = {
+  enableExif: true,
+  viewport: { width: 200, height: 200, type: 'circle' },
+  boundary: { width: 300, height: 300 }
+};
+</script>
 {{ form.media }}
 <script src="https://cdn.jsdelivr.net/npm/ol@v7.2.2/dist/ol.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.min.js"></script>
 <script>
+var _firstErr = Array.from(document.querySelectorAll('.fieldset-content')).find(el => el.querySelector('.is-invalid'));
+if (_firstErr) _firstErr.closest('.fieldset').scrollIntoView({ behavior: 'smooth', block: 'start' });
+document.addEventListener('cropper-created', () => document.getElementById('cropper').classList.remove('hidden'));
 document.addEventListener('DOMContentLoaded', () => {
+  const imageField = document.getElementById('div_id_image');
+  if (imageField) imageField.after(document.getElementById('cropper'));
+
+  const skillsInput = document.getElementById('id_skills');
+  if (skillsInput) {
+    new Tagify(skillsInput, {
+      editTags: false,
+      dropdown: { enabled: 0 },
+      originalInputValueFormat: vals => vals.map(v => v.value).join(', '),
+    });
+  }
+
   EcoMap.initLocationPicker({
     mapTarget:     'user-location-map',
     locationInput: document.getElementById('id_location'),

@@ -103,8 +103,6 @@ def register(request):
         if form.is_valid():
             form.save()
             email = form.cleaned_data.get("email")
-            name = form.cleaned_data.get("name")
-            image = form.cleaned_data.get("image")
             raw_password = form.cleaned_data.get("password")
             user = authenticate(username=email, password=raw_password)
             auth_login(request, user)
