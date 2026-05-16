@@ -56,6 +56,8 @@ class RegisterForm(forms.ModelForm):
         self.fields["name"].required = True
         self.fields["name"].widget.attrs["autofocus"] = True
         self.fields["image"].required = False
+        if 'country' in self.fields:
+            self.fields['country'].widget.attrs.update({'class': 'form-select'})
         self.helper = FormHelper()
         self.helper.form_tag = False
         self.helper.layout = Layout(
@@ -119,6 +121,8 @@ class ProfileUpdateForm(forms.ModelForm):
         for fname in ('name', 'skills', 'location_name'):
             if fname in self.fields:
                 self.fields[fname].widget.attrs.update({'class': text_input_class})
+        if 'country' in self.fields:
+            self.fields['country'].widget.attrs.update({'class': 'form-select'})
         for fname in ('about', 'world', 'ecobasa_what'):
             if fname in self.fields:
                 self.fields[fname].widget.attrs.update({'class': textarea_class})

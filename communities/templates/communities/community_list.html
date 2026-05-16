@@ -618,12 +618,12 @@ function createLayeredIcon(badgeIcon, pinColor, badgeColor) {
   const size   = 80;
   canvas.width = canvas.height = size;
   ctx.fillStyle = pinColor;
-  ctx.font = '900 60px "Font Awesome 5 Free"';
+  ctx.font = '900 60px "Font Awesome 6 Free"';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText('\uf041', size / 2, size / 2);
   ctx.fillStyle = badgeColor;
-  ctx.font = '600 25px "Font Awesome 5 Free"';
+  ctx.font = '600 25px "Font Awesome 6 Free"';
   ctx.fillText(badgeIcon, size / 2, size / 2.5);
   return canvas;
 }
