@@ -492,30 +492,7 @@
    * @param {string} pinColor - The hex code for the marker body
    * @param {string} badgeColor - The hex code for the small icon
    */
-  function createLayeredIcon(badgeIcon, pinColor, badgeColor = '#fcf3e5') {
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    const size = 80;
-    canvas.width = size;
-    canvas.height = size;
 
-    // 1. Draw the Background Marker Pin (Map Marker Alt)
-    ctx.fillStyle = pinColor;
-    ctx.font = '900 60px "Font Awesome 6 Free"';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('\uf041', size / 2, size / 2);
-
-    // 2. Draw the Badge Icon (Cap, Gift, or Heart)
-    ctx.fillStyle = badgeColor;
-    // Hearts and Gifts can be a bit bulkier, so 18px works well
-    ctx.font = '600 25px "Font Awesome 6 Free"';
-
-    // Adjusted Y-axis (size / 2.9) to sit perfectly in the "head" of the pin
-    ctx.fillText(badgeIcon, size / 2, size / 2.5);
-
-    return canvas;
-  }
 
   function getDynamicStyle(feature) {
     const props = feature.getProperties();
@@ -545,7 +522,7 @@
 
     return new ol.style.Style({
       image: new ol.style.Icon({
-        img: createLayeredIcon(iconCode, color),
+        img: EcoMap.createLayeredIcon(iconCode, color),
         imgSize: [80, 80],
         anchor: [0.5, 0.85],
         scale: 0.7
@@ -556,45 +533,7 @@
   const MARKER_ICON = '{% static "map/images/marker-icon.png" %}';
   const SKILL_ICON  = '{% static "map/images/marker-skill.png" %}';  // distinct icon for skill markers
 
-  // ── Tile layers ──────────────────────────────────────────────────
-  function createTileLayers() {
-    const watercolor = new ol.layer.Tile({
-      source: new ol.source.XYZ({
-        url: 'https://tiles.stadiamaps.com/tiles/stamen_watercolor/{z}/{x}/{y}.jpg?api_key=cb8069a3-9585-4989-a6a8-572b5c3f4ffb',
-        crossOrigin: 'anonymous'
-      })
-    });
-    const tonerLabels = new ol.layer.Tile({
-      source: new ol.source.XYZ({
-        url: 'https://tiles.stadiamaps.com/tiles/stamen_toner_lite/{z}/{x}/{y}.png?api_key=cb8069a3-9585-4989-a6a8-572b5c3f4ffb',
-        crossOrigin: 'anonymous'
-      }),
-      opacity: 0.35
-    });
-    const satellite = new ol.layer.Tile({
-      source: new ol.source.XYZ({
-        url: 'https://mt{0-3}.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}',
-        attributions: '&copy; Google', maxZoom: 20, crossOrigin: 'anonymous'
-      }),
-      visible: false
-    });
-    const osm = new ol.layer.Tile({
-      source: new ol.source.XYZ({
-        url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-        crossOrigin: 'anonymous', maxZoom: 19, wrapX: true,
-        attributions: '\u00a9 OpenStreetMap contributors'
-      }),
-      visible: false
-    });
-    return { watercolor, tonerLabels, satellite, osm, all: [watercolor, tonerLabels, satellite, osm] };
-  }
-
-  function applyLayer(tiles, mode) {
-    tiles.watercolor.setVisible(mode === 'ecobasa');
-    tiles.tonerLabels.setVisible(mode === 'ecobasa');
-    tiles.satellite.setVisible(mode === 'satellite');
-    tiles.osm.setVisible(mode === 'osm');
-  }
+  function applyLayer(tiles, mode) { tiles.setBaseLayer(mode); }
 
   // ── Popup ────────────────────────────────────────────────────────
   function truncate(text, limit) {
@@ -748,7 +687,7 @@
       image: new ol.style.Icon({ src: SKILL_ICON, anchor: [0.5, 1] })
     });
 
-    const tiles        = createTileLayers();
+    const tiles = EcoMap.buildBaseLayers();
     const vectorSource = new ol.source.Vector();
     const vectorLayer  = new ol.layer.Vector({ source: vectorSource });
 
@@ -771,7 +710,7 @@
 
     // Stadia fallback → OSM
     let fallbackFired = false;
-    [tiles.watercolor, tiles.tonerLabels].forEach(layer => {
+    [tiles.wc, tiles.toner].forEach(layer => {
       layer.getSource().on('tileloaderror', () => {
         if (fallbackFired) return;
         fallbackFired = true;

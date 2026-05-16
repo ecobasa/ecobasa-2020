@@ -177,36 +177,6 @@
 					{% with lat=community.location.y lon=community.location.x %}
 						<p class="text-sm"><i class="fa fa-map-marker mr-1"></i>{{ community.location_name }}</p>
 						<div class="relative mt-2">
-							<div class="absolute top-2 right-2 z-10">
-								<div class="relative">
-									<button id="community-layer-toggle" type="button" class="flex items-center justify-center w-10 h-10 rounded-md bg-primary bg-opacity-50 text-secondary shadow-lg border backdrop-blur">
-										<i class="fa fa-layer-group text-lg"></i>
-									</button>
-									<div id="community-layer-menu" class="hidden absolute right-0 mt-2 w-44 bg-primary text-secondary bg-opacity-50 backdrop-blur rounded-lg shadow-xl border py-2">
-										<div class="px-3 pb-1 text-xs font-semibold uppercase">{% trans "Layers" %}</div>
-										<ul class="list-none m-0 text-sm space-y-1 px-2">
-											<li>
-												<label class="dropdown-item">
-													<input type="radio" name="community-layer-option" value="ecobasa" class="form-radio mr-2 text-secondary" checked>
-													<span>{% trans "ecobasa" %}</span>
-												</label>
-											</li>
-											<li>
-												<label class="dropdown-item">
-													<input type="radio" name="community-layer-option" value="satellite" class="form-radio mr-2 text-secondary">
-													<span>{% trans "Satellite" %}</span>
-												</label>
-											</li>
-											<li>
-												<label class="dropdown-item">
-													<input type="radio" name="community-layer-option" value="osm" class="form-radio mr-2 text-secondary">
-													<span>{% trans "OSM" %}</span>
-												</label>
-											</li>
-										</ul>
-									</div>
-								</div>
-							</div>
 							<div id="community-detail-map" class="w-full rounded shadow overflow-hidden h-96"></div>
 						</div>
 					{% endwith %}
@@ -353,46 +323,11 @@ document.addEventListener('DOMContentLoaded', () => {
 				location_name: "{{ community.location_name|default:""|escapejs }}"
 			};
 
-			const stamenWatercolor = new ol.layer.Tile({
-				source: new ol.source.XYZ({
-					url: 'https://tiles.stadiamaps.com/tiles/stamen_watercolor/{z}/{x}/{y}.jpg?api_key=cb8069a3-9585-4989-a6a8-572b5c3f4ffb',
-					crossOrigin: 'anonymous'
-				})
-			});
-
-			const stamenTonerLabels = new ol.layer.Tile({
-				source: new ol.source.XYZ({
-					url: 'https://tiles.stadiamaps.com/tiles/stamen_toner_lite/{z}/{x}/{y}.png?api_key=cb8069a3-9585-4989-a6a8-572b5c3f4ffb',
-					crossOrigin: 'anonymous'
-				}),
-				opacity: 0.35
-			});
-
-			const satellite = new ol.layer.Tile({
-				source: new ol.source.XYZ({
-					url: 'https://mt{0-3}.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}',
-					attributions: '&copy; Google',
-					maxZoom: 20,
-					crossOrigin: 'anonymous'
-				}),
-				visible: false
-			});
-
-			const osmBase = new ol.layer.Tile({
-				source: new ol.source.OSM({
-					url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-					crossOrigin: 'anonymous'
-				}),
-				visible: false
-			});
-
-			const enableOsmFallback = () => { if (!osmBase.getVisible()) osmBase.setVisible(true); };
-			stamenWatercolor.getSource().on('tileloaderror', enableOsmFallback);
-			stamenTonerLabels.getSource().on('tileloaderror', enableOsmFallback);
+			const baseLayers = EcoMap.buildBaseLayers();
 
 			const map = new ol.Map({
 				target: mapEl,
-				layers: [stamenWatercolor, stamenTonerLabels, satellite, osmBase],
+				layers: baseLayers.all,
 				view: new ol.View({
 					center: ol.proj.fromLonLat([data.lon, data.lat]),
 					zoom: 13
@@ -404,35 +339,14 @@ document.addEventListener('DOMContentLoaded', () => {
 			setTimeout(() => map.updateSize(), 50);
 			ensureSize();
 
-			const layerWrap = document.getElementById('community-layer-toggle')?.parentElement?.parentElement;
-			const layerToggle = document.getElementById('community-layer-toggle');
-			const layerMenu = document.getElementById('community-layer-menu');
-			const layerRadios = document.querySelectorAll('input[name="community-layer-option"]');
-
-			const setLayerMode = (mode) => {
-				stamenWatercolor.setVisible(false); stamenTonerLabels.setVisible(false); satellite.setVisible(false); osmBase.setVisible(false);
-				const target = (mode || 'ecobasa').toLowerCase();
-				switch (target) {
-					case 'satellite': satellite.setVisible(true); break;
-					case 'osm': osmBase.setVisible(true); break;
-					default: stamenWatercolor.setVisible(true); stamenTonerLabels.setVisible(true); break;
-				}
-				layerRadios.forEach(r => { r.checked = (r.value === target); });
-			};
-
-			if (layerWrap && layerMenu && layerToggle) {
-				const showMenu = () => { layerMenu.classList.remove('hidden'); layerToggle.classList.add('hidden'); };
-				const hideMenu = () => { layerMenu.classList.add('hidden'); layerToggle.classList.remove('hidden'); };
-				layerToggle.addEventListener('mouseenter', showMenu);
-				layerToggle.addEventListener('click', (e) => { e.stopPropagation(); showMenu(); });
-				layerMenu.addEventListener('mouseleave', hideMenu);
-				document.addEventListener('click', (e) => { if (!layerWrap.contains(e.target)) hideMenu(); });
-				layerRadios.forEach(r => { r.addEventListener('change', (e) => { if (e.target.checked) setLayerMode(e.target.value); }); });
-				setLayerMode('ecobasa');
-			} else { setLayerMode('ecobasa'); }
+			const menu = EcoMap.buildLayerToggle(map, 'community-detail-layer');
+			menu.querySelectorAll('input').forEach(r => {
+				r.addEventListener('change', e => { if (e.target.checked) baseLayers.setBaseLayer(e.target.value); });
+			});
+			baseLayers.setBaseLayer('ecobasa');
 
 			const feature = new ol.Feature({ geometry: new ol.geom.Point(ol.proj.fromLonLat([data.lon, data.lat])) });
-			feature.setStyle(new ol.style.Style({ image: new ol.style.Icon({ src: '{% static "map/images/marker-icon.png" %}', anchor: [0.5, 1] }) }));
+			feature.setStyle(EcoMap.makeIconStyle(0xF015, '#da6137')); //  fa-house
 			const vectorLayer = new ol.layer.Vector({ source: new ol.source.Vector({ features: [feature] }) });
 			map.addLayer(vectorLayer);
 		};

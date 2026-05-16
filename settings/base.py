@@ -165,7 +165,10 @@ TEMPLATES = [
         "DIRS": [APPS_DIR / "templates"],
         "OPTIONS": {
             "debug": DEBUG,
-            "libraries": {"my_crispy_helpers": "templatetags.my_crispy_helpers",},
+            "libraries": {
+                    "my_crispy_helpers": "templatetags.my_crispy_helpers",
+                    "site_tags": "templatetags.site_tags",
+                },
             "loaders": [
                 "django.template.loaders.filesystem.Loader",
                 "django.template.loaders.app_directories.Loader",
@@ -231,6 +234,10 @@ CRISPY_TEMPLATE_PACK = "crispy_template_pack"
 # ------------------------------------------------------------------------------
 POSTMAN_AUTO_MODERATE_AS = True
 POSTMAN_DISALLOW_ANONYMOUS = True
+
+# MAP SETTINGS
+# ------------------------------------------------------------------------------
+STADIA_MAPS_KEY = env('STADIA_MAPS_KEY', default='cb8069a3-9585-4989-a6a8-572b5c3f4ffb')
 
 # APP SETTINGS
 # ------------------------------------------------------------------------------

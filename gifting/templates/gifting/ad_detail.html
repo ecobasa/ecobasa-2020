@@ -6,19 +6,13 @@
   {% if ad.location %}
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v7.2.2/ol.css">
   {% endif %}
-  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 {% endblock %}
 
 
 {% block content %}
-{# Root Alpine scope — manages image modal, contact modal, and layer switcher state #}
+{# Root Alpine scope — manages image modal and contact modal #}
 <div class="mx-auto max-w-4xl mt-10 px-4 pb-16"
-  x-data="{
-    imageOpen:   false,
-    contactOpen: false,
-    layer:       'ecobasa',
-    layerMenuOpen: false,
-  }">
+  x-data="{ imageOpen: false, contactOpen: false }">
 
   {# ── Breadcrumbs ── #}
   <nav class="sm:hidden">
@@ -79,11 +73,11 @@
     </div>
 
     {% if ad.owner == request.user %}
-      <a href="{% url 'gifting:delete' ad.pk %}" class="btn btn-purple flex mx-5">
+      <a href="{% url 'gifting:delete' ad.pk %}" class="btn btn-lg btn-purple flex mx-5">
         <i class="fa fa-recycle mr-1"></i> {% trans "Delete" %}
       </a>
       <div class="mt-4 flex-shrink-0 flex md:mt-0 md:ml-4">
-        <a href="{% url 'gifting:edit' ad.pk %}" class="btn">
+        <a href="{% url 'gifting:edit' ad.pk %}" class="btn btn-lg">
           <i class="fa fa-edit mr-1"></i> {% trans "Edit" %}
         </a>
       </div>
@@ -143,38 +137,7 @@
   <div class="mt-10">
     <h2 class="text-lg font-semibold mb-3">{% trans "Location" %}</h2>
     <div class="relative">
-
-      {# Layer switcher — Alpine state, same pattern as search page #}
-      <div class="absolute top-2 right-2 z-10"
-        @mouseleave="layerMenuOpen = false">
-        <button type="button"
-          x-show="!layerMenuOpen"
-          @mouseenter="layerMenuOpen = true"
-          @click="layerMenuOpen = true"
-          class="flex items-center justify-center w-12 h-12 rounded-md bg-primary bg-opacity-50 text-secondary shadow-lg border backdrop-blur border-red"
-          aria-label="{% trans 'Switch layer' %}">
-          <i class="fa fa-layer-group text-lg"></i>
-        </button>
-        <div x-show="layerMenuOpen" x-cloak
-          class="absolute right-0 mt-2 w-44 bg-primary text-secondary bg-opacity-80 backdrop-blur rounded-lg shadow-xl border py-2 border-red">
-          <div class="px-3 pb-1 text-xs font-semibold uppercase">{% trans "Layers" %}</div>
-          <ul class="list-none m-0 text-sm space-y-1 px-2">
-            {% for value, label in layer_choices %}
-            <li>
-              <label class="dropdown-item flex items-center gap-2 cursor-pointer">
-                <input type="radio" name="ad-layer-option" value="{{ value }}"
-                  class="form-radio text-secondary"
-                  :checked="layer === '{{ value }}'"
-                  @change="layer = '{{ value }}'; window._adMapSetLayer && window._adMapSetLayer('{{ value }}')">
-                <span>{{ label }}</span>
-              </label>
-            </li>
-            {% endfor %}
-          </ul>
-        </div>
-      </div>
-
-      <div id="ad-detail-map" class="w-full rounded shadow overflow-hidden" style="height:24rem;"></div>
+      <div id="ad-detail-map" class="w-full h-96 rounded shadow overflow-hidden"></div>
     </div>
   </div>
   {% endif %}
@@ -185,12 +148,17 @@
     class="modal-overlay flex"
     @click.self="contactOpen = false"
     @keydown.escape.window="contactOpen = false">
-    <div class="modal relative bg-secondary bg-opacity-95 backdrop-blur rounded-lg shadow-xl w-full max-w-lg">
+    <div class="modal relative rounded-lg shadow-xl w-full max-w-lg">
       <button type="button" @click="contactOpen = false"
-        class="absolute top-3 right-3 text-2xl w-10 h-10 flex items-center justify-center bg-black bg-opacity-30 rounded-full"
+        class="absolute top-3 right-3 text-2xl w-10 h-10 flex items-center justify-center bg-secondary bg-opacity-80 rounded-full"
         aria-label="{% trans 'Close' %}">&times;</button>
-      <div class="p-6">
-        <h2 class="text-xl font-semibold mb-4">{% trans "Contact" %} — {{ ad.title }}</h2>
+      <div class="px-6 pb-6">
+        <h2 class="text-2xl font-semibold mt-4 mb-4">
+          {% if ad.type == 'offer' %}
+            {% trans "Ask for" %}
+          {% else %}
+            {% trans "Fulfill wish" %}
+          {% endif %}: {{ ad.title }}</h2>
         <form method="post" action="{% url 'postman:write' %}">
           {% csrf_token %}
           <input type="hidden" name="recipients"    value="{{ ad.owner.email }}">
@@ -203,8 +171,8 @@
             </label>
           </div>
           <div class="mt-4 flex justify-end gap-3">
-            <button type="button" @click="contactOpen = false" class="btn">{% trans "Cancel" %}</button>
-            <button type="submit" class="btn bg-primary text-secondary">{% trans "Send" %}</button>
+            <button type="button" @click="contactOpen = false" class="btn btn-purple"><i class="fa fa-times mr-2"></i>{% trans "Cancel" %}</button>
+            <button type="submit" class="btn"><i class="fa fa-paper-plane mr-2"></i>{% trans "Send" %}</button>
           </div>
         </form>
       </div>
@@ -222,64 +190,25 @@
   <script src="https://cdn.jsdelivr.net/npm/ol@v7.2.2/dist/ol.js"></script>
   <script>
   /* ================================================================
-     Ad detail map — single marker, layer switcher wired to Alpine.
+     Ad detail map — single marker + layer switcher.
      ================================================================ */
   (function () {
     const LAT  = {{ ad.location.y|floatformat:"6" }};
     const LON  = {{ ad.location.x|floatformat:"6" }};
-    const ICON = '{% static "map/images/marker-icon.png" %}';
 
-    function createTileLayers() {
-      const watercolor = new ol.layer.Tile({
-        source: new ol.source.XYZ({
-          url: 'https://tiles.stadiamaps.com/tiles/stamen_watercolor/{z}/{x}/{y}.jpg?api_key=cb8069a3-9585-4989-a6a8-572b5c3f4ffb',
-          crossOrigin: 'anonymous'
-        })
-      });
-      const tonerLabels = new ol.layer.Tile({
-        source: new ol.source.XYZ({
-          url: 'https://tiles.stadiamaps.com/tiles/stamen_toner_lite/{z}/{x}/{y}.png?api_key=cb8069a3-9585-4989-a6a8-572b5c3f4ffb',
-          crossOrigin: 'anonymous'
-        }),
-        opacity: 0.35
-      });
-      const satellite = new ol.layer.Tile({
-        source: new ol.source.XYZ({
-          url: 'https://mt{0-3}.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}',
-          attributions: '&copy; Google', maxZoom: 20, crossOrigin: 'anonymous'
-        }),
-        visible: false
-      });
-      const osm = new ol.layer.Tile({
-        source: new ol.source.XYZ({
-          url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-          crossOrigin: 'anonymous', maxZoom: 19, wrapX: true,
-          attributions: '\u00a9 OpenStreetMap contributors'
-        }),
-        visible: false
-      });
-      return { watercolor, tonerLabels, satellite, osm,
-               all: [watercolor, tonerLabels, satellite, osm] };
-    }
-
-    function applyLayer(tiles, mode) {
-      tiles.watercolor.setVisible(mode === 'ecobasa');
-      tiles.tonerLabels.setVisible(mode === 'ecobasa');
-      tiles.satellite.setVisible(mode === 'satellite');
-      tiles.osm.setVisible(mode === 'osm');
-    }
-
-    document.addEventListener('alpine:initialized', function () {
+    document.addEventListener('DOMContentLoaded', function () {
       const mapEl = document.getElementById('ad-detail-map');
       if (!mapEl) return;
 
-      const tiles = createTileLayers();
+      const tiles = EcoMap.buildBaseLayers();
       const center = ol.proj.fromLonLat([LON, LAT]);
 
       const marker = new ol.Feature({ geometry: new ol.geom.Point(center) });
-      marker.setStyle(new ol.style.Style({
-        image: new ol.style.Icon({ src: ICON, anchor: [0.5, 1] })
-      }));
+      {% if ad.type == 'wish' %}
+      marker.setStyle(EcoMap.makeIconStyle(0xF004, '#de7a08')); //  fa-heart
+      {% else %}
+      marker.setStyle(EcoMap.makeIconStyle(0xF06B, '#da6137')); //  fa-gift
+      {% endif %}
 
       const map = new ol.Map({
         target: mapEl,
@@ -289,20 +218,10 @@
         view: new ol.View({ center, zoom: 13 })
       });
 
-      // Expose layer setter to Alpine radio @change handler
-      window._adMapSetLayer = mode => { applyLayer(tiles, mode); map.renderSync(); };
-
-      // Stadia fallback
-      let fallbackFired = false;
-      [tiles.watercolor, tiles.tonerLabels].forEach(layer => {
-        layer.getSource().on('tileloaderror', () => {
-          if (fallbackFired) return;
-          fallbackFired = true;
-          applyLayer(tiles, 'osm');
-        });
+      const menu = EcoMap.buildLayerToggle(map, 'ad-detail-layer');
+      menu.querySelectorAll('input').forEach(function (r) {
+        r.addEventListener('change', function (e) { if (e.target.checked) { tiles.setBaseLayer(e.target.value); map.renderSync(); } });
       });
-
-      applyLayer(tiles, 'ecobasa');
 
       // Simple popup showing title + location
       const popupEl = document.createElement('div');
@@ -316,7 +235,16 @@
       overlay.setPosition(center);
 
       window.addEventListener('resize', () => map.updateSize());
-      requestAnimationFrame(() => { map.updateSize(); map.renderSync(); });
+      (function ensureRender(n) {
+        const rect = mapEl.getBoundingClientRect();
+        if (rect.width && rect.height) {
+          tiles.setBaseLayer('ecobasa');
+          map.updateSize();
+          map.renderSync();
+          return;
+        }
+        if (n < 30) requestAnimationFrame(() => ensureRender(n + 1));
+      })(0);
     });
   })();
   </script>

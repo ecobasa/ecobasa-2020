@@ -168,7 +168,7 @@
               @keydown.escape="close()"
               @blur="setTimeout(() => close(), 200)">
             <ul x-show="open" x-cloak
-              class="absolute z-30 w-full mt-1 bg-secondary bg-opacity-85 rounded shadow-lg border text-sm">
+              class="absolute w-full bg-secondary bg-opacity-85 backdrop-blur rounded shadow-lg border text-sm">
               <template x-for="(item, i) in items" :key="i">
                 <li :class="i === active ? 'bg-primary text-secondary' : ''"
                   class="px-3 py-1 cursor-pointer flex items-center justify-between gap-2"
@@ -609,24 +609,8 @@
 <script>
 'use strict';
 
-let communityOlMap, communityVectorSource, communityLayers;
+let communityOlMap, communityVectorSource;
 
-function createLayeredIcon(badgeIcon, pinColor, badgeColor) {
-  badgeColor = badgeColor || '#fcf3e5';
-  const canvas = document.createElement('canvas');
-  const ctx    = canvas.getContext('2d');
-  const size   = 80;
-  canvas.width = canvas.height = size;
-  ctx.fillStyle = pinColor;
-  ctx.font = '900 60px "Font Awesome 6 Free"';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText('\uf041', size / 2, size / 2);
-  ctx.fillStyle = badgeColor;
-  ctx.font = '600 25px "Font Awesome 6 Free"';
-  ctx.fillText(badgeIcon, size / 2, size / 2.5);
-  return canvas;
-}
 
 function getDynamicStyle(feature) {
   const type = feature.get('type');
@@ -639,7 +623,7 @@ function getDynamicStyle(feature) {
   else if (type === 'Place for Projects') { iconCode = '\uf6e3'; pinColor = '#ff7800'; }
   return new ol.style.Style({
     image: new ol.style.Icon({
-      img: createLayeredIcon(iconCode, pinColor), imgSize: [80, 80], anchor: [0.5, 0.85], scale: 0.7
+      img: EcoMap.createLayeredIcon(iconCode, pinColor), imgSize: [80, 80], anchor: [0.5, 0.85], scale: 0.7
     })
   });
 }
@@ -653,26 +637,34 @@ function buildCommunityPopupHTML(f) {
   const vision = f.get('vision')      || '';
   const type   = f.get('type')        || '';
   let html = '<div class="map-popup">';
+
+  const stats = [];
+  if (f.get('inhabitants')) stats.push(`<i class="fa fa-users"></i> ${f.get('inhabitants')}`);
+  if (f.get('children'))    stats.push(`<i class="fa fa-child"></i> ${f.get('children')}`);
+  if (f.get('max_guests'))  stats.push(`<i class="fa fa-suitcase"></i> ${f.get('max_guests')}`);
+  if (stats.length) html += `<div class="popup-meta">${stats.join(' | ')}</div>`;
+
   if (type === 'Permaculture Farm')
     html += `<span class="pill bg-green text-secondary"><i class="fa fa-leaf mr-1"></i>${type}</span>`;
   else if (type === 'Place for Projects')
     html += `<span class="pill bg-orange text-secondary"><i class="fa fa-map-marker-alt mr-1"></i>${type}</span>`;
   else
     html += `<span class="pill bg-primary text-secondary"><i class="fa fa-home mr-1"></i>${type}</span>`;
-  if (name) html += `<h3 class="font-bold">${url ? `<a href="${url}">${name}</a>` : name}</h3>`;
-  const stats = [];
-  if (f.get('inhabitants')) stats.push(`<i class="fa fa-users"></i> ${f.get('inhabitants')}`);
-  if (f.get('children'))    stats.push(`<i class="fa fa-child"></i> ${f.get('children')}`);
-  if (f.get('max_guests'))  stats.push(`<i class="fa fa-suitcase"></i> ${f.get('max_guests')}`);
-  if (stats.length) html += `<div class="text-xs my-1">${stats.join(' | ')}</div>`;
+
+  if (name) html += `<h3>${url ? `<a href="${url}">${name}</a>` : name}</h3>`;
+
   if (img)         html += `<img src="${img}" class="w-full h-24 object-cover rounded my-2">`;
+
   if (desc)        html += `<span class="line-clamp-4">${desc}</span>`;
   else if (vision) html += `<span class="line-clamp-4">${vision}</span>`;
+
   if (skills.length) {
-    html += '<div class="mt-2 truncate">';
+    html += '<div class="m-2 truncate">';
     skills.slice(0, 5).forEach(s => { html += `<span class="pill bg-purple text-secondary mr-2">${s}</span>`; });
     html += '</div>';
   }
+
+  if (url)         html += `<a class="text-primary underline" href="${url}">{% trans "Open profile" %}</a>`;
   html += '</div>';
   return html;
 }
@@ -682,19 +674,15 @@ function initCommunityMap() {
   if (!mapEl) return;
 
   communityVectorSource = new ol.source.Vector();
-  communityLayers = {
-    watercolor:  new ol.layer.Tile({ source: new ol.source.XYZ({ url: 'https://tiles.stadiamaps.com/tiles/stamen_watercolor/{z}/{x}/{y}.jpg?api_key=cb8069a3-9585-4989-a6a8-572b5c3f4ffb', crossOrigin: 'anonymous' }) }),
-    tonerLabels: new ol.layer.Tile({ source: new ol.source.XYZ({ url: 'https://tiles.stadiamaps.com/tiles/stamen_toner_lite/{z}/{x}/{y}.png?api_key=cb8069a3-9585-4989-a6a8-572b5c3f4ffb', crossOrigin: 'anonymous' }), opacity: 0.35 }),
-    osm:         new ol.layer.Tile({ source: new ol.source.OSM(), visible: false }),
-    satellite:   new ol.layer.Tile({ source: new ol.source.XYZ({ url: 'https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', crossOrigin: 'anonymous' }), visible: false }),
-    markers:     new ol.layer.Vector({ source: communityVectorSource })
-  };
+  const baseLayers = EcoMap.buildBaseLayers();
+  const markersLayer = new ol.layer.Vector({ source: communityVectorSource });
 
   communityOlMap = new ol.Map({
     target: 'community-map',
-    layers: [communityLayers.watercolor, communityLayers.tonerLabels, communityLayers.osm, communityLayers.satellite, communityLayers.markers],
+    layers: baseLayers.all.concat([markersLayer]),
     view: new ol.View({ center: ol.proj.fromLonLat([0, 20]), zoom: 2, maxZoom: 20 })
   });
+  baseLayers.setBaseLayer('ecobasa');
 
   const popupEl = document.createElement('div');
   const overlay = new ol.Overlay({ element: popupEl, positioning: 'bottom-center', stopEvent: false, offset: [0, -8] });
@@ -707,10 +695,7 @@ function initCommunityMap() {
   });
 
   window._communityMapSetLayer = function (mode) {
-    communityLayers.watercolor.setVisible(mode === 'ecobasa');
-    communityLayers.tonerLabels.setVisible(mode === 'ecobasa');
-    communityLayers.osm.setVisible(mode === 'osm');
-    communityLayers.satellite.setVisible(mode === 'satellite');
+    baseLayers.setBaseLayer(mode);
     communityOlMap.renderSync();
   };
 

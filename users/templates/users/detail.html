@@ -128,51 +128,20 @@ document.addEventListener('DOMContentLoaded', () => {
 	const lat = parseFloat(mapEl.dataset.lat);
 	if (!Number.isFinite(lon) || !Number.isFinite(lat)) return;
 
-	function createLayeredIcon(badgeIcon, pinColor, badgeColor = '#fcf3e5') {
-		const canvas = document.createElement('canvas');
-		const ctx = canvas.getContext('2d');
-		const size = 80;
-		canvas.width = size; canvas.height = size;
-		ctx.fillStyle = pinColor;
-		ctx.font = '900 60px "Font Awesome 6 Free"';
-		ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-		ctx.fillText('', size / 2, size / 2);
-		ctx.fillStyle = badgeColor;
-		ctx.font = '600 22px "Font Awesome 6 Free"';
-		ctx.fillText(badgeIcon, size / 2, size / 2.5);
-		return canvas;
-	}
-
 	const coords = ol.proj.fromLonLat([lon, lat]);
 	const feature = new ol.Feature(new ol.geom.Point(coords));
-	feature.setStyle(new ol.style.Style({
-		image: new ol.style.Icon({
-			img: createLayeredIcon('', '#da6137'),
-			imgSize: [80, 80], anchor: [0.5, 0.85], scale: 0.7
-		})
-	}));
+	feature.setStyle(EcoMap.makeIconStyle(0xF007, '#da6137')); //  fa-user
 
 	const vectorLayer = new ol.layer.Vector({
 		source: new ol.source.Vector({ features: [feature] })
 	});
 
-	const watercolor = new ol.layer.Tile({
-		source: new ol.source.XYZ({
-			url: 'https://tiles.stadiamaps.com/tiles/stamen_watercolor/{z}/{x}/{y}.jpg?api_key=cb8069a3-9585-4989-a6a8-572b5c3f4ffb',
-			crossOrigin: 'anonymous'
-		})
-	});
-	const tonerLabels = new ol.layer.Tile({
-		opacity: 0.35,
-		source: new ol.source.XYZ({
-			url: 'https://tiles.stadiamaps.com/tiles/stamen_toner_lite/{z}/{x}/{y}.png?api_key=cb8069a3-9585-4989-a6a8-572b5c3f4ffb',
-			crossOrigin: 'anonymous'
-		})
-	});
+	const layers = EcoMap.buildBaseLayers();
+	layers.setBaseLayer('ecobasa');
 
 	new ol.Map({
 		target: mapEl,
-		layers: [watercolor, tonerLabels, vectorLayer],
+		layers: layers.all.concat([vectorLayer]),
 		view: new ol.View({ center: coords, zoom: 10, maxZoom: 16 }),
 	});
 });

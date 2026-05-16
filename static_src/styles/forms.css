@@ -87,6 +87,9 @@ input[type='radio']:checked:focus {
 
 input.light[type='radio']:checked {
   @apply bg-transparent;
+  &:hover {
+    @apply border-secondary;
+  }
 }
 
 input[type='checkbox']:focus,

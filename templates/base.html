@@ -1,4 +1,4 @@
-{% load static i18n %}<!DOCTYPE html>
+{% load static i18n site_tags %}<!DOCTYPE html>
 <html lang="de" class="h-full">
   <head>
     <meta charset="utf-8">
@@ -27,10 +27,7 @@
       <div class="flex items-stretch justify-between">
 
         <div class="w-full">
-
-          <div class="">
-            {% block content %}{% endblock content %}
-          </div>
+          {% block content %}{% endblock content %}
         </div>
       </div>
     </div>
@@ -40,6 +37,7 @@
     {% include "_footer.html" %}
 
     {% block javascript %}
+      <script src="{% static 'js/ecobasa-map.js' %}" data-stadia-key="{% stadia_key %}"></script>
       <script type="text/javascript" src="{% static 'alpinejs/dist/cdn.min.js' %}"></script>
     {% endblock javascript %}
   </body>
