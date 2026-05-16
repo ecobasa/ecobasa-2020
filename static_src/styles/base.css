@@ -24,7 +24,7 @@ h1, h2, h3 {
 }
 
 h1 {
-  @apply text-primary text-5xl;
+  @apply text-primary text-5xl mb-6;
 }
 
 h2 {
@@ -127,10 +127,6 @@ nav {
 
 .form-label {
 	@apply block mb-1 text-sm font-semibold text-primary;
-}
-
-.form-input {
-	@apply rounded-md w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition duration-150 ease-in-out;
 }
 
 .icon-input {

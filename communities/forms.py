@@ -41,6 +41,8 @@ class CommunityForm(forms.ModelForm):
         for field in self.fields.values():
             css = field.widget.attrs.get("class", "")
             field.widget.attrs["class"] = f"{css} form-input".strip()
+        if "country" in self.fields:
+            self.fields["country"].widget.attrs["class"] = "form-select"
         if "inhabitants" in self.fields:
             self.fields["inhabitants"].widget.attrs.setdefault(
                 "placeholder", _("e.g. 25")
