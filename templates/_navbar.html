@@ -21,13 +21,13 @@
         </div>
         {% comment %} Desktop Menu {% endcomment %}
         <div class="hidden sm:ml-6 sm:flex">
-          <a href="{% url "gifting:search" %}" class="{% if namespace == "gifting" %}text-brown{% endif %} ml-8 inline-flex items-center px-1 pt-1 border-b-2 border-transparent leading-5 focus:outline-none focus:text-brown transition duration-150 ease-in-out">
-            <i class="fa fa-recycle mr-2"></i>
-            {% trans "Free Market" %}
-          </a>
           <a href="{% url "communities:list" %}" class="{% if namespace == "communities" %}text-brown{% endif %} ml-8 inline-flex items-center px-1 pt-1 border-b-2 border-transparent leading-5 focus:outline-none focus:text-brown transition duration-150 ease-in-out">
             <i class="fa fa-home mr-2"></i>
             {% trans "Communities" %}
+          </a>
+          <a href="{% url "gifting:search" %}" class="{% if namespace == "gifting" %}text-brown{% endif %} ml-8 inline-flex items-center px-1 pt-1 border-b-2 border-transparent leading-5 focus:outline-none focus:text-brown transition duration-150 ease-in-out">
+            <i class="fa fa-recycle mr-2"></i>
+            {% trans "Free Market" %}
           </a>
           <a href="{% url "homepage:support" %}" class="{% if request.path == "/support/" %}text-brown{% endif %} ml-8 inline-flex items-center px-1 pt-1 border-b-2 border-transparent leading-5 focus:outline-none focus:text-brown transition duration-150 ease-in-out">
             <i class="fa fa-heart mr-2"></i>
@@ -47,11 +47,11 @@
           {% comment %} Profile dropdown {% endcomment %}
           <div class="ml-3 relative" x-data="{ open: false }" @close-user-menu.window="open = false">
             <div>
-                <button @click="open = !open" @keydown.escape="open = false" :aria-expanded="open" class="flex text-sm rounded-full transition duration-150 ease-in-out" id="user-menu" aria-label="User menu" aria-haspopup="true">
+                <button @click="open = !open" @keydown.escape="open = false" :aria-expanded="open" class="flex rounded-full transition duration-150 ease-in-out" id="user-menu" aria-label="User menu" aria-haspopup="true">
                {% if request.user.image %}
                 <img class="h-8 w-8 rounded-full" src="{{ request.user.image.url }}" alt="">
                {% else %}
-                <i class="fa fa-user text-lg text-primary rounded-full bg-secondary p-3"></i>
+                <i class="fa-solid fa-user p-3 text-lg text-primary rounded-full bg-secondary"></i>
                {% endif %}
               </button>
             </div>
@@ -133,7 +133,7 @@
              {% if request.user.image %}
               <img class="h-8 w-8 rounded-full" src="{{ request.user.image.url }}" alt="">
              {% else %}
-              <i class="fa fa-user text-3xl text-primary rounded-full bg-secondary p-3"></i>
+              <i class="fa-solid fa-user inline-flex items-center justify-center w-8 h-8 text-base text-primary rounded-full bg-secondary"></i>
              {% endif %}
           </div>
           <div class="ml-3">
