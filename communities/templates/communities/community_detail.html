@@ -60,12 +60,27 @@
 		</div>
 		<h2>{% trans "What brings this community together?" %}</h2>
 		<p>{{ community.vision }}</p>
+		{% if community_skills %}
 		<h2>{% trans "Skills you can learn here" %}</h2>
-		<ul>
-		{% for skill in community.skills.all %}
-			<li class="pill bg-purple text-secondary mr-2"><i class="mr-1 fa fa-graduation-cap"></i>{{ skill }}</li>
-		{% endfor %}
-		</ul>
+		<div class="flex flex-wrap gap-2 mb-2">
+			{% for cs in community_skills %}
+				<a href="{{ cs.get_absolute_url }}"
+				   class="pill bg-purple text-secondary hover:opacity-80 transition-opacity">
+					<i class="mr-1 fa fa-graduation-cap"></i>{{ cs.skill.name }}
+				</a>
+			{% endfor %}
+		</div>
+		{% if request.user == community.owner %}
+			<a href="{% url 'skills:communityskill_add' community.slug %}" class="text-sm text-primary underline">
+				<i class="fa fa-plus mr-1"></i>{% trans "Add skill" %}
+			</a>
+		{% endif %}
+		{% elif request.user == community.owner %}
+		<h2>{% trans "Skills you can learn here" %}</h2>
+		<a href="{% url 'skills:communityskill_add' community.slug %}" class="btn">
+			<i class="fa fa-plus mr-1"></i>{% trans "Add a skill" %}
+		</a>
+		{% endif %}
 	</div>
 
 	<!-- Sidebar: order controlled via Tailwind order utilities -->

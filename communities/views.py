@@ -6,6 +6,7 @@ from django.utils.translation import gettext_lazy as _
 from .models import Community
 from .models import CommunityPhoto
 from .forms import CommunityForm
+from skills.models import CommunitySkill
 
 from django.contrib.gis.geos import Polygon, Point
 from django.contrib.gis.db.models.functions import Distance
@@ -64,10 +65,12 @@ def detail(request, slug):
     community = get_object_or_404(Community, slug=slug)
     photos = list(community.photos.all())
     hero_image = photos[0].image.url if photos else None
+    community_skills = community.community_skills.select_related("skill").order_by("skill__name")
     return render(request, "communities/community_detail.html", {
-        "community": community,
-        "photos": photos,
-        "hero_image": hero_image,
+        "community":        community,
+        "photos":           photos,
+        "hero_image":       hero_image,
+        "community_skills": community_skills,
     })
 
 
@@ -354,9 +357,9 @@ def community_suggest(request):
 
     # Skills attached to a Community
     for skill in (
-        Community.objects
-        .filter(skills__name__icontains=q)
-        .values_list("skills__name", flat=True)
+        CommunitySkill.objects
+        .filter(skill__name__icontains=q)
+        .values_list("skill__name", flat=True)
         .distinct()[:5]
     ):
         add(skill, "skill")

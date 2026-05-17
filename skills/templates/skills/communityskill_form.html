@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+{% load i18n crispy_forms_tags %}
+
+{% block head_title %}
+  {% if action == 'add' %}{% trans "Add skill" %}{% else %}{% trans "Edit skill" %}{% endif %} — {{ community.name }} — ecobasa
+{% endblock %}
+
+{% block content %}
+<div class="max-w-lg mx-auto px-4 py-8">
+
+  <h1 class="text-2xl text-primary mb-6">
+    {% if action == 'add' %}
+      <i class="fa fa-plus mr-2"></i>{% trans "Add a skill for" %} {{ community.name }}
+    {% else %}
+      <i class="fa fa-pencil mr-2"></i>{% trans "Edit skill" %}: {{ comm_skill.skill.name }}
+    {% endif %}
+  </h1>
+
+  <div class="border rounded-xl bg-secondary p-6">
+    <form method="post">
+      {% csrf_token %}
+      {% crispy form %}
+    </form>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block javascript %}
+{{ block.super }}
+<script>
+(function () {
+  var input = document.querySelector('[data-skill-autocomplete]');
+  if (!input) return;
+  var list  = document.createElement('ul');
+  list.className = 'list-none absolute z-20 w-full mt-1 bg-secondary rounded shadow-lg border text-sm';
+  list.style.display = 'none';
+  input.parentElement.style.position = 'relative';
+  input.parentElement.appendChild(list);
+
+  input.addEventListener('input', function () {
+    var q = input.value.trim();
+    if (q.length < 2) { list.style.display = 'none'; return; }
+    fetch('{% url "skills:api_autocomplete" %}?q=' + encodeURIComponent(q))
+      .then(function (r) { return r.json(); })
+      .then(function (names) {
+        list.innerHTML = '';
+        if (!names.length) { list.style.display = 'none'; return; }
+        names.forEach(function (name) {
+          var li = document.createElement('li');
+          li.textContent = name;
+          li.className = 'px-3 py-2 cursor-pointer hover:bg-primary hover:text-secondary';
+          li.addEventListener('mousedown', function (e) {
+            e.preventDefault();
+            input.value = name;
+            list.style.display = 'none';
+          });
+          list.appendChild(li);
+        });
+        list.style.display = 'block';
+      });
+  });
+
+  document.addEventListener('click', function (e) {
+    if (!input.contains(e.target)) list.style.display = 'none';
+  });
+})();
+</script>
+{% endblock %}

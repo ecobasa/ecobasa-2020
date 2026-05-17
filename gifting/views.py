@@ -18,6 +18,7 @@ from .filters import AdFilter
 from .models import Ad
 from communities.models import Community
 from users.models import User
+from skills.models import UserSkill, CommunitySkill
 
 
 def search(request):
@@ -123,13 +124,13 @@ def _skill_communities(request):
 
     qs = Community.objects.filter(
         location__isnull=False,
-        skills__isnull=False,
-    ).prefetch_related("skills", "photos").distinct()
+        community_skills__isnull=False,
+    ).prefetch_related("community_skills__skill", "photos").distinct()
 
     q = request.GET.get("search", "").strip()
     if q:
         qs = qs.filter(
-            Q(skills__name__icontains=q) | Q(description__icontains=q)
+            Q(community_skills__skill__name__icontains=q) | Q(description__icontains=q)
         ).distinct()
 
     return qs
@@ -142,13 +143,13 @@ def _skill_users(request):
 
     qs = User.objects.filter(
         location__isnull=False,
-        skills__isnull=False,
-    ).prefetch_related("skills").distinct()
+        user_skills__isnull=False,
+    ).prefetch_related("user_skills__skill").distinct()
 
     q = request.GET.get("search", "").strip()
     if q:
         qs = qs.filter(
-            Q(skills__name__icontains=q) | Q(about__icontains=q)
+            Q(user_skills__skill__name__icontains=q) | Q(about__icontains=q)
         ).distinct()
 
     return qs
@@ -201,7 +202,7 @@ def gifting_markers(request):
 
     for community in skill_qs[:200]:
         first_photo = community.photos.first()
-        skill_names = [s.name for s in community.skills.all()]
+        skill_names = [cs.skill.name for cs in community.community_skills.all()]
         features.append({
             "type": "Feature",
             "geometry": {
@@ -223,7 +224,7 @@ def gifting_markers(request):
     user_skill_qs = _apply_bbox(_skill_users(request), bbox_param)
 
     for user in user_skill_qs[:200]:
-        skill_names = [s.name for s in user.skills.all()]
+        skill_names = [us.skill.name for us in user.user_skills.all()]
         features.append({
             "type": "Feature",
             "geometry": {
@@ -331,18 +332,18 @@ def gifting_suggest(request):
 
     # Community skill names
     for skill in (
-        Community.objects
-        .filter(skills__name__icontains=q)
-        .values_list("skills__name", flat=True)
+        CommunitySkill.objects
+        .filter(skill__name__icontains=q)
+        .values_list("skill__name", flat=True)
         .distinct()[:3]
     ):
         add(skill, "skill")
 
     # User skill names
     for skill in (
-        User.objects
-        .filter(skills__name__icontains=q)
-        .values_list("skills__name", flat=True)
+        UserSkill.objects
+        .filter(skill__name__icontains=q)
+        .values_list("skill__name", flat=True)
         .distinct()[:3]
     ):
         add(skill, "skill")

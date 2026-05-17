@@ -55,12 +55,15 @@ class DetailView(DetailView):
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        # Provide the user's gifting ads (if any) to the template
         try:
             user = self.get_object()
             ctx["ads"] = user.ads.all()
+            ctx["user_skills"] = (
+                user.user_skills.select_related("skill").order_by("skill__name")
+            )
         except Exception:
             ctx["ads"] = []
+            ctx["user_skills"] = []
         return ctx
 
 

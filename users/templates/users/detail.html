@@ -58,13 +58,27 @@
 			<p>{{ user.world }}</p>
 			<h2>{% trans "What would you like to use ecobasa mainly for?" %}</h2>
 			<p>{{ user.ecobasa_what }}</p>
-			{% if user.skills.exists %}
+			{% if user_skills %}
 				<h2>{% trans "Skills" %}</h2>
-				<div class="flex flex-wrap gap-2">
-					{% for tag in user.skills.all %}
-						<span class="inline-flex items-center bg-purple text-secondary px-3 py-1 rounded-full text-sm font-medium"><i class="fa fa-graduation-cap mr-1"></i>{{ tag.name }}</span>
+				<div class="flex flex-wrap gap-2 mb-2">
+					{% for us in user_skills %}
+						<a href="{{ us.get_absolute_url }}"
+						   class="inline-flex items-center gap-1 bg-purple text-secondary px-3 py-1 rounded-full text-sm font-medium hover:opacity-80 transition-opacity">
+							<i class="fa fa-graduation-cap"></i>
+							{{ us.skill.name }}
+							{% if us.level %}<span class="opacity-70 text-xs">({{ us.get_level_display }})</span>{% endif %}
+						</a>
 					{% endfor %}
 				</div>
+				{% if request.user.is_authenticated and request.user.pk == user.pk %}
+					<a href="{% url 'skills:userskill_add' %}" class="text-sm text-primary underline">
+						<i class="fa fa-plus mr-1"></i>{% trans "Add skill" %}
+					</a>
+				{% endif %}
+			{% elif request.user.is_authenticated and request.user.pk == user.pk %}
+				<a href="{% url 'skills:userskill_add' %}" class="btn mt-2">
+					<i class="fa fa-plus mr-1"></i>{% trans "Add a skill" %}
+				</a>
 			{% endif %}
 		</div>
 	</div>

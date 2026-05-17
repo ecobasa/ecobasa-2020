@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block head_title %}{{ skill.name }} — {% trans "Skills" %} — ecobasa{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 py-8">
+
+  <div class="mb-2 text-sm text-brown">
+    <a href="{% url 'skills:skill_list' %}" class="hover:underline">{% trans "Skills" %}</a>
+    <span class="mx-1">/</span>
+    <span>{{ skill.name }}</span>
+  </div>
+
+  <div class="flex items-start justify-between mb-6 gap-4">
+    <div>
+      <h1 class="text-3xl text-primary">{{ skill.name }}</h1>
+      {% if skill.description %}
+        <p class="text-brown mt-2">{{ skill.description }}</p>
+      {% endif %}
+    </div>
+    {% if user.is_authenticated %}
+      <a href="{% url 'skills:userskill_add' %}?skill={{ skill.name|urlencode }}" class="btn flex-shrink-0">
+        <i class="fa fa-plus mr-1"></i> {% trans "Add to my profile" %}
+      </a>
+    {% endif %}
+  </div>
+
+  {% if user_skills %}
+    <h2 class="text-xl text-primary mb-3">
+      <i class="fa fa-user mr-2"></i>{% trans "People with this skill" %}
+    </h2>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+      {% for us in user_skills %}
+        <a href="{{ us.get_absolute_url }}"
+          class="flex items-center gap-3 border rounded-lg p-3 bg-secondary hover:border-primary transition-colors">
+          {% if us.user.image %}
+            <img src="{{ us.user.image.url }}" alt="" class="w-12 h-12 rounded-full object-cover flex-shrink-0">
+          {% else %}
+            <div class="w-12 h-12 rounded-full bg-primary bg-opacity-20 flex items-center justify-center flex-shrink-0">
+              <i class="fa fa-user text-primary"></i>
+            </div>
+          {% endif %}
+          <div class="min-w-0">
+            <div class="font-semibold text-primary truncate">{{ us.user.name|default:us.user.username }}</div>
+            {% if us.level %}
+              <div class="text-xs pill bg-primary text-secondary inline-block mt-0.5">{{ us.get_level_display }}</div>
+            {% endif %}
+            {% if us.description %}
+              <p class="text-xs text-brown mt-1 line-clamp-2">{{ us.description }}</p>
+            {% endif %}
+          </div>
+        </a>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  {% if comm_skills %}
+    <h2 class="text-xl text-primary mb-3">
+      <i class="fa fa-home mr-2"></i>{% trans "Communities offering this skill" %}
+    </h2>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      {% for cs in comm_skills %}
+        <a href="{{ cs.get_absolute_url }}"
+          class="block border rounded-lg p-3 bg-secondary hover:border-primary transition-colors">
+          <div class="font-semibold text-primary">{{ cs.community.name }}</div>
+          {% if cs.description %}
+            <p class="text-xs text-brown mt-1 line-clamp-2">{{ cs.description }}</p>
+          {% endif %}
+        </a>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  {% if not user_skills and not comm_skills %}
+    <p class="text-brown">{% trans "Nobody has listed this skill yet." %}</p>
+  {% endif %}
+
+</div>
+{% endblock %}
