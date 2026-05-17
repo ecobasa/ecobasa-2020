@@ -114,7 +114,7 @@
   {# ── Response form (owner only, status=pending) ────────────────── #}
   {% if response_form %}
     <div class="border rounded-xl bg-secondary p-6"
-         x-data="{ isCounter: false, counterLocType: 'your_place' }">
+         x-data="{ isCounter: false, counterLocType: 'my_place' }">
       <h2 class="text-lg text-primary mb-4">
         <i class="fa fa-reply mr-2"></i>{% trans "Respond to this request" %}
       </h2>
@@ -138,7 +138,7 @@
                   <input type="radio" name="counter_location_type" value="{{ value }}"
                     class="form-radio"
                     {% if forloop.first %}checked{% endif %}
-                    @change="counterLocType = $event.target.value">
+                    @change="counterLocType = $event.target.value; window.updateCounterMode && window.updateCounterMode($event.target.value)">
                   {{ label }}
                 </label>
               {% endfor %}
@@ -172,7 +172,7 @@
           <input type="hidden" name="counter_lat" id="counter-lat">
           <input type="hidden" name="counter_lon" id="counter-lon">
 
-          <div class="rounded shadow overflow-hidden h-[220px]" x-show="isCounter" style="display:none">
+          <div class="rounded shadow overflow-hidden h-[220px]">
             <div id="counter-pick-map" class="w-full h-full bg-secondary bg-opacity-40"></div>
           </div>
 
@@ -193,7 +193,7 @@
           </button>
           <button type="button" class="btn"
             @click="isCounter = !isCounter; if (isCounter) $nextTick(() => window.initCounterPicker && window.initCounterPicker())">
-            <i class="fa fa-exchange mr-1"></i>{% trans "Counter-propose" %}
+            <i class="fa-solid fa-location-dot mr-1"></i>{% trans "Propose different location" %}
           </button>
           <button x-show="isCounter" type="submit" name="action" value="counter"
             class="btn bg-blue-600 hover:bg-blue-700 text-secondary border-blue-700" style="display:none">
@@ -211,46 +211,119 @@
 {{ block.super }}
 <script src="https://cdn.jsdelivr.net/npm/ol@v7.2.2/dist/ol.js"></script>
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-  function staticMap(target, lat, lon, pinColor) {
+document.fonts.ready.then(function () {
+  // Display map with layer toggle + zoom (no point editing)
+  function displayMap(target, lat, lon, badge) {
     var coords = ol.proj.fromLonLat([lon, lat]);
     var feature = new ol.Feature({ geometry: new ol.geom.Point(coords) });
-    feature.setStyle(EcoMap.makeIconStyle(0xF041, pinColor || '#da6137'));
+    feature.setStyle(EcoMap.makeIconStyle(badge, '#da6137'));
     var layers = EcoMap.buildBaseLayers();
     layers.setBaseLayer('ecobasa');
-    new ol.Map({
+    var map = new ol.Map({
       target: target,
       layers: layers.all.concat([new ol.layer.Vector({ source: new ol.source.Vector({ features: [feature] }) })]),
       view: new ol.View({ center: coords, zoom: 12 }),
-      interactions: [],
-      controls: [],
     });
+    var menu = EcoMap.buildLayerToggle(map, target + '-layer');
+    menu.querySelectorAll('input').forEach(function (r) {
+      r.addEventListener('change', function (e) { if (e.target.checked) layers.setBaseLayer(e.target.value); });
+    });
+    return map;
+  }
+
+  function badgeFor(locType) {
+    return (locType === 'custom') ? 0xF111 : 0xF007;
   }
 
   {% with coords=sr.location_coords %}{% if coords.0 and coords.1 %}
-  staticMap('sr-map', {{ coords.0 }}, {{ coords.1 }}, '#da6137');
+  displayMap('sr-map', {{ coords.0 }}, {{ coords.1 }}, badgeFor('{{ sr.location_type }}'));
   {% endif %}{% endwith %}
 
   {% if sr.counter_lat and sr.counter_lon %}
-  staticMap('counter-map', {{ sr.counter_lat }}, {{ sr.counter_lon }}, '#2563eb');
+  displayMap('counter-map', {{ sr.counter_lat }}, {{ sr.counter_lon }}, badgeFor('{{ sr.counter_location_type }}'));
   {% endif %}
 
-  // Counter-proposal interactive picker — init once when the section becomes visible
-  var counterPicker = null;
+  // Counter-proposal map — unified: static pin for my/your place, interactive for custom
+  var counterMapInst = null;
   window.initCounterPicker = function () {
-    if (counterPicker) return;
-    counterPicker = EcoMap.initLocationPicker({
-      mapTarget:  'counter-pick-map',
-      setPointFn: 'setCounterPoint',
-      badge:      0xF041,
-      pinColor:   '#2563eb',
-      groupName:  'counter-layer',
+    if (counterMapInst) return;
+
+    var vectorSource = new ol.source.Vector();
+    var counterFeature = new ol.Feature();
+    vectorSource.addFeature(counterFeature);
+    var counterVectorLayer = new ol.layer.Vector({ source: vectorSource });
+
+    var layers = EcoMap.buildBaseLayers();
+    layers.setBaseLayer('ecobasa');
+
+    counterMapInst = new ol.Map({
+      target: 'counter-pick-map',
+      layers: layers.all.concat([counterVectorLayer]),
+      view: new ol.View({ center: ol.proj.fromLonLat([10, 50]), zoom: 4 }),
     });
-    window.setCounterPoint = function (lon, lat, label) {
-      document.getElementById('counter-lon').value  = lon;
-      document.getElementById('counter-lat').value  = lat;
-      document.getElementById('counter-location-name').value = label || '';
+
+    var layerMenu = EcoMap.buildLayerToggle(counterMapInst, 'counter-pick-layer');
+    layerMenu.querySelectorAll('input').forEach(function (r) {
+      r.addEventListener('change', function (e) { if (e.target.checked) layers.setBaseLayer(e.target.value); });
+    });
+
+    var modify = new ol.interaction.Modify({ source: vectorSource });
+    modify.on('modifyend', function () {
+      var geom = counterFeature.getGeometry();
+      if (!geom) return;
+      var ll = ol.proj.toLonLat(geom.getCoordinates());
+      setHidden(ll[0], ll[1], '');
+    });
+
+    counterMapInst.on('click', function (evt) {
+      var checked = document.querySelector('input[name="counter_location_type"]:checked');
+      if (!checked || checked.value !== 'custom') return;
+      var ll = ol.proj.toLonLat(evt.coordinate);
+      placePin(ll[0], ll[1]);
+      setHidden(ll[0], ll[1], '');
+    });
+
+    function placePin(lon, lat, skipZoom) {
+      var coords = ol.proj.fromLonLat([parseFloat(lon), parseFloat(lat)]);
+      counterFeature.setGeometry(new ol.geom.Point(coords));
+      if (!skipZoom) counterMapInst.getView().animate({ center: coords, zoom: 12 });
+    }
+
+    function setHidden(lon, lat, name) {
+      document.getElementById('counter-lon').value = lon;
+      document.getElementById('counter-lat').value = lat;
+      document.getElementById('counter-location-name').value = name || '';
+    }
+
+    // Known coordinates from server context
+    var knownCoords = {
+      my_place:   {% if owner.location %}[{{ owner.location.x }}, {{ owner.location.y }}, '{{ owner.location_name|escapejs }}']{% else %}null{% endif %},
+      your_place: {% if sr.from_user.location %}[{{ sr.from_user.location.x }}, {{ sr.from_user.location.y }}, '{{ sr.from_user.location_name|escapejs }}']{% else %}null{% endif %},
     };
+
+    window.updateCounterMode = function (locType) {
+      counterMapInst.removeInteraction(modify);
+      if (locType === 'custom') {
+        counterFeature.setGeometry(null);
+        counterVectorLayer.setStyle(EcoMap.makeIconStyle(0xF111, '#da6137'));
+        counterMapInst.addInteraction(modify);
+        setHidden('', '', '');
+      } else {
+        counterVectorLayer.setStyle(EcoMap.makeIconStyle(0xF007, '#da6137'));
+        var c = knownCoords[locType];
+        if (c) { placePin(c[0], c[1]); setHidden(c[0], c[1], c[2]); }
+      }
+    };
+
+    // Nominatim callback (only active when custom is selected)
+    window.setCounterPoint = function (lon, lat, label) {
+      placePin(lon, lat);
+      setHidden(lon, lat, label);
+    };
+
+    // Init with the currently checked radio (defaults to my_place)
+    var checked = document.querySelector('input[name="counter_location_type"]:checked');
+    window.updateCounterMode(checked ? checked.value : 'my_place');
   };
 });
 </script>
