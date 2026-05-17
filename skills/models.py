@@ -7,6 +7,11 @@ from users.models import User
 from communities.models import Community
 
 
+def _user_slug(user):
+    """Mirrors User.get_absolute_url() slug logic — always returns a non-empty string."""
+    return user.username or slugify(user.name) or str(user.pk)
+
+
 class Skill(models.Model):
     name = models.CharField(_("Name"), max_length=100, unique=True)
     slug = models.SlugField(unique=True, blank=True)
@@ -64,7 +69,7 @@ class UserSkill(models.Model):
     def get_absolute_url(self):
         return reverse("skills:userskill_detail", kwargs={
             "skill_slug": self.skill.slug,
-            "username": self.user.username,
+            "user_slug":  _user_slug(self.user),
         })
 
 
@@ -85,27 +90,99 @@ class CommunitySkill(models.Model):
 
     def get_absolute_url(self):
         return reverse("skills:communityskill_detail", kwargs={
-            "skill_slug": self.skill.slug,
+            "skill_slug":     self.skill.slug,
             "community_slug": self.community.slug,
         })
 
 
 class SkillRequest(models.Model):
-    from_user        = models.ForeignKey(
+    LOC_MY_PLACE   = "my_place"
+    LOC_YOUR_PLACE = "your_place"
+    LOC_CUSTOM     = "custom"
+    LOC_CHOICES = [
+        (LOC_MY_PLACE,   _("My place — come visit me")),
+        (LOC_YOUR_PLACE, _("Your place — I will visit you")),
+        (LOC_CUSTOM,     _("Somewhere else")),
+    ]
+
+    STATUS_PENDING  = "pending"
+    STATUS_ACCEPTED = "accepted"
+    STATUS_DECLINED = "declined"
+    STATUS_COUNTER  = "counter"
+    STATUS_CHOICES = [
+        (STATUS_PENDING,  _("Pending")),
+        (STATUS_ACCEPTED, _("Accepted")),
+        (STATUS_DECLINED, _("Declined")),
+        (STATUS_COUNTER,  _("Counter-proposed")),
+    ]
+
+    from_user         = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name="skill_requests_sent"
     )
-    user_skill       = models.ForeignKey(
+    user_skill        = models.ForeignKey(
         UserSkill, null=True, blank=True,
         on_delete=models.CASCADE, related_name="requests"
     )
-    community_skill  = models.ForeignKey(
+    community_skill   = models.ForeignKey(
         CommunitySkill, null=True, blank=True,
         on_delete=models.CASCADE, related_name="requests"
     )
-    message          = models.TextField(_("Message"))
-    proposed_location = models.CharField(_("Proposed location"), max_length=255, blank=True)
-    proposed_date    = models.DateField(_("Proposed date"), null=True, blank=True)
-    created_at       = models.DateTimeField(auto_now_add=True)
+    message           = models.TextField(_("Message"))
+    location_type     = models.CharField(
+        _("Meeting location"), max_length=20, choices=LOC_CHOICES, default=LOC_YOUR_PLACE
+    )
+    proposed_location = models.CharField(_("Custom location"), max_length=255, blank=True)
+    proposed_lat      = models.FloatField(null=True, blank=True)
+    proposed_lon      = models.FloatField(null=True, blank=True)
+    proposed_date     = models.DateField(_("Proposed date"), null=True, blank=True)
+    status            = models.CharField(
+        _("Status"), max_length=20, choices=STATUS_CHOICES, default=STATUS_PENDING
+    )
+    response_message  = models.TextField(_("Response message"), blank=True)
+    counter_location_type = models.CharField(
+        _("Counter location"), max_length=20, choices=LOC_CHOICES, blank=True
+    )
+    counter_location  = models.CharField(max_length=255, blank=True)
+    counter_lat       = models.FloatField(null=True, blank=True)
+    counter_lon       = models.FloatField(null=True, blank=True)
+    counter_date      = models.DateField(_("Counter date"), null=True, blank=True)
+    responded_at      = models.DateTimeField(null=True, blank=True)
+    created_at        = models.DateTimeField(auto_now_add=True)
+
+    def get_absolute_url(self):
+        return reverse("skills:skillrequest_detail", kwargs={"pk": self.pk})
+
+    def resolved_location(self):
+        """Human-readable meeting location, resolving my/your place from profiles."""
+        if self.location_type == self.LOC_MY_PLACE:
+            loc = self.from_user.location_name or self.proposed_location or ""
+            name = self.from_user.name or self.from_user.email
+            return f"{name}'s place — {loc}" if loc else f"{name}'s place"
+        if self.location_type == self.LOC_YOUR_PLACE:
+            target_user = self.user_skill.user if self.user_skill else None
+            if target_user:
+                loc = target_user.location_name or ""
+                name = target_user.name or target_user.email
+                return f"{name}'s place — {loc}" if loc else f"{name}'s place"
+            if self.community_skill:
+                loc = self.community_skill.community.location_name or ""
+                return f"{self.community_skill.community.name} — {loc}" if loc else self.community_skill.community.name
+        return self.proposed_location or ""
+
+    def location_coords(self):
+        """Best coordinates for this request's proposed meeting point."""
+        if self.proposed_lat and self.proposed_lon:
+            return self.proposed_lat, self.proposed_lon
+        if self.location_type == self.LOC_MY_PLACE and self.from_user.location:
+            return self.from_user.location.y, self.from_user.location.x
+        if self.location_type == self.LOC_YOUR_PLACE:
+            target = self.user_skill.user if self.user_skill else None
+            if target and target.location:
+                return target.location.y, target.location.x
+            if self.community_skill and self.community_skill.community.location:
+                c = self.community_skill.community.location
+                return c.y, c.x
+        return None, None
 
     class Meta:
         ordering = ["-created_at"]
@@ -115,3 +192,29 @@ class SkillRequest(models.Model):
     def __str__(self):
         target = self.user_skill or self.community_skill
         return f"Request from {self.from_user} → {target}"
+
+
+class SkillWish(models.Model):
+    """Someone wants to learn a skill, or a community needs someone with a skill."""
+    user        = models.ForeignKey(
+        User, null=True, blank=True,
+        on_delete=models.CASCADE, related_name="skill_wishes"
+    )
+    community   = models.ForeignKey(
+        Community, null=True, blank=True,
+        on_delete=models.CASCADE, related_name="skill_wishes"
+    )
+    skill       = models.ForeignKey(Skill, on_delete=models.CASCADE, related_name="wishes")
+    description = models.TextField(
+        _("What do you want to learn, or what do you need?"), blank=True
+    )
+    created_at  = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        verbose_name = _("Skill Wish")
+        verbose_name_plural = _("Skill Wishes")
+
+    def __str__(self):
+        owner = self.user or self.community
+        return f"{owner} wants: {self.skill}"

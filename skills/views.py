@@ -1,14 +1,88 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.http import JsonResponse
+from django.core.mail import send_mail
+from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_GET
 
-from .forms import CommunitySkillForm, SkillRequestForm, UserSkillForm
-from .models import CommunitySkill, Skill, UserSkill
+from django.utils.text import slugify
+
+from .forms import CommunitySkillForm, SkillRequestForm, SkillRequestResponseForm, UserSkillForm
+from .models import CommunitySkill, Skill, SkillRequest, UserSkill
 from communities.models import Community
 from users.models import User
+
+
+def _notify_skill_request(skill_request):
+    """Create an in-app notification and send an email for a new SkillRequest."""
+    from notifications.models import Notification
+
+    if skill_request.user_skill:
+        recipient = skill_request.user_skill.user
+        skill_name = skill_request.user_skill.skill.name
+    else:
+        community = skill_request.community_skill.community
+        recipient = community.owner
+        skill_name = skill_request.community_skill.skill.name
+
+    if recipient is None:
+        return
+
+    link = skill_request.get_absolute_url()
+    actor_name = skill_request.from_user.name or skill_request.from_user.email
+    verb = _("%(actor)s requested your skill: %(skill)s") % {
+        "actor": actor_name, "skill": skill_name
+    }
+
+    Notification.objects.create(
+        recipient=recipient,
+        actor=skill_request.from_user,
+        verb=str(verb),
+        link=link,
+    )
+
+    location_line = skill_request.resolved_location()
+    date_line = str(skill_request.proposed_date) if skill_request.proposed_date else ""
+
+    body = (
+        f"{actor_name} has sent a skill request for '{skill_name}'.\n\n"
+        f"Message:\n{skill_request.message}\n"
+    )
+    if location_line:
+        body += f"\nLocation: {location_line}"
+    if date_line:
+        body += f"\nProposed date: {date_line}"
+    body += f"\n\nView it here: https://ecobasa.org{link}"
+
+    try:
+        send_mail(
+            subject=f"[ecobasa] Skill request: {skill_name}",
+            message=body,
+            from_email="noreply@ecobasa.org",
+            recipient_list=[recipient.email],
+            fail_silently=True,
+        )
+    except Exception:
+        pass
+
+
+def _get_user_by_slug(user_slug):
+    """Mirrors User.DetailView lookup: username → slugified name → pk."""
+    try:
+        return User.objects.get(username=user_slug)
+    except User.DoesNotExist:
+        pass
+    try:
+        return User.objects.get(name__iexact=user_slug.replace("-", " "))
+    except User.DoesNotExist:
+        pass
+    try:
+        return User.objects.get(pk=user_slug)
+    except (User.DoesNotExist, ValueError, TypeError):
+        pass
+    return None
 
 
 def skill_list(request):
@@ -37,10 +111,12 @@ def skill_detail(request, slug):
     })
 
 
-def userskill_detail(request, skill_slug, username):
+def userskill_detail(request, skill_slug, user_slug):
     """One person's skill detail page — description, level, request form."""
     skill      = get_object_or_404(Skill, slug=skill_slug)
-    user       = get_object_or_404(User, username=username)
+    user       = _get_user_by_slug(user_slug)
+    if user is None:
+        raise Http404("User not found")
     user_skill = get_object_or_404(UserSkill, skill=skill, user=user)
 
     form = None
@@ -52,15 +128,18 @@ def userskill_detail(request, skill_slug, username):
                 sr.from_user   = request.user
                 sr.user_skill  = user_skill
                 sr.save()
+                _notify_skill_request(sr)
                 messages.success(request, _("Your request has been sent."))
                 return redirect(user_skill.get_absolute_url())
         else:
             form = SkillRequestForm()
 
+    from .models import _user_slug as _slug
     return render(request, "skills/userskill_detail.html", {
         "user_skill": user_skill,
         "skill":      skill,
         "profile":    user,
+        "user_slug":  _slug(user),
         "form":       form,
     })
 
@@ -77,9 +156,10 @@ def communityskill_detail(request, skill_slug, community_slug):
             form = SkillRequestForm(request.POST)
             if form.is_valid():
                 sr = form.save(commit=False)
-                sr.from_user      = request.user
+                sr.from_user       = request.user
                 sr.community_skill = comm_skill
                 sr.save()
+                _notify_skill_request(sr)
                 messages.success(request, _("Your request has been sent."))
                 return redirect(comm_skill.get_absolute_url())
         else:
@@ -114,8 +194,9 @@ def userskill_add(request):
 
 
 @login_required
-def userskill_edit(request, skill_slug, username):
-    if request.user.username != username:
+def userskill_edit(request, skill_slug, user_slug):
+    user = _get_user_by_slug(user_slug)
+    if user is None or user != request.user:
         return redirect("users:login")
     skill      = get_object_or_404(Skill, slug=skill_slug)
     user_skill = get_object_or_404(UserSkill, skill=skill, user=request.user)
@@ -128,15 +209,16 @@ def userskill_edit(request, skill_slug, username):
 
 
 @login_required
-def userskill_delete(request, skill_slug, username):
-    if request.user.username != username:
+def userskill_delete(request, skill_slug, user_slug):
+    user = _get_user_by_slug(user_slug)
+    if user is None or user != request.user:
         return redirect("users:login")
     skill      = get_object_or_404(Skill, slug=skill_slug)
     user_skill = get_object_or_404(UserSkill, skill=skill, user=request.user)
     if request.method == "POST":
         user_skill.delete()
         messages.success(request, _("Skill removed."))
-        return redirect("users:detail", username=username)
+        return redirect(request.user.get_absolute_url())
     return render(request, "skills/userskill_confirm_delete.html", {"user_skill": user_skill})
 
 
@@ -195,6 +277,106 @@ def communityskill_delete(request, skill_slug, community_slug):
         return redirect(community.get_absolute_url())
     return render(request, "skills/communityskill_confirm_delete.html", {
         "comm_skill": comm_skill, "community": community
+    })
+
+
+# ── Skill request detail / response ──────────────────────────────────
+
+def _notify_skill_response(skill_request):
+    """Notify the original requester when their request has been responded to."""
+    from notifications.models import Notification
+
+    recipient = skill_request.from_user
+    if skill_request.user_skill:
+        skill_name = skill_request.user_skill.skill.name
+        responder = skill_request.user_skill.user
+    else:
+        skill_name = skill_request.community_skill.skill.name
+        responder = skill_request.community_skill.community.owner
+
+    if responder is None:
+        return
+
+    actor_name = responder.name or responder.email
+    status_label = skill_request.get_status_display()
+    verb = _("%(actor)s %(status)s your skill request: %(skill)s") % {
+        "actor": actor_name, "status": status_label.lower(), "skill": skill_name
+    }
+    link = skill_request.get_absolute_url()
+
+    Notification.objects.create(
+        recipient=recipient,
+        actor=responder,
+        verb=str(verb),
+        link=link,
+    )
+
+    body = (
+        f"{actor_name} has {status_label.lower()} your request for '{skill_name}'.\n"
+    )
+    if skill_request.response_message:
+        body += f"\nMessage:\n{skill_request.response_message}\n"
+    if skill_request.status == SkillRequest.STATUS_COUNTER:
+        if skill_request.counter_location:
+            body += f"\nCounter location: {skill_request.counter_location}"
+        if skill_request.counter_date:
+            body += f"\nCounter date: {skill_request.counter_date}"
+    body += f"\n\nView it here: https://ecobasa.org{link}"
+
+    try:
+        send_mail(
+            subject=f"[ecobasa] Skill request {status_label.lower()}: {skill_name}",
+            message=body,
+            from_email="noreply@ecobasa.org",
+            recipient_list=[recipient.email],
+            fail_silently=True,
+        )
+    except Exception:
+        pass
+
+
+def skillrequest_detail(request, pk):
+    sr = get_object_or_404(SkillRequest, pk=pk)
+
+    # Only from_user and the skill/community owner may view
+    if sr.user_skill:
+        owner = sr.user_skill.user
+    else:
+        owner = sr.community_skill.community.owner
+
+    if request.user != sr.from_user and request.user != owner:
+        if not request.user.is_authenticated:
+            return redirect("users:login")
+        raise Http404
+
+    response_form = None
+    if request.user == owner:
+        response_form = SkillRequestResponseForm(request.POST or None)
+        if request.method == "POST" and response_form.is_valid():
+            action = request.POST.get("action")
+            if action in ("accept", "decline", "counter"):
+                sr.status = {
+                    "accept":  SkillRequest.STATUS_ACCEPTED,
+                    "decline": SkillRequest.STATUS_DECLINED,
+                    "counter": SkillRequest.STATUS_COUNTER,
+                }[action]
+                sr.response_message = response_form.cleaned_data.get("response_message", "")
+                if action == "counter":
+                    sr.counter_location_type = response_form.cleaned_data.get("counter_location_type", "")
+                    sr.counter_location      = response_form.cleaned_data.get("counter_location", "")
+                    sr.counter_lat           = response_form.cleaned_data.get("counter_lat")
+                    sr.counter_lon           = response_form.cleaned_data.get("counter_lon")
+                    sr.counter_date          = response_form.cleaned_data.get("counter_date")
+                sr.responded_at = timezone.now()
+                sr.save()
+                _notify_skill_response(sr)
+                messages.success(request, _("Response sent."))
+                return redirect(sr.get_absolute_url())
+
+    return render(request, "skills/skillrequest_detail.html", {
+        "sr":            sr,
+        "owner":         owner,
+        "response_form": response_form,
     })
 
 

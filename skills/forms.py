@@ -87,13 +87,20 @@ class CommunitySkillForm(forms.ModelForm):
 
 
 class SkillRequestForm(forms.ModelForm):
+    proposed_lat = forms.FloatField(required=False, widget=forms.HiddenInput())
+    proposed_lon = forms.FloatField(required=False, widget=forms.HiddenInput())
+
     class Meta:
         model  = SkillRequest
-        fields = ["message", "proposed_location", "proposed_date"]
+        fields = ["message", "location_type", "proposed_location", "proposed_lat", "proposed_lon", "proposed_date"]
         widgets = {
-            "message":           forms.Textarea(attrs={"rows": 4}),
-            "proposed_date":     forms.DateInput(attrs={"type": "date"}),
-            "proposed_location": forms.TextInput(attrs={"placeholder": _("City, region or online")}),
+            "message":           forms.Textarea(attrs={"rows": 4, "class": "form-input"}),
+            "location_type":     forms.RadioSelect(),
+            "proposed_date":     forms.DateInput(attrs={"type": "date", "class": "form-input"}),
+            "proposed_location": forms.TextInput(attrs={
+                "placeholder": _("City, region, address…"),
+                "class": "form-input",
+            }),
         }
 
     def __init__(self, *args, **kwargs):
@@ -101,7 +108,48 @@ class SkillRequestForm(forms.ModelForm):
         self.helper = FormHelper()
         self.helper.layout = Layout(
             Field("message"),
+            Field("location_type"),
             Field("proposed_location"),
+            Field("proposed_lat"),
+            Field("proposed_lon"),
             Field("proposed_date"),
             Submit("submit", _("Send request"), css_class="btn mt-2"),
+        )
+
+
+class SkillRequestResponseForm(forms.Form):
+    response_message    = forms.CharField(
+        label=_("Message"), required=False,
+        widget=forms.Textarea(attrs={"rows": 3, "class": "form-input"}),
+    )
+    counter_location_type = forms.ChoiceField(
+        label=_("Counter location type"),
+        choices=SkillRequest.LOC_CHOICES,
+        required=False,
+        widget=forms.RadioSelect(),
+    )
+    counter_location = forms.CharField(
+        label=_("Counter location"),
+        max_length=255, required=False,
+        widget=forms.TextInput(attrs={"placeholder": _("City, region, address…"), "class": "form-input"}),
+    )
+    counter_lat  = forms.FloatField(required=False, widget=forms.HiddenInput())
+    counter_lon  = forms.FloatField(required=False, widget=forms.HiddenInput())
+    counter_date = forms.DateField(
+        label=_("Counter date"),
+        required=False,
+        widget=forms.DateInput(attrs={"type": "date", "class": "form-input"}),
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_tag = False
+        self.helper.layout = Layout(
+            Field("response_message"),
+            Field("counter_location_type", x_show="isCounter"),
+            Field("counter_location",      **{"x-show": "isCounter"}),
+            Field("counter_lat"),
+            Field("counter_lon"),
+            Field("counter_date",          **{"x-show": "isCounter"}),
         )

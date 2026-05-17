@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block head_title %}{% trans "Notifications" %} — ecobasa{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto px-4 py-8">
+
+  <div class="flex items-center justify-between mb-6">
+    <h1 class="text-2xl text-primary">{% trans "Notifications" %}</h1>
+    {% if notifications %}
+      <form method="post" action="{% url 'notifications:mark_all_read' %}">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{{ request.path }}">
+        <button type="submit" class="text-sm text-primary underline">
+          {% trans "Mark all as read" %}
+        </button>
+      </form>
+    {% endif %}
+  </div>
+
+  {% if notifications %}
+    <div class="space-y-2">
+      {% for n in notifications %}
+        <a href="{{ n.link|default:'#' }}"
+           class="flex items-start gap-3 border rounded-lg p-3 {% if not n.is_read %}bg-primary bg-opacity-5 border-primary{% else %}bg-secondary{% endif %} hover:border-primary transition-colors">
+          {% if n.actor and n.actor.image %}
+            <img src="{{ n.actor.image.url }}" class="w-9 h-9 rounded-full object-cover flex-shrink-0 mt-0.5">
+          {% else %}
+            <div class="w-9 h-9 rounded-full bg-primary bg-opacity-20 flex items-center justify-center flex-shrink-0 mt-0.5">
+              <i class="fa fa-bell text-sm text-primary"></i>
+            </div>
+          {% endif %}
+          <div class="min-w-0 flex-1">
+            <p class="text-sm {% if not n.is_read %}font-semibold text-primary{% else %}text-brown{% endif %}">
+              {{ n.verb }}
+            </p>
+            <p class="text-xs text-brown mt-0.5">{{ n.created_at|timesince }} {% trans "ago" %}</p>
+          </div>
+          {% if not n.is_read %}
+            <span class="w-2 h-2 rounded-full bg-primary flex-shrink-0 mt-2"></span>
+          {% endif %}
+        </a>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="text-brown text-center py-12">{% trans "No notifications yet." %}</p>
+  {% endif %}
+
+</div>
+{% endblock %}

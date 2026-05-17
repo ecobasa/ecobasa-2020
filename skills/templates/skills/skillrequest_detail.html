@@ -1,0 +1,257 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block head_title %}{% trans "Skill Request" %} — ecobasa{% endblock %}
+
+{% block extrahead %}
+{{ block.super }}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v7.2.2/ol.css">
+{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto px-4 py-8">
+
+  <div class="mb-2 text-sm text-brown">
+    <a href="{% url 'skills:skill_list' %}" class="hover:underline">{% trans "Skills" %}</a>
+    <span class="mx-1">/</span>
+    {% if sr.user_skill %}
+      <a href="{{ sr.user_skill.get_absolute_url }}" class="hover:underline">{{ sr.user_skill }}</a>
+    {% else %}
+      <a href="{{ sr.community_skill.get_absolute_url }}" class="hover:underline">{{ sr.community_skill }}</a>
+    {% endif %}
+    <span class="mx-1">/</span>
+    <span>{% trans "Request" %} #{{ sr.pk }}</span>
+  </div>
+
+  {# ── Request summary card ──────────────────────────────────────── #}
+  <div class="border rounded-xl bg-secondary p-6 mb-6">
+    <div class="flex items-center gap-3 mb-4">
+      {% if sr.from_user.image %}
+        <img src="{{ sr.from_user.image.url }}" alt="" width="48" height="48" class="w-12 h-12 rounded-full object-cover">
+      {% else %}
+        <div class="w-12 h-12 rounded-full bg-primary bg-opacity-20 flex items-center justify-center">
+          <i class="fa fa-user text-primary"></i>
+        </div>
+      {% endif %}
+      <div>
+        <a href="{{ sr.from_user.get_absolute_url }}" class="font-semibold text-primary hover:underline">
+          {{ sr.from_user.name|default:sr.from_user.email }}
+        </a>
+        <p class="text-xs text-brown">{% trans "sent this request" %} · {{ sr.created_at|date:"d M Y" }}</p>
+      </div>
+      <div class="ml-auto">
+        {% if sr.status == 'pending' %}
+          <span class="pill bg-yellow-500 text-secondary">{% trans "Pending" %}</span>
+        {% elif sr.status == 'accepted' %}
+          <span class="pill bg-green-600 text-secondary">{% trans "Accepted" %}</span>
+        {% elif sr.status == 'declined' %}
+          <span class="pill bg-red-600 text-secondary">{% trans "Declined" %}</span>
+        {% elif sr.status == 'counter' %}
+          <span class="pill bg-blue-600 text-secondary">{% trans "Counter-proposed" %}</span>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="prose text-sm text-brown mb-4">{{ sr.message|linebreaksbr }}</div>
+
+    {# Location info #}
+    {% if sr.location_type %}
+      <div class="text-sm text-brown mb-2">
+        <i class="fa fa-map-marker mr-1 text-primary"></i>
+        <strong>{% trans "Location" %}:</strong> {{ sr.resolved_location }}
+      </div>
+    {% endif %}
+    {% if sr.proposed_date %}
+      <div class="text-sm text-brown mb-2">
+        <i class="fa fa-calendar mr-1 text-primary"></i>
+        <strong>{% trans "Proposed date" %}:</strong> {{ sr.proposed_date|date:"d M Y" }}
+      </div>
+    {% endif %}
+
+    {# Map showing proposed meeting point #}
+    {% with coords=sr.location_coords %}
+      {% if coords.0 and coords.1 %}
+        <div class="rounded shadow overflow-hidden h-[200px] mt-3" id="sr-map"></div>
+      {% endif %}
+    {% endwith %}
+  </div>
+
+  {# ── Response / counter-proposal (shown after owner responds) ─── #}
+  {% if sr.status != 'pending' %}
+    <div class="border rounded-xl bg-secondary p-6 mb-6">
+      <h2 class="text-lg text-primary mb-3">
+        {% if sr.status == 'accepted' %}<i class="fa fa-check-circle mr-2 text-green-600"></i>{% trans "Accepted" %}
+        {% elif sr.status == 'declined' %}<i class="fa fa-times-circle mr-2 text-red-600"></i>{% trans "Declined" %}
+        {% elif sr.status == 'counter' %}<i class="fa fa-exchange mr-2 text-blue-600"></i>{% trans "Counter-proposal" %}
+        {% endif %}
+      </h2>
+      {% if sr.responded_at %}
+        <p class="text-xs text-brown mb-3">{{ sr.responded_at|date:"d M Y H:i" }}</p>
+      {% endif %}
+      {% if sr.response_message %}
+        <div class="prose text-sm text-brown mb-4">{{ sr.response_message|linebreaksbr }}</div>
+      {% endif %}
+      {% if sr.status == 'counter' %}
+        {% if sr.counter_location %}
+          <div class="text-sm text-brown mb-2">
+            <i class="fa fa-map-marker mr-1 text-primary"></i>
+            <strong>{% trans "Counter location" %}:</strong> {{ sr.counter_location }}
+          </div>
+        {% endif %}
+        {% if sr.counter_date %}
+          <div class="text-sm text-brown mb-2">
+            <i class="fa fa-calendar mr-1 text-primary"></i>
+            <strong>{% trans "Counter date" %}:</strong> {{ sr.counter_date|date:"d M Y" }}
+          </div>
+        {% endif %}
+        {% if sr.counter_lat and sr.counter_lon %}
+          <div class="rounded shadow overflow-hidden h-[200px] mt-3" id="counter-map"></div>
+        {% endif %}
+      {% endif %}
+    </div>
+  {% endif %}
+
+  {# ── Response form (owner only, status=pending) ────────────────── #}
+  {% if response_form %}
+    <div class="border rounded-xl bg-secondary p-6"
+         x-data="{ isCounter: false, counterLocType: 'your_place' }">
+      <h2 class="text-lg text-primary mb-4">
+        <i class="fa fa-reply mr-2"></i>{% trans "Respond to this request" %}
+      </h2>
+      <form method="post">
+        {% csrf_token %}
+
+        <div class="form-group mb-4">
+          <label class="form-label">{{ response_form.response_message.label }}</label>
+          {{ response_form.response_message }}
+        </div>
+
+        {# Counter-proposal extra fields #}
+        <div x-show="isCounter" style="display:none" class="space-y-4 border-t pt-4 mt-2">
+          <h3 class="text-sm font-semibold text-brown">{% trans "Counter-proposal details" %}</h3>
+
+          <div class="form-group">
+            <label class="form-label">{% trans "Counter location type" %}</label>
+            <div class="space-y-1">
+              {% for value, label in response_form.counter_location_type.field.choices %}
+                <label class="flex items-center gap-2 text-sm text-brown cursor-pointer">
+                  <input type="radio" name="counter_location_type" value="{{ value }}"
+                    class="form-radio"
+                    {% if forloop.first %}checked{% endif %}
+                    @change="counterLocType = $event.target.value">
+                  {{ label }}
+                </label>
+              {% endfor %}
+            </div>
+          </div>
+
+          <div x-show="counterLocType === 'custom'" style="display:none">
+            <div x-data="EcoMap.locationDropdown('setCounterPoint')" class="relative">
+              <label class="form-label">{% trans "Counter location" %}</label>
+              <input type="text" id="counter-location-search"
+                class="form-input"
+                placeholder="{% trans 'Search for a location…' %}"
+                @input.debounce="onInput($el.value)"
+                autocomplete="off">
+              <div x-show="open" @click.outside="open = false" style="display:none"
+                class="absolute z-20 inset-x-0 bg-secondary shadow-lg text-xs py-2 rounded-b border">
+                <ul class="list-none m-0">
+                  <template x-for="res in results" :key="res.place_id">
+                    <li class="m-0">
+                      <a @click.prevent="onSelect(res)" href="#"
+                        class="block px-2 py-2 text-brown hover:bg-primary hover:text-secondary"
+                        x-text="res.display_name"></a>
+                    </li>
+                  </template>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <input type="hidden" name="counter_location" id="counter-location-name">
+          <input type="hidden" name="counter_lat" id="counter-lat">
+          <input type="hidden" name="counter_lon" id="counter-lon">
+
+          <div class="rounded shadow overflow-hidden h-[220px]" x-show="isCounter" style="display:none">
+            <div id="counter-pick-map" class="w-full h-full bg-secondary bg-opacity-40"></div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">{{ response_form.counter_date.label }}</label>
+            {{ response_form.counter_date }}
+          </div>
+        </div>
+
+        <div class="flex flex-wrap gap-3 mt-4">
+          <button type="submit" name="action" value="accept"
+            class="btn bg-green-600 hover:bg-green-700 text-secondary border-green-700">
+            <i class="fa fa-check mr-1"></i>{% trans "Accept" %}
+          </button>
+          <button type="submit" name="action" value="decline"
+            class="btn bg-red-600 hover:bg-red-700 text-secondary border-red-700">
+            <i class="fa fa-times mr-1"></i>{% trans "Decline" %}
+          </button>
+          <button type="button" class="btn"
+            @click="isCounter = !isCounter; if (isCounter) $nextTick(() => window.initCounterPicker && window.initCounterPicker())">
+            <i class="fa fa-exchange mr-1"></i>{% trans "Counter-propose" %}
+          </button>
+          <button x-show="isCounter" type="submit" name="action" value="counter"
+            class="btn bg-blue-600 hover:bg-blue-700 text-secondary border-blue-700" style="display:none">
+            <i class="fa fa-paper-plane mr-1"></i>{% trans "Send counter-proposal" %}
+          </button>
+        </div>
+      </form>
+    </div>
+  {% endif %}
+
+</div>
+{% endblock %}
+
+{% block javascript %}
+{{ block.super }}
+<script src="https://cdn.jsdelivr.net/npm/ol@v7.2.2/dist/ol.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  function staticMap(target, lat, lon, pinColor) {
+    var coords = ol.proj.fromLonLat([lon, lat]);
+    var feature = new ol.Feature({ geometry: new ol.geom.Point(coords) });
+    feature.setStyle(EcoMap.makeIconStyle(0xF041, pinColor || '#da6137'));
+    var layers = EcoMap.buildBaseLayers();
+    layers.setBaseLayer('ecobasa');
+    new ol.Map({
+      target: target,
+      layers: layers.all.concat([new ol.layer.Vector({ source: new ol.source.Vector({ features: [feature] }) })]),
+      view: new ol.View({ center: coords, zoom: 12 }),
+      interactions: [],
+      controls: [],
+    });
+  }
+
+  {% with coords=sr.location_coords %}{% if coords.0 and coords.1 %}
+  staticMap('sr-map', {{ coords.0 }}, {{ coords.1 }}, '#da6137');
+  {% endif %}{% endwith %}
+
+  {% if sr.counter_lat and sr.counter_lon %}
+  staticMap('counter-map', {{ sr.counter_lat }}, {{ sr.counter_lon }}, '#2563eb');
+  {% endif %}
+
+  // Counter-proposal interactive picker — init once when the section becomes visible
+  var counterPicker = null;
+  window.initCounterPicker = function () {
+    if (counterPicker) return;
+    counterPicker = EcoMap.initLocationPicker({
+      mapTarget:  'counter-pick-map',
+      setPointFn: 'setCounterPoint',
+      badge:      0xF041,
+      pinColor:   '#2563eb',
+      groupName:  'counter-layer',
+    });
+    window.setCounterPoint = function (lon, lat, label) {
+      document.getElementById('counter-lon').value  = lon;
+      document.getElementById('counter-lat').value  = lat;
+      document.getElementById('counter-location-name').value = label || '';
+    };
+  };
+});
+</script>
+{% endblock %}

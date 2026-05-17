@@ -3,6 +3,11 @@
 
 {% block head_title %}{{ profile.name|default:profile.username }} — {{ skill.name }} — ecobasa{% endblock %}
 
+{% block extrahead %}
+{{ block.super }}
+{% if form %}<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v7.2.2/ol.css">{% endif %}
+{% endblock %}
+
 {% block content %}
 <div class="max-w-2xl mx-auto px-4 py-8">
 
@@ -39,10 +44,10 @@
 
       {% if user == profile %}
         <div class="ml-auto flex gap-2">
-          <a href="{% url 'skills:userskill_edit' skill.slug profile.username %}" class="btn btn-sm">
+          <a href="{% url 'skills:userskill_edit' skill.slug user_slug %}" class="btn btn-sm">
             <i class="fa fa-pencil"></i>
           </a>
-          <a href="{% url 'skills:userskill_delete' skill.slug profile.username %}" class="btn btn-sm btn-danger">
+          <a href="{% url 'skills:userskill_delete' skill.slug user_slug %}" class="btn btn-sm btn-danger">
             <i class="fa fa-trash"></i>
           </a>
         </div>
@@ -62,15 +67,175 @@
     {% endif %}
   </div>
 
+  {# ── Received requests (visible to skill owner only) ─────────────── #}
+  {% if user == profile and user_skill.requests.exists %}
+    <div class="border rounded-xl bg-secondary p-6 mb-6">
+      <h2 class="text-lg text-primary mb-4">
+        <i class="fa fa-inbox mr-2"></i>{% trans "Incoming requests" %}
+      </h2>
+      <div class="space-y-4">
+        {% for req in user_skill.requests.all %}
+          <div class="border rounded-lg p-4 text-sm {% if req.is_new %}border-primary{% endif %}">
+            <div class="flex items-center gap-2 mb-2">
+              {% if req.from_user.image %}
+                <img src="{{ req.from_user.image.url }}" class="w-8 h-8 rounded-full object-cover">
+              {% else %}
+                <div class="w-8 h-8 rounded-full bg-primary bg-opacity-20 flex items-center justify-center">
+                  <i class="fa fa-user text-xs text-primary"></i>
+                </div>
+              {% endif %}
+              <a href="{{ req.from_user.get_absolute_url }}" class="font-semibold text-primary hover:underline">
+                {{ req.from_user.name|default:req.from_user.email }}
+              </a>
+              <span class="text-brown text-xs ml-auto">{{ req.created_at|date:"d M Y" }}</span>
+            </div>
+            <p class="text-brown mb-2">{{ req.message }}</p>
+            <div class="flex flex-wrap gap-4 text-xs text-brown mb-3">
+              {% if req.location_type %}
+                <span><i class="fa fa-map-marker mr-1"></i>{{ req.resolved_location }}</span>
+              {% endif %}
+              {% if req.proposed_date %}
+                <span><i class="fa fa-calendar mr-1"></i>{{ req.proposed_date|date:"d M Y" }}</span>
+              {% endif %}
+            </div>
+            <div class="flex items-center gap-3">
+              <a href="{% url 'skills:skillrequest_detail' req.pk %}" class="btn btn-sm">
+                {% if req.status == 'pending' %}
+                  <i class="fa fa-reply mr-1"></i>{% trans "Respond" %}
+                {% else %}
+                  <i class="fa fa-eye mr-1"></i>{% trans "View" %}
+                {% endif %}
+              </a>
+              {% if req.status != 'pending' %}
+                <span class="text-xs pill
+                  {% if req.status == 'accepted' %}bg-green-600 text-secondary
+                  {% elif req.status == 'declined' %}bg-red-600 text-secondary
+                  {% elif req.status == 'counter' %}bg-blue-600 text-secondary
+                  {% endif %}">{{ req.get_status_display }}</span>
+              {% endif %}
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  {% endif %}
+
+  {# ── Request form ─────────────────────────────────────────────────── #}
   {% if form %}
-    <div class="border rounded-xl bg-secondary p-6">
+    <div class="border rounded-xl bg-secondary p-6"
+         x-data="{ locationType: 'your_place' }">
       <h2 class="text-lg text-primary mb-4">
         <i class="fa fa-paper-plane mr-2"></i>{% trans "Request this skill" %}
       </h2>
       <form method="post">
         {% csrf_token %}
-        {% load crispy_forms_tags %}
-        {% crispy form %}
+
+        {# Message #}
+        <div class="form-group mb-4">
+          <label class="form-label" for="{{ form.message.id_for_label }}">{{ form.message.label }}</label>
+          {{ form.message }}
+          {% for e in form.message.errors %}<p class="field-error">{{ e }}</p>{% endfor %}
+        </div>
+
+        {# Location type radio #}
+        <div class="form-group mb-4"
+             @change="if ($event.target.name === 'location_type') { locationType = $event.target.value; if (locationType === 'my_place') $nextTick(() => window.initMyPicker && window.initMyPicker()); if (locationType === 'custom') $nextTick(() => window.initCustomPicker && window.initCustomPicker()); }">
+          <label class="form-label">{{ form.location_type.label }}</label>
+          <div class="space-y-1">
+            {% for radio in form.location_type %}
+              <label class="flex items-center gap-2 text-sm text-brown cursor-pointer">
+                {{ radio.tag }}
+                <span>{{ radio.choice_label }}</span>
+              </label>
+            {% endfor %}
+          </div>
+          {% for e in form.location_type.errors %}<p class="field-error">{{ e }}</p>{% endfor %}
+        </div>
+
+        {# Your place: read-only owner location + non-interactive map #}
+        <div x-show="locationType === 'your_place'" class="mb-4 space-y-3">
+          {% if profile.location_name %}
+            <div class="text-sm text-brown">
+              <i class="fa fa-map-marker mr-1 text-primary"></i>{{ profile.location_name }}
+            </div>
+          {% else %}
+            <p class="text-xs text-brown italic">{% trans "Owner has not set a location." %}</p>
+          {% endif %}
+          <div id="your-place-map" class="rounded shadow overflow-hidden h-[200px]"></div>
+        </div>
+
+        {# My place: editable address + interactive map #}
+        <div x-show="locationType === 'my_place'" style="display:none" class="mb-4 space-y-3">
+          <div x-data="EcoMap.locationDropdown('setMyPlacePoint')" class="relative">
+            <label class="form-label">{% trans "Your location" %}</label>
+            <div class="flex gap-2">
+              <input type="text" id="my-place-search"
+                class="form-input flex-1"
+                placeholder="{% trans 'City, address…' %}"
+                value="{{ request.user.location_name|default:'' }}"
+                @input.debounce="onInput($el.value)"
+                autocomplete="off">
+              <button type="button" onclick="window.locateMyPlace()"
+                class="btn" title="{% trans 'Use my current location' %}">
+                <i class="fa-solid fa-crosshairs"></i>
+              </button>
+            </div>
+            <div x-show="open" @click.outside="open = false" style="display:none"
+              class="absolute z-20 inset-x-0 bg-secondary shadow-lg text-xs py-2 rounded-b border">
+              <ul class="list-none m-0">
+                <template x-for="res in results" :key="res.place_id">
+                  <li class="m-0">
+                    <a @click.prevent="onSelect(res)" href="#"
+                      class="block px-2 py-2 text-brown hover:bg-primary hover:text-secondary"
+                      x-text="res.display_name"></a>
+                  </li>
+                </template>
+              </ul>
+            </div>
+          </div>
+          <div id="my-place-map" class="rounded shadow overflow-hidden h-[220px]"></div>
+        </div>
+
+        {# Custom: Nominatim search + interactive map #}
+        <div x-show="locationType === 'custom'" style="display:none" class="mb-4 space-y-3">
+          <div x-data="EcoMap.locationDropdown('setCustomPoint')" class="relative">
+            <label class="form-label">{% trans "Location" %}</label>
+            <input type="text" id="custom-location-search"
+              class="form-input"
+              placeholder="{% trans 'Search for a location…' %}"
+              @input.debounce="onInput($el.value)"
+              autocomplete="off">
+            <div x-show="open" @click.outside="open = false" style="display:none"
+              class="absolute z-20 inset-x-0 bg-secondary shadow-lg text-xs py-2 rounded-b border">
+              <ul class="list-none m-0">
+                <template x-for="res in results" :key="res.place_id">
+                  <li class="m-0">
+                    <a @click.prevent="onSelect(res)" href="#"
+                      class="block px-2 py-2 text-brown hover:bg-primary hover:text-secondary"
+                      x-text="res.display_name"></a>
+                  </li>
+                </template>
+              </ul>
+            </div>
+          </div>
+          <div id="custom-map" class="rounded shadow overflow-hidden h-[220px]"></div>
+        </div>
+
+        {# Hidden fields set by map pickers #}
+        <input type="hidden" name="proposed_location" id="proposed-location-value">
+        <input type="hidden" name="proposed_lat" id="proposed-lat">
+        <input type="hidden" name="proposed_lon" id="proposed-lon">
+
+        {# Proposed date #}
+        <div class="form-group mb-4">
+          <label class="form-label" for="{{ form.proposed_date.id_for_label }}">{{ form.proposed_date.label }}</label>
+          {{ form.proposed_date }}
+          {% for e in form.proposed_date.errors %}<p class="field-error">{{ e }}</p>{% endfor %}
+        </div>
+
+        <button type="submit" class="btn mt-2">
+          <i class="fa fa-paper-plane mr-1"></i>{% trans "Send request" %}
+        </button>
       </form>
     </div>
   {% elif not user.is_authenticated %}
@@ -79,7 +244,90 @@
         {% trans "Log in to send a request" %}
       </a>
     </div>
+  {% elif user == profile %}
+    {# Owner sees nothing here — request form not shown to self #}
   {% endif %}
 
 </div>
+{% endblock %}
+
+{% block javascript %}
+{{ block.super }}
+{% if form %}
+<script src="https://cdn.jsdelivr.net/npm/ol@v7.2.2/dist/ol.js"></script>
+<script>
+(function () {
+  // ── "Your place" static map — init once container has real dimensions ──
+  {% if profile.location %}
+  (function () {
+    var initialized = false;
+    var ro = new ResizeObserver(function (entries) {
+      if (initialized || !entries[0].contentRect.height) return;
+      initialized = true;
+      ro.disconnect();
+      var lon = {{ profile.location.x }}, lat = {{ profile.location.y }};
+      var coords = ol.proj.fromLonLat([lon, lat]);
+      var icon = EcoMap.makeIconStyle(0xF007, '#da6137');
+      var feature = new ol.Feature({ geometry: new ol.geom.Point(coords) });
+      feature.setStyle(icon);
+      var layers = EcoMap.buildBaseLayers();
+      layers.setBaseLayer('ecobasa');
+      new ol.Map({
+        target: 'your-place-map',
+        layers: layers.all.concat([new ol.layer.Vector({ source: new ol.source.Vector({ features: [feature] }) })]),
+        view: new ol.View({ center: coords, zoom: 11 }),
+        interactions: [],
+        controls: [],
+      });
+    });
+    ro.observe(document.getElementById('your-place-map'));
+  })();
+  {% endif %}
+
+  // ── "My place" interactive picker ───────────────────────────────
+  var myPicker = null;
+  window.initMyPicker = function () {
+    if (myPicker) return;
+    myPicker = EcoMap.initLocationPicker({
+      mapTarget:  'my-place-map',
+      setPointFn: 'setMyPlacePoint',
+      locateFn:   'locateMyPlace',
+      badge:      0xF007,
+      pinColor:   '#da6137',
+      groupName:  'my-place-layer',
+      {% if request.user.location %}
+      existingWkt: 'POINT ({{ request.user.location.x }} {{ request.user.location.y }})',
+      {% endif %}
+    });
+  };
+
+  window.setMyPlacePoint = function (lon, lat, label) {
+    if (myPicker) myPicker.setPoint(lon, lat, {});
+    document.getElementById('proposed-location-value').value = label || '';
+    document.getElementById('proposed-lat').value = lat;
+    document.getElementById('proposed-lon').value = lon;
+  };
+
+  // ── "Custom" location interactive picker ────────────────────────
+  var customPicker = null;
+  window.initCustomPicker = function () {
+    if (customPicker) return;
+    customPicker = EcoMap.initLocationPicker({
+      mapTarget:    'custom-map',
+      setPointFn:   'setCustomPoint',
+      badge:        0xF111,
+      pinColor:     '#da6137',
+      groupName:    'custom-layer',
+    });
+  };
+
+  window.setCustomPoint = function (lon, lat, label) {
+    if (customPicker) customPicker.setPoint(lon, lat, {});
+    document.getElementById('proposed-location-value').value = label || '';
+    document.getElementById('proposed-lat').value = lat;
+    document.getElementById('proposed-lon').value = lon;
+  };
+})();
+</script>
+{% endif %}
 {% endblock %}

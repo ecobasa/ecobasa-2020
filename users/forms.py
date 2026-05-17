@@ -11,6 +11,7 @@ from croppie.fields import CroppieField
 
 from gifting.forms import Fieldset
 from .models import User
+from skills.models import Skill, UserSkill
 
 
 class SafeCroppieField(CroppieField):
@@ -112,8 +113,11 @@ class RegisterForm(forms.ModelForm):
             user.save()
             skills_val = self.cleaned_data.get("skills", "")
             if skills_val:
-                tags = [s.strip() for s in skills_val.split(",") if s.strip()]
-                user.skills.set(tags)
+                for name in [s.strip() for s in skills_val.split(",") if s.strip()]:
+                    skill, _ = Skill.objects.get_or_create(
+                        name__iexact=name, defaults={"name": name}
+                    )
+                    UserSkill.objects.get_or_create(user=user, skill=skill)
         return user
 
 
@@ -145,7 +149,9 @@ class ProfileUpdateForm(forms.ModelForm):
         instance = kwargs.get('instance')
         has_image = bool(instance and instance.image)
         if instance is not None:
-            skills_initial = ', '.join([t.name for t in instance.skills.all()])
+            skills_initial = ', '.join(
+                instance.user_skills.select_related("skill").values_list("skill__name", flat=True)
+            )
             self.fields['skills'].initial = skills_initial
             self.initial['skills'] = skills_initial
             self.fields['skills'].widget.attrs.update({'value': skills_initial})
@@ -179,6 +185,9 @@ class ProfileUpdateForm(forms.ModelForm):
         if commit:
             user.save()
             skills_val = self.cleaned_data.get('skills', '') or ''
-            tags = [s.strip() for s in skills_val.split(',') if s.strip()]
-            user.skills.set(tags)
+            for name in [s.strip() for s in skills_val.split(',') if s.strip()]:
+                skill, _ = Skill.objects.get_or_create(
+                    name__iexact=name, defaults={"name": name}
+                )
+                UserSkill.objects.get_or_create(user=user, skill=skill)
         return user
