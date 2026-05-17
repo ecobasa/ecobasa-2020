@@ -98,17 +98,27 @@ def _apply_bbox(qs, bbox_param, location_field="location"):
 
 
 def _filtered_ads(request):
-    has_type = bool(request.GET.getlist("type"))
-    has_categories = bool(request.GET.getlist("categories"))
-    if request.GET.get("show_skills") and not has_type and not has_categories:
+    types = request.GET.getlist("type")
+    ad_types = [t for t in types if t != "skill"]
+
+    if types and not ad_types:
         return Ad.objects.none()
+
     base_qs = Ad.objects.filter(location__isnull=False).select_related("owner")
-    f = AdFilter(request.GET, queryset=base_qs, request=request)
+
+    if "skill" in types:
+        data = request.GET.copy()
+        data.setlist("type", ad_types)
+        f = AdFilter(data, queryset=base_qs, request=request)
+    else:
+        f = AdFilter(request.GET, queryset=base_qs, request=request)
+
     return f.qs
 
 
 def _skill_communities(request):
-    if request.GET.getlist("type") and not request.GET.get("show_skills"):
+    types = request.GET.getlist("type")
+    if types and "skill" not in types:
         return Community.objects.none()
 
     qs = Community.objects.filter(
@@ -126,7 +136,8 @@ def _skill_communities(request):
 
 
 def _skill_users(request):
-    if request.GET.getlist("type") and not request.GET.get("show_skills"):
+    types = request.GET.getlist("type")
+    if types and "skill" not in types:
         return User.objects.none()
 
     qs = User.objects.filter(
@@ -305,22 +316,25 @@ def gifting_suggest(request):
     for ad in (
         Ad.objects
         .filter(title__icontains=q)
-        .values('title', 'type')[:5]
+        .values('title', 'type')[:4]
     ):
         add(ad['title'], ad['type'])
 
-    # Description match — add query itself as a "text" hint
-    if Ad.objects.filter(
-        Q(description__icontains=q) | Q(owner__name__icontains=q)
-    ).exclude(title__icontains=q).exists():
-        suggestions.append({"value": q, "type": "text"})
+    # Owner names — placed early so they aren't cut off by the 8-item limit
+    for user in (
+        User.objects
+        .filter(Q(name__icontains=q) | Q(email__icontains=q), ads__isnull=False)
+        .only("name", "email")
+        .distinct()[:2]
+    ):
+        add(user.name or user.email, "owner")
 
     # Community skill names
     for skill in (
         Community.objects
         .filter(skills__name__icontains=q)
         .values_list("skills__name", flat=True)
-        .distinct()[:5]
+        .distinct()[:3]
     ):
         add(skill, "skill")
 
@@ -329,17 +343,14 @@ def gifting_suggest(request):
         User.objects
         .filter(skills__name__icontains=q)
         .values_list("skills__name", flat=True)
-        .distinct()[:5]
+        .distinct()[:3]
     ):
         add(skill, "skill")
 
-    # Owner names
-    for name in (
-        User.objects
-        .filter(Q(name__icontains=q) | Q(email__icontains=q), ads__isnull=False)
-        .values_list("name", flat=True)
-        .distinct()[:3]
-    ):
-        add(name, "owner")
+    # Description match — add query itself as a "text" hint (community list pattern)
+    if Ad.objects.filter(
+        Q(description__icontains=q) | Q(owner__name__icontains=q)
+    ).exclude(title__icontains=q).exists():
+        add(q, "text")
 
     return JsonResponse(suggestions[:8], safe=False)

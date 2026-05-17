@@ -9,10 +9,13 @@ import django_filters
 from .models import Ad, AdCategory
 
 
+_AD_TYPE_CHOICES = list(Ad.TYPE_CHOICES) + [("skill", _("Skills"))]
+
+
 class AdFilter(django_filters.FilterSet):
     search = django_filters.CharFilter(label=_("Search"), method="do_search")
     type = django_filters.MultipleChoiceFilter(
-        choices=Ad.TYPE_CHOICES, widget=forms.CheckboxSelectMultiple
+        choices=_AD_TYPE_CHOICES, widget=forms.CheckboxSelectMultiple
     )
     categories = django_filters.ModelMultipleChoiceFilter(
         queryset=AdCategory.objects.all(), widget=forms.CheckboxSelectMultiple

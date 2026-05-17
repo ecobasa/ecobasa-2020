@@ -137,9 +137,8 @@
         q:             '{{ f.form.search.data|default:""|escapejs }}',
         locationName:  '{{ f.form.location_name.data|default:""|escapejs }}',
         location:      '{{ f.form.location.data|default:""|escapejs }}',
-        types:         [],
-        categories:    [],
-        showSkills:    false,
+        types:         [{% for v in f.form.type.value %}"{{ v|escapejs }}"{% if not forloop.last %}, {% endif %}{% endfor %}],
+        categories:    [{% for v in f.form.categories.value %}"{{ v|escapejs }}"{% if not forloop.last %}, {% endif %}{% endfor %}],
         markerCount:   0,
 
         showMap:  function () { this.view = 'map'; },
@@ -149,7 +148,13 @@
           this.location = '';
           this.locationName = '';
           window._fmResetView && window._fmResetView();
-          document.body.dispatchEvent(new CustomEvent('filter-updated'));
+          setTimeout(() => document.body.dispatchEvent(new CustomEvent('filter-updated')), 0);
+        },
+
+        clearSearch() {
+          this.q = '';
+          window._fmResetView && window._fmResetView();
+          setTimeout(() => document.body.dispatchEvent(new CustomEvent('filter-updated')), 0);
         }
       });
     });
@@ -217,12 +222,6 @@
               <span>{{ t.choice_label }}</span>
             </label>
           {% endfor %}
-          <label class="inline-flex text-primary items-center gap-2 cursor-pointer">
-            <input type="checkbox" name="show_skills" value="on"
-              x-model="$store.fm.showSkills"
-              class="form-checkbox dark h-5 w-5">
-            <span>{% trans "Skills" %}</span>
-          </label>
         </div>
 
         {# Search input #}
@@ -237,11 +236,11 @@
             :value="$store.fm.q"
             placeholder="{% trans 'Search offers, wishes or skills…' %}"
             autocomplete="off"
-            @input="$store.fm.q = $el.value; suggest($el.value)"
+            @input="$store.fm.q = $el.value; suggest($el.value); if (!$el.value) { window._fmResetView && window._fmResetView(); document.body.dispatchEvent(new CustomEvent('filter-updated')); }"
             @keydown.arrow-down.prevent="moveDown()"
             @keydown.arrow-up.prevent="moveUp()"
             @keydown.enter.prevent="choose() || triggerSearch()"
-            @keydown.escape="close()">
+            @keydown.escape="if (open) { close(); } else if ($store.fm.q) { $store.fm.clearSearch(); }">
           <ul x-show="open" x-cloak
             class="suggestions-dropdown list-none absolute z-20 w-full mt-1 bg-secondary rounded shadow-lg border"
             role="listbox">
@@ -273,7 +272,7 @@
             placeholder="{% trans 'Near a place…' %}"
             autocomplete="off"
             @input="$store.fm.locationName = $el.value; if (!$el.value) $store.fm.clearLocation(); else geocode($el.value)"
-            @keydown.escape="closeDropdown()">
+            @keydown.escape="if (open) { closeDropdown(); } else if ($store.fm.location) { $store.fm.clearLocation(); }">
           <div class="absolute inset-y-0 right-0 flex items-center gap-0.5 pr-2">
             <button type="button" @click="useGPS()" title="{% trans 'Use my location' %}"
               class="text-primary opacity-70 hover:opacity-100 px-1.5 py-1">
@@ -350,7 +349,8 @@
   {# ── List modal ── #}
   <div x-show="$store.fm.view === 'list'" x-cloak
     class="modal-overlay flex"
-    @click.self="$store.fm.showMap()">
+    @click.self="$store.fm.showMap()"
+    @keydown.escape.window="$store.fm.showMap()">
 
     <div class="modal relative bg-secondary bg-opacity-95 backdrop-blur rounded-lg shadow-xl max-w-5xl w-full border"
       role="dialog" aria-modal="true">
@@ -372,7 +372,6 @@
         <div class="relative"
           x-data="suggestions('{% url 'gifting:api-suggest' %}')"
           @click.outside="close()"
-          @keydown.escape.window="$store.fm.showMap()"
         >
           <div class="absolute inset-y-0 left-3 flex items-center text-primary opacity-80 pointer-events-none">
             <i class="fa fa-search"></i>
@@ -387,10 +386,11 @@
             hx-swap="innerHTML"
             hx-trigger="input changed delay:400ms"
             hx-include="#freemarket-filters"
-            @input="$store.fm.q = $el.value; suggest($el.value)"
+            @input="$store.fm.q = $el.value; suggest($el.value); if (!$el.value) window._fmResetView && window._fmResetView()"
             @keydown.arrow-down.prevent="moveDown()"
             @keydown.arrow-up.prevent="moveUp()"
-            @keydown.enter.prevent="choose() || triggerSearch()">
+            @keydown.enter.prevent="choose() || triggerSearch()"
+            @keydown.escape="if (open) { $event.stopPropagation(); close(); } else if ($store.fm.q) { $store.fm.clearSearch(); $event.stopPropagation(); }">
           <ul x-show="open" x-cloak
             class="suggestions-dropdown list-none absolute z-20 w-full mt-1 bg-secondary rounded shadow-lg border"
             role="listbox">
@@ -422,7 +422,7 @@
             placeholder="{% trans 'Near a place…' %}"
             autocomplete="off"
             @input="$store.fm.locationName = $el.value; if (!$el.value) $store.fm.clearLocation(); else geocode($el.value)"
-            @keydown.escape="closeDropdown()">
+            @keydown.escape="if (open) { $event.stopPropagation(); closeDropdown(); } else if ($store.fm.location) { $store.fm.clearLocation(); $event.stopPropagation(); }">
           <div class="absolute inset-y-0 right-0 flex items-center gap-0.5 pr-2">
             <button type="button" @click="useGPS()" title="{% trans 'Use my location' %}"
               class="text-primary opacity-70 hover:opacity-100 px-1.5 py-1">
@@ -462,10 +462,6 @@
               <span>{{ t.choice_label }}</span>
             </label>
           {% endfor %}
-          <label class="inline-flex items-center gap-2 cursor-pointer text-sm">
-            <input type="checkbox" x-model="$store.fm.showSkills" class="form-checkbox h-4 w-4">
-            <span>{% trans "Skills" %}</span>
-          </label>
         </div>
 
         {# Result count (OOB-swapped by partial) #}
@@ -563,7 +559,6 @@
     if (store.location) params.set('location', store.location);
     (store.types      || []).forEach(t => params.append('type', t));
     (store.categories || []).forEach(c => params.append('categories', c));
-    if (store.showSkills) params.set('show_skills', 'on');
     return MARKERS_URL + '?' + params.toString();
   }
 
