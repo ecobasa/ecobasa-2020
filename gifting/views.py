@@ -1,4 +1,9 @@
+import json
+import urllib.request
+import urllib.parse
+
 from django.shortcuts import render, get_object_or_404, redirect, reverse
+from django.db.models import Q
 from django.core.paginator import Paginator
 from django.contrib import messages
 from django.utils.translation import gettext_lazy as _
@@ -6,9 +11,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.gis.geos import Polygon
 from django.http import JsonResponse
 from django.views.decorators.http import require_GET
-from django.contrib.gis.geos import Point
-from django.contrib.gis.measure import D
-from django.contrib.gis.db.models.functions import Distance
+from django.core.cache import cache
 
 from .forms import AdForm
 from .filters import AdFilter
@@ -95,23 +98,17 @@ def _apply_bbox(qs, bbox_param, location_field="location"):
 
 
 def _filtered_ads(request):
-    """
-    Run the full AdFilter pipeline (same as the main search view) so
-    the API endpoints honour identical filter params: q, type, categories,
-    from_me, location (distance ordering), location_name.
-    """
+    has_type = bool(request.GET.getlist("type"))
+    has_categories = bool(request.GET.getlist("categories"))
+    if request.GET.get("show_skills") and not has_type and not has_categories:
+        return Ad.objects.none()
     base_qs = Ad.objects.filter(location__isnull=False).select_related("owner")
     f = AdFilter(request.GET, queryset=base_qs, request=request)
     return f.qs
 
 
 def _skill_communities(request):
-    """
-    Communities whose skills match ?q=, used as supplementary results.
-    Only returned when no type filter is active (skills aren't offers/wishes).
-    """
-    # Suppress skill results if the user is filtering by ad type
-    if request.GET.getlist("type"):
+    if request.GET.getlist("type") and not request.GET.get("show_skills"):
         return Community.objects.none()
 
     qs = Community.objects.filter(
@@ -119,19 +116,17 @@ def _skill_communities(request):
         skills__isnull=False,
     ).prefetch_related("skills", "photos").distinct()
 
-    q = request.GET.get("q", "").strip()
+    q = request.GET.get("search", "").strip()
     if q:
-        qs = qs.filter(skills__name__icontains=q)
+        qs = qs.filter(
+            Q(skills__name__icontains=q) | Q(description__icontains=q)
+        ).distinct()
 
     return qs
 
 
 def _skill_users(request):
-    """
-    Users whose skills match ?q=, with a known location.
-    Suppressed when a type filter is active (skills aren't offers/wishes).
-    """
-    if request.GET.getlist("type"):
+    if request.GET.getlist("type") and not request.GET.get("show_skills"):
         return User.objects.none()
 
     qs = User.objects.filter(
@@ -139,9 +134,11 @@ def _skill_users(request):
         skills__isnull=False,
     ).prefetch_related("skills").distinct()
 
-    q = request.GET.get("q", "").strip()
+    q = request.GET.get("search", "").strip()
     if q:
-        qs = qs.filter(skills__name__icontains=q)
+        qs = qs.filter(
+            Q(skills__name__icontains=q) | Q(about__icontains=q)
+        ).distinct()
 
     return qs
 
@@ -241,34 +238,21 @@ def gifting_list_partial(request):
     page_num = int(request.GET.get("page", 1))
 
     ads_queryset = _filtered_ads(request)
-
-    location_data = request.GET.get('location')
-    if location_data and ',' in location_data:
-        try:
-          lat_str, lon_str = location_data.split(',')
-          lat = float(lat_str)
-          lon = float(lon_str)
-          pnt = Point(lon, lat, srid=4326)
-
-          ads_queryset = ads_queryset.annotate(
-              distance=Distance('location', pnt)
-          ).filter(location__distance_lte=(pnt, D(km=100))).order_by('distance')
-
-        except (ValueError, TypeError, IndexError):
-            ads_queryset = ads_queryset.order_by("-created_at")
-    else:
+    if not request.GET.get('location'):
         ads_queryset = ads_queryset.order_by("-created_at")
 
     paginator = Paginator(ads_queryset, 20)
     page = paginator.get_page(page_num)
 
+    sc_qs = _skill_communities(request)
+    su_qs = _skill_users(request)
+
     skill_communities = []
     skill_users = []
 
     if page_num == 1:
-        skill_communities = list(_skill_communities(request)[:10])
-        skill_users = list(_skill_users
-        (request)[:10])
+        skill_communities = list(sc_qs[:10])
+        skill_users = list(su_qs[:10])
 
     return render(request, "gifting/_gifting_list_partial.html", {
         "ads":               page,
@@ -276,19 +260,35 @@ def gifting_list_partial(request):
         "skill_users":       skill_users,
         "has_next":          page.has_next(),
         "next_page":         page.next_page_number() if page.has_next() else None,
-        "total":             paginator.count,
-        "q":                 request.GET.get("q", ""),
+        "total":             paginator.count + sc_qs.count() + su_qs.count(),
+        "q":                 request.GET.get("search", ""),
     })
 
 
 @require_GET
-def gifting_suggest(request):
-    """
-    Autocomplete JSON — merges ad titles with community skill names.
-    Returns [{value, type}]  where type is 'ad' | 'skill'.
+def nominatim_proxy(request):
+    q = request.GET.get("q", "").strip()
+    if len(q) < 3:
+        return JsonResponse([], safe=False)
+    cache_key = "nominatim:" + q.lower()
+    cached = cache.get(cache_key)
+    if cached is not None:
+        return JsonResponse(cached, safe=False)
+    try:
+        url = "https://nominatim.openstreetmap.org/search?" + urllib.parse.urlencode({
+            "format": "json", "addressdetails": "1", "limit": "10", "q": q,
+        })
+        req = urllib.request.Request(url, headers={"User-Agent": "ecobasa.org/1.0 geocoder"})
+        with urllib.request.urlopen(req, timeout=5) as resp:
+            data = json.loads(resp.read())
+        cache.set(cache_key, data, 86400)
+        return JsonResponse(data, safe=False)
+    except Exception:
+        return JsonResponse([], safe=False)
 
-    The frontend renders a graduation-cap icon for skill suggestions.
-    """
+
+@require_GET
+def gifting_suggest(request):
     q = request.GET.get("q", "").strip()
     if len(q) < 2:
         return JsonResponse([], safe=False)
@@ -302,12 +302,18 @@ def gifting_suggest(request):
             suggestions.append({"value": value, "type": kind})
 
     # Ad titles
-    for title in (
+    for ad in (
         Ad.objects
         .filter(title__icontains=q)
-        .values_list("title", flat=True)[:5]
+        .values('title', 'type')[:5]
     ):
-        add(title, "ad")
+        add(ad['title'], ad['type'])
+
+    # Description match — add query itself as a "text" hint
+    if Ad.objects.filter(
+        Q(description__icontains=q) | Q(owner__name__icontains=q)
+    ).exclude(title__icontains=q).exists():
+        suggestions.append({"value": q, "type": "text"})
 
     # Community skill names
     for skill in (
@@ -326,5 +332,14 @@ def gifting_suggest(request):
         .distinct()[:5]
     ):
         add(skill, "skill")
+
+    # Owner names
+    for name in (
+        User.objects
+        .filter(Q(name__icontains=q) | Q(email__icontains=q), ads__isnull=False)
+        .values_list("name", flat=True)
+        .distinct()[:3]
+    ):
+        add(name, "owner")
 
     return JsonResponse(suggestions[:8], safe=False)
