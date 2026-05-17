@@ -3,7 +3,7 @@ from django.utils.translation import gettext_lazy as _
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Field, Submit
 
-from .models import UserSkill, CommunitySkill, SkillRequest, Skill
+from .models import UserSkill, CommunitySkill, SkillRequest, SkillRequestMessage, Skill
 
 
 class SkillAutocompleteWidget(forms.TextInput):
@@ -96,7 +96,7 @@ class SkillRequestForm(forms.ModelForm):
         widgets = {
             "message":           forms.Textarea(attrs={"rows": 4, "class": "form-input"}),
             "location_type":     forms.RadioSelect(),
-            "proposed_date":     forms.DateInput(attrs={"type": "date", "class": "form-input"}),
+            "proposed_date":     forms.DateTimeInput(attrs={"type": "datetime-local", "class": "form-input"}),
             "proposed_location": forms.TextInput(attrs={
                 "placeholder": _("City, region, address…"),
                 "class": "form-input",
@@ -135,10 +135,10 @@ class SkillRequestResponseForm(forms.Form):
     )
     counter_lat  = forms.FloatField(required=False, widget=forms.HiddenInput())
     counter_lon  = forms.FloatField(required=False, widget=forms.HiddenInput())
-    counter_date = forms.DateField(
+    counter_date = forms.DateTimeField(
         label=_("Counter date"),
         required=False,
-        widget=forms.DateInput(attrs={"type": "date", "class": "form-input"}),
+        widget=forms.DateTimeInput(attrs={"type": "datetime-local", "class": "form-input"}),
     )
 
     def __init__(self, *args, **kwargs):
@@ -153,3 +153,11 @@ class SkillRequestResponseForm(forms.Form):
             Field("counter_lon"),
             Field("counter_date",          **{"x-show": "isCounter"}),
         )
+
+
+class SkillRequestMessageForm(forms.Form):
+    body = forms.CharField(
+        label=_("Message"),
+        required=False,
+        widget=forms.Textarea(attrs={"rows": 3, "class": "form-input", "placeholder": _("Write a message…")}),
+    )

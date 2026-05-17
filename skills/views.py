@@ -9,8 +9,8 @@ from django.views.decorators.http import require_GET
 
 from django.utils.text import slugify
 
-from .forms import CommunitySkillForm, SkillRequestForm, SkillRequestResponseForm, UserSkillForm
-from .models import CommunitySkill, Skill, SkillRequest, UserSkill
+from .forms import CommunitySkillForm, SkillRequestForm, SkillRequestResponseForm, SkillRequestMessageForm, UserSkillForm
+from .models import CommunitySkill, Skill, SkillRequest, SkillRequestMessage, UserSkill
 from communities.models import Community
 from users.models import User
 
@@ -338,7 +338,6 @@ def _notify_skill_response(skill_request):
 def skillrequest_detail(request, pk):
     sr = get_object_or_404(SkillRequest, pk=pk)
 
-    # Only from_user and the skill/community owner may view
     if sr.user_skill:
         owner = sr.user_skill.user
     else:
@@ -349,34 +348,82 @@ def skillrequest_detail(request, pk):
             return redirect("users:login")
         raise Http404
 
-    response_form = None
-    if request.user == owner:
-        response_form = SkillRequestResponseForm(request.POST or None)
-        if request.method == "POST" and response_form.is_valid():
-            action = request.POST.get("action")
-            if action in ("accept", "decline", "counter"):
-                sr.status = {
-                    "accept":  SkillRequest.STATUS_ACCEPTED,
-                    "decline": SkillRequest.STATUS_DECLINED,
-                    "counter": SkillRequest.STATUS_COUNTER,
-                }[action]
-                sr.response_message = response_form.cleaned_data.get("response_message", "")
-                if action == "counter":
-                    sr.counter_location_type = response_form.cleaned_data.get("counter_location_type", "")
-                    sr.counter_location      = response_form.cleaned_data.get("counter_location", "")
-                    sr.counter_lat           = response_form.cleaned_data.get("counter_lat")
-                    sr.counter_lon           = response_form.cleaned_data.get("counter_lon")
-                    sr.counter_date          = response_form.cleaned_data.get("counter_date")
-                sr.responded_at = timezone.now()
-                sr.save()
-                _notify_skill_response(sr)
-                messages.success(request, _("Response sent."))
-                return redirect(sr.get_absolute_url())
+    is_owner = request.user == owner
+    is_requester = request.user == sr.from_user
+
+    if request.method == "POST" and request.user.is_authenticated:
+        action = request.POST.get("action", "message")
+
+        if action == "message":
+            form = SkillRequestMessageForm(request.POST)
+            if form.is_valid():
+                body = form.cleaned_data.get("body", "").strip()
+                if body:
+                    SkillRequestMessage.objects.create(
+                        request=sr,
+                        sender=request.user,
+                        body=body,
+                    )
+            return redirect(sr.get_absolute_url())
+
+        if is_owner and action in ("accept", "decline", "counter"):
+            from datetime import date as _date
+            new_status = {
+                "accept":  SkillRequest.STATUS_ACCEPTED,
+                "decline": SkillRequest.STATUS_DECLINED,
+                "counter": SkillRequest.STATUS_COUNTER,
+            }[action]
+            msg = SkillRequestMessage(
+                request=sr,
+                sender=request.user,
+                body=request.POST.get("body", "").strip(),
+                status_to=new_status,
+            )
+            if action == "counter":
+                msg.counter_location_type = request.POST.get("counter_location_type", "")
+                msg.counter_location      = request.POST.get("counter_location", "")
+                try:
+                    msg.counter_lat = float(request.POST.get("counter_lat") or "")
+                except (ValueError, TypeError):
+                    msg.counter_lat = None
+                try:
+                    msg.counter_lon = float(request.POST.get("counter_lon") or "")
+                except (ValueError, TypeError):
+                    msg.counter_lon = None
+                raw_date = request.POST.get("counter_date", "")
+                try:
+                    msg.counter_date = _date.fromisoformat(raw_date) if raw_date else None
+                except ValueError:
+                    msg.counter_date = None
+            msg.save()
+            sr.status = new_status
+            sr.responded_at = timezone.now()
+            sr.save()
+            _notify_skill_response(sr)
+            messages.success(request, _("Response sent."))
+            return redirect(sr.get_absolute_url())
+
+    thread = list(sr.thread.select_related("sender").all())
+    latest_status_msg = None
+    latest_counter_msg = None
+    for msg in reversed(thread):
+        if msg.status_to and latest_status_msg is None:
+            latest_status_msg = msg
+        if msg.status_to == SkillRequest.STATUS_COUNTER and latest_counter_msg is None:
+            latest_counter_msg = msg
+        if latest_status_msg and latest_counter_msg:
+            break
 
     return render(request, "skills/skillrequest_detail.html", {
-        "sr":            sr,
-        "owner":         owner,
-        "response_form": response_form,
+        "sr":                  sr,
+        "owner":               owner,
+        "is_owner":            is_owner,
+        "is_requester":        is_requester,
+        "thread":              thread,
+        "latest_status_msg":   latest_status_msg,
+        "latest_counter_msg":  latest_counter_msg,
+        "message_form":        SkillRequestMessageForm(),
+        "loc_choices":         SkillRequest.LOC_CHOICES,
     })
 
 
