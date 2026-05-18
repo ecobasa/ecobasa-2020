@@ -99,79 +99,71 @@ def volunteer_request(request, community_slug):
         messages.error(request, _("This community has no contact person."))
         return redirect(community.get_absolute_url())
 
+    import datetime
+    from django.utils import timezone
+    from giving.models import VolunteerRequest
+    from giving.emails import send_volunteer_request_email
+    from notifications.models import Notification
+
     volunteer_mode  = request.POST.get("volunteer_mode", "")
     practice_skills = request.POST.get("practice_skills", "").strip()
     sender_skills   = request.POST.get("sender_skills", "").strip()
-    stay_from       = request.POST.get("stay_from", "")
-    stay_to         = request.POST.get("stay_to", "")
     msg_body        = request.POST.get("body", "").strip()
 
-    if volunteer_mode == "wish":
-        subject = str(_("Volunteer stay request — skills to offer at %(c)s") % {"c": community.name})
-    elif volunteer_mode == "offer":
-        subject = str(_("Volunteer stay request — skills to practice at %(c)s") % {"c": community.name})
-    else:
-        subject = str(_("Volunteer stay request at %(c)s") % {"c": community.name})
+    def _parse_dt(val):
+        if not val:
+            return None
+        try:
+            dt = datetime.datetime.fromisoformat(val)
+            return timezone.make_aware(dt) if timezone.is_naive(dt) else dt
+        except ValueError:
+            return None
 
-    full_body = msg_body
-    if practice_skills:
-        label = str(_("Skills I can help with") if volunteer_mode == "wish" else _("Skills I want to learn and practice at your place"))
-        full_body += f"\n\n{label}:\nSkills: {practice_skills}"
-    if sender_skills:
-        full_body += f"\n\n{_('My skills')}:\nSender-Skills: {sender_skills}"
-    if stay_from or stay_to:
-        full_body += f"\n\n{_('Requested stay:')}\n"
-        if stay_from:
-            full_body += f"{_('From')} {stay_from}\n"
-        if stay_to:
-            full_body += f"{_('To')} {stay_to}\n"
+    stay_from = _parse_dt(request.POST.get("stay_from", ""))
+    stay_to   = _parse_dt(request.POST.get("stay_to", ""))
 
-    # Create postman message
-    from postman.models import Message
-    from django.utils.timezone import now as tz_now
-    from django.urls import reverse
-    pm = Message(
-        subject=subject,
-        body=full_body,
-        sender=request.user,
-        recipient=owner,
-        sent_at=tz_now(),
-        moderation_status="a",
+    vr = VolunteerRequest.objects.create(
+        from_user       = request.user,
+        community       = community,
+        volunteer_mode  = volunteer_mode,
+        message         = msg_body,
+        practice_skills = practice_skills,
+        sender_skills   = sender_skills,
+        stay_from       = stay_from,
+        stay_to         = stay_to,
     )
-    pm.save()
-    pm.thread = pm
-    pm.save(update_fields=["thread"])
 
-    # In-app notification for the community owner
-    from notifications.models import Notification
-    actor_name = request.user.name or request.user.username
+    send_volunteer_request_email(vr, request)
+
+    actor_name = request.user.name or request.user.username or request.user.email
     Notification.objects.create(
         recipient=owner,
         actor=request.user,
         verb=str(_("%(name)s requested a volunteering stay at %(community)s") % {
-            "name": actor_name,
-            "community": community.name,
+            "name": actor_name, "community": community.name,
         }),
-        link=reverse("postman:inbox"),
+        link=vr.get_absolute_url(),
         tag="volunteer_request",
     )
 
     if request.headers.get("HX-Request"):
         from django.http import HttpResponse
-        actor_name_safe = (request.user.name or request.user.username)
+        from django.urls import reverse
+        detail_url = vr.get_absolute_url()
         return HttpResponse(
             f'<div class="py-8 text-center">'
             f'<i class="fa-solid fa-campground text-4xl text-primary mb-3 block"></i>'
-            f'<p class="font-semibold text-primary text-lg">'
-            + str(_("Request sent!")) +
-            f'</p>'
+            f'<p class="font-semibold text-primary text-lg">' + str(_("Request sent!")) + f'</p>'
             f'<p class="text-sm text-brown mt-1">'
-            + str(_("Your message has been delivered to %(community)s.") % {"community": community.name}) +
-            f'</p></div>'
+            + str(_("Your message has been delivered to %(community)s.") % {"community": community.name})
+            + f'</p>'
+            f'<a href="{detail_url}" class="mt-3 inline-block text-sm text-primary hover:underline">'
+            + str(_("View your request →"))
+            + f'</a></div>'
         )
 
     messages.success(request, str(_("Your request has been sent to %(community)s!") % {"community": community.name}))
-    return redirect(community.get_absolute_url())
+    return redirect(vr.get_absolute_url())
 
 
 def _sync_community_skill_wishes(community, form):

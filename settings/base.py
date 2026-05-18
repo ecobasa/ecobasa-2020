@@ -76,7 +76,7 @@ THIRD_PARTY_APPS = [
     "django_countries",
 ]
 
-LOCAL_APPS = ["users", "homepage", "gifting", "communities", "skills", "notifications"]
+LOCAL_APPS = ["users", "homepage", "gifting", "communities", "skills", "notifications", "giving"]
 
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS

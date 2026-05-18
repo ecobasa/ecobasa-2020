@@ -14,6 +14,7 @@ urlpatterns = [
     path("skills/", include("skills.urls")),
     path("notifications/", include("notifications.urls")),
     path("messages/", include(("postman_urls", "postman"), namespace="postman")),
+    path("requests/", include("giving.urls", namespace="giving")),
 ]
 
 if settings.DEBUG:

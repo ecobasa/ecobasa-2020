@@ -1,0 +1,32 @@
+{% extends 'giving/base.html' %}
+{% load i18n %}
+
+{% block giving_content %}
+<h1 class="text-2xl font-semibold mb-6">{% trans "Requests" %}</h1>
+
+{% if received %}
+  <section class="mb-8">
+    <h2 class="text-lg font-semibold font-serif mb-3">{% trans "Received" %}</h2>
+    <div class="space-y-3">
+      {% for vr in received %}
+        {% include "giving/_request_row.html" with vr=vr show_from=True %}
+      {% endfor %}
+    </div>
+  </section>
+{% endif %}
+
+{% if sent %}
+  <section>
+    <h2 class="text-lg font-semibold font-serif mb-3">{% trans "Sent" %}</h2>
+    <div class="space-y-3">
+      {% for vr in sent %}
+        {% include "giving/_request_row.html" with vr=vr show_from=False %}
+      {% endfor %}
+    </div>
+  </section>
+{% endif %}
+
+{% if not received and not sent %}
+  <p class="text-brown opacity-60">{% trans "No requests yet." %}</p>
+{% endif %}
+{% endblock %}
