@@ -72,11 +72,23 @@
                      class="flex items-start gap-2 px-4 py-2 hover:bg-secondary hover:bg-opacity-10 border-b border-secondary border-opacity-10 transition-colors">
                     <span class="mt-1 flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center transition-opacity"
                       :class="[
-                        n.tag === 'accepted' ? 'bg-secondary bg-opacity-30' : n.tag === 'declined' ? 'bg-secondary bg-opacity-30' : n.tag === 'counter' || n.tag === 'requested' ? 'bg-secondary bg-opacity-20' : 'bg-secondary bg-opacity-10',
+                        (n.tag === 'accepted' || n.tag === 'gift_accepted') ? 'bg-secondary bg-opacity-30' :
+                        (n.tag === 'declined' || n.tag === 'gift_declined') ? 'bg-secondary bg-opacity-30' :
+                        (n.tag === 'counter' || n.tag === 'gift_counter' || n.tag === 'requested' || n.tag === 'gift_request' || n.tag === 'wish_request') ? 'bg-secondary bg-opacity-20' :
+                        'bg-secondary bg-opacity-10',
                         n.is_read ? 'opacity-70' : ''
                       ]">
                       <i class="text-xs"
-                        :class="n.tag === 'accepted' ? 'fa-solid fa-handshake-simple' : n.tag === 'declined' ? 'fa-solid fa-handshake-simple-slash' : n.tag === 'counter' || n.tag === 'requested' ? 'fa-solid fa-hand-holding-hand' : 'fa fa-bell opacity-60'"></i>
+                        :class="n.tag === 'accepted' ? 'fa-solid fa-handshake-simple' :
+                                n.tag === 'declined' ? 'fa-solid fa-handshake-simple-slash' :
+                                n.tag === 'counter' ? 'fa-solid fa-hand-holding-hand' :
+                                n.tag === 'requested' ? 'fa-solid fa-graduation-cap' :
+                                n.tag === 'gift_request' ? 'fa-solid fa-gift' :
+                                n.tag === 'wish_request' ? 'fa-solid fa-hand-holding-heart' :
+                                n.tag === 'gift_accepted' ? 'fa-solid fa-gift' :
+                                n.tag === 'gift_declined' ? 'fa-solid fa-gift' :
+                                n.tag === 'gift_counter' ? 'fa-solid fa-gift' :
+                                'fa fa-bell opacity-60'"></i>
                     </span>
                     <span class="text-xs leading-snug flex-1 self-center" :class="n.is_read ? 'opacity-70' : 'font-semibold'" x-text="n.verb"></span>
                     <span x-show="!n.is_read" class="mt-1.5 flex-shrink-0 w-1.5 h-1.5 rounded-full bg-red"></span>

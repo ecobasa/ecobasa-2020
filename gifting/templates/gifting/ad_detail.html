@@ -10,9 +10,9 @@
 
 
 {% block content %}
-{# Root Alpine scope — manages image modal and contact modal #}
+{# Root Alpine scope — manages image modal #}
 <div class="mx-auto max-w-4xl mt-10 px-4 pb-16"
-  x-data="{ imageOpen: false, contactOpen: false }">
+  x-data="{ imageOpen: false }">
 
   {# ── Breadcrumbs ── #}
   <nav class="sm:hidden">
@@ -115,21 +115,98 @@
       {% if ad.owner.location_name %}
         <div class="text-sm"><i class="fa fa-map-marker mr-2"></i>{{ ad.owner.location_name }}</div>
       {% endif %}
-      <div>
-        {% if request.user.is_authenticated %}
-          <button type="button" @click="contactOpen = true" class="btn">
-            <i class="fa fa-envelope mr-2"></i>
-            {% if ad.type == 'offer' %}{% trans "Request offer" %}{% else %}{% trans "Fulfill wish" %}{% endif %}
-          </button>
-        {% else %}
-          <a class="btn" href="{% url 'users:login' %}?next={{ request.path }}">
-            <i class="fa fa-envelope mr-2"></i>
-            {% if ad.type == 'offer' %}{% trans "Request offer" %}{% else %}{% trans "Fulfill wish" %}{% endif %}
-          </a>
-        {% endif %}
-      </div>
     </div>
   </div>
+  {% endif %}
+
+  {# ── Request form (non-owner authenticated) ── #}
+  {% if form %}
+  <div class="mt-8">
+    <h2 class="text-lg font-semibold mb-4">
+      {% if ad.type == 'offer' %}{% trans "Request this offer" %}{% else %}{% trans "Offer to fulfill this wish" %}{% endif %}
+    </h2>
+    <div class="border rounded-xl bg-secondary p-6" x-data="{ showLoc: false }">
+      <form method="post">
+        {% csrf_token %}
+        <div class="form-group mb-4">
+          <label class="form-label">{% trans "Message" %}</label>
+          {{ form.message }}
+        </div>
+        <div class="form-group mb-4">
+          <label class="form-label">{% trans "Proposed meeting location" %}</label>
+          <div class="space-y-1">
+            {% for radio in form.location_type %}
+              <label class="flex items-center gap-2 text-sm text-brown cursor-pointer">
+                {{ radio.tag }} {{ radio.choice_label }}
+              </label>
+            {% endfor %}
+          </div>
+          {{ form.proposed_location }}
+          {{ form.proposed_lat }}
+          {{ form.proposed_lon }}
+        </div>
+        <div class="form-group mb-4">
+          <label class="form-label">{% trans "Proposed date (optional)" %}</label>
+          {{ form.proposed_date }}
+        </div>
+        <button type="submit" class="btn">
+          <i class="fa fa-paper-plane mr-2"></i>
+          {% if ad.type == 'offer' %}{% trans "Send request" %}{% else %}{% trans "Send offer" %}{% endif %}
+        </button>
+      </form>
+    </div>
+  </div>
+  {% elif not request.user.is_authenticated and ad.owner %}
+  <div class="mt-8">
+    <a class="btn" href="{% url 'users:login' %}?next={{ request.path }}">
+      <i class="fa fa-envelope mr-2"></i>
+      {% if ad.type == 'offer' %}{% trans "Log in to request this offer" %}{% else %}{% trans "Log in to fulfill this wish" %}{% endif %}
+    </a>
+  </div>
+  {% endif %}
+
+  {# ── Incoming requests (owner only) ── #}
+  {% if is_owner %}
+    {% if incoming_requests %}
+    <div class="mt-8">
+      <h2 class="text-lg font-semibold mb-4">{% trans "Incoming Requests" %}</h2>
+      <div class="space-y-2">
+        {% for req in incoming_requests %}
+          <a href="{{ req.get_absolute_url }}"
+            class="flex items-center gap-3 border rounded-lg p-3 hover:border-primary transition-colors
+              {% if req.status == 'accepted' %}border-green bg-green bg-opacity-5
+              {% elif req.status == 'declined' %}border-red bg-red bg-opacity-5
+              {% elif req.status == 'counter' %}border-yellow bg-yellow bg-opacity-5
+              {% else %}border bg-secondary{% endif %}">
+            {% if req.from_user.image %}
+              <img src="{{ req.from_user.image.url }}" alt="" class="w-8 h-8 rounded-full object-cover flex-shrink-0">
+            {% else %}
+              <div class="w-8 h-8 rounded-full bg-primary bg-opacity-20 flex items-center justify-center flex-shrink-0">
+                <i class="fa fa-user text-xs text-primary"></i>
+              </div>
+            {% endif %}
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-semibold text-primary">{{ req.from_user.name|default:req.from_user.email }}</p>
+              <p class="text-xs text-brown truncate">{{ req.message }}</p>
+            </div>
+            <div class="flex-shrink-0">
+              {% if req.status == 'pending' %}
+                <span class="pill bg-yellow text-secondary text-xs">{% trans "Pending" %}</span>
+              {% elif req.status == 'accepted' %}
+                <span class="pill bg-green text-secondary text-xs">{% trans "Accepted" %}</span>
+              {% elif req.status == 'declined' %}
+                <span class="pill bg-red text-secondary text-xs">{% trans "Declined" %}</span>
+              {% elif req.status == 'counter' %}
+                <span class="pill bg-primary text-secondary text-xs">{% trans "Counter" %}</span>
+              {% endif %}
+            </div>
+          </a>
+        {% endfor %}
+      </div>
+    </div>
+    {% else %}
+    <div class="mt-8 text-sm text-brown">{% trans "No requests yet." %}</div>
+    {% endif %}
   {% endif %}
 
   {# ── Location map ── #}
@@ -142,43 +219,6 @@
   </div>
   {% endif %}
 
-  {# ── Contact modal ── #}
-  {% if ad.owner %}
-  <div x-show="contactOpen" x-cloak
-    class="modal-overlay flex"
-    @click.self="contactOpen = false"
-    @keydown.escape.window="contactOpen = false">
-    <div class="modal relative rounded-lg shadow-xl w-full max-w-lg">
-      <button type="button" @click="contactOpen = false"
-        class="absolute top-3 right-3 text-2xl w-10 h-10 flex items-center justify-center bg-secondary bg-opacity-80 rounded-full"
-        aria-label="{% trans 'Close' %}">&times;</button>
-      <div class="p-6">
-        <h2 class="text-2xl font-semibold mt-4 mb-4">
-          {% if ad.type == 'offer' %}
-            {% trans "Ask for" %}
-          {% else %}
-            {% trans "Fulfill wish" %}
-          {% endif %}: {{ ad.title }}</h2>
-        <form method="post" action="{% url 'postman:write' %}">
-          {% csrf_token %}
-          <input type="hidden" name="recipients"    value="{{ ad.owner.email }}">
-          <input type="hidden" name="subject"       value="{{ ad.title }}">
-          <input type="hidden" name="ad_random_id"  value="{{ ad.random_id }}">
-          <div class="grid grid-cols-1 gap-3">
-            <label class="text-sm">{% trans "Message" %}
-              <textarea name="body" rows="6" class="form-textarea w-full mt-1"
-                placeholder="{% trans 'Write a short message about why you\'re interested' %}"></textarea>
-            </label>
-          </div>
-          <div class="mt-4 flex justify-end gap-3">
-            <button type="button" @click="contactOpen = false" class="btn btn-purple"><i class="fa fa-times mr-2"></i>{% trans "Cancel" %}</button>
-            <button type="submit" class="btn"><i class="fa fa-paper-plane mr-2"></i>{% trans "Send" %}</button>
-          </div>
-        </form>
-      </div>
-    </div>
-  </div>
-  {% endif %}
 
 </div>{# /x-data #}
 {% endblock content %}

@@ -23,27 +23,39 @@
     <div class="space-y-2">
       {% for n in notifications %}
         <a href="{{ n.link|default:'#' }}"
-           class="flex items-start gap-3 border rounded-lg p-3 border-2 hover:border-primary transition-colors
-             {% if not n.is_read %}bg-primary bg-opacity-5{% else %}bg-secondary{% endif %}
-             {% if n.tag == 'accepted' %}{% if n.is_read %}border-green/50{% else %}border-green{% endif %}
-             {% elif n.tag == 'declined' %}{% if n.is_read %}border-red/50{% else %}border-red{% endif %}
-             {% elif n.tag == 'counter' %}{% if n.is_read %}border-yellow/50{% else %}border-yellow{% endif %}
-             {% elif n.tag == 'requested' %}{% if n.is_read %}border-primary/50{% else %}border-primary{% endif %}
+           class="flex items-start gap-3 border rounded-lg p-3 border-2 focus:border-2
+             {% if not n.is_read %}bg-secondary{% else %}bg-secondary bg-opacity-60 hover:bg-opacity-100{% endif %}
+             {% if n.tag == 'accepted' or n.tag == 'gift_accepted' %}{% if n.is_read %}border-green/70 hover:border-green{% else %}border-green{% endif %}
+             {% elif n.tag == 'declined' or n.tag == 'gift_declined' %}{% if n.is_read %}border-red/70 hover:border-red{% else %}border-red{% endif %}
+             {% elif n.tag == 'counter' or n.tag == 'gift_counter' %}{% if n.is_read %}border-yellow/70 hover:border-yellow{% else %}border-yellow{% endif %}
+             {% elif n.tag == 'requested' or n.tag == 'gift_request' or n.tag == 'wish_request' %}{% if n.is_read %}border-secondary/10 border-0 hover:border-primary/60{% else %}border-primary{% endif %}
              {% elif not n.is_read %}border-primary
-             {% else %}border{% endif %}">
+             {% else %}border-secondary/70{% endif %}">
 
           <div class="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5
-            {% if n.tag == 'accepted' %}bg-green bg-opacity-20
-            {% elif n.tag == 'declined' %}bg-red bg-opacity-20
-            {% elif n.tag == 'counter' %}bg-yellow bg-opacity-20
+            {% if n.tag == 'accepted' or n.tag == 'gift_accepted' %}bg-green bg-opacity-20
+            {% elif n.tag == 'declined' or n.tag == 'gift_declined' %}bg-red bg-opacity-20
+            {% elif n.tag == 'counter' or n.tag == 'gift_counter' %}bg-yellow bg-opacity-20
             {% else %}bg-primary bg-opacity-20{% endif %}
             {% if n.is_read %}opacity-50{% endif %}">
             {% if n.tag == 'accepted' %}
               <i class="fa-solid fa-handshake-simple text-sm text-green"></i>
             {% elif n.tag == 'declined' %}
               <i class="fa-solid fa-handshake-simple-slash text-sm text-red"></i>
-            {% elif n.tag == 'counter' or n.tag == 'requested' %}
+            {% elif n.tag == 'counter' %}
               <i class="fa-solid fa-hand-holding-hand text-sm text-yellow"></i>
+            {% elif n.tag == 'requested' %}
+              <i class="fa-solid fa-graduation-cap text-sm text-primary"></i>
+            {% elif n.tag == 'gift_request' %}
+              <i class="fa-solid fa-gift text-sm text-primary"></i>
+            {% elif n.tag == 'wish_request' %}
+              <i class="fa-solid fa-hand-holding-heart text-sm text-primary"></i>
+            {% elif n.tag == 'gift_accepted' %}
+              <i class="fa-solid fa-gift text-sm text-green"></i>
+            {% elif n.tag == 'gift_declined' %}
+              <i class="fa-solid fa-gift text-sm text-red"></i>
+            {% elif n.tag == 'gift_counter' %}
+              <i class="fa-solid fa-gift text-sm text-yellow"></i>
             {% else %}
               <i class="fa fa-bell text-sm text-primary"></i>
             {% endif %}

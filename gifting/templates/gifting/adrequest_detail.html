@@ -1,0 +1,465 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block head_title %}{% trans "Ad Request" %} — ecobasa{% endblock %}
+
+{% block extrahead %}
+{{ block.super }}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v7.2.2/ol.css">
+{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto px-4 py-8">
+
+  <div class="mb-2 text-sm text-brown">
+    <a href="{% url 'gifting:search' %}" class="hover:underline">{% trans "Free Market" %}</a>
+    <span class="mx-1">/</span>
+    <a href="{{ ar.ad.get_absolute_url }}" class="hover:underline">{{ ar.ad.title }}</a>
+    <span class="mx-1">/</span>
+    <span>{% trans "Request" %} #{{ ar.pk }}</span>
+  </div>
+
+  {# ── Status summary banner ────────────────────────────────────────── #}
+  {% if ar.status != 'pending' %}
+    <div class="rounded-xl p-5 mb-6 border
+      {% if ar.status == 'accepted' %}border-green bg-green bg-opacity-10
+      {% elif ar.status == 'declined' %}border-red bg-red bg-opacity-10
+      {% elif ar.status == 'counter' %}border-yellow bg-yellow bg-opacity-10
+      {% endif %}">
+
+      <div class="flex items-center gap-2 mb-3">
+        {% if ar.status == 'accepted' %}
+          <i class="fa fa-check-circle text-green text-xl"></i>
+          <span class="font-semibold text-green">{% trans "Exchange confirmed" %}</span>
+        {% elif ar.status == 'declined' %}
+          <i class="fa fa-times-circle text-red text-xl"></i>
+          <span class="font-semibold text-red">{% trans "Request declined" %}</span>
+        {% elif ar.status == 'counter' %}
+          <i class="fa fa-exchange text-primary text-xl"></i>
+          <span class="font-semibold text-primary">{% trans "Counter-proposal pending" %}</span>
+        {% endif %}
+        {% if ar.responded_at %}
+          <span class="ml-auto text-xs text-brown">{{ ar.responded_at|date:"d M Y H:i" }}</span>
+        {% endif %}
+      </div>
+
+      {% if ar.status == 'accepted' %}
+        {% if latest_counter_msg and latest_counter_msg.counter_location %}
+          <div class="flex items-center gap-2 text-sm text-brown mb-1">
+            <i class="fa fa-map-marker text-primary"></i>
+            <span>{{ latest_counter_msg.counter_location }}</span>
+          </div>
+        {% elif ar.resolved_location %}
+          <div class="flex items-center gap-2 text-sm text-brown mb-1">
+            <i class="fa fa-map-marker text-primary"></i>
+            <span>{{ ar.resolved_location }}</span>
+          </div>
+        {% endif %}
+        {% if latest_counter_msg and latest_counter_msg.counter_date %}
+          <div class="flex items-center gap-2 text-sm text-brown">
+            <i class="fa fa-calendar text-primary"></i>
+            <span>{{ latest_counter_msg.counter_date|date:"d M Y H:i" }}</span>
+          </div>
+        {% elif ar.proposed_date %}
+          <div class="flex items-center gap-2 text-sm text-brown">
+            <i class="fa fa-calendar text-primary"></i>
+            <span>{{ ar.proposed_date|date:"d M Y H:i" }}</span>
+          </div>
+        {% endif %}
+
+      {% elif ar.status == 'counter' and latest_status_msg %}
+        {% if latest_status_msg.counter_location %}
+          <div class="flex items-center gap-2 text-sm text-brown mb-1">
+            <i class="fa fa-map-marker text-primary"></i>
+            <span>{{ latest_status_msg.counter_location }}</span>
+          </div>
+        {% endif %}
+        {% if latest_status_msg.counter_date %}
+          <div class="flex items-center gap-2 text-sm text-brown">
+            <i class="fa fa-calendar text-primary"></i>
+            <span>{{ latest_status_msg.counter_date|date:"d M Y H:i" }}</span>
+          </div>
+        {% endif %}
+      {% endif %}
+
+    </div>
+  {% endif %}
+
+  {# ── Original request card ─────────────────────────────────────── #}
+  <div class="border rounded-xl bg-secondary p-6 mb-6">
+    <div class="flex items-center gap-3 mb-4">
+      {% if ar.from_user.image %}
+        <img src="{{ ar.from_user.image.url }}" alt="" width="48" height="48" class="w-12 h-12 rounded-full object-cover">
+      {% else %}
+        <div class="w-12 h-12 rounded-full bg-primary bg-opacity-20 flex items-center justify-center">
+          <i class="fa fa-user text-primary"></i>
+        </div>
+      {% endif %}
+      <div>
+        <a href="{{ ar.from_user.get_absolute_url }}" class="font-semibold text-primary hover:underline">
+          {{ ar.from_user.name|default:ar.from_user.email }}
+        </a>
+        <p class="text-xs text-brown">{% trans "sent this request" %} · {{ ar.created_at|date:"d M Y H:i" }}</p>
+      </div>
+      <div class="ml-auto">
+        {% if ar.status == 'pending' %}
+          <span class="pill bg-yellow text-secondary">{% trans "Pending" %}</span>
+        {% elif ar.status == 'accepted' %}
+          <span class="pill bg-green text-secondary">{% trans "Accepted" %}</span>
+        {% elif ar.status == 'declined' %}
+          <span class="pill bg-red text-secondary">{% trans "Declined" %}</span>
+        {% elif ar.status == 'counter' %}
+          <span class="pill bg-primary text-secondary">{% trans "Counter-proposed" %}</span>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="prose text-sm text-brown mb-4">{{ ar.message|linebreaksbr }}</div>
+
+    {% if ar.location_type %}
+      <div class="text-sm text-brown mb-2">
+        <i class="fa fa-map-marker mr-1 text-primary"></i>
+        <strong>{% trans "Location" %}:</strong> {{ ar.resolved_location }}
+      </div>
+    {% endif %}
+    {% if ar.proposed_date %}
+      <div class="text-sm text-brown mb-2">
+        <i class="fa fa-calendar mr-1 text-primary"></i>
+        <strong>{% trans "Proposed date" %}:</strong> {{ ar.proposed_date|date:"d M Y H:i" }}
+      </div>
+    {% endif %}
+
+    {% with coords=ar.location_coords %}
+      {% if coords.0 and coords.1 %}
+        <div class="rounded shadow overflow-hidden h-[200px] mt-3" id="ar-map"></div>
+      {% endif %}
+    {% endwith %}
+  </div>
+
+  {# ── Thread / history ─────────────────────────────────────────────── #}
+  {% if thread %}
+    <div class="space-y-4 mb-6">
+      {% for msg in thread %}
+        <div class="border rounded-xl bg-secondary p-4
+          {% if msg.status_to == 'accepted' %}border-green
+          {% elif msg.status_to == 'declined' %}border-red
+          {% elif msg.status_to == 'counter' %}border-yellow
+          {% endif %}">
+
+          <div class="flex items-center gap-2 mb-3">
+            {% if msg.sender.image %}
+              <img src="{{ msg.sender.image.url }}" alt="" width="32" height="32" class="w-8 h-8 rounded-full object-cover">
+            {% else %}
+              <div class="w-8 h-8 rounded-full bg-primary bg-opacity-20 flex items-center justify-center">
+                <i class="fa fa-user text-xs text-primary"></i>
+              </div>
+            {% endif %}
+            <a href="{{ msg.sender.get_absolute_url }}" class="font-semibold text-sm text-primary hover:underline">
+              {{ msg.sender.name|default:msg.sender.email }}
+            </a>
+            {% if msg.status_to %}
+              <span class="pill text-xs
+                {% if msg.status_to == 'accepted' %}bg-green text-secondary
+                {% elif msg.status_to == 'declined' %}bg-red text-secondary
+                {% elif msg.status_to == 'counter' %}bg-yellow text-secondary
+                {% endif %}">
+                {% if msg.status_to == 'accepted' %}<i class="fa fa-check mr-1"></i>{% trans "Accepted" %}
+                {% elif msg.status_to == 'declined' %}<i class="fa fa-times mr-1"></i>{% trans "Declined" %}
+                {% elif msg.status_to == 'counter' %}<i class="fa fa-exchange mr-1"></i>{% trans "Counter-proposed" %}
+                {% endif %}
+              </span>
+            {% endif %}
+            <span class="ml-auto text-xs">{{ msg.created_at|date:"d M Y H:i" }}</span>
+          </div>
+
+          {% if msg.body %}
+            <div class="prose text-sm mb-3">{{ msg.body|linebreaksbr }}</div>
+          {% endif %}
+
+          {% if msg.status_to == 'counter' %}
+            {% if msg.counter_location %}
+              <div class="text-sm mb-1">
+                <i class="fa fa-map-marker mr-1 text-primary"></i>
+                <strong>{% trans "Counter location" %}:</strong> {{ msg.counter_location }}
+              </div>
+            {% endif %}
+            {% if msg.counter_date %}
+              <div class="text-sm mb-2">
+                <i class="fa fa-calendar mr-1 text-primary"></i>
+                <strong>{% trans "Counter date" %}:</strong> {{ msg.counter_date|date:"d M Y H:i" }}
+              </div>
+            {% endif %}
+            {% with coords=msg.counter_location_coords %}
+              {% if coords.0 and coords.1 %}
+                <div class="rounded shadow overflow-hidden h-[180px] mt-2" id="thread-map-{{ msg.pk }}"></div>
+              {% endif %}
+            {% endwith %}
+          {% endif %}
+
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  {# ── Bottom compose area ──────────────────────────────────────────── #}
+  <div class="border rounded-xl bg-secondary p-6"
+       x-data="{ isCounter: false, counterLocType: 'my_place' }">
+
+    <form method="post">
+      {% csrf_token %}
+
+      {# Counter-proposal extra fields (owner only, collapsible) #}
+      {% if is_owner %}
+      <div x-show="isCounter" style="display:none" class="mb-5 pb-5 border-b space-y-4">
+        <h3 class="text-sm font-semibold text-brown">{% trans "Counter-proposal details" %}</h3>
+
+        <div class="form-group">
+          <label class="form-label">{% trans "Counter location type" %}</label>
+          <div class="space-y-1">
+            {% for value, label in loc_choices %}
+              <label class="flex items-center gap-2 text-sm text-brown cursor-pointer">
+                <input type="radio" name="counter_location_type" value="{{ value }}"
+                  class="form-radio"
+                  {% if forloop.first %}checked{% endif %}
+                  @change="counterLocType = $event.target.value; window.updateCounterMode && window.updateCounterMode($event.target.value)">
+                {{ label }}
+              </label>
+            {% endfor %}
+          </div>
+        </div>
+
+        <div x-show="counterLocType === 'custom'" style="display:none">
+          <div x-data="EcoMap.locationDropdown('setCounterPoint')" class="relative">
+            <label class="form-label">{% trans "Counter location" %}</label>
+            <input type="text" id="counter-location-search"
+              class="form-input"
+              placeholder="{% trans 'Search for a location…' %}"
+              @input.debounce="onInput($el.value)"
+              autocomplete="off">
+            <div x-show="open" @click.outside="open = false" style="display:none"
+              class="absolute z-20 inset-x-0 bg-secondary shadow-lg text-xs py-2 rounded-b border">
+              <ul class="list-none m-0">
+                <template x-for="res in results" :key="res.place_id">
+                  <li class="m-0">
+                    <a @click.prevent="onSelect(res)" href="#"
+                      class="block px-2 py-2 text-brown hover:bg-primary hover:text-secondary"
+                      x-text="res.display_name"></a>
+                  </li>
+                </template>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <input type="hidden" name="counter_location" id="counter-location-name">
+        <input type="hidden" name="counter_lat" id="counter-lat">
+        <input type="hidden" name="counter_lon" id="counter-lon">
+
+        <div class="rounded shadow overflow-hidden h-[220px]">
+          <div id="counter-pick-map" class="w-full h-full bg-secondary bg-opacity-40"></div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">{% trans "Counter date" %}</label>
+          <input type="datetime-local" name="counter_date" class="form-input">
+        </div>
+      </div>
+      {% endif %}
+
+      {# Message textarea — always visible #}
+      <div class="form-group mb-4">
+        {{ message_form.body }}
+      </div>
+
+      {# Action buttons #}
+      <div class="flex flex-wrap gap-2">
+
+        <button type="submit" name="action" value="message"
+          x-show="!isCounter" class="btn">
+          <i class="fa fa-paper-plane mr-2"></i>{% trans "Send" %}
+        </button>
+
+        {% if is_owner %}
+          {% if owner_can_decide %}
+            {% if ar.status == 'pending' %}
+              <button type="submit" name="action" value="accept"
+                x-show="!isCounter" class="btn btn-green">
+                <i class="fa fa-check mr-2"></i>{% trans "Accept" %}
+              </button>
+              <button type="submit" name="action" value="decline"
+                x-show="!isCounter" class="btn btn-red">
+                <i class="fa fa-times mr-2"></i>{% trans "Decline" %}
+              </button>
+            {% elif ar.status == 'accepted' %}
+              <button type="submit" name="action" value="decline"
+                x-show="!isCounter" class="btn btn-red">
+                <i class="fa fa-times mr-2"></i>{% trans "Change to Declined" %}
+              </button>
+            {% elif ar.status == 'declined' %}
+              <button type="submit" name="action" value="accept"
+                x-show="!isCounter" class="btn btn-green">
+                <i class="fa fa-check mr-2"></i>{% trans "Change to Accepted" %}
+              </button>
+            {% endif %}
+          {% else %}
+            <span class="text-xs text-brown self-center italic" x-show="!isCounter">
+              {% trans "Waiting for the other party's response…" %}
+            </span>
+          {% endif %}
+
+          <button type="button" x-show="!isCounter"
+            @click="isCounter = true; $nextTick(() => window.initCounterPicker && window.initCounterPicker())"
+            class="btn btn-yellow">
+            <i class="fa-solid fa-location-dot mr-2"></i>{% trans "Propose different location" %}
+          </button>
+
+          <button type="submit" name="action" value="counter"
+            x-show="isCounter" style="display:none" class="btn">
+            <i class="fa fa-paper-plane mr-2"></i>{% trans "Send counter-proposal" %}
+          </button>
+          <button type="button" x-show="isCounter" style="display:none"
+            @click="isCounter = false" class="btn btn-purple">
+            <i class="fa fa-times mr-2"></i>{% trans "Cancel" %}
+          </button>
+        {% endif %}
+
+        {% if requester_can_decide %}
+          <button type="submit" name="action" value="accept" class="btn btn-green">
+            <i class="fa fa-check mr-2"></i>{% trans "Accept" %}
+          </button>
+          <button type="submit" name="action" value="decline" class="btn btn-red">
+            <i class="fa fa-times mr-2"></i>{% trans "Decline" %}
+          </button>
+        {% endif %}
+
+      </div>
+    </form>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block javascript %}
+{{ block.super }}
+<script src="https://cdn.jsdelivr.net/npm/ol@v7.2.2/dist/ol.js"></script>
+<script>
+document.fonts.ready.then(function () {
+  function displayMap(target, lat, lon, badge) {
+    var coords = ol.proj.fromLonLat([lon, lat]);
+    var feature = new ol.Feature({ geometry: new ol.geom.Point(coords) });
+    feature.setStyle(EcoMap.makeIconStyle(badge, '#da6137'));
+    var layers = EcoMap.buildBaseLayers();
+    layers.setBaseLayer('ecobasa');
+    var map = new ol.Map({
+      target: target,
+      layers: layers.all.concat([new ol.layer.Vector({ source: new ol.source.Vector({ features: [feature] }) })]),
+      view: new ol.View({ center: coords, zoom: 12 }),
+    });
+    var menu = EcoMap.buildLayerToggle(map, target + '-layer');
+    menu.querySelectorAll('input').forEach(function (r) {
+      r.addEventListener('change', function (e) { if (e.target.checked) layers.setBaseLayer(e.target.value); });
+    });
+    return map;
+  }
+
+  function badgeFor(locType) {
+    return (locType === 'custom') ? 0xF111 : 0xF007;
+  }
+
+  {% with coords=ar.location_coords %}{% if coords.0 and coords.1 %}
+  displayMap('ar-map', {{ coords.0 }}, {{ coords.1 }}, badgeFor('{{ ar.location_type }}'));
+  {% endif %}{% endwith %}
+
+  {% for msg in thread %}
+    {% if msg.status_to == 'counter' %}
+      {% with coords=msg.counter_location_coords %}
+        {% if coords.0 and coords.1 %}
+  displayMap('thread-map-{{ msg.pk }}', {{ coords.0 }}, {{ coords.1 }}, badgeFor('{{ msg.counter_location_type }}'));
+        {% endif %}
+      {% endwith %}
+    {% endif %}
+  {% endfor %}
+
+  {% if is_owner %}
+  var counterMapInst = null;
+  window.initCounterPicker = function () {
+    if (counterMapInst) return;
+
+    var vectorSource = new ol.source.Vector();
+    var counterFeature = new ol.Feature();
+    vectorSource.addFeature(counterFeature);
+    var counterVectorLayer = new ol.layer.Vector({ source: vectorSource });
+
+    var layers = EcoMap.buildBaseLayers();
+    layers.setBaseLayer('ecobasa');
+
+    counterMapInst = new ol.Map({
+      target: 'counter-pick-map',
+      layers: layers.all.concat([counterVectorLayer]),
+      view: new ol.View({ center: ol.proj.fromLonLat([10, 50]), zoom: 4 }),
+    });
+
+    var layerMenu = EcoMap.buildLayerToggle(counterMapInst, 'counter-pick-layer');
+    layerMenu.querySelectorAll('input').forEach(function (r) {
+      r.addEventListener('change', function (e) { if (e.target.checked) layers.setBaseLayer(e.target.value); });
+    });
+
+    var modify = new ol.interaction.Modify({ source: vectorSource });
+    modify.on('modifyend', function () {
+      var geom = counterFeature.getGeometry();
+      if (!geom) return;
+      var ll = ol.proj.toLonLat(geom.getCoordinates());
+      setHidden(ll[0], ll[1], '');
+    });
+
+    counterMapInst.on('click', function (evt) {
+      var checked = document.querySelector('input[name="counter_location_type"]:checked');
+      if (!checked || checked.value !== 'custom') return;
+      var ll = ol.proj.toLonLat(evt.coordinate);
+      placePin(ll[0], ll[1]);
+      setHidden(ll[0], ll[1], '');
+    });
+
+    function placePin(lon, lat, skipZoom) {
+      var coords = ol.proj.fromLonLat([parseFloat(lon), parseFloat(lat)]);
+      counterFeature.setGeometry(new ol.geom.Point(coords));
+      if (!skipZoom) counterMapInst.getView().animate({ center: coords, zoom: 12 });
+    }
+
+    function setHidden(lon, lat, name) {
+      document.getElementById('counter-lon').value = lon;
+      document.getElementById('counter-lat').value = lat;
+      document.getElementById('counter-location-name').value = name || '';
+    }
+
+    var knownCoords = {
+      my_place:   {% if owner.location %}[{{ owner.location.x }}, {{ owner.location.y }}, '{{ owner.location_name|escapejs }}']{% else %}null{% endif %},
+      your_place: {% if ar.from_user.location %}[{{ ar.from_user.location.x }}, {{ ar.from_user.location.y }}, '{{ ar.from_user.location_name|escapejs }}']{% else %}null{% endif %},
+    };
+
+    window.updateCounterMode = function (locType) {
+      counterMapInst.removeInteraction(modify);
+      if (locType === 'custom') {
+        counterFeature.setGeometry(null);
+        counterVectorLayer.setStyle(EcoMap.makeIconStyle(0xF111, '#da6137'));
+        counterMapInst.addInteraction(modify);
+        setHidden('', '', '');
+      } else {
+        counterVectorLayer.setStyle(EcoMap.makeIconStyle(0xF007, '#da6137'));
+        var c = knownCoords[locType];
+        if (c) { placePin(c[0], c[1]); setHidden(c[0], c[1], c[2]); }
+      }
+    };
+
+    window.setCounterPoint = function (lon, lat, label) {
+      placePin(lon, lat);
+      setHidden(lon, lat, label);
+    };
+
+    var checked = document.querySelector('input[name="counter_location_type"]:checked');
+    window.updateCounterMode(checked ? checked.value : 'my_place');
+  };
+  {% endif %}
+});
+</script>
+{% endblock %}
