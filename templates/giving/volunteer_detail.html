@@ -63,24 +63,24 @@
         </div>
       </div>
     {% endif %}
-    {% if vr.practice_skills %}
+    {% if vr.practice_skills_list %}
       <div>
         <span class="opacity-60 uppercase tracking-wide text-xs">
           {% if vr.volunteer_mode == "wish" %}{% trans "Skills to offer" %}{% else %}{% trans "Skills to learn and practice" %}{% endif %}
         </span>
         <div class="mt-1 flex flex-wrap gap-1">
-          {% for skill in vr.practice_skills.split %}
-            <span class="pill bg-primary text-secondary"><i class="fa fa-graduation-cap mr-1"></i>{{ skill|cut:"," }}</span>
+          {% for skill in vr.practice_skills_list %}
+            <span class="pill bg-primary text-secondary"><i class="fa fa-graduation-cap mr-1"></i>{{ skill }}</span>
           {% endfor %}
         </div>
       </div>
     {% endif %}
-    {% if vr.sender_skills %}
+    {% if vr.sender_skills_list %}
       <div>
         <span class="opacity-60 uppercase tracking-wide text-xs">{% trans "Other skills I can help with" %}</span>
         <div class="mt-1 flex flex-wrap gap-1">
-          {% for skill in vr.sender_skills.split %}
-            <span class="pill text-white" style="background-color:#80143b;"><i class="fa fa-graduation-cap mr-1"></i>{{ skill|cut:"," }}</span>
+          {% for skill in vr.sender_skills_list %}
+            <span class="pill text-white" style="background-color:#80143b;"><i class="fa fa-graduation-cap mr-1"></i>{{ skill }}</span>
           {% endfor %}
         </div>
       </div>

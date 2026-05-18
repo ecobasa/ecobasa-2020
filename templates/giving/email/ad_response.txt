@@ -1,0 +1,8 @@
+Hello {% if recipient.name %}{{ recipient.name }}{% else %}{{ recipient.email }}{% endif %},
+
+{% if actor.name %}{{ actor.name }}{% else %}{{ actor.email }}{% endif %} has {{ status_label }} the request for {{ ad.title }}.
+
+View request: {{ detail_url }}
+
+--
+ecobasa.org

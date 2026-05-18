@@ -7,7 +7,6 @@ from django.shortcuts import render, get_object_or_404, redirect, reverse
 from django.db.models import Q
 from django.core.paginator import Paginator
 from django.contrib import messages
-from django.core.mail import send_mail
 from django.http import Http404, JsonResponse
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
@@ -24,8 +23,9 @@ from users.models import User
 from skills.models import UserSkill, CommunitySkill
 
 
-def _notify_ad_request(ad_request):
+def _notify_ad_request(ad_request, http_request=None):
     from notifications.models import Notification
+    from giving.emails import send_ad_request_email
     ad = ad_request.ad
     recipient = ad.owner
     if recipient is None:
@@ -34,34 +34,21 @@ def _notify_ad_request(ad_request):
     actor_name = ad_request.from_user.name or ad_request.from_user.email
     if ad.type == "offer":
         verb = _("%(actor)s requested your offer: %(title)s") % {"actor": actor_name, "title": ad.title}
-        tag = "gift_request"
-        subject_prefix = "Gift request"
-        body_action = "requested your offer"
+        tag  = "gift_request"
     else:
         verb = _("%(actor)s wants to fulfill your wish: %(title)s") % {"actor": actor_name, "title": ad.title}
-        tag = "wish_request"
-        subject_prefix = "Wish fulfillment"
-        body_action = "offered to fulfill your wish"
+        tag  = "wish_request"
     Notification.objects.create(
         recipient=recipient, actor=ad_request.from_user,
         verb=str(verb), link=link, tag=tag,
     )
-    body = f"{actor_name} has {body_action} for '{ad.title}'.\n\nMessage:\n{ad_request.message}\n"
-    if ad_request.proposed_date:
-        body += f"\nProposed date: {ad_request.proposed_date}"
-    body += f"\n\nView it here: https://ecobasa.org{link}"
-    try:
-        send_mail(
-            subject=f"[ecobasa] {subject_prefix}: {ad.title}",
-            message=body, from_email="noreply@ecobasa.org",
-            recipient_list=[recipient.email], fail_silently=True,
-        )
-    except Exception:
-        pass
+    if http_request:
+        send_ad_request_email(ad_request, http_request)
 
 
-def _notify_ad_response(ad_request, actor):
+def _notify_ad_response(ad_request, actor, http_request=None):
     from notifications.models import Notification
+    from giving.emails import send_ad_response_email
     ad = ad_request.ad
     owner = ad.owner
     recipient = ad_request.from_user if actor == owner else owner
@@ -83,16 +70,8 @@ def _notify_ad_response(ad_request, actor):
         recipient=recipient, actor=actor,
         verb=str(verb), link=link, tag=tag,
     )
-    body = f"{actor_name} has {status_label.lower()} the request for '{ad.title}'.\n"
-    body += f"\n\nView it here: https://ecobasa.org{link}"
-    try:
-        send_mail(
-            subject=f"[ecobasa] Ad request {status_label.lower()}: {ad.title}",
-            message=body, from_email="noreply@ecobasa.org",
-            recipient_list=[recipient.email], fail_silently=True,
-        )
-    except Exception:
-        pass
+    if http_request:
+        send_ad_response_email(ad_request, actor, http_request)
 
 
 def search(request):
@@ -115,7 +94,7 @@ def detail(request, pk):
                 ar.from_user = request.user
                 ar.ad = ad
                 ar.save()
-                _notify_ad_request(ar)
+                _notify_ad_request(ar, http_request=request)
                 messages.success(request, _("Your request has been sent."))
                 return redirect(ar.get_absolute_url())
         else:
@@ -178,7 +157,7 @@ def adrequest_detail(request, pk):
             ar.status = new_status
             ar.responded_at = timezone.now()
             ar.save()
-            _notify_ad_response(ar, actor=request.user)
+            _notify_ad_response(ar, actor=request.user, http_request=request)
             messages.success(request, _("Response sent."))
             return redirect(ar.get_absolute_url())
 
@@ -207,7 +186,7 @@ def adrequest_detail(request, pk):
             ar.status = AdRequest.STATUS_COUNTER
             ar.responded_at = timezone.now()
             ar.save()
-            _notify_ad_response(ar, actor=request.user)
+            _notify_ad_response(ar, actor=request.user, http_request=request)
             messages.success(request, _("Counter-proposal sent."))
             return redirect(ar.get_absolute_url())
 

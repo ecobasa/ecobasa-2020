@@ -1,23 +1,21 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.core.mail import send_mail
 from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_GET
 
-from django.utils.text import slugify
-
-from .forms import CommunitySkillForm, CommunitySkillOrWishForm, SkillRequestForm, SkillRequestResponseForm, SkillRequestMessageForm, SkillWishEditForm, UserSkillForm, UserSkillOrWishForm
+from .forms import CommunitySkillForm, CommunitySkillOrWishForm, SkillRequestForm, SkillRequestMessageForm, SkillWishEditForm, UserSkillForm, UserSkillOrWishForm
 from .models import CommunitySkill, Skill, SkillRequest, SkillRequestMessage, SkillWish, UserSkill
 from communities.models import Community
 from users.models import User
 
 
-def _notify_skill_request(skill_request):
+def _notify_skill_request(skill_request, http_request=None):
     """Create an in-app notification and send an email for a new SkillRequest."""
     from notifications.models import Notification
+    from giving.emails import send_skill_request_email
 
     if skill_request.user_skill:
         recipient = skill_request.user_skill.user
@@ -44,29 +42,8 @@ def _notify_skill_request(skill_request):
         tag="requested",
     )
 
-    location_line = skill_request.resolved_location()
-    date_line = str(skill_request.proposed_date) if skill_request.proposed_date else ""
-
-    body = (
-        f"{actor_name} has sent a skill request for '{skill_name}'.\n\n"
-        f"Message:\n{skill_request.message}\n"
-    )
-    if location_line:
-        body += f"\nLocation: {location_line}"
-    if date_line:
-        body += f"\nProposed date: {date_line}"
-    body += f"\n\nView it here: https://ecobasa.org{link}"
-
-    try:
-        send_mail(
-            subject=f"[ecobasa] Skill request: {skill_name}",
-            message=body,
-            from_email="noreply@ecobasa.org",
-            recipient_list=[recipient.email],
-            fail_silently=True,
-        )
-    except Exception:
-        pass
+    if http_request:
+        send_skill_request_email(skill_request, http_request)
 
 
 def _get_user_by_slug(user_slug):
@@ -129,7 +106,7 @@ def userskill_detail(request, skill_slug, user_slug):
                 sr.from_user   = request.user
                 sr.user_skill  = user_skill
                 sr.save()
-                _notify_skill_request(sr)
+                _notify_skill_request(sr, http_request=request)
                 messages.success(request, _("Your request has been sent."))
                 return redirect(sr.get_absolute_url())
         else:
@@ -160,7 +137,7 @@ def communityskill_detail(request, skill_slug, community_slug):
                 sr.from_user       = request.user
                 sr.community_skill = comm_skill
                 sr.save()
-                _notify_skill_request(sr)
+                _notify_skill_request(sr, http_request=request)
                 messages.success(request, _("Your request has been sent."))
                 return redirect(sr.get_absolute_url())
         else:
@@ -328,9 +305,10 @@ def skillwish_community_edit(request, pk, community_slug):
 
 # ── Skill request detail / response ──────────────────────────────────
 
-def _notify_skill_response(skill_request, actor):
+def _notify_skill_response(skill_request, actor, http_request=None):
     """Notify the other party when a status decision is made."""
     from notifications.models import Notification
+    from giving.emails import send_skill_response_email
 
     if skill_request.user_skill:
         skill_name = skill_request.user_skill.skill.name
@@ -365,19 +343,8 @@ def _notify_skill_response(skill_request, actor):
         tag=tag,
     )
 
-    body = f"{actor_name} has {status_label.lower()} the request for '{skill_name}'.\n"
-    body += f"\n\nView it here: https://ecobasa.org{link}"
-
-    try:
-        send_mail(
-            subject=f"[ecobasa] Skill request {status_label.lower()}: {skill_name}",
-            message=body,
-            from_email="noreply@ecobasa.org",
-            recipient_list=[recipient.email],
-            fail_silently=True,
-        )
-    except Exception:
-        pass
+    if http_request:
+        send_skill_response_email(skill_request, actor, http_request)
 
 
 def skillrequest_detail(request, pk):
@@ -445,7 +412,7 @@ def skillrequest_detail(request, pk):
             sr.status = new_status
             sr.responded_at = timezone.now()
             sr.save()
-            _notify_skill_response(sr, actor=request.user)
+            _notify_skill_response(sr, actor=request.user, http_request=request)
             messages.success(request, _("Response sent."))
             return redirect(sr.get_absolute_url())
 
@@ -475,7 +442,7 @@ def skillrequest_detail(request, pk):
             sr.status = SkillRequest.STATUS_COUNTER
             sr.responded_at = timezone.now()
             sr.save()
-            _notify_skill_response(sr, actor=request.user)
+            _notify_skill_response(sr, actor=request.user, http_request=request)
             messages.success(request, _("Counter-proposal sent."))
             return redirect(sr.get_absolute_url())
 

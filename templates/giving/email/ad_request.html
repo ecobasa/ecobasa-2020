@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ ad.get_type_display }} request</title>
+</head>
+<body style="margin:0;padding:0;background-color:#f5ede0;font-family:Georgia,serif;color:#452912;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f5ede0;padding:32px 0;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background-color:#fcf3e5;border-radius:8px;overflow:hidden;border:1px solid #d4b896;">
+
+          {# Header #}
+          <tr>
+            <td style="background-color:#da6137;padding:28px 32px;">
+              <p style="margin:0;font-size:24px;font-weight:bold;color:#fcf3e5;font-family:Georgia,serif;">ecobasa.org</p>
+              <p style="margin:8px 0 0;font-size:14px;color:#fcf3e5;opacity:0.85;">
+                {% if ad.type == "offer" %}Gift request{% else %}Wish fulfillment offer{% endif %}
+              </p>
+            </td>
+          </tr>
+
+          {# Body #}
+          <tr>
+            <td style="padding:32px;">
+              <p style="margin:0 0 16px;font-size:16px;">
+                Hello {% if recipient.name %}{{ recipient.name }}{% else %}{{ recipient.email }}{% endif %},
+              </p>
+              <p style="margin:0 0 24px;font-size:15px;line-height:1.6;">
+                <strong>{% if ar.from_user.name %}{{ ar.from_user.name }}{% else %}{{ ar.from_user.email }}{% endif %}</strong>
+                {% if ad.type == "offer" %}
+                  has requested your gift offer: <strong>{{ ad.title }}</strong>.
+                {% else %}
+                  wants to help fulfill your wish: <strong>{{ ad.title }}</strong>.
+                {% endif %}
+              </p>
+
+              {# Details box #}
+              <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f5ede0;border-radius:6px;border:1px solid #d4b896;margin-bottom:24px;">
+                <tr>
+                  <td style="padding:20px;">
+
+                    {% if ar.message %}
+                    <p style="margin:0 0 4px;font-size:11px;text-transform:uppercase;letter-spacing:0.06em;opacity:0.6;">Message</p>
+                    <p style="margin:0;font-size:15px;line-height:1.6;white-space:pre-wrap;">{{ ar.message }}</p>
+                    {% endif %}
+
+                  </td>
+                </tr>
+              </table>
+
+              {# Action buttons #}
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
+                <tr>
+                  <td align="center" style="padding:0 8px 0 0;">
+                    <a href="{{ accept_url }}"
+                       style="display:inline-block;background-color:#5A5527;color:#fcf3e5;text-decoration:none;font-size:15px;font-weight:bold;padding:12px 28px;border-radius:6px;font-family:Arial,sans-serif;">
+                      ✓ Accept
+                    </a>
+                  </td>
+                  <td align="center" style="padding:0 0 0 8px;">
+                    <a href="{{ decline_url }}"
+                       style="display:inline-block;background-color:#e34a26;color:#fcf3e5;text-decoration:none;font-size:15px;font-weight:bold;padding:12px 28px;border-radius:6px;font-family:Arial,sans-serif;">
+                      ✗ Decline
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin:0 0 8px;font-size:13px;opacity:0.7;text-align:center;">
+                Or <a href="{{ detail_url }}" style="color:#da6137;">view the full request</a> to reply or make a counter-proposal.
+              </p>
+            </td>
+          </tr>
+
+          {# Footer #}
+          <tr>
+            <td style="background-color:#f5ede0;border-top:1px solid #d4b896;padding:16px 32px;text-align:center;">
+              <p style="margin:0;font-size:12px;opacity:0.6;">ecobasa.org &mdash; the sustainable gift-economy community</p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

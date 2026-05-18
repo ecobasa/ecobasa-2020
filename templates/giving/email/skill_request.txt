@@ -1,0 +1,18 @@
+Hello {% if recipient.name %}{{ recipient.name }}{% else %}{{ recipient.email }}{% endif %},
+
+{% if sr.from_user.name %}{{ sr.from_user.name }}{% else %}{{ sr.from_user.email }}{% endif %} has sent a request for your skill: {{ skill_name }}.
+
+{% if sr.proposed_date %}PROPOSED DATE
+{{ sr.proposed_date|date:"N j, Y" }}
+
+{% endif %}{% if sr.message %}MESSAGE
+{{ sr.message }}
+
+{% endif %}---
+Accept:  {{ accept_url }}
+Decline: {{ decline_url }}
+
+View full request: {{ detail_url }}
+
+--
+ecobasa.org

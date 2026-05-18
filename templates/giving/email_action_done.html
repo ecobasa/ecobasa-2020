@@ -6,13 +6,13 @@
   {% if action == "accept" %}
     <i class="fa-solid fa-handshake-simple text-5xl text-green mb-4 block"></i>
     <h1 class="text-2xl font-semibold font-serif mb-2">{% trans "Request accepted!" %}</h1>
-    <p class="opacity-70">{% blocktrans with name=vr.from_user.name|default:vr.from_user.email community=vr.community.name %}{{ name }}'s volunteer request at {{ community }} has been accepted. They have been notified by email.{% endblocktrans %}</p>
+    <p class="opacity-70">{% blocktrans with t=title %}The request for <strong>{{ t }}</strong> has been accepted. The other party has been notified.{% endblocktrans %}</p>
   {% else %}
     <i class="fa-solid fa-handshake-simple-slash text-5xl text-red mb-4 block"></i>
     <h1 class="text-2xl font-semibold font-serif mb-2">{% trans "Request declined." %}</h1>
-    <p class="opacity-70">{% blocktrans with name=vr.from_user.name|default:vr.from_user.email community=vr.community.name %}{{ name }}'s volunteer request at {{ community }} has been declined. They have been notified by email.{% endblocktrans %}</p>
+    <p class="opacity-70">{% blocktrans with t=title %}The request for <strong>{{ t }}</strong> has been declined. The other party has been notified.{% endblocktrans %}</p>
   {% endif %}
-  <a href="{{ vr.get_absolute_url }}" class="mt-6 inline-flex items-center btn bg-primary text-secondary rounded px-4 py-2 font-semibold hover:opacity-90">
+  <a href="{{ detail_url }}" class="mt-6 inline-flex items-center bg-primary text-secondary rounded px-4 py-2 font-semibold hover:opacity-90">
     <i class="fa fa-eye mr-2"></i>{% trans "View request" %}
   </a>
 </div>
