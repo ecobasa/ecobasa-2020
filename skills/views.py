@@ -41,6 +41,7 @@ def _notify_skill_request(skill_request):
         actor=skill_request.from_user,
         verb=str(verb),
         link=link,
+        tag="requested",
     )
 
     location_line = skill_request.resolved_location()
@@ -130,7 +131,7 @@ def userskill_detail(request, skill_slug, user_slug):
                 sr.save()
                 _notify_skill_request(sr)
                 messages.success(request, _("Your request has been sent."))
-                return redirect(user_skill.get_absolute_url())
+                return redirect(sr.get_absolute_url())
         else:
             form = SkillRequestForm()
 
@@ -161,7 +162,7 @@ def communityskill_detail(request, skill_slug, community_slug):
                 sr.save()
                 _notify_skill_request(sr)
                 messages.success(request, _("Your request has been sent."))
-                return redirect(comm_skill.get_absolute_url())
+                return redirect(sr.get_absolute_url())
         else:
             form = SkillRequestForm()
 
@@ -282,22 +283,29 @@ def communityskill_delete(request, skill_slug, community_slug):
 
 # ── Skill request detail / response ──────────────────────────────────
 
-def _notify_skill_response(skill_request):
-    """Notify the original requester when their request has been responded to."""
+def _notify_skill_response(skill_request, actor):
+    """Notify the other party when a status decision is made."""
     from notifications.models import Notification
 
-    recipient = skill_request.from_user
     if skill_request.user_skill:
         skill_name = skill_request.user_skill.skill.name
-        responder = skill_request.user_skill.user
+        owner = skill_request.user_skill.user
     else:
         skill_name = skill_request.community_skill.skill.name
-        responder = skill_request.community_skill.community.owner
+        owner = skill_request.community_skill.community.owner
 
-    if responder is None:
+    recipient = skill_request.from_user if actor == owner else owner
+    if recipient is None:
         return
 
-    actor_name = responder.name or responder.email
+    tag_map = {
+        SkillRequest.STATUS_ACCEPTED: "accepted",
+        SkillRequest.STATUS_DECLINED: "declined",
+        SkillRequest.STATUS_COUNTER:  "counter",
+    }
+    tag = tag_map.get(skill_request.status, "")
+
+    actor_name = actor.name or actor.email
     status_label = skill_request.get_status_display()
     verb = _("%(actor)s %(status)s your skill request: %(skill)s") % {
         "actor": actor_name, "status": status_label.lower(), "skill": skill_name
@@ -306,21 +314,13 @@ def _notify_skill_response(skill_request):
 
     Notification.objects.create(
         recipient=recipient,
-        actor=responder,
+        actor=actor,
         verb=str(verb),
         link=link,
+        tag=tag,
     )
 
-    body = (
-        f"{actor_name} has {status_label.lower()} your request for '{skill_name}'.\n"
-    )
-    if skill_request.response_message:
-        body += f"\nMessage:\n{skill_request.response_message}\n"
-    if skill_request.status == SkillRequest.STATUS_COUNTER:
-        if skill_request.counter_location:
-            body += f"\nCounter location: {skill_request.counter_location}"
-        if skill_request.counter_date:
-            body += f"\nCounter date: {skill_request.counter_date}"
+    body = f"{actor_name} has {status_label.lower()} the request for '{skill_name}'.\n"
     body += f"\n\nView it here: https://ecobasa.org{link}"
 
     try:
@@ -336,6 +336,7 @@ def _notify_skill_response(skill_request):
 
 
 def skillrequest_detail(request, pk):
+    from datetime import datetime as _dt
     sr = get_object_or_404(SkillRequest, pk=pk)
 
     if sr.user_skill:
@@ -351,58 +352,7 @@ def skillrequest_detail(request, pk):
     is_owner = request.user == owner
     is_requester = request.user == sr.from_user
 
-    if request.method == "POST" and request.user.is_authenticated:
-        action = request.POST.get("action", "message")
-
-        if action == "message":
-            form = SkillRequestMessageForm(request.POST)
-            if form.is_valid():
-                body = form.cleaned_data.get("body", "").strip()
-                if body:
-                    SkillRequestMessage.objects.create(
-                        request=sr,
-                        sender=request.user,
-                        body=body,
-                    )
-            return redirect(sr.get_absolute_url())
-
-        if is_owner and action in ("accept", "decline", "counter"):
-            from datetime import date as _date
-            new_status = {
-                "accept":  SkillRequest.STATUS_ACCEPTED,
-                "decline": SkillRequest.STATUS_DECLINED,
-                "counter": SkillRequest.STATUS_COUNTER,
-            }[action]
-            msg = SkillRequestMessage(
-                request=sr,
-                sender=request.user,
-                body=request.POST.get("body", "").strip(),
-                status_to=new_status,
-            )
-            if action == "counter":
-                msg.counter_location_type = request.POST.get("counter_location_type", "")
-                msg.counter_location      = request.POST.get("counter_location", "")
-                try:
-                    msg.counter_lat = float(request.POST.get("counter_lat") or "")
-                except (ValueError, TypeError):
-                    msg.counter_lat = None
-                try:
-                    msg.counter_lon = float(request.POST.get("counter_lon") or "")
-                except (ValueError, TypeError):
-                    msg.counter_lon = None
-                raw_date = request.POST.get("counter_date", "")
-                try:
-                    msg.counter_date = _date.fromisoformat(raw_date) if raw_date else None
-                except ValueError:
-                    msg.counter_date = None
-            msg.save()
-            sr.status = new_status
-            sr.responded_at = timezone.now()
-            sr.save()
-            _notify_skill_response(sr)
-            messages.success(request, _("Response sent."))
-            return redirect(sr.get_absolute_url())
-
+    # Compute thread before POST so access control can check latest_status_msg
     thread = list(sr.thread.select_related("sender").all())
     latest_status_msg = None
     latest_counter_msg = None
@@ -414,16 +364,88 @@ def skillrequest_detail(request, pk):
         if latest_status_msg and latest_counter_msg:
             break
 
+    # Owner can decide unless they sent the latest counter (waiting for requester)
+    counter_by_owner = (
+        sr.status == SkillRequest.STATUS_COUNTER
+        and latest_status_msg is not None
+        and latest_status_msg.sender_id == owner.pk
+    )
+    owner_can_decide = is_owner and not counter_by_owner
+    requester_can_decide = is_requester and counter_by_owner
+
+    if request.method == "POST" and request.user.is_authenticated:
+        action = request.POST.get("action", "message")
+
+        if action == "message":
+            body = request.POST.get("body", "").strip()
+            if body:
+                SkillRequestMessage.objects.create(
+                    request=sr,
+                    sender=request.user,
+                    body=body,
+                )
+            return redirect(sr.get_absolute_url())
+
+        if action in ("accept", "decline") and (owner_can_decide or requester_can_decide):
+            new_status = {
+                "accept":  SkillRequest.STATUS_ACCEPTED,
+                "decline": SkillRequest.STATUS_DECLINED,
+            }[action]
+            SkillRequestMessage.objects.create(
+                request=sr,
+                sender=request.user,
+                body=request.POST.get("body", "").strip(),
+                status_to=new_status,
+            )
+            sr.status = new_status
+            sr.responded_at = timezone.now()
+            sr.save()
+            _notify_skill_response(sr, actor=request.user)
+            messages.success(request, _("Response sent."))
+            return redirect(sr.get_absolute_url())
+
+        if action == "counter" and is_owner:
+            msg = SkillRequestMessage(
+                request=sr,
+                sender=request.user,
+                body=request.POST.get("body", "").strip(),
+                status_to=SkillRequest.STATUS_COUNTER,
+            )
+            msg.counter_location_type = request.POST.get("counter_location_type", "")
+            msg.counter_location      = request.POST.get("counter_location", "")
+            try:
+                msg.counter_lat = float(request.POST.get("counter_lat") or "")
+            except (ValueError, TypeError):
+                msg.counter_lat = None
+            try:
+                msg.counter_lon = float(request.POST.get("counter_lon") or "")
+            except (ValueError, TypeError):
+                msg.counter_lon = None
+            raw_dt = request.POST.get("counter_date", "")
+            try:
+                msg.counter_date = _dt.fromisoformat(raw_dt) if raw_dt else None
+            except ValueError:
+                msg.counter_date = None
+            msg.save()
+            sr.status = SkillRequest.STATUS_COUNTER
+            sr.responded_at = timezone.now()
+            sr.save()
+            _notify_skill_response(sr, actor=request.user)
+            messages.success(request, _("Counter-proposal sent."))
+            return redirect(sr.get_absolute_url())
+
     return render(request, "skills/skillrequest_detail.html", {
-        "sr":                  sr,
-        "owner":               owner,
-        "is_owner":            is_owner,
-        "is_requester":        is_requester,
-        "thread":              thread,
-        "latest_status_msg":   latest_status_msg,
-        "latest_counter_msg":  latest_counter_msg,
-        "message_form":        SkillRequestMessageForm(),
-        "loc_choices":         SkillRequest.LOC_CHOICES,
+        "sr":                   sr,
+        "owner":                owner,
+        "is_owner":             is_owner,
+        "is_requester":         is_requester,
+        "thread":               thread,
+        "latest_status_msg":    latest_status_msg,
+        "latest_counter_msg":   latest_counter_msg,
+        "owner_can_decide":     owner_can_decide,
+        "requester_can_decide": requester_can_decide,
+        "message_form":         SkillRequestMessageForm(),
+        "loc_choices":          SkillRequest.LOC_CHOICES,
     })
 
 

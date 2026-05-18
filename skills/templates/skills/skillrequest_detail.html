@@ -266,7 +266,7 @@
 
         <div class="form-group">
           <label class="form-label">{% trans "Counter date" %}</label>
-          <input type="date" name="counter_date" class="form-input">
+          <input type="datetime-local" name="counter_date" class="form-input">
         </div>
       </div>
       {% endif %}
@@ -286,29 +286,35 @@
         </button>
 
         {% if is_owner %}
-          {# Decision buttons based on current status — visible when not in counter mode #}
-          {% if sr.status == 'pending' or sr.status == 'counter' %}
-            <button type="submit" name="action" value="accept"
-              x-show="!isCounter" class="btn btn-green">
-              <i class="fa fa-check mr-2"></i>{% trans "Accept" %}
-            </button>
-            <button type="submit" name="action" value="decline"
-              x-show="!isCounter" class="btn btn-red">
-              <i class="fa fa-times mr-2"></i>{% trans "Decline" %}
-            </button>
-          {% elif sr.status == 'accepted' %}
-            <button type="submit" name="action" value="decline"
-              x-show="!isCounter" class="btn btn-red">
-              <i class="fa fa-times mr-2"></i>{% trans "Change to Declined" %}
-            </button>
-          {% elif sr.status == 'declined' %}
-            <button type="submit" name="action" value="accept"
-              x-show="!isCounter" class="btn btn-green">
-              <i class="fa fa-check mr-2"></i>{% trans "Change to Accepted" %}
-            </button>
+          {# Owner decision buttons — hidden when they sent the latest counter #}
+          {% if owner_can_decide %}
+            {% if sr.status == 'pending' %}
+              <button type="submit" name="action" value="accept"
+                x-show="!isCounter" class="btn btn-green">
+                <i class="fa fa-check mr-2"></i>{% trans "Accept" %}
+              </button>
+              <button type="submit" name="action" value="decline"
+                x-show="!isCounter" class="btn btn-red">
+                <i class="fa fa-times mr-2"></i>{% trans "Decline" %}
+              </button>
+            {% elif sr.status == 'accepted' %}
+              <button type="submit" name="action" value="decline"
+                x-show="!isCounter" class="btn btn-red">
+                <i class="fa fa-times mr-2"></i>{% trans "Change to Declined" %}
+              </button>
+            {% elif sr.status == 'declined' %}
+              <button type="submit" name="action" value="accept"
+                x-show="!isCounter" class="btn btn-green">
+                <i class="fa fa-check mr-2"></i>{% trans "Change to Accepted" %}
+              </button>
+            {% endif %}
+          {% else %}
+            <span class="text-xs text-brown self-center italic" x-show="!isCounter">
+              {% trans "Waiting for the other party's response…" %}
+            </span>
           {% endif %}
 
-          {# Propose different location — always available to owner, visible when not in counter mode #}
+          {# Propose different location — always available to owner #}
           <button type="button" x-show="!isCounter"
             @click="isCounter = true; $nextTick(() => window.initCounterPicker && window.initCounterPicker())"
             class="btn btn-yellow">
@@ -322,8 +328,17 @@
           </button>
           <button type="button" x-show="isCounter" style="display:none"
             @click="isCounter = false" class="btn btn-purple">
-            <i class="fa fa-times mr-2"></i>
-            {% trans "Cancel" %}
+            <i class="fa fa-times mr-2"></i>{% trans "Cancel" %}
+          </button>
+        {% endif %}
+
+        {# Requester can accept/decline the owner's counter-proposal #}
+        {% if requester_can_decide %}
+          <button type="submit" name="action" value="accept" class="btn btn-green">
+            <i class="fa fa-check mr-2"></i>{% trans "Accept" %}
+          </button>
+          <button type="submit" name="action" value="decline" class="btn btn-red">
+            <i class="fa fa-times mr-2"></i>{% trans "Decline" %}
           </button>
         {% endif %}
 

@@ -8,7 +8,7 @@ from .models import Notification
 
 @login_required
 def notification_list(request):
-    notifications = request.user.notifications.select_related("actor").all()[:50]
+    notifications = list(request.user.notifications.select_related("actor").all()[:50])
     request.user.notifications.filter(is_read=False).update(is_read=True)
     return render(request, "notifications/list.html", {"notifications": notifications})
 
@@ -23,6 +23,7 @@ def recent_json(request):
             "verb":       n.verb,
             "link":       n.link,
             "is_read":    n.is_read,
+            "tag":        n.tag,
             "actor":      n.actor.name or n.actor.email if n.actor else None,
             "created_at": n.created_at.isoformat(),
         }

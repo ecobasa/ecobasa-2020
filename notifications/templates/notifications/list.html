@@ -23,20 +23,51 @@
     <div class="space-y-2">
       {% for n in notifications %}
         <a href="{{ n.link|default:'#' }}"
-           class="flex items-start gap-3 border rounded-lg p-3 {% if not n.is_read %}bg-primary bg-opacity-5 border-primary{% else %}bg-secondary{% endif %} hover:border-primary transition-colors">
-          {% if n.actor and n.actor.image %}
-            <img src="{{ n.actor.image.url }}" class="w-9 h-9 rounded-full object-cover flex-shrink-0 mt-0.5">
-          {% else %}
-            <div class="w-9 h-9 rounded-full bg-primary bg-opacity-20 flex items-center justify-center flex-shrink-0 mt-0.5">
+           class="flex items-start gap-3 border rounded-lg p-3 border-2 hover:border-primary transition-colors
+             {% if not n.is_read %}bg-primary bg-opacity-5{% else %}bg-secondary{% endif %}
+             {% if n.tag == 'accepted' %}{% if n.is_read %}border-green/50{% else %}border-green{% endif %}
+             {% elif n.tag == 'declined' %}{% if n.is_read %}border-red/50{% else %}border-red{% endif %}
+             {% elif n.tag == 'counter' %}{% if n.is_read %}border-yellow/50{% else %}border-yellow{% endif %}
+             {% elif n.tag == 'requested' %}{% if n.is_read %}border-primary/50{% else %}border-primary{% endif %}
+             {% elif not n.is_read %}border-primary
+             {% else %}border{% endif %}">
+
+          <div class="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5
+            {% if n.tag == 'accepted' %}bg-green bg-opacity-20
+            {% elif n.tag == 'declined' %}bg-red bg-opacity-20
+            {% elif n.tag == 'counter' %}bg-yellow bg-opacity-20
+            {% else %}bg-primary bg-opacity-20{% endif %}
+            {% if n.is_read %}opacity-50{% endif %}">
+            {% if n.tag == 'accepted' %}
+              <i class="fa-solid fa-handshake-simple text-sm text-green"></i>
+            {% elif n.tag == 'declined' %}
+              <i class="fa-solid fa-handshake-simple-slash text-sm text-red"></i>
+            {% elif n.tag == 'counter' or n.tag == 'requested' %}
+              <i class="fa-solid fa-hand-holding-hand text-sm text-yellow"></i>
+            {% else %}
               <i class="fa fa-bell text-sm text-primary"></i>
-            </div>
-          {% endif %}
+            {% endif %}
+          </div>
+
           <div class="min-w-0 flex-1">
             <p class="text-sm {% if not n.is_read %}font-semibold text-primary{% else %}text-brown{% endif %}">
               {{ n.verb }}
             </p>
             <p class="text-xs text-brown mt-0.5">{{ n.created_at|timesince }} {% trans "ago" %}</p>
           </div>
+
+          {% if n.actor %}
+            <img src="{% if n.actor.image %}{{ n.actor.image.url }}{% else %}{% endif %}"
+              class="w-7 h-7 rounded-full object-cover flex-shrink-0 mt-0.5 {% if n.is_read %}opacity-50{% endif %}"
+              {% if not n.actor.image %}style="display:none"{% endif %}
+              alt="{{ n.actor.name|default:n.actor.email }}">
+            {% if not n.actor.image %}
+              <div class="w-7 h-7 rounded-full bg-primary bg-opacity-20 flex items-center justify-center flex-shrink-0 mt-0.5 {% if n.is_read %}opacity-50{% endif %}">
+                <i class="fa fa-user text-xs text-primary"></i>
+              </div>
+            {% endif %}
+          {% endif %}
+
           {% if not n.is_read %}
             <span class="w-2 h-2 rounded-full bg-primary flex-shrink-0 mt-2"></span>
           {% endif %}
