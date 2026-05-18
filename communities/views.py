@@ -101,6 +101,7 @@ def volunteer_request(request, community_slug):
 
     volunteer_mode  = request.POST.get("volunteer_mode", "")
     practice_skills = request.POST.get("practice_skills", "").strip()
+    sender_skills   = request.POST.get("sender_skills", "").strip()
     stay_from       = request.POST.get("stay_from", "")
     stay_to         = request.POST.get("stay_to", "")
     msg_body        = request.POST.get("body", "").strip()
@@ -114,8 +115,10 @@ def volunteer_request(request, community_slug):
 
     full_body = msg_body
     if practice_skills:
-        label = str(_("Skills I can help with") if volunteer_mode == "wish" else _("Skills I want to practice"))
-        full_body += f"\n\n{label}: {practice_skills}"
+        label = str(_("Skills I can help with") if volunteer_mode == "wish" else _("Skills I want to learn and practice at your place"))
+        full_body += f"\n\n{label}:\nSkills: {practice_skills}"
+    if sender_skills:
+        full_body += f"\n\n{_('My skills')}:\nSender-Skills: {sender_skills}"
     if stay_from or stay_to:
         full_body += f"\n\n{_('Requested stay:')}\n"
         if stay_from:

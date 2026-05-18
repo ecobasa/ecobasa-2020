@@ -247,8 +247,7 @@
 						<div class="grid grid-cols-1 gap-3">
 							<div class="text-sm">
 								<label class="block mb-1" x-text="vPracticeLabel"></label>
-								<input type="text" id="volunteer-practice-skills" class="form-input w-full" placeholder="{% trans "Type a skill and press Enter…" %}">
-								<input type="hidden" name="practice_skills" id="volunteer-practice-skills-value">
+								<input type="text" id="volunteer-practice-skills" name="practice_skills" class="form-input w-full" placeholder="{% trans "Type a skill and press Enter…" %}">
 							</div>
 							<div x-show="vLevel" style="display:none" class="text-sm bg-primary bg-opacity-10 rounded px-3 py-2">
 								<span x-text="vLevelLabel"></span>: <span class="font-semibold" x-text="vLevel"></span>
@@ -382,14 +381,6 @@ document.addEventListener('DOMContentLoaded', () => {
 			document.head.appendChild(s);
 		}
 	};
-
-	/* sync tagify value into hidden field before HTMX posts the form */
-	document.addEventListener('htmx:configRequest', e => {
-		if (e.target.closest && e.target.closest('#volunteer-form-wrap') && practiceTagify) {
-			const h = document.getElementById('volunteer-practice-skills-value');
-			if (h) h.value = practiceTagify.value.map(t => t.value).join(', ');
-		}
-	});
 });
 </script>
 {% if community.location %}

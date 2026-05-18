@@ -35,7 +35,7 @@
                       </div>
                     {% endif %}
                   {% endif %}
-                  <div class="mt-2 mb-2">{{ part.body|format_message_body }}</div>
+                  <div class="mt-2 mb-2">{% format_message_body part %}</div>
                 </div>
               </div>
               <div class="flex-none flex flex-col items-center">
@@ -90,7 +90,7 @@
                       </div>
                     {% endif %}
                   {% endif %}
-                  <div class="mt-2">{{ part.body|format_message_body }}</div>
+                  <div class="mt-2">{% format_message_body part %}</div>
                 </div>
               </div>
           </div>
