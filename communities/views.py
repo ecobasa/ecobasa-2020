@@ -1,18 +1,21 @@
+import json
+
+from django.contrib.auth.decorators import login_required
 from django.db.models import Q, Prefetch
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
 from django.utils.translation import gettext_lazy as _
+from django.views.decorators.http import require_GET, require_POST
 
 from .models import Community
 from .models import CommunityPhoto
 from .forms import CommunityForm
-from skills.models import CommunitySkill, Skill, SkillWish
+from skills.models import CommunitySkill, Skill, SkillWish, UserSkill
 
 from django.contrib.gis.geos import Polygon, Point
 from django.contrib.gis.db.models.functions import Distance
 from django.core.paginator import Paginator
 from django.http import JsonResponse
-from django.views.decorators.http import require_GET
 
 
 def index(request):
@@ -65,15 +68,107 @@ def detail(request, slug):
     community = get_object_or_404(Community, slug=slug)
     photos = list(community.photos.all())
     hero_image = photos[0].image.url if photos else None
-    community_skills = community.community_skills.select_related("skill").order_by("skill__name")
-    skill_wishes = community.skill_wishes.select_related("skill").order_by("skill__name")
+    community_skills = list(community.community_skills.select_related("skill").order_by("skill__name"))
+    skill_wishes = list(community.skill_wishes.select_related("skill").order_by("skill__name"))
+
+    # Build a {skill_id: level_display} map for the visiting user so the modal can show their level
+    user_levels_json = "{}"
+    if request.user.is_authenticated and request.user != community.owner:
+        skill_ids = [cs.skill_id for cs in community_skills] + [sw.skill_id for sw in skill_wishes]
+        user_levels_json = json.dumps({
+            str(us.skill_id): us.get_level_display()
+            for us in UserSkill.objects.filter(user=request.user, skill_id__in=skill_ids)
+        })
+
     return render(request, "communities/community_detail.html", {
         "community":        community,
         "photos":           photos,
         "hero_image":       hero_image,
         "community_skills": community_skills,
         "skill_wishes":     skill_wishes,
+        "user_levels_json": user_levels_json,
     })
+
+
+@login_required
+@require_POST
+def volunteer_request(request, community_slug):
+    community = get_object_or_404(Community, slug=community_slug)
+    owner = community.owner
+    if not owner:
+        messages.error(request, _("This community has no contact person."))
+        return redirect(community.get_absolute_url())
+
+    volunteer_mode  = request.POST.get("volunteer_mode", "")
+    practice_skills = request.POST.get("practice_skills", "").strip()
+    stay_from       = request.POST.get("stay_from", "")
+    stay_to         = request.POST.get("stay_to", "")
+    msg_body        = request.POST.get("body", "").strip()
+
+    if volunteer_mode == "wish":
+        subject = str(_("Volunteer stay request — skills to offer at %(c)s") % {"c": community.name})
+    elif volunteer_mode == "offer":
+        subject = str(_("Volunteer stay request — skills to practice at %(c)s") % {"c": community.name})
+    else:
+        subject = str(_("Volunteer stay request at %(c)s") % {"c": community.name})
+
+    full_body = msg_body
+    if practice_skills:
+        label = str(_("Skills I can help with") if volunteer_mode == "wish" else _("Skills I want to practice"))
+        full_body += f"\n\n{label}: {practice_skills}"
+    if stay_from or stay_to:
+        full_body += f"\n\n{_('Requested stay:')}\n"
+        if stay_from:
+            full_body += f"{_('From')} {stay_from}\n"
+        if stay_to:
+            full_body += f"{_('To')} {stay_to}\n"
+
+    # Create postman message
+    from postman.models import Message
+    from django.utils.timezone import now as tz_now
+    from django.urls import reverse
+    pm = Message(
+        subject=subject,
+        body=full_body,
+        sender=request.user,
+        recipient=owner,
+        sent_at=tz_now(),
+        moderation_status="a",
+    )
+    pm.save()
+    pm.thread = pm
+    pm.save(update_fields=["thread"])
+
+    # In-app notification for the community owner
+    from notifications.models import Notification
+    actor_name = request.user.name or request.user.username
+    Notification.objects.create(
+        recipient=owner,
+        actor=request.user,
+        verb=str(_("%(name)s requested a volunteering stay at %(community)s") % {
+            "name": actor_name,
+            "community": community.name,
+        }),
+        link=reverse("postman:inbox"),
+        tag="volunteer_request",
+    )
+
+    if request.headers.get("HX-Request"):
+        from django.http import HttpResponse
+        actor_name_safe = (request.user.name or request.user.username)
+        return HttpResponse(
+            f'<div class="py-8 text-center">'
+            f'<i class="fa-solid fa-campground text-4xl text-primary mb-3 block"></i>'
+            f'<p class="font-semibold text-primary text-lg">'
+            + str(_("Request sent!")) +
+            f'</p>'
+            f'<p class="text-sm text-brown mt-1">'
+            + str(_("Your message has been delivered to %(community)s.") % {"community": community.name}) +
+            f'</p></div>'
+        )
+
+    messages.success(request, str(_("Your request has been sent to %(community)s!") % {"community": community.name}))
+    return redirect(community.get_absolute_url())
 
 
 def _sync_community_skill_wishes(community, form):

@@ -16,39 +16,87 @@
 	.video-container embed { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
 </style>
 {% if photos %}
-<div class="relative w-full" style="height: 340px;">
+<div class="relative w-full" style="height: 340px;"
+     x-data="{ cur: 0, len: {{ photos|length }}, fullscreen: false }"
+     x-init="len > 1 && setInterval(() => cur = (cur + 1) % len, 5000); $watch('fullscreen', v => document.body.classList.toggle('overflow-hidden', v))">
 	{% for photo in photos %}
-		<div class="absolute inset-0 bg-center bg-cover opacity-0 transition-opacity duration-700 hero-slide" data-index="{{ forloop.counter0 }}" style="background-image: url('{{ photo.image.url }}');"></div>
+		<div class="absolute inset-0 bg-center bg-cover transition-opacity duration-700"
+		     :style="{ opacity: cur === {{ forloop.counter0 }} ? 1 : 0 }"
+		     style="background-image: url('{{ photo.image.url }}'); will-change: opacity;"></div>
 	{% endfor %}
-	<div class="absolute inset-0" aria-hidden="true"></div>
-		<div class="absolute left-0 right-0 z-10" style="bottom: 100px;">
+	<button type="button" @click="fullscreen = true"
+	        class="absolute inset-0 cursor-zoom-in focus:outline-none bg-transparent"
+	        style="z-index: 2;" aria-label="{% trans 'View fullscreen' %}"></button>
+	<div class="absolute left-0 right-0 z-10" style="bottom: 100px; pointer-events: none;">
 		<div class="text-amber-100 py-10 bg-black bg-opacity-40 text-center drop-shadow-md">
 			<h1 class="text-5xl text-secondary">{{ community.name }}</h1>
 		</div>
 	</div>
 	{% if photos|length > 1 %}
-		<button type="button" class="hero-arrow hero-prev absolute left-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-20 hover:bg-opacity-90 text-primary rounded-full w-10 h-10 flex items-center justify-center shadow z-10">
+		<button type="button" @click="cur = (cur - 1 + len) % len"
+		        class="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-20 hover:bg-opacity-90 text-primary rounded-full w-10 h-10 flex items-center justify-center shadow z-10">
 			<img src="{% static 'img/arrow-left.png' %}" alt="Prev" class="w-full h-full object-contain">
 		</button>
-		<button type="button" class="hero-arrow hero-next absolute right-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-20 hover:bg-opacity-90 text-primary rounded-full w-10 h-10 flex items-center justify-center shadow z-10">
+		<button type="button" @click="cur = (cur + 1) % len"
+		        class="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-20 hover:bg-opacity-90 text-primary rounded-full w-10 h-10 flex items-center justify-center shadow z-10">
 			<img src="{% static 'img/arrow-right.png' %}" alt="Next" class="w-full h-full object-contain">
 		</button>
 		<div class="absolute left-0 right-0 z-10 bottom-0">
 			<div class="text-center space-x-2">
 				{% for photo in photos %}
-					<button type="button" class="inline-block w-3 h-3 rounded-full bg-secondary bg-opacity-60 hero-dot" data-index="{{ forloop.counter0 }}"></button>
+					<button type="button" @click="cur = {{ forloop.counter0 }}"
+					        :class="cur === {{ forloop.counter0 }} ? 'bg-primary' : 'bg-secondary bg-opacity-60'"
+					        class="inline-block w-3 h-3 rounded-full"></button>
 				{% endfor %}
 			</div>
 		</div>
 	{% endif %}
+	<!-- Fullscreen overlay -->
+	<div x-show="fullscreen" @click.self="fullscreen = false" @keydown.escape.window="fullscreen = false"
+	     class="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center p-4"
+	     style="display:none; z-index: 60;">
+		<div class="relative w-full h-full flex items-center justify-center">
+			{% for photo in photos %}
+				<img src="{{ photo.image.url }}" alt="{{ community.name }}"
+				     :class="cur === {{ forloop.counter0 }} ? 'opacity-100' : 'opacity-0 pointer-events-none'"
+				     class="absolute max-h-[90vh] max-w-[90vw] rounded-lg shadow-2xl transition-opacity duration-300 object-contain">
+			{% endfor %}
+		</div>
+		{% if photos|length > 1 %}
+			<button type="button" @click.stop="cur = (cur - 1 + len) % len"
+			        class="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-40 hover:bg-opacity-80 text-white rounded-full w-12 h-12 flex items-center justify-center shadow">
+				<img src="{% static 'img/arrow-left.png' %}" alt="Prev" class="w-full h-full object-contain">
+			</button>
+			<button type="button" @click.stop="cur = (cur + 1) % len"
+			        class="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-40 hover:bg-opacity-80 text-white rounded-full w-12 h-12 flex items-center justify-center shadow">
+				<img src="{% static 'img/arrow-right.png' %}" alt="Next" class="w-full h-full object-contain">
+			</button>
+		{% endif %}
+		<!-- Close button last in DOM so it paints above the images container -->
+		<button type="button" @click.stop="fullscreen = false"
+		        class="absolute top-4 right-4 text-white text-5xl leading-none hover:opacity-70 focus:outline-none" style="z-index: 1;" aria-label="{% trans 'Close' %}">&times;</button>
+	</div>
 </div>
 {% elif hero_image %}
-<div class="relative w-full" style="height: 340px;">
+<div class="relative w-full" style="height: 340px;"
+     x-data="{ fullscreen: false }"
+     x-init="$watch('fullscreen', v => document.body.classList.toggle('overflow-hidden', v))">
 	<div class="absolute inset-0 bg-center bg-cover" style="background-image: url('{{ hero_image }}');"></div>
-	<div class="absolute inset-0" aria-hidden="true"></div>
+	<button type="button" @click="fullscreen = true"
+	        class="absolute inset-0 cursor-zoom-in focus:outline-none bg-transparent"
+	        style="z-index: 2;" aria-label="{% trans 'View fullscreen' %}"></button>
+	<!-- Fullscreen overlay -->
+	<div x-show="fullscreen" @click.self="fullscreen = false" @keydown.escape.window="fullscreen = false"
+	     class="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center p-4"
+	     style="display:none; z-index: 60;">
+		<button type="button" @click="fullscreen = false"
+		        class="absolute top-4 right-4 text-white text-5xl leading-none hover:opacity-70 focus:outline-none" aria-label="{% trans 'Close' %}">&times;</button>
+		<img src="{{ hero_image }}" alt="{{ community.name }}"
+		     class="max-h-[90vh] max-w-[90vw] rounded-lg shadow-2xl object-contain">
+	</div>
 </div>
 {% endif %}
-<div class="mx-auto max-w-7xl mt-10 px-4 pb-10 relative">
+<div class="mx-auto max-w-7xl mt-10 px-4 pb-10 relative" x-data="communityVolunteer()">
 	{% if request.user.is_authenticated and request.user.is_staff or request.user.is_authenticated and community.owner and request.user == community.owner %}
 		<a class="btn btn-lg btn-primary absolute right-4 top-0 bg-opacity-70" href="{% url 'communities:update' slug=community.slug %}"><i class="fa fa-edit mr-2"></i>{% trans "Edit" %}</a>
 	{% endif %}
@@ -64,7 +112,7 @@
 		<h2>{% trans "Skills you can learn here" %}</h2>
 		<div class="flex flex-wrap gap-2 mb-2">
 			{% for cs in community_skills %}
-				<a href="{% if request.user == community.owner %}{% url 'skills:communityskill_edit' cs.skill.slug community.slug %}{% else %}{{ cs.get_absolute_url }}{% endif %}"
+				<a {% if request.user == community.owner %}href="{% url 'skills:communityskill_edit' cs.skill.slug community.slug %}"{% elif request.user.is_authenticated %}href="#" @click.prevent="openVolunteer('{{ cs.skill.name|escapejs }}', 'offer', {{ cs.skill_id }})"{% else %}href="{% url 'users:login' %}?next={{ request.path }}"{% endif %}
 				   class="pill bg-purple text-secondary hover:opacity-80 transition-opacity">
 					<i class="mr-1 fa fa-graduation-cap"></i>{{ cs.skill.name }}
 				</a>
@@ -86,7 +134,7 @@
 		<h2>{% trans "Looking for people with these skills" %}</h2>
 		<div class="flex flex-wrap gap-2 mb-2">
 			{% for sw in skill_wishes %}
-				<a href="{% if request.user == community.owner %}{% url 'skills:skillwish_community_edit' sw.pk community.slug %}{% else %}{% url 'skills:skill_detail' sw.skill.slug %}{% endif %}"
+				<a {% if request.user == community.owner %}href="{% url 'skills:skillwish_community_edit' sw.pk community.slug %}"{% elif request.user.is_authenticated %}href="#" @click.prevent="openVolunteer('{{ sw.skill.name|escapejs }}', 'wish', {{ sw.skill_id }})"{% else %}href="{% url 'users:login' %}?next={{ request.path }}"{% endif %}
 				   class="pill bg-yellow text-secondary hover:opacity-80 transition-opacity">
 					<i class="mr-1 fa fa-search"></i>{{ sw.skill.name }}
 					{% if sw.level %}<span class="opacity-70 text-xs">({{ sw.get_level_display }}+)</span>{% endif %}
@@ -170,25 +218,43 @@
 			<div class="order-8 sm:order-5">
 				{% if community.owner %}
 					{% if request.user.is_authenticated %}
-						<button type="button" id="volunteer-request-open" class="btn w-full"><i class="fa fa-hands-helping mr-1"></i>{% trans "Request volunteering stay" %}</button>
+						<button type="button" @click="openVolunteer(null, null, null)" class="btn w-full">
+							<i class="fa fa-hands-helping mr-1"></i>{% trans "Request volunteering stay" %}
+						</button>
 					{% else %}
-						<a class="btn w-full" href="{% url 'users:login' %}?next={{ request.path }}"><i class="fa fa-hands-helping mr-1"></i>{% trans "Request volunteering stay" %}</a>
+						<a class="btn w-full" href="{% url 'users:login' %}?next={{ request.path }}">
+							<i class="fa fa-hands-helping mr-1"></i>{% trans "Request volunteering stay" %}
+						</a>
 					{% endif %}
 				{% endif %}
 			</div>
 
-			<!-- Volunteer Request Modal -->
-			<div id="volunteer-request-modal" class="fixed inset-0 bg-black bg-opacity-70 z-50 hidden items-center justify-center p-4 overflow-y-auto">
-				<div class="modal-content" style="-webkit-overflow-scrolling: touch;">
-					<button type="button" id="volunteer-request-close" class="absolute top-3 right-3 text-2xl">&times;</button>
-					<h2 class="text-xl font-semibold mb-4">{% trans "Request volunteering stay" %}</h2>
-					<form id="volunteer-request-form" method="post" action="{% url 'postman:write' %}">
+			<!-- Volunteer Request Modal (Alpine-driven) -->
+			<div x-show="vOpen" style="display:none"
+			     @click.self="vOpen = false"
+			     @keydown.escape.window="vOpen = false"
+			     class="fixed inset-0 bg-black bg-opacity-70 z-50 flex items-center justify-center p-4 overflow-y-auto">
+				<div id="volunteer-form-wrap" class="modal-content" style="-webkit-overflow-scrolling: touch;">
+					<button type="button" @click="vOpen = false" class="absolute top-3 right-3 text-2xl">&times;</button>
+					<h1 class="text-xl font-semibold mb-4">{% trans "Request volunteering stay" %}</h1>
+					<form hx-post="{% url 'communities:volunteer_request' community.slug %}"
+					      hx-target="#volunteer-form-wrap"
+					      hx-swap="innerHTML"
+					      hx-on::after-request="if(event.detail.successful) document.dispatchEvent(new CustomEvent('volunteer-sent'))">
 						{% csrf_token %}
-						<input type="hidden" name="recipients" value="{% if community.owner %}{{ community.owner.email }}{% endif %}">
-						<input type="hidden" name="subject" value="{% trans "Request volunteering stay" %}">
+						<input type="hidden" name="volunteer_mode" :value="vMode">
 						<div class="grid grid-cols-1 gap-3">
+							<div class="text-sm">
+								<label class="block mb-1" x-text="vPracticeLabel"></label>
+								<input type="text" id="volunteer-practice-skills" class="form-input w-full" placeholder="{% trans "Type a skill and press Enter…" %}">
+								<input type="hidden" name="practice_skills" id="volunteer-practice-skills-value">
+							</div>
+							<div x-show="vLevel" style="display:none" class="text-sm bg-primary bg-opacity-10 rounded px-3 py-2">
+								<span x-text="vLevelLabel"></span>: <span class="font-semibold" x-text="vLevel"></span>
+							</div>
 							<label class="text-sm">{% trans "Your skills (comma separated)" %}
-								<input type="text" name="sender_skills" id="volunteer-sender-skills" class="form-input w-full mt-1" value="{% if request.user and request.user.is_authenticated %}{{ request.user.skills.all|join:', ' }}{% endif %}">
+								<input type="text" name="sender_skills" id="volunteer-sender-skills" class="form-input w-full mt-1"
+								       value="{% if request.user.is_authenticated %}{{ request.user.skills.all|join:', ' }}{% endif %}">
 							</label>
 							<label class="text-sm">{% trans "From" %}
 								<input type="datetime-local" name="stay_from" class="form-input w-full mt-1">
@@ -197,12 +263,12 @@
 								<input type="datetime-local" name="stay_to" class="form-input w-full mt-1">
 							</label>
 							<label class="text-sm">{% trans "Message" %}
-								<textarea name="body" id="volunteer-body" rows="6" class="form-textarea w-full mt-1" placeholder="{% trans "Write a short message explaining your motivation and skills" %}"></textarea>
+								<textarea name="body" rows="5" class="form-textarea w-full mt-1" placeholder="{% trans "Write a short message explaining your motivation and skills" %}"></textarea>
 							</label>
 						</div>
 						<div class="mt-4 flex justify-end gap-3">
-							<button type="button" id="volunteer-cancel" class="btn">{% trans "Cancel" %}</button>
-							<button type="submit" class="btn bg-primary text-secondary">{% trans "Send request" %}</button>
+							<button type="button" @click="vOpen = false" class="btn btn-lg">{% trans "Cancel" %}</button>
+							<button type="submit" class="btn btn-lg bg-primary text-secondary">{% trans "Send request" %}</button>
 						</div>
 					</form>
 				</div>
@@ -258,94 +324,71 @@
 {% block javascript %}
 {{ block.super }}
 <script>
-document.addEventListener('DOMContentLoaded', () => {
-	const slides = Array.from(document.querySelectorAll('.hero-slide'));
-	const dots = Array.from(document.querySelectorAll('.hero-dot'));
-	const prevBtn = document.querySelector('.hero-prev');
-	const nextBtn = document.querySelector('.hero-next');
-	if (!slides.length) return;
-
-	let current = 0;
-	let timer;
-
-	const setActive = (index) => {
-		current = index;
-		slides.forEach((slide, i) => {
-			slide.style.opacity = i === index ? '1' : '0';
-		});
-		dots.forEach((dot, i) => {
-			dot.classList.toggle('bg-primary', i === index);
-			dot.classList.toggle('bg-secondary', i !== index);
-		});
-	};
-
-	const next = () => setActive((current + 1) % slides.length);
-	const prev = () => setActive((current - 1 + slides.length) % slides.length);
-
-	dots.forEach(dot => {
-		dot.addEventListener('click', () => {
-			const idx = Number(dot.dataset.index) || 0;
-			setActive(idx);
-			restart();
-		});
-	});
-
-	if (prevBtn) prevBtn.addEventListener('click', () => { prev(); restart(); });
-	if (nextBtn) nextBtn.addEventListener('click', () => { next(); restart(); });
-
-	const restart = () => {
-		if (timer) clearInterval(timer);
-		if (slides.length > 1) {
-			timer = setInterval(next, 5000);
-		}
-	};
-
-	setActive(0);
-	restart();
+/* ── Alpine component: volunteer modal ─────────────────────────── */
+document.addEventListener('alpine:init', () => {
+	Alpine.data('communityVolunteer', () => ({
+		vOpen: false,
+		vMode: '',
+		vSkill: '',
+		vSkillId: null,
+		userLevels: {{ user_levels_json|safe }},
+		labelOffer:      '{% trans "Skills you would like to practice here"|escapejs %}',
+		labelWish:       '{% trans "Skills you would like to help with"|escapejs %}',
+		levelLabelOffer: '{% trans "Your current level with this skill"|escapejs %}',
+		levelLabelWish:  '{% trans "Your level with this skill"|escapejs %}',
+		get vLevel()        { return this.vSkillId ? (this.userLevels[String(this.vSkillId)] || null) : null; },
+		get vPracticeLabel(){ return this.vMode === 'wish' ? this.labelWish : this.labelOffer; },
+		get vLevelLabel()   { return this.vMode === 'wish' ? this.levelLabelWish : this.levelLabelOffer; },
+		openVolunteer(skill, mode, skillId) {
+			this.vSkill   = skill   || '';
+			this.vMode    = mode    || '';
+			this.vSkillId = skillId || null;
+			this.vOpen    = true;
+			this.$nextTick(() => window.seedPracticeTagify && window.seedPracticeTagify(skill));
+		},
+		init() {
+			this.$watch('vOpen', v => document.body.classList.toggle('overflow-hidden', v));
+			document.addEventListener('volunteer-sent', () => setTimeout(() => { this.vOpen = false; }, 2000));
+		},
+	}));
 });
-document.addEventListener('DOMContentLoaded', () => {
-	const openBtn = document.getElementById('volunteer-request-open');
-	const modal = document.getElementById('volunteer-request-modal');
-	if (!openBtn || !modal) return;
 
-	const modalSkillsInput = modal.querySelector('#volunteer-sender-skills');
-	if (modalSkillsInput) {
-		if (window.Tagify) {
-			new Tagify(modalSkillsInput, {
-				editTags: false,
-				dropdown: { enabled: 0 },
-				originalInputValueFormat: vals => vals.map(v => v.value).join(', '),
-			});
-		} else {
+/* ── Tagify for volunteer modal inputs (minimal vanilla) ────────── */
+document.addEventListener('DOMContentLoaded', () => {
+	const tagOpts = {
+		editTags: false,
+		dropdown: { enabled: 0 },
+		originalInputValueFormat: v => v.map(x => x.value).join(', '),
+	};
+	let practiceTagify = null, senderTagify = null;
+
+	window.seedPracticeTagify = (skillName) => {
+		const go = () => {
+			const pe = document.getElementById('volunteer-practice-skills');
+			const se = document.getElementById('volunteer-sender-skills');
+			if (pe && !practiceTagify) practiceTagify = new Tagify(pe, tagOpts);
+			if (se && !senderTagify)   senderTagify   = new Tagify(se, tagOpts);
+			if (practiceTagify) {
+				practiceTagify.removeAllTags();
+				if (skillName) practiceTagify.addTags([skillName]);
+			}
+		};
+		if (window.Tagify) { go(); }
+		else {
 			const s = document.createElement('script');
 			s.src = 'https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.min.js';
-			s.onload = () => { new Tagify(modalSkillsInput, { editTags: false, dropdown: { enabled: 0 }, originalInputValueFormat: vals => vals.map(v => v.value).join(', ') }); };
+			s.onload = go;
 			document.head.appendChild(s);
 		}
-	}
+	};
 
-	const openModal = () => { modal.classList.remove('hidden'); modal.classList.add('flex'); document.body.classList.add('overflow-hidden'); };
-	const closeModal = () => { modal.classList.add('hidden'); modal.classList.remove('flex'); document.body.classList.remove('overflow-hidden'); };
-
-	openBtn.addEventListener('click', openModal);
-	modal.querySelector('#volunteer-request-close').addEventListener('click', closeModal);
-	modal.querySelector('#volunteer-cancel').addEventListener('click', closeModal);
-
-	const form = modal.querySelector('#volunteer-request-form');
-	form.addEventListener('submit', function(e){
-		const bodyEl = modal.querySelector('#volunteer-body');
-		const from = form.querySelector('[name="stay_from"]').value;
-		const to = form.querySelector('[name="stay_to"]').value;
-		let extra = '';
-		if (from || to) {
-			extra += '\n\n' + '{% trans "Requested stay:" %}' + '\n';
-			if (from) extra += '{% trans "From" %} ' + from + '\n';
-			if (to) extra += '{% trans "To" %} ' + to + '\n';
+	/* sync tagify value into hidden field before HTMX posts the form */
+	document.addEventListener('htmx:configRequest', e => {
+		if (e.target.closest && e.target.closest('#volunteer-form-wrap') && practiceTagify) {
+			const h = document.getElementById('volunteer-practice-skills-value');
+			if (h) h.value = practiceTagify.value.map(t => t.value).join(', ');
 		}
-		if (extra) bodyEl.value = (bodyEl.value || '') + extra;
 	});
-
-	modal.addEventListener('click', function(e){ if (e.target === modal) closeModal(); });
 });
 </script>
 {% if community.location %}

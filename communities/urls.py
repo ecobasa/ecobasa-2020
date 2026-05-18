@@ -9,6 +9,7 @@ urlpatterns = [
     path('<slug:slug>/edit/', views.update, name='update'),
     path('<slug:slug>/delete/', views.delete, name='delete'),
     path('<slug:slug>/', views.detail, name='detail'),
+    path('volunteer-request/<slug:community_slug>/', views.volunteer_request, name='volunteer_request'),
     # API endpoints for the map template
     path('api/markers/', views.community_markers, name='api-markers'),
     path('api/list/', views.community_list_partial, name='api-list'),

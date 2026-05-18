@@ -4,7 +4,6 @@
 {% block extrahead %}
   {{ block.super }}
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v7.2.2/ol.css">
-  <script src="https://unpkg.com/htmx.org@1.9.10/dist/htmx.min.js"></script>
   <script>
     const communityTypeLabels   = { {% for v, l in community_types %}'{{ v }}': '{{ l|escapejs }}',{% endfor %} };
     const communityStatusLabels = { {% for v, l in community_statuses %}'{{ v }}': '{{ l|escapejs }}',{% endfor %} };
