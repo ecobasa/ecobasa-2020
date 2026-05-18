@@ -62,7 +62,7 @@
 				<h2>{% trans "Skills" %}</h2>
 				<div class="flex flex-wrap gap-2 mb-2">
 					{% for us in user_skills %}
-						<a href="{{ us.get_absolute_url }}"
+						<a href="{% if request.user.pk == user.pk %}{% url 'skills:userskill_edit' us.skill.slug user.username %}{% else %}{{ us.get_absolute_url }}{% endif %}"
 						   class="inline-flex items-center gap-1 bg-purple text-secondary px-3 py-1 rounded-full text-sm font-medium hover:opacity-80 transition-opacity">
 							<i class="fa fa-graduation-cap"></i>
 							{{ us.skill.name }}
@@ -78,6 +78,29 @@
 			{% elif request.user.is_authenticated and request.user.pk == user.pk %}
 				<a href="{% url 'skills:userskill_add' %}" class="btn mt-2">
 					<i class="fa fa-plus mr-1"></i>{% trans "Add a skill" %}
+				</a>
+			{% endif %}
+
+			{% if skill_wishes %}
+				<h2>{% trans "Skills I would like to learn" %}</h2>
+				<div class="flex flex-wrap gap-2 mb-2">
+					{% for sw in skill_wishes %}
+						<a href="{% if request.user.pk == user.pk %}{% url 'skills:skillwish_user_edit' sw.pk %}{% else %}{% url 'skills:skill_detail' sw.skill.slug %}{% endif %}"
+						   class="inline-flex items-center gap-1 bg-yellow text-secondary px-3 py-1 rounded-full text-sm font-medium hover:opacity-80 transition-opacity">
+							<i class="fa fa-book"></i>
+							{{ sw.skill.name }}
+							{% if sw.level %}<span class="opacity-70 text-xs">({{ sw.get_level_display }})</span>{% endif %}
+						</a>
+					{% endfor %}
+				</div>
+				{% if request.user.is_authenticated and request.user.pk == user.pk %}
+					<a href="{% url 'skills:userskill_add' %}?mode=wish" class="text-sm text-primary underline">
+						<i class="fa fa-plus mr-1"></i>{% trans "Add another" %}
+					</a>
+				{% endif %}
+			{% elif request.user.is_authenticated and request.user.pk == user.pk %}
+				<a href="{% url 'skills:userskill_add' %}?mode=wish" class="btn mt-2">
+					<i class="fa fa-book mr-1"></i>{% trans "Add skills I'd like to learn" %}
 				</a>
 			{% endif %}
 		</div>

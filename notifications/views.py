@@ -15,8 +15,9 @@ def notification_list(request):
 
 @login_required
 def recent_json(request):
-    """HTMX / fetch endpoint: last 8 notifications with unread count."""
-    qs = request.user.notifications.select_related("actor").all()[:8]
+    """HTMX / fetch endpoint: last 7 notifications with unread count and has_more flag."""
+    qs = list(request.user.notifications.select_related("actor").all()[:8])
+    has_more = len(qs) == 8
     data = [
         {
             "id":         n.pk,
@@ -27,10 +28,11 @@ def recent_json(request):
             "actor":      n.actor.name or n.actor.email if n.actor else None,
             "created_at": n.created_at.isoformat(),
         }
-        for n in qs
+        for n in qs[:7]
     ]
     return JsonResponse({
         "notifications": data,
+        "has_more":      has_more,
         "unread": request.user.notifications.filter(is_read=False).count(),
     })
 

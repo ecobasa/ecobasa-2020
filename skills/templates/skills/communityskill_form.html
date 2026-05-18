@@ -8,12 +8,98 @@
 {% block content %}
 <div class="max-w-lg mx-auto px-4 py-8">
 
+  {% if action == 'add' %}
+
   <h1 class="text-2xl text-primary mb-6">
-    {% if action == 'add' %}
-      <i class="fa fa-plus mr-2"></i>{% trans "Add a skill for" %} {{ community.name }}
-    {% else %}
-      <i class="fa fa-pencil mr-2"></i>{% trans "Edit skill" %}: {{ comm_skill.skill.name }}
-    {% endif %}
+    <i class="fa fa-plus mr-2"></i>{% trans "Add a skill for" %} {{ community.name }}
+  </h1>
+
+  <div class="border rounded-xl bg-secondary p-6"
+       x-data="{ mode: '{{ form.mode.value|default:'offer' }}' }">
+    <form method="post">
+      {% csrf_token %}
+
+      {# ── Mode radio ── #}
+      <div class="form-group mb-6">
+        <p class="form-label mb-2">{% trans "Do you offer or need this skill?" %}</p>
+
+        <label class="flex items-start gap-3 p-3 rounded-lg border cursor-pointer mb-2 transition-colors"
+               :class="mode === 'offer' ? 'border-primary bg-primary bg-opacity-5' : 'border hover:border-primary'">
+          <input type="radio" name="mode" value="offer" class="form-radio mt-0.5 flex-shrink-0"
+                 @change="mode = 'offer'" {% if form.mode.value == 'offer' or not form.mode.value %}checked{% endif %}>
+          <div>
+            <span class="font-semibold text-primary block">
+              <i class="fa fa-graduation-cap mr-1"></i>{% trans "We can offer / teach this skill" %}
+            </span>
+            <span class="text-xs text-brown">{% trans "Visitors and volunteers can learn this skill by staying or working with your community." %}</span>
+          </div>
+        </label>
+
+        <label class="flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors"
+               :class="mode === 'wish' ? 'border-yellow bg-yellow bg-opacity-5' : 'border hover:border-yellow'">
+          <input type="radio" name="mode" value="wish" class="form-radio mt-0.5 flex-shrink-0"
+                 @change="mode = 'wish'" {% if form.mode.value == 'wish' %}checked{% endif %}>
+          <div>
+            <span class="font-semibold text-primary block">
+              <i class="fa fa-search mr-1"></i>{% trans "We're looking for people with this skill" %}
+            </span>
+            <span class="text-xs text-brown">{% trans "You need this expertise in your community — for a project, permanent membership, or a volunteer stay." %}</span>
+          </div>
+        </label>
+      </div>
+
+      {# ── Skill name ── #}
+      <div class="form-group mb-4">
+        <label class="form-label" for="id_skill_name">{% trans "Skill" %}</label>
+        {{ form.skill_name }}
+        {% for e in form.skill_name.errors %}<p class="field-error">{{ e }}</p>{% endfor %}
+      </div>
+
+      {# ── Minimum level sought — wish only ── #}
+      <div class="form-group mb-4" x-show="mode === 'wish'">
+        <label class="form-label" for="id_wish_level">{% trans "Minimum level sought" %}</label>
+        <p class="text-xs text-brown mb-1">{% trans "Leave as 'Any level' if beginners are welcome — communities often provide on-the-job training." %}</p>
+        <select name="wish_level" id="id_wish_level" class="form-select">
+          {% for val, label in form.wish_level.field.choices %}
+            <option value="{{ val }}" {% if form.wish_level.value == val %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+        {% for e in form.wish_level.errors %}<p class="field-error">{{ e }}</p>{% endfor %}
+      </div>
+
+      {# ── Description — helptext switches based on mode ── #}
+      <div class="form-group mb-6">
+        <label class="form-label" for="id_description">{% trans "Description" %}</label>
+        <p class="text-xs text-brown mb-1" x-show="mode === 'offer'" style="display:none">
+          {% trans "What will visitors learn? How is it taught or practised here?" %}
+        </p>
+        <p class="text-xs text-brown mb-1" x-show="mode === 'wish'">
+          {% trans "Why does your community need this skill and what do you need it for exactly?" %}
+        </p>
+        {{ form.description }}
+        {% for e in form.description.errors %}<p class="field-error">{{ e }}</p>{% endfor %}
+      </div>
+
+      <div class="flex gap-3">
+        <button type="submit" class="btn" x-show="mode === 'offer'" style="display:none">
+          <i class="fa fa-graduation-cap mr-2"></i>{% trans "Add skill offer" %}
+        </button>
+        <button type="submit" class="btn" x-show="mode === 'wish'">
+          <i class="fa fa-search mr-2"></i>{% trans "Add skill wish" %}
+        </button>
+        <a href="{{ community.get_absolute_url }}" class="btn btn-purple">
+          <i class="fa fa-times mr-2"></i>{% trans "Cancel" %}
+        </a>
+      </div>
+
+    </form>
+  </div>
+
+  {% else %}
+
+  {# ── Edit existing CommunitySkill ── #}
+  <h1 class="text-2xl text-primary mb-6">
+    <i class="fa fa-pencil mr-2"></i>{% trans "Edit skill" %}: {{ comm_skill.skill.name }}
   </h1>
 
   <div class="border rounded-xl bg-secondary p-6">
@@ -22,6 +108,8 @@
       {% crispy form %}
     </form>
   </div>
+
+  {% endif %}
 
 </div>
 {% endblock %}
@@ -32,7 +120,7 @@
 (function () {
   var input = document.querySelector('[data-skill-autocomplete]');
   if (!input) return;
-  var list  = document.createElement('ul');
+  var list = document.createElement('ul');
   list.className = 'list-none absolute z-20 w-full mt-1 bg-secondary rounded shadow-lg border text-sm';
   list.style.display = 'none';
   input.parentElement.style.position = 'relative';

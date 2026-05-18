@@ -6,7 +6,7 @@ from django.utils.translation import gettext_lazy as _
 from .models import Community
 from .models import CommunityPhoto
 from .forms import CommunityForm
-from skills.models import CommunitySkill
+from skills.models import CommunitySkill, Skill, SkillWish
 
 from django.contrib.gis.geos import Polygon, Point
 from django.contrib.gis.db.models.functions import Distance
@@ -66,12 +66,22 @@ def detail(request, slug):
     photos = list(community.photos.all())
     hero_image = photos[0].image.url if photos else None
     community_skills = community.community_skills.select_related("skill").order_by("skill__name")
+    skill_wishes = community.skill_wishes.select_related("skill").order_by("skill__name")
     return render(request, "communities/community_detail.html", {
         "community":        community,
         "photos":           photos,
         "hero_image":       hero_image,
         "community_skills": community_skills,
+        "skill_wishes":     skill_wishes,
     })
+
+
+def _sync_community_skill_wishes(community, form):
+    wish_val = form.cleaned_data.get('skill_wishes', '') or ''
+    community.skill_wishes.all().delete()
+    for name in [s.strip() for s in wish_val.split(',') if s.strip()]:
+        skill, _ = Skill.objects.get_or_create(name__iexact=name, defaults={"name": name})
+        SkillWish.objects.create(community=community, skill=skill)
 
 
 def _collect_gallery_files(form, request):
@@ -103,6 +113,7 @@ def create(request):
             community.save()
             if hasattr(form, "save_m2m"):
                 form.save_m2m()
+            _sync_community_skill_wishes(community, form)
             images = _collect_gallery_files(form, request)
             for image_file in images:
                 CommunityPhoto.objects.create(community=community, image=image_file)
@@ -146,6 +157,7 @@ def update(request, slug):
             community = form.save()
             if hasattr(form, "save_m2m"):
                 form.save_m2m()
+            _sync_community_skill_wishes(community, form)
             delete_ids = request.POST.getlist("delete_photos")
             if delete_ids:
                 community.photos.filter(id__in=delete_ids).delete()

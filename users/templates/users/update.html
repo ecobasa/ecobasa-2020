@@ -75,6 +75,15 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  const wishInput = document.getElementById('id_skill_wishes');
+  if (wishInput) {
+    new Tagify(wishInput, {
+      editTags: false,
+      dropdown: { enabled: 0 },
+      originalInputValueFormat: vals => vals.map(v => v.value).join(', '),
+    });
+  }
+
   const locationInput = document.getElementById('id_location');
   EcoMap.initLocationPicker({
     mapTarget:     'user-location-map',

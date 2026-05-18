@@ -9,8 +9,8 @@ from django.views.decorators.http import require_GET
 
 from django.utils.text import slugify
 
-from .forms import CommunitySkillForm, SkillRequestForm, SkillRequestResponseForm, SkillRequestMessageForm, UserSkillForm
-from .models import CommunitySkill, Skill, SkillRequest, SkillRequestMessage, UserSkill
+from .forms import CommunitySkillForm, CommunitySkillOrWishForm, SkillRequestForm, SkillRequestResponseForm, SkillRequestMessageForm, SkillWishEditForm, UserSkillForm, UserSkillOrWishForm
+from .models import CommunitySkill, Skill, SkillRequest, SkillRequestMessage, SkillWish, UserSkill
 from communities.models import Community
 from users.models import User
 
@@ -178,19 +178,22 @@ def communityskill_detail(request, skill_slug, community_slug):
 
 @login_required
 def userskill_add(request):
+    initial_mode = request.GET.get("mode", UserSkillOrWishForm.MODE_OFFER)
+    if initial_mode not in (UserSkillOrWishForm.MODE_OFFER, UserSkillOrWishForm.MODE_WISH):
+        initial_mode = UserSkillOrWishForm.MODE_OFFER
+
     if request.method == "POST":
-        form = UserSkillForm(request.POST)
+        form = UserSkillOrWishForm(request.POST)
         if form.is_valid():
-            us = form.save(commit=False)
-            us.user = request.user
-            try:
-                us.save()
+            us, wish = form.save(user=request.user)
+            if wish is not None:
+                messages.success(request, _("Skill wish added."))
+                return redirect(request.user.get_absolute_url())
+            else:
                 messages.success(request, _("Skill added."))
                 return redirect(us.get_absolute_url())
-            except Exception:
-                messages.error(request, _("You already have this skill listed."))
     else:
-        form = UserSkillForm()
+        form = UserSkillOrWishForm(initial={"mode": initial_mode})
     return render(request, "skills/userskill_form.html", {"form": form, "action": "add"})
 
 
@@ -230,19 +233,21 @@ def communityskill_add(request, community_slug):
     community = get_object_or_404(Community, slug=community_slug)
     if community.owner != request.user:
         return redirect("users:login")
+    initial_mode = request.GET.get("mode", CommunitySkillOrWishForm.MODE_OFFER)
+    if initial_mode not in (CommunitySkillOrWishForm.MODE_OFFER, CommunitySkillOrWishForm.MODE_WISH):
+        initial_mode = CommunitySkillOrWishForm.MODE_OFFER
     if request.method == "POST":
-        form = CommunitySkillForm(request.POST)
+        form = CommunitySkillOrWishForm(request.POST)
         if form.is_valid():
-            cs = form.save(commit=False)
-            cs.community = community
-            try:
-                cs.save()
+            cs, wish = form.save(community=community)
+            if wish is not None:
+                messages.success(request, _("Skill wish added."))
+                return redirect(community.get_absolute_url())
+            else:
                 messages.success(request, _("Skill added."))
                 return redirect(cs.get_absolute_url())
-            except Exception:
-                messages.error(request, _("This community already has this skill listed."))
     else:
-        form = CommunitySkillForm()
+        form = CommunitySkillOrWishForm(initial={"mode": initial_mode})
     return render(request, "skills/communityskill_form.html", {
         "form": form, "community": community, "action": "add"
     })
@@ -278,6 +283,46 @@ def communityskill_delete(request, skill_slug, community_slug):
         return redirect(community.get_absolute_url())
     return render(request, "skills/communityskill_confirm_delete.html", {
         "comm_skill": comm_skill, "community": community
+    })
+
+
+# ── Skill wish edit ──────────────────────────────────────────────────
+
+@login_required
+def skillwish_user_edit(request, pk):
+    wish = get_object_or_404(SkillWish, pk=pk, user=request.user)
+    form = SkillWishEditForm(
+        request.POST or None,
+        initial={"wish_level": wish.level, "description": wish.description},
+    )
+    if form.is_valid():
+        form.save(wish)
+        messages.success(request, _("Skill wish updated."))
+        return redirect(request.user.get_absolute_url())
+    return render(request, "skills/skillwish_form.html", {
+        "form": form, "wish": wish, "owner": request.user,
+    })
+
+
+@login_required
+def skillwish_community_edit(request, pk, community_slug):
+    community = get_object_or_404(Community, slug=community_slug)
+    if community.owner != request.user:
+        return redirect("users:login")
+    wish = get_object_or_404(SkillWish, pk=pk, community=community)
+    level_label = _("Minimum level sought")
+    form = SkillWishEditForm(
+        request.POST or None,
+        initial={"wish_level": wish.level, "description": wish.description},
+    )
+    form.fields["wish_level"].label = level_label
+    form.fields["wish_level"].choices = [("", _("Any level — beginners welcome"))] + UserSkill.LEVEL_CHOICES
+    if form.is_valid():
+        form.save(wish)
+        messages.success(request, _("Skill wish updated."))
+        return redirect(community.get_absolute_url())
+    return render(request, "skills/skillwish_form.html", {
+        "form": form, "wish": wish, "community": community,
     })
 
 

@@ -98,6 +98,13 @@
     </div>
 
     <h3 class="text-lg font-semibold text-primary">{% trans "Visitor information" %}</h3>
+    
+    <div>
+      <label class="form-label" for="id_max_guests">{{ form.max_guests.label }}</label>
+      {{ form.max_guests }}
+      {% for error in form.max_guests.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+    </div>
+    
     <div>
       <label class="form-label" for="id_accomodation">{{ form.accomodation.label }}</label>
       {{ form.accomodation }}
@@ -126,17 +133,17 @@
       {% for error in form.offers_seminars.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
     </div>
 
-    <div class="grid md:grid-cols-2 gap-4">
-      <div>
-        <label class="form-label" for="id_max_guests">{{ form.max_guests.label }}</label>
-        {{ form.max_guests }}
-        {% for error in form.max_guests.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
-      </div>
-      <div>
-        <label class="form-label" for="id_skills">{% trans "What skills can people learn by volunteering or staying in your community?" %}</label>
-        {{ form.skills }}
-        {% for error in form.skills.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
-      </div>
+    <div>
+      <label class="form-label" for="id_skills">{% trans "What skills can people learn by volunteering or staying in your community?" %}</label>
+      {{ form.skills }}
+      {% for error in form.skills.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+    </div>
+
+    <div>
+      <label class="form-label" for="id_skill_wishes">{% trans "Skills we're looking for in visitors or new members" %}</label>
+      {{ form.skill_wishes }}
+      {% if form.skill_wishes.help_text %}<p class="text-xs text-brown">{{ form.skill_wishes.help_text }}</p>{% endif %}
+      {% for error in form.skill_wishes.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
     </div>
 
     <div>
@@ -190,6 +197,15 @@
       const skillsInput = document.getElementById('id_skills');
       if (skillsInput) {
         new Tagify(skillsInput, {
+          editTags: false,
+          dropdown: { enabled: 0 },
+          originalInputValueFormat: vals => vals.map(v => v.value).join(', '),
+        });
+      }
+
+      const wishInput = document.getElementById('id_skill_wishes');
+      if (wishInput) {
+        new Tagify(wishInput, {
           editTags: false,
           dropdown: { enabled: 0 },
           originalInputValueFormat: vals => vals.map(v => v.value).join(', '),

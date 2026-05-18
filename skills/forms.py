@@ -3,7 +3,7 @@ from django.utils.translation import gettext_lazy as _
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Field, Submit
 
-from .models import UserSkill, CommunitySkill, SkillRequest, SkillRequestMessage, Skill
+from .models import UserSkill, CommunitySkill, SkillRequest, SkillRequestMessage, Skill, SkillWish
 
 
 class SkillAutocompleteWidget(forms.TextInput):
@@ -51,6 +51,120 @@ class UserSkillForm(forms.ModelForm):
         return super().save(commit=commit)
 
 
+class UserSkillOrWishForm(forms.Form):
+    """Single form for adding either a skill offer or a skill wish to a user profile."""
+    MODE_OFFER = "offer"
+    MODE_WISH  = "wish"
+    MODE_CHOICES = [
+        (MODE_OFFER, _("I can offer / teach this skill")),
+        (MODE_WISH,  _("I want to learn this skill")),
+    ]
+
+    mode = forms.ChoiceField(
+        choices=MODE_CHOICES,
+        widget=forms.RadioSelect,
+        initial=MODE_OFFER,
+        label=_("How do you relate to this skill?"),
+    )
+    skill_name = forms.CharField(
+        label=_("Skill"),
+        max_length=100,
+        widget=SkillAutocompleteWidget(attrs={"placeholder": _("e.g. Carpentry, Solar Energy…"), "class": "form-input"}),
+    )
+    level = forms.ChoiceField(
+        choices=[("", "—")] + UserSkill.LEVEL_CHOICES,
+        required=False,
+        label=_("Level"),
+        widget=forms.Select(attrs={"class": "form-select"}),
+    )
+    wish_level = forms.ChoiceField(
+        choices=[("", _("Any level"))] + UserSkill.LEVEL_CHOICES,
+        required=False,
+        label=_("My current level"),
+        widget=forms.Select(attrs={"class": "form-select"}),
+    )
+    available = forms.BooleanField(
+        required=False,
+        initial=True,
+        label=_("Available to teach / share"),
+        widget=forms.CheckboxInput(attrs={"class": "form-checkbox"}),
+    )
+    description = forms.CharField(
+        required=False,
+        widget=forms.Textarea(attrs={"rows": 4, "class": "form-input"}),
+        label=_("Description"),
+    )
+
+    def save(self, user):
+        name = self.cleaned_data["skill_name"].strip()
+        skill, _ = Skill.objects.get_or_create(name__iexact=name, defaults={"name": name})
+        if self.cleaned_data["mode"] == self.MODE_WISH:
+            wish, created = SkillWish.objects.get_or_create(user=user, skill=skill)
+            wish.level = self.cleaned_data.get("wish_level") or ""
+            wish.description = self.cleaned_data.get("description") or ""
+            wish.save()
+            return None, wish
+        else:
+            us, _ = UserSkill.objects.get_or_create(
+                user=user, skill=skill,
+                defaults={
+                    "level":       self.cleaned_data.get("level") or "",
+                    "description": self.cleaned_data.get("description") or "",
+                    "available":   self.cleaned_data.get("available") or True,
+                },
+            )
+            return us, None
+
+
+class CommunitySkillOrWishForm(forms.Form):
+    """Single form for adding either a skill offer or a skill wish for a community."""
+    MODE_OFFER = "offer"
+    MODE_WISH  = "wish"
+    MODE_CHOICES = [
+        (MODE_OFFER, _("We can offer / teach this skill")),
+        (MODE_WISH,  _("We're looking for people with this skill")),
+    ]
+
+    mode = forms.ChoiceField(
+        choices=MODE_CHOICES,
+        widget=forms.RadioSelect,
+        initial=MODE_OFFER,
+        label=_("How does your community relate to this skill?"),
+    )
+    skill_name = forms.CharField(
+        label=_("Skill"),
+        max_length=100,
+        widget=SkillAutocompleteWidget(attrs={"placeholder": _("e.g. Permaculture, Natural Building…"), "class": "form-input"}),
+    )
+    wish_level = forms.ChoiceField(
+        choices=[("", _("Any level — beginners welcome"))] + UserSkill.LEVEL_CHOICES,
+        required=False,
+        label=_("Minimum level sought"),
+        widget=forms.Select(attrs={"class": "form-select"}),
+    )
+    description = forms.CharField(
+        required=False,
+        widget=forms.Textarea(attrs={"rows": 4, "class": "form-input"}),
+        label=_("Description"),
+    )
+
+    def save(self, community):
+        name = self.cleaned_data["skill_name"].strip()
+        skill, _ = Skill.objects.get_or_create(name__iexact=name, defaults={"name": name})
+        if self.cleaned_data["mode"] == self.MODE_WISH:
+            wish, created = SkillWish.objects.get_or_create(community=community, skill=skill)
+            wish.level = self.cleaned_data.get("wish_level") or ""
+            wish.description = self.cleaned_data.get("description") or ""
+            wish.save()
+            return None, wish
+        else:
+            cs, _ = CommunitySkill.objects.get_or_create(
+                community=community, skill=skill,
+                defaults={"description": self.cleaned_data.get("description") or ""},
+            )
+            return cs, None
+
+
 class CommunitySkillForm(forms.ModelForm):
     skill_name = forms.CharField(
         label=_("Skill"),
@@ -84,6 +198,27 @@ class CommunitySkillForm(forms.ModelForm):
         )
         self.instance.skill = skill
         return super().save(commit=commit)
+
+
+class SkillWishEditForm(forms.Form):
+    """Edit level and description of an existing SkillWish."""
+    wish_level = forms.ChoiceField(
+        choices=[("", _("Any level"))] + UserSkill.LEVEL_CHOICES,
+        required=False,
+        label=_("My current level"),
+        widget=forms.Select(attrs={"class": "form-select"}),
+    )
+    description = forms.CharField(
+        required=False,
+        widget=forms.Textarea(attrs={"rows": 4, "class": "form-input"}),
+        label=_("Description"),
+    )
+
+    def save(self, wish):
+        wish.level = self.cleaned_data.get("wish_level") or ""
+        wish.description = self.cleaned_data.get("description") or ""
+        wish.save()
+        return wish
 
 
 class SkillRequestForm(forms.ModelForm):

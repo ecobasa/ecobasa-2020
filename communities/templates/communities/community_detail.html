@@ -64,7 +64,7 @@
 		<h2>{% trans "Skills you can learn here" %}</h2>
 		<div class="flex flex-wrap gap-2 mb-2">
 			{% for cs in community_skills %}
-				<a href="{{ cs.get_absolute_url }}"
+				<a href="{% if request.user == community.owner %}{% url 'skills:communityskill_edit' cs.skill.slug community.slug %}{% else %}{{ cs.get_absolute_url }}{% endif %}"
 				   class="pill bg-purple text-secondary hover:opacity-80 transition-opacity">
 					<i class="mr-1 fa fa-graduation-cap"></i>{{ cs.skill.name }}
 				</a>
@@ -79,6 +79,29 @@
 		<h2>{% trans "Skills you can learn here" %}</h2>
 		<a href="{% url 'skills:communityskill_add' community.slug %}" class="btn">
 			<i class="fa fa-plus mr-1"></i>{% trans "Add a skill" %}
+		</a>
+		{% endif %}
+
+		{% if skill_wishes %}
+		<h2>{% trans "Looking for people with these skills" %}</h2>
+		<div class="flex flex-wrap gap-2 mb-2">
+			{% for sw in skill_wishes %}
+				<a href="{% if request.user == community.owner %}{% url 'skills:skillwish_community_edit' sw.pk community.slug %}{% else %}{% url 'skills:skill_detail' sw.skill.slug %}{% endif %}"
+				   class="pill bg-yellow text-secondary hover:opacity-80 transition-opacity">
+					<i class="mr-1 fa fa-search"></i>{{ sw.skill.name }}
+					{% if sw.level %}<span class="opacity-70 text-xs">({{ sw.get_level_display }}+)</span>{% endif %}
+				</a>
+			{% endfor %}
+		</div>
+		{% if request.user == community.owner %}
+			<a href="{% url 'communities:update' community.slug %}" class="text-sm text-primary underline">
+				<i class="fa fa-pencil mr-1"></i>{% trans "Edit" %}
+			</a>
+		{% endif %}
+		{% elif request.user == community.owner %}
+		<h2>{% trans "Looking for people with these skills" %}</h2>
+		<a href="{% url 'skills:communityskill_add' community.slug %}?mode=wish" class="btn">
+			<i class="fa fa-plus mr-1"></i>{% trans "Add skills you're looking for" %}
 		</a>
 		{% endif %}
 	</div>

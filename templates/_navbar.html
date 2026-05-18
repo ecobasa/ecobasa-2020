@@ -38,9 +38,9 @@
       {% if request.user.is_authenticated %}
         <div class="hidden sm:ml-6 sm:flex sm:items-center">
           {% comment %} Notification Bell {% endcomment %}
-          <div class="relative mr-1" x-data="{ open: false, notifications: [], unread: {{ unread_notifications_count }} }"
+          <div class="relative mr-1" x-data="{ open: false, notifications: [], unread: {{ unread_notifications_count }}, hasMore: false }"
                @close-notifications.window="open = false">
-            <button @click="open = !open; if (open) { fetch('{% url 'notifications:recent_json' %}').then(r=>r.json()).then(d=>{ notifications=d.notifications; unread=d.unread; }); }"
+            <button @click="open = !open; if (open) { fetch('{% url 'notifications:recent_json' %}').then(r=>r.json()).then(d=>{ notifications=d.notifications; unread=d.unread; hasMore=d.has_more; }); }"
                     class="relative p-1 rounded-full hover:text-brown focus:outline-none transition duration-150 ease-in-out"
                     aria-label="{% trans 'Notifications' %}">
               <svg class="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24">
@@ -86,6 +86,11 @@
                     </span>
                     <span class="text-xs leading-snug flex-1 self-center" :class="n.is_read ? 'opacity-70' : 'font-semibold'" x-text="n.verb"></span>
                     <span x-show="!n.is_read" class="mt-1.5 flex-shrink-0 w-1.5 h-1.5 rounded-full bg-secondary"></span>
+                  </a>
+                </template>
+                <template x-if="hasMore">
+                  <a href="{% url 'notifications:list' %}" class="block text-center px-4 py-2 text-xs opacity-70 hover:opacity-100 hover:underline border-b border-secondary border-opacity-10">
+                    {% trans "More notifications — view all" %}
                   </a>
                 </template>
                 <div class="px-4 py-2 flex justify-end items-center">

@@ -262,6 +262,9 @@ class SkillWish(models.Model):
         on_delete=models.CASCADE, related_name="skill_wishes"
     )
     skill       = models.ForeignKey(Skill, on_delete=models.CASCADE, related_name="wishes")
+    # For user wishes: their current level. For community wishes: minimum level sought.
+    level       = models.CharField(max_length=20, blank=True,
+                                   choices=UserSkill.LEVEL_CHOICES)
     description = models.TextField(
         _("What do you want to learn, or what do you need?"), blank=True
     )

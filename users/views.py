@@ -61,9 +61,13 @@ class DetailView(DetailView):
             ctx["user_skills"] = (
                 user.user_skills.select_related("skill").order_by("skill__name")
             )
+            ctx["skill_wishes"] = (
+                user.skill_wishes.select_related("skill").order_by("skill__name")
+            )
         except Exception:
             ctx["ads"] = []
             ctx["user_skills"] = []
+            ctx["skill_wishes"] = []
         return ctx
 
 
