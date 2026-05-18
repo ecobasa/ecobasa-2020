@@ -28,8 +28,11 @@ TEMPLATES[0]["OPTIONS"]["debug"] = DEBUG  # noqa F405
 # ------------------------------------------------------------------------------
 
 EMAIL_BACKEND = env(
-    "DJANGO_EMAIL_BACKEND", default="django.core.mail.backends.console.EmailBackend"
+    "DJANGO_EMAIL_BACKEND", default="django.core.mail.backends.smtp.EmailBackend"
 )
+EMAIL_HOST = env("EMAIL_HOST", default="mailpit")
+EMAIL_PORT = env.int("EMAIL_PORT", default=1025)
+DEFAULT_FROM_EMAIL = env("DJANGO_DEFAULT_FROM_EMAIL", default="ecobasa <noreply@ecobasa.org>")
 
 
 # django-debug-toolbar
