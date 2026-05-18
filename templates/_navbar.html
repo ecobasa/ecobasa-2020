@@ -70,14 +70,8 @@
                 <template x-for="n in notifications" :key="n.id">
                   <a :href="n.link || '#'"
                      class="flex items-start gap-2 px-4 py-2 hover:bg-secondary hover:bg-opacity-10 border-b border-secondary border-opacity-10 transition-colors">
-                    <span class="mt-1 flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center transition-opacity"
-                      :class="[
-                        (n.tag === 'accepted' || n.tag === 'gift_accepted') ? 'bg-secondary bg-opacity-30' :
-                        (n.tag === 'declined' || n.tag === 'gift_declined') ? 'bg-secondary bg-opacity-30' :
-                        (n.tag === 'counter' || n.tag === 'gift_counter' || n.tag === 'requested' || n.tag === 'gift_request' || n.tag === 'wish_request') ? 'bg-secondary bg-opacity-20' :
-                        'bg-secondary bg-opacity-10',
-                        n.is_read ? 'opacity-70' : ''
-                      ]">
+                    <span class="mt-1 flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center transition-opacity bg-secondary bg-opacity-20"
+                      :class="n.is_read ? 'opacity-70' : ''">
                       <i class="text-xs"
                         :class="n.tag === 'accepted' ? 'fa-solid fa-handshake-simple' :
                                 n.tag === 'declined' ? 'fa-solid fa-handshake-simple-slash' :
@@ -85,21 +79,20 @@
                                 n.tag === 'requested' ? 'fa-solid fa-graduation-cap' :
                                 n.tag === 'gift_request' ? 'fa-solid fa-gift' :
                                 n.tag === 'wish_request' ? 'fa-solid fa-hand-holding-heart' :
-                                n.tag === 'gift_accepted' ? 'fa-solid fa-gift' :
-                                n.tag === 'gift_declined' ? 'fa-solid fa-gift' :
-                                n.tag === 'gift_counter' ? 'fa-solid fa-gift' :
-                                'fa fa-bell opacity-60'"></i>
+                                n.tag === 'gift_accepted' ? 'fa-solid fa-handshake-simple' :
+                                n.tag === 'gift_declined' ? 'fa-solid fa-handshake-simple-slash' :
+                                n.tag === 'gift_counter' ? 'fa-solid fa-hand-holding-hand' :
+                                'fa fa-bell'"></i>
                     </span>
                     <span class="text-xs leading-snug flex-1 self-center" :class="n.is_read ? 'opacity-70' : 'font-semibold'" x-text="n.verb"></span>
-                    <span x-show="!n.is_read" class="mt-1.5 flex-shrink-0 w-1.5 h-1.5 rounded-full bg-red"></span>
+                    <span x-show="!n.is_read" class="mt-1.5 flex-shrink-0 w-1.5 h-1.5 rounded-full bg-secondary"></span>
                   </a>
                 </template>
-                <div class="px-4 py-2 flex justify-between items-center">
+                <div class="px-4 py-2 flex justify-end items-center">
                   <form method="post" action="{% url 'notifications:mark_all_read' %}">
                     {% csrf_token %}
-                    <button type="submit" class="text-xs hover:underline opacity-70">{% trans "Mark all read" %}</button>
+                    <button type="submit" class="text-xs hover:underline opacity-70 hover:text-brown">{% trans "Mark all read" %}</button>
                   </form>
-                  <a href="{% url 'notifications:list' %}" class="text-xs hover:underline opacity-70">{% trans "View all" %}</a>
                 </div>
               </div>
             </div>
