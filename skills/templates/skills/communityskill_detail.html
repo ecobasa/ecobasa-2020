@@ -83,7 +83,7 @@
               {% endif %}
             </div>
             <div class="flex items-center gap-3">
-              <a href="{% url 'skills:skillrequest_detail' req.pk %}" class="btn btn-sm">
+              <a href="{% url 'matches:skillrequest_detail' req.pk %}" class="btn btn-sm">
                 {% if req.status == 'pending' %}
                   <i class="fa fa-reply mr-1"></i>{% trans "Respond" %}
                 {% else %}

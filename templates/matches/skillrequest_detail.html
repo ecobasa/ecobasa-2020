@@ -14,13 +14,15 @@
   <div class="mb-2 text-sm text-brown">
     <a href="{% url 'skills:skill_list' %}" class="hover:underline">{% trans "Skills" %}</a>
     <span class="mx-1">/</span>
-    {% if sr.user_skill %}
+    {% if sr.wish %}
+      <a href="{{ sr.wish.get_absolute_url }}" class="hover:underline">{{ sr.wish.skill.name }}</a>
+    {% elif sr.user_skill %}
       <a href="{{ sr.user_skill.get_absolute_url }}" class="hover:underline">{{ sr.user_skill }}</a>
     {% else %}
       <a href="{{ sr.community_skill.get_absolute_url }}" class="hover:underline">{{ sr.community_skill }}</a>
     {% endif %}
     <span class="mx-1">/</span>
-    <span>{% trans "Request" %} #{{ sr.pk }}</span>
+    <span>{% if sr.wish %}{% trans "Offer" %}{% else %}{% trans "Request" %}{% endif %} #{{ sr.pk }}</span>
   </div>
 
   {# ── Status summary banner ────────────────────────────────────────── #}

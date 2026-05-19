@@ -17,22 +17,27 @@ def _notify_skill_request(skill_request, http_request=None):
     from notifications.models import Notification
     from matches.emails import send_skill_request_email
 
-    if skill_request.user_skill:
+    if skill_request.wish:
+        wish = skill_request.wish
+        skill_name = wish.skill.name
+        recipient = wish.user or (wish.community.owner if wish.community else None)
+        verb_template = _("%(actor)s offered to teach you: %(skill)s")
+    elif skill_request.user_skill:
         recipient = skill_request.user_skill.user
         skill_name = skill_request.user_skill.skill.name
+        verb_template = _("%(actor)s requested your skill: %(skill)s")
     else:
         community = skill_request.community_skill.community
         recipient = community.owner
         skill_name = skill_request.community_skill.skill.name
+        verb_template = _("%(actor)s requested your skill: %(skill)s")
 
     if recipient is None:
         return
 
     link = skill_request.get_absolute_url()
     actor_name = skill_request.from_user.name or skill_request.from_user.email
-    verb = _("%(actor)s requested your skill: %(skill)s") % {
-        "actor": actor_name, "skill": skill_name
-    }
+    verb = verb_template % {"actor": actor_name, "skill": skill_name}
 
     Notification.objects.create(
         recipient=recipient,
@@ -260,6 +265,46 @@ def communityskill_delete(request, skill_slug, community_slug):
         return redirect(community.get_absolute_url())
     return render(request, "skills/communityskill_confirm_delete.html", {
         "comm_skill": comm_skill, "community": community
+    })
+
+
+# ── Skill wish detail ────────────────────────────────────────────────
+
+def skillwish_user_detail(request, user_slug, skill_slug):
+    """Detail page for a user's skill wish — lets other users offer to teach."""
+    skill = get_object_or_404(Skill, slug=skill_slug)
+    user  = _get_user_by_slug(user_slug)
+    if user is None:
+        raise Http404("User not found")
+    wish = get_object_or_404(SkillWish, user=user, skill=skill)
+
+    viewer_user_skill = None
+    form = None
+    if request.user.is_authenticated and request.user != user:
+        viewer_user_skill = UserSkill.objects.filter(user=request.user, skill=skill).first()
+        if viewer_user_skill:
+            if request.method == "POST":
+                form = SkillRequestForm(request.POST)
+                if form.is_valid():
+                    sr = form.save(commit=False)
+                    sr.from_user  = request.user
+                    sr.user_skill = viewer_user_skill
+                    sr.wish       = wish
+                    sr.save()
+                    _notify_skill_request(sr, http_request=request)
+                    messages.success(request, _("Your offer has been sent."))
+                    return redirect(sr.get_absolute_url())
+            else:
+                form = SkillRequestForm()
+
+    from .models import _user_slug as _slug
+    return render(request, "skills/skillwish_user_detail.html", {
+        "wish":              wish,
+        "skill":             skill,
+        "profile":           user,
+        "user_slug":         _slug(user),
+        "viewer_user_skill": viewer_user_skill,
+        "form":              form,
     })
 
 

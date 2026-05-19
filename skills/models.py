@@ -127,6 +127,10 @@ class SkillRequest(models.Model):
         CommunitySkill, null=True, blank=True,
         on_delete=models.CASCADE, related_name="requests"
     )
+    wish              = models.ForeignKey(
+        'SkillWish', null=True, blank=True,
+        on_delete=models.SET_NULL, related_name="offer_requests"
+    )
     message           = models.TextField(_("Message"))
     location_type     = models.CharField(
         _("Meeting location"), max_length=20, choices=LOC_CHOICES, default=LOC_YOUR_PLACE
@@ -253,6 +257,20 @@ class SkillRequestMessage(models.Model):
 
 class SkillWish(models.Model):
     """Someone wants to learn a skill, or a community needs someone with a skill."""
+
+    def get_absolute_url(self):
+        if self.user:
+            return reverse("skills:skillwish_user_detail", kwargs={
+                "user_slug":  _user_slug(self.user),
+                "skill_slug": self.skill.slug,
+            })
+        if self.community:
+            return reverse("skills:communityskill_detail", kwargs={
+                "skill_slug":     self.skill.slug,
+                "community_slug": self.community.slug,
+            })
+        return reverse("skills:skill_detail", kwargs={"slug": self.skill.slug})
+
     user        = models.ForeignKey(
         User, null=True, blank=True,
         on_delete=models.CASCADE, related_name="skill_wishes"

@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load i18n %}
 
-{% block head_title %}{{ profile.name|default:profile.username }} — {{ skill.name }} — ecobasa{% endblock %}
+{% block head_title %}{{ profile.name|default:profile.username }} — {% trans "wants to learn" %} {{ skill.name }} — ecobasa{% endblock %}
 
 {% block extrahead %}
 {{ block.super }}
@@ -19,10 +19,11 @@
     <span>{{ profile.name|default:profile.username }}</span>
   </div>
 
+  {# ── Wish owner card ──────────────────────────────────────────────── #}
   <div class="border rounded-xl bg-secondary p-6 mb-6">
     <div class="flex items-center gap-4 mb-4">
       {% if profile.image %}
-        <img src="{{ profile.image.url }}" alt="" class="w-16 h-16 rounded-full object-cover flex-shrink-0">
+        <img src="{{ profile.image.url }}" alt="" width="64" height="64" class="w-16 h-16 rounded-full object-cover flex-shrink-0">
       {% else %}
         <div class="w-16 h-16 rounded-full bg-primary bg-opacity-20 flex items-center justify-center flex-shrink-0">
           <i class="fa fa-user text-2xl text-primary"></i>
@@ -33,111 +34,60 @@
           {{ profile.name|default:profile.username }}
         </a>
         <div class="flex items-center gap-2 mt-1">
-          <span class="pill bg-purple text-secondary">
-            <i class="fa fa-graduation-cap mr-1"></i>{{ skill.name }}
+          <span class="pill bg-yellow text-secondary">
+            <i class="fa fa-book mr-1"></i>{% trans "wants to learn" %} {{ skill.name }}
           </span>
-          {% if user_skill.level %}
-            <span class="pill bg-primary text-secondary text-xs">{{ user_skill.get_level_display }}</span>
+          {% if wish.level %}
+            <span class="pill bg-primary text-secondary text-xs">{% trans "current level:" %} {{ wish.get_level_display }}</span>
           {% endif %}
         </div>
       </div>
 
       {% if user == profile %}
-        <div class="ml-auto flex gap-2">
-          <a href="{% url 'skills:userskill_edit' skill.slug user_slug %}" class="btn btn-sm">
+        <div class="ml-auto">
+          <a href="{% url 'skills:skillwish_user_edit' wish.pk %}" class="btn btn-sm">
             <i class="fa fa-pencil"></i>
-          </a>
-          <a href="{% url 'skills:userskill_delete' skill.slug user_slug %}" class="btn btn-sm btn-danger">
-            <i class="fa fa-trash"></i>
           </a>
         </div>
       {% endif %}
     </div>
 
-    {% if user_skill.description %}
-      <div class="prose text-sm text-brown">{{ user_skill.description|linebreaksbr }}</div>
+    {% if wish.description %}
+      <div class="prose text-sm text-brown">{{ wish.description|linebreaksbr }}</div>
     {% else %}
       <p class="text-sm text-brown italic">{% trans "No description provided." %}</p>
     {% endif %}
-
-    {% if not user_skill.available %}
-      <div class="mt-3 text-sm text-brown opacity-70">
-        <i class="fa fa-clock mr-1"></i>{% trans "Currently not available to teach / share." %}
-      </div>
-    {% endif %}
   </div>
 
-  {# ── Received requests (visible to skill owner only) ─────────────── #}
-  {% if user == profile and user_skill.requests.exists %}
-    <div class="border rounded-xl bg-secondary p-6 mb-6">
-      <h2 class="text-lg text-primary mb-4">
-        <i class="fa fa-inbox mr-2"></i>{% trans "Incoming requests" %}
-      </h2>
-      <div class="space-y-4">
-        {% for req in user_skill.requests.all %}
-          <div class="border rounded-lg p-4 text-sm {% if req.is_new %}border-primary{% endif %}">
-            <div class="flex items-center gap-2 mb-2">
-              {% if req.from_user.image %}
-                <img src="{{ req.from_user.image.url }}" class="w-8 h-8 rounded-full object-cover">
-              {% else %}
-                <div class="w-8 h-8 rounded-full bg-primary bg-opacity-20 flex items-center justify-center">
-                  <i class="fa fa-user text-xs text-primary"></i>
-                </div>
-              {% endif %}
-              <a href="{{ req.from_user.get_absolute_url }}" class="font-semibold text-primary hover:underline">
-                {{ req.from_user.name|default:req.from_user.email }}
-              </a>
-              <span class="text-brown text-xs ml-auto">{{ req.created_at|date:"d M Y" }}</span>
-            </div>
-            <p class="text-brown mb-2">{{ req.message }}</p>
-            <div class="flex flex-wrap gap-4 text-xs text-brown mb-3">
-              {% if req.location_type %}
-                <span><i class="fa fa-map-marker mr-1"></i>{{ req.resolved_location }}</span>
-              {% endif %}
-              {% if req.proposed_date %}
-                <span><i class="fa fa-calendar mr-1"></i>{{ req.proposed_date|date:"d M Y" }}</span>
-              {% endif %}
-            </div>
-            <div class="flex items-center gap-3">
-              <a href="{% url 'matches:skillrequest_detail' req.pk %}" class="btn btn-sm">
-                {% if req.status == 'pending' %}
-                  <i class="fa fa-reply mr-1"></i>{% trans "Respond" %}
-                {% else %}
-                  <i class="fa fa-eye mr-1"></i>{% trans "View" %}
-                {% endif %}
-              </a>
-              {% if req.status != 'pending' %}
-                <span class="text-xs pill
-                  {% if req.status == 'accepted' %}bg-green-600 text-secondary
-                  {% elif req.status == 'declined' %}bg-red-600 text-secondary
-                  {% elif req.status == 'counter' %}bg-blue-600 text-secondary
-                  {% endif %}">{{ req.get_status_display }}</span>
-              {% endif %}
-            </div>
-          </div>
-        {% endfor %}
-      </div>
-    </div>
-  {% endif %}
-
-  {# ── Request form ─────────────────────────────────────────────────── #}
+  {# ── Offer to teach form ──────────────────────────────────────────── #}
   {% if form %}
     <div class="border rounded-xl bg-secondary p-6"
          x-data="{ locationType: 'your_place' }">
-      <h2 class="text-lg text-primary mb-4">
-        <i class="fa fa-paper-plane mr-2"></i>{% trans "Request this skill" %}
+      <h2 class="text-lg text-primary mb-1">
+        <i class="fa fa-graduation-cap mr-2"></i>{% trans "Offer to teach this skill" %}
       </h2>
+      {% if viewer_user_skill.level or viewer_user_skill.description %}
+        <div class="flex items-center gap-2 mb-4 text-sm text-brown">
+          {% if viewer_user_skill.level %}
+            <span class="pill bg-purple text-secondary text-xs">{{ viewer_user_skill.get_level_display }}</span>
+          {% endif %}
+          {% if viewer_user_skill.description %}
+            <span class="italic">{{ viewer_user_skill.description|truncatechars:80 }}</span>
+          {% endif %}
+        </div>
+      {% else %}
+        <div class="mb-4"></div>
+      {% endif %}
+
       <form method="post">
         {% csrf_token %}
 
-        {# Message #}
         <div class="form-group mb-4">
           <label class="form-label" for="{{ form.message.id_for_label }}">{{ form.message.label }}</label>
           {{ form.message }}
           {% for e in form.message.errors %}<p class="field-error">{{ e }}</p>{% endfor %}
         </div>
 
-        {# Location type radio #}
         <div class="form-group mb-4"
              @change="if ($event.target.name === 'location_type') { locationType = $event.target.value; if (locationType === 'my_place') $nextTick(() => window.initMyPicker && window.initMyPicker()); if (locationType === 'custom') $nextTick(() => window.initCustomPicker && window.initCustomPicker()); }">
           <label class="form-label">{{ form.location_type.label }}</label>
@@ -152,19 +102,19 @@
           {% for e in form.location_type.errors %}<p class="field-error">{{ e }}</p>{% endfor %}
         </div>
 
-        {# Your place: read-only owner location + non-interactive map #}
+        {# Your place: the wish owner's location #}
         <div x-show="locationType === 'your_place'" class="mb-4 space-y-3">
           {% if profile.location_name %}
             <div class="text-sm text-brown">
               <i class="fa fa-map-marker mr-1 text-primary"></i>{{ profile.location_name }}
             </div>
           {% else %}
-            <p class="text-xs text-brown italic">{% trans "Owner has not set a location." %}</p>
+            <p class="text-xs text-brown italic">{% trans "This person has not set a location." %}</p>
           {% endif %}
           <div id="your-place-map" class="rounded shadow overflow-hidden h-[200px]"></div>
         </div>
 
-        {# My place: editable address + interactive map #}
+        {# My place: the viewer's (teacher's) location #}
         <div x-show="locationType === 'my_place'" style="display:none" class="mb-4 space-y-3">
           <div x-data="EcoMap.locationDropdown('setMyPlacePoint')" class="relative">
             <label class="form-label">{% trans "Your location" %}</label>
@@ -196,7 +146,7 @@
           <div id="my-place-map" class="rounded shadow overflow-hidden h-[220px]"></div>
         </div>
 
-        {# Custom: Nominatim search + interactive map #}
+        {# Custom location #}
         <div x-show="locationType === 'custom'" style="display:none" class="mb-4 space-y-3">
           <div x-data="EcoMap.locationDropdown('setCustomPoint')" class="relative">
             <label class="form-label">{% trans "Location" %}</label>
@@ -221,12 +171,10 @@
           <div id="custom-map" class="rounded shadow overflow-hidden h-[220px]"></div>
         </div>
 
-        {# Hidden fields set by map pickers #}
         <input type="hidden" name="proposed_location" id="proposed-location-value">
         <input type="hidden" name="proposed_lat" id="proposed-lat">
         <input type="hidden" name="proposed_lon" id="proposed-lon">
 
-        {# Proposed date #}
         <div class="form-group mb-4">
           <label class="form-label" for="{{ form.proposed_date.id_for_label }}">{{ form.proposed_date.label }}</label>
           {{ form.proposed_date }}
@@ -234,18 +182,29 @@
         </div>
 
         <button type="submit" class="btn mt-2">
-          <i class="fa fa-paper-plane mr-1"></i>{% trans "Send request" %}
+          <i class="fa fa-paper-plane mr-1"></i>{% trans "Send offer" %}
         </button>
       </form>
     </div>
+
+  {% elif user.is_authenticated and user != profile %}
+    {# Viewer is logged in but doesn't have the skill yet #}
+    <div class="border rounded-xl bg-secondary p-6">
+      <h2 class="text-lg text-primary mb-3">
+        <i class="fa fa-graduation-cap mr-2"></i>{% trans "Offer to teach this skill" %}
+      </h2>
+      <p class="text-sm text-brown mb-4">{% trans "Add this skill to your profile first to send an offer." %}</p>
+      <a href="{% url 'skills:userskill_add' %}?skill={{ skill.name|urlencode }}" class="btn">
+        <i class="fa fa-plus mr-1"></i>{% trans "Add this skill to your profile" %}
+      </a>
+    </div>
+
   {% elif not user.is_authenticated %}
     <div class="border rounded-xl bg-secondary p-6 text-center text-brown">
       <a href="{% url 'users:login' %}?next={{ request.path }}" class="btn">
-        {% trans "Log in to send a request" %}
+        {% trans "Log in to offer teaching this skill" %}
       </a>
     </div>
-  {% elif user == profile %}
-    {# Owner sees nothing here — request form not shown to self #}
   {% endif %}
 
 </div>
@@ -257,7 +216,6 @@
 <script src="https://cdn.jsdelivr.net/npm/ol@v7.2.2/dist/ol.js"></script>
 <script>
 (function () {
-  // ── "Your place" static map — init once container has real dimensions ──
   {% if profile.location %}
   (function () {
     var initialized = false;
@@ -284,7 +242,6 @@
   })();
   {% endif %}
 
-  // ── "My place" interactive picker ───────────────────────────────
   var myPicker = null;
   window.initMyPicker = function () {
     if (myPicker) return;
@@ -308,7 +265,6 @@
     document.getElementById('proposed-lon').value = lon;
   };
 
-  // ── "Custom" location interactive picker ────────────────────────
   var customPicker = null;
   window.initCustomPicker = function () {
     if (customPicker) return;

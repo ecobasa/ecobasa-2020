@@ -6,15 +6,19 @@
   </div>
   <div class="flex-1 min-w-0">
     <div class="font-semibold font-serif truncate">
-      {% if obj.user_skill %}{{ obj.user_skill.skill.name }}{% else %}{{ obj.community_skill.skill.name }}{% endif %}
+      {% if obj.wish %}{{ obj.wish.skill.name }}
+      {% elif obj.user_skill %}{{ obj.user_skill.skill.name }}
+      {% else %}{{ obj.community_skill.skill.name }}{% endif %}
     </div>
     {% if show_from %}
       <div class="text-sm opacity-70">
         {% if obj.from_user.name %}{{ obj.from_user.name }}{% else %}{{ obj.from_user.email }}{% endif %}
+        {% if obj.wish %}<span class="opacity-60"> — {% trans "offer" %}</span>{% endif %}
       </div>
     {% else %}
       <div class="text-sm opacity-70">
-        {% if obj.user_skill %}{{ obj.user_skill.user.name|default:obj.user_skill.user.email }}
+        {% if obj.wish %}{{ obj.wish.user.name|default:obj.wish.user.email }}
+        {% elif obj.user_skill %}{{ obj.user_skill.user.name|default:obj.user_skill.user.email }}
         {% else %}{{ obj.community_skill.community.name }}{% endif %}
       </div>
     {% endif %}

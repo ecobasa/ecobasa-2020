@@ -174,7 +174,11 @@
   });
 
   var params = new URLSearchParams(window.location.search);
-  if (params.get('skill') && !input.value) input.value = params.get('skill');
+  if (params.get('skill') && !input.value) {
+    input.value = params.get('skill');
+    input.readOnly = true;
+    input.classList.add('opacity-60', 'cursor-default');
+  }
 })();
 </script>
 {% endblock %}

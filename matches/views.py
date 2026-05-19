@@ -41,11 +41,18 @@ def request_list(request):
         ctx["skill_mine"]   = SkillRequest.objects.filter(from_user=request.user).select_related(
             "user_skill__skill", "user_skill__user",
             "community_skill__skill", "community_skill__community",
+            "wish__skill", "wish__user",
         )
         ctx["skill_theirs"] = SkillRequest.objects.filter(
             Q(user_skill__user=request.user) |
-            Q(community_skill__community__owner=request.user)
-        ).select_related("from_user", "user_skill__skill", "community_skill__skill")
+            Q(community_skill__community__owner=request.user) |
+            Q(wish__user=request.user)
+        ).select_related(
+            "from_user",
+            "user_skill__skill", "user_skill__user",
+            "community_skill__skill", "community_skill__community",
+            "wish__skill", "wish__user",
+        )
 
     return render(request, "matches/request_list.html", ctx)
 
@@ -205,11 +212,14 @@ def skillrequest_detail(request, pk):
         SkillRequest.objects.select_related(
             "user_skill__user", "user_skill__skill",
             "community_skill__community__owner", "community_skill__skill",
+            "wish__user", "wish__community__owner", "wish__skill",
             "from_user",
         ), pk=pk
     )
 
-    if sr.user_skill:
+    if sr.wish:
+        owner = sr.wish.user or (sr.wish.community.owner if sr.wish.community else None)
+    elif sr.user_skill:
         owner = sr.user_skill.user
     else:
         owner = sr.community_skill.community.owner
