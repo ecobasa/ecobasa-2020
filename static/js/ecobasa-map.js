@@ -183,6 +183,10 @@
         window[cfg.setPointFn] = function (lon, lat, label, country) {
           setPoint(lon, lat, { label: label, country: country || '' });
         };
+        window[cfg.setPointFn + '_clear'] = function () {
+          feature.setGeometry(null);
+          if (cfg.locationInput) cfg.locationInput.value = '';
+        };
       }
 
       map.on('click', async function (evt) {
@@ -227,7 +231,11 @@
         results: [], open: false, loading: false,
         async onInput(query) {
           const term = (query || '').trim();
-          if (!term) { this.results = []; this.open = false; return; }
+          if (!term) {
+            this.results = []; this.open = false;
+            if (window[setPointFn + '_clear']) window[setPointFn + '_clear']();
+            return;
+          }
           this.loading = true;
           try {
             const r = await fetch('https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&q=' + encodeURIComponent(term));
