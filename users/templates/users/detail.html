@@ -10,7 +10,7 @@
 
 {% block content %}
 <div class="mx-auto max-w-7xl mt-10 px-4 pb-10">
-	<div class="flex items-start justify-between mb-8">
+	<div class="flex items-start justify-between">
 		<h1 class="text-5xl font-semibold">{{ user.name }}</h1>
 		{% if request.user.is_authenticated and request.user.pk == user.pk %}
 			<a href="{% url 'users:update' %}" class="btn btn-lg">
@@ -42,10 +42,10 @@
 			<div class="mt-8">
 				<h2>{% trans "Location" %}</h2>
 				{% if user.country and not user.location_name %}
-					<p><i class="fa fa-map-marker mr-1"></i>{{ user.country }}</p>
+					<p><i class="fa fa-map-marker mr-2"></i>{{ user.country }}</p>
 				{% endif %}
 				{% if user.location_name %}
-					<p class="mb-2"><i class="fa fa-map-marker mr-1"></i>{{ user.location_name }}</p>
+					<p class="mb-2"><i class="fa fa-map-marker mr-2"></i>{{ user.location_name }}</p>
 				{% endif %}
 				<div class="rounded shadow overflow-hidden" style="height: 260px;">
 					<div id="user-profile-map" class="w-full h-full bg-secondary bg-opacity-40"
@@ -56,19 +56,25 @@
 
 		</div>
 		<div class="sm:col-span-3">
-			<h2>{% trans "About me" %}</h2>
-			<p>{{ user.about }}</p>
-			<h2>{% trans "What do you do to make the world a better place?" %}</h2>
-			<p>{{ user.world }}</p>
-			<h2>{% trans "What would you like to use ecobasa mainly for?" %}</h2>
-			<p>{{ user.ecobasa_what }}</p>
+			{% if user.about or request.user.is_authenticated and request.user.pk == user.pk %}
+				<h2>{% trans "About me" %}</h2>
+				<p>{{ user.about }}</p>
+			{% endif %}
+			{% if user.world or request.user.is_authenticated and request.user.pk == user.pk %}
+				<h2>{% trans "What do you do to make the world a better place?" %}</h2>
+				<p>{{ user.world }}</p>
+			{% endif %}
+			{% if user.ecobasa_what or request.user.is_authenticated and request.user.pk == user.pk %}
+				<h2>{% trans "What would you like to use ecobasa mainly for?" %}</h2>
+				<p>{{ user.ecobasa_what }}</p>
+			{% endif %}
 			{% if user_skills or request.user.pk == user.pk %}
 				<h2>{% trans "Skills" %}</h2>
 				{% if user_skills %}
-				<div class="flex flex-wrap gap-2 mb-2">
+				<div class="flex flex-wrap gap-2 mb-6">
 					{% for us in user_skills %}
 						<a href="{% if request.user.pk == user.pk %}{{ us.get_edit_url }}{% else %}{{ us.get_absolute_url }}{% endif %}"
-						   class="inline-flex items-center gap-1 bg-purple text-secondary px-3 py-1 rounded-full text-sm font-medium hover:opacity-80 transition-opacity">
+						   class="inline-flex items-center gap-1 bg-purple text-secondary hover:text-secondary pill hover:opacity-80 transition-opacity">
 							<i class="fa fa-graduation-cap"></i>
 							{{ us.skill.name }}
 							{% if us.level %}<span class="opacity-70 text-xs">({{ us.get_level_display }})</span>{% endif %}
@@ -78,7 +84,7 @@
 				{% endif %}
 				{% if request.user.is_authenticated and request.user.pk == user.pk %}
 					<a href="{% url 'skills:userskill_add' %}" class="btn mt-2">
-						<i class="fa fa-plus mr-1"></i>{% trans "Add skill" %}
+						<i class="fa fa-plus mr-2"></i>{% trans "Add skills you have to offer" %}
 					</a>
 				{% endif %}
 			{% endif %}
@@ -100,7 +106,7 @@
 				{% endif %}
 				{% if request.user.is_authenticated and request.user.pk == user.pk %}
 					<a href="{% url 'skills:userskill_add' %}?mode=wish" class="btn mt-2">
-						<i class="fa fa-book mr-1"></i>{% trans "Add skills I'd like to learn" %}
+						<i class="fa fa-plus mr-2"></i>{% trans "Add skills I'd like to learn" %}
 					</a>
 				{% endif %}
 			{% endif %}
