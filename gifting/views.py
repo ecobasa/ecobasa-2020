@@ -32,7 +32,7 @@ def _notify_ad_request(ad_request, http_request=None):
     link = ad_request.get_absolute_url()
     actor_name = ad_request.from_user.name or ad_request.from_user.email
     if ad.type == "offer":
-        verb = _("%(actor)s requested your offer: %(title)s") % {"actor": actor_name, "title": ad.title}
+        verb = _("%(actor)s expressed interest in your gift: %(title)s") % {"actor": actor_name, "title": ad.title}
         tag  = "gift_request"
     else:
         verb = _("%(actor)s wants to fulfill your wish: %(title)s") % {"actor": actor_name, "title": ad.title}

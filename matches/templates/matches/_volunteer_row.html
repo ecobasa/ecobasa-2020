@@ -1,6 +1,10 @@
 {% load i18n %}
 <a href="{{ obj.get_absolute_url }}"
-   class="flex items-center gap-4 p-4 bg-primary bg-opacity-10 hover:bg-opacity-20 rounded border border-primary border-opacity-20 transition-colors">
+   class="flex items-center gap-4 p-4 bg-secondary bg-opacity-50 hover:bg-opacity-80 rounded border-2 transition-colors
+     {% if obj.status == 'accepted' %}border-green
+     {% elif obj.status == 'declined' %}border-red
+     {% elif obj.status == 'counter' %}border-primary
+     {% else %}border-yellow{% endif %}">
   <div class="flex-none">
     <i class="fa-solid fa-campground text-2xl text-primary opacity-70"></i>
   </div>

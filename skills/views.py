@@ -21,7 +21,7 @@ def _notify_skill_interest(skill_interest, http_request=None):
         wish = skill_interest.wish
         skill_name = wish.skill.name
         recipient = wish.user or (wish.community.owner if wish.community else None)
-        verb_template = _("%(actor)s wants to teach you: %(skill)s")
+        verb_template = _("%(actor)s offered to teach you: %(skill)s")
     elif skill_interest.user_skill:
         recipient = skill_interest.user_skill.user
         skill_name = skill_interest.user_skill.skill.name

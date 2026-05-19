@@ -11,12 +11,12 @@
 {% block giving_content %}
 <div>
 
-  <div class="mb-2 text-sm text-brown">
+  <div class="mb-2 text-sm">
     <a href="{% url 'gifting:search' %}" class="hover:underline">{% trans "Gifts" %}</a>
     <span class="mx-1">/</span>
     <a href="{{ ar.ad.get_absolute_url }}" class="hover:underline">{{ ar.ad.title }}</a>
     <span class="mx-1">/</span>
-    <span>{% trans "Interest" %} #{{ ar.pk }}</span>
+    <span>{% if ar.ad.type == "wish" %}{% trans "Offer" %}{% else %}{% trans "Interest" %}{% endif %} #{{ ar.pk }}</span>
   </div>
 
   {# ── Status summary banner ────────────────────────────────────────── #}
@@ -39,29 +39,29 @@
           <span class="font-semibold text-primary">{% trans "Counter-proposal pending" %}</span>
         {% endif %}
         {% if ar.responded_at %}
-          <span class="ml-auto text-xs text-brown">{{ ar.responded_at|date:"d M Y H:i" }}</span>
+          <span class="ml-auto text-xs">{{ ar.responded_at|date:"d M Y H:i" }}</span>
         {% endif %}
       </div>
 
       {% if ar.status == 'accepted' %}
         {% if latest_counter_msg and latest_counter_msg.counter_location %}
-          <div class="flex items-center gap-2 text-sm text-brown mb-1">
+          <div class="flex items-center gap-2 text-sm mb-1">
             <i class="fa fa-map-marker text-primary"></i>
             <span>{{ latest_counter_msg.counter_location }}</span>
           </div>
         {% elif ar.resolved_location %}
-          <div class="flex items-center gap-2 text-sm text-brown mb-1">
+          <div class="flex items-center gap-2 text-sm mb-1">
             <i class="fa fa-map-marker text-primary"></i>
             <span>{{ ar.resolved_location }}</span>
           </div>
         {% endif %}
         {% if latest_counter_msg and latest_counter_msg.counter_date %}
-          <div class="flex items-center gap-2 text-sm text-brown">
+          <div class="flex items-center gap-2 text-sm">
             <i class="fa fa-calendar text-primary"></i>
             <span>{{ latest_counter_msg.counter_date|date:"d M Y H:i" }}</span>
           </div>
         {% elif ar.proposed_date %}
-          <div class="flex items-center gap-2 text-sm text-brown">
+          <div class="flex items-center gap-2 text-sm">
             <i class="fa fa-calendar text-primary"></i>
             <span>{{ ar.proposed_date|date:"d M Y H:i" }}</span>
           </div>
@@ -69,13 +69,13 @@
 
       {% elif ar.status == 'counter' and latest_status_msg %}
         {% if latest_status_msg.counter_location %}
-          <div class="flex items-center gap-2 text-sm text-brown mb-1">
+          <div class="flex items-center gap-2 text-sm mb-1">
             <i class="fa fa-map-marker text-primary"></i>
             <span>{{ latest_status_msg.counter_location }}</span>
           </div>
         {% endif %}
         {% if latest_status_msg.counter_date %}
-          <div class="flex items-center gap-2 text-sm text-brown">
+          <div class="flex items-center gap-2 text-sm">
             <i class="fa fa-calendar text-primary"></i>
             <span>{{ latest_status_msg.counter_date|date:"d M Y H:i" }}</span>
           </div>
@@ -99,7 +99,7 @@
         <a href="{{ ar.from_user.get_absolute_url }}" class="font-semibold text-primary hover:underline">
           {{ ar.from_user.name|default:ar.from_user.email }}
         </a>
-        <p class="text-xs text-brown">{% trans "expressed interest" %} · {{ ar.created_at|date:"d M Y H:i" }}</p>
+        <p class="text-xs">{% if ar.ad.type == "wish" %}{% trans "offered" %}{% else %}{% trans "expressed interest in" %}{% endif %} <a href="{{ ar.ad.get_absolute_url }}" class="hover:underline">{{ ar.ad.title }}</a> on {{ ar.created_at|date:"d M Y H:i" }}</p>
       </div>
       <div class="ml-auto">
         {% if ar.status == 'pending' %}
@@ -114,16 +114,16 @@
       </div>
     </div>
 
-    <div class="prose text-sm text-brown mb-4">{{ ar.message|linebreaksbr }}</div>
+    <div class="prose text-sm mb-4">{{ ar.message|linebreaksbr }}</div>
 
     {% if ar.location_type %}
-      <div class="text-sm text-brown mb-2">
+      <div class="text-sm mb-2">
         <i class="fa fa-map-marker mr-1 text-primary"></i>
         <strong>{% trans "Location" %}:</strong> {{ ar.resolved_location }}
       </div>
     {% endif %}
     {% if ar.proposed_date %}
-      <div class="text-sm text-brown mb-2">
+      <div class="text-sm mb-2">
         <i class="fa fa-calendar mr-1 text-primary"></i>
         <strong>{% trans "Proposed date" %}:</strong> {{ ar.proposed_date|date:"d M Y H:i" }}
       </div>
@@ -211,13 +211,13 @@
       {# Counter-proposal extra fields (owner only, collapsible) #}
       {% if is_owner %}
       <div x-show="isCounter" style="display:none" class="mb-5 pb-5 border-b space-y-4">
-        <h3 class="text-sm font-semibold text-brown">{% trans "Counter-proposal details" %}</h3>
+        <h3 class="text-sm font-semibold">{% trans "Counter-proposal details" %}</h3>
 
         <div class="form-group">
           <label class="form-label">{% trans "Counter location type" %}</label>
           <div class="space-y-1">
             {% for value, label in loc_choices %}
-              <label class="flex items-center gap-2 text-sm text-brown cursor-pointer">
+              <label class="flex items-center gap-2 text-sm cursor-pointer">
                 <input type="radio" name="counter_location_type" value="{{ value }}"
                   class="form-radio"
                   {% if forloop.first %}checked{% endif %}
@@ -242,7 +242,7 @@
                 <template x-for="res in results" :key="res.place_id">
                   <li class="m-0">
                     <a @click.prevent="onSelect(res)" href="#"
-                      class="block px-2 py-2 text-brown hover:bg-primary hover:text-secondary"
+                      class="block px-2 py-2 hover:bg-primary hover:text-secondary"
                       x-text="res.display_name"></a>
                   </li>
                 </template>
@@ -302,7 +302,7 @@
               </button>
             {% endif %}
           {% else %}
-            <span class="text-xs text-brown self-center italic" x-show="!isCounter">
+            <span class="text-xs self-center italic" x-show="!isCounter">
               {% trans "Waiting for the other party's response…" %}
             </span>
           {% endif %}

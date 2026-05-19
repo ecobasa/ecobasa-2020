@@ -27,7 +27,7 @@
               </p>
               <p style="margin:0 0 24px;font-size:15px;line-height:1.6;">
                 <strong>{% if sr.from_user.name %}{{ sr.from_user.name }}{% else %}{{ sr.from_user.email }}{% endif %}</strong>
-                {% if is_wish %}wants to teach you: <strong>{{ skill_name }}</strong>.{% else %}has expressed interest in your skill: <strong>{{ skill_name }}</strong>.{% endif %}
+                {% if is_wish %}offered to teach you: <strong>{{ skill_name }}</strong>.{% else %}has expressed interest in your skill: <strong>{{ skill_name }}</strong>.{% endif %}
               </p>
 
               {# Details box #}

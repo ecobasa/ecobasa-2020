@@ -1,6 +1,6 @@
 Hello {% if recipient.name %}{{ recipient.name }}{% else %}{{ recipient.email }}{% endif %},
 
-{% if sr.from_user.name %}{{ sr.from_user.name }}{% else %}{{ sr.from_user.email }}{% endif %} {% if is_wish %}wants to teach you: {{ skill_name }}.{% else %}has expressed interest in your skill: {{ skill_name }}.{% endif %}
+{% if sr.from_user.name %}{{ sr.from_user.name }}{% else %}{{ sr.from_user.email }}{% endif %} {% if is_wish %}offered to teach you: {{ skill_name }}.{% else %}has expressed interest in your skill: {{ skill_name }}.{% endif %}
 
 {% if sr.proposed_date %}PROPOSED DATE
 {{ sr.proposed_date|date:"N j, Y" }}

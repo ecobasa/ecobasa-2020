@@ -11,15 +11,15 @@
 {% block giving_content %}
 <div>
 
-  <div class="mb-2 text-sm text-brown">
+  <div class="mb-2 text-sm">
     <a href="{% url 'skills:skill_list' %}" class="hover:underline">{% trans "Skills" %}</a>
     <span class="mx-1">/</span>
     {% if sr.wish %}
       <a href="{{ sr.wish.get_absolute_url }}" class="hover:underline">{{ sr.wish.skill.name }}</a>
     {% elif sr.user_skill %}
-      <a href="{{ sr.user_skill.get_absolute_url }}" class="hover:underline">{{ sr.user_skill }}</a>
+      <a href="{{ sr.user_skill.get_absolute_url }}" class="hover:underline">{{ sr.user_skill.skill.name }}</a>
     {% else %}
-      <a href="{{ sr.community_skill.get_absolute_url }}" class="hover:underline">{{ sr.community_skill }}</a>
+      <a href="{{ sr.community_skill.get_absolute_url }}" class="hover:underline">{{ sr.community_skill.skill.name }}</a>
     {% endif %}
     <span class="mx-1">/</span>
     <span>{% if sr.wish %}{% trans "Offer" %}{% else %}{% trans "Interest" %}{% endif %} #{{ sr.pk }}</span>
@@ -45,30 +45,30 @@
           <span class="font-semibold text-primary">{% trans "Counter-proposal pending" %}</span>
         {% endif %}
         {% if sr.responded_at %}
-          <span class="ml-auto text-xs text-brown">{{ sr.responded_at|date:"d M Y H:i" }}</span>
+          <span class="ml-auto text-xs">{{ sr.responded_at|date:"d M Y H:i" }}</span>
         {% endif %}
       </div>
 
       {% if sr.status == 'accepted' %}
         {# Show counter details if the last agreed state was from a counter, else original request #}
         {% if latest_counter_msg and latest_counter_msg.counter_location %}
-          <div class="flex items-center gap-2 text-sm text-brown mb-1">
+          <div class="flex items-center gap-2 text-sm mb-1">
             <i class="fa fa-map-marker text-primary"></i>
             <span>{{ latest_counter_msg.counter_location }}</span>
           </div>
         {% elif sr.resolved_location %}
-          <div class="flex items-center gap-2 text-sm text-brown mb-1">
+          <div class="flex items-center gap-2 text-sm mb-1">
             <i class="fa fa-map-marker text-primary"></i>
             <span>{{ sr.resolved_location }}</span>
           </div>
         {% endif %}
         {% if latest_counter_msg and latest_counter_msg.counter_date %}
-          <div class="flex items-center gap-2 text-sm text-brown">
+          <div class="flex items-center gap-2 text-sm">
             <i class="fa fa-calendar text-primary"></i>
             <span>{{ latest_counter_msg.counter_date|date:"d M Y H:i" }}</span>
           </div>
         {% elif sr.proposed_date %}
-          <div class="flex items-center gap-2 text-sm text-brown">
+          <div class="flex items-center gap-2 text-sm">
             <i class="fa fa-calendar text-primary"></i>
             <span>{{ sr.proposed_date|date:"d M Y H:i" }}</span>
           </div>
@@ -76,13 +76,13 @@
 
       {% elif sr.status == 'counter' and latest_status_msg %}
         {% if latest_status_msg.counter_location %}
-          <div class="flex items-center gap-2 text-sm text-brown mb-1">
+          <div class="flex items-center gap-2 text-sm mb-1">
             <i class="fa fa-map-marker text-primary"></i>
             <span>{{ latest_status_msg.counter_location }}</span>
           </div>
         {% endif %}
         {% if latest_status_msg.counter_date %}
-          <div class="flex items-center gap-2 text-sm text-brown">
+          <div class="flex items-center gap-2 text-sm">
             <i class="fa fa-calendar text-primary"></i>
             <span>{{ latest_status_msg.counter_date|date:"d M Y" }}</span>
           </div>
@@ -106,8 +106,20 @@
         <a href="{{ sr.from_user.get_absolute_url }}" class="font-semibold text-primary hover:underline">
           {{ sr.from_user.name|default:sr.from_user.email }}
         </a>
-        <p class="text-xs text-brown">{% trans "expressed interest" %} · {{ sr.created_at|date:"d M Y H:i" }}</p>
-      </div>
+        <p class="text-xs">
+          {% if not sr.wish %}
+            {% trans "expressed interest in" %}
+          {% else %}
+            {% trans "offered to teach you" %}
+          {% endif %}
+          {% if sr.wish %}
+            <a href="{{ sr.wish.get_absolute_url }}" class="hover:underline">{{ sr.wish.skill.name }}</a>
+          {% elif sr.user_skill %}
+            <a href="{{ sr.user_skill.get_absolute_url }}" class="hover:underline">{{ sr.user_skill.skill.name }}</a>
+          {% else %}
+            <a href="{{ sr.community_skill.get_absolute_url }}" class="hover:underline">{{ sr.community_skill.name }}</a>
+          {% endif %} on {{ sr.created_at|date:"d M Y H:i" }}</p>
+        </div>
       <div class="ml-auto">
         {% if sr.status == 'pending' %}
           <span class="pill bg-yellow text-secondary">{% trans "Pending" %}</span>
@@ -121,16 +133,16 @@
       </div>
     </div>
 
-    <div class="prose text-sm text-brown mb-4">{{ sr.message|linebreaksbr }}</div>
+    <div class="prose text-sm mb-4">{{ sr.message|linebreaksbr }}</div>
 
     {% if sr.location_type %}
-      <div class="text-sm text-brown mb-2">
+      <div class="text-sm mb-2">
         <i class="fa fa-map-marker mr-1 text-primary"></i>
         <strong>{% trans "Location" %}:</strong> {{ sr.resolved_location }}
       </div>
     {% endif %}
     {% if sr.proposed_date %}
-      <div class="text-sm text-brown mb-2">
+      <div class="text-sm mb-2">
         <i class="fa fa-calendar mr-1 text-primary"></i>
         <strong>{% trans "Proposed date" %}:</strong> {{ sr.proposed_date|date:"d M Y H:i" }}
       </div>
@@ -218,13 +230,13 @@
       {# Counter-proposal extra fields (owner only, collapsible) #}
       {% if is_owner %}
       <div x-show="isCounter" style="display:none" class="mb-5 pb-5 border-b space-y-4">
-        <h3 class="text-sm font-semibold text-brown">{% trans "Counter-proposal details" %}</h3>
+        <h3 class="text-sm font-semibold">{% trans "Counter-proposal details" %}</h3>
 
         <div class="form-group">
           <label class="form-label">{% trans "Counter location type" %}</label>
           <div class="space-y-1">
             {% for value, label in loc_choices %}
-              <label class="flex items-center gap-2 text-sm text-brown cursor-pointer">
+              <label class="flex items-center gap-2 text-sm cursor-pointer">
                 <input type="radio" name="counter_location_type" value="{{ value }}"
                   class="form-radio"
                   {% if forloop.first %}checked{% endif %}
@@ -249,7 +261,7 @@
                 <template x-for="res in results" :key="res.place_id">
                   <li class="m-0">
                     <a @click.prevent="onSelect(res)" href="#"
-                      class="block px-2 py-2 text-brown hover:bg-primary hover:text-secondary"
+                      class="block px-2 py-2 hover:bg-primary hover:text-secondary"
                       x-text="res.display_name"></a>
                   </li>
                 </template>
@@ -311,7 +323,7 @@
               </button>
             {% endif %}
           {% else %}
-            <span class="text-xs text-brown self-center italic" x-show="!isCounter">
+            <span class="text-xs self-center italic" x-show="!isCounter">
               {% trans "Waiting for the other party's response…" %}
             </span>
           {% endif %}
