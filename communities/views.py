@@ -1,4 +1,5 @@
 import json
+import re
 
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q, Prefetch
@@ -434,9 +435,17 @@ def community_suggest(request):
     for name in Community.objects.filter(name__icontains=q).values_list("name", flat=True)[:5]:
         add(name, "name")
 
-    # Description / vision — one entry if any community matches either field
-    if Community.objects.filter(Q(description__icontains=q) | Q(vision__icontains=q)).exists():
-        suggestions.append({"value": q, "type": "text"})
+    # Description / vision — extract words that start with the query
+    q_lower = q.lower()
+    for desc, vision in (
+        Community.objects
+        .filter(Q(description__icontains=q) | Q(vision__icontains=q))
+        .exclude(name__icontains=q)
+        .values_list("description", "vision")[:5]
+    ):
+        for word in re.findall(r'\b\w[\w-]*\b', (desc or "") + " " + (vision or "")):
+            if word.lower().startswith(q_lower) and word.lower() != q_lower:
+                add(word.lower(), "text")
 
     # Locations (split on comma to surface city/country parts)
     for loc in Community.objects.filter(location_name__icontains=q).values_list("location_name", flat=True)[:10]:

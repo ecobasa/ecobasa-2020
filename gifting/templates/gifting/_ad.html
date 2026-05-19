@@ -1,7 +1,12 @@
 {% load i18n %}
 <a href="{% url "gifting:detail" ad.pk %}" class="relative w-full max-w-4xl group flex items-stretch justify-between my-5 sm:my-10 md:mb-20 bg-secondary bg-opacity-50 p-5 rounded-md hover:text-primary hover:shadow-lg">
-  <div class="text-xs absolute bottom-0 right-0 rounded-full p-2 text-secondary{% if ad.get_type_display == "Offer" %} bg-primary{% else %} bg-purple{% endif %}">
-        {{ ad.get_type_display }}
+  <div class="text-xs absolute bottom-0 right-0 rounded-full p-2 text-secondary{% if ad.get_type_display == "Offer" %} bg-primary{% elif ad.get_type_display == "Wish" %} bg-yellow{% else %} bg-purple{% endif %}">
+    {% if ad.get_type_display == "Offer" %}
+      <i class="fa fa-gift mr-1"></i>
+    {% elif ad.get_type_display == "Wish" %}
+      <i class="fa fa-heart mr-1"></i>
+    {% endif %}
+    {{ ad.get_type_display }}
   </div>
   <div class="flex w-full">
     {% if ad.image %}

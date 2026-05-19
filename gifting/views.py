@@ -1,4 +1,5 @@
 import json
+import re
 import urllib.request
 import urllib.parse
 from datetime import datetime as _dt
@@ -176,7 +177,10 @@ def _skill_communities(request):
     q = request.GET.get("search", "").strip()
     if q:
         qs = qs.filter(
-            Q(community_skills__skill__name__icontains=q) | Q(description__icontains=q)
+            Q(community_skills__skill__name__icontains=q)
+            | Q(community_skills__skill__description__icontains=q)
+            | Q(community_skills__description__icontains=q)
+            | Q(description__icontains=q)
         ).distinct()
 
     return qs
@@ -195,7 +199,10 @@ def _skill_users(request):
     q = request.GET.get("search", "").strip()
     if q:
         qs = qs.filter(
-            Q(user_skills__skill__name__icontains=q) | Q(about__icontains=q)
+            Q(user_skills__skill__name__icontains=q)
+            | Q(user_skills__skill__description__icontains=q)
+            | Q(user_skills__description__icontains=q)
+            | Q(about__icontains=q)
         ).distinct()
 
     return qs
@@ -394,10 +401,39 @@ def gifting_suggest(request):
     ):
         add(skill, "skill")
 
-    # Description match — add query itself as a "text" hint (community list pattern)
-    if Ad.objects.filter(
-        Q(description__icontains=q) | Q(owner__name__icontains=q)
-    ).exclude(title__icontains=q).exists():
-        add(q, "text")
+    # Description match — extract words that start with the query
+    def _desc_words(*texts):
+        q_lower = q.lower()
+        for text in texts:
+            for word in re.findall(r'\b\w[\w-]*\b', text or ""):
+                if word.lower().startswith(q_lower) and word.lower() != q_lower:
+                    yield word.lower()
+
+    for desc, in (
+        Ad.objects
+        .filter(Q(description__icontains=q))
+        .exclude(title__icontains=q)
+        .values_list("description")[:5]
+    ):
+        for word in _desc_words(desc):
+            add(word, "text")
+
+    for desc, skill_desc in (
+        CommunitySkill.objects
+        .filter(Q(description__icontains=q) | Q(skill__description__icontains=q))
+        .exclude(skill__name__icontains=q)
+        .values_list("description", "skill__description")[:5]
+    ):
+        for word in _desc_words(desc, skill_desc):
+            add(word, "text")
+
+    for desc, skill_desc in (
+        UserSkill.objects
+        .filter(Q(description__icontains=q) | Q(skill__description__icontains=q))
+        .exclude(skill__name__icontains=q)
+        .values_list("description", "skill__description")[:5]
+    ):
+        for word in _desc_words(desc, skill_desc):
+            add(word, "text")
 
     return JsonResponse(suggestions[:8], safe=False)

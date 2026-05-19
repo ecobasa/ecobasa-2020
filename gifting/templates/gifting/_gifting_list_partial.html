@@ -11,46 +11,67 @@
 
 {# ── Community skill cards (first page only) ───────────────────── #}
 {% for community in skill_communities %}
-<div class="relative w-full max-w-4xl group flex items-stretch justify-between my-5 sm:my-10 bg-secondary bg-opacity-50 p-5 rounded-md hover:text-primary hover:shadow-lg border-l-4 border-purple">
-  <div class="text-xs absolute bottom-0 right-0 rounded-full p-2 text-secondary bg-purple">
-    <i class="fa fa-graduation-cap mr-1"></i>{% trans "Skill" %}
-  </div>
-  <div class="flex w-full">
-    {% with community.photos.first as photo %}
-    {% if photo %}
-      <img class="flex-shrink-0 h-20 w-20 sm:h-32 sm:w-48 object-cover rounded"
-        src="{{ photo.image.url }}" alt="{{ community.name }}" loading="lazy">
-    {% else %}
-      <div class="flex-shrink-0 h-20 w-20 sm:h-32 sm:w-48 bg-primary rounded"></div>
-    {% endif %}
-    {% endwith %}
-    <div class="pl-2 sm:pl-6 w-full">
-      <i class="fa fa-map-marker text-primary"></i>
-      <div class="text-xs inline">{{ community.location_name }}</div>
-      <div class="mt-1">
-        {% for skill in community.skills.all|slice:":4" %}
-          <span class="border mx-px py-px px-1 rounded-full text-xs text-secondary bg-purple">{{ skill }}</span>
-        {% endfor %}
-        <a href="{{ community.get_absolute_url }}"
-          class="font-serif sm:text-lg group-hover:text-primary ml-1">
-          {{ community.name }}
-        </a>
-      </div>
-      <p class="text-sm text-brown mt-1">{{ community.description|truncatewords:20 }}</p>
-      <a href="{{ community.get_absolute_url }}"
-        class="absolute bottom-5 text-xs text-primary hover:underline">
-        <i class="fa fa-home mr-1"></i>{% trans "View community" %}
-      </a>
+  {% with community.photos.first as photo %}
+  {% for cs in community.community_skills.all %}
+  <a href="{{ cs.get_absolute_url }}" class="relative w-full max-w-4xl group flex items-stretch justify-between my-5 sm:my-10 bg-secondary bg-opacity-50 p-5 rounded-md hover:text-primary hover:shadow-lg">
+    <div class="text-xs absolute bottom-0 right-0 rounded-full p-2 text-secondary bg-purple">
+      <i class="fa fa-graduation-cap mr-1"></i>{% trans "Skill" %}
     </div>
-  </div>
-</div>
+    <div class="flex w-full">
+      {% if photo %}
+        <img class="flex-shrink-0 h-20 w-20 sm:h-32 sm:w-48 object-cover rounded"
+          src="{{ photo.image.url }}" alt="{{ community.name }}" loading="lazy">
+      {% else %}
+        <div class="flex-shrink-0 h-20 w-20 sm:h-32 sm:w-48 bg-primary rounded"></div>
+      {% endif %}
+      <div class="pl-2 sm:pl-6 w-full">
+        <i class="fa fa-map-marker text-primary"></i>
+        <div class="text-xs inline">{{ community.location_name }}</div>
+        <div class="font-serif sm:text-lg group-hover:text-primary mt-1">{{ cs.skill.name }}</div>
+        <p class="text-sm text-brown mt-1">
+          {% if cs.description %}{{ cs.description|truncatewords:20 }}{% else %}{{ cs.skill.description|truncatewords:20 }}{% endif %}
+        </p>
+        <span class="absolute bottom-5"><i class="fa fa-home mr-1"></i>{{ community.name }}</span>
+      </div>
+    </div>
+  </a>
+  {% endfor %}
+  {% endwith %}
+{% endfor %}
+
+{# ── User skill cards (first page only) ────────────────────────── #}
+{% for user in skill_users %}
+  {% for us in user.user_skills.all %}
+  <a href="{{ us.get_absolute_url }}" class="relative w-full max-w-4xl group flex items-stretch justify-between my-5 sm:my-10 bg-secondary bg-opacity-50 p-5 rounded-md hover:text-primary hover:shadow-lg">
+    <div class="text-xs absolute bottom-0 right-0 rounded-full p-2 text-secondary bg-purple">
+      <i class="fa fa-graduation-cap mr-1"></i>{% trans "Skill" %}
+    </div>
+    <div class="flex w-full">
+      {% if user.image %}
+        <img class="flex-shrink-0 h-20 w-20 sm:h-32 sm:w-48 object-cover rounded"
+          src="{{ user.image.url }}" alt="{{ user.name }}" loading="lazy">
+      {% else %}
+        <div class="flex-shrink-0 h-20 w-20 sm:h-32 sm:w-48 bg-primary rounded"></div>
+      {% endif %}
+      <div class="pl-2 sm:pl-6 w-full">
+        <i class="fa fa-map-marker text-primary"></i>
+        <div class="text-xs inline">{{ user.location_name }}</div>
+        <div class="font-serif sm:text-lg group-hover:text-primary mt-1">{{ us.skill.name }}</div>
+        <p class="text-sm text-brown mt-1">
+          {% if us.description %}{{ us.description|truncatewords:20 }}{% else %}{{ us.skill.description|truncatewords:20 }}{% endif %}
+        </p>
+        <span class="absolute bottom-5 text-xs text-brown"><i class="fa fa-user mr-1"></i>{{ user.name|default:user.email }}</span>
+      </div>
+    </div>
+  </a>
+  {% endfor %}
 {% endfor %}
 
 {# ── Ad cards — reuse existing _ad.html exactly as-is ─────────── #}
 {% for ad in ads %}
   {% include "gifting/_ad.html" %}
 {% empty %}
-  {% if not skill_communities %}
+  {% if not skill_communities and not skill_users %}
     <p class="text-primary py-8 text-center">{% trans "No results found." %}</p>
   {% endif %}
 {% endfor %}
