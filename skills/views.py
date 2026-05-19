@@ -6,49 +6,49 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_GET
 
-from .forms import CommunitySkillForm, CommunitySkillOrWishForm, SkillRequestForm, SkillWishEditForm, UserSkillForm, UserSkillOrWishForm
-from .models import CommunitySkill, Skill, SkillRequest, SkillWish, UserSkill
+from .forms import CommunitySkillForm, CommunitySkillOrWishForm, SkillInterestForm, SkillWishEditForm, UserSkillForm, UserSkillOrWishForm
+from .models import CommunitySkill, Skill, SkillInterest, SkillWish, UserSkill
 from communities.models import Community
 from users.models import User
 
 
-def _notify_skill_request(skill_request, http_request=None):
-    """Create an in-app notification and send an email for a new SkillRequest."""
+def _notify_skill_interest(skill_interest, http_request=None):
+    """Create an in-app notification and send an email for a new SkillInterest."""
     from notifications.models import Notification
-    from matches.emails import send_skill_request_email
+    from matches.emails import send_skill_interest_email
 
-    if skill_request.wish:
-        wish = skill_request.wish
+    if skill_interest.wish:
+        wish = skill_interest.wish
         skill_name = wish.skill.name
         recipient = wish.user or (wish.community.owner if wish.community else None)
-        verb_template = _("%(actor)s offered to teach you: %(skill)s")
-    elif skill_request.user_skill:
-        recipient = skill_request.user_skill.user
-        skill_name = skill_request.user_skill.skill.name
-        verb_template = _("%(actor)s requested your skill: %(skill)s")
+        verb_template = _("%(actor)s wants to teach you: %(skill)s")
+    elif skill_interest.user_skill:
+        recipient = skill_interest.user_skill.user
+        skill_name = skill_interest.user_skill.skill.name
+        verb_template = _("%(actor)s expressed interest in your skill: %(skill)s")
     else:
-        community = skill_request.community_skill.community
+        community = skill_interest.community_skill.community
         recipient = community.owner
-        skill_name = skill_request.community_skill.skill.name
-        verb_template = _("%(actor)s requested your skill: %(skill)s")
+        skill_name = skill_interest.community_skill.skill.name
+        verb_template = _("%(actor)s expressed interest in your skill: %(skill)s")
 
     if recipient is None:
         return
 
-    link = skill_request.get_absolute_url()
-    actor_name = skill_request.from_user.name or skill_request.from_user.email
+    link = skill_interest.get_absolute_url()
+    actor_name = skill_interest.from_user.name or skill_interest.from_user.email
     verb = verb_template % {"actor": actor_name, "skill": skill_name}
 
     Notification.objects.create(
         recipient=recipient,
-        actor=skill_request.from_user,
+        actor=skill_interest.from_user,
         verb=str(verb),
         link=link,
         tag="requested",
     )
 
     if http_request:
-        send_skill_request_email(skill_request, http_request)
+        send_skill_interest_email(skill_interest, http_request)
 
 
 def _get_user_by_slug(user_slug):
@@ -105,17 +105,17 @@ def userskill_detail(request, skill_slug, user_slug):
     form = None
     if request.user.is_authenticated and request.user != user:
         if request.method == "POST":
-            form = SkillRequestForm(request.POST)
+            form = SkillInterestForm(request.POST)
             if form.is_valid():
                 sr = form.save(commit=False)
                 sr.from_user   = request.user
                 sr.user_skill  = user_skill
                 sr.save()
-                _notify_skill_request(sr, http_request=request)
-                messages.success(request, _("Your request has been sent."))
+                _notify_skill_interest(sr, http_request=request)
+                messages.success(request, _("Your interest has been sent."))
                 return redirect(sr.get_absolute_url())
         else:
-            form = SkillRequestForm()
+            form = SkillInterestForm()
 
     from .models import _user_slug as _slug
     return render(request, "skills/userskill_detail.html", {
@@ -136,17 +136,17 @@ def communityskill_detail(request, skill_slug, community_slug):
     form = None
     if request.user.is_authenticated:
         if request.method == "POST":
-            form = SkillRequestForm(request.POST)
+            form = SkillInterestForm(request.POST)
             if form.is_valid():
                 sr = form.save(commit=False)
                 sr.from_user       = request.user
                 sr.community_skill = comm_skill
                 sr.save()
-                _notify_skill_request(sr, http_request=request)
-                messages.success(request, _("Your request has been sent."))
+                _notify_skill_interest(sr, http_request=request)
+                messages.success(request, _("Your interest has been sent."))
                 return redirect(sr.get_absolute_url())
         else:
-            form = SkillRequestForm()
+            form = SkillInterestForm()
 
     return render(request, "skills/communityskill_detail.html", {
         "comm_skill": comm_skill,
@@ -284,18 +284,18 @@ def skillwish_user_detail(request, user_slug, skill_slug):
         viewer_user_skill = UserSkill.objects.filter(user=request.user, skill=skill).first()
         if viewer_user_skill:
             if request.method == "POST":
-                form = SkillRequestForm(request.POST)
+                form = SkillInterestForm(request.POST)
                 if form.is_valid():
                     sr = form.save(commit=False)
                     sr.from_user  = request.user
                     sr.user_skill = viewer_user_skill
                     sr.wish       = wish
                     sr.save()
-                    _notify_skill_request(sr, http_request=request)
+                    _notify_skill_interest(sr, http_request=request)
                     messages.success(request, _("Your offer has been sent."))
                     return redirect(sr.get_absolute_url())
             else:
-                form = SkillRequestForm()
+                form = SkillInterestForm()
 
     from .models import _user_slug as _slug
     return render(request, "skills/skillwish_user_detail.html", {

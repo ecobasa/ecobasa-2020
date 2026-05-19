@@ -12,8 +12,12 @@
 <div class="mx-auto max-w-7xl mt-10 px-4 pb-10">
 	<div class="flex items-start justify-between mb-8">
 		<h1 class="text-5xl font-semibold">{{ user.name }}</h1>
-		{% if request.user.is_authenticated and request.user.is_staff or request.user.is_authenticated and request.user.pk == user.pk %}
+		{% if request.user.is_authenticated and request.user.pk == user.pk %}
 			<a href="{% url 'users:update' %}" class="btn btn-lg">
+				<i class="fa fa-pencil mr-2"></i>{% trans "Edit profile" %}
+			</a>
+		{% elif request.user.is_authenticated and request.user.is_staff %}
+			<a href="{% url 'admin:users_user_change' user.pk %}" class="btn btn-lg">
 				<i class="fa fa-pencil mr-2"></i>{% trans "Edit profile" %}
 			</a>
 		{% endif %}
@@ -63,7 +67,7 @@
 				{% if user_skills %}
 				<div class="flex flex-wrap gap-2 mb-2">
 					{% for us in user_skills %}
-						<a href="{% if request.user.pk == user.pk %}{% url 'skills:userskill_edit' us.skill.slug user.username %}{% else %}{{ us.get_absolute_url }}{% endif %}"
+						<a href="{% if request.user.pk == user.pk %}{{ us.get_edit_url }}{% else %}{{ us.get_absolute_url }}{% endif %}"
 						   class="inline-flex items-center gap-1 bg-purple text-secondary px-3 py-1 rounded-full text-sm font-medium hover:opacity-80 transition-opacity">
 							<i class="fa fa-graduation-cap"></i>
 							{{ us.skill.name }}

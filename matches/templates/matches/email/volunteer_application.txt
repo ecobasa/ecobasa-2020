@@ -1,8 +1,8 @@
 Hello {% if recipient.name %}{{ recipient.name }}{% else %}{{ recipient.email }}{% endif %},
 
-{% if vr.from_user.name %}{{ vr.from_user.name }}{% else %}{{ vr.from_user.email }}{% endif %} has sent a volunteer stay request for {{ vr.community.name }}.
+{% if vr.from_user.name %}{{ vr.from_user.name }}{% else %}{{ vr.from_user.email }}{% endif %} has applied to volunteer at {{ vr.community.name }}.
 
-{% if vr.stay_from or vr.stay_to %}REQUESTED STAY
+{% if vr.stay_from or vr.stay_to %}PROPOSED STAY
 {% if vr.stay_from %}From: {{ vr.stay_from|date:"N j, Y" }}{% endif %}
 {% if vr.stay_to %}To:   {{ vr.stay_to|date:"N j, Y" }}{% endif %}
 
@@ -19,7 +19,7 @@ Hello {% if recipient.name %}{{ recipient.name }}{% else %}{{ recipient.email }}
 Accept:  {{ accept_url }}
 Decline: {{ decline_url }}
 
-View full request: {{ detail_url }}
+View application: {{ detail_url }}
 
 --
 ecobasa.org

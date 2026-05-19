@@ -68,13 +68,13 @@
   </div>
 
   {# ── Received requests (visible to skill owner only) ─────────────── #}
-  {% if user == profile and user_skill.requests.exists %}
+  {% if user == profile and user_skill.interests.exists %}
     <div class="border rounded-xl bg-secondary p-6 mb-6">
       <h2 class="text-lg text-primary mb-4">
-        <i class="fa fa-inbox mr-2"></i>{% trans "Incoming requests" %}
+        <i class="fa fa-inbox mr-2"></i>{% trans "Incoming interests" %}
       </h2>
       <div class="space-y-4">
-        {% for req in user_skill.requests.all %}
+        {% for req in user_skill.interests.all %}
           <div class="border rounded-lg p-4 text-sm {% if req.is_new %}border-primary{% endif %}">
             <div class="flex items-center gap-2 mb-2">
               {% if req.from_user.image %}
@@ -99,7 +99,7 @@
               {% endif %}
             </div>
             <div class="flex items-center gap-3">
-              <a href="{% url 'matches:skillrequest_detail' req.pk %}" class="btn btn-sm">
+              <a href="{% url 'matches:skill_interest_detail' req.pk %}" class="btn btn-sm">
                 {% if req.status == 'pending' %}
                   <i class="fa fa-reply mr-1"></i>{% trans "Respond" %}
                 {% else %}
@@ -125,7 +125,7 @@
     <div class="border rounded-xl bg-secondary p-6"
          x-data="{ locationType: 'your_place' }">
       <h2 class="text-lg text-primary mb-4">
-        <i class="fa fa-paper-plane mr-2"></i>{% trans "Request this skill" %}
+        <i class="fa fa-paper-plane mr-2"></i>{% trans "Express Interest" %}
       </h2>
       <form method="post">
         {% csrf_token %}
@@ -234,14 +234,14 @@
         </div>
 
         <button type="submit" class="btn mt-2">
-          <i class="fa fa-paper-plane mr-1"></i>{% trans "Send request" %}
+          <i class="fa fa-paper-plane mr-1"></i>{% trans "Express Interest" %}
         </button>
       </form>
     </div>
   {% elif not user.is_authenticated %}
     <div class="border rounded-xl bg-secondary p-6 text-center text-brown">
       <a href="{% url 'users:login' %}?next={{ request.path }}" class="btn">
-        {% trans "Log in to send a request" %}
+        {% trans "Log in to express interest" %}
       </a>
     </div>
   {% elif user == profile %}

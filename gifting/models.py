@@ -108,7 +108,7 @@ class AdRequest(models.Model):
     created_at        = models.DateTimeField(auto_now_add=True)
 
     def get_absolute_url(self):
-        return reverse("matches:adrequest_detail", kwargs={"pk": self.pk})
+        return reverse("matches:gift_offer_detail", kwargs={"pk": self.pk})
 
     def resolved_location(self):
         if self.location_type == self.LOC_MY_PLACE:

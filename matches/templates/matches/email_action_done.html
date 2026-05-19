@@ -4,16 +4,16 @@
 {% block content %}
 <div class="mx-auto max-w-lg px-4 py-16 text-center text-brown">
   {% if action == "accept" %}
-    <i class="fa-solid fa-handshake-simple text-5xl text-green mb-4 block"></i>
-    <h1 class="text-2xl font-semibold font-serif mb-2">{% trans "Request accepted!" %}</h1>
-    <p class="opacity-70">{% blocktrans with t=title %}The request for <strong>{{ t }}</strong> has been accepted. The other party has been notified.{% endblocktrans %}</p>
+    <i class="fa-solid fa-check-circle text-5xl text-green mb-4 block"></i>
+    <h1 class="text-2xl font-semibold font-serif mb-2">{% trans "Done — you said yes." %}</h1>
+    <p class="opacity-70">{% blocktrans with t=title %}Your answer about <strong>{{ t }}</strong> has been sent.{% endblocktrans %}</p>
   {% else %}
-    <i class="fa-solid fa-handshake-simple-slash text-5xl text-red mb-4 block"></i>
-    <h1 class="text-2xl font-semibold font-serif mb-2">{% trans "Request declined." %}</h1>
-    <p class="opacity-70">{% blocktrans with t=title %}The request for <strong>{{ t }}</strong> has been declined. The other party has been notified.{% endblocktrans %}</p>
+    <i class="fa-solid fa-circle-xmark text-5xl text-red mb-4 block"></i>
+    <h1 class="text-2xl font-semibold font-serif mb-2">{% trans "Done — you passed on this." %}</h1>
+    <p class="opacity-70">{% blocktrans with t=title %}Your answer about <strong>{{ t }}</strong> has been sent.{% endblocktrans %}</p>
   {% endif %}
   <a href="{{ detail_url }}" class="mt-6 inline-flex items-center bg-primary text-secondary rounded px-4 py-2 font-semibold hover:opacity-90">
-    <i class="fa fa-eye mr-2"></i>{% trans "View request" %}
+    <i class="fa fa-comments mr-2"></i>{% trans "View conversation" %}
   </a>
 </div>
 {% endblock %}

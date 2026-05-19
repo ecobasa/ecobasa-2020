@@ -19,7 +19,7 @@
         </a>
         <a href="{% url 'matches:list' %}?type=freemarket"
            class="block px-3 py-2 rounded {% if request_type == 'freemarket' %}bg-secondary text-primary font-semibold{% else %}text-secondary hover:bg-secondary hover:text-primary{% endif %}">
-          <i class="fa fa-gift mr-2"></i>{% trans "Gift Market" %}
+          <i class="fa fa-gift mr-2"></i>{% trans "Gifts" %}
         </a>
         <a href="{% url 'matches:list' %}?type=skills"
            class="block px-3 py-2 rounded {% if request_type == 'skills' %}bg-secondary text-primary font-semibold{% else %}text-secondary hover:bg-secondary hover:text-primary{% endif %}">

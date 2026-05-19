@@ -39,8 +39,8 @@ def send_volunteer_request_email(vr, http_request):
         "decline_url": _action_url(http_request, "volunteer", vr.pk, "decline"),
         "detail_url":  _absolute(http_request, vr.get_absolute_url()),
     }
-    subject = str(_("Volunteer stay request at %(c)s") % {"c": vr.community.name})
-    _send(subject, recipient.email, "matches/email/volunteer_request", context)
+    subject = str(_("Volunteer stay application at %(c)s") % {"c": vr.community.name})
+    _send(subject, recipient.email, "matches/email/volunteer_application", context)
 
 
 def send_volunteer_response_email(vr, http_request):
@@ -77,10 +77,10 @@ def send_ad_request_email(ad_request, http_request):
         "detail_url":  _absolute(http_request, ad_request.get_absolute_url()),
     }
     if ad.type == "offer":
-        subject = str(_("Gift request: %(title)s") % {"title": ad.title})
+        subject = str(_("Gift interest: %(title)s") % {"title": ad.title})
     else:
         subject = str(_("Wish fulfillment offer: %(title)s") % {"title": ad.title})
-    _send(subject, recipient.email, "matches/email/ad_request", context)
+    _send(subject, recipient.email, "matches/email/gift_interest", context)
 
 
 def send_ad_response_email(ad_request, actor, http_request):
@@ -99,55 +99,66 @@ def send_ad_response_email(ad_request, actor, http_request):
         "status_label": status_label,
         "detail_url":   _absolute(http_request, ad_request.get_absolute_url()),
     }
-    subject = str(_("Ad request %(status)s: %(title)s") % {"status": status_label, "title": ad.title})
+    subject = str(_("Gift interest %(status)s: %(title)s") % {"status": status_label, "title": ad.title})
     _send(subject, recipient.email, "matches/email/ad_response", context)
 
 
-# ── Skill request ─────────────────────────────────────────────────────────────
+# ── Skill interest ────────────────────────────────────────────────────────────
 
-def send_skill_request_email(skill_request, http_request):
-    """Initial email to the skill holder when a request arrives."""
-    if skill_request.user_skill:
-        recipient  = skill_request.user_skill.user
-        skill_name = skill_request.user_skill.skill.name
+def send_skill_interest_email(skill_interest, http_request):
+    """Initial email to the skill holder when an offer arrives."""
+    if skill_interest.wish:
+        recipient  = skill_interest.wish.user or (
+            skill_interest.wish.community.owner if skill_interest.wish.community else None
+        )
+        skill_name = skill_interest.wish.skill.name
+    elif skill_interest.user_skill:
+        recipient  = skill_interest.user_skill.user
+        skill_name = skill_interest.user_skill.skill.name
     else:
-        recipient  = skill_request.community_skill.community.owner
-        skill_name = skill_request.community_skill.skill.name
+        recipient  = skill_interest.community_skill.community.owner
+        skill_name = skill_interest.community_skill.skill.name
     if not recipient or not recipient.email:
         return
     context = {
-        "sr":          skill_request,
+        "sr":          skill_interest,
         "skill_name":  skill_name,
+        "is_wish":     bool(skill_interest.wish),
         "recipient":   recipient,
-        "accept_url":  _action_url(http_request, "skill_request", skill_request.pk, "accept"),
-        "decline_url": _action_url(http_request, "skill_request", skill_request.pk, "decline"),
-        "detail_url":  _absolute(http_request, skill_request.get_absolute_url()),
+        "accept_url":  _action_url(http_request, "skill_interest", skill_interest.pk, "accept"),
+        "decline_url": _action_url(http_request, "skill_interest", skill_interest.pk, "decline"),
+        "detail_url":  _absolute(http_request, skill_interest.get_absolute_url()),
     }
-    subject = str(_("Skill request: %(skill)s") % {"skill": skill_name})
-    _send(subject, recipient.email, "matches/email/skill_request", context)
+    subject = str(_("Skill interest: %(skill)s") % {"skill": skill_name})
+    _send(subject, recipient.email, "matches/email/skill_interest", context)
 
 
-def send_skill_response_email(skill_request, actor, http_request):
+def send_skill_response_email(skill_interest, actor, http_request):
     """Status-change email to whichever party didn't just respond."""
-    if skill_request.user_skill:
-        skill_name = skill_request.user_skill.skill.name
-        owner      = skill_request.user_skill.user
+    if skill_interest.wish:
+        skill_name = skill_interest.wish.skill.name
+        owner      = skill_interest.wish.user or (
+            skill_interest.wish.community.owner if skill_interest.wish.community else None
+        )
+    elif skill_interest.user_skill:
+        skill_name = skill_interest.user_skill.skill.name
+        owner      = skill_interest.user_skill.user
     else:
-        skill_name = skill_request.community_skill.skill.name
-        owner      = skill_request.community_skill.community.owner
-    recipient = skill_request.from_user if actor == owner else owner
+        skill_name = skill_interest.community_skill.skill.name
+        owner      = skill_interest.community_skill.community.owner
+    recipient = skill_interest.from_user if actor == owner else owner
     if not recipient or not recipient.email:
         return
-    status_label = skill_request.get_status_display().lower()
+    status_label = skill_interest.get_status_display().lower()
     context = {
-        "sr":           skill_request,
+        "sr":           skill_interest,
         "skill_name":   skill_name,
         "actor":        actor,
         "recipient":    recipient,
         "status_label": status_label,
-        "detail_url":   _absolute(http_request, skill_request.get_absolute_url()),
+        "detail_url":   _absolute(http_request, skill_interest.get_absolute_url()),
     }
-    subject = str(_("Skill request %(status)s: %(skill)s") % {"status": status_label, "skill": skill_name})
+    subject = str(_("Skill interest %(status)s: %(skill)s") % {"status": status_label, "skill": skill_name})
     _send(subject, recipient.email, "matches/email/skill_response", context)
 
 

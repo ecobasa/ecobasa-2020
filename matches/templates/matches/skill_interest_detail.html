@@ -1,7 +1,7 @@
 {% extends 'matches/base.html' %}
 {% load i18n %}
 
-{% block head_title %}{% trans "Freemarket Request" %} — ecobasa{% endblock %}
+{% block head_title %}{% if sr.wish %}{% trans "Skill Offer" %}{% else %}{% trans "Skill Interest" %}{% endif %} — ecobasa{% endblock %}
 
 {% block extrahead %}
 {{ block.super }}
@@ -12,47 +12,54 @@
 <div>
 
   <div class="mb-2 text-sm text-brown">
-    <a href="{% url 'gifting:search' %}" class="hover:underline">{% trans "Free Market" %}</a>
+    <a href="{% url 'skills:skill_list' %}" class="hover:underline">{% trans "Skills" %}</a>
     <span class="mx-1">/</span>
-    <a href="{{ ar.ad.get_absolute_url }}" class="hover:underline">{{ ar.ad.title }}</a>
+    {% if sr.wish %}
+      <a href="{{ sr.wish.get_absolute_url }}" class="hover:underline">{{ sr.wish.skill.name }}</a>
+    {% elif sr.user_skill %}
+      <a href="{{ sr.user_skill.get_absolute_url }}" class="hover:underline">{{ sr.user_skill }}</a>
+    {% else %}
+      <a href="{{ sr.community_skill.get_absolute_url }}" class="hover:underline">{{ sr.community_skill }}</a>
+    {% endif %}
     <span class="mx-1">/</span>
-    <span>{% trans "Request" %} #{{ ar.pk }}</span>
+    <span>{% if sr.wish %}{% trans "Offer" %}{% else %}{% trans "Interest" %}{% endif %} #{{ sr.pk }}</span>
   </div>
 
   {# ── Status summary banner ────────────────────────────────────────── #}
-  {% if ar.status != 'pending' %}
+  {% if sr.status != 'pending' %}
     <div class="rounded-xl p-5 mb-6 border
-      {% if ar.status == 'accepted' %}border-green bg-green bg-opacity-10
-      {% elif ar.status == 'declined' %}border-red bg-red bg-opacity-10
-      {% elif ar.status == 'counter' %}border-yellow bg-yellow bg-opacity-10
+      {% if sr.status == 'accepted' %}border-green bg-green bg-opacity-10
+      {% elif sr.status == 'declined' %}border-red bg-red bg-opacity-10
+      {% elif sr.status == 'counter' %}border-yellow bg-yellow bg-opacity-10
       {% endif %}">
 
       <div class="flex items-center gap-2 mb-3">
-        {% if ar.status == 'accepted' %}
+        {% if sr.status == 'accepted' %}
           <i class="fa fa-check-circle text-green text-xl"></i>
-          <span class="font-semibold text-green">{% trans "Exchange confirmed" %}</span>
-        {% elif ar.status == 'declined' %}
+          <span class="font-semibold text-green">{% trans "Meeting confirmed" %}</span>
+        {% elif sr.status == 'declined' %}
           <i class="fa fa-times-circle text-red text-xl"></i>
-          <span class="font-semibold text-red">{% trans "Request declined" %}</span>
-        {% elif ar.status == 'counter' %}
+          <span class="font-semibold text-red">{% trans "Declined" %}</span>
+        {% elif sr.status == 'counter' %}
           <i class="fa fa-exchange text-primary text-xl"></i>
           <span class="font-semibold text-primary">{% trans "Counter-proposal pending" %}</span>
         {% endif %}
-        {% if ar.responded_at %}
-          <span class="ml-auto text-xs text-brown">{{ ar.responded_at|date:"d M Y H:i" }}</span>
+        {% if sr.responded_at %}
+          <span class="ml-auto text-xs text-brown">{{ sr.responded_at|date:"d M Y H:i" }}</span>
         {% endif %}
       </div>
 
-      {% if ar.status == 'accepted' %}
+      {% if sr.status == 'accepted' %}
+        {# Show counter details if the last agreed state was from a counter, else original request #}
         {% if latest_counter_msg and latest_counter_msg.counter_location %}
           <div class="flex items-center gap-2 text-sm text-brown mb-1">
             <i class="fa fa-map-marker text-primary"></i>
             <span>{{ latest_counter_msg.counter_location }}</span>
           </div>
-        {% elif ar.resolved_location %}
+        {% elif sr.resolved_location %}
           <div class="flex items-center gap-2 text-sm text-brown mb-1">
             <i class="fa fa-map-marker text-primary"></i>
-            <span>{{ ar.resolved_location }}</span>
+            <span>{{ sr.resolved_location }}</span>
           </div>
         {% endif %}
         {% if latest_counter_msg and latest_counter_msg.counter_date %}
@@ -60,14 +67,14 @@
             <i class="fa fa-calendar text-primary"></i>
             <span>{{ latest_counter_msg.counter_date|date:"d M Y H:i" }}</span>
           </div>
-        {% elif ar.proposed_date %}
+        {% elif sr.proposed_date %}
           <div class="flex items-center gap-2 text-sm text-brown">
             <i class="fa fa-calendar text-primary"></i>
-            <span>{{ ar.proposed_date|date:"d M Y H:i" }}</span>
+            <span>{{ sr.proposed_date|date:"d M Y H:i" }}</span>
           </div>
         {% endif %}
 
-      {% elif ar.status == 'counter' and latest_status_msg %}
+      {% elif sr.status == 'counter' and latest_status_msg %}
         {% if latest_status_msg.counter_location %}
           <div class="flex items-center gap-2 text-sm text-brown mb-1">
             <i class="fa fa-map-marker text-primary"></i>
@@ -77,7 +84,7 @@
         {% if latest_status_msg.counter_date %}
           <div class="flex items-center gap-2 text-sm text-brown">
             <i class="fa fa-calendar text-primary"></i>
-            <span>{{ latest_status_msg.counter_date|date:"d M Y H:i" }}</span>
+            <span>{{ latest_status_msg.counter_date|date:"d M Y" }}</span>
           </div>
         {% endif %}
       {% endif %}
@@ -88,50 +95,50 @@
   {# ── Original request card ─────────────────────────────────────── #}
   <div class="border rounded-xl bg-secondary p-6 mb-6">
     <div class="flex items-center gap-3 mb-4">
-      {% if ar.from_user.image %}
-        <img src="{{ ar.from_user.image.url }}" alt="" width="48" height="48" class="w-12 h-12 rounded-full object-cover">
+      {% if sr.from_user.image %}
+        <img src="{{ sr.from_user.image.url }}" alt="" width="48" height="48" class="w-12 h-12 rounded-full object-cover">
       {% else %}
         <div class="w-12 h-12 rounded-full bg-primary bg-opacity-20 flex items-center justify-center">
           <i class="fa fa-user text-primary"></i>
         </div>
       {% endif %}
       <div>
-        <a href="{{ ar.from_user.get_absolute_url }}" class="font-semibold text-primary hover:underline">
-          {{ ar.from_user.name|default:ar.from_user.email }}
+        <a href="{{ sr.from_user.get_absolute_url }}" class="font-semibold text-primary hover:underline">
+          {{ sr.from_user.name|default:sr.from_user.email }}
         </a>
-        <p class="text-xs text-brown">{% trans "sent this request" %} · {{ ar.created_at|date:"d M Y H:i" }}</p>
+        <p class="text-xs text-brown">{% trans "expressed interest" %} · {{ sr.created_at|date:"d M Y H:i" }}</p>
       </div>
       <div class="ml-auto">
-        {% if ar.status == 'pending' %}
+        {% if sr.status == 'pending' %}
           <span class="pill bg-yellow text-secondary">{% trans "Pending" %}</span>
-        {% elif ar.status == 'accepted' %}
+        {% elif sr.status == 'accepted' %}
           <span class="pill bg-green text-secondary">{% trans "Accepted" %}</span>
-        {% elif ar.status == 'declined' %}
+        {% elif sr.status == 'declined' %}
           <span class="pill bg-red text-secondary">{% trans "Declined" %}</span>
-        {% elif ar.status == 'counter' %}
+        {% elif sr.status == 'counter' %}
           <span class="pill bg-primary text-secondary">{% trans "Counter-proposed" %}</span>
         {% endif %}
       </div>
     </div>
 
-    <div class="prose text-sm text-brown mb-4">{{ ar.message|linebreaksbr }}</div>
+    <div class="prose text-sm text-brown mb-4">{{ sr.message|linebreaksbr }}</div>
 
-    {% if ar.location_type %}
+    {% if sr.location_type %}
       <div class="text-sm text-brown mb-2">
         <i class="fa fa-map-marker mr-1 text-primary"></i>
-        <strong>{% trans "Location" %}:</strong> {{ ar.resolved_location }}
+        <strong>{% trans "Location" %}:</strong> {{ sr.resolved_location }}
       </div>
     {% endif %}
-    {% if ar.proposed_date %}
+    {% if sr.proposed_date %}
       <div class="text-sm text-brown mb-2">
         <i class="fa fa-calendar mr-1 text-primary"></i>
-        <strong>{% trans "Proposed date" %}:</strong> {{ ar.proposed_date|date:"d M Y H:i" }}
+        <strong>{% trans "Proposed date" %}:</strong> {{ sr.proposed_date|date:"d M Y H:i" }}
       </div>
     {% endif %}
 
-    {% with coords=ar.location_coords %}
+    {% with coords=sr.location_coords %}
       {% if coords.0 and coords.1 %}
-        <div class="rounded shadow overflow-hidden h-[200px] mt-3" id="ar-map"></div>
+        <div class="rounded shadow overflow-hidden h-[200px] mt-3" id="sr-map"></div>
       {% endif %}
     {% endwith %}
   </div>
@@ -274,14 +281,16 @@
       {# Action buttons #}
       <div class="flex flex-wrap gap-2">
 
+        {# Send message — visible when not in counter mode #}
         <button type="submit" name="action" value="message"
           x-show="!isCounter" class="btn">
           <i class="fa fa-paper-plane mr-2"></i>{% trans "Send" %}
         </button>
 
         {% if is_owner %}
+          {# Owner decision buttons — hidden when they sent the latest counter #}
           {% if owner_can_decide %}
-            {% if ar.status == 'pending' %}
+            {% if sr.status == 'pending' %}
               <button type="submit" name="action" value="accept"
                 x-show="!isCounter" class="btn btn-green">
                 <i class="fa fa-check mr-2"></i>{% trans "Accept" %}
@@ -290,12 +299,12 @@
                 x-show="!isCounter" class="btn btn-red">
                 <i class="fa fa-times mr-2"></i>{% trans "Decline" %}
               </button>
-            {% elif ar.status == 'accepted' %}
+            {% elif sr.status == 'accepted' %}
               <button type="submit" name="action" value="decline"
                 x-show="!isCounter" class="btn btn-red">
                 <i class="fa fa-times mr-2"></i>{% trans "Change to Declined" %}
               </button>
-            {% elif ar.status == 'declined' %}
+            {% elif sr.status == 'declined' %}
               <button type="submit" name="action" value="accept"
                 x-show="!isCounter" class="btn btn-green">
                 <i class="fa fa-check mr-2"></i>{% trans "Change to Accepted" %}
@@ -307,12 +316,14 @@
             </span>
           {% endif %}
 
+          {# Propose different location — always available to owner #}
           <button type="button" x-show="!isCounter"
             @click="isCounter = true; $nextTick(() => window.initCounterPicker && window.initCounterPicker())"
             class="btn btn-yellow">
             <i class="fa-solid fa-location-dot mr-2"></i>{% trans "Propose different location" %}
           </button>
 
+          {# Counter mode submit + cancel #}
           <button type="submit" name="action" value="counter"
             x-show="isCounter" style="display:none" class="btn">
             <i class="fa fa-paper-plane mr-2"></i>{% trans "Send counter-proposal" %}
@@ -323,6 +334,7 @@
           </button>
         {% endif %}
 
+        {# Requester can accept/decline the owner's counter-proposal #}
         {% if requester_can_decide %}
           <button type="submit" name="action" value="accept" class="btn btn-green">
             <i class="fa fa-check mr-2"></i>{% trans "Accept" %}
@@ -366,8 +378,8 @@ document.fonts.ready.then(function () {
     return (locType === 'custom') ? 0xF111 : 0xF007;
   }
 
-  {% with coords=ar.location_coords %}{% if coords.0 and coords.1 %}
-  displayMap('ar-map', {{ coords.0 }}, {{ coords.1 }}, badgeFor('{{ ar.location_type }}'));
+  {% with coords=sr.location_coords %}{% if coords.0 and coords.1 %}
+  displayMap('sr-map', {{ coords.0 }}, {{ coords.1 }}, badgeFor('{{ sr.location_type }}'));
   {% endif %}{% endwith %}
 
   {% for msg in thread %}
@@ -434,7 +446,7 @@ document.fonts.ready.then(function () {
 
     var knownCoords = {
       my_place:   {% if owner.location %}[{{ owner.location.x }}, {{ owner.location.y }}, '{{ owner.location_name|escapejs }}']{% else %}null{% endif %},
-      your_place: {% if ar.from_user.location %}[{{ ar.from_user.location.x }}, {{ ar.from_user.location.y }}, '{{ ar.from_user.location_name|escapejs }}']{% else %}null{% endif %},
+      your_place: {% if sr.from_user.location %}[{{ sr.from_user.location.x }}, {{ sr.from_user.location.y }}, '{{ sr.from_user.location_name|escapejs }}']{% else %}null{% endif %},
     };
 
     window.updateCounterMode = function (locType) {

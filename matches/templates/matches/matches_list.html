@@ -30,29 +30,29 @@
 </section>
 {% endif %}
 
-{# ── Freemarket ──────────────────────────────────────────────────── #}
+{# ── Gifts ───────────────────────────────────────────────────────── #}
 {% if fm_mine is not None or fm_theirs is not None %}
 <section class="mb-8">
   <h1 class="text-2xl font-semibold mb-6 font-serif flex items-center gap-2">
-    <i class="fa fa-gift text-primary"></i>{% trans "Gift Market" %}
+    <i class="fa fa-gift text-primary"></i>{% trans "Gifts" %}
   </h1>
 
   {% if fm_theirs %}
     <h2 class="text-sm font-semibold uppercase tracking-wide opacity-60 mb-2">{% trans "Received" %}</h2>
     <div class="space-y-2 mb-6">
-      {% for ar in fm_theirs %}{% include "matches/_adrequest_row.html" with obj=ar show_from=True %}{% endfor %}
+      {% for ar in fm_theirs %}{% include "matches/_gift_offer_row.html" with obj=ar show_from=True %}{% endfor %}
     </div>
   {% endif %}
 
   {% if fm_mine %}
     <h2 class="text-sm font-semibold uppercase tracking-wide opacity-60 mb-2">{% trans "Sent" %}</h2>
     <div class="space-y-2">
-      {% for ar in fm_mine %}{% include "matches/_adrequest_row.html" with obj=ar show_from=False %}{% endfor %}
+      {% for ar in fm_mine %}{% include "matches/_gift_offer_row.html" with obj=ar show_from=False %}{% endfor %}
     </div>
   {% endif %}
 
   {% if not fm_mine and not fm_theirs %}
-    <p class="text-brown opacity-60">{% trans "No gift market offers yet." %}</p>
+    <p class="text-brown opacity-60">{% trans "No gift offers yet." %}</p>
   {% endif %}
 </section>
 {% endif %}
@@ -67,14 +67,14 @@
   {% if skill_theirs %}
     <h2 class="text-sm font-semibold uppercase tracking-wide opacity-60 mb-2">{% trans "Received" %}</h2>
     <div class="space-y-2 mb-6">
-      {% for sr in skill_theirs %}{% include "matches/_skillrequest_row.html" with obj=sr show_from=True %}{% endfor %}
+      {% for sr in skill_theirs %}{% include "matches/_skill_interest_row.html" with obj=sr show_from=True %}{% endfor %}
     </div>
   {% endif %}
 
   {% if skill_mine %}
     <h2 class="text-sm font-semibold uppercase tracking-wide opacity-60 mb-2">{% trans "Sent" %}</h2>
     <div class="space-y-2">
-      {% for sr in skill_mine %}{% include "matches/_skillrequest_row.html" with obj=sr show_from=False %}{% endfor %}
+      {% for sr in skill_mine %}{% include "matches/_skill_interest_row.html" with obj=sr show_from=False %}{% endfor %}
     </div>
   {% endif %}
 

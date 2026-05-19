@@ -72,6 +72,18 @@ class UserSkill(models.Model):
             "user_slug":  _user_slug(self.user),
         })
 
+    def get_edit_url(self):
+        return reverse("skills:userskill_edit", kwargs={
+            "skill_slug": self.skill.slug,
+            "user_slug":  _user_slug(self.user),
+        })
+
+    def get_delete_url(self):
+        return reverse("skills:userskill_delete", kwargs={
+            "skill_slug": self.skill.slug,
+            "user_slug":  _user_slug(self.user),
+        })
+
 
 class CommunitySkill(models.Model):
     community   = models.ForeignKey(Community, on_delete=models.CASCADE, related_name="community_skills")
@@ -95,7 +107,7 @@ class CommunitySkill(models.Model):
         })
 
 
-class SkillRequest(models.Model):
+class SkillInterest(models.Model):
     LOC_MY_PLACE   = "my_place"
     LOC_YOUR_PLACE = "your_place"
     LOC_CUSTOM     = "custom"
@@ -117,19 +129,19 @@ class SkillRequest(models.Model):
     ]
 
     from_user         = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name="skill_requests_sent"
+        User, on_delete=models.CASCADE, related_name="skill_interests_sent"
     )
     user_skill        = models.ForeignKey(
         UserSkill, null=True, blank=True,
-        on_delete=models.CASCADE, related_name="requests"
+        on_delete=models.CASCADE, related_name="interests"
     )
     community_skill   = models.ForeignKey(
         CommunitySkill, null=True, blank=True,
-        on_delete=models.CASCADE, related_name="requests"
+        on_delete=models.CASCADE, related_name="interests"
     )
     wish              = models.ForeignKey(
         'SkillWish', null=True, blank=True,
-        on_delete=models.SET_NULL, related_name="offer_requests"
+        on_delete=models.SET_NULL, related_name="offer_interests"
     )
     message           = models.TextField(_("Message"))
     location_type     = models.CharField(
@@ -154,7 +166,7 @@ class SkillRequest(models.Model):
     created_at        = models.DateTimeField(auto_now_add=True)
 
     def get_absolute_url(self):
-        return reverse("matches:skillrequest_detail", kwargs={"pk": self.pk})
+        return reverse("matches:skill_interest_detail", kwargs={"pk": self.pk})
 
     def resolved_location(self):
         """Human-readable meeting location, resolving my/your place from profiles."""
@@ -190,23 +202,23 @@ class SkillRequest(models.Model):
 
     class Meta:
         ordering = ["-created_at"]
-        verbose_name = _("Skill Request")
-        verbose_name_plural = _("Skill Requests")
+        verbose_name = _("Skill Interest")
+        verbose_name_plural = _("Skill Interests")
 
     def __str__(self):
         target = self.user_skill or self.community_skill
-        return f"Request from {self.from_user} → {target}"
+        return f"Interest from {self.from_user} → {target}"
 
 
-class SkillRequestMessage(models.Model):
-    """One entry in a SkillRequest conversation thread — plain message or a status decision."""
-    request      = models.ForeignKey(SkillRequest, on_delete=models.CASCADE, related_name="thread")
-    sender       = models.ForeignKey(User, on_delete=models.CASCADE, related_name="skill_request_messages")
+class SkillInterestMessage(models.Model):
+    """One entry in a SkillInterest conversation thread — plain message or a status decision."""
+    interest     = models.ForeignKey(SkillInterest, on_delete=models.CASCADE, related_name="thread")
+    sender       = models.ForeignKey(User, on_delete=models.CASCADE, related_name="skill_interest_messages")
     body         = models.TextField(_("Message"), blank=True)
     status_to    = models.CharField(
-        _("Decision"), max_length=20, blank=True, choices=SkillRequest.STATUS_CHOICES
+        _("Decision"), max_length=20, blank=True, choices=SkillInterest.STATUS_CHOICES
     )
-    counter_location_type = models.CharField(max_length=20, blank=True, choices=SkillRequest.LOC_CHOICES)
+    counter_location_type = models.CharField(max_length=20, blank=True, choices=SkillInterest.LOC_CHOICES)
     counter_location      = models.CharField(max_length=255, blank=True)
     counter_lat           = models.FloatField(null=True, blank=True)
     counter_lon           = models.FloatField(null=True, blank=True)
@@ -215,18 +227,18 @@ class SkillRequestMessage(models.Model):
 
     class Meta:
         ordering = ["created_at"]
-        verbose_name = _("Skill Request Message")
-        verbose_name_plural = _("Skill Request Messages")
+        verbose_name = _("Skill Interest Message")
+        verbose_name_plural = _("Skill Interest Messages")
 
     def __str__(self):
-        return f"{self.sender} → {self.request} ({self.status_to or 'message'})"
+        return f"{self.sender} → {self.interest} ({self.status_to or 'message'})"
 
     def resolved_counter_location(self):
         """Human-readable counter-proposed meeting location, resolving my/your place from profiles."""
         if self.counter_location:
             return self.counter_location
-        sr = self.request
-        if self.counter_location_type == SkillRequest.LOC_MY_PLACE:
+        sr = self.interest
+        if self.counter_location_type == SkillInterest.LOC_MY_PLACE:
             if sr.user_skill:
                 owner = sr.user_skill.user
                 loc = owner.location_name or ""
@@ -236,7 +248,7 @@ class SkillRequestMessage(models.Model):
                 loc = sr.community_skill.community.location_name or ""
                 name = sr.community_skill.community.name
                 return f"{name} — {loc}" if loc else name
-        if self.counter_location_type == SkillRequest.LOC_YOUR_PLACE:
+        if self.counter_location_type == SkillInterest.LOC_YOUR_PLACE:
             loc = sr.from_user.location_name or ""
             name = sr.from_user.name or sr.from_user.email
             return f"{name}'s place — {loc}" if loc else f"{name}'s place"
@@ -245,12 +257,12 @@ class SkillRequestMessage(models.Model):
     def counter_location_coords(self):
         if self.counter_lat and self.counter_lon:
             return self.counter_lat, self.counter_lon
-        sr = self.request
-        if self.counter_location_type == SkillRequest.LOC_MY_PLACE:
+        sr = self.interest
+        if self.counter_location_type == SkillInterest.LOC_MY_PLACE:
             owner = sr.user_skill.user if sr.user_skill else None
             if owner and owner.location:
                 return owner.location.y, owner.location.x
-        if self.counter_location_type == SkillRequest.LOC_YOUR_PLACE and sr.from_user.location:
+        if self.counter_location_type == SkillInterest.LOC_YOUR_PLACE and sr.from_user.location:
             return sr.from_user.location.y, sr.from_user.location.x
         return None, None
 

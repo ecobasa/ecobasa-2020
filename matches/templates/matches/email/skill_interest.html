@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{{ ad.get_type_display }} request</title>
+  <title>Skill interest: {{ skill_name }}</title>
 </head>
 <body style="margin:0;padding:0;background-color:#f5ede0;font-family:Georgia,serif;color:#452912;">
   <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f5ede0;padding:32px 0;">
@@ -15,9 +15,7 @@
           <tr>
             <td style="background-color:#da6137;padding:28px 32px;">
               <p style="margin:0;font-size:24px;font-weight:bold;color:#fcf3e5;font-family:Georgia,serif;">ecobasa.org</p>
-              <p style="margin:8px 0 0;font-size:14px;color:#fcf3e5;opacity:0.85;">
-                {% if ad.type == "offer" %}Gift request{% else %}Wish fulfillment offer{% endif %}
-              </p>
+              <p style="margin:8px 0 0;font-size:14px;color:#fcf3e5;opacity:0.85;">Skill interest</p>
             </td>
           </tr>
 
@@ -28,12 +26,8 @@
                 Hello {% if recipient.name %}{{ recipient.name }}{% else %}{{ recipient.email }}{% endif %},
               </p>
               <p style="margin:0 0 24px;font-size:15px;line-height:1.6;">
-                <strong>{% if ar.from_user.name %}{{ ar.from_user.name }}{% else %}{{ ar.from_user.email }}{% endif %}</strong>
-                {% if ad.type == "offer" %}
-                  has requested your gift offer: <strong>{{ ad.title }}</strong>.
-                {% else %}
-                  wants to help fulfill your wish: <strong>{{ ad.title }}</strong>.
-                {% endif %}
+                <strong>{% if sr.from_user.name %}{{ sr.from_user.name }}{% else %}{{ sr.from_user.email }}{% endif %}</strong>
+                {% if is_wish %}wants to teach you: <strong>{{ skill_name }}</strong>.{% else %}has expressed interest in your skill: <strong>{{ skill_name }}</strong>.{% endif %}
               </p>
 
               {# Details box #}
@@ -41,9 +35,14 @@
                 <tr>
                   <td style="padding:20px;">
 
-                    {% if ar.message %}
+                    {% if sr.proposed_date %}
+                    <p style="margin:0 0 4px;font-size:11px;text-transform:uppercase;letter-spacing:0.06em;opacity:0.6;">Proposed date</p>
+                    <p style="margin:0 0 16px;font-size:15px;font-weight:bold;">{{ sr.proposed_date|date:"N j, Y" }}</p>
+                    {% endif %}
+
+                    {% if sr.message %}
                     <p style="margin:0 0 4px;font-size:11px;text-transform:uppercase;letter-spacing:0.06em;opacity:0.6;">Message</p>
-                    <p style="margin:0;font-size:15px;line-height:1.6;white-space:pre-wrap;">{{ ar.message }}</p>
+                    <p style="margin:0;font-size:15px;line-height:1.6;white-space:pre-wrap;">{{ sr.message }}</p>
                     {% endif %}
 
                   </td>
@@ -69,7 +68,7 @@
               </table>
 
               <p style="margin:0 0 8px;font-size:13px;opacity:0.7;text-align:center;">
-                Or <a href="{{ detail_url }}" style="color:#da6137;">view the full request</a> to reply or make a counter-proposal.
+                Or <a href="{{ detail_url }}" style="color:#da6137;">view the full interest</a> to reply or make a counter-proposal.
               </p>
             </td>
           </tr>

@@ -19,12 +19,12 @@ from .emails import (
 from .models import VolunteerRequest, VolunteerRequestMessage
 
 
-# ── Request list (all types) ──────────────────────────────────────────────────
+# ── Matches list (all types) ──────────────────────────────────────────────────
 
 @login_required
-def request_list(request):
+def matches_list(request):
     from gifting.models import AdRequest
-    from skills.models import SkillRequest
+    from skills.models import SkillInterest
 
     t = request.GET.get("type", "")
     ctx = {"request_type": t}
@@ -38,12 +38,12 @@ def request_list(request):
         ctx["fm_theirs"] = AdRequest.objects.filter(ad__owner=request.user).select_related("from_user", "ad")
 
     if t in ("", "skills"):
-        ctx["skill_mine"]   = SkillRequest.objects.filter(from_user=request.user).select_related(
+        ctx["skill_mine"]   = SkillInterest.objects.filter(from_user=request.user).select_related(
             "user_skill__skill", "user_skill__user",
             "community_skill__skill", "community_skill__community",
             "wish__skill", "wish__user",
         )
-        ctx["skill_theirs"] = SkillRequest.objects.filter(
+        ctx["skill_theirs"] = SkillInterest.objects.filter(
             Q(user_skill__user=request.user) |
             Q(community_skill__community__owner=request.user) |
             Q(wish__user=request.user)
@@ -54,7 +54,7 @@ def request_list(request):
             "wish__skill", "wish__user",
         )
 
-    return render(request, "matches/request_list.html", ctx)
+    return render(request, "matches/matches_list.html", ctx)
 
 
 # ── Volunteer request detail ──────────────────────────────────────────────────
@@ -99,10 +99,10 @@ def volunteer_detail(request, pk):
     })
 
 
-# ── Freemarket (ad) request detail ───────────────────────────────────────────
+# ── Gift offer detail ────────────────────────────────────────────────────────
 
 @login_required
-def adrequest_detail(request, pk):
+def gift_offer_detail(request, pk):
     from gifting.models import AdRequest, AdRequestMessage
     from gifting.forms import AdRequestMessageForm
 
@@ -185,7 +185,7 @@ def adrequest_detail(request, pk):
             flash.success(request, _("Counter-proposal sent."))
             return redirect(ar.get_absolute_url())
 
-    return render(request, "matches/adrequest_detail.html", {
+    return render(request, "matches/gift_offer_detail.html", {
         "ar":                   ar,
         "owner":                owner,
         "is_owner":             is_owner,
@@ -201,15 +201,15 @@ def adrequest_detail(request, pk):
     })
 
 
-# ── Skill request detail ──────────────────────────────────────────────────────
+# ── Skill interest detail ────────────────────────────────────────────────────
 
 @login_required
-def skillrequest_detail(request, pk):
-    from skills.models import SkillRequest, SkillRequestMessage
-    from skills.forms import SkillRequestMessageForm
+def skill_interest_detail(request, pk):
+    from skills.models import SkillInterest, SkillInterestMessage
+    from skills.forms import SkillInterestMessageForm
 
     sr = get_object_or_404(
-        SkillRequest.objects.select_related(
+        SkillInterest.objects.select_related(
             "user_skill__user", "user_skill__skill",
             "community_skill__community__owner", "community_skill__skill",
             "wish__user", "wish__community__owner", "wish__skill",
@@ -236,13 +236,13 @@ def skillrequest_detail(request, pk):
     for msg in reversed(thread):
         if msg.status_to and latest_status_msg is None:
             latest_status_msg = msg
-        if msg.status_to == SkillRequest.STATUS_COUNTER and latest_counter_msg is None:
+        if msg.status_to == SkillInterest.STATUS_COUNTER and latest_counter_msg is None:
             latest_counter_msg = msg
         if latest_status_msg and latest_counter_msg:
             break
 
     counter_by_owner  = (
-        sr.status == SkillRequest.STATUS_COUNTER
+        sr.status == SkillInterest.STATUS_COUNTER
         and latest_status_msg is not None
         and latest_status_msg.sender_id == owner.pk
     )
@@ -255,16 +255,16 @@ def skillrequest_detail(request, pk):
         if action == "message":
             body = request.POST.get("body", "").strip()
             if body:
-                SkillRequestMessage.objects.create(request=sr, sender=request.user, body=body)
+                SkillInterestMessage.objects.create(interest=sr, sender=request.user, body=body)
             return redirect(sr.get_absolute_url())
 
         if action in ("accept", "decline") and (owner_can_decide or requester_can_decide):
             new_status = {
-                "accept":  SkillRequest.STATUS_ACCEPTED,
-                "decline": SkillRequest.STATUS_DECLINED,
+                "accept":  SkillInterest.STATUS_ACCEPTED,
+                "decline": SkillInterest.STATUS_DECLINED,
             }[action]
-            SkillRequestMessage.objects.create(
-                request=sr, sender=request.user,
+            SkillInterestMessage.objects.create(
+                interest=sr, sender=request.user,
                 body=request.POST.get("body", "").strip(), status_to=new_status,
             )
             sr.status       = new_status
@@ -275,10 +275,10 @@ def skillrequest_detail(request, pk):
             return redirect(sr.get_absolute_url())
 
         if action == "counter" and is_owner:
-            msg = SkillRequestMessage(
-                request=sr, sender=request.user,
+            msg = SkillInterestMessage(
+                interest=sr, sender=request.user,
                 body=request.POST.get("body", "").strip(),
-                status_to=SkillRequest.STATUS_COUNTER,
+                status_to=SkillInterest.STATUS_COUNTER,
             )
             msg.counter_location_type = request.POST.get("counter_location_type", "")
             msg.counter_location      = request.POST.get("counter_location", "")
@@ -296,14 +296,14 @@ def skillrequest_detail(request, pk):
             except ValueError:
                 msg.counter_date = None
             msg.save()
-            sr.status       = SkillRequest.STATUS_COUNTER
+            sr.status       = SkillInterest.STATUS_COUNTER
             sr.responded_at = timezone.now()
             sr.save()
             _notify_skill_response(sr, actor=request.user, http_request=request)
             flash.success(request, _("Counter-proposal sent."))
             return redirect(sr.get_absolute_url())
 
-    return render(request, "matches/skillrequest_detail.html", {
+    return render(request, "matches/skill_interest_detail.html", {
         "sr":                   sr,
         "owner":                owner,
         "is_owner":             is_owner,
@@ -313,8 +313,8 @@ def skillrequest_detail(request, pk):
         "latest_counter_msg":   latest_counter_msg,
         "owner_can_decide":     owner_can_decide,
         "requester_can_decide": requester_can_decide,
-        "message_form":         SkillRequestMessageForm(),
-        "loc_choices":          SkillRequest.LOC_CHOICES,
+        "message_form":         SkillInterestMessageForm(),
+        "loc_choices":          SkillInterest.LOC_CHOICES,
         "request_type":         "skills",
     })
 
@@ -336,7 +336,7 @@ def email_action(request, token):
         return _email_action_volunteer(request, pk, action)
     elif request_type == "ad_request":
         return _email_action_ad(request, pk, action)
-    elif request_type == "skill_request":
+    elif request_type == "skill_interest":
         return _email_action_skill(request, pk, action)
     else:
         return HttpResponseBadRequest("Unknown request type.")
@@ -345,7 +345,7 @@ def email_action(request, token):
 def _email_action_volunteer(request, pk, action):
     vr = get_object_or_404(VolunteerRequest, pk=pk)
     if vr.status != "pending":
-        flash.info(request, _("This request has already been responded to."))
+        flash.info(request, _("This interest has already been responded to."))
         return redirect(vr.get_absolute_url())
 
     vr.status       = "accepted" if action == "accept" else "declined"
@@ -363,7 +363,7 @@ def _email_action_ad(request, pk, action):
     from gifting.models import AdRequest, AdRequestMessage
     ar = get_object_or_404(AdRequest.objects.select_related("ad", "ad__owner", "from_user"), pk=pk)
     if ar.status != AdRequest.STATUS_PENDING:
-        flash.info(request, _("This request has already been responded to."))
+        flash.info(request, _("This interest has already been responded to."))
         return redirect(ar.get_absolute_url())
 
     actor           = ar.ad.owner
@@ -380,17 +380,17 @@ def _email_action_ad(request, pk, action):
 
 
 def _email_action_skill(request, pk, action):
-    from skills.models import SkillRequest, SkillRequestMessage
+    from skills.models import SkillInterest, SkillInterestMessage
     sr = get_object_or_404(
-        SkillRequest.objects.select_related(
+        SkillInterest.objects.select_related(
             "user_skill", "user_skill__user", "user_skill__skill",
             "community_skill", "community_skill__community",
             "community_skill__community__owner", "community_skill__skill",
             "from_user",
         ), pk=pk,
     )
-    if sr.status != SkillRequest.STATUS_PENDING:
-        flash.info(request, _("This request has already been responded to."))
+    if sr.status != SkillInterest.STATUS_PENDING:
+        flash.info(request, _("This interest has already been responded to."))
         return redirect(sr.get_absolute_url())
 
     if sr.user_skill:
@@ -400,10 +400,10 @@ def _email_action_skill(request, pk, action):
         actor      = sr.community_skill.community.owner
         skill_name = sr.community_skill.skill.name
 
-    sr.status       = SkillRequest.STATUS_ACCEPTED if action == "accept" else SkillRequest.STATUS_DECLINED
+    sr.status       = SkillInterest.STATUS_ACCEPTED if action == "accept" else SkillInterest.STATUS_DECLINED
     sr.responded_at = timezone.now()
     sr.save(update_fields=["status", "responded_at"])
-    SkillRequestMessage.objects.create(request=sr, sender=actor, body="", status_to=sr.status)
+    SkillInterestMessage.objects.create(interest=sr, sender=actor, body="", status_to=sr.status)
     send_skill_response_email(sr, actor, request)
     _notify_skill_response_from_token(sr, actor, skill_name)
 
@@ -442,7 +442,7 @@ def _notify_ad_response(ad_request, actor, http_request=None):
     }
     tag        = tag_map.get(ad_request.status, "")
     actor_name = actor.name or actor.email
-    verb = _g("%(actor)s %(status)s your request: %(title)s") % {
+    verb = _g("%(actor)s %(status)s your interest in: %(title)s") % {
         "actor": actor_name, "status": ad_request.get_status_display().lower(), "title": ad.title,
     }
     Notification.objects.create(
@@ -453,34 +453,37 @@ def _notify_ad_response(ad_request, actor, http_request=None):
         send_ad_response_email(ad_request, actor, http_request)
 
 
-def _notify_skill_response(skill_request, actor, http_request=None):
-    from skills.models import SkillRequest
+def _notify_skill_response(skill_interest, actor, http_request=None):
+    from skills.models import SkillInterest
     from django.utils.translation import gettext as _g
-    if skill_request.user_skill:
-        skill_name = skill_request.user_skill.skill.name
-        owner      = skill_request.user_skill.user
+    if skill_interest.user_skill:
+        skill_name = skill_interest.user_skill.skill.name
+        owner      = skill_interest.user_skill.user
+    elif skill_interest.wish:
+        skill_name = skill_interest.wish.skill.name
+        owner      = skill_interest.wish.user or (skill_interest.wish.community.owner if skill_interest.wish.community else None)
     else:
-        skill_name = skill_request.community_skill.skill.name
-        owner      = skill_request.community_skill.community.owner
-    recipient = skill_request.from_user if actor == owner else owner
+        skill_name = skill_interest.community_skill.skill.name
+        owner      = skill_interest.community_skill.community.owner
+    recipient = skill_interest.from_user if actor == owner else owner
     if recipient is None:
         return
     tag_map = {
-        SkillRequest.STATUS_ACCEPTED: "accepted",
-        SkillRequest.STATUS_DECLINED: "declined",
-        SkillRequest.STATUS_COUNTER:  "counter",
+        SkillInterest.STATUS_ACCEPTED: "accepted",
+        SkillInterest.STATUS_DECLINED: "declined",
+        SkillInterest.STATUS_COUNTER:  "counter",
     }
-    tag        = tag_map.get(skill_request.status, "")
+    tag        = tag_map.get(skill_interest.status, "")
     actor_name = actor.name or actor.email
-    verb = _g("%(actor)s %(status)s your skill request: %(skill)s") % {
-        "actor": actor_name, "status": skill_request.get_status_display().lower(), "skill": skill_name,
+    verb = _g("%(actor)s %(status)s your skill interest in: %(skill)s") % {
+        "actor": actor_name, "status": skill_interest.get_status_display().lower(), "skill": skill_name,
     }
     Notification.objects.create(
         recipient=recipient, actor=actor,
-        verb=str(verb), link=skill_request.get_absolute_url(), tag=tag,
+        verb=str(verb), link=skill_interest.get_absolute_url(), tag=tag,
     )
     if http_request:
-        send_skill_response_email(skill_request, actor, http_request)
+        send_skill_response_email(skill_interest, actor, http_request)
 
 
 def _notify_ad_response_from_token(ar, actor):
@@ -489,7 +492,7 @@ def _notify_ad_response_from_token(ar, actor):
     Notification.objects.create(
         recipient=ar.from_user,
         actor=actor,
-        verb=_g("%(actor)s %(status)s your request: %(title)s") % {
+        verb=_g("%(actor)s %(status)s your interest in: %(title)s") % {
             "actor": actor.name or actor.email,
             "status": ar.get_status_display().lower(),
             "title": ar.ad.title,
@@ -505,7 +508,7 @@ def _notify_skill_response_from_token(sr, actor, skill_name):
     Notification.objects.create(
         recipient=sr.from_user,
         actor=actor,
-        verb=_g("%(actor)s %(status)s your skill request: %(skill)s") % {
+        verb=_g("%(actor)s %(status)s your skill interest in: %(skill)s") % {
             "actor": actor.name or actor.email,
             "status": sr.get_status_display().lower(),
             "skill": skill_name,

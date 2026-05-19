@@ -3,7 +3,7 @@ from django.utils.translation import gettext_lazy as _
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Field, Submit
 
-from .models import UserSkill, CommunitySkill, SkillRequest, SkillRequestMessage, Skill, SkillWish
+from .models import UserSkill, CommunitySkill, SkillInterest, SkillInterestMessage, Skill, SkillWish
 
 
 class SkillAutocompleteWidget(forms.TextInput):
@@ -221,12 +221,12 @@ class SkillWishEditForm(forms.Form):
         return wish
 
 
-class SkillRequestForm(forms.ModelForm):
+class SkillInterestForm(forms.ModelForm):
     proposed_lat = forms.FloatField(required=False, widget=forms.HiddenInput())
     proposed_lon = forms.FloatField(required=False, widget=forms.HiddenInput())
 
     class Meta:
-        model  = SkillRequest
+        model  = SkillInterest
         fields = ["message", "location_type", "proposed_location", "proposed_lat", "proposed_lon", "proposed_date"]
         widgets = {
             "message":           forms.Textarea(attrs={"rows": 4, "class": "form-input"}),
@@ -248,18 +248,18 @@ class SkillRequestForm(forms.ModelForm):
             Field("proposed_lat"),
             Field("proposed_lon"),
             Field("proposed_date"),
-            Submit("submit", _("Send request"), css_class="btn mt-2"),
+            Submit("submit", _("Express Interest"), css_class="btn mt-2"),
         )
 
 
-class SkillRequestResponseForm(forms.Form):
+class SkillInterestResponseForm(forms.Form):
     response_message    = forms.CharField(
         label=_("Message"), required=False,
         widget=forms.Textarea(attrs={"rows": 3, "class": "form-input"}),
     )
     counter_location_type = forms.ChoiceField(
         label=_("Counter location type"),
-        choices=SkillRequest.LOC_CHOICES,
+        choices=SkillInterest.LOC_CHOICES,
         required=False,
         widget=forms.RadioSelect(),
     )
@@ -290,7 +290,7 @@ class SkillRequestResponseForm(forms.Form):
         )
 
 
-class SkillRequestMessageForm(forms.Form):
+class SkillInterestMessageForm(forms.Form):
     body = forms.CharField(
         label=_("Message"),
         required=False,

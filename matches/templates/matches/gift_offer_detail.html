@@ -1,22 +1,22 @@
-{% extends 'base.html' %}
+{% extends 'matches/base.html' %}
 {% load i18n %}
 
-{% block head_title %}{% trans "Ad Request" %} — ecobasa{% endblock %}
+{% block head_title %}{% trans "Gift Interest" %} — ecobasa{% endblock %}
 
 {% block extrahead %}
 {{ block.super }}
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v7.2.2/ol.css">
 {% endblock %}
 
-{% block content %}
-<div class="max-w-2xl mx-auto px-4 py-8">
+{% block giving_content %}
+<div>
 
   <div class="mb-2 text-sm text-brown">
-    <a href="{% url 'gifting:search' %}" class="hover:underline">{% trans "Free Market" %}</a>
+    <a href="{% url 'gifting:search' %}" class="hover:underline">{% trans "Gifts" %}</a>
     <span class="mx-1">/</span>
     <a href="{{ ar.ad.get_absolute_url }}" class="hover:underline">{{ ar.ad.title }}</a>
     <span class="mx-1">/</span>
-    <span>{% trans "Request" %} #{{ ar.pk }}</span>
+    <span>{% trans "Interest" %} #{{ ar.pk }}</span>
   </div>
 
   {# ── Status summary banner ────────────────────────────────────────── #}
@@ -33,7 +33,7 @@
           <span class="font-semibold text-green">{% trans "Exchange confirmed" %}</span>
         {% elif ar.status == 'declined' %}
           <i class="fa fa-times-circle text-red text-xl"></i>
-          <span class="font-semibold text-red">{% trans "Request declined" %}</span>
+          <span class="font-semibold text-red">{% trans "Declined" %}</span>
         {% elif ar.status == 'counter' %}
           <i class="fa fa-exchange text-primary text-xl"></i>
           <span class="font-semibold text-primary">{% trans "Counter-proposal pending" %}</span>
@@ -99,7 +99,7 @@
         <a href="{{ ar.from_user.get_absolute_url }}" class="font-semibold text-primary hover:underline">
           {{ ar.from_user.name|default:ar.from_user.email }}
         </a>
-        <p class="text-xs text-brown">{% trans "sent this request" %} · {{ ar.created_at|date:"d M Y H:i" }}</p>
+        <p class="text-xs text-brown">{% trans "expressed interest" %} · {{ ar.created_at|date:"d M Y H:i" }}</p>
       </div>
       <div class="ml-auto">
         {% if ar.status == 'pending' %}

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Volunteer request update</title>
+  <title>Volunteer application update</title>
 </head>
 <body style="margin:0;padding:0;background-color:#f5ede0;font-family:Georgia,serif;color:#452912;">
   <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f5ede0;padding:32px 0;">
@@ -16,7 +16,7 @@
             <td style="background-color:{% if vr.status == 'accepted' %}#5A5527{% else %}#e34a26{% endif %};padding:28px 32px;">
               <p style="margin:0;font-size:24px;font-weight:bold;color:#fcf3e5;font-family:Georgia,serif;">ecobasa.org</p>
               <p style="margin:8px 0 0;font-size:14px;color:#fcf3e5;opacity:0.85;">
-                Your volunteer request has been {{ status_label }}
+                Your volunteer application has been {{ status_label }}
               </p>
             </td>
           </tr>
@@ -27,7 +27,7 @@
                 Hello {% if recipient.name %}{{ recipient.name }}{% else %}{{ recipient.email }}{% endif %},
               </p>
               <p style="margin:0 0 24px;font-size:15px;line-height:1.6;">
-                Your volunteer stay request at <strong>{{ vr.community.name }}</strong> has been
+                Your volunteer application at <strong>{{ vr.community.name }}</strong> has been
                 <strong>{{ status_label }}</strong>
                 {% if vr.responded_at %}on {{ vr.responded_at|date:"N j, Y" }}{% endif %}.
               </p>
@@ -36,7 +36,7 @@
               <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f5ede0;border-radius:6px;border:1px solid #d4b896;margin-bottom:24px;">
                 <tr>
                   <td style="padding:16px 20px;">
-                    <p style="margin:0 0 4px;font-size:11px;text-transform:uppercase;letter-spacing:0.06em;opacity:0.6;">Requested stay</p>
+                    <p style="margin:0 0 4px;font-size:11px;text-transform:uppercase;letter-spacing:0.06em;opacity:0.6;">Proposed stay</p>
                     <p style="margin:0;font-size:15px;font-weight:bold;">
                       {% if vr.stay_from %}{{ vr.stay_from|date:"N j, Y" }}{% endif %}
                       {% if vr.stay_from and vr.stay_to %} &ndash; {% endif %}
@@ -50,7 +50,7 @@
               <p style="margin:0 0 24px;text-align:center;">
                 <a href="{{ detail_url }}"
                    style="display:inline-block;background-color:#da6137;color:#fcf3e5;text-decoration:none;font-size:15px;font-weight:bold;padding:12px 28px;border-radius:6px;font-family:Arial,sans-serif;">
-                  View request &rarr;
+                  View &rarr;
                 </a>
               </p>
             </td>

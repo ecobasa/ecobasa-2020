@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Volunteer stay request</title>
+  <title>Gift interest: {{ ad.title }}</title>
 </head>
 <body style="margin:0;padding:0;background-color:#f5ede0;font-family:Georgia,serif;color:#452912;">
   <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f5ede0;padding:32px 0;">
@@ -15,7 +15,9 @@
           <tr>
             <td style="background-color:#da6137;padding:28px 32px;">
               <p style="margin:0;font-size:24px;font-weight:bold;color:#fcf3e5;font-family:Georgia,serif;">ecobasa.org</p>
-              <p style="margin:8px 0 0;font-size:14px;color:#fcf3e5;opacity:0.85;">Volunteer stay request</p>
+              <p style="margin:8px 0 0;font-size:14px;color:#fcf3e5;opacity:0.85;">
+                {% if ad.type == "offer" %}Gift interest{% else %}Wish interest{% endif %}
+              </p>
             </td>
           </tr>
 
@@ -26,8 +28,12 @@
                 Hello {% if recipient.name %}{{ recipient.name }}{% else %}{{ recipient.email }}{% endif %},
               </p>
               <p style="margin:0 0 24px;font-size:15px;line-height:1.6;">
-                <strong>{% if vr.from_user.name %}{{ vr.from_user.name }}{% else %}{{ vr.from_user.email }}{% endif %}</strong>
-                has sent a volunteer stay request for <strong>{{ vr.community.name }}</strong>.
+                <strong>{% if ar.from_user.name %}{{ ar.from_user.name }}{% else %}{{ ar.from_user.email }}{% endif %}</strong>
+                {% if ad.type == "offer" %}
+                  has expressed interest in your gift: <strong>{{ ad.title }}</strong>.
+                {% else %}
+                  wants to fulfill your wish: <strong>{{ ad.title }}</strong>.
+                {% endif %}
               </p>
 
               {# Details box #}
@@ -35,35 +41,9 @@
                 <tr>
                   <td style="padding:20px;">
 
-                    {% if vr.stay_from or vr.stay_to %}
-                    <p style="margin:0 0 4px;font-size:11px;text-transform:uppercase;letter-spacing:0.06em;opacity:0.6;">Requested stay</p>
-                    <p style="margin:0 0 16px;font-size:15px;font-weight:bold;">
-                      {% if vr.stay_from %}{{ vr.stay_from|date:"N j, Y" }}{% endif %}
-                      {% if vr.stay_from and vr.stay_to %} &ndash; {% endif %}
-                      {% if vr.stay_to %}{{ vr.stay_to|date:"N j, Y" }}{% endif %}
-                    </p>
-                    {% endif %}
-
-                    {% if vr.practice_skills %}
-                    <p style="margin:0 0 4px;font-size:11px;text-transform:uppercase;letter-spacing:0.06em;opacity:0.6;">
-                      {% if vr.volunteer_mode == "wish" %}Skills to offer{% else %}Skills to learn and practice at your place{% endif %}
-                    </p>
-                    <p style="margin:0 0 4px;font-size:15px;">{{ vr.practice_skills }}</p>
-                    {% if vr.practice_skill_level %}
-                    <p style="margin:0 0 16px;font-size:13px;opacity:0.7;">Current level: {{ vr.practice_skill_level }}</p>
-                    {% else %}
-                    <p style="margin:0 0 12px;"></p>
-                    {% endif %}
-                    {% endif %}
-
-                    {% if vr.sender_skills %}
-                    <p style="margin:0 0 4px;font-size:11px;text-transform:uppercase;letter-spacing:0.06em;opacity:0.6;">Other skills I can help with</p>
-                    <p style="margin:0 0 16px;font-size:15px;">{{ vr.sender_skills }}</p>
-                    {% endif %}
-
-                    {% if vr.message %}
+                    {% if ar.message %}
                     <p style="margin:0 0 4px;font-size:11px;text-transform:uppercase;letter-spacing:0.06em;opacity:0.6;">Message</p>
-                    <p style="margin:0;font-size:15px;line-height:1.6;white-space:pre-wrap;">{{ vr.message }}</p>
+                    <p style="margin:0;font-size:15px;line-height:1.6;white-space:pre-wrap;">{{ ar.message }}</p>
                     {% endif %}
 
                   </td>
@@ -89,7 +69,7 @@
               </table>
 
               <p style="margin:0 0 8px;font-size:13px;opacity:0.7;text-align:center;">
-                Or <a href="{{ detail_url }}" style="color:#da6137;">view the full request</a> to reply or respond later.
+                Or <a href="{{ detail_url }}" style="color:#da6137;">view the full interest</a> to reply or make a counter-proposal.
               </p>
             </td>
           </tr>
