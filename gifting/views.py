@@ -145,14 +145,16 @@ def _apply_bbox(qs, bbox_param, location_field="location"):
         return qs
 
 
-def _filtered_ads(request):
+def _filtered_ads(request, require_location=True):
     types = request.GET.getlist("type")
     ad_types = [t for t in types if t != "skill"]
 
     if types and not ad_types:
         return Ad.objects.none()
 
-    base_qs = Ad.objects.filter(location__isnull=False).select_related("owner")
+    base_qs = Ad.objects.select_related("owner")
+    if require_location:
+        base_qs = base_qs.filter(location__isnull=False)
 
     if "skill" in types:
         data = request.GET.copy()
@@ -164,15 +166,16 @@ def _filtered_ads(request):
     return f.qs
 
 
-def _skill_communities(request):
+def _skill_communities(request, require_location=True):
     types = request.GET.getlist("type")
     if types and "skill" not in types:
         return Community.objects.none()
 
-    qs = Community.objects.filter(
-        location__isnull=False,
-        community_skills__isnull=False,
-    ).prefetch_related("community_skills__skill", "photos").distinct()
+    filters = {"community_skills__isnull": False}
+    if require_location:
+        filters["location__isnull"] = False
+
+    qs = Community.objects.filter(**filters).prefetch_related("community_skills__skill", "photos").distinct()
 
     q = request.GET.get("search", "").strip()
     if q:
@@ -186,15 +189,16 @@ def _skill_communities(request):
     return qs
 
 
-def _skill_users(request):
+def _skill_users(request, require_location=True):
     types = request.GET.getlist("type")
     if types and "skill" not in types:
         return User.objects.none()
 
-    qs = User.objects.filter(
-        location__isnull=False,
-        user_skills__isnull=False,
-    ).prefetch_related("user_skills__skill").distinct()
+    filters = {"user_skills__isnull": False}
+    if require_location:
+        filters["location__isnull"] = False
+
+    qs = User.objects.filter(**filters).prefetch_related("user_skills__skill").distinct()
 
     q = request.GET.get("search", "").strip()
     if q:
@@ -302,15 +306,15 @@ def gifting_markers(request):
 def gifting_list_partial(request):
     page_num = int(request.GET.get("page", 1))
 
-    ads_queryset = _filtered_ads(request)
+    ads_queryset = _filtered_ads(request, require_location=False)
     if not request.GET.get('location'):
         ads_queryset = ads_queryset.order_by("-created_at")
 
     paginator = Paginator(ads_queryset, 20)
     page = paginator.get_page(page_num)
 
-    sc_qs = _skill_communities(request)
-    su_qs = _skill_users(request)
+    sc_qs = _skill_communities(request, require_location=False)
+    su_qs = _skill_users(request, require_location=False)
 
     skill_communities = []
     skill_users = []

@@ -266,9 +266,9 @@ def update(request, slug):
 
 # ── Helpers ──────────────────────────────────────────────────────────
 
-def _base_qs(request):
+def _base_qs(request, require_location=True):
     """Return a Community queryset filtered by ?q= search term."""
-    qs = Community.objects.filter(location__isnull=False)  # PostGIS point field
+    qs = Community.objects.filter(location__isnull=False) if require_location else Community.objects.all()
     q = request.GET.get("q", "").strip()
     if q:
         qs = qs.filter(
@@ -374,7 +374,7 @@ def community_list_partial(request):
                   nearest-first so the user naturally sees close ones first.
         page      page number for infinite scroll (default 1)
     """
-    qs = _base_qs(request).prefetch_related("skills", "photos")
+    qs = _base_qs(request, require_location=False).prefetch_related("skills", "photos")
 
     # ── Proximity sorting ─────────────────────────────────────────────
     # When the user clicks "near me", the browser sends location=lat,lon.
