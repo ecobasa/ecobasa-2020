@@ -122,13 +122,13 @@
         </div>
       <div class="ml-auto">
         {% if sr.status == 'pending' %}
-          <span class="pill bg-yellow text-secondary">{% trans "Pending" %}</span>
+          <span class="pill bg-yellow">{% trans "Pending" %}</span>
         {% elif sr.status == 'accepted' %}
-          <span class="pill bg-green text-secondary">{% trans "Accepted" %}</span>
+          <span class="pill bg-green">{% trans "Accepted" %}</span>
         {% elif sr.status == 'declined' %}
-          <span class="pill bg-red text-secondary">{% trans "Declined" %}</span>
+          <span class="pill bg-red">{% trans "Declined" %}</span>
         {% elif sr.status == 'counter' %}
-          <span class="pill bg-primary text-secondary">{% trans "Counter-proposed" %}</span>
+          <span class="pill bg-primary">{% trans "Counter-proposed" %}</span>
         {% endif %}
       </div>
     </div>
@@ -178,9 +178,9 @@
             </a>
             {% if msg.status_to %}
               <span class="pill text-xs
-                {% if msg.status_to == 'accepted' %}bg-green text-secondary
-                {% elif msg.status_to == 'declined' %}bg-red text-secondary
-                {% elif msg.status_to == 'counter' %}bg-yellow text-secondary
+                {% if msg.status_to == 'accepted' %}bg-green
+                {% elif msg.status_to == 'declined' %}bg-red
+                {% elif msg.status_to == 'counter' %}bg-yellow
                 {% endif %}">
                 {% if msg.status_to == 'accepted' %}<i class="fa fa-check mr-1"></i>{% trans "Accepted" %}
                 {% elif msg.status_to == 'declined' %}<i class="fa fa-times mr-1"></i>{% trans "Declined" %}

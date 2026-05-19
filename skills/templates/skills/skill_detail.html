@@ -44,7 +44,7 @@
           <div class="min-w-0">
             <div class="font-semibold text-primary truncate">{{ us.user.name|default:us.user.username }}</div>
             {% if us.level %}
-              <div class="text-xs pill bg-primary text-secondary inline-block mt-0.5">{{ us.get_level_display }}</div>
+              <div class="text-xs pill bg-primary inline-block mt-0.5">{{ us.get_level_display }}</div>
             {% endif %}
             {% if us.description %}
               <p class="text-xs text-brown mt-1 line-clamp-2">{{ us.description }}</p>

@@ -34,11 +34,11 @@
           {{ profile.name|default:profile.username }}
         </a>
         <div class="flex items-center gap-2 mt-1">
-          <span class="pill bg-yellow text-secondary">
+          <span class="pill bg-yellow">
             <i class="fa fa-book mr-1"></i>{% trans "wants to learn" %} {{ skill.name }}
           </span>
           {% if wish.level %}
-            <span class="pill bg-primary text-secondary text-xs">{% trans "current level:" %} {{ wish.get_level_display }}</span>
+            <span class="pill bg-primary text-xs">{% trans "current level:" %} {{ wish.get_level_display }}</span>
           {% endif %}
         </div>
       </div>
@@ -69,7 +69,7 @@
       {% if viewer_user_skill.level or viewer_user_skill.description %}
         <div class="flex items-center gap-2 mb-4 text-sm text-brown">
           {% if viewer_user_skill.level %}
-            <span class="pill bg-purple text-secondary text-xs">{{ viewer_user_skill.get_level_display }}</span>
+            <span class="pill bg-purple text-xs">{{ viewer_user_skill.get_level_display }}</span>
           {% endif %}
           {% if viewer_user_skill.description %}
             <span class="italic">{{ viewer_user_skill.description|truncatechars:80 }}</span>

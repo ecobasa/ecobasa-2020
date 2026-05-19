@@ -644,11 +644,11 @@ function buildCommunityPopupHTML(f) {
   if (stats.length) html += `<div class="popup-meta">${stats.join(' | ')}</div>`;
 
   if (type === 'Permaculture Farm')
-    html += `<span class="pill bg-green text-secondary"><i class="fa fa-leaf mr-1"></i>${type}</span>`;
+    html += `<span class="pill bg-green"><i class="fa fa-leaf mr-1"></i>${type}</span>`;
   else if (type === 'Place for Projects')
-    html += `<span class="pill bg-orange text-secondary"><i class="fa fa-map-marker-alt mr-1"></i>${type}</span>`;
+    html += `<span class="pill bg-orange"><i class="fa fa-map-marker-alt mr-1"></i>${type}</span>`;
   else
-    html += `<span class="pill bg-primary text-secondary"><i class="fa fa-home mr-1"></i>${type}</span>`;
+    html += `<span class="pill bg-primary"><i class="fa fa-home mr-1"></i>${type}</span>`;
 
   if (name) html += `<h3>${url ? `<a href="${url}">${name}</a>` : name}</h3>`;
 
@@ -659,7 +659,7 @@ function buildCommunityPopupHTML(f) {
 
   if (skills.length) {
     html += '<div class="m-2 truncate">';
-    skills.slice(0, 5).forEach(s => { html += `<span class="pill bg-purple text-secondary mr-2">${s}</span>`; });
+    skills.slice(0, 5).forEach(s => { html += `<span class="pill bg-purple mr-2">${s}</span>`; });
     html += '</div>';
   }
 

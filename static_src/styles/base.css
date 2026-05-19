@@ -134,7 +134,7 @@ nav {
 }
 
 .pill {
-	@apply px-3 py-1 rounded-full text-xs font-semibold inline-flex items-center;
+	@apply px-3 py-2 rounded-full text-xs font-semibold inline-flex items-center text-secondary hover:text-secondary hover:bg-primary transition-colors duration-150;
 }
 
 .form-label {

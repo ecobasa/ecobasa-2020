@@ -114,7 +114,7 @@
 		<div class="flex flex-wrap gap-2 mb-2">
 			{% for cs in community_skills %}
 				<a {% if request.user == community.owner %}href="{% url 'skills:communityskill_edit' cs.skill.slug community.slug %}"{% elif request.user.is_authenticated %}href="#" @click.prevent="openVolunteer('{{ cs.skill.name|escapejs }}', 'offer', {{ cs.skill_id }})"{% else %}href="{% url 'users:login' %}?next={{ request.path }}"{% endif %}
-				   class="pill bg-purple text-secondary hover:opacity-80 transition-opacity">
+				   class="pill bg-purple hover:bg-purple hover:opacity-80 transition-opacity">
 					<i class="mr-1 fa fa-graduation-cap"></i>{{ cs.skill.name }}
 				</a>
 			{% endfor %}
@@ -136,9 +136,9 @@
 		<div class="flex flex-wrap gap-2 mb-2">
 			{% for sw in skill_wishes %}
 				<a {% if request.user == community.owner %}href="{% url 'skills:skillwish_community_edit' sw.pk community.slug %}"{% elif request.user.is_authenticated %}href="#" @click.prevent="openVolunteer('{{ sw.skill.name|escapejs }}', 'wish', {{ sw.skill_id }})"{% else %}href="{% url 'users:login' %}?next={{ request.path }}"{% endif %}
-				   class="pill bg-yellow text-secondary hover:opacity-80 transition-opacity">
+				   class="pill bg-yellow hover:bg-yellow hover:opacity-80 transition-opacity">
 					<i class="mr-1 fa fa-search"></i>{{ sw.skill.name }}
-					{% if sw.level %}<span class="opacity-70 text-xs">({{ sw.get_level_display }}+)</span>{% endif %}
+					{% if sw.level %}<span class="opacity-70 text-xs ml-1">({{ sw.get_level_display }}+)</span>{% endif %}
 				</a>
 			{% endfor %}
 		</div>
@@ -224,7 +224,7 @@
 						</button>
 					{% else %}
 						<a class="btn w-full" href="{% url 'users:login' %}?next={{ request.path }}">
-							<i class="fa fa-hands-helping mr-1"></i>{% trans "Request volunteering stay" %}
+							<i class="fa fa-hands-helping mr-1"></i>{% trans "Apply for volunteering stay" %}
 						</a>
 					{% endif %}
 				{% endif %}
@@ -315,8 +315,8 @@
 				</label>
 			</div>
 			<div class="mt-4 flex justify-end gap-3">
-				<button type="button" @click="vOpen = false" class="btn btn-lg">{% trans "Cancel" %}</button>
-				<button type="submit" class="btn btn-lg bg-primary text-secondary">{% trans "Send request" %}</button>
+				<button type="button" @click="vOpen = false" class="btn btn-lg btn-purple"><i class="fa-solid fa-times mr-2"></i>{% trans "Cancel" %}</button>
+				<button type="submit" class="btn btn-lg"><i class="fa-solid fa-paper-plane mr-2"></i>{% trans "Send Application" %}</button>
 			</div>
 		</form>
 	</div>

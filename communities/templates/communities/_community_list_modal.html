@@ -43,7 +43,7 @@
         </div>
       </div>
       <div class="text-right flex-shrink-0">
-        <span class="pill bg-primary text-secondary">{{ community.get_status_display }}</span>
+        <span class="pill bg-primary">{{ community.get_status_display }}</span>
         <div class="mt-2 flex justify-end gap-3 text-sm">
           {% if community.inhabitants %}<span><i class="fa fa-users mr-1"></i>{{ community.inhabitants }}</span>{% endif %}
           {% if community.children %}<span><i class="fa fa-child mr-1"></i>{{ community.children }}</span>{% endif %}
@@ -57,7 +57,7 @@
     {% if community.skills.all %}
     <div class="mt-2 flex flex-wrap gap-1">
       {% for skill in community.skills.all %}
-        <span class="pill text-secondary bg-purple">
+        <span class="pill bg-purple">
           <i class="fa fa-graduation-cap mr-1"></i>{{ skill }}
         </span>
       {% endfor %}

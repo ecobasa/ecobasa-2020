@@ -86,11 +86,11 @@ def _render_skill_pills(skills_list, sender_username):
             url = None
         if url:
             html.append(
-                '<a href="%s" class="pill bg-primary text-secondary hover:opacity-80 transition-opacity">'
+                '<a href="%s" class="pill bg-primary hover:opacity-80 transition-opacity">'
                 '<i class="fa fa-graduation-cap mr-1"></i>%s</a>' % (url, label)
             )
         else:
-            html.append('<span class="pill bg-primary text-secondary">%s</span>' % label)
+            html.append('<span class="pill bg-primary">%s</span>' % label)
     html.append('</div>')
     return ''.join(html)
 

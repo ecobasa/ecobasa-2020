@@ -33,11 +33,11 @@
           {{ profile.name|default:profile.username }}
         </a>
         <div class="flex items-center gap-2 mt-1">
-          <span class="pill bg-purple text-secondary">
+          <span class="pill bg-purple">
             <i class="fa fa-graduation-cap mr-1"></i>{{ skill.name }}
           </span>
           {% if user_skill.level %}
-            <span class="pill bg-primary text-secondary text-xs">{{ user_skill.get_level_display }}</span>
+            <span class="pill bg-primary text-xs">{{ user_skill.get_level_display }}</span>
           {% endif %}
         </div>
       </div>
@@ -108,9 +108,9 @@
               </a>
               {% if req.status != 'pending' %}
                 <span class="text-xs pill
-                  {% if req.status == 'accepted' %}bg-green-600 text-secondary
-                  {% elif req.status == 'declined' %}bg-red-600 text-secondary
-                  {% elif req.status == 'counter' %}bg-blue-600 text-secondary
+                  {% if req.status == 'accepted' %}bg-green
+                  {% elif req.status == 'declined' %}bg-red
+                  {% elif req.status == 'counter' %}bg-orange
                   {% endif %}">{{ req.get_status_display }}</span>
               {% endif %}
             </div>

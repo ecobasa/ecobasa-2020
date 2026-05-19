@@ -191,13 +191,13 @@
             </div>
             <div class="flex-shrink-0">
               {% if req.status == 'pending' %}
-                <span class="pill bg-yellow text-secondary text-xs">{% trans "Pending" %}</span>
+                <span class="pill bg-yellow text-xs">{% trans "Pending" %}</span>
               {% elif req.status == 'accepted' %}
-                <span class="pill bg-green text-secondary text-xs">{% trans "Accepted" %}</span>
+                <span class="pill bg-green text-xs">{% trans "Accepted" %}</span>
               {% elif req.status == 'declined' %}
-                <span class="pill bg-red text-secondary text-xs">{% trans "Declined" %}</span>
+                <span class="pill bg-red text-xs">{% trans "Declined" %}</span>
               {% elif req.status == 'counter' %}
-                <span class="pill bg-primary text-secondary text-xs">{% trans "Counter" %}</span>
+                <span class="pill bg-primary text-xs">{% trans "Counter" %}</span>
               {% endif %}
             </div>
           </a>

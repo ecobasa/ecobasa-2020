@@ -70,7 +70,7 @@
         </span>
         <div class="mt-1 flex flex-wrap gap-1">
           {% for skill in vr.practice_skills_list %}
-            <span class="pill bg-primary text-secondary"><i class="fa fa-graduation-cap mr-1"></i>{{ skill }}</span>
+            <span class="pill bg-primary"><i class="fa fa-graduation-cap mr-1"></i>{{ skill }}</span>
           {% endfor %}
         </div>
       </div>
@@ -79,8 +79,8 @@
       <div>
         <span class="opacity-60 uppercase tracking-wide text-xs">{% trans "Other skills I can help with" %}</span>
         <div class="mt-1 flex flex-wrap gap-1">
-          {% for skill in vr.sender_skills_list %}
-            <span class="pill text-white" style="background-color:#80143b;"><i class="fa fa-graduation-cap mr-1"></i>{{ skill }}</span>
+          {% for name, level in vr.sender_skills_with_levels %}
+            <span class="pill bg-purple"><i class="fa fa-graduation-cap mr-1"></i>{{ name }}{% if level %} <span class="opacity-70 font-normal ml-1">({{ level }})</span>{% endif %}</span>
           {% endfor %}
         </div>
       </div>
