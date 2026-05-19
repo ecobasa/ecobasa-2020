@@ -8,7 +8,6 @@ urlpatterns = [
     path("add/",                                                      views.userskill_add,           name="userskill_add"),
     path("api/autocomplete/",                                         views.skill_autocomplete,      name="api_autocomplete"),
     path("community/<slug:community_slug>/add/",                      views.communityskill_add,      name="communityskill_add"),
-    path("request/<int:pk>/",                                          views.skillrequest_detail,     name="skillrequest_detail"),
     path("wish/<int:pk>/edit/",                                        views.skillwish_user_edit,     name="skillwish_user_edit"),
     path("wish/<int:pk>/community/<slug:community_slug>/edit/",        views.skillwish_community_edit, name="skillwish_community_edit"),
 

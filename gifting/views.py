@@ -7,17 +7,16 @@ from django.shortcuts import render, get_object_or_404, redirect, reverse
 from django.db.models import Q
 from django.core.paginator import Paginator
 from django.contrib import messages
-from django.http import Http404, JsonResponse
-from django.utils import timezone
+from django.http import JsonResponse
 from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.decorators import login_required
 from django.contrib.gis.geos import Polygon
 from django.views.decorators.http import require_GET
 from django.core.cache import cache
 
-from .forms import AdForm, AdRequestForm, AdRequestMessageForm
+from .forms import AdForm, AdRequestForm
 from .filters import AdFilter
-from .models import Ad, AdRequest, AdRequestMessage
+from .models import Ad, AdRequest
 from communities.models import Community
 from users.models import User
 from skills.models import UserSkill, CommunitySkill
@@ -25,7 +24,7 @@ from skills.models import UserSkill, CommunitySkill
 
 def _notify_ad_request(ad_request, http_request=None):
     from notifications.models import Notification
-    from giving.emails import send_ad_request_email
+    from matches.emails import send_ad_request_email
     ad = ad_request.ad
     recipient = ad.owner
     if recipient is None:
@@ -44,34 +43,6 @@ def _notify_ad_request(ad_request, http_request=None):
     )
     if http_request:
         send_ad_request_email(ad_request, http_request)
-
-
-def _notify_ad_response(ad_request, actor, http_request=None):
-    from notifications.models import Notification
-    from giving.emails import send_ad_response_email
-    ad = ad_request.ad
-    owner = ad.owner
-    recipient = ad_request.from_user if actor == owner else owner
-    if recipient is None:
-        return
-    tag_map = {
-        AdRequest.STATUS_ACCEPTED: "gift_accepted",
-        AdRequest.STATUS_DECLINED: "gift_declined",
-        AdRequest.STATUS_COUNTER:  "gift_counter",
-    }
-    tag = tag_map.get(ad_request.status, "")
-    actor_name = actor.name or actor.email
-    status_label = ad_request.get_status_display()
-    verb = _("%(actor)s %(status)s your request: %(title)s") % {
-        "actor": actor_name, "status": status_label.lower(), "title": ad.title
-    }
-    link = ad_request.get_absolute_url()
-    Notification.objects.create(
-        recipient=recipient, actor=actor,
-        verb=str(verb), link=link, tag=tag,
-    )
-    if http_request:
-        send_ad_response_email(ad_request, actor, http_request)
 
 
 def search(request):
@@ -107,102 +78,6 @@ def detail(request, pk):
         context["incoming_requests"] = list(ad.requests.select_related("from_user").order_by("-created_at")[:20])
 
     return render(request, "gifting/ad_detail.html", context)
-
-
-@login_required
-def adrequest_detail(request, pk):
-    ar = get_object_or_404(AdRequest, pk=pk)
-    owner = ar.ad.owner
-
-    if request.user != ar.from_user and request.user != owner:
-        raise Http404
-
-    is_owner = request.user == owner
-    is_requester = request.user == ar.from_user
-
-    thread = list(ar.thread.select_related("sender").all())
-    latest_status_msg = None
-    latest_counter_msg = None
-    for msg in reversed(thread):
-        if msg.status_to and latest_status_msg is None:
-            latest_status_msg = msg
-        if msg.status_to == AdRequest.STATUS_COUNTER and latest_counter_msg is None:
-            latest_counter_msg = msg
-        if latest_status_msg and latest_counter_msg:
-            break
-
-    counter_by_owner = (
-        ar.status == AdRequest.STATUS_COUNTER
-        and latest_status_msg is not None
-        and latest_status_msg.sender_id == owner.pk
-    )
-    owner_can_decide = is_owner and not counter_by_owner
-    requester_can_decide = is_requester and counter_by_owner
-
-    if request.method == "POST":
-        action = request.POST.get("action", "message")
-
-        if action == "message":
-            body = request.POST.get("body", "").strip()
-            if body:
-                AdRequestMessage.objects.create(request=ar, sender=request.user, body=body)
-            return redirect(ar.get_absolute_url())
-
-        if action in ("accept", "decline") and (owner_can_decide or requester_can_decide):
-            new_status = {"accept": AdRequest.STATUS_ACCEPTED, "decline": AdRequest.STATUS_DECLINED}[action]
-            AdRequestMessage.objects.create(
-                request=ar, sender=request.user,
-                body=request.POST.get("body", "").strip(), status_to=new_status,
-            )
-            ar.status = new_status
-            ar.responded_at = timezone.now()
-            ar.save()
-            _notify_ad_response(ar, actor=request.user, http_request=request)
-            messages.success(request, _("Response sent."))
-            return redirect(ar.get_absolute_url())
-
-        if action == "counter" and is_owner:
-            msg = AdRequestMessage(
-                request=ar, sender=request.user,
-                body=request.POST.get("body", "").strip(),
-                status_to=AdRequest.STATUS_COUNTER,
-            )
-            msg.counter_location_type = request.POST.get("counter_location_type", "")
-            msg.counter_location = request.POST.get("counter_location", "")
-            try:
-                msg.counter_lat = float(request.POST.get("counter_lat") or "")
-            except (ValueError, TypeError):
-                msg.counter_lat = None
-            try:
-                msg.counter_lon = float(request.POST.get("counter_lon") or "")
-            except (ValueError, TypeError):
-                msg.counter_lon = None
-            raw_dt = request.POST.get("counter_date", "")
-            try:
-                msg.counter_date = _dt.fromisoformat(raw_dt) if raw_dt else None
-            except ValueError:
-                msg.counter_date = None
-            msg.save()
-            ar.status = AdRequest.STATUS_COUNTER
-            ar.responded_at = timezone.now()
-            ar.save()
-            _notify_ad_response(ar, actor=request.user, http_request=request)
-            messages.success(request, _("Counter-proposal sent."))
-            return redirect(ar.get_absolute_url())
-
-    return render(request, "gifting/adrequest_detail.html", {
-        "ar":                   ar,
-        "owner":                owner,
-        "is_owner":             is_owner,
-        "is_requester":         is_requester,
-        "thread":               thread,
-        "latest_status_msg":    latest_status_msg,
-        "latest_counter_msg":   latest_counter_msg,
-        "owner_can_decide":     owner_can_decide,
-        "requester_can_decide": requester_can_decide,
-        "message_form":         AdRequestMessageForm(),
-        "loc_choices":          AdRequest.LOC_CHOICES,
-    })
 
 
 @login_required

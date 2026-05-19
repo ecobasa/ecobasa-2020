@@ -47,7 +47,7 @@ class VolunteerRequest(BaseRequest):
         return f"Volunteer request by {self.from_user} at {self.community} ({self.status})"
 
     def get_absolute_url(self):
-        return reverse("giving:volunteer_detail", args=[self.pk])
+        return reverse("matches:volunteer_detail", args=[self.pk])
 
     @property
     def recipient(self):

@@ -101,8 +101,8 @@ def volunteer_request(request, community_slug):
 
     import datetime
     from django.utils import timezone
-    from giving.models import VolunteerRequest
-    from giving.emails import send_volunteer_request_email
+    from matches.models import VolunteerRequest
+    from matches.emails import send_volunteer_request_email
     from notifications.models import Notification
 
     volunteer_mode  = request.POST.get("volunteer_mode", "")

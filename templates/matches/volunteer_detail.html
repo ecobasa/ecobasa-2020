@@ -1,4 +1,4 @@
-{% extends 'giving/base.html' %}
+{% extends 'matches/base.html' %}
 {% load i18n %}
 
 {% block giving_content %}
@@ -6,7 +6,7 @@
   <h1 class="text-2xl font-semibold font-serif">
     <a href="{{ vr.community.get_absolute_url }}" class="hover:underline">{{ vr.community.name }}</a>
   </h1>
-  <a href="{% url 'giving:list' %}" class="btn border rounded bg-primary text-secondary inline-flex items-center px-3 py-1 text-sm">
+  <a href="{% url 'matches:list' %}" class="btn border rounded bg-primary text-secondary inline-flex items-center px-3 py-1 text-sm">
     <i class="fa fa-arrow-left mr-2"></i>{% trans "Requests" %}
   </a>
 </div>

@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block content %}
+<div class="mx-auto max-w-5xl px-4 py-8 grid grid-cols-1 md:grid-cols-4 gap-6">
+  <aside class="md:col-span-1">
+    <div class="bg-primary bg-opacity-75 p-4 rounded">
+      <nav class="space-y-1">
+        <a href="{% url 'postman:inbox' %}"
+           class="block px-3 py-2 rounded text-secondary hover:bg-secondary hover:text-primary">
+          <i class="fa fa-envelope mr-2"></i>{% trans "Inbox" %}
+        </a>
+
+        <div class="pt-3 pb-1 px-3 text-xs text-secondary opacity-60 uppercase tracking-wide">{% trans "Matches" %}</div>
+
+        <a href="{% url 'matches:list' %}?type=volunteer"
+           class="block px-3 py-2 rounded {% if request_type == 'volunteer' %}bg-secondary text-primary font-semibold{% else %}text-secondary hover:bg-secondary hover:text-primary{% endif %}">
+          <i class="fa-solid fa-campground mr-2"></i>{% trans "Community Volunteering" %}
+        </a>
+        <a href="{% url 'matches:list' %}?type=freemarket"
+           class="block px-3 py-2 rounded {% if request_type == 'freemarket' %}bg-secondary text-primary font-semibold{% else %}text-secondary hover:bg-secondary hover:text-primary{% endif %}">
+          <i class="fa fa-gift mr-2"></i>{% trans "Gift Market" %}
+        </a>
+        <a href="{% url 'matches:list' %}?type=skills"
+           class="block px-3 py-2 rounded {% if request_type == 'skills' %}bg-secondary text-primary font-semibold{% else %}text-secondary hover:bg-secondary hover:text-primary{% endif %}">
+          <i class="fa fa-graduation-cap mr-2"></i>{% trans "Skills" %}
+        </a>
+
+        {% if user.is_authenticated %}
+          <div class="pt-4 pb-1 px-3 text-xs text-secondary opacity-60 uppercase tracking-wide">{% trans "Communities" %}</div>
+
+          <span class="block px-3 py-2 rounded text-secondary opacity-40 cursor-default text-sm">
+            <i class="fa-solid fa-tools mr-2"></i>{% trans "Volunteer Visits" %} <span class="text-xs opacity-60">({% trans "coming soon" %})</span>
+          </span>
+          <span class="block px-3 py-2 rounded text-secondary opacity-40 cursor-default text-sm">
+            <i class="fa-solid fa-door-open mr-2"></i>{% trans "Member Applications" %} <span class="text-xs opacity-60">({% trans "coming soon" %})</span>
+          </span>
+
+          <div class="pt-4 pb-1 px-3 text-xs text-secondary opacity-60 uppercase tracking-wide">{% trans "Tours" %}</div>
+
+          <span class="block px-3 py-2 rounded text-secondary opacity-40 cursor-default text-sm">
+            <i class="fa-solid fa-route mr-2"></i>{% trans "Community-Tour Applications" %} <span class="text-xs opacity-60">({% trans "coming soon" %})</span>
+          </span>
+        {% endif %}
+      </nav>
+    </div>
+  </aside>
+  <main class="md:col-span-3">
+    <div class="p-6 rounded text-brown">
+      {% block giving_content %}{% endblock %}
+    </div>
+  </main>
+</div>
+{% endblock content %}

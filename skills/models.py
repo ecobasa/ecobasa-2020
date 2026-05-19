@@ -150,7 +150,7 @@ class SkillRequest(models.Model):
     created_at        = models.DateTimeField(auto_now_add=True)
 
     def get_absolute_url(self):
-        return reverse("skills:skillrequest_detail", kwargs={"pk": self.pk})
+        return reverse("matches:skillrequest_detail", kwargs={"pk": self.pk})
 
     def resolved_location(self):
         """Human-readable meeting location, resolving my/your place from profiles."""

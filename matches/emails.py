@@ -4,7 +4,7 @@ from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.translation import gettext as _
 
-TOKEN_SALT    = "giving-request-action"
+TOKEN_SALT    = "matches-action"
 TOKEN_MAX_AGE = 60 * 60 * 24 * 30   # 30 days
 
 
@@ -23,7 +23,7 @@ def _absolute(http_request, path):
 
 def _action_url(http_request, request_type, pk, action):
     token = make_action_token(request_type, pk, action)
-    return _absolute(http_request, reverse("giving:email_action", args=[token]))
+    return _absolute(http_request, reverse("matches:email_action", args=[token]))
 
 
 # ── Volunteer stay ────────────────────────────────────────────────────────────
@@ -40,7 +40,7 @@ def send_volunteer_request_email(vr, http_request):
         "detail_url":  _absolute(http_request, vr.get_absolute_url()),
     }
     subject = str(_("Volunteer stay request at %(c)s") % {"c": vr.community.name})
-    _send(subject, recipient.email, "giving/email/volunteer_request", context)
+    _send(subject, recipient.email, "matches/email/volunteer_request", context)
 
 
 def send_volunteer_response_email(vr, http_request):
@@ -57,7 +57,7 @@ def send_volunteer_response_email(vr, http_request):
     subject = str(_("Your volunteer request at %(c)s has been %(status)s") % {
         "c": vr.community.name, "status": status_label,
     })
-    _send(subject, requester.email, "giving/email/volunteer_response", context)
+    _send(subject, requester.email, "matches/email/volunteer_response", context)
 
 
 # ── Ad / freemarket request ───────────────────────────────────────────────────
@@ -80,7 +80,7 @@ def send_ad_request_email(ad_request, http_request):
         subject = str(_("Gift request: %(title)s") % {"title": ad.title})
     else:
         subject = str(_("Wish fulfillment offer: %(title)s") % {"title": ad.title})
-    _send(subject, recipient.email, "giving/email/ad_request", context)
+    _send(subject, recipient.email, "matches/email/ad_request", context)
 
 
 def send_ad_response_email(ad_request, actor, http_request):
@@ -100,7 +100,7 @@ def send_ad_response_email(ad_request, actor, http_request):
         "detail_url":   _absolute(http_request, ad_request.get_absolute_url()),
     }
     subject = str(_("Ad request %(status)s: %(title)s") % {"status": status_label, "title": ad.title})
-    _send(subject, recipient.email, "giving/email/ad_response", context)
+    _send(subject, recipient.email, "matches/email/ad_response", context)
 
 
 # ── Skill request ─────────────────────────────────────────────────────────────
@@ -124,7 +124,7 @@ def send_skill_request_email(skill_request, http_request):
         "detail_url":  _absolute(http_request, skill_request.get_absolute_url()),
     }
     subject = str(_("Skill request: %(skill)s") % {"skill": skill_name})
-    _send(subject, recipient.email, "giving/email/skill_request", context)
+    _send(subject, recipient.email, "matches/email/skill_request", context)
 
 
 def send_skill_response_email(skill_request, actor, http_request):
@@ -148,7 +148,7 @@ def send_skill_response_email(skill_request, actor, http_request):
         "detail_url":   _absolute(http_request, skill_request.get_absolute_url()),
     }
     subject = str(_("Skill request %(status)s: %(skill)s") % {"status": status_label, "skill": skill_name})
-    _send(subject, recipient.email, "giving/email/skill_response", context)
+    _send(subject, recipient.email, "matches/email/skill_response", context)
 
 
 # ── Shared send helper ────────────────────────────────────────────────────────
