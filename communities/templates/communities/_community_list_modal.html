@@ -32,15 +32,17 @@
         <a href="{{ community.get_absolute_url }}">
           <h3 class="text-lg font-bold text-primary my-2">{{ community.name }}</h3>
         </a>
-        <div class="text-sm text-brown">
-          <i class="fa fa-map-marker-alt mr-1"></i>{{ community.location_name|rough_location }}
-          {# Show distance when sorting by proximity #}
-          {% if community.distance %}
-            <span class="ml-2 text-xs opacity-70">
-              · {{ community.distance.km|floatformat:0 }} km
-            </span>
-          {% endif %}
-        </div>
+        {% if community.location_name %}
+          <div class="text-sm text-brown">
+            <i class="fa fa-map-marker-alt mr-1"></i>{{ community.location_name|rough_location }}
+            {# Show distance when sorting by proximity #}
+            {% if community.distance %}
+              <span class="ml-2 text-xs opacity-70">
+                · {{ community.distance.km|floatformat:0 }} km
+              </span>
+            {% endif %}
+          </div>
+        {% endif %}
       </div>
       <div class="text-right flex-shrink-0">
         <span class="pill bg-primary">{{ community.get_status_display }}</span>
