@@ -129,13 +129,16 @@
                   <i class="fa fa-user mr-2"></i>
                   {% trans "Your Profile" %}
                 </a>
-                <a href="{% url 'postman:inbox' %}" class="dropdown-link">
-                  <i class="fa fa-envelope mr-2"></i>
-                  {% trans "Inbox" %}
+                <a href="{% url 'matches:list' %}?type=volunteer" class="dropdown-link">
+                  <i class="fa-solid fa-campground mr-2"></i>{% if owned_communities %}{% trans "Volunteer Requests" %}{% else %}{% trans "Community Volunteering" %}{% endif %}
                 </a>
                 <a href="{% url 'matches:list' %}" class="dropdown-link">
                   <i class="fa-solid fa-handshake mr-2"></i>
                   {% trans "Matches" %}
+                </a>
+                <a href="{% url 'postman:inbox' %}" class="dropdown-link">
+                  <i class="fa fa-envelope mr-2"></i>
+                  {% trans "Inbox" %}
                 </a>
                 {% if owned_communities %}
                   <div class="border-t border-secondary border-opacity-20 mt-1 pt-1">
@@ -145,9 +148,6 @@
                         <i class="fa fa-home mr-2"></i>{{ comm.name }}
                       </a>
                     {% endfor %}
-                    <a href="{% url 'matches:list' %}?type=volunteer" class="dropdown-link">
-                      <i class="fa-solid fa-campground mr-2"></i>{% trans "Community Volunteering" %}
-                    </a>
                   </div>
                 {% endif %}
                 <div class="border-t border-secondary border-opacity-20 mt-1 pt-1">
