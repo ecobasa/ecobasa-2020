@@ -25,13 +25,15 @@
         <div class="flex-shrink-0 h-20 w-20 sm:h-32 sm:w-48 bg-primary rounded"></div>
       {% endif %}
       <div class="pl-2 sm:pl-6 w-full">
-        <i class="fa fa-map-marker text-primary"></i>
-        <div class="text-xs inline">{{ community.location_name }}</div>
-        <div class="font-serif sm:text-lg group-hover:text-primary mt-1">{{ cs.skill.name }}</div>
+        {% if community.location_name %}
+          <i class="fa fa-map-marker text-primary mb-1"></i>
+          <div class="text-xs inline">{{ community.location_name }}</div>
+        {% endif %}
+        <div class="font-serif sm:text-lg group-hover:text-primary">{{ cs.skill.name }}</div>
         <p class="text-sm text-brown mt-1">
           {% if cs.description %}{{ cs.description|truncatewords:20 }}{% else %}{{ cs.skill.description|truncatewords:20 }}{% endif %}
         </p>
-        <span class="absolute bottom-5"><i class="fa fa-home mr-1"></i>{{ community.name }}</span>
+        <span class="absolute bottom-5"><i class="fa fa-home mr-2"></i>{{ community.name }}</span>
       </div>
     </div>
   </a>
@@ -54,13 +56,15 @@
         <div class="flex-shrink-0 h-20 w-20 sm:h-32 sm:w-48 bg-primary rounded"></div>
       {% endif %}
       <div class="pl-2 sm:pl-6 w-full">
-        <i class="fa fa-map-marker text-primary"></i>
-        <div class="text-xs inline">{{ user.location_name }}</div>
-        <div class="font-serif sm:text-lg group-hover:text-primary mt-1">{{ us.skill.name }}</div>
+        {% if user.location_name %}
+          <i class="fa fa-map-marker text-primary mb-1"></i>
+          <div class="text-xs inline">{{ user.location_name }}</div>
+        {% endif %}
+        <div class="font-serif sm:text-lg group-hover:text-primary">{{ us.skill.name }}</div>
         <p class="text-sm text-brown mt-1">
           {% if us.description %}{{ us.description|truncatewords:20 }}{% else %}{{ us.skill.description|truncatewords:20 }}{% endif %}
         </p>
-        <span class="absolute bottom-5 text-xs text-brown"><i class="fa fa-user mr-1"></i>{{ user.name|default:user.email }}</span>
+        <span class="absolute bottom-5"><i class="fa fa-user mr-2"></i>{{ user.name|default:user.email }}</span>
       </div>
     </div>
   </a>
