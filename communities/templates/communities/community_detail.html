@@ -230,49 +230,8 @@
 				{% endif %}
 			</div>
 
-			<!-- Volunteer Request Modal (Alpine-driven) -->
-			<div x-show="vOpen" style="display:none"
-			     @click.self="vOpen = false"
-			     @keydown.escape.window="vOpen = false"
-			     class="fixed inset-0 bg-black bg-opacity-70 z-50 flex items-center justify-center p-4 overflow-y-auto">
-				<div id="volunteer-form-wrap" class="modal-content" style="-webkit-overflow-scrolling: touch;">
-					<button type="button" @click="vOpen = false" class="absolute top-3 right-3 text-2xl">&times;</button>
-					<h1 class="text-xl font-semibold mb-4">{% trans "Request volunteering stay" %}</h1>
-					<form hx-post="{% url 'communities:volunteer_request' community.slug %}"
-					      hx-target="#volunteer-form-wrap"
-					      hx-swap="innerHTML"
-					      hx-on::after-request="if(event.detail.successful) document.dispatchEvent(new CustomEvent('volunteer-sent'))">
-						{% csrf_token %}
-						<input type="hidden" name="volunteer_mode" :value="vMode">
-						<div class="grid grid-cols-1 gap-3">
-							<div class="text-sm">
-								<label class="block mb-1" x-text="vPracticeLabel"></label>
-								<input type="text" id="volunteer-practice-skills" name="practice_skills" class="form-input w-full" placeholder="{% trans "Type a skill and press Enter…" %}">
-							</div>
-							<div x-show="vLevel" style="display:none" class="text-sm bg-primary bg-opacity-10 rounded px-3 py-2">
-								<span x-text="vLevelLabel"></span>: <span class="font-semibold" x-text="vLevel"></span>
-							</div>
-							<label class="text-sm">{% trans "Your skills (comma separated)" %}
-								<input type="text" name="sender_skills" id="volunteer-sender-skills" class="form-input w-full mt-1"
-								       value="{% if request.user.is_authenticated %}{{ request.user.skills.all|join:', ' }}{% endif %}">
-							</label>
-							<label class="text-sm">{% trans "From" %}
-								<input type="datetime-local" name="stay_from" class="form-input w-full mt-1">
-							</label>
-							<label class="text-sm">{% trans "To" %}
-								<input type="datetime-local" name="stay_to" class="form-input w-full mt-1">
-							</label>
-							<label class="text-sm">{% trans "Message" %}
-								<textarea name="body" rows="5" class="form-textarea w-full mt-1" placeholder="{% trans "Write a short message explaining your motivation and skills" %}"></textarea>
-							</label>
-						</div>
-						<div class="mt-4 flex justify-end gap-3">
-							<button type="button" @click="vOpen = false" class="btn btn-lg">{% trans "Cancel" %}</button>
-							<button type="submit" class="btn btn-lg bg-primary text-secondary">{% trans "Send request" %}</button>
-						</div>
-					</form>
-				</div>
-			</div>
+			<!-- Toast slot for HTMX success messages -->
+			<div id="volunteer-messages-slot"></div>
 
 			<!-- Address / Location name + OpenLayers map -->
 			<div class="order-4 sm:order-4">
@@ -297,8 +256,6 @@
 				</div>
 			{% endif %}
 
-
-
 			<!-- Ambassador / owner -->
 			<div class="order-11 sm:order-8 text-center">
 				{% if community.owner %}
@@ -307,18 +264,64 @@
 						{% if community.owner.image %}
 							<img src="{{ community.owner.image.url }}" class="rounded-full h-20 w-20 mx-auto mb-2 object-cover" alt="{{ community.owner.name }}">
 						{% else %}
-			        <i class="fa fa-user text-6xl text-primary rounded-full border border-dashed border-primary p-10 mt-15"></i>
+							<i class="fa fa-user text-6xl text-primary rounded-full border border-dashed border-primary p-10 mt-15"></i>
 						{% endif %}
 						<div class="font-serif font-bold text-xl">{{ community.owner.name }}</div>
 					</a>
 					{% if request.user.is_authenticated %}
-						<a class="btn block mt-2" href="{% url 'postman:write' community.owner.name %}"><i class="fa fa-paper-plane  mr-1"></i>{% trans "Contact" %}</a>
+						<a class="btn block mt-2" href="{% url 'postman:write' community.owner.name %}"><i class="fa fa-paper-plane mr-1"></i>{% trans "Contact" %}</a>
 					{% endif %}
 				{% endif %}
 			</div>
-		</div>
+		</div>{# flex flex-col space-y-4 #}
 	</aside>
+</div>{# grid #}
+
+<!-- Volunteer Request Modal — placed outside grid/flex so space-y doesn't apply margin to the fixed overlay -->
+<div x-show="vOpen" style="display:none"
+     @click.self="vOpen = false"
+     @keydown.escape.window="vOpen = false"
+     class="fixed inset-0 bg-black bg-opacity-70 z-50 flex items-center justify-center p-4 overflow-y-auto">
+	<div id="volunteer-form-wrap" class="modal-content" style="-webkit-overflow-scrolling: touch;">
+		<button type="button" @click="vOpen = false" class="absolute top-3 right-3 text-2xl">&times;</button>
+		<h1 class="text-xl font-semibold mb-4">{% trans "Offer to volunteer" %}</h1>
+		<form hx-post="{% url 'communities:volunteer_request' community.slug %}"
+		      hx-target="#volunteer-messages-slot"
+		      hx-swap="innerHTML"
+		      hx-on::after-request="if(event.detail.successful) { document.dispatchEvent(new CustomEvent('volunteer-modal-close')); }">
+			{% csrf_token %}
+			<input type="hidden" name="volunteer_mode" :value="vMode">
+			<input type="hidden" name="practice_skill_level" :value="vLevel || ''">
+			<div class="grid grid-cols-1 gap-3">
+				<div class="text-sm">
+					<label class="block mb-1" x-text="vPracticeLabel"></label>
+					<input type="text" id="volunteer-practice-skills" name="practice_skills" class="form-input w-full" placeholder="{% trans "Type a skill and press Enter…" %}">
+				</div>
+				<div x-show="vLevel" style="display:none" class="text-sm bg-primary bg-opacity-10 rounded px-3 py-2">
+					<span x-text="vLevelLabel"></span>: <span class="font-semibold capitalize" x-text="vLevel"></span>
+				</div>
+				<label class="text-sm">{% trans "Your skills (comma separated)" %}
+					<input type="text" name="sender_skills" id="volunteer-sender-skills" class="form-input w-full mt-1"
+					       value="{% if request.user.is_authenticated %}{% for us in request.user.user_skills.all %}{{ us.skill.name }}{% if not forloop.last %}, {% endif %}{% endfor %}{% endif %}">
+				</label>
+				<label class="text-sm">{% trans "From" %}
+					<input type="datetime-local" name="stay_from" class="form-input w-full mt-1">
+				</label>
+				<label class="text-sm">{% trans "To" %}
+					<input type="datetime-local" name="stay_to" class="form-input w-full mt-1">
+				</label>
+				<label class="text-sm">{% trans "Message" %}
+					<textarea name="body" rows="5" class="form-textarea w-full mt-1" placeholder="{% trans "Write a short message explaining your motivation and skills" %}"></textarea>
+				</label>
+			</div>
+			<div class="mt-4 flex justify-end gap-3">
+				<button type="button" @click="vOpen = false" class="btn btn-lg">{% trans "Cancel" %}</button>
+				<button type="submit" class="btn btn-lg bg-primary text-secondary">{% trans "Send request" %}</button>
+			</div>
+		</form>
+	</div>
 </div>
+</div>{# Alpine communityVolunteer #}
 {% endblock content %}
 
 {% block javascript %}
@@ -348,7 +351,7 @@ document.addEventListener('alpine:init', () => {
 		},
 		init() {
 			this.$watch('vOpen', v => document.body.classList.toggle('overflow-hidden', v));
-			document.addEventListener('volunteer-sent', () => setTimeout(() => { this.vOpen = false; }, 2000));
+			document.addEventListener('volunteer-modal-close', () => { this.vOpen = false; });
 		},
 	}));
 });

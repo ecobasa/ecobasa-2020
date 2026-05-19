@@ -105,10 +105,11 @@ def volunteer_request(request, community_slug):
     from matches.emails import send_volunteer_request_email
     from notifications.models import Notification
 
-    volunteer_mode  = request.POST.get("volunteer_mode", "")
-    practice_skills = request.POST.get("practice_skills", "").strip()
-    sender_skills   = request.POST.get("sender_skills", "").strip()
-    msg_body        = request.POST.get("body", "").strip()
+    volunteer_mode       = request.POST.get("volunteer_mode", "")
+    practice_skills      = request.POST.get("practice_skills", "").strip()
+    practice_skill_level = request.POST.get("practice_skill_level", "").strip()
+    sender_skills        = request.POST.get("sender_skills", "").strip()
+    msg_body             = request.POST.get("body", "").strip()
 
     def _parse_dt(val):
         if not val:
@@ -123,12 +124,13 @@ def volunteer_request(request, community_slug):
     stay_to   = _parse_dt(request.POST.get("stay_to", ""))
 
     vr = VolunteerRequest.objects.create(
-        from_user       = request.user,
-        community       = community,
-        volunteer_mode  = volunteer_mode,
-        message         = msg_body,
-        practice_skills = practice_skills,
-        sender_skills   = sender_skills,
+        from_user            = request.user,
+        community            = community,
+        volunteer_mode       = volunteer_mode,
+        message              = msg_body,
+        practice_skills      = practice_skills,
+        practice_skill_level = practice_skill_level,
+        sender_skills        = sender_skills,
         stay_from       = stay_from,
         stay_to         = stay_to,
     )
@@ -146,23 +148,10 @@ def volunteer_request(request, community_slug):
         tag="volunteer_request",
     )
 
-    if request.headers.get("HX-Request"):
-        from django.http import HttpResponse
-        from django.urls import reverse
-        detail_url = vr.get_absolute_url()
-        return HttpResponse(
-            f'<div class="py-8 text-center">'
-            f'<i class="fa-solid fa-campground text-4xl text-primary mb-3 block"></i>'
-            f'<p class="font-semibold text-primary text-lg">' + str(_("Request sent!")) + f'</p>'
-            f'<p class="text-sm text-brown mt-1">'
-            + str(_("Your message has been delivered to %(community)s.") % {"community": community.name})
-            + f'</p>'
-            f'<a href="{detail_url}" class="mt-3 inline-block text-sm text-primary hover:underline">'
-            + str(_("View your request →"))
-            + f'</a></div>'
-        )
-
     messages.success(request, str(_("Your request has been sent to %(community)s!") % {"community": community.name}))
+
+    if request.headers.get("HX-Request"):
+        return render(request, "_messages.html")
     return redirect(vr.get_absolute_url())
 
 

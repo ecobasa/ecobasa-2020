@@ -58,8 +58,9 @@
 			<p>{{ user.world }}</p>
 			<h2>{% trans "What would you like to use ecobasa mainly for?" %}</h2>
 			<p>{{ user.ecobasa_what }}</p>
-			{% if user_skills %}
+			{% if user_skills or request.user.pk == user.pk %}
 				<h2>{% trans "Skills" %}</h2>
+				{% if user_skills %}
 				<div class="flex flex-wrap gap-2 mb-2">
 					{% for us in user_skills %}
 						<a href="{% if request.user.pk == user.pk %}{% url 'skills:userskill_edit' us.skill.slug user.username %}{% else %}{{ us.get_absolute_url }}{% endif %}"
@@ -70,38 +71,34 @@
 						</a>
 					{% endfor %}
 				</div>
+				{% endif %}
 				{% if request.user.is_authenticated and request.user.pk == user.pk %}
-					<a href="{% url 'skills:userskill_add' %}" class="text-sm text-primary underline">
+					<a href="{% url 'skills:userskill_add' %}" class="btn mt-2">
 						<i class="fa fa-plus mr-1"></i>{% trans "Add skill" %}
 					</a>
 				{% endif %}
-			{% elif request.user.is_authenticated and request.user.pk == user.pk %}
-				<a href="{% url 'skills:userskill_add' %}" class="btn mt-2">
-					<i class="fa fa-plus mr-1"></i>{% trans "Add a skill" %}
-				</a>
 			{% endif %}
 
-			{% if skill_wishes %}
-				<h2>{% trans "Skills I would like to learn" %}</h2>
+			{% if skill_wishes or request.user.pk == user.pk %}
+				<h2 class="mt-6">{% trans "Skills I would like to learn" %}</h2>
+				{% if skill_wishes %}
 				<div class="flex flex-wrap gap-2 mb-2">
 					{% for sw in skill_wishes %}
-						<a href="{% if request.user.pk == user.pk %}{% url 'skills:skillwish_user_edit' sw.pk %}{% else %}{% url 'skills:skill_detail' sw.skill.slug %}{% endif %}"
-						   class="inline-flex items-center gap-1 bg-yellow text-secondary px-3 py-1 rounded-full text-sm font-medium hover:opacity-80 transition-opacity">
-							<i class="fa fa-book"></i>
+						<a href="{% if request.user.pk == user.pk %}{% url 'skills:skillwish_user_edit' sw.pk %}{% else %}{{ sw.get_absolute_url }}{% endif %}"
+						   class="inline-flex items-center gap-1 bg-yellow text-secondary px-3 py-1 rounded-full text-sm font-medium hover:opacity-80 transition-opacity"
+						   {% if request.user.is_authenticated and request.user.pk != user.pk %}title="{% trans "Offer to teach this skill" %}"{% endif %}>
+							<i class="{% if request.user.is_authenticated and request.user.pk != user.pk %}fa fa-paper-plane{% else %}fa fa-book{% endif %}"></i>
 							{{ sw.skill.name }}
 							{% if sw.level %}<span class="opacity-70 text-xs">({{ sw.get_level_display }})</span>{% endif %}
 						</a>
 					{% endfor %}
 				</div>
+				{% endif %}
 				{% if request.user.is_authenticated and request.user.pk == user.pk %}
-					<a href="{% url 'skills:userskill_add' %}?mode=wish" class="text-sm text-primary underline">
-						<i class="fa fa-plus mr-1"></i>{% trans "Add another" %}
+					<a href="{% url 'skills:userskill_add' %}?mode=wish" class="btn mt-2">
+						<i class="fa fa-book mr-1"></i>{% trans "Add skills I'd like to learn" %}
 					</a>
 				{% endif %}
-			{% elif request.user.is_authenticated and request.user.pk == user.pk %}
-				<a href="{% url 'skills:userskill_add' %}?mode=wish" class="btn mt-2">
-					<i class="fa fa-book mr-1"></i>{% trans "Add skills I'd like to learn" %}
-				</a>
 			{% endif %}
 		</div>
 	</div>

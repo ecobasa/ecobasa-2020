@@ -48,7 +48,12 @@
                     <p style="margin:0 0 4px;font-size:11px;text-transform:uppercase;letter-spacing:0.06em;opacity:0.6;">
                       {% if vr.volunteer_mode == "wish" %}Skills to offer{% else %}Skills to learn and practice at your place{% endif %}
                     </p>
-                    <p style="margin:0 0 16px;font-size:15px;">{{ vr.practice_skills }}</p>
+                    <p style="margin:0 0 4px;font-size:15px;">{{ vr.practice_skills }}</p>
+                    {% if vr.practice_skill_level %}
+                    <p style="margin:0 0 16px;font-size:13px;opacity:0.7;">Current level: {{ vr.practice_skill_level }}</p>
+                    {% else %}
+                    <p style="margin:0 0 12px;"></p>
+                    {% endif %}
                     {% endif %}
 
                     {% if vr.sender_skills %}

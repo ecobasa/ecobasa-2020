@@ -87,7 +87,7 @@
     buildLayerToggle(map, groupName, trans) {
       trans = Object.assign({ title: 'Map style', ecobasa: 'ecobasa', satellite: 'Satellite', osm: 'OSM' }, trans || {});
       const wrap = document.createElement('div');
-      wrap.className = 'absolute top-2.5 right-2.5 z-[1000]';
+      wrap.className = 'absolute top-2.5 right-2.5';
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.className = 'flex items-center justify-center w-12 h-12 rounded-md bg-primary bg-opacity-80 text-secondary shadow-lg border border-red backdrop-blur';

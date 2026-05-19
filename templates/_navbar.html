@@ -230,7 +230,7 @@
               {% for comm in owned_communities %}
                 <a href="{{ comm.get_absolute_url }}" class="mt-1 block px-4 py-2 text-base text-secondary hover:text-primary hover:bg-secondary focus:text-primary focus:bg-secondary" role="menuitem"><i class="fa fa-home mr-2"></i>{{ comm.name }}</a>
               {% endfor %}
-              <a href="{% url 'notifications:list' %}" class="mt-1 block px-4 py-2 text-base text-secondary hover:text-primary hover:bg-secondary focus:text-primary focus:bg-secondary" role="menuitem"><i class="fa-solid fa-campground mr-2"></i>{% trans "Volunteer Requests" %}</a>
+              <a href="{% url 'matches:list' %}?type=volunteer" class="mt-1 block px-4 py-2 text-base text-secondary hover:text-primary hover:bg-secondary focus:text-primary focus:bg-secondary" role="menuitem"><i class="fa-solid fa-campground mr-2"></i>{% trans "Volunteer Visits" %}</a>
             </div>
           {% endif %}
           <a href="#" class="mt-1 block px-4 py-2 text-base text-secondary hover:text-primary hover:bg-secondary focus:text-primary focus:bg-secondary" role="menuitem"><i class="fa fa-cog mr-2"></i>{% trans "Settings" %}</a>

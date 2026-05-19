@@ -29,8 +29,9 @@ class VolunteerRequest(BaseRequest):
     volunteer_mode  = models.CharField(max_length=20, blank=True)   # 'offer' | 'wish'
     stay_from       = models.DateTimeField(null=True, blank=True)
     stay_to         = models.DateTimeField(null=True, blank=True)
-    practice_skills = models.CharField(max_length=500, blank=True)
-    sender_skills   = models.CharField(max_length=500, blank=True)
+    practice_skills       = models.CharField(max_length=500, blank=True)
+    practice_skill_level  = models.CharField(max_length=20, blank=True)
+    sender_skills         = models.CharField(max_length=500, blank=True)
 
     class Meta:
         ordering = ["-created_at"]
