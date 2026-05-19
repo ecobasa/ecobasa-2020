@@ -44,6 +44,21 @@ class VolunteerRequest(BaseRequest):
     def sender_skills_list(self):
         return [s.strip() for s in self.sender_skills.split(",") if s.strip()] if self.sender_skills else []
 
+    @property
+    def sender_skills_with_levels(self):
+        from skills.models import UserSkill
+        names = self.sender_skills_list
+        if not names:
+            return []
+        level_map = {
+            us.skill.name: us.get_level_display()
+            for us in UserSkill.objects.filter(
+                user=self.from_user, skill__name__in=names,
+            ).select_related("skill")
+            if us.level
+        }
+        return [(name, level_map.get(name)) for name in names]
+
     def __str__(self):
         return f"Volunteer request by {self.from_user} at {self.community} ({self.status})"
 
