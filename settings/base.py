@@ -185,6 +185,7 @@ TEMPLATES = [
                 "django.template.context_processors.tz",
                 "django.contrib.messages.context_processors.messages",
                 "notifications.context_processors.unread_notifications",
+                "users.context_processors.skill_nudge",
             ],
         },
     }

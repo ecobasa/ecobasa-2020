@@ -143,12 +143,26 @@
 {% include "skills/_skill_autocomplete_js.html" %}
 <script>
 (function () {
-  var params = new URLSearchParams(window.location.search);
-  var input  = document.querySelector('[data-skill-autocomplete]');
-  if (params.get('skill') && input && !input.value) {
-    input.value = params.get('skill');
+  var params    = new URLSearchParams(window.location.search);
+  var input     = document.querySelector('[data-skill-autocomplete]');
+  var skillName = params.get('skill');
+  if (skillName && input && !input.value) {
+    input.value    = skillName;
     input.readOnly = true;
     input.classList.add('opacity-60', 'cursor-default');
+    var hidden = document.querySelector('[name="skill_taxonomy_data"]');
+    fetch('{% url "skills:api_autocomplete" %}?q=' + encodeURIComponent(skillName))
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        var results = data.results || [];
+        var match = results.find(function (r) {
+          return r.text.toLowerCase() === skillName.toLowerCase();
+        }) || results[0];
+        if (match && hidden) {
+          hidden.value = match.id;
+          input.classList.add('ring-2', 'ring-green');
+        }
+      });
   }
 })();
 </script>

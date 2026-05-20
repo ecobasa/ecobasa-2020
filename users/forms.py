@@ -47,13 +47,13 @@ class RegisterForm(forms.ModelForm):
     )
     skills = forms.CharField(
         required=False,
-        label=_("Skills"),
-        help_text=_("Comma-separated list of skills, e.g. carpentry, cooking, solar energy."),
+        label=_("What can you offer or teach?"),
+        help_text=_("Everyday skills count just as much as professional ones — cooking, gardening, basic repairs, childcare are all valuable to communities."),
     )
     skill_wishes = forms.CharField(
         required=False,
-        label=_("Skills I'd like to learn"),
-        help_text=_("Comma-separated list of skills you want to learn, e.g. beekeeping, natural building."),
+        label=_("What do you want to learn or need help with?"),
+        help_text=_("Sharing what you need helps communities match you with the right people and experiences."),
     )
 
     class Meta:
@@ -143,8 +143,16 @@ class ProfileUpdateForm(forms.ModelForm):
             "boundary": {"width": 300, "height": 300},
         },
     )
-    skills = forms.CharField(required=False, label=_("Skills"), help_text=_("Comma-separated list of skills."))
-    skill_wishes = forms.CharField(required=False, label=_("Skills I'd like to learn"), help_text=_("Comma-separated list of skills you want to learn."))
+    skills = forms.CharField(
+        required=False,
+        label=_("What can you offer or teach?"),
+        help_text=_("Everyday skills count just as much as professional ones — cooking, gardening, basic repairs, childcare are all valuable to communities."),
+    )
+    skill_wishes = forms.CharField(
+        required=False,
+        label=_("What do you want to learn or need help with?"),
+        help_text=_("Sharing what you need helps communities match you with the right people and experiences."),
+    )
 
     class Meta:
         model = User

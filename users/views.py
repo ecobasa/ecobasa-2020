@@ -71,6 +71,11 @@ class DetailView(DetailView):
         return ctx
 
 
+def dismiss_skill_nudge(request):
+    request.session["skill_nudge_dismissed"] = True
+    return redirect(request.GET.get("next") or "/")
+
+
 def logout(request):
     """Logout user on POST requests only (more secure)"""
     if request.method == "POST":

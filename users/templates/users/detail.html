@@ -90,7 +90,7 @@
 			{% endif %}
 
 			{% if skill_wishes or request.user.pk == user.pk %}
-				<h2 class="mt-6">{% trans "Skills I would like to learn" %}</h2>
+				<h2 class="mt-6">{% trans "Skills I want to learn or need help with" %}</h2>
 				{% if skill_wishes %}
 				<div class="flex flex-wrap gap-2 mb-6">
 					{% for sw in skill_wishes %}
@@ -106,7 +106,7 @@
 				{% endif %}
 				{% if request.user.is_authenticated and request.user.pk == user.pk %}
 					<a href="{% url 'skills:userskill_add' %}?mode=wish" class="btn mt-2">
-						<i class="fa fa-plus mr-2"></i>{% trans "Add skills I'd like to learn" %}
+						<i class="fa fa-plus mr-2"></i>{% trans "Add skills I want to learn or need help with" %}
 					</a>
 				{% endif %}
 			{% endif %}

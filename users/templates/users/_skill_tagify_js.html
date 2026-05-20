@@ -1,0 +1,65 @@
+{% load i18n %}
+<script>
+(function () {
+  const AUTOCOMPLETE_URL = '{% url "skills:api_autocomplete" %}';
+  const PROPOSALS_URL    = '{% url "skills:api_proposals" %}';
+
+  function makeTagOpts(existingValue) {
+    const existing = (existingValue || '').split(',').map(s => s.trim()).filter(Boolean);
+    return {
+      editTags: false,
+      enforceWhitelist: true,
+      whitelist: existing.map(s => ({ value: s })),
+      dropdown: {
+        enabled: 0,
+        maxItems: 20,
+        closeOnSelect: true,
+        searchKeys: ['value'],
+        highlightFirst: true,
+      },
+      originalInputValueFormat: vals => vals.map(v => v.value).join(', '),
+    };
+  }
+
+  function wireTagify(tagify, proposalHeader) {
+    let fetchTimer = null;
+
+    tagify.on('input', function (e) {
+      clearTimeout(fetchTimer);
+      const q = (e.detail.value || '').trim();
+      const isSearch = q.length >= 2;
+      const url = isSearch ? AUTOCOMPLETE_URL + '?q=' + encodeURIComponent(q) : PROPOSALS_URL;
+      fetchTimer = setTimeout(function () {
+        fetch(url).then(r => r.json()).then(data => {
+          tagify.settings.whitelist = (data.results || []).map(r => ({ value: r.text }));
+          tagify.settings.dropdown.header = isSearch ? '' : proposalHeader;
+          tagify.loading(false).dropdown.show.call(tagify, q);
+        });
+      }, isSearch ? 300 : 0);
+    });
+
+    tagify.on('focus', function () {
+      if (tagify.state.inputText) return;
+      fetch(PROPOSALS_URL).then(r => r.json()).then(data => {
+        tagify.settings.whitelist = (data.results || []).map(r => ({ value: r.text }));
+        tagify.settings.dropdown.header = proposalHeader;
+        tagify.dropdown.show.call(tagify, '');
+      });
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    const skillsInput = document.getElementById('id_skills');
+    if (skillsInput) {
+      const t = new Tagify(skillsInput, makeTagOpts(skillsInput.value));
+      wireTagify(t, '{% trans "Skills communities always need" %}');
+    }
+
+    const wishInput = document.getElementById('id_skill_wishes');
+    if (wishInput) {
+      const t = new Tagify(wishInput, makeTagOpts(wishInput.value));
+      wireTagify(t, '{% trans "Popular skills to explore" %}');
+    }
+  });
+})();
+</script>

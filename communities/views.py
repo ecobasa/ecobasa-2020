@@ -73,8 +73,14 @@ def detail(request, slug):
     skill_wishes = list(community.skill_wishes.select_related("skill").order_by("skill__name"))
 
     # Build a {skill_id: level_display} map for the visiting user so the modal can show their level
+    skill_nudges = []
     user_levels_json = "{}"
     if request.user.is_authenticated and request.user != community.owner:
+        user_covered = set(
+            list(request.user.user_skills.values_list("skill_id", flat=True)) +
+            list(request.user.skill_wishes.values_list("skill_id", flat=True))
+        )
+        skill_nudges = [cs for cs in community_skills if cs.skill_id not in user_covered][:3]
         skill_ids = [cs.skill_id for cs in community_skills] + [sw.skill_id for sw in skill_wishes]
         user_levels_json = json.dumps({
             str(us.skill_id): us.get_level_display()
@@ -88,6 +94,7 @@ def detail(request, slug):
         "community_skills": community_skills,
         "skill_wishes":     skill_wishes,
         "user_levels_json": user_levels_json,
+        "skill_nudges":     skill_nudges,
     })
 
 

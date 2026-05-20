@@ -27,6 +27,21 @@
       <div class="flex items-stretch justify-between">
 
         <div class="w-full">
+          {% if show_skill_nudge %}
+          {% load i18n %}
+          <div class="bg-primary text-secondary px-4 py-3 flex items-center justify-between gap-4 text-sm">
+            <span>
+              <i class="fa fa-seedling mr-2"></i>
+              {% trans "Your profile has no skills yet — add what you can offer and what you want to learn so communities and people can find you." %}
+            </span>
+            <div class="flex gap-3 flex-shrink-0">
+              <a href="{% url 'skills:userskill_add' %}" class="underline font-semibold">{% trans "Add skills" %}</a>
+              <a href="{% url 'users:dismiss_skill_nudge' %}?next={{ request.path }}" class="opacity-70 hover:opacity-100" aria-label="{% trans 'Dismiss' %}">
+                <i class="fa fa-times"></i>
+              </a>
+            </div>
+          </div>
+          {% endif %}
           {% block content %}{% endblock content %}
         </div>
       </div>

@@ -10,6 +10,7 @@ from skills.models import SkillTaxonomy
 SKILLS = [
     # ── Agriculture & Food ───────────────────────────────────────────────────
     ("permaculture",            "Permaculture",             "Permakultur",                  "Permacultura",                  "Permaculture"),
+    ("permaculture-design",     "Permaculture Design",      "Permakultur-Design",           "Diseño de Permacultura",        "Design en Permaculture"),
     ("organic-farming",         "Organic Farming",          "Ökologischer Landbau",         "Agricultura Ecológica",         "Agriculture Biologique"),
     ("market-gardening",        "Market Gardening",         "Marktgärtnerei",               "Horticultura de Mercado",       "Maraîchage"),
     ("beekeeping",              "Beekeeping",               "Imkerei",                      "Apicultura",                    "Apiculture"),
@@ -408,6 +409,7 @@ SKILLS = [
     ("circus-skills",           "Circus Skills",            "Zirkuskünste",                 "Habilidades Circenses",           "Arts du Cirque"),
     ("clowning",                "Clowning",                 "Clownerie",                    "Clown",                           "Clown"),
     ("impro-theatre",           "Improvisational Theatre",  "Improtheater",                 "Teatro de Impro",                 "Théâtre d'Impro"),
+    ("filmmaking",              "Filmmaking",               "Filmemachen",                  "Realización de Films",           "Réalisation de Films"),
 
     # ── Technology ───────────────────────────────────────────────────────────
     ("web-development",         "Web Development",          "Webentwicklung",               "Desarrollo Web",                "Développement Web"),
@@ -505,7 +507,7 @@ SKILLS = [
     ("event-cleanup",           "Event Cleanup",            "Veranstaltungsabbau",          "Limpieza tras Eventos",         "Nettoyage d'Événements"),
     ("decoration",              "Decoration",               "Dekoration",                   "Decoración",                    "Décoration"),
     ("campfire-hosting",        "Campfire Hosting",         "Lagerfeuer gestalten",         "Facilitar Fogatas",             "Animation de Feu de Camp"),
-    ("food-distribution",      "Bread & Food Distribution","Lebensmittel verteilen",       "Distribución de Alimentos",     "Distribution Alimentaire"),
+    ("food-distribution",       "Bread & Food Distribution","Lebensmittel verteilen",       "Distribución de Alimentos",     "Distribution Alimentaire"),
 ]
 
 

@@ -2,9 +2,9 @@
 {% load i18n embed_video_tags static %}
 
 {% block extrahead %}
-	{{ block.super }}
 	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.css">
 	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v7.2.2/ol.css">
+	{{ block.super }}
 {% endblock extrahead %}
 
 {% block content %}
@@ -14,6 +14,7 @@
 	.video-container iframe,
 	.video-container object,
 	.video-container embed { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+
 </style>
 {% if photos %}
 <div class="relative w-full" style="height: 340px;"
@@ -129,6 +130,20 @@
 		<a href="{% url 'skills:communityskill_add' community.slug %}" class="btn">
 			<i class="fa fa-plus mr-1"></i>{% trans "Add a skill" %}
 		</a>
+		{% endif %}
+
+		{% if skill_nudges %}
+		<div class="rounded-lg border border-primary bg-secondary px-4 py-3 my-4 text-sm">
+			<p class="font-semibold text-primary mb-2"><i class="fa fa-lightbulb mr-2"></i>{% trans "This community can teach you:" %}</p>
+			<div class="flex flex-wrap gap-2">
+				{% for cs in skill_nudges %}
+					<a href="{% url 'skills:userskill_add' %}?skill={{ cs.skill.name|urlencode }}&mode=wish" class="pill bg-primary text-secondary">
+						<i class="fa fa-plus mr-1"></i>{{ cs.skill.name }}
+					</a>
+				{% endfor %}
+			</div>
+			<p class="text-xs text-brown mt-2">{% trans "Add these as learning goals so communities and people know what you're looking for." %}</p>
+		</div>
 		{% endif %}
 
 		{% if skill_wishes %}
@@ -281,7 +296,7 @@
 <div x-show="vOpen" style="display:none"
      @click.self="vOpen = false"
      @keydown.escape.window="vOpen = false"
-     class="fixed inset-0 bg-black bg-opacity-70 z-50 flex items-center justify-center p-4 overflow-y-auto">
+     class="modal fixed inset-0 bg-black bg-opacity-70 z-50 flex items-center justify-center p-4 overflow-y-auto">
 	<div id="volunteer-form-wrap" class="modal-content" style="-webkit-overflow-scrolling: touch;">
 		<button type="button" @click="vOpen = false" class="absolute top-3 right-3 text-2xl">&times;</button>
 		<h1 class="text-xl font-semibold mb-4">{% trans "Offer to volunteer" %}</h1>
@@ -342,12 +357,13 @@ document.addEventListener('alpine:init', () => {
 		get vLevel()        { return this.vSkillId ? (this.userLevels[String(this.vSkillId)] || null) : null; },
 		get vPracticeLabel(){ return this.vMode === 'wish' ? this.labelWish : this.labelOffer; },
 		get vLevelLabel()   { return this.vMode === 'wish' ? this.levelLabelWish : this.levelLabelOffer; },
+		wishNames: [{% for sw in skill_wishes %}"{{ sw.skill.name|escapejs }}"{% if not forloop.last %},{% endif %}{% endfor %}],
 		openVolunteer(skill, mode, skillId) {
 			this.vSkill   = skill   || '';
 			this.vMode    = mode    || '';
 			this.vSkillId = skillId || null;
 			this.vOpen    = true;
-			this.$nextTick(() => window.seedPracticeTagify && window.seedPracticeTagify(skill));
+			this.$nextTick(() => window.seedPracticeTagify && window.seedPracticeTagify(skill ? [skill] : this.wishNames));
 		},
 		init() {
 			this.$watch('vOpen', v => document.body.classList.toggle('overflow-hidden', v));
@@ -356,24 +372,80 @@ document.addEventListener('alpine:init', () => {
 	}));
 });
 
-/* ── Tagify for volunteer modal inputs (minimal vanilla) ────────── */
+/* ── Tagify for volunteer modal inputs with taxonomy autocomplete ── */
 document.addEventListener('DOMContentLoaded', () => {
-	const tagOpts = {
-		editTags: false,
-		dropdown: { enabled: 0 },
-		originalInputValueFormat: v => v.map(x => x.value).join(', '),
-	};
+	const AUTOCOMPLETE_URL = '{% url "skills:api_autocomplete" %}';
+	const PROPOSALS_URL    = '{% url "skills:api_proposals" %}';
+
+	function makeTagOpts() {
+		return {
+			editTags: false,
+			enforceWhitelist: true,
+			whitelist: [],
+			dropdown: {
+				enabled: 0,
+				maxItems: 20,
+				closeOnSelect: true,
+				searchKeys: ['value'],
+				highlightFirst: true,
+			},
+			originalInputValueFormat: v => v.map(x => x.value).join(', '),
+		};
+	}
+
+	function wireTagify(tagify) {
+		let fetchTimer = null;
+
+		tagify.on('input', function (e) {
+			clearTimeout(fetchTimer);
+			const q = (e.detail.value || '').trim();
+			const isSearch = q.length >= 2;
+			const url = isSearch ? AUTOCOMPLETE_URL + '?q=' + encodeURIComponent(q) : PROPOSALS_URL;
+			fetchTimer = setTimeout(function () {
+				fetch(url).then(r => r.json()).then(data => {
+					tagify.settings.whitelist = (data.results || []).map(r => ({ value: r.text }));
+					tagify.settings.dropdown.header = isSearch ? '' : '{% trans "Suggested community skills" %}';
+					tagify.loading(false).dropdown.show.call(tagify, q);
+				});
+			}, isSearch ? 300 : 0);
+		});
+
+		tagify.on('focus', function () {
+			if (tagify.state.inputText) return;
+			fetch(PROPOSALS_URL).then(r => r.json()).then(data => {
+				tagify.settings.whitelist = (data.results || []).map(r => ({ value: r.text }));
+				tagify.settings.dropdown.header = '{% trans "Suggested community skills" %}';
+				tagify.dropdown.show.call(tagify, '');
+			});
+		});
+	}
+
 	let practiceTagify = null, senderTagify = null;
 
-	window.seedPracticeTagify = (skillName) => {
+	window.seedPracticeTagify = (skills) => {
+		const names = Array.isArray(skills) ? skills : (skills ? [skills] : []);
 		const go = () => {
 			const pe = document.getElementById('volunteer-practice-skills');
 			const se = document.getElementById('volunteer-sender-skills');
-			if (pe && !practiceTagify) practiceTagify = new Tagify(pe, tagOpts);
-			if (se && !senderTagify)   senderTagify   = new Tagify(se, tagOpts);
+			if (pe && !practiceTagify) {
+				practiceTagify = new Tagify(pe, makeTagOpts());
+				wireTagify(practiceTagify);
+			}
+			if (se && !senderTagify) {
+				// Parse the pre-filled value so enforceWhitelist doesn't reject existing skills at init
+				const existingSkills = (se.value || '').split(',').map(s => s.trim()).filter(Boolean);
+				const senderOpts = makeTagOpts();
+				senderOpts.whitelist = existingSkills.map(s => ({ value: s }));
+				senderTagify = new Tagify(se, senderOpts);
+				wireTagify(senderTagify);
+			}
 			if (practiceTagify) {
 				practiceTagify.removeAllTags();
-				if (skillName) practiceTagify.addTags([skillName]);
+				if (names.length) {
+					// Whitelist must contain the seeds or enforceWhitelist rejects them
+					practiceTagify.settings.whitelist = names.map(n => ({ value: n }));
+					practiceTagify.addTags(names.map(n => ({ value: n })));
+				}
 			}
 		};
 		if (window.Tagify) { go(); }

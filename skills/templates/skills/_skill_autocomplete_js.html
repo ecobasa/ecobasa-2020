@@ -4,11 +4,11 @@
   var input  = document.querySelector('[data-skill-autocomplete]');
   var hidden = document.querySelector('[name="skill_taxonomy_data"]');
   var error  = document.getElementById('skill-taxonomy-error');
-  if (error && error.textContent.trim()) error.hidden = false; // show server-side errors on load
+  if (error && error.textContent.trim()) error.hidden = false;
   if (!input) return;
 
   var list = document.createElement('ul');
-  list.className = 'list-none absolute z-20 w-full mt-1 bg-secondary rounded shadow-lg border text-sm';
+  list.className = 'list-none absolute z-20 w-full mt-1 bg-secondary rounded shadow-lg border text-sm max-h-64 overflow-y-auto';
   list.hidden = true;
   input.parentElement.style.position = 'relative';
   input.parentElement.appendChild(list);
@@ -20,44 +20,65 @@
     if (error) { error.textContent = ''; error.hidden = true; }
   }
 
+  function renderResults(results, isProposals) {
+    list.innerHTML = '';
+    if (!results.length) {
+      var li = document.createElement('li');
+      li.textContent = '{% trans "No results — try a different term" %}';
+      li.className = 'px-3 py-2 italic text-xs';
+      list.appendChild(li);
+      list.hidden = false;
+      return;
+    }
+    if (isProposals) {
+      var header = document.createElement('li');
+      header.textContent = '{% trans "Popular community skills — click to select" %}';
+      header.className = 'px-3 py-1.5 text-xs font-semibold uppercase tracking-wide border-b';
+      list.appendChild(header);
+    }
+    results.forEach(function (item) {
+      var li = document.createElement('li');
+      li.textContent = item.text;
+      li.className = 'px-3 py-2 cursor-pointer hover:bg-primary hover:text-secondary';
+      li.addEventListener('mousedown', function (e) {
+        e.preventDefault();
+        input.value = item.text;
+        if (hidden) hidden.value = item.id;
+        input.classList.add('ring-2', 'ring-green');
+        clearError();
+        list.hidden = true;
+      });
+      list.appendChild(li);
+    });
+    list.hidden = false;
+  }
+
   var debounceTimer = null;
+
+  input.addEventListener('focus', function () {
+    if (input.value.trim().length >= 2) return;
+    fetch('{% url "skills:api_proposals" %}')
+      .then(function (r) { return r.json(); })
+      .then(function (data) { renderResults(data.results || [], true); });
+  });
+
   input.addEventListener('input', function () {
     if (hidden) hidden.value = '';
     input.classList.remove('ring-2', 'ring-green');
     clearError();
     var q = input.value.trim();
-    if (q.length < 2) { list.hidden = true; clearTimeout(debounceTimer); return; }
+    if (q.length < 2) {
+      clearTimeout(debounceTimer);
+      fetch('{% url "skills:api_proposals" %}')
+        .then(function (r) { return r.json(); })
+        .then(function (data) { renderResults(data.results || [], true); });
+      return;
+    }
     clearTimeout(debounceTimer);
     debounceTimer = setTimeout(function () {
-    fetch('{% url "skills:api_autocomplete" %}?q=' + encodeURIComponent(q))
-      .then(function (r) { return r.json(); })
-      .then(function (data) {
-        list.innerHTML = '';
-        var results = data.results || [];
-        if (!results.length) {
-          var li = document.createElement('li');
-          li.textContent = '{% trans "No results — try a different term" %}';
-          li.className = 'px-3 py-2 text-brown italic text-xs';
-          list.appendChild(li);
-          list.hidden = false;
-          return;
-        }
-        results.forEach(function (item) {
-          var li = document.createElement('li');
-          li.textContent = item.text;
-          li.className = 'px-3 py-2 cursor-pointer hover:bg-primary hover:text-secondary';
-          li.addEventListener('mousedown', function (e) {
-            e.preventDefault();
-            input.value = item.text;
-            if (hidden) hidden.value = item.id;
-            input.classList.add('ring-2', 'ring-green');
-            clearError();
-            list.hidden = true;
-          });
-          list.appendChild(li);
-        });
-        list.hidden = false;
-      });
+      fetch('{% url "skills:api_autocomplete" %}?q=' + encodeURIComponent(q))
+        .then(function (r) { return r.json(); })
+        .then(function (data) { renderResults(data.results || [], false); });
     }, 350);
   });
 

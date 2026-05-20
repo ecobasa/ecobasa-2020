@@ -90,10 +90,19 @@ def skill_detail(request, slug):
     skill        = get_object_or_404(Skill, slug=slug)
     user_skills  = skill.user_skills.filter(available=True).select_related("user").order_by("user__name")
     comm_skills  = skill.community_skills.select_related("community").order_by("community__name")
+    wish_count   = skill.wishes.count()
+    user_has_skill = (
+        request.user.is_authenticated and (
+            skill.user_skills.filter(user=request.user).exists() or
+            skill.wishes.filter(user=request.user).exists()
+        )
+    )
     return render(request, "skills/skill_detail.html", {
-        "skill":       skill,
-        "user_skills": user_skills,
-        "comm_skills": comm_skills,
+        "skill":          skill,
+        "user_skills":    user_skills,
+        "comm_skills":    comm_skills,
+        "wish_count":     wish_count,
+        "user_has_skill": user_has_skill,
     })
 
 
@@ -353,7 +362,40 @@ def skillwish_community_edit(request, pk, community_slug):
 
 # ── Autocomplete API ─────────────────────────────────────────────────
 
+# Curated "offer" proposals — ordered by community need, NOT by usage.
+# Rationale: communities always need construction, maintenance, and everyday
+# support skills more than they need the popular skills everyone already lists.
+_OFFER_PROPOSAL_SLUGS = [
+    # Everyday — universal, low-barrier, always needed in any community
+    "kitchen-help", "meal-preparation", "garden-maintenance", "harvesting", "painting-walls", "childcare", "elder-care", "pet-care",
+    # Construction & maintenance — every community has broken things
+    "carpentry", "plumbing", "electrical-installation", "woodworking", "natural-building",
+    # Energy & water systems — high-value for off-grid communities
+    "passive-solar-design", "solar-thermal", "solar-panel-installation", "rainwater-harvesting", "water-system-maintenance", "bicycle-repair",
+    # Health — first aid and basic care are universally valued
+    "medical-practice", "first-aid", "massage-therapy", "herbal-medicine",
+    # High-value pro-bono — rare and extremely useful for community governance
+    "bookkeeping", "translation", "legal-advice", "social-media", "filmmaking", "fundraising", "permaculture", "permaculture-design",
+]
+
 _SKILL_LANGS = [code for code, _ in settings.LANGUAGES]
+
+
+@require_GET
+def skill_proposals(request):
+    """Return curated offer proposals ordered by community need (not popularity)."""
+    lang = getattr(request, "LANGUAGE_CODE", "en")[:2]
+    taxonomy = SkillTaxonomy.objects.filter(slug__in=_OFFER_PROPOSAL_SLUGS)
+    taxonomy_map = {t.slug: t for t in taxonomy}
+    results = []
+    for slug in _OFFER_PROPOSAL_SLUGS:
+        t = taxonomy_map.get(slug)
+        if t:
+            results.append({
+                "id":   json.dumps({"slug": t.slug, "names": t.names}),
+                "text": t.get_name(lang),
+            })
+    return JsonResponse({"results": results})
 
 
 @require_GET
@@ -362,7 +404,11 @@ def skill_autocomplete(request):
     lang = getattr(request, "LANGUAGE_CODE", "en")[:2]
     if len(q) < 2:
         return JsonResponse({"results": []})
-    results = SkillTaxonomy.objects.filter(**{f"names__{lang}__icontains": q})[:10]
+    from django.db.models import Q
+    lang_filter = Q()
+    for code in _SKILL_LANGS:
+        lang_filter |= Q(**{f"names__{code}__icontains": q})
+    results = SkillTaxonomy.objects.filter(lang_filter)[:10]
     return JsonResponse({"results": [
         {
             "id":   json.dumps({"slug": s.slug, "names": s.names}),

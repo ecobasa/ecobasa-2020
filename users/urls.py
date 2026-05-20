@@ -26,5 +26,6 @@ urlpatterns = [
         name="password_reset_complete",
     ),
         path("autocomplete/", views.autocomplete, name="autocomplete"),
+    path("dismiss-skill-nudge/", views.dismiss_skill_nudge, name="dismiss_skill_nudge"),
         path("<slug>/", views.DetailView.as_view(), name="detail"),
 ]

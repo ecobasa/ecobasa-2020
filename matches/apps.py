@@ -5,3 +5,6 @@ class ExchangeConfig(AppConfig):
     default_auto_field = "django.db.models.BigAutoField"
     name = "matches"
     verbose_name = "Exchange Requests"
+
+    def ready(self):
+        import matches.signals  # noqa: F401
