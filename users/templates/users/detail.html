@@ -74,7 +74,7 @@
 				<div class="flex flex-wrap gap-2 mb-6">
 					{% for us in user_skills %}
 						<a href="{% if request.user.pk == user.pk %}{{ us.get_edit_url }}{% else %}{{ us.get_absolute_url }}{% endif %}"
-						   class="inline-flex gap-1 bg-purple pill hover:opacity-80 transition-opacity">
+						   class="pill pill-lg inline-flex gap-1 bg-purple hover:opacity-80 transition-opacity">
 							<i class="fa fa-graduation-cap"></i>
 							{{ us.skill.name }}
 							{% if us.level %}<span class="opacity-70 text-xs">({{ us.get_level_display }})</span>{% endif %}
@@ -95,7 +95,7 @@
 				<div class="flex flex-wrap gap-2 mb-6">
 					{% for sw in skill_wishes %}
 						<a href="{% if request.user.pk == user.pk %}{% url 'skills:skillwish_user_edit' sw.pk %}{% else %}{{ sw.get_absolute_url }}{% endif %}"
-						   class="inline-flex gap-1 bg-yellow pill hover:bg-purple transition-opacity"
+						   class="pill pill-lg inline-flex gap-1 bg-yellow hover:bg-purple transition-opacity"
 						   {% if request.user.is_authenticated and request.user.pk != user.pk %}title="{% trans "Offer to teach this skill" %}"{% endif %}>
 							<i class="{% if request.user.is_authenticated and request.user.pk != user.pk %}fa fa-paper-plane{% else %}fa fa-book{% endif %}"></i>
 							{{ sw.skill.name }}

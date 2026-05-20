@@ -663,7 +663,7 @@ function buildCommunityPopupHTML(f) {
 
   if (skills.length) {
     html += '<div class="m-2 truncate">';
-    skills.slice(0, 5).forEach(s => { html += `<span class="pill bg-purple mr-2">${s}</span>`; });
+    skills.slice(0, 5).forEach(s => { html += `<span class="pill bg-purple mr-2"><i class="fa fa-graduation-cap mr-1"></i>${s}</span>`; });
     html += '</div>';
   }
 
