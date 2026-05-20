@@ -96,6 +96,9 @@
 	</div>
 {% endif %}
 <div class="container-page relative" x-data="communityVolunteer()">
+	{% if not hero_image and not photos %}
+		<h1>{{ community.name }}</h1>
+	{% endif %}
 	{% if request.user.is_authenticated and request.user.is_staff or request.user.is_authenticated and community.owner and request.user == community.owner %}
 		<a class="btn btn-lg btn-primary absolute right-4 top-0 bg-opacity-70" href="{% url 'communities:update' slug=community.slug %}"><i class="fa fa-edit mr-2"></i>{% trans "Edit" %}</a>
 	{% endif %}
