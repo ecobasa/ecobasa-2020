@@ -1,9 +1,11 @@
 import json
 import re
+from urllib.parse import urlencode
 
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q, Prefetch
 from django.shortcuts import render, get_object_or_404, redirect
+from django.urls import reverse
 from django.contrib import messages
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_GET, require_POST
@@ -150,6 +152,32 @@ def volunteer_request(request, community_slug):
     )
 
     messages.success(request, str(_("Your request has been sent to %(community)s!") % {"community": community.name}))
+
+    offer_list = [s.strip() for s in sender_skills.split(",") if s.strip()]
+    wish_list  = [s.strip() for s in practice_skills.split(",") if s.strip()]
+
+    if offer_list or wish_list:
+        existing_offers = set(
+            request.user.user_skills.values_list("skill__name", flat=True)
+        )
+        existing_wishes = set(
+            request.user.skill_wishes.values_list("skill__name", flat=True)
+        )
+        offer_list = [s for s in offer_list if s.lower() not in {n.lower() for n in existing_offers}]
+        wish_list  = [s for s in wish_list  if s.lower() not in {n.lower() for n in existing_wishes}]
+
+    if request.headers.get("HX-Request") and (offer_list or wish_list):
+        params = {}
+        if offer_list:
+            params["offer_skills"] = ",".join(offer_list)
+        if wish_list:
+            params["wish_skills"] = ",".join(wish_list)
+        return render(request, "communities/_volunteer_skill_proposal.html", {
+            "community":  community,
+            "offer_list": offer_list,
+            "wish_list":  wish_list,
+            "review_url": reverse("users:update") + "?" + urlencode(params),
+        })
 
     if request.headers.get("HX-Request"):
         return render(request, "_messages.html")

@@ -68,7 +68,7 @@
                  x-transition:leave-start="opacity-100 transform scale-100"
                  x-transition:leave-end="opacity-0 transform scale-95"
                  class="origin-top-right absolute right-0 mt-3 w-80 rounded-md shadow-lg z-50">
-              <div class="rounded-md bg-primary bg-opacity-95 shadow-xs text-secondary">
+              <div class="rounded-md bg-primary bg-opacity-75 backdrop-blur shadow-xs text-secondary">
                 <div class="flex items-center justify-between px-4 py-2 border-b border-secondary border-opacity-20">
                   <span class="text-sm font-semibold">{% trans "Notifications" %}</span>
                   <a href="{% url 'notifications:list' %}" class="text-xs hover:underline opacity-70">{% trans "See all" %}</a>
@@ -134,7 +134,7 @@
                   x-transition:leave-start="opacity-100 transform scale-100"
                   x-transition:leave-end="opacity-0 transform scale-95"
                   class="origin-top-right absolute right-0 mt-3 w-48 rounded-md shadow-lg z-40">
-              <div class="py-1 rounded-md bg-primary bg-opacity-75 shadow-xs">
+              <div class="py-1 rounded-md bg-primary bg-opacity-75 backdrop-blur shadow-xs">
                 <a href="{{ request.user.get_absolute_url }}" class="dropdown-link">
                   <i class="fa fa-user mr-2"></i>
                   {% trans "Your Profile" %}

@@ -293,13 +293,13 @@
 				<div class="grid grid-cols-1 gap-3">
 					<div class="text-sm">
 						<label class="block mb-1" x-text="vPracticeLabel"></label>
-						<input type="text" id="volunteer-practice-skills" name="practice_skills" class="form-input w-full" placeholder="{% trans "Type a skill and press Enter…" %}">
+						<input type="text" id="volunteer-practice-skills" name="practice_skills" class="form-input" placeholder="{% trans "Type a skill and press Enter…" %}">
 					</div>
 					<div x-show="vLevel" style="display:none" class="text-sm bg-primary bg-opacity-10 rounded px-3 py-2">
 						<span x-text="vLevelLabel"></span>: <span class="font-semibold capitalize" x-text="vLevel"></span>
 					</div>
 					<label class="text-sm">{% trans "Your skills (comma separated)" %}
-						<input type="text" name="sender_skills" id="volunteer-sender-skills" class="form-input w-full mt-1"
+						<input type="text" name="sender_skills" id="volunteer-sender-skills" class="form-input mt-1"
 									value="{% if request.user.is_authenticated %}{% for us in request.user.user_skills.all %}{{ us.skill.name }}{% if not forloop.last %}, {% endif %}{% endfor %}{% endif %}">
 					</label>
 					<label class="text-sm">{% trans "From" %}

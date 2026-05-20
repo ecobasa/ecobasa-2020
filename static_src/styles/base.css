@@ -123,6 +123,9 @@ nav {
 	&-lg {
 		@apply py-3 px-6 text-lg;
 	}
+	&-sm {
+		@apply py-2 px-4 text-sm;
+	}
 }
 
 .btn-pill-select {

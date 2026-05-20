@@ -48,15 +48,25 @@
     });
   }
 
+  function mergeQueryParam(inputValue, paramName) {
+    const params = new URLSearchParams(window.location.search);
+    const proposed = (params.get(paramName) || '').split(',').map(s => s.trim()).filter(Boolean);
+    if (!proposed.length) return inputValue;
+    const existing = (inputValue || '').split(',').map(s => s.trim()).filter(Boolean);
+    return [...new Set([...existing, ...proposed])].join(', ');
+  }
+
   document.addEventListener('DOMContentLoaded', function () {
     const skillsInput = document.getElementById('id_skills');
     if (skillsInput) {
+      skillsInput.value = mergeQueryParam(skillsInput.value, 'offer_skills');
       const t = new Tagify(skillsInput, makeTagOpts(skillsInput.value));
       wireTagify(t, '{% trans "Skills communities always need" %}');
     }
 
     const wishInput = document.getElementById('id_skill_wishes');
     if (wishInput) {
+      wishInput.value = mergeQueryParam(wishInput.value, 'wish_skills');
       const t = new Tagify(wishInput, makeTagOpts(wishInput.value));
       wireTagify(t, '{% trans "Popular skills to explore" %}');
     }
