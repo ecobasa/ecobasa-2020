@@ -1,5 +1,6 @@
 {% if messages %}
-  <div class="mx-auto max-w-3xl fixed inset-0 z-50 sm:mt-12 flex items-end justify-center px-4 py-6 pointer-events-none sm:p-6 sm:items-start sm:justify-end">
+  <div
+    class="mx-auto max-w-3xl fixed inset-0 z-50 sm:mt-12 justify-center px-4 py-6 pointer-events-none sm:p-6 sm:items-start sm:justify-end">
     {% for message in messages %}
       {% include "_message_item.html" %}
     {% endfor %}
