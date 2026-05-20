@@ -38,7 +38,16 @@
       {% if request.user.is_authenticated %}
         <div class="hidden sm:ml-6 sm:flex sm:items-center">
           {% comment %} Notification Bell {% endcomment %}
-          <div class="relative mr-1" x-data="{ open: false, notifications: [], unread: {{ unread_notifications_count }}, hasMore: false }"
+          <div class="relative mr-1" x-data="{
+                 open: false, notifications: [], unread: {{ unread_notifications_count }}, hasMore: false,
+                 init() {
+                   setInterval(() => {
+                     fetch('{% url 'notifications:recent_json' %}')
+                       .then(r => r.json())
+                       .then(d => { this.unread = d.unread; });
+                   }, 60000);
+                 }
+               }"
                @close-notifications.window="open = false">
             <button @click="open = !open; if (open) { fetch('{% url 'notifications:recent_json' %}').then(r=>r.json()).then(d=>{ notifications=d.notifications; unread=d.unread; hasMore=d.has_more; }); }"
                     class="relative p-1 rounded-full hover:text-brown focus:outline-none transition duration-150 ease-in-out"
@@ -69,6 +78,7 @@
                 </template>
                 <template x-for="n in notifications" :key="n.id">
                   <a :href="n.link || '#'"
+                     @click="fetch('/notifications/'+n.id+'/mark-read/', {method:'POST', headers:{'X-CSRFToken':'{{ csrf_token }}'}}).then(()=>{ n.is_read=true; unread=Math.max(0,unread-1); })"
                      class="flex items-start gap-2 px-4 py-2 hover:bg-secondary hover:bg-opacity-10 border-b border-secondary border-opacity-10 transition-colors">
                     <span class="mt-1 flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center transition-opacity bg-secondary bg-opacity-20"
                       :class="n.is_read ? 'opacity-70' : ''">

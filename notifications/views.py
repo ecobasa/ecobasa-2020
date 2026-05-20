@@ -1,5 +1,5 @@
 from django.contrib.auth.decorators import login_required
-from django.http import JsonResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
 from django.views.decorators.http import require_POST
 
@@ -35,6 +35,13 @@ def recent_json(request):
         "has_more":      has_more,
         "unread": request.user.notifications.filter(is_read=False).count(),
     })
+
+
+@login_required
+@require_POST
+def mark_read(request, pk):
+    request.user.notifications.filter(pk=pk, is_read=False).update(is_read=True)
+    return HttpResponse(status=204)
 
 
 @login_required
