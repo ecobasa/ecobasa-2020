@@ -160,7 +160,7 @@
               type="text"
               placeholder="{% trans 'Name, location or skill…' %}"
               :value="$store.communityMap.q"
-              @input="$store.communityMap.q = $el.value; suggest($el.value); clearTimeout(window._mapInputTimer); window._mapInputTimer = setTimeout(() => window._communityMapReload && window._communityMapReload(), 600)"
+              @input="$store.communityMap.q = $el.value; suggest($el.value); clearTimeout(window._mapInputTimer); window._mapInputTimer = setTimeout(() => !$el.value ? window._communityMapReset && window._communityMapReset() : window._communityMapReload && window._communityMapReload(), 600)"
               @keydown.arrow-down.prevent="moveDown()"
               @keydown.arrow-up.prevent="moveUp()"
               @keydown.enter.prevent="choose(); window._communityMapReload && window._communityMapReload(!!(($store.communityMap.q || $store.communityMap.location || $store.communityMap.selectedCountry || $store.communityMap.selectedTypes.length || $store.communityMap.selectedStatuses.length)))"
@@ -402,7 +402,7 @@
               hx-swap="innerHTML"
               hx-trigger="input changed delay:400ms, list:search, list:reload"
               hx-include="#community-hidden-filters, [name='type'], [name='status'], [name='country']"
-              @input="$store.communityMap.q = $el.value; suggest($el.value)"
+              @input="$store.communityMap.q = $el.value; suggest($el.value); if (!$el.value) window._communityMapReset && window._communityMapReset();"
               @keydown.arrow-down.prevent="moveDown()"
               @keydown.arrow-up.prevent="moveUp()"
               @keydown.enter.prevent="choose()"
@@ -700,6 +700,13 @@ function initCommunityMap() {
   window._communityMapSetLayer = function (mode) {
     baseLayers.setBaseLayer(mode);
     communityOlMap.renderSync();
+  };
+
+  window._communityMapReset = function () {
+    communityOlMap.getView().animate(
+      { center: ol.proj.fromLonLat([0, 20]), zoom: 2 },
+      function () { window._communityMapReload(); }
+    );
   };
 
   window._communityMapPanTo = function (lon, lat, zoom) {
