@@ -56,11 +56,11 @@
 
     <p class="text-sm text-brown mt-2 line-clamp-2">{{ community.description }}</p>
 
-    {% if community.skills.all %}
+    {% if community.community_skills.all %}
     <div class="mt-2 flex flex-wrap gap-1">
-      {% for skill in community.skills.all %}
+      {% for cs in community.community_skills.all %}
         <span class="pill bg-purple">
-          <i class="fa fa-graduation-cap mr-1"></i>{{ skill }}
+          <i class="fa fa-graduation-cap mr-1"></i>{{ cs.skill.name }}
         </span>
       {% endfor %}
     </div>

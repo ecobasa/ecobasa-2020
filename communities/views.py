@@ -22,7 +22,7 @@ from django.http import JsonResponse
 def index(request):
     """Map-first list of communities."""
     from django_countries.fields import Country as DjangoCountry
-    base_qs = Community.objects.all().prefetch_related("photos", "skills").order_by("name")
+    base_qs = Community.objects.all().prefetch_related("photos", "community_skills__skill").order_by("name")
 
     countries_raw = (
         Community.objects
@@ -43,7 +43,7 @@ def index(request):
             Q(name__icontains=q)
             | Q(description__icontains=q)
             | Q(location_name__icontains=q)
-            | Q(skills__name__icontains=q)
+            | Q(community_skills__skill__name__icontains=q)
         ).distinct()
     country = (request.GET.get('country') or '').strip()
     if country:
@@ -282,7 +282,7 @@ def _base_qs(request, require_location=True):
             Q(name__icontains=q) |
             Q(description__icontains=q) |
             Q(location_name__icontains=q) |
-            Q(skills__name__icontains=q)
+            Q(community_skills__skill__name__icontains=q)
         )
     country = request.GET.get("country", "").strip()
     if country:
@@ -321,7 +321,7 @@ def community_markers(request):
     )
 
     # Use the helper to get the base filtered queryset
-    qs = _base_qs(request).prefetch_related(hero_prefetch, "skills")
+    qs = _base_qs(request).prefetch_related(hero_prefetch, "community_skills__skill")
 
     bbox_param = request.GET.get("bbox", "")
     if bbox_param:
@@ -359,7 +359,7 @@ def community_markers(request):
                 "inhabitants": c.inhabitants,
                 "children":    c.children,
                 "max_guests":  c.max_guests,
-                "skills":      list(c.skills.values_list("name", flat=True)),
+                "skills":      [cs.skill.name for cs in c.community_skills.all()],
             },
         })
 
@@ -381,7 +381,7 @@ def community_list_partial(request):
                   nearest-first so the user naturally sees close ones first.
         page      page number for infinite scroll (default 1)
     """
-    qs = _base_qs(request, require_location=False).prefetch_related("skills", "photos")
+    qs = _base_qs(request, require_location=False).prefetch_related("community_skills__skill", "photos")
 
     # ── Proximity sorting ─────────────────────────────────────────────
     # When the user clicks "near me", the browser sends location=lat,lon.
