@@ -41,7 +41,7 @@
                  @change="mode = 'wish'" {% if form.mode.value == 'wish' %}checked{% endif %}>
           <div>
             <span class="font-semibold text-primary block">
-              <i class="fa fa-book mr-1"></i>{% trans "I want to learn this skill" %}
+              <i class="fa fa-book mr-1"></i>{% trans "I want to learn this or need help with it" %}
             </span>
             <span class="text-xs text-brown">{% trans "You're interested in learning this skill and would love to find someone who can teach or share it with you." %}</span>
           </div>
@@ -89,7 +89,7 @@
           {% trans "How did you learn this? What can you offer?" %}
         </p>
         <p class="text-xs text-brown mb-1" x-show="mode === 'wish'">
-          {% trans "Why do you want to learn this and what would you like to be able to do with it?" %}
+          {% trans "Why do you want to learn this or need help with it? What would you like to be able to do?" %}
         </p>
         {{ form.description }}
         {% for e in form.description.errors %}<p class="field-error">{{ e }}</p>{% endfor %}
@@ -109,7 +109,7 @@
           <i class="fa fa-graduation-cap mr-2"></i>{% trans "Add skill offer" %}
         </button>
         <button type="submit" class="btn" x-show="mode === 'wish'">
-          <i class="fa fa-book mr-2"></i>{% trans "Add skill wish" %}
+          <i class="fa fa-book mr-2"></i>{% trans "Add skill need" %}
         </button>
         <a href="{{ request.user.get_absolute_url }}" class="btn btn-purple">
           <i class="fa fa-times mr-2"></i>{% trans "Cancel" %}

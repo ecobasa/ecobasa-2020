@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load i18n %}
 
-{% block head_title %}{{ profile.name|default:profile.username }} — {% trans "wants to learn" %} {{ skill.name }} — ecobasa{% endblock %}
+{% block head_title %}{{ profile.name|default:profile.username }} — {% trans "wants to learn or needs help with" %} {{ skill.name }} — ecobasa{% endblock %}
 
 {% block extrahead %}
 {{ block.super }}
@@ -35,7 +35,7 @@
         </a>
         <div class="flex items-center gap-2 mt-1">
           <span class="pill bg-yellow">
-            <i class="fa fa-book mr-1"></i>{% trans "wants to learn" %} {{ skill.name }}
+            <i class="fa fa-book mr-1"></i>{% trans "wants to learn or needs help with" %} {{ skill.name }}
           </span>
           {% if wish.level %}
             <span class="pill bg-primary text-xs">{% trans "current level:" %} {{ wish.get_level_display }}</span>

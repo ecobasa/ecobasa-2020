@@ -80,7 +80,7 @@
   <div class="mt-8 rounded-lg border border-primary bg-secondary px-5 py-4">
     <p class="font-semibold text-primary mb-1">
       <i class="fa fa-hand-holding-heart mr-2"></i>
-      {% blocktrans count wish_count as n %}{{ n }} person wants to learn this skill.{% plural %}{{ n }} people want to learn this skill.{% endblocktrans %}
+      {% blocktrans count wish_count as n %}{{ n }} person wants to learn or needs help with this skill.{% plural %}{{ n }} people want to learn or need help with this skill.{% endblocktrans %}
     </p>
     <p class="text-sm text-brown mb-3">{% trans "Can you teach or share it? Add it to your profile and they'll be able to find you." %}</p>
     <a href="{% url 'skills:userskill_add' %}?skill={{ skill.name|urlencode }}" class="btn">

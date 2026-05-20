@@ -72,7 +72,7 @@ class UserSkillOrWishForm(forms.Form):
     MODE_WISH  = "wish"
     MODE_CHOICES = [
         (MODE_OFFER, _("I can offer / teach this skill")),
-        (MODE_WISH,  _("I want to learn this skill")),
+        (MODE_WISH,  _("I want to learn this or need help with it")),
     ]
 
     mode = forms.ChoiceField(
