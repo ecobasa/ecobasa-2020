@@ -241,7 +241,7 @@
             @keydown.enter.prevent="choose() || triggerSearch()"
             @keydown.escape="if (open) { close(); } else if ($store.fm.q) { $store.fm.clearSearch(); }">
           <ul x-show="open" x-cloak
-            class="suggestions-dropdown list-none absolute z-20 w-full mt-1 bg-secondary rounded shadow-lg border"
+            class="suggestions-dropdown"
             role="listbox">
             <template x-for="(item, i) in items" :key="i">
               <li :class="i === active ? 'is-active' : ''"
@@ -391,7 +391,7 @@
             @keydown.enter.prevent="choose() || triggerSearch()"
             @keydown.escape="if (open) { $event.stopPropagation(); close(); } else if ($store.fm.q) { $store.fm.clearSearch(); $event.stopPropagation(); }">
           <ul x-show="open" x-cloak
-            class="suggestions-dropdown list-none absolute z-20 w-full mt-1 bg-secondary rounded shadow-lg border"
+            class="suggestions-dropdown"
             role="listbox">
             <template x-for="(item, i) in items" :key="i">
               <li :class="i === active ? 'is-active' : ''"

@@ -167,7 +167,7 @@
               @keydown.escape="close()"
               @blur="setTimeout(() => close(), 200)">
             <ul x-show="open" x-cloak
-              class="absolute w-full bg-secondary bg-opacity-85 backdrop-blur rounded shadow-lg border text-sm">
+              class="suggestions-dropdown">
               <template x-for="(item, i) in items" :key="i">
                 <li :class="i === active ? 'bg-primary text-secondary' : ''"
                   class="px-3 py-1 cursor-pointer flex items-center justify-between gap-2"
@@ -409,7 +409,7 @@
               @keydown.escape="close()"
               @blur="setTimeout(() => close(), 200)">
             <ul x-show="open" x-cloak
-              class="absolute z-30 w-full mt-1 bg-secondary rounded shadow-lg border">
+              class="suggestions-dropdown">
               <template x-for="(item, i) in items" :key="i">
                 <li :class="i === active ? 'bg-primary text-secondary' : ''"
                   class="px-3 py-1 cursor-pointer flex items-center justify-between gap-2"

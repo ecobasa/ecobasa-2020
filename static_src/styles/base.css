@@ -218,7 +218,7 @@ nav {
 }
 /* Low-profile suggestions dropdown (shared with communities) */
 .suggestions-dropdown {
-	@apply absolute left-0 right-0 bg-secondary bg-opacity-75 backdrop-blur-sm border border-gray-200 shadow-lg z-50 rounded-md overflow-hidden;
+	@apply absolute left-0 right-0 bg-secondary bg-opacity-75 backdrop-blur-sm border border-primary border-opacity-50 border-t-0 shadow-lg rounded-md rounded-t-none overflow-hidden z-10;
 
 	& ul {
 		@apply list-none m-0 p-0;
