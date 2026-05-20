@@ -9,7 +9,7 @@
 {% endblock %}
 
 {% block content %}
-<div class="mx-auto max-w-7xl mt-10 px-4 pb-10">
+<div class="container-page">
 	<div class="flex items-start justify-between">
 		<h1 class="text-5xl font-semibold">{{ user.name }}</h1>
 		{% if request.user.is_authenticated and request.user.pk == user.pk %}

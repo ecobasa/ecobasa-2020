@@ -9,7 +9,7 @@
 
 {% block content %}
 <style>
-	/* Only custom rules that Tailwind can't express easily */
+	/* Custom rules that Tailwind can't express easily */
 	.hero-slide { will-change: opacity; }
 	.video-container iframe,
 	.video-container object,
@@ -95,7 +95,7 @@
 		</div>
 	</div>
 {% endif %}
-<div class="mx-auto max-w-7xl mt-10 px-4 pb-10 relative" x-data="communityVolunteer()">
+<div class="container-page relative" x-data="communityVolunteer()">
 	{% if request.user.is_authenticated and request.user.is_staff or request.user.is_authenticated and community.owner and request.user == community.owner %}
 		<a class="btn btn-lg btn-primary absolute right-4 top-0 bg-opacity-70" href="{% url 'communities:update' slug=community.slug %}"><i class="fa fa-edit mr-2"></i>{% trans "Edit" %}</a>
 	{% endif %}

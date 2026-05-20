@@ -91,6 +91,13 @@ nav {
  	}
 }
 
+/* ── Page layout containers ───────────────────────────────────────── */
+.container-page    { @apply mx-auto max-w-7xl px-4 mt-10 pb-10; }   /* wide detail pages: profile, community, homepage */
+.container-content { @apply mx-auto max-w-4xl px-4 mt-10 mb-12; }  /* multi-field forms & content pages */
+.container-narrow  { @apply mx-auto max-w-2xl px-4 py-8; }          /* reading content: notifications, skill details */
+.container-form    { @apply mx-auto max-w-lg px-4 py-8; }           /* small focused forms */
+.container-auth    { @apply flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8; } /* centered auth pages */
+
 .btn {
  	@apply py-2 px-4 rounded border border-solid box-border font-bold bg-primary bg-opacity-75 text-secondary border-primary;
  	&:hover {
@@ -122,9 +129,6 @@ nav {
  	}
 	&-lg {
 		@apply py-3 px-6 text-lg;
-	}
-	&-sm {
-		@apply py-2 px-4 text-sm;
 	}
 }
 

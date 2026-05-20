@@ -7,7 +7,7 @@
 {% endblock %}
 
 {% block content %}
-<div class="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 mt-10 mb-12">
+<div class="container-content">
 
   <button type="button" class="btn flex items-center text-sm leading-5 font-medium mb-10" href="{% if ad.pk %}{% url "gifting:detail" ad.pk %}{% else %}{% url "gifting:search" %}{% endif %}">
     <svg class="flex-shrink-0 -ml-1 mr-1 h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
