@@ -238,6 +238,7 @@ CRISPY_TEMPLATE_PACK = "crispy_template_pack"
 # ------------------------------------------------------------------------------
 POSTMAN_AUTO_MODERATE_AS = True
 POSTMAN_DISALLOW_ANONYMOUS = True
+POSTMAN_NAME_USER_AS = 'name'
 
 # MAP SETTINGS
 # ------------------------------------------------------------------------------

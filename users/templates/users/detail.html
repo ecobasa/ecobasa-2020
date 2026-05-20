@@ -35,22 +35,24 @@
 				<i class="fa fa-user text-6xl text-primary rounded-full border border-dashed border-primary p-10 mt-15"></i>
 			{% endif %}
 			{% if request.user.is_authenticated and request.user.pk != user.pk %}
-				<a class="btn block mt-10" href="{% url 'postman:write' user.username %}"><i class="fa fa-envelope mr-2"></i>{% trans "Message" %}</a>
+				<a class="btn block mt-10" href="{% url 'postman:write' user.name %}"><i class="fa fa-envelope mr-2"></i>{% trans "Message" %}</a>
 			{% endif %}
 
 			{% if user.location or user.country %}
 			<div class="mt-8">
-				<h2>{% trans "Location" %}</h2>
+				<h2>{% if not user.location %}{% trans "Country" %}{% else %}{% trans "Location" %}{% endif %}</h2>
 				{% if user.country and not user.location_name %}
-					<p><i class="fa fa-map-marker mr-2"></i>{{ user.country }}</p>
+					<p><i class="fa fa-map-marker mr-2"></i>{{ user.country.name }}</p>
 				{% endif %}
 				{% if user.location_name %}
 					<p class="mb-2"><i class="fa fa-map-marker mr-2"></i>{{ user.location_name }}</p>
 				{% endif %}
-				<div class="rounded shadow overflow-hidden" style="height: 260px;">
-					<div id="user-profile-map" class="w-full h-full bg-secondary bg-opacity-40"
-						data-lon="{{ user.location.x }}" data-lat="{{ user.location.y }}"></div>
-				</div>
+				{% if user.location %}
+					<div class="rounded shadow overflow-hidden" style="height: 260px;">
+						<div id="user-profile-map" class="w-full h-full bg-secondary bg-opacity-40"
+							data-lon="{{ user.location.x }}" data-lat="{{ user.location.y }}"></div>
+					</div>
+				{% endif %}
 			</div>
 			{% endif %}
 

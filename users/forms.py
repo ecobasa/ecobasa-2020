@@ -113,8 +113,13 @@ class RegisterForm(forms.ModelForm):
         user = super().save(commit=False)
         user.set_password(self.cleaned_data["password"])
         if not user.username:
-            base = self.cleaned_data.get("name") or user.email.split("@")[0]
-            user.username = slugify(base)
+            base = slugify(self.cleaned_data.get("name") or user.email.split("@")[0]) or 'user'
+            slug = base
+            n = 2
+            while User.objects.filter(username=slug).exists():
+                slug = f'{base}{n}'
+                n += 1
+            user.username = slug
         if commit:
             user.save()
             skills_val = self.cleaned_data.get("skills", "")

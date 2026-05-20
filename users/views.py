@@ -90,11 +90,16 @@ def autocomplete(request):
     q = request.GET.get("q", "").strip()
     results = []
     if q:
-        # Match by username or email (helps when users type an email address)
-        qs = User.objects.filter(Q(username__istartswith=q) | Q(email__istartswith=q)).order_by('username', 'email')[:20]
+        qs = User.objects.filter(
+            Q(name__icontains=q) | Q(username__istartswith=q)
+        ).order_by('name')[:20]
         for u in qs:
-            # return the user's email as the canonical value (matches USERNAME_FIELD)
-            results.append({"value": u.email, "name": u.name or u.username, "username": u.username})
+            results.append({
+                "value": u.name or u.username,
+                "name": u.name or u.username,
+                "username": u.username,
+                "image_url": u.image.url if u.image else None,
+            })
     return JsonResponse(results, safe=False)
 
 

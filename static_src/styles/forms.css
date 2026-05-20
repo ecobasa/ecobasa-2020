@@ -20,7 +20,16 @@
     @apply !inline-block;
   }
 
+
   /* Inputs */
+
+
+  textarea,
+  input[type="text"] {
+    @apply bg-secondary bg-opacity-65 border-brown border-opacity-50 text-brown w-full rounded;
+  }
+
+
   .form-input, .form-textarea, .form-select, .form-multiselect {
     @apply bg-secondary bg-opacity-65 border-brown border-opacity-50 text-brown w-full rounded;
     &::placeholder {
@@ -107,6 +116,11 @@
     anchors inside heading elements so we don't add the shadow to linked images or
     headline links. Uses :has() where available and provides a heading-based
     override as a fallback. */
+
+  input:where([type='text']):focus, input:where(:not([type])):focus, input:where([type='email']):focus, input:where([type='url']):focus, input:where([type='password']):focus, input:where([type='number']):focus, input:where([type='date']):focus, input:where([type='datetime-local']):focus, input:where([type='month']):focus, input:where([type='search']):focus, input:where([type='tel']):focus, input:where([type='time']):focus, input:where([type='week']):focus, select:where([multiple]):focus, textarea:focus, select:focus {
+    @apply ring-0 outline-0 border-2 border-primary;
+  }
+
   a:focus,
   a:focus-visible,
   .btn:focus {
