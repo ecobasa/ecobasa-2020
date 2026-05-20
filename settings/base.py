@@ -33,6 +33,8 @@ USE_TZ = True
 LANGUAGES = [
     ("de", _("German")),
     ("en", _("English")),
+    ("es", _("Spanish")),
+    ("fr", _("French")),
 ]
 
 LOCALE_PATHS = [str(ROOT_DIR / "locale")]

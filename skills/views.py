@@ -1,13 +1,16 @@
+import json
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
+from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_GET
 
 from .forms import CommunitySkillForm, CommunitySkillOrWishForm, SkillInterestForm, SkillWishEditForm, UserSkillForm, UserSkillOrWishForm
-from .models import CommunitySkill, Skill, SkillInterest, SkillWish, UserSkill
+from .models import CommunitySkill, Skill, SkillInterest, SkillWish, SkillTaxonomy, UserSkill
 from communities.models import Community
 from users.models import User
 
@@ -350,12 +353,20 @@ def skillwish_community_edit(request, pk, community_slug):
 
 # ── Autocomplete API ─────────────────────────────────────────────────
 
+_SKILL_LANGS = [code for code, _ in settings.LANGUAGES]
+
+
 @require_GET
 def skill_autocomplete(request):
-    q = request.GET.get("q", "").strip()
+    q    = request.GET.get("q", "").strip()
+    lang = getattr(request, "LANGUAGE_CODE", "en")[:2]
     if len(q) < 2:
-        return JsonResponse([], safe=False)
-    names = list(
-        Skill.objects.filter(name__icontains=q).values_list("name", flat=True)[:10]
-    )
-    return JsonResponse(names, safe=False)
+        return JsonResponse({"results": []})
+    results = SkillTaxonomy.objects.filter(**{f"names__{lang}__icontains": q})[:10]
+    return JsonResponse({"results": [
+        {
+            "id":   json.dumps({"slug": s.slug, "names": s.names}),
+            "text": s.get_name(lang),
+        }
+        for s in results
+    ]})

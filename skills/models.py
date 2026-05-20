@@ -12,6 +12,33 @@ def _user_slug(user):
     return user.username or slugify(user.name) or str(user.pk)
 
 
+class SkillTaxonomy(models.Model):
+    names = models.JSONField(default=dict)
+    slug        = models.SlugField(max_length=120, unique=True, blank=True)
+    created_at  = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["slug"]
+        verbose_name = _("Skill taxonomy")
+        verbose_name_plural = _("Skill taxonomy")
+
+    def get_name(self, lang="en"):
+        return self.names.get(lang) or self.names.get("en") or next(iter(self.names.values()), "")
+
+    def __str__(self):
+        return self.get_name()
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            base = slugify(self.get_name())[:100]
+            slug, n = base, 1
+            while SkillTaxonomy.objects.filter(slug=slug).exclude(pk=self.pk).exists():
+                slug = f"{base}-{n}"
+                n += 1
+            self.slug = slug
+        super().save(*args, **kwargs)
+
+
 class Skill(models.Model):
     name = models.CharField(_("Name"), max_length=100, unique=True)
     slug = models.SlugField(unique=True, blank=True)

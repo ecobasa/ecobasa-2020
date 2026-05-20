@@ -31,7 +31,7 @@
             <span class="font-semibold text-primary block">
               <i class="fa fa-graduation-cap mr-1"></i>{% trans "We can offer / teach this skill" %}
             </span>
-            <span class="text-xs text-brown">{% trans "Visitors and volunteers can learn this skill by staying or working with your community." %}</span>
+            <span class="text-xs">{% trans "Visitors and volunteers can learn this skill by staying or working with your community." %}</span>
           </div>
         </label>
 
@@ -43,7 +43,7 @@
             <span class="font-semibold text-primary block">
               <i class="fa fa-search mr-1"></i>{% trans "We're looking for people with this skill" %}
             </span>
-            <span class="text-xs text-brown">{% trans "You need this expertise in your community — for a project, permanent membership, or a volunteer stay." %}</span>
+            <span class="text-xs">{% trans "You need this expertise in your community — for a project, permanent membership, or a volunteer stay." %}</span>
           </div>
         </label>
       </div>
@@ -52,13 +52,17 @@
       <div class="form-group mb-4">
         <label class="form-label" for="id_skill_name">{% trans "Skill" %}</label>
         {{ form.skill_name }}
+        {{ form.skill_taxonomy_data }}
+        <p id="skill-taxonomy-error" class="field-error mt-1" hidden>
+          {% for e in form.skill_taxonomy_data.errors %}{{ e }}{% endfor %}
+        </p>
         {% for e in form.skill_name.errors %}<p class="field-error">{{ e }}</p>{% endfor %}
       </div>
 
       {# ── Minimum level sought — wish only ── #}
       <div class="form-group mb-4" x-show="mode === 'wish'">
         <label class="form-label" for="id_wish_level">{% trans "Minimum level sought" %}</label>
-        <p class="text-xs text-brown mb-1">{% trans "Leave as 'Any level' if beginners are welcome — communities often provide on-the-job training." %}</p>
+        <p class="text-xs mb-1">{% trans "Leave as 'Any level' if beginners are welcome — communities often provide on-the-job training." %}</p>
         <select name="wish_level" id="id_wish_level" class="form-select">
           {% for val, label in form.wish_level.field.choices %}
             <option value="{{ val }}" {% if form.wish_level.value == val %}selected{% endif %}>{{ label }}</option>
@@ -70,10 +74,10 @@
       {# ── Description — helptext switches based on mode ── #}
       <div class="form-group mb-6">
         <label class="form-label" for="id_description">{% trans "Description" %}</label>
-        <p class="text-xs text-brown mb-1" x-show="mode === 'offer'" style="display:none">
+        <p class="text-xs mb-1" x-show="mode === 'offer'" x-cloak>
           {% trans "What will visitors learn? How is it taught or practised here?" %}
         </p>
-        <p class="text-xs text-brown mb-1" x-show="mode === 'wish'">
+        <p class="text-xs mb-1" x-show="mode === 'wish'">
           {% trans "Why does your community need this skill and what do you need it for exactly?" %}
         </p>
         {{ form.description }}
@@ -81,7 +85,7 @@
       </div>
 
       <div class="flex gap-3">
-        <button type="submit" class="btn" x-show="mode === 'offer'" style="display:none">
+        <button type="submit" class="btn" x-show="mode === 'offer'" x-cloak>
           <i class="fa fa-graduation-cap mr-2"></i>{% trans "Add skill offer" %}
         </button>
         <button type="submit" class="btn" x-show="mode === 'wish'">
@@ -116,42 +120,5 @@
 
 {% block javascript %}
 {{ block.super }}
-<script>
-(function () {
-  var input = document.querySelector('[data-skill-autocomplete]');
-  if (!input) return;
-  var list = document.createElement('ul');
-  list.className = 'list-none absolute z-20 w-full mt-1 bg-secondary rounded shadow-lg border text-sm';
-  list.style.display = 'none';
-  input.parentElement.style.position = 'relative';
-  input.parentElement.appendChild(list);
-
-  input.addEventListener('input', function () {
-    var q = input.value.trim();
-    if (q.length < 2) { list.style.display = 'none'; return; }
-    fetch('{% url "skills:api_autocomplete" %}?q=' + encodeURIComponent(q))
-      .then(function (r) { return r.json(); })
-      .then(function (names) {
-        list.innerHTML = '';
-        if (!names.length) { list.style.display = 'none'; return; }
-        names.forEach(function (name) {
-          var li = document.createElement('li');
-          li.textContent = name;
-          li.className = 'px-3 py-2 cursor-pointer hover:bg-primary hover:text-secondary';
-          li.addEventListener('mousedown', function (e) {
-            e.preventDefault();
-            input.value = name;
-            list.style.display = 'none';
-          });
-          list.appendChild(li);
-        });
-        list.style.display = 'block';
-      });
-  });
-
-  document.addEventListener('click', function (e) {
-    if (!input.contains(e.target)) list.style.display = 'none';
-  });
-})();
-</script>
+{% include "skills/_skill_autocomplete_js.html" %}
 {% endblock %}
