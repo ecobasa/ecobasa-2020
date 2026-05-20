@@ -100,36 +100,40 @@
 		<h1>{{ community.name }}</h1>
 	{% endif %}
 	{% if request.user.is_authenticated and request.user.is_staff or request.user.is_authenticated and community.owner and request.user == community.owner %}
-		<a class="btn btn-lg btn-primary absolute right-4 top-0 bg-opacity-70" href="{% url 'communities:update' slug=community.slug %}"><i class="fa fa-edit mr-2"></i>{% trans "Edit" %}</a>
+		<a class="btn btn-lg btn-primary absolute right-4 top-0 bg-opacity-70 backdrop-blur-sm" href="{% url 'communities:update' slug=community.slug %}"><i class="fa fa-edit mr-2"></i>{% trans "Edit" %}</a>
 	{% endif %}
 	<div class="grid grid-cols-1 sm:grid-cols-12 gap-6">
+
 		<!-- Main content: description, vision, skills, accommodation summary (appears first on mobile) -->
-		<div class="order-1 sm:order-1 sm:col-span-8">
+		<div class="sm:col-span-8">
 			<div class="sm:pr-24 pr-0">
-				<p class="mt-0">{{ community.description }}</p>
+				{% if community.description %}
+					<p class="mt-0">{{ community.description }}</p>
+				{% endif %}
 			</div>
-			<h2>{% trans "What brings this community together?" %}</h2>
-			<p>{{ community.vision }}</p>
-			{% if community_skills %}
-			<h2>{% trans "Skills you can learn here" %}</h2>
-			<div class="flex flex-wrap gap-2 mb-2">
-				{% for cs in community_skills %}
-					<a {% if request.user == community.owner %}href="{% url 'skills:communityskill_edit' cs.skill.slug community.slug %}"{% elif request.user.is_authenticated %}href="#" @click.prevent="openVolunteer('{{ cs.skill.name|escapejs }}', 'offer', {{ cs.skill_id }})"{% else %}href="{% url 'users:login' %}?next={{ request.path }}"{% endif %}
-						class="pill pill-lg bg-purple transition-opacity">
-						<i class="mr-1 fa fa-graduation-cap"></i>{{ cs.skill.name }}
-					</a>
-				{% endfor %}
-			</div>
-			{% if request.user == community.owner %}
-				<a href="{% url 'skills:communityskill_add' community.slug %}" class="text-sm text-primary underline">
-					<i class="fa fa-plus mr-1"></i>{% trans "Add skill" %}
-				</a>
+			{% if community.vision %}
+				<h2>{% trans "What brings this community together?" %}</h2>
+				<p>{{ community.vision }}</p>
 			{% endif %}
+
+			
+			<!-- Skills -->
+
+			{% if community_skills %}
+				<h2>{% trans "Skills you can learn here" %}</h2>
+				<div class="flex flex-wrap gap-2 mb-2">
+					{% for cs in community_skills %}
+						<a {% if request.user == community.owner %}href="{% url 'skills:communityskill_edit' cs.skill.slug community.slug %}"{% elif request.user.is_authenticated %}href="#" @click.prevent="openVolunteer('{{ cs.skill.name|escapejs }}', 'offer', {{ cs.skill_id }})"{% else %}href="{% url 'users:login' %}?next={{ request.path }}"{% endif %}
+							class="pill pill-lg bg-purple transition-opacity">
+							<i class="mr-1 fa fa-graduation-cap"></i>{{ cs.skill.name }}
+						</a>
+					{% endfor %}
+				</div>
 			{% elif request.user == community.owner %}
-			<h2>{% trans "Skills you can learn here" %}</h2>
-			<a href="{% url 'skills:communityskill_add' community.slug %}" class="btn">
-				<i class="fa fa-plus mr-1"></i>{% trans "Add a skill" %}
-			</a>
+				<h2>{% trans "Skills you can learn here" %}</h2>
+				<a href="{% url 'skills:communityskill_add' community.slug %}" class="btn">
+					<i class="fa fa-plus mr-1"></i>{% trans "Add a skill" %}
+				</a>
 			{% endif %}
 
 			{% if skill_wishes %}
@@ -143,12 +147,7 @@
 						</a>
 					{% endfor %}
 				</div>
-				{% if request.user == community.owner %}
-					<a href="{% url 'communities:update' community.slug %}" class="text-sm text-primary underline">
-						<i class="fa fa-pencil mr-1"></i>{% trans "Edit" %}
-					</a>
-				{% endif %}
-				{% elif request.user == community.owner %}
+			{% elif request.user == community.owner %}
 				<h2>{% trans "Looking for people with these skills" %}</h2>
 				<a href="{% url 'skills:communityskill_add' community.slug %}?mode=wish" class="btn">
 					<i class="fa fa-plus mr-1"></i>{% trans "Add skills you're looking for" %}
@@ -156,124 +155,120 @@
 			{% endif %}
 		</div>
 
-		<!-- Sidebar: order controlled via Tailwind order utilities -->
-		<aside class="order-2 sm:order-2 sm:col-span-4">
-			<div class="flex flex-col space-y-4">
-				<!-- Stats (mobile: appears first in sidebar after main content; desktop: first in sidebar) -->
-				<div class="order-1 sm:order-1">
-					<h2 class="mt-0">{% trans "Statistics" %}</h2>
-					<span class="block text-primary mb-2">
-						{% if community.type == "e" %}
-							<i class="mr-1 fa fa-home"></i> {% trans "Ecovillage" %}
-						{% elif community.type == "p" %}
-							<i class="mr-1 fa fa-tag"></i>{% trans "Planning Initiative" %}
-						{% elif community.type == "c" %}
-							<i class="mr-1 fa fa-home"></i>{% trans "Commune" %}
-						{% elif community.type == "h" %}
-							<i class="mr-1 fa fa-home"></i>{% trans "Houseproject" %}
-						{% elif community.type == "f" %}
-							<i class="mr-1 fa fa-home"></i>{% trans "Permaculture Farm" %}
-						{% endif %}
-					</span>
-					<span class="block text-primary mb-2">
-						{% if community.status == "s" %}
-							<i class="mr-1 fa fa-hand-rock"></i>{% trans "Starting Project (first years)" %}
-						{% elif community.status == "e" %}
-							<i class="mr-1 fa fa-thumbs-up"></i>{% trans "Established (+4 years)" %}
-						{% elif community.status == "l" %}
-							<i class="mr-1 fa fa-map-marker"></i>{% trans "Land Offer" %}
-						{% endif %}
-					</span>
-					{% with community.inhabitants as inhabitants %}
-						{% if inhabitants %}
-							<span class="block text-primary mb-2"><i class="mr-1 fa fa-users"></i>{% blocktrans count inhabitants as count %}{{ count }} person living there{% plural %}{{ count }} people living there{% endblocktrans %}</span>
-						{% endif %}
+		<!-- Sidebar -->
+		<aside class="sm:col-span-4">
+			<div class="flex flex-col">
+
+		<!-- Statistics -->
+			{% if community.type or community.status or community.inhabitants or community.children %}
+				<h2 class="mt-0">{% trans "Statistics" %}</h2>
+				<span class="block text-primary mb-2">
+					{% if community.type == "e" %}
+						<i class="mr-1 fa fa-home"></i> {% trans "Ecovillage" %}
+					{% elif community.type == "p" %}
+						<i class="mr-1 fa fa-tag"></i>{% trans "Planning Initiative" %}
+					{% elif community.type == "c" %}
+						<i class="mr-1 fa fa-home"></i>{% trans "Commune" %}
+					{% elif community.type == "h" %}
+						<i class="mr-1 fa fa-home"></i>{% trans "Houseproject" %}
+					{% elif community.type == "f" %}
+						<i class="mr-1 fa fa-home"></i>{% trans "Permaculture Farm" %}
+					{% endif %}
+				</span>
+				<span class="block text-primary mb-2">
+					{% if community.status == "s" %}
+						<i class="mr-1 fa fa-hand-rock"></i>{% trans "Starting Project (first years)" %}
+					{% elif community.status == "e" %}
+						<i class="mr-1 fa fa-thumbs-up"></i>{% trans "Established (+4 years)" %}
+					{% elif community.status == "l" %}
+						<i class="mr-1 fa fa-map-marker"></i>{% trans "Land Offer" %}
+					{% endif %}
+				</span>
+				{% with community.inhabitants as inhabitants %}
+					{% if inhabitants %}
+						<span class="block text-primary mb-2"><i class="mr-1 fa fa-users"></i>{% blocktrans count inhabitants as count %}{{ count }} person living there{% plural %}{{ count }} people living there{% endblocktrans %}</span>
+					{% endif %}
+				{% endwith %}
+				{% with community.children as children %}
+					{% if children %}
+						<span class="block text-primary mb-2"><i class="mr-1 fa fa-child"></i>{% blocktrans count children as count %}{{ count }} child{% plural %}{{ count }} children{% endblocktrans %}</span>
+					{% endif %}
+				{% endwith %}
+			{% endif %}
+
+			<!-- Video -->
+			{% if community.video %}
+				<h3>{% trans "Video" %}</h3>
+				<div class="video-container" style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;">{% video community.video is_secure=True %}</div>
+			{% endif %}
+
+			<!-- Accommodation -->
+			{% if community.accomodation %}
+				<h2>{% trans "Accomodation for guests" %}</h2>
+				<p>{{ community.accomodation }}</p>
+			{% endif %}
+
+			<!-- Address / Location name + Map Widget -->
+			{% if community.location %}
+				<h2>{% trans "Location" %}</h2>
+					{% with lat=community.location.y lon=community.location.x %}
+						<p class="text-sm"><i class="fa fa-map-marker mr-1"></i>{{ community.location_name }}</p>
+						<div class="relative mt-8">
+							<div id="community-detail-map" class="w-full rounded shadow overflow-hidden h-96"></div>
+						</div>
 					{% endwith %}
-					{% with community.children as children %}
-						{% if children %}
-							<span class="block text-primary mb-2"><i class="mr-1 fa fa-child"></i>{% blocktrans count children as count %}{{ count }} child{% plural %}{{ count }} children{% endblocktrans %}</span>
-						{% endif %}
-					{% endwith %}
-				</div>
-
-				<!-- Accommodation (mobile: after stats; desktop: second in sidebar) -->
-				<div class="order-2 sm:order-2">
-					<h2 class="mt-0">{% trans "Accomodation for guests" %}</h2>
-					<p>{{ community.accomodation }}</p>
-				</div>
-
-				<!-- Website -->
-				{% if community.website %}
-				<div class="order-3 sm:order-3">
-					<a href="{{ community.website }}" target="_blank" rel="noopener" class="text-primary"><i class="fa fa-globe mr-1"></i>{{ community.website }}</a>
-				</div>
+				{% else %}
+					{% if community.location_name %}<p class="text-sm">{{ community.location_name }}</p>
 				{% endif %}
+			{% endif %}
 
-				<!-- Telephone (mobile should show it earlier; on desktop it appears later) -->
-				{% if community.telephone %}
-				<div class="order-5 sm:order-100">
-					<a href="tel:{{ community.telephone }}" class="text-primary"><i class="fa fa-phone mr-1"></i>{{ community.telephone }}</a>
-				</div>
-				{% endif %}
+			<h2>{% trans "Contact Information" %}</h2>
 
-				<!-- Volunteer request button (mobile later, desktop mid-sidebar) -->
-				<div class="order-8 sm:order-5">
-					{% if community.owner %}
-						{% if request.user.is_authenticated %}
-							<button type="button" @click="openVolunteer(null, null, null)" class="btn w-full">
-								<i class="fa fa-hands-helping mr-1"></i>{% trans "Request volunteering stay" %}
-							</button>
+			<!-- Telephone (mobile should show it earlier; on desktop it appears later) -->
+			{% if community.telephone %}
+					<a href="tel:{{ community.telephone }}" class="text-primary text-xl"><i class="fa fa-phone mr-3"></i>{{ community.telephone }}</a>
+			{% endif %}
+
+			<!-- Website -->
+			{% if community.website %}
+				<a href="{{ community.website }}" target="_blank" rel="noopener" class="text-primary mt-8"><i class="fa fa-globe mr-1"></i>{{ community.website }}</a>
+			{% endif %}
+
+			<!-- Toast slot for HTMX success messages -->
+			<div id="volunteer-messages-slot"></div>
+
+			<!-- Ambassador / owner -->
+			{% if community.owner %}
+				<div class="text-center mt-6">
+					<h3>{% trans "Gift-economy Ambassador" %}</h3>
+					<a href="{{ community.owner.get_absolute_url }}" class="block mb-4">
+						{% if community.owner.image %}
+							<img src="{{ community.owner.image.url }}" class="rounded-full h-20 w-20 mx-auto mb-2 object-cover" alt="{{ community.owner.name }}">
 						{% else %}
-							<a class="btn w-full" href="{% url 'users:login' %}?next={{ request.path }}">
-								<i class="fa fa-hands-helping mr-1"></i>{% trans "Apply for volunteering stay" %}
-							</a>
+							<i class="fa fa-user text-6xl text-primary rounded-full border border-dashed border-primary p-10 mt-15"></i>
 						{% endif %}
-					{% endif %}
+						<div class="font-serif font-bold text-xl">{{ community.owner.name }}</div>
+					</a>
 				</div>
+			{% endif %}
 
-				<!-- Toast slot for HTMX success messages -->
-				<div id="volunteer-messages-slot"></div>
-
-				<!-- Address / Location name + OpenLayers map -->
-				<div class="order-4 sm:order-4">
-					{% if community.location %}
-					<h2>{% trans "Location" %}</h2>
-						{% with lat=community.location.y lon=community.location.x %}
-							<p class="text-sm"><i class="fa fa-map-marker mr-1"></i>{{ community.location_name }}</p>
-							<div class="relative mt-2">
-								<div id="community-detail-map" class="w-full rounded shadow overflow-hidden h-96"></div>
-							</div>
-						{% endwith %}
-					{% else %}
-						{% if community.location_name %}<p class="text-sm">{{ community.location_name }}</p>{% endif %}
-					{% endif %}
-				</div>
-
-				<!-- Video (desktop positioned earlier than map; mobile appears near end) -->
-				{% if community.video %}
-					<div class="order-9 sm:order-6">
-						<h3>{% trans "Video" %}</h3>
-						<div class="video-container" style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;">{% video community.video is_secure=True %}</div>
-					</div>
+			<!-- Volunteer request button (mobile later, desktop mid-sidebar) -->
+			{% if community.owner %}
+				{% if request.user.is_authenticated %}
+					<button
+						type="button"
+						class="btn btn-lg w-full mt-8"
+						@click="openVolunteer(null, null, null)"
+					>
+						<i class="fa fa-hands-helping mr-1"></i>{% trans "Apply for volunteering stay" %}
+					</button>
+				{% else %}
+					<a class="btn btn-lg w-full" href="{% url 'users:login' %}?next={{ request.path }}">
+						<i class="fa fa-hands-helping mr-1"></i>{% trans "Apply for volunteering stay" %}
+					</a>
 				{% endif %}
+			{% endif %}
 
-				<!-- Ambassador / owner -->
-				<div class="order-11 sm:order-8 text-center">
-					{% if community.owner %}
-						<h2>{% trans "Gift-economy Ambassador" %}</h2>
-						<a href="{{ community.owner.get_absolute_url }}">
-							{% if community.owner.image %}
-								<img src="{{ community.owner.image.url }}" class="rounded-full h-20 w-20 mx-auto mb-2 object-cover" alt="{{ community.owner.name }}">
-							{% else %}
-								<i class="fa fa-user text-6xl text-primary rounded-full border border-dashed border-primary p-10 mt-15"></i>
-							{% endif %}
-							<div class="font-serif font-bold text-xl">{{ community.owner.name }}</div>
-						</a>
-						{% if request.user.is_authenticated %}
-							<a class="btn block mt-2" href="{% url 'postman:write' community.owner.name %}"><i class="fa fa-paper-plane mr-1"></i>{% trans "Contact" %}</a>
-						{% endif %}
-					{% endif %}
-				</div>
 			</div>{# flex flex-col space-y-4 #}
 		</aside>
 	</div>{# grid #}
