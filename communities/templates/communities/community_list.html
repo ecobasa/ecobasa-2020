@@ -371,8 +371,12 @@
     @click.self="$store.communityMap.showMap()"
     @keydown.escape.window="$store.communityMap.showMap()">
 
-    <div class="modal bg-secondary px-5 pt-8 rounded-lg shadow-xl max-w-5xl w-full relative">
-      <button class="absolute top-0 right-2 text-3xl" @click="$store.communityMap.showMap()">&times;</button>
+    <div class="modal-content"
+      role="dialog" aria-modal="true">
+      <button type="button"
+        class="absolute top-3 right-3 h-10 w-10 rounded-full bg-black bg-opacity-50 hover:bg-opacity-70 text-secondary text-2xl flex items-center justify-center"
+        @click="$store.fm.showMap()">&times;
+      </button>
 
       <div class="space-y-3 mb-4">
 
