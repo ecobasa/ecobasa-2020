@@ -18,8 +18,8 @@
 </style>
 {% if photos %}
 <div class="relative w-full" style="height: 340px;"
-     x-data="{ cur: 0, len: {{ photos|length }}, fullscreen: false }"
-     x-init="len > 1 && setInterval(() => cur = (cur + 1) % len, 5000)"
+     x-data="{ cur: 0, len: {{ photos|length }}, fullscreen: false, _timer: null }"
+     x-init="if (len > 1) { $watch('fullscreen', v => { if (v) { clearInterval(_timer); _timer = null; } else { _timer = setInterval(() => cur = (cur + 1) % len, 5000); } }); _timer = setInterval(() => cur = (cur + 1) % len, 5000); }"
      x-effect="document.body.classList.toggle('overflow-hidden', fullscreen)">
 	{% for photo in photos %}
 		<div class="absolute inset-0 bg-center bg-cover transition-opacity duration-700"
@@ -54,16 +54,16 @@
 		</div>
 	{% endif %}
 	<!-- Fullscreen overlay -->
-	<div x-show="fullscreen" @click.self="fullscreen = false" @keydown.escape.window="fullscreen = false"
-	     class="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center p-4"
+	<div x-show="fullscreen" @click="fullscreen = false" @keydown.escape.window="fullscreen = false"
+	     class="fixed inset-0 bg-black bg-opacity-90"
 	     style="display:none; z-index: 60;">
-		<div class="relative w-full h-full flex items-center justify-center">
-			{% for photo in photos %}
-				<img src="{{ photo.image.url }}" alt="{{ community.name }}"
-				     :class="cur === {{ forloop.counter0 }} ? 'opacity-100' : 'opacity-0 pointer-events-none'"
-				     class="absolute max-h-[90vh] max-w-[90vw] rounded-lg shadow-2xl transition-opacity duration-300 object-contain">
-			{% endfor %}
-		</div>
+		<button type="button" @click.stop="fullscreen = false" class="lightbox-close" aria-label="{% trans 'Close' %}">&times;</button>
+		{% for photo in photos %}
+			<img src="{{ photo.image.url }}" alt="{{ community.name }}"
+			     :class="cur === {{ forloop.counter0 }} ? 'opacity-100' : 'opacity-0 pointer-events-none'"
+			     @click.stop
+			     class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 max-h-[90vh] max-w-[90vw] rounded-lg shadow-2xl transition-opacity duration-300 object-contain">
+		{% endfor %}
 		{% if photos|length > 1 %}
 			<button type="button" @click.stop="cur = (cur - 1 + len) % len"
 			        class="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-40 hover:bg-opacity-80 text-white rounded-full w-12 h-12 flex items-center justify-center shadow">
@@ -74,9 +74,6 @@
 				<img src="{% static 'img/arrow-right.png' %}" alt="Next" class="w-full h-full object-contain">
 			</button>
 		{% endif %}
-		<!-- Close button last in DOM so it paints above the images container -->
-		<button type="button" @click.stop="fullscreen = false"
-		        class="absolute top-4 right-4 text-white text-5xl leading-none hover:opacity-70 focus:outline-none" style="z-index: 1;" aria-label="{% trans 'Close' %}">&times;</button>
 	</div>
 </div>
 {% elif hero_image %}
@@ -88,13 +85,13 @@
 	        class="absolute inset-0 cursor-zoom-in focus:outline-none bg-transparent"
 	        style="z-index: 2;" aria-label="{% trans 'View fullscreen' %}"></button>
 	<!-- Fullscreen overlay -->
-	<div x-show="fullscreen" @click.self="fullscreen = false" @keydown.escape.window="fullscreen = false"
-	     class="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center p-4"
+	<div x-show="fullscreen" @click="fullscreen = false" @keydown.escape.window="fullscreen = false"
+	     class="fixed inset-0 bg-black bg-opacity-90"
 	     style="display:none; z-index: 60;">
+		<button type="button" @click.stop="fullscreen = false" class="modal-close" aria-label="{% trans 'Close' %}">&times;</button>
 		<img src="{{ hero_image }}" alt="{{ community.name }}"
-		     class="max-h-[90vh] max-w-[90vw] rounded-lg shadow-2xl object-contain">
-		<button type="button" @click.stop="fullscreen = false"
-		        class="absolute top-4 right-4 text-white text-5xl leading-none hover:opacity-70 focus:outline-none" style="z-index: 1;" aria-label="{% trans 'Close' %}">&times;</button>
+		     @click.stop
+		     class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 max-h-[90vh] max-w-[90vw] rounded-lg shadow-2xl object-contain">
 	</div>
 </div>
 {% endif %}
@@ -298,7 +295,7 @@
      @keydown.escape.window="vOpen = false"
      class="fixed inset-0 bg-black bg-opacity-70 z-50 flex items-center justify-center p-4 overflow-y-auto">
 	<div id="volunteer-form-wrap" class="modal-content" style="-webkit-overflow-scrolling: touch;">
-		<button type="button" @click="vOpen = false" class="absolute top-3 right-3 text-2xl">&times;</button>
+		<button type="button" @click="vOpen = false" class="modal-close">&times;</button>
 		<h1 class="text-xl font-semibold mb-4">{% trans "Offer to volunteer" %}</h1>
 		<form hx-post="{% url 'communities:volunteer_request' community.slug %}"
 		      hx-target="#volunteer-messages-slot"

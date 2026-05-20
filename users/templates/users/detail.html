@@ -26,11 +26,21 @@
 	<div class="sm:grid sm:grid-cols-4 sm:gap-6">
 		<div>
 			{% if user.image %}
-				<button type="button" class="block mx-auto" data-profile-modal="open">
+				<div x-data="{ open: false }" x-effect="document.body.classList.toggle('overflow-hidden', open)">
+				<button type="button" @click="open = true" class="block mx-auto">
 					<div class="relative inline-block mt-15">
 						<img class="object-cover rounded-full h-48 w-48 sm:h-56 sm:w-56 mx-auto shadow border border-dashed border-primary p-1" src="{{ user.image.url }}" alt="{{ user.name }}">
 					</div>
 				</button>
+				<div x-show="open" @click="open = false" @keydown.escape.window="open = false"
+				     class="fixed inset-0 bg-black bg-opacity-90"
+				     style="display:none; z-index: 60;">
+					<button type="button" @click.stop="open = false" class="lightbox-close" aria-label="{% trans 'Close' %}">&times;</button>
+					<img src="{{ user.image.url }}" alt="{{ user.name }}"
+					     @click.stop
+					     class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 max-h-[90vh] max-w-[90vw] rounded-lg shadow-2xl object-contain">
+				</div>
+				</div>
 			{% else %}
 				<i class="fa fa-user text-6xl text-primary rounded-full border border-dashed border-primary p-10 mt-15"></i>
 			{% endif %}
@@ -57,7 +67,7 @@
 			{% endif %}
 
 		</div>
-		<div class="sm:col-span-3">
+		<div class="md:col-span-3">
 			{% if user.about or request.user.is_authenticated and request.user.pk == user.pk %}
 				<h2>{% trans "About me" %}</h2>
 				<p>{{ user.about }}</p>
@@ -135,16 +145,6 @@
 	{% endif %}
 	</div>
 </div>
-{% if user.image %}
-<div id="profile-image-modal" class="fixed inset-0 bg-black bg-opacity-80 z-50 hidden items-center justify-center p-4">
-	<div class="relative max-w-5xl w-full flex justify-center">
-		<button type="button" class="modal-close" data-profile-modal="close" aria-label="Close">
-			&times;
-		</button>
-		<img src="{{ user.image.url }}" alt="{{ user.name }}" class="max-h-[80vh] max-w-full rounded-lg shadow-lg">
-	</div>
-</div>
-{% endif %}
 {% endblock content %}
 
 {% block javascript %}
@@ -153,43 +153,42 @@
 <script src="https://cdn.jsdelivr.net/npm/ol@v7.2.2/dist/ol.js"></script>
 {% endif %}
 <script>
-document.addEventListener('DOMContentLoaded', () => {
-	// ── Profile image modal ──────────────────────────────────────────
-	const modal = document.getElementById('profile-image-modal');
-	if (modal) {
-		const openers = document.querySelectorAll('[data-profile-modal="open"]');
-		const closer = modal.querySelector('[data-profile-modal="close"]');
-		const closeModal = () => { modal.classList.add('hidden'); document.body.classList.remove('overflow-hidden'); };
-		const openModal = () => { modal.classList.remove('hidden'); modal.classList.add('flex'); document.body.classList.add('overflow-hidden'); };
-		openers.forEach(btn => btn.addEventListener('click', openModal));
-		if (closer) closer.addEventListener('click', closeModal);
-		modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
-	}
-
-	// ── Location map (read-only) ─────────────────────────────────────
+{
 	const mapEl = document.getElementById('user-profile-map');
-	if (!mapEl || !window.ol) return;
+	if (mapEl) {
+		const initMap = () => {
+			const lon = parseFloat(mapEl.dataset.lon);
+			const lat = parseFloat(mapEl.dataset.lat);
+			if (!Number.isFinite(lon) || !Number.isFinite(lat)) return;
 
-	const lon = parseFloat(mapEl.dataset.lon);
-	const lat = parseFloat(mapEl.dataset.lat);
-	if (!Number.isFinite(lon) || !Number.isFinite(lat)) return;
+			const baseLayers = EcoMap.buildBaseLayers();
+			const coords = ol.proj.fromLonLat([lon, lat]);
+			const feature = new ol.Feature({ geometry: new ol.geom.Point(coords) });
+			feature.setStyle(EcoMap.makeIconStyle(0xF007, '#da6137')); //  fa-user
+			const vectorLayer = new ol.layer.Vector({ source: new ol.source.Vector({ features: [feature] }) });
 
-	const coords = ol.proj.fromLonLat([lon, lat]);
-	const feature = new ol.Feature(new ol.geom.Point(coords));
-	feature.setStyle(EcoMap.makeIconStyle(0xF007, '#da6137')); //  fa-user
+			const map = new ol.Map({
+				target: mapEl,
+				layers: baseLayers.all.concat([vectorLayer]),
+				view: new ol.View({ center: coords, zoom: 10 }),
+			});
 
-	const vectorLayer = new ol.layer.Vector({
-		source: new ol.source.Vector({ features: [feature] })
-	});
+			const ensureSize = () => {
+				const rect = mapEl.getBoundingClientRect();
+				if (!rect.width || !rect.height) { requestAnimationFrame(ensureSize); return; }
+				map.updateSize();
+			};
+			setTimeout(() => map.updateSize(), 50);
+			ensureSize();
 
-	const layers = EcoMap.buildBaseLayers();
-	layers.setBaseLayer('ecobasa');
-
-	new ol.Map({
-		target: mapEl,
-		layers: layers.all.concat([vectorLayer]),
-		view: new ol.View({ center: coords, zoom: 10, maxZoom: 16 }),
-	});
-});
+			const menu = EcoMap.buildLayerToggle(map, 'user-profile-layer');
+			menu.querySelectorAll('input').forEach(r => {
+				r.addEventListener('change', e => { if (e.target.checked) baseLayers.setBaseLayer(e.target.value); });
+			});
+			baseLayers.setBaseLayer('ecobasa');
+		};
+		if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', initMap); } else { initMap(); }
+	}
+}
 </script>
 {% endblock javascript %}
