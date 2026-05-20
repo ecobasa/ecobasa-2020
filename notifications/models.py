@@ -5,11 +5,12 @@ from users.models import User
 
 
 class Notification(models.Model):
-    TAG_REQUESTED = "requested"
-    TAG_ACCEPTED  = "accepted"
-    TAG_DECLINED  = "declined"
-    TAG_COUNTER   = "counter"
-    TAG_MESSAGE   = "message"
+    TAG_REQUESTED   = "requested"
+    TAG_ACCEPTED    = "accepted"
+    TAG_DECLINED    = "declined"
+    TAG_COUNTER     = "counter"
+    TAG_MESSAGE     = "message"
+    TAG_SKILL_NUDGE = "skill_nudge"
 
     recipient   = models.ForeignKey(User, on_delete=models.CASCADE, related_name="notifications")
     actor       = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name="notifications_sent")
