@@ -1,0 +1,56 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      # django.env / postgres.env are gitignored (real deployments set these via
+      # secrets); CI just needs the same local-dev-style values used in docker-compose.yaml.
+      - name: Write env files
+        run: |
+          cat > postgres.env <<'EOF'
+          POSTGRES_USER=ecobasa
+          POSTGRES_PASSWORD=ecobasa
+          POSTGRES_DB=ecobasa
+          EOF
+          cat > django.env <<'EOF'
+          DJANGO_SETTINGS_MODULE=settings.test
+          DATABASE_URL=postgis://ecobasa:ecobasa@database/ecobasa
+          EOF
+
+      - name: Build django image
+        run: docker compose build django
+
+      - name: Start database
+        run: docker compose up -d database
+
+      - name: Wait for database to be ready
+        run: |
+          for i in $(seq 1 30); do
+            docker compose exec -T database pg_isready -U ecobasa && exit 0
+            sleep 2
+          done
+          echo "database never became ready" >&2
+          exit 1
+
+      - name: Check for missing migrations
+        run: docker compose run --rm django python manage.py makemigrations --check --dry-run
+
+      - name: Run test suite
+        run: docker compose run --rm django python -m pytest -q --create-db
+
+      - name: Tear down
+        if: always()
+        run: docker compose down -v
