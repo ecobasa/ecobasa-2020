@@ -1,3 +1,4 @@
+from django.contrib.contenttypes.fields import GenericRelation
 from django.contrib.gis.db import models
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
@@ -103,12 +104,29 @@ class Community(UniqueSlugMixin, models.Model):
     location = models.PointField(
         _("Geo Location"), null=True, blank=True, geography=True
     )
+    matches = GenericRelation("matches.Match")
 
     def __str__(self):
         return self.name
 
     def get_absolute_url(self) -> str:
         return reverse("communities:detail", kwargs={"slug": self.slug})
+
+    # ── matches.Match target protocol ───────────────────────────────
+    def get_match_owner(self):
+        return self.owner
+
+    def get_match_display_name(self):
+        return self.name
+
+    def get_match_location(self):
+        return self.name, self.location_name, self.location
+
+    def get_match_icon(self):
+        return "fa-campground"
+
+    def get_match_verb(self):
+        return _("requested to volunteer at")
 
     class Meta:
         verbose_name = _("Community")

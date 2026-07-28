@@ -13,14 +13,14 @@
   {% if volunteer_theirs %}
     <h2 class="text-2xl font-semibold uppercase tracking-wide mb-4 mt-0">{% trans "Received" %}</h2>
     <div class="space-y-2 mb-6">
-      {% for vr in volunteer_theirs %}{% include "matches/_volunteer_row.html" with obj=vr show_from=True %}{% endfor %}
+      {% for match in volunteer_theirs %}{% include "matches/_match_row.html" with match=match show_from=True %}{% endfor %}
     </div>
   {% endif %}
 
   {% if volunteer_mine %}
     <h2 class="text-2xl font-semibold uppercase tracking-wide mb-4">{% trans "Sent" %}</h2>
     <div class="space-y-2">
-      {% for vr in volunteer_mine %}{% include "matches/_volunteer_row.html" with obj=vr show_from=False %}{% endfor %}
+      {% for match in volunteer_mine %}{% include "matches/_match_row.html" with match=match show_from=False %}{% endfor %}
     </div>
   {% endif %}
 
@@ -40,14 +40,14 @@
   {% if fm_theirs %}
     <h2 class="text-2xl font-semibold uppercase tracking-wide mb-4 mt-0">{% trans "Received" %}</h2>
     <div class="space-y-2 mb-6">
-      {% for ar in fm_theirs %}{% include "matches/_gift_offer_row.html" with obj=ar show_from=True %}{% endfor %}
+      {% for match in fm_theirs %}{% include "matches/_match_row.html" with match=match show_from=True %}{% endfor %}
     </div>
   {% endif %}
 
   {% if fm_mine %}
     <h2 class="text-2xl font-semibold uppercase tracking-wide mb-4">{% trans "Sent" %}</h2>
     <div class="space-y-2">
-      {% for ar in fm_mine %}{% include "matches/_gift_offer_row.html" with obj=ar show_from=False %}{% endfor %}
+      {% for match in fm_mine %}{% include "matches/_match_row.html" with match=match show_from=False %}{% endfor %}
     </div>
   {% endif %}
 
@@ -67,14 +67,14 @@
   {% if skill_theirs %}
     <h2 class="text-2xl font-semibold uppercase tracking-wide mb-4 mt-0">{% trans "Received" %}</h2>
     <div class="space-y-2 mb-6">
-      {% for sr in skill_theirs %}{% include "matches/_skill_interest_row.html" with obj=sr show_from=True %}{% endfor %}
+      {% for match in skill_theirs %}{% include "matches/_match_row.html" with match=match show_from=True %}{% endfor %}
     </div>
   {% endif %}
 
   {% if skill_mine %}
     <h2 class="text-2xl font-semibold uppercase tracking-wide mb-4">{% trans "Sent" %}</h2>
     <div class="space-y-2">
-      {% for sr in skill_mine %}{% include "matches/_skill_interest_row.html" with obj=sr show_from=False %}{% endfor %}
+      {% for match in skill_mine %}{% include "matches/_match_row.html" with match=match show_from=False %}{% endfor %}
     </div>
   {% endif %}
 

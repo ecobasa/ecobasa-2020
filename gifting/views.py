@@ -15,35 +15,14 @@ from django.contrib.gis.geos import Polygon
 from django.views.decorators.http import require_GET
 from django.core.cache import cache
 
-from .forms import AdForm, AdRequestForm
+from .forms import AdForm
 from .filters import AdFilter
-from .models import Ad, AdRequest
+from .models import Ad
 from communities.models import Community
 from users.models import User
 from skills.models import UserSkill, CommunitySkill
-
-
-def _notify_ad_request(ad_request, http_request=None):
-    from notifications.models import Notification
-    from matches.emails import send_ad_request_email
-    ad = ad_request.ad
-    recipient = ad.owner
-    if recipient is None:
-        return
-    link = ad_request.get_absolute_url()
-    actor_name = ad_request.from_user.name or ad_request.from_user.email
-    if ad.type == "offer":
-        verb = _("%(actor)s expressed interest in your gift: %(title)s") % {"actor": actor_name, "title": ad.title}
-        tag  = "gift_request"
-    else:
-        verb = _("%(actor)s wants to fulfill your wish: %(title)s") % {"actor": actor_name, "title": ad.title}
-        tag  = "wish_request"
-    Notification.objects.create(
-        recipient=recipient, actor=ad_request.from_user,
-        verb=str(verb), link=link, tag=tag,
-    )
-    if http_request:
-        send_ad_request_email(ad_request, http_request)
+from matches.forms import MatchForm
+from matches.emails import notify_match_created
 
 
 def search(request):
@@ -60,23 +39,24 @@ def detail(request, pk):
 
     if request.user.is_authenticated and request.user != ad.owner:
         if request.method == "POST":
-            form = AdRequestForm(request.POST)
+            form = MatchForm(request.POST)
             if form.is_valid():
-                ar = form.save(commit=False)
-                ar.from_user = request.user
-                ar.ad = ad
-                ar.save()
-                _notify_ad_request(ar, http_request=request)
+                match = form.save(commit=False)
+                match.from_user = request.user
+                match.recipient = ad.get_match_owner()
+                match.target = ad
+                match.save()
+                notify_match_created(match, http_request=request)
                 messages.success(request, _("Your request has been sent."))
-                return redirect(ar.get_absolute_url())
+                return redirect(match.get_absolute_url())
         else:
-            form = AdRequestForm()
+            form = MatchForm()
         context["form"] = form
 
     is_owner = request.user.is_authenticated and request.user == ad.owner
     context["is_owner"] = is_owner
     if is_owner:
-        context["incoming_requests"] = list(ad.requests.select_related("from_user").order_by("-created_at")[:20])
+        context["incoming_requests"] = list(ad.matches.select_related("from_user").order_by("-created_at")[:20])
 
     return render(request, "gifting/ad_detail.html", context)
 

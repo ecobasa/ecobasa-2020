@@ -1,3 +1,4 @@
+from django.contrib.contenttypes.fields import GenericRelation
 from django.db import models
 from django.urls import reverse
 from django.utils.text import slugify
@@ -83,6 +84,7 @@ class UserSkill(models.Model):
         _("Available to teach / share"), default=True
     )
     created_at  = models.DateTimeField(auto_now_add=True)
+    matches     = GenericRelation("matches.Match")
 
     class Meta:
         unique_together = ("user", "skill")
@@ -111,12 +113,31 @@ class UserSkill(models.Model):
             "user_slug":  _user_slug(self.user),
         })
 
+    # ── matches.Match target protocol ───────────────────────────────
+    def get_match_owner(self):
+        return self.user
+
+    def get_match_display_name(self):
+        return self.skill.name
+
+    def get_match_location(self):
+        user = self.user
+        label = f"{user.name or user.email}'s place"
+        return label, user.location_name, user.location
+
+    def get_match_icon(self):
+        return "fa-hand-point-up"
+
+    def get_match_verb(self):
+        return _("expressed interest")
+
 
 class CommunitySkill(models.Model):
     community   = models.ForeignKey(Community, on_delete=models.CASCADE, related_name="community_skills")
     skill       = models.ForeignKey(Skill,     on_delete=models.CASCADE, related_name="community_skills")
     description = models.TextField(_("What can visitors learn here?"), blank=True)
     created_at  = models.DateTimeField(auto_now_add=True)
+    matches     = GenericRelation("matches.Match")
 
     class Meta:
         unique_together = ("community", "skill")
@@ -133,165 +154,22 @@ class CommunitySkill(models.Model):
             "community_slug": self.community.slug,
         })
 
+    # ── matches.Match target protocol ───────────────────────────────
+    def get_match_owner(self):
+        return self.community.owner
 
-class SkillInterest(models.Model):
-    LOC_MY_PLACE   = "my_place"
-    LOC_YOUR_PLACE = "your_place"
-    LOC_CUSTOM     = "custom"
-    LOC_CHOICES = [
-        (LOC_MY_PLACE,   _("My place — come visit me")),
-        (LOC_YOUR_PLACE, _("Your place — I will visit you")),
-        (LOC_CUSTOM,     _("Somewhere else")),
-    ]
+    def get_match_display_name(self):
+        return self.skill.name
 
-    STATUS_PENDING  = "pending"
-    STATUS_ACCEPTED = "accepted"
-    STATUS_DECLINED = "declined"
-    STATUS_COUNTER  = "counter"
-    STATUS_CHOICES = [
-        (STATUS_PENDING,  _("Pending")),
-        (STATUS_ACCEPTED, _("Accepted")),
-        (STATUS_DECLINED, _("Declined")),
-        (STATUS_COUNTER,  _("Counter-proposed")),
-    ]
+    def get_match_location(self):
+        community = self.community
+        return community.name, community.location_name, community.location
 
-    from_user         = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name="skill_interests_sent"
-    )
-    user_skill        = models.ForeignKey(
-        UserSkill, null=True, blank=True,
-        on_delete=models.CASCADE, related_name="interests"
-    )
-    community_skill   = models.ForeignKey(
-        CommunitySkill, null=True, blank=True,
-        on_delete=models.CASCADE, related_name="interests"
-    )
-    wish              = models.ForeignKey(
-        'SkillWish', null=True, blank=True,
-        on_delete=models.SET_NULL, related_name="offer_interests"
-    )
-    message           = models.TextField(_("Message"))
-    location_type     = models.CharField(
-        _("Meeting location"), max_length=20, choices=LOC_CHOICES, default=LOC_YOUR_PLACE
-    )
-    proposed_location = models.CharField(_("Custom location"), max_length=255, blank=True)
-    proposed_lat      = models.FloatField(null=True, blank=True)
-    proposed_lon      = models.FloatField(null=True, blank=True)
-    proposed_date     = models.DateTimeField(_("Proposed date"), null=True, blank=True)
-    status            = models.CharField(
-        _("Status"), max_length=20, choices=STATUS_CHOICES, default=STATUS_PENDING
-    )
-    response_message  = models.TextField(_("Response message"), blank=True)
-    counter_location_type = models.CharField(
-        _("Counter location"), max_length=20, choices=LOC_CHOICES, blank=True
-    )
-    counter_location  = models.CharField(max_length=255, blank=True)
-    counter_lat       = models.FloatField(null=True, blank=True)
-    counter_lon       = models.FloatField(null=True, blank=True)
-    counter_date      = models.DateTimeField(_("Counter date"), null=True, blank=True)
-    responded_at      = models.DateTimeField(null=True, blank=True)
-    created_at        = models.DateTimeField(auto_now_add=True)
+    def get_match_icon(self):
+        return "fa-hand-point-up"
 
-    def get_absolute_url(self):
-        return reverse("matches:skill_interest_detail", kwargs={"pk": self.pk})
-
-    def resolved_location(self):
-        """Human-readable meeting location, resolving my/your place from profiles."""
-        if self.location_type == self.LOC_MY_PLACE:
-            loc = self.from_user.location_name or self.proposed_location or ""
-            name = self.from_user.name or self.from_user.email
-            return f"{name}'s place — {loc}" if loc else f"{name}'s place"
-        if self.location_type == self.LOC_YOUR_PLACE:
-            target_user = self.user_skill.user if self.user_skill else None
-            if target_user:
-                loc = target_user.location_name or ""
-                name = target_user.name or target_user.email
-                return f"{name}'s place — {loc}" if loc else f"{name}'s place"
-            if self.community_skill:
-                loc = self.community_skill.community.location_name or ""
-                return f"{self.community_skill.community.name} — {loc}" if loc else self.community_skill.community.name
-        return self.proposed_location or ""
-
-    def location_coords(self):
-        """Best coordinates for this request's proposed meeting point."""
-        if self.proposed_lat and self.proposed_lon:
-            return self.proposed_lat, self.proposed_lon
-        if self.location_type == self.LOC_MY_PLACE and self.from_user.location:
-            return self.from_user.location.y, self.from_user.location.x
-        if self.location_type == self.LOC_YOUR_PLACE:
-            target = self.user_skill.user if self.user_skill else None
-            if target and target.location:
-                return target.location.y, target.location.x
-            if self.community_skill and self.community_skill.community.location:
-                c = self.community_skill.community.location
-                return c.y, c.x
-        return None, None
-
-    class Meta:
-        ordering = ["-created_at"]
-        verbose_name = _("Skill Interest")
-        verbose_name_plural = _("Skill Interests")
-
-    def __str__(self):
-        target = self.user_skill or self.community_skill
-        return f"Interest from {self.from_user} → {target}"
-
-
-class SkillInterestMessage(models.Model):
-    """One entry in a SkillInterest conversation thread — plain message or a status decision."""
-    interest     = models.ForeignKey(SkillInterest, on_delete=models.CASCADE, related_name="thread")
-    sender       = models.ForeignKey(User, on_delete=models.CASCADE, related_name="skill_interest_messages")
-    body         = models.TextField(_("Message"), blank=True)
-    status_to    = models.CharField(
-        _("Decision"), max_length=20, blank=True, choices=SkillInterest.STATUS_CHOICES
-    )
-    counter_location_type = models.CharField(max_length=20, blank=True, choices=SkillInterest.LOC_CHOICES)
-    counter_location      = models.CharField(max_length=255, blank=True)
-    counter_lat           = models.FloatField(null=True, blank=True)
-    counter_lon           = models.FloatField(null=True, blank=True)
-    counter_date          = models.DateTimeField(null=True, blank=True)
-    created_at   = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        ordering = ["created_at"]
-        verbose_name = _("Skill Interest Message")
-        verbose_name_plural = _("Skill Interest Messages")
-
-    def __str__(self):
-        return f"{self.sender} → {self.interest} ({self.status_to or 'message'})"
-
-    def resolved_counter_location(self):
-        """Human-readable counter-proposed meeting location, resolving my/your place from profiles."""
-        if self.counter_location:
-            return self.counter_location
-        sr = self.interest
-        if self.counter_location_type == SkillInterest.LOC_MY_PLACE:
-            if sr.user_skill:
-                owner = sr.user_skill.user
-                loc = owner.location_name or ""
-                name = owner.name or owner.email
-                return f"{name}'s place — {loc}" if loc else f"{name}'s place"
-            if sr.community_skill:
-                loc = sr.community_skill.community.location_name or ""
-                name = sr.community_skill.community.name
-                return f"{name} — {loc}" if loc else name
-        if self.counter_location_type == SkillInterest.LOC_YOUR_PLACE:
-            loc = sr.from_user.location_name or ""
-            name = sr.from_user.name or sr.from_user.email
-            return f"{name}'s place — {loc}" if loc else f"{name}'s place"
-        return ""
-
-    def counter_location_coords(self):
-        if self.counter_lat and self.counter_lon:
-            return self.counter_lat, self.counter_lon
-        sr = self.interest
-        if self.counter_location_type == SkillInterest.LOC_MY_PLACE:
-            owner = sr.user_skill.user if sr.user_skill else None
-            if owner and owner.location:
-                return owner.location.y, owner.location.x
-        if self.counter_location_type == SkillInterest.LOC_YOUR_PLACE and sr.from_user.location:
-            return sr.from_user.location.y, sr.from_user.location.x
-        return None, None
+    def get_match_verb(self):
+        return _("expressed interest")
 
 
 class SkillWish(models.Model):
@@ -326,6 +204,7 @@ class SkillWish(models.Model):
         _("What do you want to learn, or what do you need?"), blank=True
     )
     created_at  = models.DateTimeField(auto_now_add=True)
+    matches     = GenericRelation("matches.Match")
 
     class Meta:
         ordering = ["-created_at"]
@@ -335,3 +214,24 @@ class SkillWish(models.Model):
     def __str__(self):
         owner = self.user or self.community
         return f"{owner} wants: {self.skill}"
+
+    # ── matches.Match target protocol ───────────────────────────────
+    def get_match_owner(self):
+        return self.user or (self.community.owner if self.community else None)
+
+    def get_match_display_name(self):
+        return self.skill.name
+
+    def get_match_location(self):
+        if self.user:
+            label = f"{self.user.name or self.user.email}'s place"
+            return label, self.user.location_name, self.user.location
+        if self.community:
+            return self.community.name, self.community.location_name, self.community.location
+        return "", None, None
+
+    def get_match_icon(self):
+        return "fa-hand-holding-heart"
+
+    def get_match_verb(self):
+        return _("offered to teach you")

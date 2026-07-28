@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Skill, UserSkill, CommunitySkill, SkillInterest
+from .models import Skill, UserSkill, CommunitySkill
 
 
 class UserSkillInline(admin.TabularInline):
@@ -45,9 +45,3 @@ class CommunitySkillAdmin(admin.ModelAdmin):
     list_display  = ("community", "skill", "created_at")
     search_fields = ("community__name", "skill__name")
     raw_id_fields = ("community",)
-
-
-@admin.register(SkillInterest)
-class SkillInterestAdmin(admin.ModelAdmin):
-    list_display  = ("from_user", "user_skill", "community_skill", "proposed_date", "created_at")
-    raw_id_fields = ("from_user",)

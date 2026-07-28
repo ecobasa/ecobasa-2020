@@ -7,7 +7,7 @@ from crispy_forms.layout import Layout, Field, Fieldset as CrispyFieldset
 from django.contrib.gis import forms
 
 from .widgets import LocationWidget
-from .models import Ad, AdRequest, AdRequestMessage
+from .models import Ad
 
 
 class Fieldset(CrispyFieldset):
@@ -51,25 +51,4 @@ class AdForm(forms.ModelForm):
         }
 
 
-class AdRequestForm(forms.ModelForm):
-    class Meta:
-        model = AdRequest
-        fields = ("message", "location_type", "proposed_location", "proposed_lat", "proposed_lon", "proposed_date")
-        widgets = {
-            "message": forms.Textarea(attrs={"rows": 4, "class": "form-textarea w-full", "placeholder": "Write a short message about why you're interested…"}),
-            "location_type": forms.RadioSelect,
-            "proposed_location": forms.HiddenInput,
-            "proposed_lat": forms.HiddenInput,
-            "proposed_lon": forms.HiddenInput,
-            "proposed_date": forms.DateTimeInput(attrs={"type": "datetime-local", "class": "form-input"}),
-        }
-
-
-class AdRequestMessageForm(forms.ModelForm):
-    class Meta:
-        model = AdRequestMessage
-        fields = ("body",)
-        widgets = {
-            "body": forms.Textarea(attrs={"rows": 3, "class": "form-textarea w-full", "placeholder": "Add a message (optional)…"}),
-        }
 

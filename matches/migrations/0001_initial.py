@@ -10,13 +10,13 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ("communities", "0001_initial"),
+        ("contenttypes", "0002_remove_content_type_name"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.CreateModel(
-            name="VolunteerRequest",
+            name="Match",
             fields=[
                 (
                     "id",
@@ -27,7 +27,35 @@ class Migration(migrations.Migration):
                         verbose_name="ID",
                     ),
                 ),
-                ("message", models.TextField(blank=True)),
+                ("object_id", models.CharField(max_length=255)),
+                ("message", models.TextField(verbose_name="Message")),
+                (
+                    "location_type",
+                    models.CharField(
+                        choices=[
+                            ("my_place", "My place — come visit me"),
+                            ("your_place", "Your place — I will visit you"),
+                            ("custom", "Somewhere else"),
+                        ],
+                        default="your_place",
+                        max_length=20,
+                        verbose_name="Meeting location",
+                    ),
+                ),
+                (
+                    "proposed_location",
+                    models.CharField(
+                        blank=True, max_length=255, verbose_name="Custom location"
+                    ),
+                ),
+                ("proposed_lat", models.FloatField(blank=True, null=True)),
+                ("proposed_lon", models.FloatField(blank=True, null=True)),
+                (
+                    "proposed_date",
+                    models.DateTimeField(
+                        blank=True, null=True, verbose_name="Proposed date"
+                    ),
+                ),
                 (
                     "status",
                     models.CharField(
@@ -35,42 +63,49 @@ class Migration(migrations.Migration):
                             ("pending", "Pending"),
                             ("accepted", "Accepted"),
                             ("declined", "Declined"),
+                            ("counter", "Counter-proposed"),
                         ],
                         default="pending",
                         max_length=20,
+                        verbose_name="Status",
                     ),
                 ),
                 ("responded_at", models.DateTimeField(blank=True, null=True)),
                 ("created_at", models.DateTimeField(auto_now_add=True)),
-                ("volunteer_mode", models.CharField(blank=True, max_length=20)),
-                ("stay_from", models.DateTimeField(blank=True, null=True)),
-                ("stay_to", models.DateTimeField(blank=True, null=True)),
-                ("practice_skills", models.CharField(blank=True, max_length=500)),
-                ("practice_skill_level", models.CharField(blank=True, max_length=20)),
-                ("sender_skills", models.CharField(blank=True, max_length=500)),
                 (
-                    "community",
+                    "content_type",
                     models.ForeignKey(
                         on_delete=django.db.models.deletion.CASCADE,
-                        related_name="volunteer_requests",
-                        to="communities.community",
+                        to="contenttypes.contenttype",
                     ),
                 ),
                 (
                     "from_user",
                     models.ForeignKey(
                         on_delete=django.db.models.deletion.CASCADE,
-                        related_name="+",
+                        related_name="matches_sent",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
+                (
+                    "recipient",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="matches_received",
                         to=settings.AUTH_USER_MODEL,
                     ),
                 ),
             ],
             options={
+                "verbose_name": "Match",
+                "verbose_name_plural": "Matches",
                 "ordering": ["-created_at"],
             },
         ),
         migrations.CreateModel(
-            name="VolunteerRequestMessage",
+            name="MatchMessage",
             fields=[
                 (
                     "id",
@@ -81,14 +116,44 @@ class Migration(migrations.Migration):
                         verbose_name="ID",
                     ),
                 ),
-                ("body", models.TextField()),
+                ("body", models.TextField(blank=True, verbose_name="Message")),
+                (
+                    "status_to",
+                    models.CharField(
+                        blank=True,
+                        choices=[
+                            ("pending", "Pending"),
+                            ("accepted", "Accepted"),
+                            ("declined", "Declined"),
+                            ("counter", "Counter-proposed"),
+                        ],
+                        max_length=20,
+                        verbose_name="Decision",
+                    ),
+                ),
+                (
+                    "counter_location_type",
+                    models.CharField(
+                        blank=True,
+                        choices=[
+                            ("my_place", "My place — come visit me"),
+                            ("your_place", "Your place — I will visit you"),
+                            ("custom", "Somewhere else"),
+                        ],
+                        max_length=20,
+                    ),
+                ),
+                ("counter_location", models.CharField(blank=True, max_length=255)),
+                ("counter_lat", models.FloatField(blank=True, null=True)),
+                ("counter_lon", models.FloatField(blank=True, null=True)),
+                ("counter_date", models.DateTimeField(blank=True, null=True)),
                 ("created_at", models.DateTimeField(auto_now_add=True)),
                 (
-                    "request",
+                    "match",
                     models.ForeignKey(
                         on_delete=django.db.models.deletion.CASCADE,
-                        related_name="messages",
-                        to="matches.volunteerrequest",
+                        related_name="thread",
+                        to="matches.match",
                     ),
                 ),
                 (
@@ -101,7 +166,41 @@ class Migration(migrations.Migration):
                 ),
             ],
             options={
+                "verbose_name": "Match Message",
+                "verbose_name_plural": "Match Messages",
                 "ordering": ["created_at"],
+            },
+        ),
+        migrations.CreateModel(
+            name="VolunteerDetails",
+            fields=[
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("volunteer_mode", models.CharField(blank=True, max_length=20)),
+                ("stay_from", models.DateTimeField(blank=True, null=True)),
+                ("stay_to", models.DateTimeField(blank=True, null=True)),
+                ("practice_skills", models.CharField(blank=True, max_length=500)),
+                ("practice_skill_level", models.CharField(blank=True, max_length=20)),
+                ("sender_skills", models.CharField(blank=True, max_length=500)),
+                (
+                    "match",
+                    models.OneToOneField(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="volunteer_details",
+                        to="matches.match",
+                    ),
+                ),
+            ],
+            options={
+                "verbose_name": "Volunteer Details",
+                "verbose_name_plural": "Volunteer Details",
             },
         ),
     ]

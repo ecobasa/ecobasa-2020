@@ -104,9 +104,8 @@ def volunteer_request(request, community_slug):
 
     import datetime
     from django.utils import timezone
-    from matches.models import VolunteerRequest
-    from matches.emails import send_volunteer_request_email
-    from notifications.models import Notification
+    from matches.models import Match, VolunteerDetails
+    from matches.emails import notify_match_created
 
     volunteer_mode       = request.POST.get("volunteer_mode", "")
     practice_skills      = request.POST.get("practice_skills", "").strip()
@@ -126,30 +125,24 @@ def volunteer_request(request, community_slug):
     stay_from = _parse_dt(request.POST.get("stay_from", ""))
     stay_to   = _parse_dt(request.POST.get("stay_to", ""))
 
-    vr = VolunteerRequest.objects.create(
-        from_user            = request.user,
-        community            = community,
-        volunteer_mode       = volunteer_mode,
-        message              = msg_body,
-        practice_skills      = practice_skills,
-        practice_skill_level = practice_skill_level,
-        sender_skills        = sender_skills,
-        stay_from       = stay_from,
-        stay_to         = stay_to,
+    vr = Match(
+        from_user = request.user,
+        recipient = community.get_match_owner(),
+        message   = msg_body,
+    )
+    vr.target = community
+    vr.save()
+    VolunteerDetails.objects.create(
+        match                 = vr,
+        volunteer_mode        = volunteer_mode,
+        practice_skills       = practice_skills,
+        practice_skill_level  = practice_skill_level,
+        sender_skills         = sender_skills,
+        stay_from             = stay_from,
+        stay_to               = stay_to,
     )
 
-    send_volunteer_request_email(vr, request)
-
-    actor_name = request.user.name or request.user.username or request.user.email
-    Notification.objects.create(
-        recipient=owner,
-        actor=request.user,
-        verb=str(_("%(name)s requested a volunteering stay at %(community)s") % {
-            "name": actor_name, "community": community.name,
-        }),
-        link=vr.get_absolute_url(),
-        tag="volunteer_request",
-    )
+    notify_match_created(vr, http_request=request)
 
     messages.success(request, str(_("Your request has been sent to %(community)s!") % {"community": community.name}))
 

@@ -1,6 +1,6 @@
 Hello {% if recipient.name %}{{ recipient.name }}{% else %}{{ recipient.email }}{% endif %},
 
-{% if actor.name %}{{ actor.name }}{% else %}{{ actor.email }}{% endif %} has {{ status_label }} your interest in: {{ ad.title }}.
+{% if actor.name %}{{ actor.name }}{% else %}{{ actor.email }}{% endif %} has {{ status_label }} your interest in: {{ title }}.
 
 View: {{ detail_url }}
 
