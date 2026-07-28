@@ -1,15 +1,17 @@
 import json
+import re
 import urllib.request
 import urllib.parse
+from datetime import datetime as _dt
 
 from django.shortcuts import render, get_object_or_404, redirect, reverse
 from django.db.models import Q
 from django.core.paginator import Paginator
 from django.contrib import messages
+from django.http import JsonResponse
 from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.decorators import login_required
 from django.contrib.gis.geos import Polygon
-from django.http import JsonResponse
 from django.views.decorators.http import require_GET
 from django.core.cache import cache
 
@@ -18,6 +20,9 @@ from .filters import AdFilter
 from .models import Ad
 from communities.models import Community
 from users.models import User
+from skills.models import UserSkill, CommunitySkill
+from matches.forms import MatchForm
+from matches.emails import notify_match_created
 
 
 def search(request):
@@ -30,7 +35,30 @@ def search(request):
 def detail(request, pk):
     """Show details for an Ad"""
     ad = get_object_or_404(Ad, pk=pk)
-    return render(request, "gifting/ad_detail.html", {"ad": ad})
+    context = {"ad": ad}
+
+    if request.user.is_authenticated and request.user != ad.owner:
+        if request.method == "POST":
+            form = MatchForm(request.POST)
+            if form.is_valid():
+                match = form.save(commit=False)
+                match.from_user = request.user
+                match.recipient = ad.get_match_owner()
+                match.target = ad
+                match.save()
+                notify_match_created(match, http_request=request)
+                messages.success(request, _("Your request has been sent."))
+                return redirect(match.get_absolute_url())
+        else:
+            form = MatchForm()
+        context["form"] = form
+
+    is_owner = request.user.is_authenticated and request.user == ad.owner
+    context["is_owner"] = is_owner
+    if is_owner:
+        context["incoming_requests"] = list(ad.matches.select_related("from_user").order_by("-created_at")[:20])
+
+    return render(request, "gifting/ad_detail.html", context)
 
 
 @login_required
@@ -97,14 +125,16 @@ def _apply_bbox(qs, bbox_param, location_field="location"):
         return qs
 
 
-def _filtered_ads(request):
+def _filtered_ads(request, require_location=True):
     types = request.GET.getlist("type")
     ad_types = [t for t in types if t != "skill"]
 
     if types and not ad_types:
         return Ad.objects.none()
 
-    base_qs = Ad.objects.filter(location__isnull=False).select_related("owner")
+    base_qs = Ad.objects.select_related("owner")
+    if require_location:
+        base_qs = base_qs.filter(location__isnull=False)
 
     if "skill" in types:
         data = request.GET.copy()
@@ -116,39 +146,47 @@ def _filtered_ads(request):
     return f.qs
 
 
-def _skill_communities(request):
+def _skill_communities(request, require_location=True):
     types = request.GET.getlist("type")
     if types and "skill" not in types:
         return Community.objects.none()
 
-    qs = Community.objects.filter(
-        location__isnull=False,
-        skills__isnull=False,
-    ).prefetch_related("skills", "photos").distinct()
+    filters = {"community_skills__isnull": False}
+    if require_location:
+        filters["location__isnull"] = False
+
+    qs = Community.objects.filter(**filters).prefetch_related("community_skills__skill", "photos").distinct()
 
     q = request.GET.get("search", "").strip()
     if q:
         qs = qs.filter(
-            Q(skills__name__icontains=q) | Q(description__icontains=q)
+            Q(community_skills__skill__name__icontains=q)
+            | Q(community_skills__skill__description__icontains=q)
+            | Q(community_skills__description__icontains=q)
+            | Q(description__icontains=q)
         ).distinct()
 
     return qs
 
 
-def _skill_users(request):
+def _skill_users(request, require_location=True):
     types = request.GET.getlist("type")
     if types and "skill" not in types:
         return User.objects.none()
 
-    qs = User.objects.filter(
-        location__isnull=False,
-        skills__isnull=False,
-    ).prefetch_related("skills").distinct()
+    filters = {"user_skills__isnull": False}
+    if require_location:
+        filters["location__isnull"] = False
+
+    qs = User.objects.filter(**filters).prefetch_related("user_skills__skill").distinct()
 
     q = request.GET.get("search", "").strip()
     if q:
         qs = qs.filter(
-            Q(skills__name__icontains=q) | Q(about__icontains=q)
+            Q(user_skills__skill__name__icontains=q)
+            | Q(user_skills__skill__description__icontains=q)
+            | Q(user_skills__description__icontains=q)
+            | Q(about__icontains=q)
         ).distinct()
 
     return qs
@@ -201,7 +239,7 @@ def gifting_markers(request):
 
     for community in skill_qs[:200]:
         first_photo = community.photos.first()
-        skill_names = [s.name for s in community.skills.all()]
+        skill_names = [cs.skill.name for cs in community.community_skills.all()]
         features.append({
             "type": "Feature",
             "geometry": {
@@ -223,7 +261,7 @@ def gifting_markers(request):
     user_skill_qs = _apply_bbox(_skill_users(request), bbox_param)
 
     for user in user_skill_qs[:200]:
-        skill_names = [s.name for s in user.skills.all()]
+        skill_names = [us.skill.name for us in user.user_skills.all()]
         features.append({
             "type": "Feature",
             "geometry": {
@@ -248,15 +286,15 @@ def gifting_markers(request):
 def gifting_list_partial(request):
     page_num = int(request.GET.get("page", 1))
 
-    ads_queryset = _filtered_ads(request)
+    ads_queryset = _filtered_ads(request, require_location=False)
     if not request.GET.get('location'):
         ads_queryset = ads_queryset.order_by("-created_at")
 
     paginator = Paginator(ads_queryset, 20)
     page = paginator.get_page(page_num)
 
-    sc_qs = _skill_communities(request)
-    su_qs = _skill_users(request)
+    sc_qs = _skill_communities(request, require_location=False)
+    su_qs = _skill_users(request, require_location=False)
 
     skill_communities = []
     skill_users = []
@@ -331,26 +369,55 @@ def gifting_suggest(request):
 
     # Community skill names
     for skill in (
-        Community.objects
-        .filter(skills__name__icontains=q)
-        .values_list("skills__name", flat=True)
+        CommunitySkill.objects
+        .filter(skill__name__icontains=q)
+        .values_list("skill__name", flat=True)
         .distinct()[:3]
     ):
         add(skill, "skill")
 
     # User skill names
     for skill in (
-        User.objects
-        .filter(skills__name__icontains=q)
-        .values_list("skills__name", flat=True)
+        UserSkill.objects
+        .filter(skill__name__icontains=q)
+        .values_list("skill__name", flat=True)
         .distinct()[:3]
     ):
         add(skill, "skill")
 
-    # Description match — add query itself as a "text" hint (community list pattern)
-    if Ad.objects.filter(
-        Q(description__icontains=q) | Q(owner__name__icontains=q)
-    ).exclude(title__icontains=q).exists():
-        add(q, "text")
+    # Description match — extract words that start with the query
+    def _desc_words(*texts):
+        q_lower = q.lower()
+        for text in texts:
+            for word in re.findall(r'\b\w[\w-]*\b', text or ""):
+                if word.lower().startswith(q_lower) and word.lower() != q_lower:
+                    yield word.lower()
+
+    for desc, in (
+        Ad.objects
+        .filter(Q(description__icontains=q))
+        .exclude(title__icontains=q)
+        .values_list("description")[:5]
+    ):
+        for word in _desc_words(desc):
+            add(word, "text")
+
+    for desc, skill_desc in (
+        CommunitySkill.objects
+        .filter(Q(description__icontains=q) | Q(skill__description__icontains=q))
+        .exclude(skill__name__icontains=q)
+        .values_list("description", "skill__description")[:5]
+    ):
+        for word in _desc_words(desc, skill_desc):
+            add(word, "text")
+
+    for desc, skill_desc in (
+        UserSkill.objects
+        .filter(Q(description__icontains=q) | Q(skill__description__icontains=q))
+        .exclude(skill__name__icontains=q)
+        .values_list("description", "skill__description")[:5]
+    ):
+        for word in _desc_words(desc, skill_desc):
+            add(word, "text")
 
     return JsonResponse(suggestions[:8], safe=False)

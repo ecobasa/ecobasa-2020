@@ -1,0 +1,101 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block head_title %}{% trans "Notifications" %} — ecobasa{% endblock %}
+
+{% block content %}
+<div class="container-narrow">
+
+  <div class="flex items-center justify-between mb-6">
+    <h1 class="text-2xl text-primary">{% trans "Notifications" %}</h1>
+    {% if notifications %}
+      <form method="post" action="{% url 'notifications:mark_all_read' %}">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{{ request.path }}">
+        <button type="submit" class="text-sm text-primary underline">
+          {% trans "Mark all as read" %}
+        </button>
+      </form>
+    {% endif %}
+  </div>
+
+  {% if notifications %}
+    <div class="space-y-2">
+      {% for n in notifications %}
+        <a href="{{ n.link|default:'#' }}"
+           hx-post="{% url 'notifications:mark_read' n.pk %}"
+           hx-trigger="click"
+           hx-swap="none"
+           class="flex items-start gap-3 border rounded-lg p-3 border-2 focus:border-2
+             {% if not n.is_read %}bg-secondary{% else %}bg-secondary bg-opacity-60 hover:bg-opacity-100{% endif %}
+             {% if n.tag == 'accepted' or n.tag == 'gift_accepted' %}{% if n.is_read %}border-green/70 hover:border-green{% else %}border-green{% endif %}
+             {% elif n.tag == 'declined' or n.tag == 'gift_declined' %}{% if n.is_read %}border-red/70 hover:border-red{% else %}border-red{% endif %}
+             {% elif n.tag == 'counter' or n.tag == 'gift_counter' %}{% if n.is_read %}border-yellow/70 hover:border-yellow{% else %}border-yellow{% endif %}
+             {% elif n.tag == 'requested' or n.tag == 'gift_request' or n.tag == 'wish_request' %}{% if n.is_read %}border-secondary/10 border-0 hover:border-primary/60{% else %}border-primary{% endif %}
+             {% elif not n.is_read %}border-primary
+             {% else %}border-secondary/70{% endif %}">
+
+          <div class="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5
+            {% if n.tag == 'accepted' or n.tag == 'gift_accepted' %}bg-green bg-opacity-20
+            {% elif n.tag == 'declined' or n.tag == 'gift_declined' %}bg-red bg-opacity-20
+            {% elif n.tag == 'counter' or n.tag == 'gift_counter' %}bg-yellow bg-opacity-20
+            {% else %}bg-primary bg-opacity-20{% endif %}
+            {% if n.is_read %}opacity-50{% endif %}">
+            {% if n.tag == 'accepted' %}
+              <i class="fa-solid fa-handshake-simple text-sm text-green"></i>
+            {% elif n.tag == 'declined' %}
+              <i class="fa-solid fa-handshake-simple-slash text-sm text-red"></i>
+            {% elif n.tag == 'counter' %}
+              <i class="fa-solid fa-hand-holding-hand text-sm text-yellow"></i>
+            {% elif n.tag == 'requested' %}
+              <i class="fa-solid fa-graduation-cap text-sm text-primary"></i>
+            {% elif n.tag == 'gift_request' %}
+              <i class="fa-solid fa-gift text-sm text-primary"></i>
+            {% elif n.tag == 'wish_request' %}
+              <i class="fa-solid fa-hand-holding-heart text-sm text-primary"></i>
+            {% elif n.tag == 'gift_accepted' %}
+              <i class="fa-solid fa-gift text-sm text-green"></i>
+            {% elif n.tag == 'gift_declined' %}
+              <i class="fa-solid fa-gift text-sm text-red"></i>
+            {% elif n.tag == 'gift_counter' %}
+              <i class="fa-solid fa-gift text-sm text-yellow"></i>
+            {% elif n.tag == 'volunteer_request' %}
+              <i class="fa-solid fa-campground text-sm text-primary"></i>
+            {% elif n.tag == 'skill_nudge' %}
+              <i class="fa fa-graduation-cap text-sm text-primary"></i>
+            {% else %}
+              <i class="fa fa-bell text-sm text-primary"></i>
+            {% endif %}
+          </div>
+
+          <div class="min-w-0 flex-1">
+            <p class="text-sm {% if not n.is_read %}font-semibold text-primary{% else %}text-brown{% endif %}">
+              {{ n.verb }}
+            </p>
+            <p class="text-xs text-brown mt-0.5">{{ n.created_at|timesince }} {% trans "ago" %}</p>
+          </div>
+
+          {% if n.actor %}
+            <img src="{% if n.actor.image %}{{ n.actor.image.url }}{% else %}{% endif %}"
+              class="w-7 h-7 rounded-full object-cover flex-shrink-0 mt-0.5 {% if n.is_read %}opacity-50{% endif %}"
+              {% if not n.actor.image %}style="display:none"{% endif %}
+              alt="{{ n.actor.name|default:n.actor.email }}">
+            {% if not n.actor.image %}
+              <div class="w-7 h-7 rounded-full bg-primary bg-opacity-20 flex items-center justify-center flex-shrink-0 mt-0.5 {% if n.is_read %}opacity-50{% endif %}">
+                <i class="fa fa-user text-xs text-primary"></i>
+              </div>
+            {% endif %}
+          {% endif %}
+
+          {% if not n.is_read %}
+            <span class="w-2 h-2 rounded-full bg-primary flex-shrink-0 mt-2"></span>
+          {% endif %}
+        </a>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="text-brown text-center py-12">{% trans "No notifications yet." %}</p>
+  {% endif %}
+
+</div>
+{% endblock %}

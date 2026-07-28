@@ -11,6 +11,7 @@ from croppie.fields import CroppieField
 
 from gifting.forms import Fieldset
 from .models import User
+from skills.models import Skill, UserSkill, SkillWish
 
 
 class SafeCroppieField(CroppieField):
@@ -46,13 +47,18 @@ class RegisterForm(forms.ModelForm):
     )
     skills = forms.CharField(
         required=False,
-        label=_("Skills"),
-        help_text=_("Comma-separated list of skills, e.g. carpentry, cooking, solar energy."),
+        label=_("What can you offer or teach?"),
+        help_text=_("Everyday skills count just as much as professional ones — cooking, gardening, basic repairs, childcare are all valuable to communities."),
+    )
+    skill_wishes = forms.CharField(
+        required=False,
+        label=_("What do you want to learn or need help with?"),
+        help_text=_("Sharing what you need helps communities match you with the right people and experiences."),
     )
 
     class Meta:
         model = User
-        fields = ["name", "email", "image", "skills", "about", "world", "ecobasa_what",
+        fields = ["name", "email", "image", "skills", "skill_wishes", "about", "world", "ecobasa_what",
                   "location_name", "location", "country"]
         widgets = {
             "location": forms.HiddenInput(),
@@ -89,6 +95,7 @@ class RegisterForm(forms.ModelForm):
                 Field("world"),
                 Field("ecobasa_what"),
                 Field("skills"),
+                Field("skill_wishes"),
                 header_text=_("Tell communities you want to visit or join who you are and what you have to offer."),
             ),
         )
@@ -106,14 +113,29 @@ class RegisterForm(forms.ModelForm):
         user = super().save(commit=False)
         user.set_password(self.cleaned_data["password"])
         if not user.username:
-            base = self.cleaned_data.get("name") or user.email.split("@")[0]
-            user.username = slugify(base)
+            base = slugify(self.cleaned_data.get("name") or user.email.split("@")[0]) or 'user'
+            slug = base
+            n = 2
+            while User.objects.filter(username=slug).exists():
+                slug = f'{base}{n}'
+                n += 1
+            user.username = slug
         if commit:
             user.save()
             skills_val = self.cleaned_data.get("skills", "")
             if skills_val:
-                tags = [s.strip() for s in skills_val.split(",") if s.strip()]
-                user.skills.set(tags)
+                for name in [s.strip() for s in skills_val.split(",") if s.strip()]:
+                    skill, _ = Skill.objects.get_or_create(
+                        name__iexact=name, defaults={"name": name}
+                    )
+                    UserSkill.objects.get_or_create(user=user, skill=skill)
+            wish_val = self.cleaned_data.get("skill_wishes", "")
+            if wish_val:
+                for name in [s.strip() for s in wish_val.split(",") if s.strip()]:
+                    skill, _ = Skill.objects.get_or_create(
+                        name__iexact=name, defaults={"name": name}
+                    )
+                    SkillWish.objects.get_or_create(user=user, skill=skill)
         return user
 
 
@@ -126,12 +148,20 @@ class ProfileUpdateForm(forms.ModelForm):
             "boundary": {"width": 300, "height": 300},
         },
     )
-    # comma-separated skills input for Taggit (editable via Tagify in the template)
-    skills = forms.CharField(required=False, label=_("Skills"), help_text=_("Comma-separated list of skills."))
+    skills = forms.CharField(
+        required=False,
+        label=_("What can you offer or teach?"),
+        help_text=_("Everyday skills count just as much as professional ones — cooking, gardening, basic repairs, childcare are all valuable to communities."),
+    )
+    skill_wishes = forms.CharField(
+        required=False,
+        label=_("What do you want to learn or need help with?"),
+        help_text=_("Sharing what you need helps communities match you with the right people and experiences."),
+    )
 
     class Meta:
         model = User
-        fields = ["name", "image", "about", "world", "ecobasa_what", "skills",
+        fields = ["name", "image", "about", "world", "ecobasa_what", "skills", "skill_wishes",
                   "location_name", "location", "country"]
         widgets = {
             "location": forms.HiddenInput(),
@@ -145,13 +175,21 @@ class ProfileUpdateForm(forms.ModelForm):
         instance = kwargs.get('instance')
         has_image = bool(instance and instance.image)
         if instance is not None:
-            skills_initial = ', '.join([t.name for t in instance.skills.all()])
+            skills_initial = ', '.join(
+                instance.user_skills.select_related("skill").values_list("skill__name", flat=True)
+            )
             self.fields['skills'].initial = skills_initial
             self.initial['skills'] = skills_initial
             self.fields['skills'].widget.attrs.update({'value': skills_initial})
+            wishes_initial = ', '.join(
+                instance.skill_wishes.select_related("skill").values_list("skill__name", flat=True)
+            )
+            self.fields['skill_wishes'].initial = wishes_initial
+            self.initial['skill_wishes'] = wishes_initial
+            self.fields['skill_wishes'].widget.attrs.update({'value': wishes_initial})
         text_input_class = "block w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
         textarea_class = "block w-full rounded-md border border-gray-300 px-3 py-2 text-sm h-32"
-        for fname in ('name', 'skills', 'location_name'):
+        for fname in ('name', 'skills', 'skill_wishes', 'location_name'):
             if fname in self.fields:
                 self.fields[fname].widget.attrs.update({'class': text_input_class})
         if 'country' in self.fields:
@@ -169,6 +207,7 @@ class ProfileUpdateForm(forms.ModelForm):
             Field("world"),
             Field("ecobasa_what"),
             Field("skills"),
+            Field("skill_wishes"),
         )
 
     def save(self, commit=True):
@@ -179,6 +218,15 @@ class ProfileUpdateForm(forms.ModelForm):
         if commit:
             user.save()
             skills_val = self.cleaned_data.get('skills', '') or ''
-            tags = [s.strip() for s in skills_val.split(',') if s.strip()]
-            user.skills.set(tags)
+            for name in [s.strip() for s in skills_val.split(',') if s.strip()]:
+                skill, _ = Skill.objects.get_or_create(
+                    name__iexact=name, defaults={"name": name}
+                )
+                UserSkill.objects.get_or_create(user=user, skill=skill)
+            wish_val = self.cleaned_data.get('skill_wishes', '') or ''
+            new_wish_names = [s.strip() for s in wish_val.split(',') if s.strip()]
+            user.skill_wishes.all().delete()
+            for name in new_wish_names:
+                skill, _ = Skill.objects.get_or_create(name__iexact=name, defaults={"name": name})
+                SkillWish.objects.create(user=user, skill=skill)
         return user

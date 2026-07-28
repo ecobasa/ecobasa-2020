@@ -27,6 +27,14 @@ services:
     ports:
       - "127.0.0.1:8000:8000"
   
+  mailpit:
+    image: axllent/mailpit
+    networks:
+      - backend
+    ports:
+      - "127.0.0.1:8025:8025"
+      - "127.0.0.1:1025:1025"
+
   watch:
     image: node
     volumes:

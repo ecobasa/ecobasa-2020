@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ verb|capfirst }}: {{ title }}</title>
+</head>
+<body style="margin:0;padding:0;background-color:#f5ede0;font-family:Georgia,serif;color:#452912;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f5ede0;padding:32px 0;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background-color:#fcf3e5;border-radius:8px;overflow:hidden;border:1px solid #d4b896;">
+
+          {# Header #}
+          <tr>
+            <td style="background-color:#da6137;padding:28px 32px;">
+              <p style="margin:0;font-size:24px;font-weight:bold;color:#fcf3e5;font-family:Georgia,serif;">ecobasa.org</p>
+              <p style="margin:8px 0 0;font-size:14px;color:#fcf3e5;opacity:0.85;">New match</p>
+            </td>
+          </tr>
+
+          {# Body #}
+          <tr>
+            <td style="padding:32px;">
+              <p style="margin:0 0 16px;font-size:16px;">
+                Hello {% if recipient.name %}{{ recipient.name }}{% else %}{{ recipient.email }}{% endif %},
+              </p>
+              <p style="margin:0 0 24px;font-size:15px;line-height:1.6;">
+                <strong>{% if match.from_user.name %}{{ match.from_user.name }}{% else %}{{ match.from_user.email }}{% endif %}</strong>
+                {{ verb }}: <strong>{{ title }}</strong>.
+              </p>
+
+              {% with vd=match.volunteer_details %}
+              {% if vd and vd.stay_from or vd and vd.stay_to or vd.practice_skills or vd.sender_skills or match.message %}
+              <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f5ede0;border-radius:6px;border:1px solid #d4b896;margin-bottom:24px;">
+                <tr>
+                  <td style="padding:20px;">
+                    {% if vd and vd.stay_from or vd and vd.stay_to %}
+                    <p style="margin:0 0 4px;font-size:11px;text-transform:uppercase;letter-spacing:0.06em;opacity:0.6;">Proposed stay</p>
+                    <p style="margin:0 0 16px;font-size:15px;">
+                      {% if vd.stay_from %}{{ vd.stay_from|date:"N j, Y" }}{% endif %}{% if vd.stay_from and vd.stay_to %} &ndash; {% endif %}{% if vd.stay_to %}{{ vd.stay_to|date:"N j, Y" }}{% endif %}
+                    </p>
+                    {% endif %}
+                    {% if vd.practice_skills %}
+                    <p style="margin:0 0 4px;font-size:11px;text-transform:uppercase;letter-spacing:0.06em;opacity:0.6;">{% if vd.volunteer_mode == "wish" %}Skills to offer{% else %}Skills to learn and practice{% endif %}</p>
+                    <p style="margin:0 0 16px;font-size:15px;">{{ vd.practice_skills }}{% if vd.practice_skill_level %} (level: {{ vd.practice_skill_level }}){% endif %}</p>
+                    {% endif %}
+                    {% if vd.sender_skills %}
+                    <p style="margin:0 0 4px;font-size:11px;text-transform:uppercase;letter-spacing:0.06em;opacity:0.6;">Other skills I can help with</p>
+                    <p style="margin:0 0 16px;font-size:15px;">{{ vd.sender_skills }}</p>
+                    {% endif %}
+                    {% if match.message %}
+                    <p style="margin:0 0 4px;font-size:11px;text-transform:uppercase;letter-spacing:0.06em;opacity:0.6;">Message</p>
+                    <p style="margin:0;font-size:15px;line-height:1.6;white-space:pre-wrap;">{{ match.message }}</p>
+                    {% endif %}
+                  </td>
+                </tr>
+              </table>
+              {% endif %}
+              {% endwith %}
+
+              {# Action buttons #}
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
+                <tr>
+                  <td align="center" style="padding:0 8px 0 0;">
+                    <a href="{{ accept_url }}"
+                       style="display:inline-block;background-color:#5A5527;color:#fcf3e5;text-decoration:none;font-size:15px;font-weight:bold;padding:12px 28px;border-radius:6px;font-family:Arial,sans-serif;">
+                      ✓ Accept
+                    </a>
+                  </td>
+                  <td align="center" style="padding:0 0 0 8px;">
+                    <a href="{{ decline_url }}"
+                       style="display:inline-block;background-color:#e34a26;color:#fcf3e5;text-decoration:none;font-size:15px;font-weight:bold;padding:12px 28px;border-radius:6px;font-family:Arial,sans-serif;">
+                      ✗ Decline
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin:0 0 8px;font-size:13px;opacity:0.7;text-align:center;">
+                Or <a href="{{ detail_url }}" style="color:#da6137;">view the full match</a> to reply or make a counter-proposal.
+              </p>
+            </td>
+          </tr>
+
+          {# Footer #}
+          <tr>
+            <td style="background-color:#f5ede0;border-top:1px solid #d4b896;padding:16px 32px;text-align:center;">
+              <p style="margin:0;font-size:12px;opacity:0.6;">ecobasa.org &mdash; the sustainable gift-economy community</p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

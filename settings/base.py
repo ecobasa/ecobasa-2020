@@ -33,6 +33,8 @@ USE_TZ = True
 LANGUAGES = [
     ("de", _("German")),
     ("en", _("English")),
+    ("es", _("Spanish")),
+    ("fr", _("French")),
 ]
 
 LOCALE_PATHS = [str(ROOT_DIR / "locale")]
@@ -76,7 +78,7 @@ THIRD_PARTY_APPS = [
     "django_countries",
 ]
 
-LOCAL_APPS = ["users", "homepage", "gifting", "communities"]
+LOCAL_APPS = ["users", "homepage", "gifting", "communities", "skills", "notifications", "matches"]
 
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -182,6 +184,7 @@ TEMPLATES = [
                 "django.template.context_processors.static",
                 "django.template.context_processors.tz",
                 "django.contrib.messages.context_processors.messages",
+                "notifications.context_processors.unread_notifications",
             ],
         },
     }
@@ -234,6 +237,7 @@ CRISPY_TEMPLATE_PACK = "crispy_template_pack"
 # ------------------------------------------------------------------------------
 POSTMAN_AUTO_MODERATE_AS = True
 POSTMAN_DISALLOW_ANONYMOUS = True
+POSTMAN_NAME_USER_AS = 'name'
 
 # MAP SETTINGS
 # ------------------------------------------------------------------------------

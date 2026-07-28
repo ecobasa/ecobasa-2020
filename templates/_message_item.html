@@ -1,0 +1,32 @@
+<div
+  x-show="open" x-data="{ open: true }" 
+  @click.outside="open = false"
+  {% if message.level == DEFAULT_MESSAGE_LEVELS.SUCCESS %}
+  x-init="setTimeout(() => open = false, 3000)"
+  {% elif message.level == DEFAULT_MESSAGE_LEVELS.ERROR %}
+  {% elif message.level == DEFAULT_MESSAGE_LEVELS.WARNING %}
+  x-init="setTimeout(() => open = false, 4000)"
+  {% endif %}
+  x-transition:enter="transform ease-out duration-300 transition"
+  x-transition:enter-start="translate-y-2 opacity-0 sm:translate-y-0 sm:translate-x-2"
+  x-transition:enter-end="translate-y-0 opacity-100 sm:translate-x-0"
+  x-transition:leave="transition ease-in duration-100"
+  x-transition:leave-start="opacity-100"
+  x-transition:leave-end="opacity-0"
+  class="w-full bg-opacity-75 backdrop-blur-sm border shadow-lg rounded-lg pointer-events-auto p-4 flex items-center gap-3 mb-6
+  {% if message.level == DEFAULT_MESSAGE_LEVELS.SUCCESS %}bg-green text-secondary border-green
+  {% elif message.level == DEFAULT_MESSAGE_LEVELS.ERROR %}bg-red text-secondary border-red
+  {% elif message.level == DEFAULT_MESSAGE_LEVELS.WARNING %}bg-yellow text-secondary border-yellow
+  {% else %}bg-secondary text-brown border-third{% endif %}">
+  {% if message.level == DEFAULT_MESSAGE_LEVELS.SUCCESS %}
+    <i class="fa fa-circle-check flex-shrink-0"></i>
+  {% elif message.level == DEFAULT_MESSAGE_LEVELS.ERROR %}
+    <i class="fa fa-circle-exclamation flex-shrink-0"></i>
+  {% elif message.level == DEFAULT_MESSAGE_LEVELS.WARNING %}
+    <i class="fa fa-triangle-exclamation flex-shrink-0"></i>
+  {% endif %}
+  <span class="text-sm leading-5 font-medium flex-1">{{ message }}</span>
+  <button @click="open = false" class="flex-shrink-0 opacity-60 hover:opacity-100 focus:outline-none">
+    <i class="fa fa-times"></i>
+  </button>
+</div>

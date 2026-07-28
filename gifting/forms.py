@@ -50,3 +50,5 @@ class AdForm(forms.ModelForm):
             "location": forms.HiddenInput,
         }
 
+
+

@@ -6,15 +6,33 @@ register = template.Library()
 
 
 def _extract_skills_from_text(text):
-    """Return tuple (text_without_skills, [skills...]) by extracting trailing 'Skills: ...' line."""
+    """Return tuple (text_without_skills, [skills...]) by extracting a 'Skills: ...' line.
+    Does NOT match 'Sender-Skills:' lines. Uses MULTILINE so capture stays on one line."""
     if not text:
         return text, []
     import re
-    m = re.search(r"Skills:\s*(.+)$", text, flags=re.IGNORECASE | re.DOTALL)
+    m = re.search(r"(?<![A-Za-z-])Skills:\s*(.+)$", text, flags=re.IGNORECASE | re.MULTILINE)
     if not m:
         return text, []
     skills_text = m.group(1).strip()
-    cleaned = re.sub(r"\n?Skills:\s*.+$", "", text, flags=re.IGNORECASE | re.DOTALL).strip()
+    # Also strip the optional preceding label line (e.g. "Skills I want to learn...:")
+    cleaned = re.sub(r"\n?(?:[^\n]+\n)?(?<![A-Za-z-])Skills:\s*.+$", "", text, flags=re.IGNORECASE | re.MULTILINE).strip()
+    skills = [s.strip() for s in re.split(r",\s*", skills_text) if s.strip()]
+    return cleaned, skills
+
+
+def _extract_sender_skills_from_text(text):
+    """Return tuple (text_without_sender_skills, [skills...]) by extracting 'Sender-Skills: ...' line
+    and the preceding label line (e.g. 'My skills:')."""
+    if not text:
+        return text, []
+    import re
+    m = re.search(r"Sender-Skills:\s*(.+)$", text, flags=re.IGNORECASE | re.MULTILINE)
+    if not m:
+        return text, []
+    skills_text = m.group(1).strip()
+    # Remove the optional preceding label line + the Sender-Skills line itself
+    cleaned = re.sub(r"\n?[^\n]+\nSender-Skills:\s*.+$", "", text, flags=re.IGNORECASE | re.MULTILINE).strip()
     skills = [s.strip() for s in re.split(r",\s*", skills_text) if s.strip()]
     return cleaned, skills
 
@@ -35,15 +53,100 @@ def conversation_messages(message):
     return qs
 
 
-@register.filter(is_safe=True)
-def format_message_body(body):
-    """Render message body as HTML and format any "Requested stay" block.
+def _render_skill_pills(skills_list, sender_username):
+    """Return HTML for a row of skill pills, linked to the sender's userskill page when they have it,
+    falling back to the general skill page, or plain text if the skill isn't in the database."""
+    from django.urls import reverse
+    from django.db.models import Q
+    from skills.models import Skill as SkillModel, UserSkill
 
-    If the body contains a block starting with "Requested stay:", parse
-    optional "From <iso-datetime>" and "To <iso-datetime>" lines and
-    render them in a small summary box. Falls back to preserving plain
-    text (with newlines -> <br>) when parsing fails.
-    """
+    # Case-insensitive slug lookup for all skill names at once
+    q = Q()
+    for name in skills_list:
+        q |= Q(name__iexact=name)
+    skill_slugs = {s.name.lower(): s.slug for s in SkillModel.objects.filter(q)}
+
+    # Skills the sender actually has in their profile
+    sender_skill_slugs = set()
+    if sender_username:
+        sender_skill_slugs = set(
+            UserSkill.objects.filter(user__username=sender_username)
+            .values_list('skill__slug', flat=True)
+        )
+
+    html = ['<div class="mt-3 flex flex-wrap gap-2">']
+    for name in skills_list:
+        slug = skill_slugs.get(name.lower())
+        label = template.defaultfilters.force_escape(name)
+        if slug and sender_username and slug in sender_skill_slugs:
+            url = reverse('skills:userskill_detail', args=[slug, sender_username])
+        elif slug:
+            url = reverse('skills:skill_detail', args=[slug])
+        else:
+            url = None
+        if url:
+            html.append(
+                '<a href="%s" class="pill bg-primary hover:opacity-80 transition-opacity">'
+                '<i class="fa fa-graduation-cap mr-1"></i>%s</a>' % (url, label)
+            )
+        else:
+            html.append('<span class="pill bg-primary">%s</span>' % label)
+    html.append('</div>')
+    return ''.join(html)
+
+
+def _render_sender_skill_pills(skills_list, sender_username):
+    """Return HTML for purple sender-skill pills with graduation cap icons."""
+    from django.urls import reverse
+    from django.db.models import Q
+    from skills.models import Skill as SkillModel, UserSkill
+
+    q = Q()
+    for name in skills_list:
+        q |= Q(name__iexact=name)
+    skill_slugs = {s.name.lower(): s.slug for s in SkillModel.objects.filter(q)}
+
+    sender_skill_slugs = set()
+    if sender_username:
+        sender_skill_slugs = set(
+            UserSkill.objects.filter(user__username=sender_username)
+            .values_list('skill__slug', flat=True)
+        )
+
+    html = [
+        '<div class="mt-3">',
+        '<div class="font-semibold mb-1 opacity-70">Other skills that I can help with</div>',
+        '<div class="flex flex-wrap gap-2">',
+    ]
+    for name in skills_list:
+        slug = skill_slugs.get(name.lower())
+        label = template.defaultfilters.force_escape(name)
+        if slug and sender_username and slug in sender_skill_slugs:
+            url = reverse('skills:userskill_detail', args=[slug, sender_username])
+        elif slug:
+            url = reverse('skills:skill_detail', args=[slug])
+        else:
+            url = None
+        style = 'background-color:#80143b;color:#fff;'
+        if url:
+            html.append(
+                '<a href="%s" class="pill hover:opacity-80 transition-opacity" style="%s">'
+                '<i class="fa fa-graduation-cap mr-1"></i>%s</a>' % (url, style, label)
+            )
+        else:
+            html.append('<span class="pill" style="%s"><i class="fa fa-graduation-cap mr-1"></i>%s</span>' % (style, label))
+    html.append('</div></div>')
+    return ''.join(html)
+
+
+@register.simple_tag
+def format_message_body(message):
+    """Render message body as HTML, formatting skills as linked pills and stay dates as a summary box."""
+    body = getattr(message, 'body', None) or message  # accept body string as fallback
+    sender_username = None
+    if hasattr(message, 'sender') and message.sender:
+        sender_username = message.sender.username
+
     if not body:
         return ""
 
@@ -53,39 +156,35 @@ def format_message_body(body):
     from django.utils.formats import date_format
     import datetime
 
-    # remove any trailing Ad-ID line added by server-side wrappers
     body = re.sub(r"\n?Ad-ID:\s*[A-Za-z0-9-_]+\s*$", "", body, flags=re.IGNORECASE)
 
     parts = re.split(r"Requested stay:\s*", body, maxsplit=1)
 
-    skills_list = []
-
     if len(parts) == 1:
-        # no special block; still check for appended Skills: line
-        main, skills_list = _extract_skills_from_text(body.strip())
-        # preserve whitespace
+        main = body.strip()
+        main, sender_skills_list = _extract_sender_skills_from_text(main)
+        main, skills_list = _extract_skills_from_text(main)
         html_main = template.defaultfilters.linebreaksbr(template.defaultfilters.force_escape(main))
-        html = ["<div class=\"whitespace-pre-wrap\">%s</div>" % html_main]
-        # render skills if present
+        html = ['<div class="whitespace-pre-wrap">%s</div>' % html_main]
         if skills_list:
-            html.append('<h3>Skills</h3><div class="mt-3 text-xs text-secondary flex flex-wrap gap-2">')
-            for t in skills_list:
-                html.append('<span class="inline-flex items-center bg-secondary text-primary px-3 py-1 rounded-full text-sm font-medium">%s</span>' % template.defaultfilters.force_escape(t))
-            html.append('</div>')
+            html.append(_render_skill_pills(skills_list, sender_username))
+        if sender_skills_list:
+            html.append(_render_sender_skill_pills(sender_skills_list, sender_username))
         return mark_safe(''.join(html))
 
     main, stay = parts[0].strip(), parts[1].strip()
-    # extract skills from the stay block if present
-    stay, skills_list = _extract_skills_from_text(stay)
+    main, sender_skills_list = _extract_sender_skills_from_text(main)
+    main, skills_list = _extract_skills_from_text(main)
+    stay, stay_skills = _extract_skills_from_text(stay)
+    skills_list = skills_list + stay_skills
 
-    # find From and To lines
     from_dt = None
     to_dt = None
     m_from = re.search(r"From\s+(.+)", stay)
     m_to = re.search(r"To\s+(.+)", stay)
+
     def _parse_iso(s):
         try:
-            # Accept common ISO formats from datetime-local input
             dt = datetime.datetime.fromisoformat(s.strip())
             if timezone.is_naive(dt):
                 dt = timezone.make_aware(dt, timezone.get_current_timezone())
@@ -98,10 +197,9 @@ def format_message_body(body):
     if m_to:
         to_dt = _parse_iso(m_to.group(1))
 
-    # build HTML
     html = []
     if main:
-        html.append("<div class=\"whitespace-pre-wrap mb-3\">%s</div>" % (template.defaultfilters.linebreaksbr(template.defaultfilters.force_escape(main))))
+        html.append('<div class="whitespace-pre-wrap mb-3">%s</div>' % template.defaultfilters.linebreaksbr(template.defaultfilters.force_escape(main)))
 
     html.append('<div class="p-3 rounded border border-brown bg-secondary bg-opacity-10">')
     html.append('<div class="font-semibold mb-1">Requested stay</div>')
@@ -113,19 +211,14 @@ def format_message_body(body):
         html.append('<div><strong>To:</strong> %s</div>' % date_format(to_dt, 'SHORT_DATETIME_FORMAT'))
     elif m_to:
         html.append('<div><strong>To:</strong> %s</div>' % template.defaultfilters.force_escape(m_to.group(1)))
-
-    # if no parsed dates, include raw remainder
     if not from_dt and not to_dt and stay:
         html.append('<div class="text-sm text-brown mt-2 whitespace-pre-wrap">%s</div>' % template.defaultfilters.linebreaksbr(template.defaultfilters.force_escape(stay)))
-
     html.append('</div>')
 
-    # render extracted skills (if any) as pill badges after the main/stay block
     if skills_list:
-        html.append('<div class="mt-3 text-xs text-secondary flex flex-wrap gap-2">')
-        for t in skills_list:
-            html.append('<span class="inline-flex items-center bg-primary text-secondary px-3 py-1 rounded-full text-sm font-medium">%s</span>' % template.defaultfilters.force_escape(t))
-        html.append('</div>')
+        html.append(_render_skill_pills(skills_list, sender_username))
+    if sender_skills_list:
+        html.append(_render_sender_skill_pills(sender_skills_list, sender_username))
 
     return mark_safe(''.join(html))
 
@@ -179,23 +272,31 @@ def parse_requested_dates(body):
 
 @register.filter(is_safe=False)
 def strip_requested_block(body):
-    """Remove a trailing 'Requested stay:' block (and following skills) from message body."""
+    """Remove structured metadata blocks (Requested stay, Skills, Sender-Skills, Ad-ID) from message body."""
     if not body:
         return ""
     import re
-    # Remove 'Requested stay:' and everything that follows it
     cleaned = re.sub(r"Requested stay:\s*.*$", "", body, flags=re.IGNORECASE | re.DOTALL).strip()
-    # Also strip any trailing 'Skills: ...' line (in case it's not inside the Requested block)
+    cleaned, _ = _extract_sender_skills_from_text(cleaned)
     cleaned, _ = _extract_skills_from_text(cleaned)
-    # Remove any trailing Ad-ID line
     cleaned = re.sub(r"\n?Ad-ID:\s*[A-Za-z0-9-_]+\s*$", "", cleaned, flags=re.IGNORECASE).strip()
     return cleaned
 
 
 @register.simple_tag
 def extract_skills(body, limit=5):
-    """Extract a comma-separated 'Skills: ...' trailing line from the message body and return up to `limit` skills as a list."""
+    """Extract a comma-separated 'Skills: ...' line from the message body and return up to `limit` skills as a list."""
     if not body:
         return []
-    _, skills = _extract_skills_from_text(body)
+    cleaned, _ = _extract_sender_skills_from_text(body)
+    _, skills = _extract_skills_from_text(cleaned)
+    return skills[:int(limit)]
+
+
+@register.simple_tag
+def extract_sender_skills(body, limit=5):
+    """Extract a comma-separated 'Sender-Skills: ...' line from the message body and return up to `limit` skills as a list."""
+    if not body:
+        return []
+    _, skills = _extract_sender_skills_from_text(body)
     return skills[:int(limit)]

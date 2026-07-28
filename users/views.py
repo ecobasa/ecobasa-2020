@@ -55,12 +55,19 @@ class DetailView(DetailView):
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        # Provide the user's gifting ads (if any) to the template
         try:
             user = self.get_object()
             ctx["ads"] = user.ads.all()
+            ctx["user_skills"] = (
+                user.user_skills.select_related("skill").order_by("skill__name")
+            )
+            ctx["skill_wishes"] = (
+                user.skill_wishes.select_related("skill").order_by("skill__name")
+            )
         except Exception:
             ctx["ads"] = []
+            ctx["user_skills"] = []
+            ctx["skill_wishes"] = []
         return ctx
 
 
@@ -78,11 +85,16 @@ def autocomplete(request):
     q = request.GET.get("q", "").strip()
     results = []
     if q:
-        # Match by username or email (helps when users type an email address)
-        qs = User.objects.filter(Q(username__istartswith=q) | Q(email__istartswith=q)).order_by('username', 'email')[:20]
+        qs = User.objects.filter(
+            Q(name__icontains=q) | Q(username__istartswith=q)
+        ).order_by('name')[:20]
         for u in qs:
-            # return the user's email as the canonical value (matches USERNAME_FIELD)
-            results.append({"value": u.email, "name": u.name or u.username, "username": u.username})
+            results.append({
+                "value": u.name or u.username,
+                "name": u.name or u.username,
+                "username": u.username,
+                "image_url": u.image.url if u.image else None,
+            })
     return JsonResponse(results, safe=False)
 
 

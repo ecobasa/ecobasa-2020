@@ -4,7 +4,6 @@
 {% block extrahead %}
   {{ block.super }}
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v7.2.2/ol.css">
-  <script src="https://unpkg.com/htmx.org@1.9.10/dist/htmx.min.js"></script>
   <script>
     const communityTypeLabels   = { {% for v, l in community_types %}'{{ v }}': '{{ l|escapejs }}',{% endfor %} };
     const communityStatusLabels = { {% for v, l in community_statuses %}'{{ v }}': '{{ l|escapejs }}',{% endfor %} };
@@ -161,14 +160,14 @@
               type="text"
               placeholder="{% trans 'Name, location or skill…' %}"
               :value="$store.communityMap.q"
-              @input="$store.communityMap.q = $el.value; suggest($el.value); clearTimeout(window._mapInputTimer); window._mapInputTimer = setTimeout(() => window._communityMapReload && window._communityMapReload(), 600)"
+              @input="$store.communityMap.q = $el.value; suggest($el.value); clearTimeout(window._mapInputTimer); window._mapInputTimer = setTimeout(() => !$el.value ? window._communityMapReset && window._communityMapReset() : window._communityMapReload && window._communityMapReload(), 600)"
               @keydown.arrow-down.prevent="moveDown()"
               @keydown.arrow-up.prevent="moveUp()"
               @keydown.enter.prevent="choose(); window._communityMapReload && window._communityMapReload(!!(($store.communityMap.q || $store.communityMap.location || $store.communityMap.selectedCountry || $store.communityMap.selectedTypes.length || $store.communityMap.selectedStatuses.length)))"
               @keydown.escape="close()"
               @blur="setTimeout(() => close(), 200)">
             <ul x-show="open" x-cloak
-              class="absolute w-full bg-secondary bg-opacity-85 backdrop-blur rounded shadow-lg border text-sm">
+              class="suggestions-dropdown">
               <template x-for="(item, i) in items" :key="i">
                 <li :class="i === active ? 'bg-primary text-secondary' : ''"
                   class="px-3 py-1 cursor-pointer flex items-center justify-between gap-2"
@@ -372,8 +371,9 @@
     @click.self="$store.communityMap.showMap()"
     @keydown.escape.window="$store.communityMap.showMap()">
 
-    <div class="modal bg-secondary px-5 pt-8 rounded-lg shadow-xl max-w-5xl w-full relative">
-      <button class="absolute top-0 right-2 text-3xl" @click="$store.communityMap.showMap()">&times;</button>
+    <div class="modal-content"
+      role="dialog" aria-modal="true">
+      <button type="button" class="modal-close" @click="$store.communityMap.showMap()">&times;</button>
 
       <div class="space-y-3 mb-4">
 
@@ -399,14 +399,14 @@
               hx-swap="innerHTML"
               hx-trigger="input changed delay:400ms, list:search, list:reload"
               hx-include="#community-hidden-filters, [name='type'], [name='status'], [name='country']"
-              @input="$store.communityMap.q = $el.value; suggest($el.value)"
+              @input="$store.communityMap.q = $el.value; suggest($el.value); if (!$el.value) window._communityMapReset && window._communityMapReset();"
               @keydown.arrow-down.prevent="moveDown()"
               @keydown.arrow-up.prevent="moveUp()"
               @keydown.enter.prevent="choose()"
               @keydown.escape="close()"
               @blur="setTimeout(() => close(), 200)">
             <ul x-show="open" x-cloak
-              class="absolute z-30 w-full mt-1 bg-secondary rounded shadow-lg border">
+              class="suggestions-dropdown">
               <template x-for="(item, i) in items" :key="i">
                 <li :class="i === active ? 'bg-primary text-secondary' : ''"
                   class="px-3 py-1 cursor-pointer flex items-center justify-between gap-2"
@@ -645,11 +645,11 @@ function buildCommunityPopupHTML(f) {
   if (stats.length) html += `<div class="popup-meta">${stats.join(' | ')}</div>`;
 
   if (type === 'Permaculture Farm')
-    html += `<span class="pill bg-green text-secondary"><i class="fa fa-leaf mr-1"></i>${type}</span>`;
+    html += `<span class="pill bg-green"><i class="fa fa-leaf mr-1"></i>${type}</span>`;
   else if (type === 'Place for Projects')
-    html += `<span class="pill bg-orange text-secondary"><i class="fa fa-map-marker-alt mr-1"></i>${type}</span>`;
+    html += `<span class="pill bg-orange"><i class="fa fa-map-marker-alt mr-1"></i>${type}</span>`;
   else
-    html += `<span class="pill bg-primary text-secondary"><i class="fa fa-home mr-1"></i>${type}</span>`;
+    html += `<span class="pill bg-primary"><i class="fa fa-home mr-1"></i>${type}</span>`;
 
   if (name) html += `<h3>${url ? `<a href="${url}">${name}</a>` : name}</h3>`;
 
@@ -660,7 +660,7 @@ function buildCommunityPopupHTML(f) {
 
   if (skills.length) {
     html += '<div class="m-2 truncate">';
-    skills.slice(0, 5).forEach(s => { html += `<span class="pill bg-purple text-secondary mr-2">${s}</span>`; });
+    skills.slice(0, 5).forEach(s => { html += `<span class="pill bg-purple mr-2"><i class="fa fa-graduation-cap mr-1"></i>${s}</span>`; });
     html += '</div>';
   }
 
@@ -697,6 +697,13 @@ function initCommunityMap() {
   window._communityMapSetLayer = function (mode) {
     baseLayers.setBaseLayer(mode);
     communityOlMap.renderSync();
+  };
+
+  window._communityMapReset = function () {
+    communityOlMap.getView().animate(
+      { center: ol.proj.fromLonLat([0, 20]), zoom: 2 },
+      function () { window._communityMapReload(); }
+    );
   };
 
   window._communityMapPanTo = function (lon, lat, zoom) {

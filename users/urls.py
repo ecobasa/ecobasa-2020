@@ -26,5 +26,5 @@ urlpatterns = [
         name="password_reset_complete",
     ),
         path("autocomplete/", views.autocomplete, name="autocomplete"),
-        path("<slug>/", views.DetailView.as_view(), name="detail"),
+    path("<slug>/", views.DetailView.as_view(), name="detail"),
 ]

@@ -4,7 +4,6 @@
 {% block extrahead %}
   {{ block.super }}
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v7.2.2/ol.css">
-  <script src="https://unpkg.com/htmx.org@1.9.10/dist/htmx.min.js"></script>
   <script>
     function suggestions(endpoint) {
       return {
@@ -242,7 +241,7 @@
             @keydown.enter.prevent="choose() || triggerSearch()"
             @keydown.escape="if (open) { close(); } else if ($store.fm.q) { $store.fm.clearSearch(); }">
           <ul x-show="open" x-cloak
-            class="suggestions-dropdown list-none absolute z-20 w-full mt-1 bg-secondary rounded shadow-lg border"
+            class="suggestions-dropdown"
             role="listbox">
             <template x-for="(item, i) in items" :key="i">
               <li :class="i === active ? 'is-active' : ''"
@@ -352,15 +351,12 @@
     @click.self="$store.fm.showMap()"
     @keydown.escape.window="$store.fm.showMap()">
 
-    <div class="modal relative bg-secondary bg-opacity-95 backdrop-blur rounded-lg shadow-xl max-w-5xl w-full border"
+    <div class="modal-content"
       role="dialog" aria-modal="true">
 
-      <button type="button"
-        class="absolute top-3 right-3 h-10 w-10 rounded-full bg-black bg-opacity-50 hover:bg-opacity-70 text-secondary text-2xl flex items-center justify-center"
-        @click="$store.fm.showMap()">&times;
-      </button>
+      <button type="button" class="modal-close" @click="$store.fm.showMap()">&times;</button>
 
-      <div class="p-5 space-y-4">
+      <div class="space-y-3">
 
         <div class="flex items-center gap-3">
           <a href="{% url 'gifting:create' %}" class="btn shadow ml-auto">
@@ -392,7 +388,7 @@
             @keydown.enter.prevent="choose() || triggerSearch()"
             @keydown.escape="if (open) { $event.stopPropagation(); close(); } else if ($store.fm.q) { $store.fm.clearSearch(); $event.stopPropagation(); }">
           <ul x-show="open" x-cloak
-            class="suggestions-dropdown list-none absolute z-20 w-full mt-1 bg-secondary rounded shadow-lg border"
+            class="suggestions-dropdown"
             role="listbox">
             <template x-for="(item, i) in items" :key="i">
               <li :class="i === active ? 'is-active' : ''"
@@ -530,11 +526,11 @@
   function buildPopupHTML(props) {
     const td = (props.type_display || '').toLowerCase();
     let badge = '';
-    if (props.source === 'skill')      badge = `<span class="pill bg-purple text-secondary"><i class="fa fa-graduation-cap mr-1"></i>${td || 'Skill'}</span>`;
-    else if (props.source === 'user_skill') badge = `<span class="pill bg-purple text-secondary"><i class="fa fa-graduation-cap mr-1"></i>{% trans "skill / teaching" %}</span>`;
-    else if (td.includes('offer'))     badge = `<span class="pill bg-primary text-secondary"><i class="fa fa-gift mr-1"></i>${td}</span>`;
-    else if (td.includes('wish'))      badge = `<span class="pill bg-yellow text-secondary"><i class="fa fa-heart mr-1"></i>${td}</span>`;
-    else                               badge = `<span class="pill bg-primary text-secondary">${td}</span>`;
+    if (props.source === 'skill')      badge = `<span class="pill bg-purple"><i class="fa fa-graduation-cap mr-1"></i>${td || 'Skill'}</span>`;
+    else if (props.source === 'user_skill') badge = `<span class="pill bg-purple"><i class="fa fa-graduation-cap mr-1"></i>{% trans "skill / teaching" %}</span>`;
+    else if (td.includes('offer'))     badge = `<span class="pill bg-primary"><i class="fa fa-gift mr-1"></i>${td}</span>`;
+    else if (td.includes('wish'))      badge = `<span class="pill bg-yellow"><i class="fa fa-heart mr-1"></i>${td}</span>`;
+    else                               badge = `<span class="pill bg-primary">${td}</span>`;
     let html = badge;
     if (props.title) html += props.url ? `<h3><a href="${props.url}" class="hover:underline">${props.title}</a></h3>` : `<h3>${props.title}</h3>`;
     if (props.image) html += `<div class="mb-2">${props.url ? `<a href="${props.url}">` : ''}<img src="${props.image}" alt="" class="w-full max-w-xs rounded shadow">${props.url ? '</a>' : ''}</div>`;

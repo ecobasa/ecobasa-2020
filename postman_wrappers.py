@@ -1,10 +1,29 @@
 from django.shortcuts import get_object_or_404, redirect
 from django.http import HttpResponse, HttpResponseForbidden
-from django.urls import reverse
+from django.urls import reverse, reverse_lazy
 
 from postman.views import MessageView
 from postman.models import Message, STATUS_ACCEPTED
 from postman.views import WriteView
+
+
+class WriteViewToSent(WriteView):
+    success_url = reverse_lazy('postman:sent')
+
+
+class MessageViewWithReply(MessageView):
+    """Like MessageView but also shows a reply form when viewing sent messages."""
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        if context.get('form') is None:
+            user = self.request.user
+            for m in reversed(self.msgs):
+                if m.sender == user and m.recipient and not m.recipient_deleted_at:
+                    context['form'] = self.form_class(initial=m.quote(*self.formatters))
+                    context['reply_to_pk'] = m.pk
+                    break
+        return context
 from django.http import QueryDict
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
@@ -22,14 +41,15 @@ def message_view_wrapper(request, message_id):
     to the compose page.
     """
     if request.method == "GET":
-        return MessageView.as_view()(request, message_id=message_id)
+        return MessageViewWithReply.as_view()(request, message_id=message_id)
 
     if request.method == "POST":
         if not request.user.is_authenticated:
             return HttpResponseForbidden()
 
         original = get_object_or_404(Message, pk=message_id)
-        recipient = original.sender
+        # reply goes to the other person, regardless of who sent the original
+        recipient = original.recipient if original.sender == request.user else original.sender
         if recipient is None:
             return HttpResponse(status=400)
 
@@ -74,7 +94,7 @@ def postman_write_wrapper(request, recipients=None):
     """
     # delegate GET directly
     if request.method == "GET":
-        return WriteView.as_view()(request, recipients=recipients) if recipients else WriteView.as_view()(request)
+        return WriteViewToSent.as_view()(request, recipients=recipients) if recipients else WriteViewToSent.as_view()(request)
 
     if request.method == "POST":
         # Normalize a mutable copy and append special metadata (skills, ad id)
@@ -120,7 +140,7 @@ def postman_write_wrapper(request, recipients=None):
             # best-effort: if anything fails, continue to delegate
             pass
 
-        return WriteView.as_view()(request, recipients=recipients) if recipients else WriteView.as_view()(request)
+        return WriteViewToSent.as_view()(request, recipients=recipients) if recipients else WriteViewToSent.as_view()(request)
 
     return HttpResponse(status=405)
 

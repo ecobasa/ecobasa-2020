@@ -1,150 +1,219 @@
 @layer components {
 
-.form-group {
-  @apply mb-5;
-}
-
-.col-form-label {
-  @apply block mb-1 text-sm font-bold text-primary;
-}
-
-.form-control-w-full .form-input, .form-control-w-full .form-textarea {
-  @apply w-full;
-}
-
-/* hide "(optional)" by default */
-.optionalField {
-  @apply text-primary text-xs hidden font-normal;
-}
-.show-optional .optionalField {
-  @apply !inline-block;
-}
-
-/* Inputs */
-.form-input, .form-textarea, .form-select {
-  @apply bg-secondary bg-opacity-65 border-brown border-opacity-50 text-brown w-full rounded;
-  &::placeholder {
-    @apply text-brown text-opacity-50;
+  .form-group {
+    @apply mb-5;
   }
-  &:focus {
-    @apply outline-none ring-0 border-primary border-2 transition duration-150 ease-in-out;
+
+  .col-form-label {
+    @apply block mb-1 text-sm font-bold text-primary;
+  }
+
+  .form-control-w-full .form-input, .form-control-w-full .form-textarea {
+    @apply w-full;
+  }
+
+  /* hide "(optional)" by default */
+  .optionalField {
+    @apply text-primary text-xs hidden font-normal;
+  }
+  .show-optional .optionalField {
+    @apply !inline-block;
+  }
+
+
+  /* Inputs */
+
+
+  textarea,
+  input[type="text"] {
+    @apply bg-secondary bg-opacity-65 border-brown border-opacity-50 text-brown w-full rounded;
+  }
+
+
+  .form-input, .form-textarea, .form-select, .form-multiselect {
+    @apply bg-secondary bg-opacity-65 border-brown border-opacity-50 text-brown w-full rounded;
+    &::placeholder {
+      @apply text-brown text-opacity-50;
+    }
+    &:focus {
+      @apply outline-none ring-0 border-primary border-2 transition duration-150 ease-in-out;
+    }
+  }
+
+  /* right align numbers */
+  input[type="number"] {
+    @apply text-right;
+  }
+
+  #id_location_div_map {
+    width: 100% !important;
+  }
+
+  .form-checkbox,
+  input[type="checkbox"],
+  .form-radio,
+  input[type="radio"] {
+    @apply bg-transparent shadow-none;
+  }
+
+  input[type="radio"].light {
+    @apply border-secondary ring-0;
+  }
+
+  .form-checkbox:checked,
+  input[type="checkbox"]:checked,
+  .form-radio:checked,
+  input[type="radio"]:checked {
+    @apply bg-primary;
+  }
+
+  .dark.form-checkbox {
+    @apply border-primary;
+  }
+
+  .dark.form-checkbox:checked,
+  .dark.form-checkbox:checked:hover {
+    @apply bg-primary;
+  }
+
+  .light.form-checkbox,
+  .light.input[type="checkbox"],
+  .light.form-checkbox:focus,
+  .light.form-checkbox:checked:hover {
+    @apply bg-transparent ring-secondary border-secondary;
+  }
+
+  .form-radio:focus,
+  input[type="radio"]:focus {
+    @apply bg-transparent;
+  }
+
+  input[type='radio']:checked,
+  input[type='radio']:checked:hover,
+  input[type='radio']:checked:focus {
+    @apply bg-primary ring-0;
+  }
+
+  input.light[type='radio']:checked {
+    @apply bg-transparent;
+    &:hover {
+      @apply border-secondary;
+    }
+  }
+
+  input[type='checkbox']:focus,
+  .form-checkbox:focus {
+    @apply ring-0 border-none shadow-none outline-0;
+  }
+
+  input[type='radio']:hover,
+  input[type='radio']:focus {
+    @apply rounded-full;
+  }
+
+
+  /* Focus styling for textual links (tabbable anchors). Exclude image-only links and
+    anchors inside heading elements so we don't add the shadow to linked images or
+    headline links. Uses :has() where available and provides a heading-based
+    override as a fallback. */
+
+  input:where([type='text']):focus, input:where(:not([type])):focus, input:where([type='email']):focus, input:where([type='url']):focus, input:where([type='password']):focus, input:where([type='number']):focus, input:where([type='date']):focus, input:where([type='datetime-local']):focus, input:where([type='month']):focus, input:where([type='search']):focus, input:where([type='tel']):focus, input:where([type='time']):focus, input:where([type='week']):focus, select:where([multiple]):focus, textarea:focus, select:focus {
+    @apply ring-0 outline-0 border-2 border-primary;
+  }
+
+  a:focus,
+  a:focus-visible,
+  .btn:focus {
+    @apply ring-0 outline-0 border-0;
+  }
+
+  /* for gray button in invalid forms */
+  form:invalid .form-invalid\:bg-gray,
+  form:invalid .form-invalid\:bg-gray:hover,
+  form:invalid .form-invalid\:bg-gray:focus,
+  form:invalid .form-invalid\:bg-gray:active {
+    @apply !bg-gray-400;
+  }
+
+
+  /* linkwidgets are used in filter forms */
+  .linkwidget {
+    @apply text-sm;
+  }
+
+  .linkwidget.horizontal {
+    @apply flex flex-wrap -mx-1;
+  }
+
+  .linkwidget.horizontal a {
+    @apply px-1;
+  }
+
+  .linkwidget a {
+    @apply my-1 px-1;
+  }
+
+  .linkwidget .selected {
+    @apply font-bold border-l-4 border-green;
+  }
+
+  .linkwidget.horizontal .selected {
+    @apply font-bold border-l-0 border-b-2 border-green;
+  }
+
+}
+
+/* ── Tagify — nested selectors give (0,2,0) specificity to beat CDN's (0,1,0) ── */
+.tagify {
+  --tags-border-color: theme('colors.purple');
+  --tags-hover-border-color: theme('colors.third');
+  --tag-bg: theme('colors.purple');
+  --tag-text-color: theme('colors.secondary');
+  --tag-hover: theme('colors.primary');
+  --tag-border-radius: 9999px;
+  --tag-pad: 0.3rem 0.6rem;
+	--tags-focus-border-color: theme('colors.primary');
+
+  &.tagify--focus {
+		@apply border-2;
+		--tags-border-color: theme('colors.primary');
+		--tags-focus-border-color: theme('colors.primary');
+  }
+
+  & .tagify__tag {
+    @apply font-bold bg-purple rounded-full pl-2 pb-[1px];
+  }
+
+  & .tagify__tag-text {
+    @apply text-secondary;
+  }
+
+  & .tagify__tag > div {
+    --tag-inset-shadow-size: 0;
+  }
+
+  & .tagify__tag__removeBtn {
+    @apply text-secondary mt-[1px];
   }
 }
 
-/* right align numbers */
-input[type="number"] {
-  @apply text-right;
-}
+/* Dropdown is appended to <body>, outside .tagify — nest under .tagify__dropdown */
+.tagify__dropdown {
+  @apply rounded-md text-sm border-t-0;
 
-#id_location_div_map {
-  width: 100% !important;
-}
-
-.form-checkbox,
-input[type="checkbox"],
-.form-radio,
-input[type="radio"] {
-  @apply bg-transparent shadow-none;
-}
-
-input[type="radio"].light {
-  @apply border-secondary ring-0;
-}
-
-.form-checkbox:checked,
-input[type="checkbox"]:checked,
-.form-radio:checked,
-input[type="radio"]:checked {
-  @apply bg-primary;
-}
-
-.dark.form-checkbox {
-  @apply border-primary;
-}
-
-.dark.form-checkbox:checked,
-.dark.form-checkbox:checked:hover {
-  @apply bg-primary;
-}
-
-.light.form-checkbox,
-.light.input[type="checkbox"],
-.light.form-checkbox:focus,
-.light.form-checkbox:checked:hover {
-  @apply bg-transparent ring-secondary border-secondary;
-}
-
-.form-radio:focus,
-input[type="radio"]:focus {
-  @apply bg-transparent;
-}
-
-input[type='radio']:checked,
-input[type='radio']:checked:hover,
-input[type='radio']:checked:focus {
-  @apply bg-primary ring-0;
-}
-
-input.light[type='radio']:checked {
-  @apply bg-transparent;
-  &:hover {
-    @apply border-secondary;
+  & .tagify__dropdown__wrapper {
+    @apply rounded-md bg-secondary bg-opacity-50 backdrop-blur-sm border-2 border-primary border-t-0;
   }
-}
 
-input[type='checkbox']:focus,
-.form-checkbox:focus {
-  @apply ring-0 border-none shadow-none outline-0;
-}
+  & .tagify__dropdown__item {
+    @apply px-3 py-2 text-brown cursor-pointer;
+  }
 
-input[type='radio']:hover,
-input[type='radio']:focus {
-  @apply rounded-full;
-}
+  & .tagify__dropdown__item--active {
+    @apply bg-primary text-secondary;
+  }
 
-
-/* Focus styling for textual links (tabbable anchors). Exclude image-only links and
-   anchors inside heading elements so we don't add the shadow to linked images or
-   headline links. Uses :has() where available and provides a heading-based
-   override as a fallback. */
-a:focus,
-a:focus-visible,
-.btn:focus {
-  @apply ring-0 outline-0 border-0;
-}
-
-/* for gray button in invalid forms */
-form:invalid .form-invalid\:bg-gray,
-form:invalid .form-invalid\:bg-gray:hover,
-form:invalid .form-invalid\:bg-gray:focus,
-form:invalid .form-invalid\:bg-gray:active {
-  @apply !bg-gray-400;
-}
-
-
-/* linkwidgets are used in filter forms */
-.linkwidget {
-  @apply text-sm;
-}
-
-.linkwidget.horizontal {
-  @apply flex flex-wrap -mx-1;
-}
-
-.linkwidget.horizontal a {
-  @apply px-1;
-}
-
-.linkwidget a {
-  @apply my-1 px-1;
-}
-
-.linkwidget .selected {
-  @apply font-bold border-l-4 border-green;
-}
-
-.linkwidget.horizontal .selected {
-  @apply font-bold border-l-0 border-b-2 border-green;
-}
-
+  & .tagify__dropdown__header {
+    @apply px-3 py-1 text-xs font-semibold uppercase tracking-wide text-brown border-b border-primary opacity-70;
+  }
 }

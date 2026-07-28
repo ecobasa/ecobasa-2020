@@ -38,7 +38,8 @@
 
     {% block javascript %}
       <script src="{% static 'js/ecobasa-map.js' %}" data-stadia-key="{% stadia_key %}"></script>
-      <script type="text/javascript" src="{% static 'alpinejs/dist/cdn.min.js' %}"></script>
+      <script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.4/dist/htmx.min.js" defer></script>
+      <script src="{% static 'alpinejs/dist/cdn.min.js' %}" defer></script>
     {% endblock javascript %}
   </body>
 

@@ -87,7 +87,7 @@
     buildLayerToggle(map, groupName, trans) {
       trans = Object.assign({ title: 'Map style', ecobasa: 'ecobasa', satellite: 'Satellite', osm: 'OSM' }, trans || {});
       const wrap = document.createElement('div');
-      wrap.className = 'absolute top-2.5 right-2.5 z-[1000]';
+      wrap.className = 'absolute top-2.5 right-2.5';
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.className = 'flex items-center justify-center w-12 h-12 rounded-md bg-primary bg-opacity-80 text-secondary shadow-lg border border-red backdrop-blur';
@@ -183,6 +183,10 @@
         window[cfg.setPointFn] = function (lon, lat, label, country) {
           setPoint(lon, lat, { label: label, country: country || '' });
         };
+        window[cfg.setPointFn + '_clear'] = function () {
+          feature.setGeometry(null);
+          if (cfg.locationInput) cfg.locationInput.value = '';
+        };
       }
 
       map.on('click', async function (evt) {
@@ -227,7 +231,11 @@
         results: [], open: false, loading: false,
         async onInput(query) {
           const term = (query || '').trim();
-          if (!term) { this.results = []; this.open = false; return; }
+          if (!term) {
+            this.results = []; this.open = false;
+            if (window[setPointFn + '_clear']) window[setPointFn + '_clear']();
+            return;
+          }
           this.loading = true;
           try {
             const r = await fetch('https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&q=' + encodeURIComponent(term));

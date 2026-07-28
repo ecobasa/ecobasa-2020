@@ -4,6 +4,7 @@ from django.utils.translation import gettext_lazy as _
 from taggit.forms import TagWidget
 
 from .models import Community
+from skills.models import Skill, SkillWish
 
 
 class MultiFileInput(ClearableFileInput):
@@ -35,9 +36,21 @@ class CommunityForm(forms.ModelForm):
         help_text=_("Upload one or more additional images."),
     )
     _gallery_validator = forms.ImageField(required=False)
+    skill_wishes = forms.CharField(
+        required=False,
+        label=_("Skills we're looking for"),
+        help_text=_("Comma-separated list of skills you're looking for in visitors or new members."),
+    )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        if self.instance and self.instance.pk:
+            wishes_initial = ', '.join(
+                self.instance.skill_wishes.select_related("skill").values_list("skill__name", flat=True)
+            )
+            self.fields['skill_wishes'].initial = wishes_initial
+            self.initial['skill_wishes'] = wishes_initial
+            self.fields['skill_wishes'].widget.attrs['value'] = wishes_initial
         for field in self.fields.values():
             css = field.widget.attrs.get("class", "")
             field.widget.attrs["class"] = f"{css} form-input".strip()

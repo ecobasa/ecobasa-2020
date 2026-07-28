@@ -47,26 +47,31 @@ class TestSearch:
         assert response.status_code == 200
 
     def test_get(self, client: Client, ads: [Ad]):
+        """The search shell page itself never renders ad titles directly —
+        results are fetched separately by the client via gifting:api-list."""
         response = client.get("/gifting/")
+        assert response.status_code == 200
+
+        response = client.get(reverse("gifting:api-list"))
         assert response.status_code == 200
         assert "Test" in str(response.content)
         assert "Foobar" in str(response.content)
 
     def test_filter_by_type(self, client: Client, ads: [Ad]):
-        response = client.get("/gifting/?type=offer")
+        response = client.get(reverse("gifting:api-list"), {"type": "offer"})
         assert "Test" in str(response.content)
         assert "Foobar" not in str(response.content)
 
-        response = client.get("/gifting/?type=wish")
+        response = client.get(reverse("gifting:api-list"), {"type": "wish"})
         assert "Test" not in str(response.content)
         assert "Foobar" in str(response.content)
 
     def test_filter_search(self, client: Client, ads: [Ad]):
-        response = client.get("/gifting/?search=testdesc")
+        response = client.get(reverse("gifting:api-list"), {"search": "testdesc"})
         assert "Test" in str(response.content)
         assert "Foobar" not in str(response.content)
 
-        response = client.get("/gifting/?search=foobardesc")
+        response = client.get(reverse("gifting:api-list"), {"search": "foobardesc"})
         assert "Test" not in str(response.content)
         assert "Foobar" in str(response.content)
 

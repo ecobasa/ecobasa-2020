@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block head_title %}{% trans "Skills" %} — ecobasa{% endblock %}
+
+{% block content %}
+<div class="container-content">
+
+  <div class="flex items-center justify-between mb-6">
+    <h1 class="text-3xl text-primary">{% trans "Skills" %}</h1>
+    {% if user.is_authenticated %}
+      <a href="{% url 'skills:userskill_add' %}" class="btn">
+        <i class="fa fa-plus mr-1"></i> {% trans "Add a skill" %}
+      </a>
+    {% endif %}
+  </div>
+
+  {% if skills %}
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      {% for skill in skills %}
+        <a href="{{ skill.get_absolute_url }}"
+          class="block border rounded-lg p-4 bg-secondary hover:border-primary transition-colors">
+          <div class="font-semibold text-primary text-lg">{{ skill.name }}</div>
+          <div class="text-sm text-brown mt-1 flex gap-4">
+            {% if skill.user_count %}
+              <span><i class="fa fa-user mr-1"></i>{{ skill.user_count }}</span>
+            {% endif %}
+            {% if skill.community_count %}
+              <span><i class="fa fa-home mr-1"></i>{{ skill.community_count }}</span>
+            {% endif %}
+          </div>
+          {% if skill.description %}
+            <p class="text-sm text-brown mt-2 line-clamp-2">{{ skill.description }}</p>
+          {% endif %}
+        </a>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="text-brown">{% trans "No skills listed yet." %}</p>
+  {% endif %}
+
+</div>
+{% endblock %}

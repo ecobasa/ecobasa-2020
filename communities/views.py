@@ -1,23 +1,30 @@
+import json
+import re
+from urllib.parse import urlencode
+
+from django.contrib.auth.decorators import login_required
 from django.db.models import Q, Prefetch
 from django.shortcuts import render, get_object_or_404, redirect
+from django.urls import reverse
 from django.contrib import messages
 from django.utils.translation import gettext_lazy as _
+from django.views.decorators.http import require_GET, require_POST
 
 from .models import Community
 from .models import CommunityPhoto
 from .forms import CommunityForm
+from skills.models import CommunitySkill, Skill, SkillWish, UserSkill
 
 from django.contrib.gis.geos import Polygon, Point
 from django.contrib.gis.db.models.functions import Distance
 from django.core.paginator import Paginator
 from django.http import JsonResponse
-from django.views.decorators.http import require_GET
 
 
 def index(request):
     """Map-first list of communities."""
     from django_countries.fields import Country as DjangoCountry
-    base_qs = Community.objects.all().prefetch_related("photos", "skills").order_by("name")
+    base_qs = Community.objects.all().prefetch_related("photos", "community_skills__skill").order_by("name")
 
     countries_raw = (
         Community.objects
@@ -38,7 +45,7 @@ def index(request):
             Q(name__icontains=q)
             | Q(description__icontains=q)
             | Q(location_name__icontains=q)
-            | Q(skills__name__icontains=q)
+            | Q(community_skills__skill__name__icontains=q)
         ).distinct()
     country = (request.GET.get('country') or '').strip()
     if country:
@@ -64,11 +71,118 @@ def detail(request, slug):
     community = get_object_or_404(Community, slug=slug)
     photos = list(community.photos.all())
     hero_image = photos[0].image.url if photos else None
+    community_skills = list(community.community_skills.select_related("skill").order_by("skill__name"))
+    skill_wishes = list(community.skill_wishes.select_related("skill").order_by("skill__name"))
+
+    # Build a {skill_id: level_display} map for the visiting user so the modal can show their level
+    user_levels_json = "{}"
+    if request.user.is_authenticated and request.user != community.owner:
+        skill_ids = [cs.skill_id for cs in community_skills] + [sw.skill_id for sw in skill_wishes]
+        user_levels_json = json.dumps({
+            str(us.skill_id): us.get_level_display()
+            for us in UserSkill.objects.filter(user=request.user, skill_id__in=skill_ids)
+        })
+
     return render(request, "communities/community_detail.html", {
-        "community": community,
-        "photos": photos,
-        "hero_image": hero_image,
+        "community":        community,
+        "photos":           photos,
+        "hero_image":       hero_image,
+        "community_skills": community_skills,
+        "skill_wishes":     skill_wishes,
+        "user_levels_json": user_levels_json,
     })
+
+
+@login_required
+@require_POST
+def volunteer_request(request, community_slug):
+    community = get_object_or_404(Community, slug=community_slug)
+    owner = community.owner
+    if not owner:
+        messages.error(request, _("This community has no contact person."))
+        return redirect(community.get_absolute_url())
+
+    import datetime
+    from django.utils import timezone
+    from matches.models import Match, VolunteerDetails
+    from matches.emails import notify_match_created
+
+    volunteer_mode       = request.POST.get("volunteer_mode", "")
+    practice_skills      = request.POST.get("practice_skills", "").strip()
+    practice_skill_level = request.POST.get("practice_skill_level", "").strip()
+    sender_skills        = request.POST.get("sender_skills", "").strip()
+    msg_body             = request.POST.get("body", "").strip()
+
+    def _parse_dt(val):
+        if not val:
+            return None
+        try:
+            dt = datetime.datetime.fromisoformat(val)
+            return timezone.make_aware(dt) if timezone.is_naive(dt) else dt
+        except ValueError:
+            return None
+
+    stay_from = _parse_dt(request.POST.get("stay_from", ""))
+    stay_to   = _parse_dt(request.POST.get("stay_to", ""))
+
+    vr = Match(
+        from_user = request.user,
+        recipient = community.get_match_owner(),
+        message   = msg_body,
+    )
+    vr.target = community
+    vr.save()
+    VolunteerDetails.objects.create(
+        match                 = vr,
+        volunteer_mode        = volunteer_mode,
+        practice_skills       = practice_skills,
+        practice_skill_level  = practice_skill_level,
+        sender_skills         = sender_skills,
+        stay_from             = stay_from,
+        stay_to               = stay_to,
+    )
+
+    notify_match_created(vr, http_request=request)
+
+    messages.success(request, str(_("Your request has been sent to %(community)s!") % {"community": community.name}))
+
+    offer_list = [s.strip() for s in sender_skills.split(",") if s.strip()]
+    wish_list  = [s.strip() for s in practice_skills.split(",") if s.strip()]
+
+    if offer_list or wish_list:
+        existing_offers = set(
+            request.user.user_skills.values_list("skill__name", flat=True)
+        )
+        existing_wishes = set(
+            request.user.skill_wishes.values_list("skill__name", flat=True)
+        )
+        offer_list = [s for s in offer_list if s.lower() not in {n.lower() for n in existing_offers}]
+        wish_list  = [s for s in wish_list  if s.lower() not in {n.lower() for n in existing_wishes}]
+
+    if request.headers.get("HX-Request") and (offer_list or wish_list):
+        params = {}
+        if offer_list:
+            params["offer_skills"] = ",".join(offer_list)
+        if wish_list:
+            params["wish_skills"] = ",".join(wish_list)
+        return render(request, "communities/_volunteer_skill_proposal.html", {
+            "community":  community,
+            "offer_list": offer_list,
+            "wish_list":  wish_list,
+            "review_url": reverse("users:update") + "?" + urlencode(params),
+        })
+
+    if request.headers.get("HX-Request"):
+        return render(request, "_messages.html")
+    return redirect(vr.get_absolute_url())
+
+
+def _sync_community_skill_wishes(community, form):
+    wish_val = form.cleaned_data.get('skill_wishes', '') or ''
+    community.skill_wishes.all().delete()
+    for name in [s.strip() for s in wish_val.split(',') if s.strip()]:
+        skill, _ = Skill.objects.get_or_create(name__iexact=name, defaults={"name": name})
+        SkillWish.objects.create(community=community, skill=skill)
 
 
 def _collect_gallery_files(form, request):
@@ -100,6 +214,7 @@ def create(request):
             community.save()
             if hasattr(form, "save_m2m"):
                 form.save_m2m()
+            _sync_community_skill_wishes(community, form)
             images = _collect_gallery_files(form, request)
             for image_file in images:
                 CommunityPhoto.objects.create(community=community, image=image_file)
@@ -143,6 +258,7 @@ def update(request, slug):
             community = form.save()
             if hasattr(form, "save_m2m"):
                 form.save_m2m()
+            _sync_community_skill_wishes(community, form)
             delete_ids = request.POST.getlist("delete_photos")
             if delete_ids:
                 community.photos.filter(id__in=delete_ids).delete()
@@ -171,16 +287,16 @@ def update(request, slug):
 
 # ── Helpers ──────────────────────────────────────────────────────────
 
-def _base_qs(request):
+def _base_qs(request, require_location=True):
     """Return a Community queryset filtered by ?q= search term."""
-    qs = Community.objects.filter(location__isnull=False)  # PostGIS point field
+    qs = Community.objects.filter(location__isnull=False) if require_location else Community.objects.all()
     q = request.GET.get("q", "").strip()
     if q:
         qs = qs.filter(
             Q(name__icontains=q) |
             Q(description__icontains=q) |
             Q(location_name__icontains=q) |
-            Q(skills__name__icontains=q)
+            Q(community_skills__skill__name__icontains=q)
         )
     country = request.GET.get("country", "").strip()
     if country:
@@ -219,7 +335,7 @@ def community_markers(request):
     )
 
     # Use the helper to get the base filtered queryset
-    qs = _base_qs(request).prefetch_related(hero_prefetch, "skills")
+    qs = _base_qs(request).prefetch_related(hero_prefetch, "community_skills__skill")
 
     bbox_param = request.GET.get("bbox", "")
     if bbox_param:
@@ -257,7 +373,7 @@ def community_markers(request):
                 "inhabitants": c.inhabitants,
                 "children":    c.children,
                 "max_guests":  c.max_guests,
-                "skills":      list(c.skills.values_list("name", flat=True)),
+                "skills":      [cs.skill.name for cs in c.community_skills.all()],
             },
         })
 
@@ -279,7 +395,7 @@ def community_list_partial(request):
                   nearest-first so the user naturally sees close ones first.
         page      page number for infinite scroll (default 1)
     """
-    qs = _base_qs(request).prefetch_related("skills", "photos")
+    qs = _base_qs(request, require_location=False).prefetch_related("community_skills__skill", "photos")
 
     # ── Proximity sorting ─────────────────────────────────────────────
     # When the user clicks "near me", the browser sends location=lat,lon.
@@ -340,9 +456,17 @@ def community_suggest(request):
     for name in Community.objects.filter(name__icontains=q).values_list("name", flat=True)[:5]:
         add(name, "name")
 
-    # Description / vision — one entry if any community matches either field
-    if Community.objects.filter(Q(description__icontains=q) | Q(vision__icontains=q)).exists():
-        suggestions.append({"value": q, "type": "text"})
+    # Description / vision — extract words that start with the query
+    q_lower = q.lower()
+    for desc, vision in (
+        Community.objects
+        .filter(Q(description__icontains=q) | Q(vision__icontains=q))
+        .exclude(name__icontains=q)
+        .values_list("description", "vision")[:5]
+    ):
+        for word in re.findall(r'\b\w[\w-]*\b', (desc or "") + " " + (vision or "")):
+            if word.lower().startswith(q_lower) and word.lower() != q_lower:
+                add(word.lower(), "text")
 
     # Locations (split on comma to surface city/country parts)
     for loc in Community.objects.filter(location_name__icontains=q).values_list("location_name", flat=True)[:10]:
@@ -354,9 +478,9 @@ def community_suggest(request):
 
     # Skills attached to a Community
     for skill in (
-        Community.objects
-        .filter(skills__name__icontains=q)
-        .values_list("skills__name", flat=True)
+        CommunitySkill.objects
+        .filter(skill__name__icontains=q)
+        .values_list("skill__name", flat=True)
         .distinct()[:5]
     ):
         add(skill, "skill")

@@ -8,7 +8,7 @@
 {% endblock %}
 
 {% block content %}
-<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 mt-10 mb-12">
+<div class="container-content">
   <button type="button" class="btn flex items-center text-sm leading-5 font-medium mb-10" href="{{ user_obj.get_absolute_url }}">
     <svg class="flex-shrink-0 -ml-1 mr-1 h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
       <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
@@ -68,7 +68,7 @@
           <p class="text-sm font-semibold text-primary">{% trans "Existing photos" %}</p>
           <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
             {% for photo in community.photos.all %}
-              <label class="block border rounded shadow-sm bg-white bg-opacity-70 p-2 cursor-pointer">
+              <label class="block border rounded shadow-sm bg-secondary bg-opacity-70 p-2 cursor-pointer">
                 <img src="{{ photo.image.url }}" alt="" class="w-full h-28 object-cover rounded mb-2">
                 <span class="inline-flex items-center text-sm text-brown"><input type="checkbox" name="delete_photos" value="{{ photo.id }}" class="form-checkbox">{% trans "Delete" %}</span>
               </label>
@@ -98,6 +98,13 @@
     </div>
 
     <h3 class="text-lg font-semibold text-primary">{% trans "Visitor information" %}</h3>
+    
+    <div>
+      <label class="form-label" for="id_max_guests">{{ form.max_guests.label }}</label>
+      {{ form.max_guests }}
+      {% for error in form.max_guests.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+    </div>
+    
     <div>
       <label class="form-label" for="id_accomodation">{{ form.accomodation.label }}</label>
       {{ form.accomodation }}
@@ -126,17 +133,17 @@
       {% for error in form.offers_seminars.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
     </div>
 
-    <div class="grid md:grid-cols-2 gap-4">
-      <div>
-        <label class="form-label" for="id_max_guests">{{ form.max_guests.label }}</label>
-        {{ form.max_guests }}
-        {% for error in form.max_guests.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
-      </div>
-      <div>
-        <label class="form-label" for="id_skills">{% trans "What skills can people learn by volunteering or staying in your community?" %}</label>
-        {{ form.skills }}
-        {% for error in form.skills.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
-      </div>
+    <div>
+      <label class="form-label" for="id_skills">{% trans "What skills can people learn by volunteering or staying in your community?" %}</label>
+      {{ form.skills }}
+      {% for error in form.skills.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+    </div>
+
+    <div>
+      <label class="form-label" for="id_skill_wishes">{% trans "Skills we're looking for in visitors or new members" %}</label>
+      {{ form.skill_wishes }}
+      {% if form.skill_wishes.help_text %}<p class="text-xs text-brown">{{ form.skill_wishes.help_text }}</p>{% endif %}
+      {% for error in form.skill_wishes.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
     </div>
 
     <div>
@@ -190,6 +197,15 @@
       const skillsInput = document.getElementById('id_skills');
       if (skillsInput) {
         new Tagify(skillsInput, {
+          editTags: false,
+          dropdown: { enabled: 0 },
+          originalInputValueFormat: vals => vals.map(v => v.value).join(', '),
+        });
+      }
+
+      const wishInput = document.getElementById('id_skill_wishes');
+      if (wishInput) {
+        new Tagify(wishInput, {
           editTags: false,
           dropdown: { enabled: 0 },
           originalInputValueFormat: vals => vals.map(v => v.value).join(', '),

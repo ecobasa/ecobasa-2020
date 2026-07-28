@@ -15,10 +15,6 @@ body {
 	background: url('../images/back.jpg') repeat;
 }
 
-.modal {
-	background: url('../images/back.jpg') repeat;
-}
-
 h1, h2, h3 {
   @apply font-serif ;
 }
@@ -29,14 +25,23 @@ h1 {
 
 h2 {
   @apply text-purple text-4xl mt-12 mb-6;
+	&:first-child {
+		@apply mt-0;
+	}
 }
 
 h3 {
 	@apply text-3xl;
+	&:first-child {
+		@apply mt-0;
+	}
 }
 
 h3, h4, h5, h6 {
   @apply text-xl font-bold mt-8 mb-4;
+	&:first-child {
+		@apply mt-0;
+	}
  }
 
 ::selection {
@@ -86,6 +91,13 @@ nav {
  	}
 }
 
+/* ── Page layout containers ───────────────────────────────────────── */
+.container-page    { @apply mx-auto max-w-7xl px-6 mt-10 pb-10; }   /* wide detail pages: profile, community, homepage */
+.container-content { @apply mx-auto max-w-4xl px-6 mt-10 mb-12; }  /* multi-field forms & content pages */
+.container-narrow  { @apply mx-auto max-w-2xl px-6 py-8; }          /* reading content: notifications, skill details */
+.container-form    { @apply mx-auto max-w-lg px-6 py-8; }           /* small focused forms */
+.container-auth    { @apply flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8; } /* centered auth pages */
+
 .btn {
  	@apply py-2 px-4 rounded border border-solid box-border font-bold bg-primary bg-opacity-75 text-secondary border-primary;
  	&:hover {
@@ -125,7 +137,11 @@ nav {
 }
 
 .pill {
-	@apply px-3 py-1 rounded-full text-xs font-semibold inline-flex items-center;
+	@apply px-3 py-1 rounded-full text-xs font-semibold inline-flex items-center text-secondary hover:text-secondary hover:bg-primary transition-colors duration-150;
+
+	&-lg {
+		@apply px-4 py-2 text-sm;
+	}
 }
 
 .form-label {
@@ -157,11 +173,16 @@ nav {
 }
 
 .modal-content {
-	@apply bg-secondary rounded-lg max-w-2xl w-full p-6 relative max-h-[90vh] overflow-y-auto;
+	@apply relative rounded-lg w-full p-6 shadow-xl max-w-5xl;
+	background: url('../images/back.jpg') repeat;
 }
 
 .modal-close {
-	@apply absolute top-3 right-3 text-secondary text-2xl h-10 w-10 rounded-full bg-black bg-opacity-50 hover:bg-opacity-70 flex items-center justify-center;
+	@apply absolute top-2 right-2 text-secondary text-xl h-8 w-8 rounded-full bg-black bg-opacity-50 hover:bg-opacity-70 flex items-center justify-center;
+}
+
+.lightbox-close {
+	@apply absolute top-4 right-8 text-white text-6xl leading-none hover:opacity-70 focus:outline-none;
 }
 
 .video-container iframe,
@@ -212,7 +233,7 @@ nav {
 }
 /* Low-profile suggestions dropdown (shared with communities) */
 .suggestions-dropdown {
-	@apply absolute left-0 right-0 bg-secondary bg-opacity-75 backdrop-blur-sm border border-gray-200 shadow-lg z-50 rounded-md overflow-hidden;
+	@apply absolute left-0 right-0 bg-secondary bg-opacity-75 backdrop-blur-sm border border-primary border-opacity-50 border-t-0 shadow-lg rounded-md rounded-t-none overflow-hidden z-10;
 
 	& ul {
 		@apply list-none m-0 p-0;
@@ -226,46 +247,4 @@ nav {
 			@apply bg-primary bg-opacity-60;
 		}
 	}
-}
-
-@layer components {
-  .tagify {
-    --tags-border-color: theme('colors.purple');
-    --tags-hover-border-color: theme('colors.third');
-    --tag-bg: theme('colors.purple');
-    --tag-text-color: theme('colors.secondary');
-    --tag-hover: theme('colors.primary');
-    --tag-border-radius: 9999px;
-    --tag-pad: 0.3rem 0.6rem;
-  }
-
-  /* Style the dropdown suggestions to match your theme */
-  .tagify__dropdown__wrapper {
-    background: theme('colors.secondary');
-    border-color: theme('colors.primary');
-  }
-
-  .tagify__dropdown__item--active {
-    background: theme('colors.primary');
-    color: theme('colors.secondary');
-  }
-
-  .tagify__tag {
-    @apply font-bold bg-purple rounded-full pl-2 pb-1;
-  }
-
-  .tagify__tag-text {
-    @apply text-secondary;
-  }
-
-  .tagify__tag > div {
-    /* This removes the default inset shadow Tagify uses for borders */
-    --tag-inset-shadow-size: 0;
-  }
-
-  .tagify__tag__removeBtn {
-    /* Make the 'x' look cleaner */
-    @apply ml-2 text-secondary hover:bg-red hover:text-white rounded-full;
-    --tag-remove-btn-color: #fcf3e5;
-  }
 }

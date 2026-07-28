@@ -1,0 +1,48 @@
+{% load i18n %}
+<div class="mx-auto max-w-3xl fixed inset-0 z-50 sm:mt-12 flex flex-col items-end justify-end gap-3 px-4 py-6 pointer-events-none sm:p-6 sm:items-start sm:justify-end">
+
+  {% for message in messages %}
+    {% include "_message_item.html" %}
+  {% endfor %}
+
+  <div x-data="{ open: true }" x-show="open"
+       x-transition:enter="transform ease-out duration-300 transition"
+       x-transition:enter-start="translate-y-2 opacity-0 sm:translate-y-0 sm:translate-x-2"
+       x-transition:enter-end="translate-y-0 opacity-100 sm:translate-x-0"
+       x-transition:leave="transition ease-in duration-100"
+       x-transition:leave-start="opacity-100"
+       x-transition:leave-end="opacity-0"
+       class="w-full bg-secondary bg-opacity-75 backdrop-blur-sm border border-primary shadow-lg rounded-lg pointer-events-auto p-4">
+    <div class="flex items-start gap-3">
+      <i class="fa fa-graduation-cap text-primary mt-0.5 flex-shrink-0"></i>
+      <p class="text-primary flex-1">
+        {% trans "Your application mentioned skills that you dont have on your profile yet — Do you want to add them now, so others can find you by them too?" %}
+      </p>
+      <button @click="open = false" class="flex-shrink-0 opacity-60 hover:opacity-100 focus:outline-none" aria-label="{% trans 'Dismiss' %}">
+        <i class="fa fa-times"></i>
+      </button>
+    </div>
+    {% if offer_list %}
+      <span class="text-sm font-semibold">{% trans "Offers" %}:</span>
+      <div class="flex flex-wrap gap-1 mt-2">
+        {% for skill in offer_list %}
+          <span class="pill bg-purple"><i class="fa fa-graduation-cap mr-1"></i>{{ skill }}</span>
+        {% endfor %}
+      </div>
+    {% endif %}
+    {% if offer_list and wish_list %}<div class="mt-4"></div>{% endif %}
+    {% if wish_list %}
+      <span class="text-sm font-semibold">{% trans "Learning goals" %}:</span>
+      <div class="flex flex-wrap gap-1 mt-2">
+        {% for skill in wish_list %}
+          <span class="pill bg-yellow hover:bg-purple"><i class="fa fa-graduation-cap mr-1"></i>{{ skill }}</span>
+        {% endfor %}
+      </div>
+    {% endif %}
+    <div class="flex justify-end gap-3 mt-5">
+      <button @click="open = false" class="btn text-sm btn-purple"><i class="fa fa-times mr-2"></i>{% trans "No thanks" %}</button>
+      <a href="{{ review_url }}" class="btn text-sm flex-shrink-0"><i class="fa fa-check mr-2"></i>{% trans "Review and add" %}</a>
+    </div>
+  </div>
+
+</div>

@@ -1,3 +1,4 @@
+from django.contrib.contenttypes.fields import GenericRelation
 from django.contrib.gis.db import models
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
@@ -53,12 +54,33 @@ class Ad(RandomIdMixin, models.Model):
     location = models.PointField(
         _("Geo Location"), null=True, blank=True, geography=True
     )
+    matches = GenericRelation("matches.Match")
 
     def __str__(self):
         return self.title
 
     def get_absolute_url(self) -> str:
         return reverse("gifting:detail", kwargs={"pk": self.pk})
+
+    # ── matches.Match target protocol ───────────────────────────────
+    def get_match_owner(self):
+        return self.owner
+
+    def get_match_display_name(self):
+        return self.title
+
+    def get_match_location(self):
+        owner = self.owner
+        if not owner:
+            return "", None, None
+        label = f"{owner.name or owner.email}'s place"
+        return label, owner.location_name, owner.location
+
+    def get_match_icon(self):
+        return "fa-hand-holding-heart" if self.type == "wish" else "fa-hand-point-up"
+
+    def get_match_verb(self):
+        return _("is interested in your offer") if self.type == "offer" else _("wants to fulfill your wish")
 
     class Meta:
         verbose_name = _("Ad")

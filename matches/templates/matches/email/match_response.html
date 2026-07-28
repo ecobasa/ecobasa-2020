@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ status_label|capfirst }}: {{ title }}</title>
+</head>
+<body style="margin:0;padding:0;background-color:#f5ede0;font-family:Georgia,serif;color:#452912;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f5ede0;padding:32px 0;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background-color:#fcf3e5;border-radius:8px;overflow:hidden;border:1px solid #d4b896;">
+
+          {# Header #}
+          <tr>
+            <td style="background-color:#da6137;padding:28px 32px;">
+              <p style="margin:0;font-size:24px;font-weight:bold;color:#fcf3e5;font-family:Georgia,serif;">ecobasa.org</p>
+              <p style="margin:8px 0 0;font-size:14px;color:#fcf3e5;opacity:0.85;">Match {{ status_label }}</p>
+            </td>
+          </tr>
+
+          {# Body #}
+          <tr>
+            <td style="padding:32px;">
+              <p style="margin:0 0 16px;font-size:16px;">
+                Hello {% if recipient.name %}{{ recipient.name }}{% else %}{{ recipient.email }}{% endif %},
+              </p>
+              <p style="margin:0 0 24px;font-size:15px;line-height:1.6;">
+                <strong>{% if actor.name %}{{ actor.name }}{% else %}{{ actor.email }}{% endif %}</strong>
+                has <strong>{{ status_label }}</strong> your interest in: <strong>{{ title }}</strong>.
+              </p>
+
+              <p style="margin:0 0 24px;font-size:15px;text-align:center;">
+                <a href="{{ detail_url }}"
+                   style="display:inline-block;background-color:#da6137;color:#fcf3e5;text-decoration:none;font-size:15px;font-weight:bold;padding:12px 28px;border-radius:6px;font-family:Arial,sans-serif;">
+                  View
+                </a>
+              </p>
+            </td>
+          </tr>
+
+          {# Footer #}
+          <tr>
+            <td style="background-color:#f5ede0;border-top:1px solid #d4b896;padding:16px 32px;text-align:center;">
+              <p style="margin:0;font-size:12px;opacity:0.6;">ecobasa.org &mdash; the sustainable gift-economy community</p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

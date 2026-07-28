@@ -3,8 +3,8 @@
 {% load postman_extras %}
 
 {% block postman_content %}
-  <div class="flex items-start justify-between mb-4">
-    <h1 class="text-2xl font-semibold">{% trans "Inbox" %}</h1>
+  <div class="flex">
+    <h1 class="text-4xl font-semibold">{% trans "Inbox" %}</h1>
     {% if pm_messages and has_requested_dates %}
       <div id="inbox-sort-wrap" class="text-right">
         <form method="get">
@@ -26,17 +26,18 @@
       {% for m in pm_messages %}
         {% parse_requested_dates m.body as rd %}
         {% extract_skills m.body as skills %}
+        {% extract_sender_skills m.body as sender_skills %}
         <div class="flex items-start gap-4 inbox-item" data-sent="{{ m.sent_at|date:'c' }}" data-from="{{ rd.from_iso }}" data-to="{{ rd.to_iso }}">
           <div class="flex-1">
-            <div class="p-3 bg-primary rounded flex items-start gap-4 items-center">
+            <div class="p-3 bg-primary bg-opacity-75 rounded flex items-start gap-4 items-center">
               <div class="flex-none flex flex-col items-center">
                 {% if m.sender and m.sender.image %}
                   <a href="{{ m.sender.get_absolute_url }}">
-                    <img class="w-10 h-10 rounded-full object-cover" src="{{ m.sender.image.url }}" alt="{% if m.sender.name %}{{ m.sender.name }}{% elif m.sender.get_full_name %}{{ m.sender.get_full_name }}{% elif m.sender.get_username %}{{ m.sender.get_username }}{% else %}{{ m.sender.email }}{% endif %}">
+                    <img class="w-12 h-12 rounded-full object-cover" src="{{ m.sender.image.url }}" alt="{% if m.sender.name %}{{ m.sender.name }}{% elif m.sender.get_full_name %}{{ m.sender.get_full_name }}{% elif m.sender.get_username %}{{ m.sender.get_username }}{% else %}{{ m.sender.email }}{% endif %}">
                   </a>
                 {% else %}
                   <a href="{{ m.sender.get_absolute_url }}">
-                    <i class="fa fa-user text-3xl text-primary rounded-full border border-dashed border-primary p-3" title="{% if m.sender.name %}{{ m.sender.name }}{% elif m.sender.get_full_name %}{{ m.sender.get_full_name }}{% elif m.sender.get_username %}{{ m.sender.get_username }}{% else %}{{ m.sender.email }}{% endif %}"></i>
+                    <i class="fa fa-user text-2xl text-secondary rounded-full border border-dashed border-secondary p-3" title="{% if m.sender.name %}{{ m.sender.name }}{% elif m.sender.get_full_name %}{{ m.sender.get_full_name }}{% elif m.sender.get_username %}{{ m.sender.get_username }}{% else %}{{ m.sender.email }}{% endif %}"></i>
                   </a>
                 {% endif %}
                 <div class="text-xs text-secondary mt-2 font-serif text-center">
@@ -63,12 +64,22 @@
                 </div>
                 <div class="text-sm text-secondary mt-1">{{ m.body|strip_requested_block|truncatechars:200 }}</div>
                 {% if skills %}
-                <div class="mt-2 flex flex-wrap gap-2">
-                {% for s in skills %}
+                <div class="mt-6 flex flex-wrap gap-2">
+                  {% for s in skills %}
                     <span class="inline-flex items-center bg-secondary text-primary px-3 py-1 rounded-full text-sm font-medium"><i class="fa fa-graduation-cap mr-1"></i>{{ s }}</span>
-                {% endfor %}
+                  {% endfor %}
                 </div>
-              {% endif %}
+                {% endif %}
+                {% if sender_skills %}
+                <div class="mt-3">
+                  <div class="font-semibold mb-1 opacity-70 text-secondary text-sm">Other skills that I can help with</div>
+                  <div class="flex flex-wrap gap-2">
+                    {% for s in sender_skills %}
+                      <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium" style="background-color:#80143b;color:#fff;"><i class="fa fa-graduation-cap mr-1"></i>{{ s }}</span>
+                    {% endfor %}
+                  </div>
+                </div>
+                {% endif %}
               </div>
               <div class="flex-none text-xs text-brown">{% if m.sent_at %}{{ m.sent_at }}{% endif %}</div>
             </div>

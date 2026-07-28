@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% load i18n crispy_forms_tags %}
+
+{% block head_title %}{% trans "Edit skill wish" %} — ecobasa{% endblock %}
+
+{% block content %}
+<div class="container-form">
+
+  <h1 class="text-2xl text-primary mb-6">
+    <i class="fa fa-pencil mr-2"></i>{% trans "Edit skill wish" %}: {{ wish.skill.name }}
+  </h1>
+
+  <div class="border rounded-xl bg-secondary p-6">
+    <form method="post">
+      {% csrf_token %}
+
+      <div class="form-group mb-4">
+        <label class="form-label" for="id_wish_level">{{ form.wish_level.label }}</label>
+        {{ form.wish_level }}
+        {% for e in form.wish_level.errors %}<p class="field-error">{{ e }}</p>{% endfor %}
+      </div>
+
+      <div class="form-group mb-6">
+        <label class="form-label" for="id_description">{% trans "Description" %}</label>
+        {{ form.description }}
+        {% for e in form.description.errors %}<p class="field-error">{{ e }}</p>{% endfor %}
+      </div>
+
+      <div class="flex gap-3">
+        <button type="submit" class="btn">
+          <i class="fa fa-save mr-2"></i>{% trans "Save" %}
+        </button>
+        {% if community %}
+          <a href="{{ community.get_absolute_url }}" class="btn btn-purple">
+            <i class="fa fa-times mr-2"></i>{% trans "Cancel" %}
+          </a>
+        {% else %}
+          <a href="{{ owner.get_absolute_url }}" class="btn btn-purple">
+            <i class="fa fa-times mr-2"></i>{% trans "Cancel" %}
+          </a>
+        {% endif %}
+      </div>
+    </form>
+  </div>
+
+</div>
+{% endblock %}
