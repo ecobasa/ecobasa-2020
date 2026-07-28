@@ -28,7 +28,6 @@ SITE_ID = env("DJANGO_SITE_ID", default=1)
 TIME_ZONE = "Europe/Berlin"
 LANGUAGE_CODE = "en"
 USE_I18N = True
-USE_L10N = True
 USE_TZ = True
 
 LANGUAGES = [
@@ -64,7 +63,7 @@ DJANGO_APPS = [
     "django.contrib.staticfiles",
     "django.contrib.humanize",
     "django.contrib.gis",
-    "django.forms",
+    "django.forms"
 ]
 
 THIRD_PARTY_APPS = [
@@ -73,12 +72,17 @@ THIRD_PARTY_APPS = [
     "embed_video",
     "taggit",
     "croppie",
+    "postman",
+    "django_countries",
 ]
 
 LOCAL_APPS = ["users", "homepage", "gifting", "communities"]
 
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
+
+# Use BigAutoField by default to avoid implicit primary key warnings on Django 4+
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # MIGRATIONS
 # ------------------------------------------------------------------------------
@@ -161,7 +165,10 @@ TEMPLATES = [
         "DIRS": [APPS_DIR / "templates"],
         "OPTIONS": {
             "debug": DEBUG,
-            "libraries": {"my_crispy_helpers": "templatetags.my_crispy_helpers",},
+            "libraries": {
+                    "my_crispy_helpers": "templatetags.my_crispy_helpers",
+                    "site_tags": "templatetags.site_tags",
+                },
             "loaders": [
                 "django.template.loaders.filesystem.Loader",
                 "django.template.loaders.app_directories.Loader",
@@ -222,6 +229,15 @@ EMAIL_TIMEOUT = 5
 # ------------------------------------------------------------------------------
 CRISPY_ALLOWED_TEMPLATE_PACKS = "crispy_template_pack"
 CRISPY_TEMPLATE_PACK = "crispy_template_pack"
+
+# POSTMAN SETTINGS
+# ------------------------------------------------------------------------------
+POSTMAN_AUTO_MODERATE_AS = True
+POSTMAN_DISALLOW_ANONYMOUS = True
+
+# MAP SETTINGS
+# ------------------------------------------------------------------------------
+STADIA_MAPS_KEY = env('STADIA_MAPS_KEY', default='cb8069a3-9585-4989-a6a8-572b5c3f4ffb')
 
 # APP SETTINGS
 # ------------------------------------------------------------------------------

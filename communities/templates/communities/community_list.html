@@ -1,0 +1,774 @@
+{% extends 'base.html' %}
+{% load static i18n %}
+
+{% block extrahead %}
+  {{ block.super }}
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v7.2.2/ol.css">
+  <script src="https://unpkg.com/htmx.org@1.9.10/dist/htmx.min.js"></script>
+  <script>
+    const communityTypeLabels   = { {% for v, l in community_types %}'{{ v }}': '{{ l|escapejs }}',{% endfor %} };
+    const communityStatusLabels = { {% for v, l in community_statuses %}'{{ v }}': '{{ l|escapejs }}',{% endfor %} };
+
+    document.addEventListener('alpine:init', () => {
+      Alpine.store('communityMap', {
+        view: 'map',
+        layer: 'ecobasa',
+        q: '{{ q|escapejs }}',
+        location: '',
+        loading: false,
+        markerCount: 0,
+        selectedTypes: [],
+        selectedStatuses: [],
+        selectedCountry: '',
+        showMap()  { this.view = 'map'; },
+        showList() { this.view = 'list'; }
+      });
+    });
+
+    function nominatimLabel(d) {
+      const parts = d.display_name.split(',')
+        .map(p => p.trim())
+        .filter(p => p && !/^\d[\d\s\-]*$/.test(p));
+      if (parts.length === 0) return d.display_name;
+      if (parts.length <= 3) return parts.join(', ');
+      return [parts[0], parts[parts.length - 2], parts[parts.length - 1]].join(', ');
+    }
+
+    function nominatimZoom(d) {
+      const rank = d.place_rank || 30;
+      const imp  = parseFloat(d.importance) || 0;
+      if (rank <= 4)  return imp > 0.95 ? 4 : imp > 0.88 ? 6 : 9;  // country: RU / USA+AUS / DE+IT+ES
+      if (rank <= 8)  return 8;                     // state / city-state (Berlin etc.)
+      if (rank <= 14) return 10;                    // city
+      return 12;                                    // town / village
+    }
+
+    function suggestions(endpoint, includeNominatim, context) {
+      return {
+        items: [], active: -1, open: false, _timer: null,
+        suggest(term) {
+          clearTimeout(this._timer);
+          if (!term || term.length < 2) return this.close();
+          const self = this;
+          this._timer = setTimeout(function () {
+            const communityFetch = fetch(endpoint + '?q=' + encodeURIComponent(term))
+              .then(r => r.json()).catch(() => []);
+            const promises = [communityFetch];
+            if (includeNominatim) {
+              const nominatimFetch = fetch(
+                'https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=12&q=' + encodeURIComponent(term)
+              ).then(r => r.json()).then(data => {
+                const seen = new Set();
+                const perCountry = {};
+                return data.reduce((acc, d) => {
+                  const label = nominatimLabel(d);
+                  const cc = (d.address && d.address.country_code) || '??';
+                  if (!seen.has(label)) {
+                    seen.add(label);
+                    perCountry[cc] = (perCountry[cc] || 0) + 1;
+                    if (perCountry[cc] <= 2) {
+                      acc.push({ value: label, type: 'place', lon: parseFloat(d.lon), lat: parseFloat(d.lat), zoom: nominatimZoom(d) });
+                    }
+                  }
+                  return acc;
+                }, []).slice(0, 5);
+              }).catch(() => []);
+              promises.push(nominatimFetch);
+            }
+            Promise.all(promises).then(([communityItems, placeItems]) => {
+              const merged = (communityItems || []).slice(0, 6);
+              if (placeItems) placeItems.forEach(p => merged.push(p));
+              self.items = merged.slice(0, 10);
+              self.open = self.items.length > 0;
+              self.active = -1;
+            }).catch(() => self.close());
+          }, 350);
+        },
+        selectItem(item) {
+          if (item.type === 'place') {
+            Alpine.store('communityMap').location = item.lat + ',' + item.lon;
+            Alpine.store('communityMap').q = '';
+            this.$refs.searchInput.value = '';
+            this.close();
+            if (context === 'modal') {
+              this.$nextTick(() => htmx.trigger(document.getElementById('modal-search-q'), 'list:reload'));
+            }
+            window._communityMapPanTo && window._communityMapPanTo(item.lon, item.lat, item.zoom);
+          } else {
+            Alpine.store('communityMap').q = item.value;
+            this.$refs.searchInput.value = item.value;
+            this.close();
+            if (context === 'modal') {
+              htmx.trigger(document.getElementById('modal-search-q'), 'list:search');
+            }
+            window._communityMapReload && window._communityMapReload(true);
+          }
+        },
+        moveDown() { if (this.open) this.active = Math.min(this.active + 1, this.items.length - 1); },
+        moveUp()   { if (this.open) this.active = Math.max(this.active - 1, 0); },
+        choose()   { if (this.active >= 0 && this.items[this.active]) this.selectItem(this.items[this.active]); },
+        close()    { this.open = false; this.items = []; this.active = -1; clearTimeout(this._timer); }
+      };
+    }
+  </script>
+{% endblock %}
+
+
+{% block content %}
+<div x-data>
+
+  <div class="relative w-full map-shell">
+    <div id="community-map" class="absolute inset-0 w-full h-full rounded shadow bg-secondary bg-opacity-50"></div>
+
+    {% comment %}View toggle — top center{% endcomment %}
+    <div class="absolute top-4 left-1/2 -translate-x-1/2 z-10">
+      <div class="inline-flex overflow-hidden rounded-full shadow-lg border bg-primary bg-opacity-20 backdrop-blur border-red">
+        <button type="button"
+          :class="$store.communityMap.view === 'map' ? 'bg-opacity-90 shadow-inner' : 'bg-opacity-40'"
+          class="btn-pill-select bg-primary transition-all"
+          @click="$store.communityMap.showMap()">
+          <i class="fa fa-globe"></i><span>{% trans "Map" %}</span>
+        </button>
+        <button type="button"
+          :class="$store.communityMap.view === 'list' ? 'bg-opacity-90 shadow-inner' : 'bg-opacity-40'"
+          class="btn-pill-select bg-primary transition-all"
+          @click="$store.communityMap.showList()"
+          hx-get="{% url 'communities:api-list' %}"
+          hx-target="#community-modal-list"
+          hx-swap="innerHTML"
+          hx-include="#community-hidden-filters"
+          hx-trigger="click once">
+          <i class="fa fa-list-alt"></i><span>{% trans "List" %}</span>
+        </button>
+      </div>
+    </div>
+
+    {% comment %}Left toolbar — search row + filter popover + add button{% endcomment %}
+    <div class="absolute top-4 left-4 flex flex-col gap-3 z-10 w-full max-w-40 md:max-w-60 lg:max-w-xs xl:max-w-md">
+      <div class="bg-secondary bg-opacity-30 backdrop-blur rounded-lg shadow p-3 flex flex-col gap-2">
+
+        {% comment %}Search input (full width on mobile, row on md+){% endcomment %}
+        <div class="flex flex-col lg:flex-row gap-2 items-stretch">
+
+          {% comment %}Search input with suggestions{% endcomment %}
+          <div class="relative flex-1" x-data="suggestions('{% url 'communities:api-suggest' %}', true)">
+            <div class="absolute inset-y-0 left-3 flex items-center text-primary opacity-80 pointer-events-none">
+              <i class="fa fa-search"></i>
+            </div>
+            <input
+              x-ref="searchInput"
+              class="form-input icon-input"
+              type="text"
+              placeholder="{% trans 'Name, location or skill…' %}"
+              :value="$store.communityMap.q"
+              @input="$store.communityMap.q = $el.value; suggest($el.value); clearTimeout(window._mapInputTimer); window._mapInputTimer = setTimeout(() => window._communityMapReload && window._communityMapReload(), 600)"
+              @keydown.arrow-down.prevent="moveDown()"
+              @keydown.arrow-up.prevent="moveUp()"
+              @keydown.enter.prevent="choose(); window._communityMapReload && window._communityMapReload(!!(($store.communityMap.q || $store.communityMap.location || $store.communityMap.selectedCountry || $store.communityMap.selectedTypes.length || $store.communityMap.selectedStatuses.length)))"
+              @keydown.escape="close()"
+              @blur="setTimeout(() => close(), 200)">
+            <ul x-show="open" x-cloak
+              class="absolute w-full bg-secondary bg-opacity-85 backdrop-blur rounded shadow-lg border text-sm">
+              <template x-for="(item, i) in items" :key="i">
+                <li :class="i === active ? 'bg-primary text-secondary' : ''"
+                  class="px-3 py-1 cursor-pointer flex items-center justify-between gap-2"
+                  @mousedown.prevent="selectItem(item)">
+                  <span x-text="item.value" class="truncate"></span>
+                  <i x-show="item.type === 'name'" class="fa fa-home text-xs opacity-50 flex-shrink-0"></i>
+                  <i x-show="item.type === 'place' || item.type === 'location'" class="fa fa-map-marker-alt text-xs opacity-50 flex-shrink-0"></i>
+                  <i x-show="item.type === 'skill'" class="fa fa-graduation-cap text-xs opacity-50 flex-shrink-0"></i>
+                  <i x-show="item.type === 'text'" class="fa fa-align-left text-xs opacity-50 flex-shrink-0"></i>
+                </li>
+              </template>
+            </ul>
+          </div>
+
+          {% comment %}Filter + near-me buttons (inline on md+, own row on mobile){% endcomment %}
+          <div class="flex gap-2 flex-shrink-0">
+
+          {% comment %}Filter popover button{% endcomment %}
+          <div class="relative" x-data="{ filterOpen: false }">
+            <button type="button"
+              @click="filterOpen = !filterOpen"
+              :class="($store.communityMap.selectedTypes.length + $store.communityMap.selectedStatuses.length) > 0 ? 'ring-2 ring-offset-1 ring-primary' : ''"
+              class="btn h-full px-3 flex items-center gap-1 text-sm"
+              title="{% trans 'Filters' %}">
+              <i class="fa fa-sliders-h"></i>
+              <span x-show="($store.communityMap.selectedTypes.length + $store.communityMap.selectedStatuses.length) > 0"
+                x-text="$store.communityMap.selectedTypes.length + $store.communityMap.selectedStatuses.length"
+                class="text-xs font-bold leading-none">
+              </span>
+            </button>
+
+            {% comment %}Filter popover panel{% endcomment %}
+            <div x-show="filterOpen" x-cloak
+              @click.away="filterOpen = false"
+              @keydown.escape.window="filterOpen = false"
+              class="absolute left-0 top-full mt-2 w-64 bg-primary text-secondary rounded-lg shadow-xl border border-red p-4 z-30 space-y-4">
+
+              <div>
+                <div class="text-xs font-bold uppercase tracking-wider opacity-70 mb-2">{% trans "Type" %}</div>
+                <div class="space-y-1">
+                  {% for value, label in community_types %}
+                  <label class="flex items-center gap-2 cursor-pointer text-sm hover:bg-secondary hover:bg-opacity-10 rounded px-1 py-0.5">
+                    <input type="checkbox" value="{{ value }}"
+                      class="form-checkbox light h-4 w-4 flex-shrink-0"
+                      :checked="$store.communityMap.selectedTypes.includes('{{ value }}')"
+                      @change="
+                        if ($el.checked) $store.communityMap.selectedTypes.push('{{ value }}');
+                        else $store.communityMap.selectedTypes = $store.communityMap.selectedTypes.filter(v => v !== '{{ value }}');
+                        window._communityMapReload && window._communityMapReload();
+                      ">
+                    <span>{{ label }}</span>
+                  </label>
+                  {% endfor %}
+                </div>
+              </div>
+
+              <div>
+                <div class="text-xs font-bold uppercase tracking-wider opacity-70 mb-2">{% trans "Status" %}</div>
+                <div class="space-y-1">
+                  {% for value, label in community_statuses %}
+                  <label class="flex items-center gap-2 cursor-pointer text-sm hover:bg-secondary hover:bg-opacity-10 rounded px-1 py-0.5">
+                    <input type="checkbox" value="{{ value }}"
+                      class="form-checkbox light h-4 w-4 flex-shrink-0"
+                      :checked="$store.communityMap.selectedStatuses.includes('{{ value }}')"
+                      @change="
+                        if ($el.checked) $store.communityMap.selectedStatuses.push('{{ value }}');
+                        else $store.communityMap.selectedStatuses = $store.communityMap.selectedStatuses.filter(v => v !== '{{ value }}');
+                        window._communityMapReload && window._communityMapReload();
+                      ">
+                    <span>{{ label }}</span>
+                  </label>
+                  {% endfor %}
+                </div>
+              </div>
+
+              <button type="button"
+                x-show="($store.communityMap.selectedTypes.length + $store.communityMap.selectedStatuses.length) > 0"
+                class="text-xs underline opacity-70 hover:opacity-100"
+                @click="$store.communityMap.selectedTypes = []; $store.communityMap.selectedStatuses = []; window._communityMapReload && window._communityMapReload();">
+                {% trans "Clear filters" %}
+              </button>
+            </div>
+          </div>
+
+          {% comment %}Near me button{% endcomment %}
+          <button type="button"
+            class="btn px-3"
+            title="{% trans 'Show communities near me' %}"
+            @click="
+              if (!navigator.geolocation) return;
+              navigator.geolocation.getCurrentPosition(pos => {
+                $store.communityMap.location = pos.coords.latitude + ',' + pos.coords.longitude;
+                window._communityMapPanTo && window._communityMapPanTo(pos.coords.longitude, pos.coords.latitude);
+              });
+            ">
+            <i class="fa fa-crosshairs"></i>
+          </button>
+
+          </div>{# end buttons row #}
+        </div>{# end search+buttons flex #}
+
+        {% comment %}Active filter pills — compact summary row{% endcomment %}
+        <div x-show="($store.communityMap.selectedTypes.length + $store.communityMap.selectedStatuses.length) > 0"
+          x-cloak
+          class="flex flex-wrap gap-1">
+          <template x-for="t in $store.communityMap.selectedTypes" :key="t">
+            <span class="inline-flex items-center gap-1 text-xs bg-primary text-secondary rounded-full px-2 py-0.5">
+              <span x-text="communityTypeLabels[t] || t"></span>
+              <button @click="$store.communityMap.selectedTypes = $store.communityMap.selectedTypes.filter(v => v !== t); window._communityMapReload && window._communityMapReload();" class="opacity-70 hover:opacity-100">&times;</button>
+            </span>
+          </template>
+          <template x-for="s in $store.communityMap.selectedStatuses" :key="s">
+            <span class="inline-flex items-center gap-1 text-xs bg-primary text-secondary rounded-full px-2 py-0.5">
+              <span x-text="communityStatusLabels[s] || s"></span>
+              <button @click="$store.communityMap.selectedStatuses = $store.communityMap.selectedStatuses.filter(v => v !== s); window._communityMapReload && window._communityMapReload();" class="opacity-70 hover:opacity-100">&times;</button>
+            </span>
+          </template>
+        </div>
+
+        {% comment %}Count + clear row{% endcomment %}
+        <div class="flex items-center justify-between text-brown">
+          <span x-text="$store.communityMap.markerCount + ' {% trans "results on map" %}'"></span>
+          <button type="button" x-cloak
+            x-show="$store.communityMap.selectedTypes.length + $store.communityMap.selectedStatuses.length + ($store.communityMap.selectedCountry ? 1 : 0) + ($store.communityMap.q ? 1 : 0) > 0"
+            class="underline opacity-70 hover:opacity-100"
+            @click="
+              $store.communityMap.selectedTypes = [];
+              $store.communityMap.selectedStatuses = [];
+              $store.communityMap.selectedCountry = '';
+              $store.communityMap.q = '';
+              $store.communityMap.location = '';
+              document.querySelector('[x-ref=searchInput]').value = '';
+              window._communityMapReload && window._communityMapReload();
+            ">
+            {% trans "Clear filters" %}
+          </button>
+        </div>
+
+      </div>
+
+      {% if user.is_authenticated %}
+        <a href="{% url 'communities:create' %}" class="btn shadow self-start text-sm">
+          <i class="fa fa-plus mr-1"></i> {% trans "Add community" %}
+        </a>
+      {% endif %}
+    </div>
+
+    {# ── Layer switcher – top-right ── #}
+    <div class="absolute top-4 right-4 z-10" x-data="{ layerOpen: false }">
+      <button type="button"
+        x-show="!layerOpen"
+        @mouseenter="layerOpen = !layerOpen"
+        @click="layerOpen = !layerOpen"
+        class="w-14 h-14 rounded-md bg-primary bg-opacity-80 text-secondary shadow-lg border border-red backdrop-blur hover:bg-opacity-90 transition-colors"
+        aria-label="{% trans 'Switch map layer' %}">
+        <i class="fa fa-layer-group"></i>
+      </button>
+      <div x-show="layerOpen" x-cloak @click.away="layerOpen = false"
+        class="absolute right-0 mt-2 w-48 bg-primary text-secondary bg-opacity-80 backdrop-blur rounded-lg shadow-xl border py-2 border-red">
+        <div class="px-3 py-1 text-xs font-bold uppercase tracking-wider">{% trans "Map style" %}</div>
+        <hr class="border-secondary opacity-20 my-1">
+        <label class="flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-secondary hover:bg-opacity-10">
+          <input
+            type="radio"
+            name="community-map-layer"
+            class="light"
+            :checked="$store.communityMap.layer === 'ecobasa'"
+            @change="$store.communityMap.layer = 'ecobasa'; window._communityMapSetLayer('ecobasa'); layerOpen = false;">
+          <span class="text-sm">{% trans "ecobasa" %}</span>
+        </label>
+        <label class="flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-secondary hover:bg-opacity-10">
+          <input
+            type="radio"
+            name="community-map-layer"
+            class="light"
+            :checked="$store.communityMap.layer === 'osm'"
+            @change="$store.communityMap.layer = 'osm'; window._communityMapSetLayer('osm'); layerOpen = false;">
+          <span class="text-sm">{% trans "OpenStreetMap" %}</span>
+        </label>
+        <label class="flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-secondary hover:bg-opacity-10">
+          <input type="radio" name="community-map-layer"
+            class="light"
+            :checked="$store.communityMap.layer === 'satellite'"
+            @change="$store.communityMap.layer = 'satellite'; window._communityMapSetLayer('satellite'); layerOpen = false;">
+          <span class="text-sm">{% trans "Satellite" %}</span>
+        </label>
+      </div>
+    </div>
+
+    {% comment %}Loading spinner{% endcomment %}
+    <div x-show="$store.communityMap.loading" x-cloak
+      class="absolute bottom-16 left-1/2 -translate-x-1/2 z-10 bg-primary text-secondary px-3 py-1 rounded-full shadow text-xs">
+      <i class="fa fa-spinner fa-spin mr-1"></i> {% trans "Loading…" %}
+    </div>
+  </div>
+
+
+  {% comment %}List modal{% endcomment %}
+  <div x-show="$store.communityMap.view === 'list'" x-cloak
+    class="modal-overlay flex"
+    @click.self="$store.communityMap.showMap()"
+    @keydown.escape.window="$store.communityMap.showMap()">
+
+    <div class="modal bg-secondary px-5 pt-8 rounded-lg shadow-xl max-w-5xl w-full relative">
+      <button class="absolute top-0 right-2 text-3xl" @click="$store.communityMap.showMap()">&times;</button>
+
+      <div class="space-y-3 mb-4">
+
+        {% comment %}Search + filter button + near me row{% endcomment %}
+        <div class="flex gap-2 items-stretch">
+
+          {% comment %}Modal search input with suggestions{% endcomment %}
+          <div class="relative flex-1" x-data="suggestions('{% url 'communities:api-suggest' %}', true, 'modal')">
+            <div class="absolute inset-y-0 left-3 flex items-center text-primary opacity-80 pointer-events-none">
+              <i class="fa fa-search"></i>
+            </div>
+            <input
+              x-ref="searchInput"
+              id="modal-search-q"
+              type="text"
+              name="q"
+              :value="$store.communityMap.q"
+              class="form-input icon-input w-full"
+              placeholder="{% trans 'Search by name, location or skill' %}"
+              autocomplete="off"
+              hx-get="{% url 'communities:api-list' %}"
+              hx-target="#community-modal-list"
+              hx-swap="innerHTML"
+              hx-trigger="input changed delay:400ms, list:search, list:reload"
+              hx-include="#community-hidden-filters, [name='type'], [name='status'], [name='country']"
+              @input="$store.communityMap.q = $el.value; suggest($el.value)"
+              @keydown.arrow-down.prevent="moveDown()"
+              @keydown.arrow-up.prevent="moveUp()"
+              @keydown.enter.prevent="choose()"
+              @keydown.escape="close()"
+              @blur="setTimeout(() => close(), 200)">
+            <ul x-show="open" x-cloak
+              class="absolute z-30 w-full mt-1 bg-secondary rounded shadow-lg border">
+              <template x-for="(item, i) in items" :key="i">
+                <li :class="i === active ? 'bg-primary text-secondary' : ''"
+                  class="px-3 py-1 cursor-pointer flex items-center justify-between gap-2"
+                  @mousedown.prevent="selectItem(item)">
+                  <span x-text="item.value" class="truncate"></span>
+                  <i x-show="item.type === 'name'" class="fa fa-home text-xs opacity-50 flex-shrink-0"></i>
+                  <i x-show="item.type === 'place' || item.type === 'location'" class="fa fa-map-marker-alt text-xs opacity-50 flex-shrink-0"></i>
+                  <i x-show="item.type === 'skill'" class="fa fa-graduation-cap text-xs opacity-50 flex-shrink-0"></i>
+                  <i x-show="item.type === 'text'" class="fa fa-align-left text-xs opacity-50 flex-shrink-0"></i>
+                </li>
+              </template>
+            </ul>
+          </div>
+
+          {% comment %}Modal filter popover{% endcomment %}
+          <div class="relative flex-shrink-0" x-data="{ modalFilterOpen: false }">
+            <button type="button"
+              @click="modalFilterOpen = !modalFilterOpen"
+              :class="($store.communityMap.selectedTypes.length + $store.communityMap.selectedStatuses.length) > 0 ? 'ring-2 ring-offset-1 ring-primary' : ''"
+              class="btn h-full px-3 flex items-center gap-1 text-sm"
+              title="{% trans 'Filters' %}">
+              <i class="fa fa-sliders-h"></i>
+              <span x-show="($store.communityMap.selectedTypes.length + $store.communityMap.selectedStatuses.length) > 0"
+                x-text="$store.communityMap.selectedTypes.length + $store.communityMap.selectedStatuses.length"
+                class="text-xs font-bold leading-none">
+              </span>
+            </button>
+
+            <div x-show="modalFilterOpen" x-cloak
+              @click.away="modalFilterOpen = false"
+              @keydown.escape.window="modalFilterOpen = false"
+              class="absolute left-0 top-full mt-2 w-64 bg-primary text-secondary rounded-lg shadow-xl border border-red p-4 z-30 space-y-4">
+
+              <div>
+                <div class="text-xs font-bold uppercase tracking-wider opacity-70 mb-2">{% trans "Type" %}</div>
+                <div class="space-y-1">
+                  {% for value, label in community_types %}
+                  <label class="flex items-center gap-2 cursor-pointer text-sm hover:bg-secondary hover:bg-opacity-10 rounded px-1 py-0.5">
+                    <input type="checkbox" name="type" value="{{ value }}"
+                      class="form-checkbox light h-4 w-4 flex-shrink-0"
+                      :checked="$store.communityMap.selectedTypes.includes('{{ value }}')"
+                      @change="
+                        if ($el.checked) $store.communityMap.selectedTypes.push('{{ value }}');
+                        else $store.communityMap.selectedTypes = $store.communityMap.selectedTypes.filter(v => v !== '{{ value }}');
+                        window._communityMapReload && window._communityMapReload();
+                        htmx.trigger(document.getElementById('modal-search-q'), 'list:search');
+                      ">
+                    <span>{{ label }}</span>
+                  </label>
+                  {% endfor %}
+                </div>
+              </div>
+
+              <div>
+                <div class="text-xs font-bold uppercase tracking-wider opacity-70 mb-2">{% trans "Status" %}</div>
+                <div class="space-y-1">
+                  {% for value, label in community_statuses %}
+                  <label class="flex items-center gap-2 cursor-pointer text-sm hover:bg-secondary hover:bg-opacity-10 rounded px-1 py-0.5">
+                    <input type="checkbox" name="status" value="{{ value }}"
+                      class="form-checkbox light h-4 w-4 flex-shrink-0"
+                      :checked="$store.communityMap.selectedStatuses.includes('{{ value }}')"
+                      @change="
+                        if ($el.checked) $store.communityMap.selectedStatuses.push('{{ value }}');
+                        else $store.communityMap.selectedStatuses = $store.communityMap.selectedStatuses.filter(v => v !== '{{ value }}');
+                        window._communityMapReload && window._communityMapReload();
+                        htmx.trigger(document.getElementById('modal-search-q'), 'list:search');
+                      ">
+                    <span>{{ label }}</span>
+                  </label>
+                  {% endfor %}
+                </div>
+              </div>
+
+              <button type="button"
+                x-show="($store.communityMap.selectedTypes.length + $store.communityMap.selectedStatuses.length) > 0"
+                class="text-xs underline opacity-70 hover:opacity-100"
+                @click="
+                  $store.communityMap.selectedTypes = [];
+                  $store.communityMap.selectedStatuses = [];
+                  window._communityMapReload && window._communityMapReload();
+                  $nextTick(() => htmx.trigger(document.getElementById('modal-search-q'), 'list:search'));
+                ">
+                {% trans "Clear filters" %}
+              </button>
+            </div>
+          </div>
+
+          {% comment %}Near me — modal version sorts list by proximity{% endcomment %}
+          <button type="button"
+            class="btn"
+            title="{% trans 'Show communities near me' %}"
+            @click="
+              if (!navigator.geolocation) return;
+              navigator.geolocation.getCurrentPosition(pos => {
+                $store.communityMap.location = pos.coords.latitude + ',' + pos.coords.longitude;
+                htmx.trigger(document.getElementById('modal-search-q'), 'list:reload');
+                window._communityMapReload && window._communityMapReload();
+              });
+            ">
+            <i class="fa fa-crosshairs"></i>
+          </button>
+        </div>
+
+        {% comment %}Country dropdown{% endcomment %}
+        <select
+          name="country"
+          class="form-select w-full rounded text-sm"
+          x-model="$store.communityMap.selectedCountry"
+          hx-get="{% url 'communities:api-list' %}"
+          hx-target="#community-modal-list"
+          hx-swap="innerHTML"
+          hx-trigger="change"
+          hx-include="#community-hidden-filters, [name='q'], [name='type'], [name='status']"
+          @change="window._communityMapReload && window._communityMapReload()">
+          <option value="">{% trans "All countries" %}</option>
+          {% for code, name in countries %}
+          <option value="{{ code }}">{{ name }}</option>
+          {% endfor %}
+        </select>
+
+        {% comment %}Active filter pills in modal{% endcomment %}
+        <div x-show="($store.communityMap.selectedTypes.length + $store.communityMap.selectedStatuses.length) > 0"
+          x-cloak class="flex flex-wrap gap-1">
+          <template x-for="t in $store.communityMap.selectedTypes" :key="t">
+            <span class="inline-flex items-center gap-1 text-xs bg-primary text-secondary rounded-full px-2 py-0.5">
+              <span x-text="communityTypeLabels[t] || t"></span>
+              <button
+                @click="
+                  $store.communityMap.selectedTypes = $store.communityMap.selectedTypes.filter(v => v !== t);
+                  window._communityMapReload && window._communityMapReload();
+                  $nextTick(() => htmx.trigger(document.getElementById('modal-search-q'), 'list:search'));
+                "
+                class="opacity-70 hover:opacity-100">&times;</button>
+            </span>
+          </template>
+          <template x-for="s in $store.communityMap.selectedStatuses" :key="s">
+            <span class="inline-flex items-center gap-1 text-xs bg-primary text-secondary rounded-full px-2 py-0.5">
+              <span x-text="communityStatusLabels[s] || s"></span>
+              <button
+                @click="
+                  $store.communityMap.selectedStatuses = $store.communityMap.selectedStatuses.filter(v => v !== s);
+                  window._communityMapReload && window._communityMapReload();
+                  $nextTick(() => htmx.trigger(document.getElementById('modal-search-q'), 'list:search'));
+                "
+                class="opacity-70 hover:opacity-100">&times;</button>
+            </span>
+          </template>
+        </div>
+
+        {% comment %}Result count + clear-all button{% endcomment %}
+        <div class="text-xs text-brown flex items-center justify-between gap-2">
+          <span id="community-modal-count" hx-swap-oob="true"></span>
+          <button type="button" x-cloak
+            x-show="$store.communityMap.selectedTypes.length + $store.communityMap.selectedStatuses.length + ($store.communityMap.selectedCountry ? 1 : 0) + ($store.communityMap.q ? 1 : 0) > 0"
+            class="underline opacity-70 hover:opacity-100 whitespace-nowrap"
+            @click="
+              $store.communityMap.selectedTypes = [];
+              $store.communityMap.selectedStatuses = [];
+              $store.communityMap.selectedCountry = '';
+              $store.communityMap.q = '';
+              $store.communityMap.location = '';
+              document.getElementById('modal-search-q').value = '';
+              window._communityMapReload && window._communityMapReload();
+              $nextTick(() => htmx.trigger(document.getElementById('modal-search-q'), 'list:search'));
+            ">
+            {% trans "Clear all filters" %}
+          </button>
+        </div>
+      </div>
+
+      {% comment %}HTMX list target{% endcomment %}
+      <div id="community-modal-list"
+        class="max-h-[60vh] overflow-y-auto space-y-3"
+        hx-get="{% url 'communities:api-list' %}"
+        hx-target="this"
+        hx-swap="innerHTML"
+        hx-include="#community-hidden-filters, [name='type'], [name='status'], [name='country']"
+        hx-trigger="revealed">
+        <div class="text-center py-8 text-brown">
+          <i class="fa fa-spinner fa-spin text-2xl"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {% comment %}Hidden filter inputs shared by all HTMX requests{% endcomment %}
+  <div id="community-hidden-filters" style="display:none" aria-hidden="true">
+    <input type="hidden" name="q"        :value="$store.communityMap.q">
+    <input type="hidden" name="location" :value="$store.communityMap.location">
+    <input type="hidden" name="country"  :value="$store.communityMap.selectedCountry">
+  </div>
+
+</div>
+{% endblock %}
+
+
+{% block javascript %}
+{{ block.super }}
+<script src="https://cdn.jsdelivr.net/npm/ol@v7.2.2/dist/ol.js"></script>
+<script>
+'use strict';
+
+let communityOlMap, communityVectorSource;
+
+
+function getDynamicStyle(feature) {
+  const type = feature.get('type');
+  let iconCode = '\uf015';
+  let pinColor  = '#da6137';
+  if (type === 'Permaculture Farm')   { iconCode = '\uf4d8'; pinColor = '#5A5527'; }
+  else if (type === 'Ecovillage') { iconCode = '\ue537'; pinColor = '#b4502c'; }
+  else if (type === 'Commune') { iconCode = '\ue3af'; pinColor = '#de7a08'; }
+  else if (type === 'Houseproject') { iconCode = '\ue3af'; pinColor = '#e34a26'; }
+  else if (type === 'Place for Projects') { iconCode = '\uf6e3'; pinColor = '#ff7800'; }
+  return new ol.style.Style({
+    image: new ol.style.Icon({
+      img: EcoMap.createLayeredIcon(iconCode, pinColor), imgSize: [80, 80], anchor: [0.5, 0.85], scale: 0.7
+    })
+  });
+}
+
+function buildCommunityPopupHTML(f) {
+  const name   = f.get('name')        || '';
+  const url    = f.get('url')         || '';
+  const img    = f.get('image');
+  const skills = f.get('skills')      || [];
+  const desc   = f.get('description') || '';
+  const vision = f.get('vision')      || '';
+  const type   = f.get('type')        || '';
+  let html = '<div class="map-popup">';
+
+  const stats = [];
+  if (f.get('inhabitants')) stats.push(`<i class="fa fa-users"></i> ${f.get('inhabitants')}`);
+  if (f.get('children'))    stats.push(`<i class="fa fa-child"></i> ${f.get('children')}`);
+  if (f.get('max_guests'))  stats.push(`<i class="fa fa-suitcase"></i> ${f.get('max_guests')}`);
+  if (stats.length) html += `<div class="popup-meta">${stats.join(' | ')}</div>`;
+
+  if (type === 'Permaculture Farm')
+    html += `<span class="pill bg-green text-secondary"><i class="fa fa-leaf mr-1"></i>${type}</span>`;
+  else if (type === 'Place for Projects')
+    html += `<span class="pill bg-orange text-secondary"><i class="fa fa-map-marker-alt mr-1"></i>${type}</span>`;
+  else
+    html += `<span class="pill bg-primary text-secondary"><i class="fa fa-home mr-1"></i>${type}</span>`;
+
+  if (name) html += `<h3>${url ? `<a href="${url}">${name}</a>` : name}</h3>`;
+
+  if (img)         html += `<img src="${img}" class="w-full h-24 object-cover rounded my-2">`;
+
+  if (desc)        html += `<span class="line-clamp-4">${desc}</span>`;
+  else if (vision) html += `<span class="line-clamp-4">${vision}</span>`;
+
+  if (skills.length) {
+    html += '<div class="m-2 truncate">';
+    skills.slice(0, 5).forEach(s => { html += `<span class="pill bg-purple text-secondary mr-2">${s}</span>`; });
+    html += '</div>';
+  }
+
+  if (url)         html += `<a class="text-primary underline" href="${url}">{% trans "Open profile" %}</a>`;
+  html += '</div>';
+  return html;
+}
+
+function initCommunityMap() {
+  const mapEl = document.getElementById('community-map');
+  if (!mapEl) return;
+
+  communityVectorSource = new ol.source.Vector();
+  const baseLayers = EcoMap.buildBaseLayers();
+  const markersLayer = new ol.layer.Vector({ source: communityVectorSource });
+
+  communityOlMap = new ol.Map({
+    target: 'community-map',
+    layers: baseLayers.all.concat([markersLayer]),
+    view: new ol.View({ center: ol.proj.fromLonLat([0, 20]), zoom: 2, maxZoom: 20 })
+  });
+  baseLayers.setBaseLayer('ecobasa');
+
+  const popupEl = document.createElement('div');
+  const overlay = new ol.Overlay({ element: popupEl, positioning: 'bottom-center', stopEvent: false, offset: [0, -8] });
+  communityOlMap.addOverlay(overlay);
+
+  communityOlMap.on('singleclick', e => {
+    const feature = communityOlMap.forEachFeatureAtPixel(e.pixel, f => f);
+    if (feature) { popupEl.innerHTML = buildCommunityPopupHTML(feature); overlay.setPosition(e.coordinate); }
+    else          { overlay.setPosition(undefined); }
+  });
+
+  window._communityMapSetLayer = function (mode) {
+    baseLayers.setBaseLayer(mode);
+    communityOlMap.renderSync();
+  };
+
+  window._communityMapPanTo = function (lon, lat, zoom) {
+    communityOlMap.getView().animate(
+      { center: ol.proj.fromLonLat([lon, lat]), zoom: zoom || 7 },
+      function () { window._communityMapReload(); }
+    );
+  };
+
+  window._communityMapReload = function (fitToResults) {
+    const store = Alpine.store('communityMap');
+    if (!store) return;
+    store.loading = true;
+    const params = new URLSearchParams();
+    if (store.q)               params.set('q', store.q);
+    if (store.location)        params.set('location', store.location);
+    if (store.selectedCountry) params.set('country', store.selectedCountry);
+    store.selectedTypes.forEach(t    => params.append('type', t));
+    store.selectedStatuses.forEach(s => params.append('status', s));
+    // When fitting to results, skip bbox so all matches are returned globally
+    if (!fitToResults) {
+      const view = communityOlMap.getView();
+      const size = communityOlMap.getSize();
+      if (size) {
+        const ext = ol.proj.transformExtent(view.calculateExtent(size), 'EPSG:3857', 'EPSG:4326');
+        if (ext && ext.every(isFinite)) params.set('bbox', ext.map(v => v.toFixed(4)).join(','));
+      }
+    }
+    fetch('{% url "communities:api-markers" %}?' + params.toString())
+      .then(r => r.json())
+      .then(data => {
+        communityVectorSource.clear();
+        const features = (data.features || []).map(item => {
+          const props  = item.properties || item;
+          const coords = item.geometry ? item.geometry.coordinates : [item.longitude, item.latitude];
+          const f = new ol.Feature({
+            geometry: new ol.geom.Point(ol.proj.fromLonLat([parseFloat(coords[0]), parseFloat(coords[1])])),
+            ...props
+          });
+          f.setStyle(getDynamicStyle(f));
+          return f;
+        });
+        communityVectorSource.addFeatures(features);
+        store.markerCount = features.length;
+        if (fitToResults && features.length > 0) {
+          if (features.length === 1) {
+            const coords = features[0].getGeometry().getCoordinates();
+            communityOlMap.getView().animate({ center: coords, zoom: 12 });
+          } else {
+            const ext = communityVectorSource.getExtent();
+            if (ext && ext.every(isFinite)) {
+              communityOlMap.getView().fit(ext, { padding: [60, 60, 60, 60], minZoom: 3, maxZoom: 10 });
+            }
+          }
+        }
+      })
+      .catch(err => console.error('Community marker fetch failed:', err))
+      .finally(() => { store.loading = false; });
+  };
+
+  let fetchTimer;
+  communityOlMap.on('moveend', () => {
+    clearTimeout(fetchTimer);
+    fetchTimer = setTimeout(() => window._communityMapReload(), 300);
+  });
+
+  window.addEventListener('resize', () => communityOlMap.updateSize());
+  window._communityMapReload();
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+  setTimeout(initCommunityMap, 100);
+});
+</script>
+{% endblock %}

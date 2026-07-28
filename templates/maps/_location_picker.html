@@ -1,0 +1,51 @@
+{% load i18n %}
+{# Location picker: set_point_fn (required), map_id (required), locate_fn (optional), map_height (optional, default h-[280px]), no_label (optional) #}
+<div x-data="EcoMap.locationDropdown('{{ set_point_fn }}')" class="relative space-y-2">
+  <div class="relative">
+    {% if not no_label %}
+    <label class="form-label" for="id_location_name">{{ form.location_name.label }}</label>
+    {% endif %}
+    <div class="relative">
+      <input type="text" name="location_name" id="id_location_name"
+        value="{{ form.location_name.value|default_if_none:'' }}"
+        class="form-input {% if locate_fn %}pr-10{% endif %}"
+        @input.debounce="onInput($el.value)"
+        autocomplete="off"
+        placeholder="{% trans 'City, country…' %}">
+      {% if locate_fn %}
+      <button type="button" onclick="window.{{ locate_fn }}()"
+        class="btn absolute right-0"
+        title="{% trans 'Use my current location' %}">
+        <i class="fa-solid fa-crosshairs"></i>
+      </button>
+      {% endif %}
+    </div>
+    <div x-show="open" @click.outside="open = false" style="display:none"
+      class="absolute z-20 inset-x-0 bg-secondary backdrop-blur bg-opacity-80 shadow-lg text-xs py-3 rounded-b border-b border-l border-r">
+      <ul class="list-none m-0">
+        <template x-for="res in results" :key="res.place_id">
+          <li class="m-0">
+            <a @click.prevent="onSelect(res)" href="#"
+              class="block px-2 py-2 text-brown hover:bg-primary hover:text-secondary"
+              x-text="res.display_name"></a>
+          </li>
+        </template>
+      </ul>
+    </div>
+    {% for error in form.location_name.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+  </div>
+
+  {{ form.location }}
+
+  <div class="rounded shadow overflow-hidden {{ map_height|default:'h-[280px]' }}">
+    <div id="{{ map_id }}" class="w-full h-full bg-secondary bg-opacity-40"></div>
+  </div>
+  <p class="text-xs text-brown">{% trans "Click the map or drag the pin to set your exact location." %}</p>
+
+  <div class="mt-2">
+    <label class="form-label" for="id_country">{{ form.country.label }}</label>
+    {{ form.country }}
+    <p class="text-xs text-brown mt-1">{% trans "Auto-filled from map — you can also set it manually." %}</p>
+    {% for error in form.country.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+  </div>
+</div>

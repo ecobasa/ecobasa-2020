@@ -1,0 +1,62 @@
+{% extends 'postman/base.html' %}
+{% load i18n %}
+
+{% block postman_content %}
+  <h1 class="text-2xl font-semibold mb-4">{% trans "Outbox" %}</h1>
+
+  {% if pm_messages %}
+    <ul class="space-y-3">
+      {% for m in pm_messages %}
+        <li class="p-3 bg-primary rounded flex items-start gap-4">
+          <div class="flex-none flex flex-col items-center">
+            {% if m.recipient and m.recipient.image %}
+              <a href="{{ m.recipient.get_absolute_url }}">
+                <img class="w-10 h-10 rounded-full object-cover" src="{{ m.recipient.image.url }}" alt="{% if m.recipient.name %}{{ m.recipient.name }}{% elif m.recipient.get_full_name %}{{ m.recipient.get_full_name }}{% elif m.recipient.get_username %}{{ m.recipient.get_username }}{% else %}{{ m.recipient.email }}{% endif %}">
+              </a>
+            {% else %}
+              <a href="{{ m.recipient.get_absolute_url }}">
+                <i class="fa fa-user text-3xl text-primary rounded-full border border-dashed border-primary p-3" title="{% if m.recipient.name %}{{ m.recipient.name }}{% elif m.recipient.get_full_name %}{{ m.recipient.get_full_name }}{% elif m.recipient.get_username %}{{ m.recipient.get_username }}{% else %}{{ m.recipient.email }}{% endif %}"></i>
+              </a>
+            {% endif %}
+            <div class="text-xs text-secondary mt-2 font-serif text-center">
+              {% if m.recipient %}
+                <a href="{{ m.recipient.get_absolute_url }}" class="text-secondary hover:underline">
+                  {% if m.recipient.name %}
+                    {{ m.recipient.name }}
+                  {% elif m.recipient.get_full_name %}
+                    {{ m.recipient.get_full_name }}
+                  {% elif m.recipient.get_username %}
+                    {{ m.recipient.get_username }}
+                  {% else %}
+                    {{ m.recipient.email }}
+                  {% endif %}
+                </a>
+              {% else %}
+                {% trans "(no recipient)" %}
+              {% endif %}
+            </div>
+          </div>
+          <div class="flex-1">
+            <div class="font-bold">
+              <a class="text-secondary font-serif hover:underline" href="{% url 'postman:view' m.pk %}">{% if m.subject %}{{ m.subject }}{% else %}{% trans "(no subject)" %}{% endif %}</a>
+            </div>
+            <div class="text-sm text-secondary mt-1">{{ m.body|truncatechars:200 }}</div>
+          </div>
+          <div class="flex-none text-xs text-brown">{% if m.sent_at %}{{ m.sent_at }}{% endif %}</div>
+        </li>
+      {% endfor %}
+    </ul>
+  {% elif object_list %}
+    <ul class="space-y-3">
+      {% for m in object_list %}
+        <li class="p-3 bg-white bg-opacity-5 rounded">
+          <div class="font-bold">{% if m.subject %}{{ m.subject }}{% else %}{% trans "(no subject)" %}{% endif %}</div>
+          <div class="text-sm text-brown mt-1">{{ m.body|truncatechars:200 }}</div>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <div class="text-brown">{% trans "No messages to display." %}</div>
+  {% endif %}
+
+{% endblock postman_content %}

@@ -1,0 +1,230 @@
+{% extends 'base.html' %}
+{% load i18n static %}
+
+{% block extrahead %}
+  {{ block.super }}
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v7.2.2/ol.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.css">
+{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 mt-10 mb-12">
+  <button type="button" class="btn flex items-center text-sm leading-5 font-medium mb-10" href="{{ user_obj.get_absolute_url }}">
+    <svg class="flex-shrink-0 -ml-1 mr-1 h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+      <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+    </svg>
+    {% trans "Back to profile" %}
+  </button>
+  <h1>{% if community %}{% blocktrans with name=community.name %}Edit {{ name }}{% endblocktrans %}{% else %}{% trans "Add your community" %}{% endif %}</h1>
+
+  <form id="community-main-form" method="post" enctype="multipart/form-data" class="space-y-6">
+    {% csrf_token %}
+    {% if form.non_field_errors %}
+      <div class="p-3 rounded bg-red-100 text-red-800 text-sm">
+        {% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
+      </div>
+    {% endif %}
+
+    <div>
+      <label class="form-label" for="id_name">{{ form.name.label }}</label>
+      {{ form.name }}
+      {% for error in form.name.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+    </div>
+
+    <div>
+      <label class="form-label" for="id_type">{{ form.type.label }}</label>
+      {{ form.type }}
+      {% for error in form.type.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+    </div>
+
+    <div>
+      <label class="form-label" for="id_status">{{ form.status.label }}</label>
+      {{ form.status }}
+      {% for error in form.status.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+    </div>
+
+    <!-- Location -->
+    {% include "maps/_location_picker.html" with map_id="community-location-map" set_point_fn="setCommunityPoint" locate_fn="locateCommunity" map_height="h-80" %}
+
+    <div>
+      <label class="form-label" for="id_description">{{ form.description.label }}</label>
+      {{ form.description }}
+      {% for error in form.description.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+    </div>
+
+    <div>
+      <label class="form-label" for="id_vision">{{ form.vision.label }}</label>
+      {{ form.vision }}
+      {% for error in form.vision.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+    </div>
+
+    <div>
+      <label class="form-label" for="id_gallery">{% trans "Gallery images" %}</label>
+      {{ form.gallery }}
+      {% if form.gallery.help_text %}<p class="text-xs text-brown">{{ form.gallery.help_text }}</p>{% endif %}
+      {% for error in form.gallery.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+      {% if community and community.photos.all %}
+        <div class="mt-3 space-y-2">
+          <p class="text-sm font-semibold text-primary">{% trans "Existing photos" %}</p>
+          <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+            {% for photo in community.photos.all %}
+              <label class="block border rounded shadow-sm bg-white bg-opacity-70 p-2 cursor-pointer">
+                <img src="{{ photo.image.url }}" alt="" class="w-full h-28 object-cover rounded mb-2">
+                <span class="inline-flex items-center text-sm text-brown"><input type="checkbox" name="delete_photos" value="{{ photo.id }}" class="form-checkbox">{% trans "Delete" %}</span>
+              </label>
+            {% endfor %}
+          </div>
+        </div>
+      {% endif %}
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-4">
+      <div>
+        <label class="form-label" for="id_inhabitants">{{ form.inhabitants.label }}</label>
+        {{ form.inhabitants }}
+        {% for error in form.inhabitants.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+      </div>
+      <div>
+        <label class="form-label" for="id_children">{{ form.children.label }}</label>
+        {{ form.children }}
+        {% for error in form.children.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+      </div>
+    </div>
+
+    <div>
+      <label class="form-label" for="id_telephone">{{ form.telephone.label }}</label>
+      {{ form.telephone }}
+      {% for error in form.telephone.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+    </div>
+
+    <h3 class="text-lg font-semibold text-primary">{% trans "Visitor information" %}</h3>
+    <div>
+      <label class="form-label" for="id_accomodation">{{ form.accomodation.label }}</label>
+      {{ form.accomodation }}
+      {% if form.accomodation.help_text %}<p class="text-xs text-brown">{{ form.accomodation.help_text }}</p>{% endif %}
+      {% for error in form.accomodation.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+    </div>
+
+    <div>
+      <label class="form-label" for="id_visitor_requirements">{{ form.visitor_requirements.label }}</label>
+      {{ form.visitor_requirements }}
+      {% if form.visitor_requirements.help_text %}<p class="text-xs text-brown">{{ form.visitor_requirements.help_text }}</p>{% endif %}
+      {% for error in form.visitor_requirements.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+    </div>
+
+    <div>
+      <label class="form-label" for="id_has_workshop_space">{{ form.has_workshop_space.label }}</label>
+      {{ form.has_workshop_space }}
+      {% if form.has_workshop_space.help_text %}<p class="text-xs text-brown">{{ form.has_workshop_space.help_text }}</p>{% endif %}
+      {% for error in form.has_workshop_space.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+    </div>
+
+    <div>
+      <label class="form-label" for="id_offers_seminars">{{ form.offers_seminars.label }}</label>
+      {{ form.offers_seminars }}
+      {% if form.offers_seminars.help_text %}<p class="text-xs text-brown">{{ form.offers_seminars.help_text }}</p>{% endif %}
+      {% for error in form.offers_seminars.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-4">
+      <div>
+        <label class="form-label" for="id_max_guests">{{ form.max_guests.label }}</label>
+        {{ form.max_guests }}
+        {% for error in form.max_guests.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+      </div>
+      <div>
+        <label class="form-label" for="id_skills">{% trans "What skills can people learn by volunteering or staying in your community?" %}</label>
+        {{ form.skills }}
+        {% for error in form.skills.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+      </div>
+    </div>
+
+    <div>
+      <label class="form-label" for="id_website">{{ form.website.label }}</label>
+      {{ form.website }}
+      {% for error in form.website.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+    </div>
+
+    <div>
+      <label class="form-label" for="id_video">{{ form.video.label }}</label>
+      {{ form.video }}
+      {% for error in form.video.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+    </div>
+
+  </form>
+
+  <div class="flex justify-end gap-4 mt-12">
+    {% if community and user.is_authenticated %}
+    <form method="post" action="{% url 'communities:delete' community.slug %}"
+      x-data="{ confirm: false }"
+      @submit.prevent="confirm ? $el.submit() : (confirm = true)"
+      @click.outside="confirm = false">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-lg btn-red inline-flex items-center">
+        <i class="fa fa-recycle mr-2"></i>
+        <span x-text="confirm ? '{% trans "Sure?" %}' : '{% trans "Delete" %}'"></span>
+      </button>
+    </form>
+    <div class="mr-4"></div>
+    {% endif %}
+    <a href="{% if community %}{{ community.get_absolute_url }}{% else %}{% url 'communities:list' %}{% endif %}"
+      class="btn btn-lg btn-purple inline-flex items-center">
+      <i class="fa fa-times mr-2"></i>
+      {% trans "Cancel" %}
+    </a>
+    <button type="submit" form="community-main-form" class="btn btn-lg btn-primary inline-flex items-center">
+      <i class="fa fa-check mr-2"></i>
+      {% trans "Save" %}
+    </button>
+  </div>
+</div>
+{% endblock %}
+
+{% block javascript %}
+  {{ block.super }}
+  <script src="https://cdn.jsdelivr.net/npm/ol@v7.2.2/dist/ol.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.min.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+
+      const skillsInput = document.getElementById('id_skills');
+      if (skillsInput) {
+        new Tagify(skillsInput, {
+          editTags: false,
+          dropdown: { enabled: 0 },
+          originalInputValueFormat: vals => vals.map(v => v.value).join(', '),
+        });
+      }
+
+      const locationInput = document.getElementById('id_location');
+      const picker = EcoMap.initLocationPicker({
+        mapTarget:     'community-location-map',
+        locationInput: locationInput,
+        countryInput:  document.getElementById('id_country'),
+        nameInput:     document.getElementById('id_location_name'),
+        groupName:     'community-layer',
+        setPointFn:    'setCommunityPoint',
+        locateFn:      'locateCommunity',
+        existingWkt:   locationInput ? locationInput.value : '',
+      });
+
+      // Type-specific marker icons  — unicode escapes, no raw glyphs
+      const TYPE_ICONS = {
+        e: { badge: 0xe537, color: '#b4502c' },  //  fa-people-roof  (ecovillage)
+        c: { badge: 0xe3af, color: '#de7a08' },  //  fa-house-chimney (commune)
+        h: { badge: 0xe3af, color: '#e34a26' },  //  fa-house-chimney (houseproject)
+        f: { badge: 0xf4d8, color: '#5A5527' },  //  fa-seedling      (permaculture)
+        p: { badge: 0xf6e3, color: '#ff7800' },  //  fa-hammer        (projects)
+      };
+
+      const applyTypeStyle = () => {
+        const val = document.getElementById('id_type')?.value || 'e';
+        const t = TYPE_ICONS[val] || { badge: 0xf015, color: '#da6137' };
+        picker.vectorLayer.setStyle(EcoMap.makeIconStyle(t.badge, t.color));
+      };
+
+      applyTypeStyle();
+      document.getElementById('id_type')?.addEventListener('change', applyTypeStyle);
+    });
+  </script>
+{% endblock %}

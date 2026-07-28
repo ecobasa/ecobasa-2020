@@ -1,43 +1,84 @@
 {% extends 'base.html' %}
-{% load crispy_forms_tags i18n %}
+{% load crispy_forms_tags i18n static %}
+
+{% block extrahead %}
+{{ block.super }}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v7.2.2/ol.css">
+{% endblock %}
 
 {% block content %}
-<div class="mx-auto max-w-4xl px-4 mt-10">
+<div class="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 mt-10 mb-12">
 
-  {% comment %} backlink {% endcomment %}
-  <a href="{% if ad.pk %}{% url "gifting:detail" ad.pk %}{% else %}{% url "gifting:search" %}{% endif %}" class="btn flex items-center text-sm leading-5 font-medium">
+  <button type="button" class="btn flex items-center text-sm leading-5 font-medium mb-10" href="{% if ad.pk %}{% url "gifting:detail" ad.pk %}{% else %}{% url "gifting:search" %}{% endif %}">
     <svg class="flex-shrink-0 -ml-1 mr-1 h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
       <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
     </svg>
     {% trans "Back" %}
-  </a>
+  </button>
 
-  {% comment %} heading {% endcomment %}
-  <div class="mt-2 md:flex md:items-center md:justify-between border-b pb-4">
-    <h1 class="leading-7 sm:text-3xl sm:leading-9 sm:truncatess">
-      {% if ad.pk %}
-        Edit {{ ad.get_type_display }} {{ ad.title }}
-      {% else %}
-        Create new Offer or Wish
-      {% endif %}
-    </h1>
-  </div>
-  
-  {% comment %} form {% endcomment %}
-  <form enctype="multipart/form-data" method="post" class="w-full my-10 form-control-w-full">
+  <h1 class="text-3xl md:text-5xl">
+    {% if ad.pk %}
+      Edit {{ ad.get_type_display }} {{ ad.title }}
+    {% else %}
+      Create new Offer or Wish
+    {% endif %}
+  </h1>
+
+  <form enctype="multipart/form-data" method="post" class="w-full form-control-w-full">
     {% csrf_token %}
     {% crispy form %}
-    <div class="flex items-center justify-end -mx-5 my-5">
-      <a class="mx-5 btn btn-red flex" href="{% if ad.pk %}{% url "gifting:detail" ad.pk %}{% else %}{% url "gifting:search" %}{% endif %}"><i class="fa fa-ban mr-1"></i>{% trans "Cancel" %}</a>
+
+    <!-- Location picker (rendered manually; form.location and form.location_name are hidden inputs) -->
+    <h3 class="text-lg font-semibold text-primary mb-2">{% trans "Location" %}</h3>
+    {% include "maps/_location_picker.html" with map_id="ad-location-map" set_point_fn="setAdPoint" locate_fn="locateAd" map_height="h-80" %}
+
+    <div class="flex items-center justify-end gap-4 mt-12">
       {% if ad.pk %}
-        <a href="{% url "gifting:delete" ad.pk %}" class="btn btn-purple"><i class="fa fa-recycle mr-1"></i>{% trans "Delete" %}</a>
+      <a href="{% url "gifting:delete" ad.pk %}" class="btn btn-lg btn-red"><i class="fa fa-recycle mr-2"></i>{% trans "Delete" %}</a>
       {% endif %}
-      <button class="mx-5 btn btn-green" type="submit">
-        <i class="fa fa-check mr-1"></i>{% trans "Save" %}
+      <a class="btn btn-lg btn-purple flex" href="{% if ad.pk %}{% url "gifting:detail" ad.pk %}{% else %}{% url "gifting:search" %}{% endif %}"><i class="fa fa-times mr-2"></i>{% trans "Cancel" %}</a>
+      <button class="btn btn-lg" type="submit">
+        <i class="fa fa-check mr-2"></i>{% trans "Save" %}
       </button>
     </div>
   </form>
 
-  
 </div>
 {% endblock content %}
+
+{% block javascript %}
+  {{ block.super }}
+  <script src="https://cdn.jsdelivr.net/npm/ol@v7.2.2/dist/ol.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const locationInput = document.getElementById('id_location');
+      const picker = EcoMap.initLocationPicker({
+        mapTarget:     'ad-location-map',
+        locationInput: locationInput,
+        countryInput:  null,
+        nameInput:     document.getElementById('id_location_name'),
+        groupName:     'ad-layer',
+        setPointFn:    'setAdPoint',
+        locateFn:      'locateAd',
+        existingWkt:   locationInput ? locationInput.value : '',
+      });
+
+      // Wish/offer icon changes with type selection
+      const applyAdStyle = () => {
+        const typeEl = document.querySelector('input[name="type"]:checked');
+        const isWish = typeEl && typeEl.value === 'wish';
+        picker.vectorLayer.setStyle(
+          EcoMap.makeIconStyle(
+            isWish ? 0xF004 : 0xF06B,  //  fa-heart : fa-gift
+            isWish ? '#de7a08' : '#da6137'
+          )
+        );
+      };
+
+      applyAdStyle();
+      document.querySelectorAll('input[name="type"]').forEach(r =>
+        r.addEventListener('change', applyAdStyle)
+      );
+    });
+  </script>
+{% endblock javascript %}

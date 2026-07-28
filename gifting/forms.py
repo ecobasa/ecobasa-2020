@@ -30,7 +30,6 @@ class AdForm(forms.ModelForm):
                 Field("description"),
                 header_text=_("Describe your wish or offer here"),
             ),
-            Fieldset(_("Location"), Field("location_name"), Field("location")),
         )
 
     class Meta:
@@ -47,7 +46,7 @@ class AdForm(forms.ModelForm):
         widgets = {
             "type": forms.RadioSelect,
             "categories": forms.CheckboxSelectMultiple,
-            "location_name": LocationWidget,
-            "location": forms.OSMWidget(attrs={'map_width': '100%', 'map_height': 400, 'default_zoom': 1}),
+            "location_name": forms.HiddenInput,
+            "location": forms.HiddenInput,
         }
 

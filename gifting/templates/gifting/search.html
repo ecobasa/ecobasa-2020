@@ -1,145 +1,669 @@
 {% extends 'base.html' %}
-{% load crispy_forms_tags i18n %}
+{% load static i18n %}
 
+{% block extrahead %}
+  {{ block.super }}
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v7.2.2/ol.css">
+  <script src="https://unpkg.com/htmx.org@1.9.10/dist/htmx.min.js"></script>
+  <script>
+    function suggestions(endpoint) {
+      return {
+        items: [], active: -1, open: false, _timer: null,
+
+        suggest(term) {
+          clearTimeout(this._timer);
+          if (!term || term.length < 2) { this.close(); return; }
+          const self = this;
+          this._timer = setTimeout(function () {
+            fetch(endpoint + '?q=' + encodeURIComponent(term))
+              .then(r => r.json())
+              .then(data => { self.items = data.slice(0, 8); self.open = self.items.length > 0; self.active = -1; })
+              .catch(() => self.close());
+          }, 200);
+        },
+
+        moveDown() { if (this.open) this.active = Math.min(this.active + 1, this.items.length - 1); },
+        moveUp()   { if (this.open) this.active = Math.max(this.active - 1, 0); },
+        choose()   { if (this.active >= 0 && this.items[this.active]) { this.selectItem(this.items[this.active]); return true; } return false; },
+
+        selectItem(item) {
+          Alpine.store('fm').q = item.value;
+          this.close();
+          this.$nextTick(() => {
+            document.body.dispatchEvent(new CustomEvent('filter-updated'));
+            window._fmReloadMarkers && window._fmReloadMarkers(true);
+          });
+        },
+
+        triggerSearch() { window._fmReloadMarkers && window._fmReloadMarkers(); },
+        close() { this.open = false; this.items = []; this.active = -1; }
+      };
+    }
+
+    const _nominatimCache = new Map();
+    let   _nominatimLastFetch = 0;
+
+    function nominatimLabel(d) {
+      const parts = d.display_name.split(',')
+        .map(p => p.trim())
+        .filter(p => p && !/^\d[\d\s\-]*$/.test(p));
+      if (parts.length === 0) return d.display_name;
+      if (parts.length <= 3)  return parts.join(', ');
+      return [parts[0], parts[parts.length - 2], parts[parts.length - 1]].join(', ');
+    }
+
+    function nominatimZoom(d) {
+      const rank = d.place_rank || 30;
+      const imp  = parseFloat(d.importance) || 0;
+      if (rank <= 4)  return imp > 0.95 ? 4 : imp > 0.88 ? 6 : 9;
+      if (rank <= 8)  return 8;
+      if (rank <= 14) return 10;
+      return 12;
+    }
+
+    const _geocodeURL = '{% url "gifting:api-geocode" %}';
+
+    function _nominatimFetch(query) {
+      if (_nominatimCache.has(query)) return Promise.resolve(_nominatimCache.get(query));
+      return fetch(_geocodeURL + '?q=' + encodeURIComponent(query))
+        .then(function (r) { return r.json(); })
+        .then(function (data) { _nominatimCache.set(query, data); return data; });
+    }
+
+    function locationDropdown() {
+      return {
+        results: [], open: false, _timer: null,
+
+        geocode(input) {
+          clearTimeout(this._timer);
+          if (!input || input.length < 3) { this.results = []; this.open = false; return; }
+          const self = this;
+          this._timer = setTimeout(function () {
+            _nominatimFetch(input)
+              .then(function (json) {
+                const seen = new Set(), perCountry = {};
+                self.results = json.reduce(function (acc, d) {
+                  const label = nominatimLabel(d);
+                  const cc    = (d.address && d.address.country_code) || '??';
+                  if (!seen.has(label)) {
+                    seen.add(label);
+                    perCountry[cc] = (perCountry[cc] || 0) + 1;
+                    if (perCountry[cc] <= 2)
+                      acc.push(Object.assign({}, d, { _label: label, _zoom: nominatimZoom(d) }));
+                  }
+                  return acc;
+                }, []).slice(0, 5);
+                self.open = self.results.length > 0;
+              })
+              .catch(function () { self.open = false; });
+          }, 350);
+        },
+
+        pick(res) {
+          Alpine.store('fm').locationName = res._label;
+          Alpine.store('fm').location     = res.lat + ',' + res.lon;
+          this.closeDropdown();
+          this.$nextTick(() => {
+            if (window._fmZoomTo) window._fmZoomTo(res.lat, res.lon, res.boundingbox, res._zoom);
+            if (window._fmReloadMarkers) window._fmReloadMarkers();
+            document.body.dispatchEvent(new CustomEvent('filter-updated'));
+          });
+        },
+
+        useGPS() {
+          if (!navigator.geolocation) return;
+          navigator.geolocation.getCurrentPosition(function (pos) {
+            const lat = pos.coords.latitude, lon = pos.coords.longitude;
+            Alpine.store('fm').locationName = '{% trans "Current Location" %}';
+            Alpine.store('fm').location     = lat + ',' + lon;
+            window._fmZoomTo && window._fmZoomTo(lat, lon, null, 9);
+            setTimeout(function () {
+              window._fmReloadMarkers && window._fmReloadMarkers();
+              document.body.dispatchEvent(new CustomEvent('filter-updated'));
+            }, 50);
+          });
+        },
+
+        closeDropdown() { clearTimeout(this._timer); this.open = false; this.results = []; }
+      };
+    }
+
+    document.addEventListener('alpine:init', function () {
+      Alpine.store('fm', {
+        view:          'map',
+        layerMenuOpen: false,
+        layer:         'ecobasa',
+        loading:       false,
+        q:             '{{ f.form.search.data|default:""|escapejs }}',
+        locationName:  '{{ f.form.location_name.data|default:""|escapejs }}',
+        location:      '{{ f.form.location.data|default:""|escapejs }}',
+        types:         [{% for v in f.form.type.value %}"{{ v|escapejs }}"{% if not forloop.last %}, {% endif %}{% endfor %}],
+        categories:    [{% for v in f.form.categories.value %}"{{ v|escapejs }}"{% if not forloop.last %}, {% endif %}{% endfor %}],
+        markerCount:   0,
+
+        showMap:  function () { this.view = 'map'; },
+        showList: function () { this.view = 'list'; },
+
+        clearLocation() {
+          this.location = '';
+          this.locationName = '';
+          window._fmResetView && window._fmResetView();
+          setTimeout(() => document.body.dispatchEvent(new CustomEvent('filter-updated')), 0);
+        },
+
+        clearSearch() {
+          this.q = '';
+          window._fmResetView && window._fmResetView();
+          setTimeout(() => document.body.dispatchEvent(new CustomEvent('filter-updated')), 0);
+        }
+      });
+    });
+  </script>
+{% endblock %}
+
+
+{# ═══════════════════════════════════════════════════════════════════ #}
 {% block content %}
+<div x-data>
 
-{% comment %} filter bar {% endcomment %}
-<div class="bg-secondary bg-opacity-50 shadow py-4">
-  <form id="searchForm" x-data="" method="get" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 js-submit-on-input">
-    <div class="flex items-center flex-wrap -mx-2">
+  {# ── Map shell ── #}
+  <div class="relative w-full map-shell">
+    <div id="freemarket-map" class="absolute inset-0 w-full h-full rounded shadow bg-secondary bg-opacity-50"></div>
 
-      {% comment %} search field {% endcomment %}
-      <div class="relative w-full max-w-2xl my-2 mx-2">
-        <div class="absolute ml-3 inset-y-0 flex items-center text-brown">
-          <i class="fa fa-search text-primary opacity-75"></i>
-        </div>
-        <input type="text" value="{{ f.form.search.data|default:"" }}" class="pl-10 form-input w-full max-w-2xl" autocomplete="off" autofocus name="search">
+    {# ── View toggle (top center) ── #}
+    <div class="absolute top-4 left-1/2 -translate-x-1/2 z-10">
+      <div class="inline-flex overflow-hidden rounded-full shadow-lg border bg-primary bg-opacity-20 backdrop-blur border-red">
+        <button type="button"
+          :class="$store.fm.view === 'map' ? 'bg-opacity-90 shadow-inner' : 'bg-opacity-40'"
+          class="btn-pill-select bg-primary transition-all"
+          aria-label="{% trans 'Show map view' %}"
+          @click="$store.fm.showMap()">
+          <i class="fa fa-globe"></i><span>{% trans "Map" %}</span>
+        </button>
+        <button type="button"
+          :class="$store.fm.view === 'list' ? 'bg-opacity-90 shadow-inner' : 'bg-opacity-40'"
+          class="btn-pill-select bg-primary transition-all"
+          aria-label="{% trans 'Show list view' %}"
+          @click="$store.fm.showList()"
+          hx-get="{% url 'gifting:api-list' %}"
+          hx-target="#freemarket-list-results"
+          hx-swap="innerHTML"
+          hx-include="#freemarket-filters"
+          hx-trigger="click once">
+          <i class="fa fa-list-alt"></i><span>{% trans "List" %}</span>
+        </button>
       </div>
+    </div>
 
-      {% comment %} location field {% endcomment %}
-      <div class="relative my-2 mx-2" x-data="locationDropdown()">
-        <div class="relative w-full max-w-2xl">
-          <div class="absolute ml-3 inset-y-0 flex items-center text-primary">
-            <i class="fa fa-map-marker-alt mr-1 text-primary opacity-75" onclick="getLocation()"></i>
-          </div>
-          <input id="location_name" x-ref="input" type="text" @input.debounce="onInput($event.target.value)" value="{{ f.form.location_name.data|default:"" }}" placeholder="Sort by Location" class="form-input w-full max-w-2xl pl-10" autocomplete="off" autofocus name="location_name">
+    {# ── Left toolbar ── #}
+    <div class="absolute top-4 left-4 flex flex-col gap-3 w-full max-w-40 md:max-w-60 lg:max-w-xs xl:max-w-md z-10">
+      <div id="freemarket-filters" class="bg-secondary bg-opacity-30 backdrop-blur rounded-lg shadow p-4 flex flex-col gap-3">
+
+        {# Hidden state synced from Alpine — picked up by all hx-include="#freemarket-filters" #}
+        <input type="hidden" name="search"        :value="$store.fm.q">
+        <input type="hidden" name="location_name" :value="$store.fm.locationName">
+        <input type="hidden" name="location"      :value="$store.fm.location">
+        <div class="flex flex-wrap gap-4"
+          @change="$store.fm.view === 'list' && document.body.dispatchEvent(new CustomEvent('filter-updated'));
+                   window._fmReloadMarkers && window._fmReloadMarkers();">
+          {% for t in f.form.type %}
+            <label class="inline-flex text-primary items-center gap-2 cursor-pointer">
+              <input type="checkbox" name="type" value="{{ t.data.value }}"
+                x-model="$store.fm.types"
+                class="form-checkbox dark h-5 w-5">
+              <span>{{ t.choice_label }}</span>
+            </label>
+          {% endfor %}
+          {% for t in f.form.categories %}
+            <label class="inline-flex text-primary items-center gap-2 cursor-pointer">
+              <input type="checkbox" name="categories" value="{{ t.data.value }}"
+                x-model="$store.fm.categories"
+                class="form-checkbox dark h-5 w-5">
+              <span>{{ t.choice_label }}</span>
+            </label>
+          {% endfor %}
         </div>
-        <input x-ref="location" type="hidden" value="{{ f.form.location.data|default:"" }}" name="location">
-        <div x-show.transition="open" @click.away="open = false" class="absolute inset-x-0 bg-secondary bg-opacity-50 shadow-lg text-xs py-3 rounded-b border-brown border-opacity-50 border-b border-l border-r">
-          <ul class="list-none">
-            <template x-for="res in results" :key="res">
-              <li class="m-0"><a @click.prevent="onSelect(res)" href="#" class="block px-2 py-2 text-brown hover:bg-primary hover:text-secondary" x-text="res.display_name"></a></li>
+
+        {# Search input #}
+        <div class="relative"
+          x-data="suggestions('{% url 'gifting:api-suggest' %}')"
+          @click.outside="close()">
+          <div class="absolute inset-y-0 left-3 flex items-center text-primary opacity-80 pointer-events-none">
+            <i class="fa fa-search"></i>
+          </div>
+          <input class="form-input icon-input bg-secondary w-full"
+            type="text"
+            :value="$store.fm.q"
+            placeholder="{% trans 'Search offers, wishes or skills…' %}"
+            autocomplete="off"
+            @input="$store.fm.q = $el.value; suggest($el.value); if (!$el.value) { window._fmResetView && window._fmResetView(); document.body.dispatchEvent(new CustomEvent('filter-updated')); }"
+            @keydown.arrow-down.prevent="moveDown()"
+            @keydown.arrow-up.prevent="moveUp()"
+            @keydown.enter.prevent="choose() || triggerSearch()"
+            @keydown.escape="if (open) { close(); } else if ($store.fm.q) { $store.fm.clearSearch(); }">
+          <ul x-show="open" x-cloak
+            class="suggestions-dropdown list-none absolute z-20 w-full mt-1 bg-secondary rounded shadow-lg border"
+            role="listbox">
+            <template x-for="(item, i) in items" :key="i">
+              <li :class="i === active ? 'is-active' : ''"
+                class="px-3 py-1 cursor-pointer justify-between hover:bg-primary hover:text-secondary text-sm flex items-center gap-2"
+                @mousedown.prevent="selectItem(item)" role="option">
+                <span x-text="item.value"></span>
+                <i x-show="item.type === 'skill'" class="fa fa-graduation-cap text-xs opacity-50 flex-shrink-0 w-3"></i>
+                <i x-show="item.type === 'offer'" class="fa fa-gift         text-xs opacity-50 flex-shrink-0 w-3"></i>
+                <i x-show="item.type === 'wish'"  class="fa fa-heart        text-xs opacity-50 flex-shrink-0 w-3"></i>
+                <i x-show="item.type === 'owner'" class="fa fa-user         text-xs opacity-50 flex-shrink-0 w-3"></i>
+                <i x-show="item.type === 'text'"  class="fa fa-align-left   text-xs opacity-50 flex-shrink-0 w-3"></i>
+              </li>
             </template>
           </ul>
         </div>
-      </div>
-      <script>
-        function locationDropdown() {
-          return {
-            results: [],
-            open: false,
-            onSelect(res) {
-              this.$refs.location.value = res.lat + ',' + res.lon
-              this.$refs.input.value = res.display_name
-              this.open = false
-              document.getElementById("searchForm").submit()
-            },
-            onInput(input) {
-              if (input.length < 3) { results = []; return }
-              fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=5&q=${input}`).then(res => res.json()).then(json => {
-                this.open = true
-                this.results = json
-              })
-            }
-          }
-        }
-        
-        var x = document.getElementById("location_name");
 
-        function getLocation() {
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(
-                    // Success function
-                    showPosition, 
-                    // Error function
-                    null, 
-                    // Options. See MDN for details.
-                    {
-                       enableHighAccuracy: true,
-                       timeout: 5000,
-                       maximumAge: 0
-                    });
-            } else { 
-                x.value = "{%trans 'Geolocation is not supported by this browser.' %}";
-            }
-        }
-
-        function showPosition(position) {
-            this.location.value=position.coords.latitude + "," + position.coords.longitude;
-            x.value = "{%trans 'Current Location' %}";
-              document.getElementById("searchForm").submit()
-        }
-      </script>
-
-      <button class="btn m-2 hidden sm:block"><i class="fa fa-search mr-1"></i>{% trans "Search" %}</button>
-    </div>
-
-    <div x-on:input="$event.target.form.submit()">
-      <div class="space-x-2 mb-2">
-        {% for t in f.form.type %}
-          <label class="inline-flex items-center">
-            <input type="checkbox" name="{{ t.data.name }}" value="{{ t.data.value }}" {% if t.data.selected %}checked{% endif %} class="form-checkbox h-5 w-5">
-            <span class="ml-2">{{ t.choice_label }}</span>
-          </label>
-        {% endfor %}
-      </div>
-      <div class="space-x-2 mb-2">
-        {% for t in f.form.categories %}
-          <label class="inline-flex items-center">
-            <input type="checkbox" name="{{ t.data.name }}" value="{{ t.data.value }}" {% if t.data.selected %}checked{% endif %} class="form-checkbox h-5 w-5">
-            <span class="ml-2">{{ t.choice_label }}</span>
-          </label>
-        {% endfor %}
-      </div>
-      {% if user.is_authenticated %}
-        <div>
-          <label class="inline-flex items-center">
-            <input type="checkbox" name="{{ f.form.from_me.name }}" value="on" {% if f.form.from_me.data %}checked{% endif %} class="form-checkbox h-5 w-5">
-            <span class="ml-2">{{ f.form.from_me.label }}</span>
-          </label>
+        {# Location input #}
+        <div class="relative"
+          x-data="locationDropdown()"
+          @click.outside="closeDropdown()">
+          <div class="absolute inset-y-0 left-3 flex items-center text-primary opacity-50 pointer-events-none">
+            <i class="fa fa-location-dot"></i>
+          </div>
+          <input class="form-input icon-input bg-secondary w-full pr-16"
+            type="text"
+            :value="$store.fm.locationName"
+            placeholder="{% trans 'Near a place…' %}"
+            autocomplete="off"
+            @input="$store.fm.locationName = $el.value; if (!$el.value) $store.fm.clearLocation(); else geocode($el.value)"
+            @keydown.escape="if (open) { closeDropdown(); } else if ($store.fm.location) { $store.fm.clearLocation(); }">
+          <div class="absolute inset-y-0 right-0 flex items-center gap-0.5 pr-2">
+            <button type="button" @click="useGPS()" title="{% trans 'Use my location' %}"
+              class="text-primary opacity-70 hover:opacity-100 px-1.5 py-1">
+              <i class="fa fa-crosshairs"></i>
+            </button>
+            <button type="button" x-show="$store.fm.locationName" @click="$store.fm.clearLocation()"
+              class="text-primary opacity-70 hover:opacity-100 px-1.5 py-1">
+              <i class="fa fa-times"></i>
+            </button>
+          </div>
+          <ul x-show="open" x-cloak
+            class="list-none absolute z-20 inset-x-0 mt-1 bg-secondary bg-opacity-95 rounded shadow-lg border text-sm">
+            <template x-for="res in results" :key="res.place_id">
+              <li><a href="#" class="block px-3 py-2 hover:bg-primary hover:text-secondary"
+                @click.prevent="pick(res)" x-text="res._label"></a></li>
+            </template>
+          </ul>
         </div>
+
+        <div class="flex items-center justify-between">
+          <span class="text-sm text-brown" x-text="$store.fm.markerCount + ' {% trans "results on map" %}'"></span>
+          <button type="button" class="btn"
+            @click="window._fmReloadMarkers && window._fmReloadMarkers()">
+            <i class="fa fa-search mr-1"></i> {% trans "Search" %}
+          </button>
+        </div>
+      </div>
+
+      {% if user.is_authenticated %}
+        <a href="{% url 'gifting:create' %}" class="btn shadow self-start">
+          <i class="fa fa-plus mr-1"></i> {% trans "Add your Wish or Offer" %}
+        </a>
       {% endif %}
     </div>
-  </form>
 
+    {# ── Layer switcher – top-right ── #}
+    <div class="absolute top-4 right-4 z-10" @mouseleave="$store.fm.layerMenuOpen = false">
+      <button type="button"
+        x-show="!$store.fm.layerMenuOpen"
+        @mouseenter="$store.fm.layerMenuOpen = true"
+        @click="$store.fm.layerMenuOpen = true"
+        class="flex items-center justify-center w-14 h-14 rounded-md bg-primary bg-opacity-80 text-secondary shadow-lg border backdrop-blur border-red">
+        <i class="fa fa-layer-group"></i>
+      </button>
+      <div x-show="$store.fm.layerMenuOpen" x-cloak
+        class="w-48 bg-primary text-secondary bg-opacity-80 backdrop-blur rounded-lg shadow-xl border py-2 border-red">
+        <div class="px-3 pb-1 text-xs font-semibold uppercase tracking-wider">{% trans "Map style" %}</div>
+        <hr class="border-secondary opacity-20 my-1">
+        <label class="flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-secondary hover:bg-opacity-10">
+          <input type="radio" name="map-layer" class="light" :checked="$store.fm.layer === 'ecobasa'"
+            @change="$store.fm.layer = 'ecobasa'; window._fmSetLayer('ecobasa'); $store.fm.layerMenuOpen = false;">
+          <span class="text-sm">{% trans "ecobasa" %}</span>
+        </label>
+        <label class="flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-secondary hover:bg-opacity-10">
+          <input type="radio" name="map-layer" class="light" :checked="$store.fm.layer === 'osm'"
+            @change="$store.fm.layer = 'osm'; window._fmSetLayer('osm'); $store.fm.layerMenuOpen = false;">
+          <span class="text-sm">{% trans "OpenStreetMap" %}</span>
+        </label>
+        <label class="flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-secondary hover:bg-opacity-10">
+          <input type="radio" name="map-layer" class="light" :checked="$store.fm.layer === 'satellite'"
+            @change="$store.fm.layer = 'satellite'; window._fmSetLayer('satellite'); $store.fm.layerMenuOpen = false;">
+          <span class="text-sm">{% trans "Satellite" %}</span>
+        </label>
+      </div>
+    </div>
 
-</div>
+    {# ── Loading indicator ── #}
+    <div x-show="$store.fm.loading" x-cloak
+      class="absolute bottom-16 left-1/2 -translate-x-1/2 z-10 bg-primary text-secondary px-3 py-1 rounded-full shadow opacity-80">
+      <i class="fa fa-spinner fa-spin mr-1"></i> {% trans "Loading…" %}
+    </div>
+  </div>{# /map shell #}
 
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+  {# ── List modal ── #}
+  <div x-show="$store.fm.view === 'list'" x-cloak
+    class="modal-overlay flex"
+    @click.self="$store.fm.showMap()"
+    @keydown.escape.window="$store.fm.showMap()">
 
-  <div class="my-10">
-    {% comment %} Add button {% endcomment %}
-    <a href="{% url "gifting:create" %}" class="btn inline-flex items-center shadow">
-      <i class="fa fa-plus mr-1"></i>
-      {% trans "Add your Wish or Offer" %}
-    </a>
+    <div class="modal relative bg-secondary bg-opacity-95 backdrop-blur rounded-lg shadow-xl max-w-5xl w-full border"
+      role="dialog" aria-modal="true">
+
+      <button type="button"
+        class="absolute top-3 right-3 h-10 w-10 rounded-full bg-black bg-opacity-50 hover:bg-opacity-70 text-secondary text-2xl flex items-center justify-center"
+        @click="$store.fm.showMap()">&times;
+      </button>
+
+      <div class="p-5 space-y-4">
+
+        <div class="flex items-center gap-3">
+          <a href="{% url 'gifting:create' %}" class="btn shadow ml-auto">
+            <i class="fa fa-plus mr-1"></i> {% trans "Add your Wish or Offer" %}
+          </a>
+        </div>
+
+        {# Modal search #}
+        <div class="relative"
+          x-data="suggestions('{% url 'gifting:api-suggest' %}')"
+          @click.outside="close()"
+        >
+          <div class="absolute inset-y-0 left-3 flex items-center text-primary opacity-80 pointer-events-none">
+            <i class="fa fa-search"></i>
+          </div>
+          <input class="form-input icon-input w-full"
+            type="text"
+            :value="$store.fm.q"
+            placeholder="{% trans 'Search offers, wishes or skills…' %}"
+            autocomplete="off"
+            hx-get="{% url 'gifting:api-list' %}"
+            hx-target="#freemarket-list-results"
+            hx-swap="innerHTML"
+            hx-trigger="input changed delay:400ms"
+            hx-include="#freemarket-filters"
+            @input="$store.fm.q = $el.value; suggest($el.value); if (!$el.value) window._fmResetView && window._fmResetView()"
+            @keydown.arrow-down.prevent="moveDown()"
+            @keydown.arrow-up.prevent="moveUp()"
+            @keydown.enter.prevent="choose() || triggerSearch()"
+            @keydown.escape="if (open) { $event.stopPropagation(); close(); } else if ($store.fm.q) { $store.fm.clearSearch(); $event.stopPropagation(); }">
+          <ul x-show="open" x-cloak
+            class="suggestions-dropdown list-none absolute z-20 w-full mt-1 bg-secondary rounded shadow-lg border"
+            role="listbox">
+            <template x-for="(item, i) in items" :key="i">
+              <li :class="i === active ? 'is-active' : ''"
+                class="px-3 py-1 cursor-pointer justify-between hover:bg-primary hover:text-secondary text-sm flex items-center gap-2"
+                @mousedown.prevent="selectItem(item)" role="option">
+                <span x-text="item.value"></span>
+                <i x-show="item.type === 'skill'" class="fa fa-graduation-cap text-xs opacity-60 flex-shrink-0 w-3"></i>
+                <i x-show="item.type === 'offer'" class="fa fa-gift         text-xs opacity-60 flex-shrink-0 w-3"></i>
+                <i x-show="item.type === 'wish'"  class="fa fa-heart        text-xs opacity-60 flex-shrink-0 w-3"></i>
+                <i x-show="item.type === 'owner'" class="fa fa-user         text-xs opacity-60 flex-shrink-0 w-3"></i>
+                <i x-show="item.type === 'text'"  class="fa fa-align-left   text-xs opacity-60 flex-shrink-0 w-3"></i>
+              </li>
+            </template>
+          </ul>
+        </div>
+
+        {# Modal location #}
+        <div class="relative"
+          x-data="locationDropdown()"
+          @click.outside="closeDropdown()">
+          <div class="absolute inset-y-0 left-3 flex items-center text-primary opacity-50 pointer-events-none">
+            <i class="fa fa-location-dot"></i>
+          </div>
+          <input class="form-input icon-input w-full pr-16"
+            type="text"
+            :value="$store.fm.locationName"
+            placeholder="{% trans 'Near a place…' %}"
+            autocomplete="off"
+            @input="$store.fm.locationName = $el.value; if (!$el.value) $store.fm.clearLocation(); else geocode($el.value)"
+            @keydown.escape="if (open) { $event.stopPropagation(); closeDropdown(); } else if ($store.fm.location) { $store.fm.clearLocation(); $event.stopPropagation(); }">
+          <div class="absolute inset-y-0 right-0 flex items-center gap-0.5 pr-2">
+            <button type="button" @click="useGPS()" title="{% trans 'Use my location' %}"
+              class="text-primary opacity-70 hover:opacity-100 px-1.5 py-1">
+              <i class="fa fa-crosshairs"></i>
+            </button>
+            <button type="button" x-show="$store.fm.locationName" @click="$store.fm.clearLocation()"
+              class="text-primary opacity-70 hover:opacity-100 px-1.5 py-1">
+              <i class="fa fa-times"></i>
+            </button>
+          </div>
+          <ul x-show="open" x-cloak
+            class="list-none absolute z-20 inset-x-0 mt-1 bg-secondary bg-opacity-95 rounded shadow-lg border text-sm">
+            <template x-for="res in results" :key="res.place_id">
+              <li><a href="#" class="block px-3 py-2 hover:bg-primary hover:text-secondary"
+                @click.prevent="pick(res)" x-text="res._label"></a></li>
+            </template>
+          </ul>
+        </div>
+
+        {# Modal filters — same x-model as panel, always in sync #}
+        <div class="flex flex-wrap gap-4 pt-1 border-t"
+          @change="document.body.dispatchEvent(new CustomEvent('filter-updated'));
+                   window._fmReloadMarkers && window._fmReloadMarkers();">
+          {% for t in f.form.type %}
+            <label class="inline-flex items-center gap-2 cursor-pointer text-sm">
+              <input type="checkbox" value="{{ t.data.value }}"
+                x-model="$store.fm.types"
+                class="form-checkbox h-4 w-4">
+              <span>{{ t.choice_label }}</span>
+            </label>
+          {% endfor %}
+          {% for t in f.form.categories %}
+            <label class="inline-flex items-center gap-2 cursor-pointer text-sm">
+              <input type="checkbox" value="{{ t.data.value }}"
+                x-model="$store.fm.categories"
+                class="form-checkbox h-4 w-4">
+              <span>{{ t.choice_label }}</span>
+            </label>
+          {% endfor %}
+        </div>
+
+        {# Result count (OOB-swapped by partial) #}
+        <div class="flex justify-between items-center text-sm text-brown">
+          <span id="freemarket-result-count" hx-swap-oob="true"></span>
+        </div>
+
+        {# HTMX list target #}
+        <div id="freemarket-list-results"
+          class="max-h-[65vh] overflow-y-auto space-y-3 pr-1"
+          hx-get="{% url 'gifting:api-list' %}"
+          hx-target="this"
+          hx-swap="innerHTML"
+          hx-include="#freemarket-filters"
+          hx-trigger="revealed, filter-updated from:body">
+          <div class="text-center py-8 text-brown">
+            <i class="fa fa-spinner fa-spin text-2xl"></i>
+          </div>
+        </div>
+
+      </div>
+    </div>
   </div>
 
-  {% if page_obj %}
-    <p>{% blocktrans with count=page_obj.paginator.count %}{{ count }} found{% endblocktrans %}</p>
-    
-    {% comment %} results {% endcomment %}
-    {% for ad in page_obj %}
-      {% include "./_ad.html" %}
-    {% endfor %}
-
-    {% include "./_pagination.html" %}
-  {% else %}
-    <p>{% trans "No results found" %}</p>
-  {% endif %}
-
-</div>
+</div>{# /x-data root #}
+{% endblock %}
 
 
+{# ═══════════════════════════════════════════════════════════════════ #}
+{% block javascript %}
+{{ block.super }}
+<script src="https://cdn.jsdelivr.net/npm/ol@v7.2.2/dist/ol.js"></script>
 
-{% endblock content %}
+<script>
+(function () {
+  'use strict';
+
+  function getDynamicStyle(feature) {
+    const props = feature.getProperties();
+    const source = props.source;
+    const type_display = (props.type_display || '').toLowerCase();
+    let iconCode = '';
+    let color = '#da6137';
+    if (source === 'skill' || source === 'user_skill') {
+      iconCode = '';
+      color = '#80143b';
+    } else if (source === 'ad') {
+      if (type_display.includes('offer')) { iconCode = ''; }
+      else if (type_display.includes('wish')) { iconCode = ''; color = '#de7a08'; }
+    }
+    return new ol.style.Style({
+      image: new ol.style.Icon({
+        img: EcoMap.createLayeredIcon(iconCode, color),
+        imgSize: [80, 80], anchor: [0.5, 0.85], scale: 0.7
+      })
+    });
+  }
+
+  const MARKERS_URL = '{% url "gifting:api-markers" %}';
+
+  function truncate(text, limit) {
+    if (!text || text.length <= limit) return text || '';
+    return text.slice(0, limit).replace(/\s+\S*$/, '') + '…';
+  }
+
+  function buildPopupHTML(props) {
+    const td = (props.type_display || '').toLowerCase();
+    let badge = '';
+    if (props.source === 'skill')      badge = `<span class="pill bg-purple text-secondary"><i class="fa fa-graduation-cap mr-1"></i>${td || 'Skill'}</span>`;
+    else if (props.source === 'user_skill') badge = `<span class="pill bg-purple text-secondary"><i class="fa fa-graduation-cap mr-1"></i>{% trans "skill / teaching" %}</span>`;
+    else if (td.includes('offer'))     badge = `<span class="pill bg-primary text-secondary"><i class="fa fa-gift mr-1"></i>${td}</span>`;
+    else if (td.includes('wish'))      badge = `<span class="pill bg-yellow text-secondary"><i class="fa fa-heart mr-1"></i>${td}</span>`;
+    else                               badge = `<span class="pill bg-primary text-secondary">${td}</span>`;
+    let html = badge;
+    if (props.title) html += props.url ? `<h3><a href="${props.url}" class="hover:underline">${props.title}</a></h3>` : `<h3>${props.title}</h3>`;
+    if (props.image) html += `<div class="mb-2">${props.url ? `<a href="${props.url}">` : ''}<img src="${props.image}" alt="" class="w-full max-w-xs rounded shadow">${props.url ? '</a>' : ''}</div>`;
+    const desc = truncate(props.description, 150);
+    if (desc) html += `<div class="text-sm text-brown mt-2">${desc}</div>`;
+    if (props.source === 'skill' && props.community_name) html += `<div class="text-xs text-brown mt-1"><i class="fa fa-home mr-1"></i>${props.community_name}</div>`;
+    if (props.source === 'user_skill' && props.user_name) html += `<div class="text-xs mt-1"><i class="fa fa-user mr-1"></i>${props.user_name}</div>`;
+    if (props.url) html += `<a class="text-primary underline" href="${props.url}">{% trans "Open profile" %}</a>`;
+    return html;
+  }
+
+  function buildMarkersURL(map, skipBbox) {
+    const store = Alpine.store('fm');
+    const params = new URLSearchParams();
+    if (!skipBbox) {
+      const ext = ol.proj.transformExtent(
+        map.getView().calculateExtent(map.getSize()), 'EPSG:3857', 'EPSG:4326'
+      );
+      params.set('bbox', ext.map(v => v.toFixed(4)).join(','));
+    }
+    if (store.q)        params.set('search', store.q);
+    if (store.location) params.set('location', store.location);
+    (store.types      || []).forEach(t => params.append('type', t));
+    (store.categories || []).forEach(c => params.append('categories', c));
+    return MARKERS_URL + '?' + params.toString();
+  }
+
+  function fetchMarkers(map, vectorSource, fitToResults) {
+    const store = Alpine.store('fm');
+    store.loading = true;
+    fetch(buildMarkersURL(map, fitToResults))
+      .then(r => r.json())
+      .then(geojson => {
+        vectorSource.clear();
+        const features = (geojson.features || []).map(feat => {
+          const f = new ol.Feature({
+            geometry: new ol.geom.Point(ol.proj.fromLonLat(feat.geometry.coordinates)),
+            ...feat.properties
+          });
+          f.setStyle(getDynamicStyle(f));
+          return f;
+        });
+        vectorSource.addFeatures(features);
+        store.markerCount = features.length;
+        if (fitToResults && features.length > 0) {
+          const extent = vectorSource.getExtent();
+          if (!ol.extent.isEmpty(extent)) {
+            map.getView().fit(extent, { duration: 800, padding: [60, 60, 60, 60], minZoom: 3, maxZoom: 10 });
+          }
+        }
+      })
+      .catch(err => console.error('Marker fetch failed', err))
+      .finally(() => { store.loading = false; });
+  }
+
+  function waitForSize(el, maxTries) {
+    maxTries = maxTries || 30;
+    return new Promise(function (resolve, reject) {
+      (function check(n) {
+        var r = el.getBoundingClientRect();
+        if (r.width && r.height) return resolve(r);
+        if (n >= maxTries) return reject(new Error('Map never got a size'));
+        requestAnimationFrame(function () { check(n + 1); });
+      })(0);
+    });
+  }
+
+  function initMap() {
+    var mapEl = document.getElementById('freemarket-map');
+    if (!mapEl || !window.ol) return;
+
+    var tiles = EcoMap.buildBaseLayers();
+    var vectorSource = new ol.source.Vector();
+    var vectorLayer  = new ol.layer.Vector({ source: vectorSource });
+
+    var map = new ol.Map({
+      target: mapEl,
+      layers: tiles.all.concat([vectorLayer]),
+      view: new ol.View({ center: ol.proj.fromLonLat([0, 20]), zoom: 2, maxZoom: 20 })
+    });
+
+    window._fmSetLayer      = function (mode) { tiles.setBaseLayer(mode); map.renderSync(); };
+    window._fmReloadMarkers = function (fitToResults) { fetchMarkers(map, vectorSource, fitToResults); };
+    window._fmResetView     = function () { map.getView().animate({ center: ol.proj.fromLonLat([0, 20]), zoom: 2, duration: 800 }); };
+
+    var fetchTimer;
+    map.on('moveend', function () {
+      clearTimeout(fetchTimer);
+      fetchTimer = setTimeout(function () { fetchMarkers(map, vectorSource); }, 300);
+    });
+
+    var popupEl = document.createElement('div');
+    popupEl.className = 'map-popup';
+    var overlay = new ol.Overlay({
+      element: popupEl, positioning: 'bottom-center', offset: [0, -12], stopEvent: false
+    });
+    map.addOverlay(overlay);
+
+    map.on('singleclick', function (evt) {
+      var feature = map.forEachFeatureAtPixel(evt.pixel, function (f) { return f; });
+      if (!feature) { overlay.setPosition(undefined); return; }
+      var props = {};
+      feature.getKeys().forEach(function (k) { if (k !== 'geometry') props[k] = feature.get(k); });
+      popupEl.innerHTML = buildPopupHTML(props);
+      overlay.setPosition(evt.coordinate);
+    });
+
+    window.addEventListener('resize', function () { map.updateSize(); });
+
+    waitForSize(mapEl).then(function () {
+      map.updateSize();
+      tiles.setBaseLayer(Alpine.store('fm').layer);
+      fetchMarkers(map, vectorSource);
+    });
+
+    window._fmZoomTo = function (lat, lon, bbox, zoom) {
+      if (bbox) {
+        var extent = ol.proj.transformExtent(
+          [parseFloat(bbox[2]), parseFloat(bbox[0]), parseFloat(bbox[3]), parseFloat(bbox[1])],
+          'EPSG:4326', 'EPSG:3857'
+        );
+        map.getView().fit(extent, { duration: 1000, padding: [50, 50, 50, 50] });
+      } else {
+        map.getView().animate({ center: ol.proj.fromLonLat([parseFloat(lon), parseFloat(lat)]), zoom: zoom || 12, duration: 1000 });
+      }
+    };
+  }
+
+  document.addEventListener('DOMContentLoaded', initMap);
+})();
+</script>
+{% endblock %}

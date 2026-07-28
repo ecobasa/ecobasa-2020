@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags i18n static %}
+
+{% block extrahead %}
+{{ block.super }}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v7.2.2/ol.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.css">
+{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 mt-10 mb-12">
+  <a class="btn flex items-center text-sm leading-5 font-medium mb-10" href="{{ user_obj.get_absolute_url }}">
+    <svg class="flex-shrink-0 -ml-1 mr-1 h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+      <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+    </svg>
+    {% trans "Back to profile" %}
+  </a>
+  <h1>{% trans "Edit profile" %}</h1>
+  
+  <form method="post" enctype="multipart/form-data" class="w-full">
+    {% csrf_token %}
+
+    {% if user_obj.image %}
+    <div class="flex items-center gap-5 mb-6 p-4 bg-secondary bg-opacity-75 rounded-md shadow">
+      <img src="{{ user_obj.image.url }}" alt="" class="w-16 h-16 rounded-full object-cover flex-shrink-0">
+      <div>
+        <p class="text-sm font-semibold mb-1">{% trans "Current photo" %}</p>
+        <label class="flex items-center gap-2 text-sm cursor-pointer">
+          <input type="checkbox" name="clear_image" class="form-checkbox">
+          {% trans "Remove photo" %}
+        </label>
+      </div>
+    </div>
+    {% endif %}
+
+    {% crispy form %}
+    <div id="cropper" class="hidden"></div>
+
+    <!-- Location section (manually rendered to wrap in Alpine + OL map) -->
+    {% include "maps/_location_picker.html" with map_id="user-location-map" set_point_fn="setUserPoint" locate_fn="locateUserProfile" map_height="h-[280px]" %}
+
+    <div class="flex items-center justify-end gap-4 mt-12">
+      <a class="btn btn-lg btn-purple" href="{{ user_obj.get_absolute_url }}"><i class="fa fa-times mr-2"></i>{% trans "Cancel" %}</a>
+      <button class="btn btn-lg" type="submit"><i class="fa fa-check mr-2"></i>{% trans "Save changes" %}</button>
+    </div>
+  </form>
+</div>
+{% endblock content %}
+
+{% block javascript %}
+{{ block.super }}
+<script>
+var croppieFieldName = 'image';
+var croppieOptions = {
+  enableExif: true,
+  viewport: { width: 200, height: 200, type: 'circle' },
+  boundary: { width: 300, height: 300 }
+};
+</script>
+{{ form.media }}
+<script src="https://cdn.jsdelivr.net/npm/ol@v7.2.2/dist/ol.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.min.js"></script>
+<script>
+document.addEventListener('cropper-created', () => document.getElementById('cropper').classList.remove('hidden'));
+document.addEventListener('DOMContentLoaded', () => {
+  const imageField = document.getElementById('div_id_image');
+  if (imageField) imageField.after(document.getElementById('cropper'));
+
+  const skillsInput = document.getElementById('id_skills');
+  if (skillsInput) {
+    new Tagify(skillsInput, {
+      editTags: false,
+      dropdown: { enabled: 0 },
+      originalInputValueFormat: vals => vals.map(v => v.value).join(', '),
+    });
+  }
+
+  const locationInput = document.getElementById('id_location');
+  EcoMap.initLocationPicker({
+    mapTarget:     'user-location-map',
+    locationInput: locationInput,
+    countryInput:  document.getElementById('id_country'),
+    nameInput:     document.getElementById('id_location_name'),
+    badge:         0xF007,
+    pinColor:      '#da6137',
+    groupName:     'update-layer',
+    setPointFn:    'setUserPoint',
+    locateFn:      'locateUserProfile',
+    existingWkt:   locationInput ? locationInput.value : '',
+  });
+});
+</script>
+{% endblock javascript %}

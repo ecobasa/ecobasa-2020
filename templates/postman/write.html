@@ -1,0 +1,229 @@
+{% extends 'postman/base.html' %}
+{% load i18n %}
+
+{% block extrahead %}
+  {{ block.super }}
+  <style>
+    .message-field,
+    .message-field textarea,
+    .message-field input,
+    .message-field select,
+    input.message-field,
+    textarea.message-field,
+    select.message-field {
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 4px;
+      border: 1px solid #ccc;
+      width: 100%;
+      display: block;
+      padding: 0.6rem 0.75rem;
+    }
+  </style>
+{% endblock extrahead %}
+
+{% block postman_content %}
+  <h1 class="text-2xl font-semibold mb-4">{% trans "Compose message" %}</h1>
+  <form method="post" novalidate>
+    {% csrf_token %}
+    <input type="hidden" id="id_recipients_hidden" name="recipients" value="">
+    {% if form.non_field_errors %}
+      <div class="mb-4 text-red-600">{{ form.non_field_errors }}</div>
+    {% endif %}
+
+    <div class="mb-4">
+      <label class="block text-sm font-bold mb-1">{% trans "To" %}</label>
+      {{ form.recipients.errors }}
+      <div class="relative">
+        <input type="text" id="id_recipients_input" name="recipients_display" class="message-field" autocomplete="off" list="recipients-list" placeholder="{% trans "Start typing a name or email" %}">
+        <datalist id="recipients-list"></datalist>
+        <ul id="recipients-suggestions" class="hidden absolute left-0 right-0 z-50 bg-secondary bg-opacity-75 bg-blur-2px border border-brown border-opacity-25 max-h-52 overflow-auto m-0 p-0 list-none rounded-md">
+        </ul>
+      </div>
+    </div>
+
+    <div class="mb-4">
+      <label class="block text-sm font-bold mb-1">{% trans "Subject" %}</label>
+      {{ form.subject.errors }}
+      {{ form.subject }}
+    </div>
+
+    <div class="mb-4">
+      <label class="block text-sm font-bold mb-1">{% trans "Message" %}</label>
+      {{ form.body.errors }}
+      {{ form.body }}
+    </div>
+
+    <div class="flex items-center gap-4">
+        <button type="submit" class="inline-flex items-center bg-primary text-secondary px-6 py-3 rounded-md shadow-lg text-lg hover:opacity-95">
+          <i class="fa fa-paper-plane mr-2"></i>{% trans "Send" %}
+        </button>
+        <a href="{% url 'postman:inbox' %}" class="inline-flex items-center border border-brown bg-purple text-secondary px-6 py-3 rounded-md shadow-lg text-lg hover:opacity-95">
+          <i class="fa fa-ban mr-2"></i>{% trans "Cancel" %}
+        </a>
+    </div>
+  </form>
+{% endblock postman_content %}
+
+{% block javascript %}
+  {{ block.super }}
+  <script>
+    document.addEventListener('DOMContentLoaded', function(){
+      const applyClass = (el) => { if (!el) return; el.classList.add('message-field'); };
+      applyClass(document.getElementById('id_recipients'));
+      applyClass(document.querySelector('[name="recipients"]'));
+      applyClass(document.getElementById('id_subject'));
+      applyClass(document.querySelector('[name="subject"]'));
+      const body = document.getElementById('id_body') || document.querySelector('[name="body"]');
+      if (body) { applyClass(body); if (body.tagName === 'TEXTAREA' && !body.getAttribute('rows')) body.setAttribute('rows', '10'); }
+
+      try {
+        const m = window.location.pathname.match(/\/messages\/write\/([^\/]+)\/?$/);
+        if (m && m[1]) {
+          const name = decodeURIComponent(m[1]);
+          const fm = document.querySelector('form');
+          let hidden = document.getElementById('id_recipients_hidden');
+          if (!hidden && fm) { hidden = document.createElement('input'); hidden.type = 'hidden'; hidden.name = 'recipients'; hidden.id = 'id_recipients_hidden'; fm.appendChild(hidden); }
+          try {
+            fetch('/users/autocomplete/?q=' + encodeURIComponent(name))
+              .then(r => r.json())
+              .then(data => { if ((data || [])[0] && data[0].value) hidden.value = data[0].value; else hidden.value = name; })
+              .catch(() => { if (hidden) hidden.value = name; });
+          } catch(e) { if (hidden) hidden.value = name; }
+
+            // prefer the visible recipients input id/name variants
+            const target = document.getElementById('id_recipients_input') || document.getElementById('id_recipients') || document.querySelector('[name="recipients_display"]') || document.querySelector('[name="recipients"]');
+            const display = document.createElement('div'); display.className = 'message-field'; display.style.paddingTop = '0.6rem'; display.style.paddingBottom = '0.6rem'; display.textContent = name;
+            if (target && target.parentNode) {
+              // insert a non-editable display and remove the editable input to avoid autocomplete
+              target.parentNode.insertBefore(display, target);
+              try { target.parentNode.removeChild(target); } catch(e) {}
+            }
+            // mark global flag so autocomplete script can skip setup
+            window.RECIPIENTS_FIXED = true;
+        }
+      } catch(e) {}
+
+      // Postman-style autocomplete using users.autocomplete
+      (function(){
+        if (window.RECIPIENTS_FIXED) return;
+        const input = document.getElementById('id_recipients_input') || document.getElementById('id_recipients') || document.querySelector('[name="recipients"]');
+        const hidden = document.getElementById('id_recipients_hidden');
+        const datalist = document.getElementById('recipients-list');
+        if (!input || !hidden || !datalist) return;
+
+        let map = {};
+        let lastQuery = '';
+
+        const setHiddenByLabel = (label) => {
+          if (map[label]) hidden.value = (map[label].email || map[label]);
+          else hidden.value = label;
+        };
+
+        input.addEventListener('input', function(e){
+          const q = (e.target.value || '').trim();
+          if (!q) { hidden.value = ''; datalist.innerHTML = ''; map = {}; const suggestionsElEmpty = document.getElementById('recipients-suggestions'); if (suggestionsElEmpty) suggestionsElEmpty.style.display = 'none'; return; }
+          // determine fetch query: if user typed an email use the local-part
+          const isEmail = q.indexOf('@') !== -1;
+          const local = isEmail ? q.split('@')[0] : q;
+          if (!isEmail && local.length < 2) return;
+          if (q === lastQuery) return;
+          lastQuery = q;
+          fetch('/users/autocomplete/?q=' + encodeURIComponent(local))
+            .then(r => r.json())
+            .then(data => {
+              datalist.innerHTML = '';
+              map = {};
+              const suggestions = document.getElementById('recipients-suggestions');
+              if (suggestions) suggestions.innerHTML = '';
+              (data || []).forEach(item => {
+                // server returns {value: email, name: display, username}
+                const nameLabel = item.name || item.label || item.text || '';
+                const emailValue = (item.value || item.id || '').toString();
+                const usernameVal = item.username || '';
+                // display username/name primarily; when typing an email, show name plus email
+                const displayLabel = isEmail ? (nameLabel ? (nameLabel + ' <' + emailValue + '>') : emailValue) : (nameLabel || usernameVal || emailValue);
+                const opt = document.createElement('option');
+                opt.value = displayLabel;
+                datalist.appendChild(opt);
+                // map displayLabel -> canonical details
+                map[displayLabel] = { email: emailValue, username: usernameVal };
+
+                if (suggestions) {
+                  const li = document.createElement('li');
+                  li.className = 'px-3 py-2 cursor-pointer hover:bg-primary hover:text-secondary';
+                  // create styled content: username/name bold, email small
+                  const title = document.createElement('div');
+                  title.className = 'font-semibold font-serif';
+                  title.textContent = nameLabel || usernameVal || emailValue;
+                  const subtitle = document.createElement('div');
+                  subtitle.className = 'text-sm';
+                  subtitle.textContent = (emailValue && nameLabel) ? emailValue : '';
+                  li.appendChild(title);
+                  if (subtitle.textContent) li.appendChild(subtitle);
+                  li.addEventListener('mousedown', function(ev){
+                    input.value = nameLabel || usernameVal || emailValue;
+                    hidden.value = emailValue || (map[displayLabel] && map[displayLabel].email) || '';
+                    suggestions.classList.add('hidden');
+                    ev.preventDefault();
+                  });
+                  suggestions.appendChild(li);
+                }
+              });
+              if (suggestions && suggestions.children.length) {
+                suggestions.classList.remove('hidden');
+              } else if (suggestions) {
+                suggestions.classList.add('hidden');
+              }
+              // if user typed full email and it exactly matches a returned item's email, auto-suggest it
+              if (isEmail) {
+                const match = (data || []).find(it => (it.value || '').toLowerCase() === q.toLowerCase());
+                if (match) {
+                  const label = match.name || match.value || match.id || q;
+                  input.value = label;
+                  hidden.value = match.value || match.id || q;
+                  if (suggestions) suggestions.classList.add('hidden');
+                }
+              }
+            }).catch(()=>{});
+        });
+
+        // show suggestions on focus or ArrowDown
+        const suggestionsEl = document.getElementById('recipients-suggestions');
+        input.addEventListener('focus', function(){ if (suggestionsEl && suggestionsEl.children.length) suggestionsEl.classList.remove('hidden'); });
+        input.addEventListener('keydown', function(e){ if (e.key === 'ArrowDown' && suggestionsEl && suggestionsEl.children.length) { e.preventDefault(); suggestionsEl.classList.remove('hidden'); suggestionsEl.children[0].focus && suggestionsEl.children[0].focus(); } });
+        // hide on outside click
+        document.addEventListener('click', function(e){ if (!input.contains(e.target) && suggestionsEl && !suggestionsEl.contains(e.target)) { suggestionsEl.classList.add('hidden'); } });
+
+        // when user chooses an entry (change fires on selection)
+        input.addEventListener('change', function(e){ setHiddenByLabel(e.target.value || ''); });
+        input.addEventListener('blur', function(e){
+          const val = (e.target.value || '').trim();
+          if (!val) { hidden.value = ''; return; }
+          // if the displayed label matches a known map entry, set canonical value
+          if (map[val]) { hidden.value = (map[val].email || map[val]); return; }
+          // if user typed an email, try to resolve it by querying the local-part
+          if (val.indexOf('@') !== -1) {
+            const local = val.split('@')[0];
+            fetch('/users/autocomplete/?q=' + encodeURIComponent(local))
+              .then(r => r.json())
+              .then(data => {
+                const found = (data || []).find(it => (it.value || '').toLowerCase() === val.toLowerCase());
+                if (found) {
+                  // replace displayed email with the user's name label and set hidden to canonical value
+                  const label = found.name || found.username || found.label || found.text || found.value || '';
+                  input.value = label;
+                  hidden.value = found.value || found.id || val;
+                } else {
+                  // no match: use the typed email as canonical
+                  hidden.value = val;
+                }
+              }).catch(()=>{ hidden.value = val; });
+            return;
+          }
+          // fallback: use raw input as canonical
+          hidden.value = val;
+        });
+      })();
+    });
+  </script>
+{% endblock javascript %}

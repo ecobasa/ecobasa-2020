@@ -6,6 +6,7 @@
 @import "tailwindcss/components";
 
 @import "./forms.css";
+@import "./maps.css";
 
 @import "tailwindcss/utilities";
 
@@ -14,12 +15,16 @@ body {
 	background: url('../images/back.jpg') repeat;
 }
 
+.modal {
+	background: url('../images/back.jpg') repeat;
+}
+
 h1, h2, h3 {
   @apply font-serif ;
 }
 
 h1 {
-  @apply text-primary text-5xl;
+  @apply text-primary text-5xl mb-6;
 }
 
 h2 {
@@ -79,12 +84,15 @@ nav {
  			@apply text-brown;
  		}
  	}
- }
+}
 
 .btn {
  	@apply py-2 px-4 rounded border border-solid box-border font-bold bg-primary bg-opacity-75 text-secondary border-primary;
- 	&:hover, &:focus {
-		@apply bg-opacity-100 transition duration-300 ease-in-out;
+ 	&:hover {
+		@apply bg-opacity-100 transition duration-300 ease-in-out border;
+	}
+	&:focus-visible, &:focus {
+		@apply outline-none border border-primary;
 	}
 	a& {
 		@apply cursor-pointer text-center items-center bg-opacity-75;
@@ -107,9 +115,157 @@ nav {
  	&-green {
  		@apply bg-green bg-opacity-75 border-green;
  	}
- }
+	&-lg {
+		@apply py-3 px-6 text-lg;
+	}
+}
 
- .video-container iframe,
- .video-container embed {
- 	@apply absolute top-0 left-0 w-full h-full;
- }
+.btn-pill-select {
+	@apply px-4 py-2 text-sm font-semibold flex items-center gap-2 text-secondary hover:bg-primary hover:text-secondary transition-colors duration-150;
+}
+
+.pill {
+	@apply px-3 py-1 rounded-full text-xs font-semibold inline-flex items-center;
+}
+
+.form-label {
+	@apply block mb-1 text-sm font-semibold text-primary;
+}
+
+.icon-input {
+	@apply pl-10;
+}
+
+.field-error {
+	@apply text-xs text-red;
+}
+
+.panel-card {
+	@apply bg-secondary bg-opacity-75 shadow rounded-md px-8 py-8 mt-10 form-control-w-full;
+}
+
+.dropdown-link {
+	@apply block px-4 py-2 text-sm leading-5 text-secondary hover:bg-secondary focus:outline-none focus:bg-secondary transition duration-150 ease-in-out;
+}
+
+.dropdown-item {
+	@apply inline-flex items-center w-full px-2 py-1 rounded hover:bg-secondary hover:text-primary cursor-pointer;
+}
+
+.modal-overlay {
+	@apply fixed inset-0 bg-black bg-opacity-70 z-50 items-center justify-center p-4;
+}
+
+.modal-content {
+	@apply bg-secondary rounded-lg max-w-2xl w-full p-6 relative max-h-[90vh] overflow-y-auto;
+}
+
+.modal-close {
+	@apply absolute top-3 right-3 text-secondary text-2xl h-10 w-10 rounded-full bg-black bg-opacity-50 hover:bg-opacity-70 flex items-center justify-center;
+}
+
+.video-container iframe,
+.video-container embed {
+	@apply absolute top-0 left-0 w-full h-full;
+}
+
+
+
+/* MAPS */
+
+.map-shell {
+	@apply h-[calc(100vh-113px)] max-h-[calc(100vh-113px)] pb-12 box-border overflow-hidden;
+}
+
+.map-popup {
+	@apply relative bg-secondary bg-opacity-80 text-brown rounded-xl p-4 shadow-lg text-xs leading-snug max-w-[300px] -top-[20px];
+	
+	&:before {
+		content: '';
+		position: absolute;
+		bottom: -10px;
+		left: 50%;
+		transform: translateX(-50%);
+		border-width: 10px 10px 0 10px;
+		border-style: solid;
+		border-color: #b4502c transparent transparent transparent;
+	}
+
+	&:after {
+		content: '';
+		position: absolute;
+		bottom: -9px;
+		left: 50%;
+		transform: translateX(-50%);
+		border-width: 9px 9px 0 9px;
+		border-style: solid;
+		border-color: rgba(252, 243, 229, 0.8) transparent transparent transparent;
+	}
+
+	& h3 {
+		@apply text-2xl m-0 font-bold leading-tight text-brown;
+	}
+
+	& .popup-meta {
+		@apply float-right ml-8;
+	}
+}
+/* Low-profile suggestions dropdown (shared with communities) */
+.suggestions-dropdown {
+	@apply absolute left-0 right-0 bg-secondary bg-opacity-75 backdrop-blur-sm border border-gray-200 shadow-lg z-50 rounded-md overflow-hidden;
+
+	& ul {
+		@apply list-none m-0 p-0;
+}
+
+	& li {
+		@apply p-2 text-xs text-brown cursor-pointer;
+		
+		&:hover,
+		&.is-active {
+			@apply bg-primary bg-opacity-60;
+		}
+	}
+}
+
+@layer components {
+  .tagify {
+    --tags-border-color: theme('colors.purple');
+    --tags-hover-border-color: theme('colors.third');
+    --tag-bg: theme('colors.purple');
+    --tag-text-color: theme('colors.secondary');
+    --tag-hover: theme('colors.primary');
+    --tag-border-radius: 9999px;
+    --tag-pad: 0.3rem 0.6rem;
+  }
+
+  /* Style the dropdown suggestions to match your theme */
+  .tagify__dropdown__wrapper {
+    background: theme('colors.secondary');
+    border-color: theme('colors.primary');
+  }
+
+  .tagify__dropdown__item--active {
+    background: theme('colors.primary');
+    color: theme('colors.secondary');
+  }
+
+  .tagify__tag {
+    @apply font-bold bg-purple rounded-full pl-2 pb-1;
+  }
+
+  .tagify__tag-text {
+    @apply text-secondary;
+  }
+
+  .tagify__tag > div {
+    /* This removes the default inset shadow Tagify uses for borders */
+    --tag-inset-shadow-size: 0;
+  }
+
+  .tagify__tag__removeBtn {
+    /* Make the 'x' look cleaner */
+    @apply ml-2 text-secondary hover:bg-red hover:text-white rounded-full;
+    --tag-remove-btn-color: #fcf3e5;
+  }
+}

@@ -11,14 +11,12 @@
       <h1 class="mt-6 text-center text-3xl leading-9">
         {% trans "Log in to your ecobasa account" %}
       </h1>
-      <p class="mt-2 text-center text-base leading-5">
-        <a href="{% url "users:register" %}" class="font-bold focus:outline-none focus:underline">
-          {% trans "Or create a new account" %}
-        </a>
+      <p class="mt-2 text-center text-sm leading-5 text-primary">
+        {% trans "Log in with your email address (usernames are legacy only)." %}
       </p>
     </div>
 
-    <form method="POST" class="bg-secondary bg-opacity-75 shadow rounded-md px-8 py-8 mt-10 form-control-w-full">
+    <form method="POST" class="panel-card">
       {% csrf_token %}
       
       {{ form | crispy }}
@@ -27,7 +25,13 @@
         <a href="{% url "users:password_reset" %}" class="text-sm text-primary">{% trans "Forgot your password?" %}</a>
       </div>
 
-      <button class="btn w-full my-5"><i class="fa fa-sign-in-alt mr-1"></i>{% trans "Log in" %}</button>
+      <div class="flex flex-col gap-3 mt-5">
+        <button type="submit" class="btn w-full"><i class="fa fa-sign-in-alt mr-2"></i>{% trans "Log in" %}</button>
+        <a class="btn btn-purple w-full" href="{% url "users:register" %}">
+          <i class="fa fa-user-plus mr-2"></i>
+          {% trans "Create a new account" %}
+        </a>
+      </div>
     </form>
   </div>
 </div>

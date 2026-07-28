@@ -1,40 +1,69 @@
 {% extends 'base.html' %}
-{% load i18n %}
+{% load static i18n %}
+
+{% block extrahead %}
+  {{ block.super }}
+  {% if ad.location %}
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v7.2.2/ol.css">
+  {% endif %}
+{% endblock %}
+
 
 {% block content %}
-<div class="mx-auto max-w-4xl mt-10 px-4">
+{# Root Alpine scope — manages image modal and contact modal #}
+<div class="mx-auto max-w-4xl mt-10 px-4 pb-16"
+  x-data="{ imageOpen: false, contactOpen: false }">
 
-  {% comment %} breadcrumbs {% endcomment %}
+  {# ── Breadcrumbs ── #}
   <nav class="sm:hidden">
-    <a href="{% url "gifting:search" %}" class="flex items-center text-sm leading-5 font-medium text-yellow hover:text-purple transition duration-150 ease-in-out">
+    <a href="{% url 'gifting:search' %}"
+      class="flex items-center text-sm font-medium text-yellow hover:text-purple transition">
       <svg class="flex-shrink-0 -ml-1 mr-1 h-5 w-5 text-yellow" viewBox="0 0 20 20" fill="currentColor">
-        <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+        <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd"/>
       </svg>
       {% trans "Back" %}
     </a>
   </nav>
-  <nav class="hidden sm:flex items-center text-sm leading-5 font-medium">
-    <a href="{% url "gifting:search" %}" class="text-yellow hover:text-purple transition duration-150 ease-in-out">{% trans "Free Market" %}</a>
-    <svg class="flex-shrink-0 mx-2 h-5 w-5 text-yellow" viewBox="0 0 20 20" fill="currentColor">
-      <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
-    </svg>
-    <a href="{% url "gifting:search" %}?type={{ ad.type }}" class="text-yellow hover:text-purple transition duration-150 ease-in-out">{{ ad.get_type_display }}</a>
-    <svg class="flex-shrink-0 mx-2 h-5 w-5 text-yellow" viewBox="0 0 20 20" fill="currentColor">
-      <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
-    </svg>
+  <nav class="hidden sm:flex items-center text-sm font-medium gap-2">
+    <a href="{% url 'gifting:search' %}" class="text-yellow hover:text-purple transition">{% trans "Free Market" %}</a>
+    <svg class="h-5 w-5 text-yellow" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/></svg>
+    <a href="{% url 'gifting:search' %}?type={{ ad.type }}" class="text-yellow hover:text-purple transition">{{ ad.get_type_display }}</a>
+    <svg class="h-5 w-5 text-yellow" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/></svg>
     <span class="text-primary">{{ ad.title }}</span>
   </nav>
 
-  {% comment %} header {% endcomment %}
+  {# ── Hero image (opens lightbox) ── #}
+  {% if ad.image %}
+  <div class="mt-6 flex justify-center">
+    <button type="button" @click="imageOpen = true" aria-label="{% trans 'Open image' %}" class="inline-block w-full">
+      <img src="{{ ad.image.url }}" alt="{{ ad.title }}"
+        class="w-full h-52 object-cover rounded-lg shadow mb-4">
+    </button>
+  </div>
+
+  {# ── Image lightbox modal ── #}
+  <div x-show="imageOpen" x-cloak
+    class="fixed inset-0 bg-black bg-opacity-80 z-50 flex items-center justify-center p-4"
+    @click.self="imageOpen = false"
+    @keydown.escape.window="imageOpen = false">
+    <div class="relative max-w-5xl w-full flex justify-center">
+      <button type="button" @click="imageOpen = false"
+        class="modal-close absolute top-0 right-0"
+        aria-label="{% trans 'Close' %}">&times;</button>
+      <img src="{{ ad.image.url }}" alt="{{ ad.title }}"
+        class="max-h-[80vh] max-w-full rounded-lg shadow-lg">
+    </div>
+  </div>
+  {% endif %}
+
+  {# ── Header ── #}
   <div class="mt-4 md:mt-10 md:flex md:items-center md:justify-between">
     <div class="flex-1 min-w-0">
       <div class="text-primary font-bold">{{ ad.get_type_display }}</div>
-      <h1 class="sm:text-3xl sm:leading-9 sm:truncate">
-        {{ ad.title }}
-      </h1>
+      <h1 class="sm:text-3xl sm:leading-9 sm:truncate">{{ ad.title }}</h1>
       <div class="my-1">
         {% if ad.owner == request.user %}
-          <span class="border mx-px py-px px-1 rounded text-xs text-secondary bg-purple">from me</span>
+          <span class="border mx-px py-px px-1 rounded text-xs text-secondary bg-purple">{% trans "from me" %}</span>
         {% endif %}
         {% for cat in ad.categories.all %}
           <span class="border mx-px py-px px-1 rounded text-xs text-secondary bg-primary">{{ cat.name }}</span>
@@ -44,25 +73,180 @@
     </div>
 
     {% if ad.owner == request.user %}
-      <a href="{% url "gifting:delete" ad.pk %}" class="btn btn-purple flex mx-5">
-        <i class="fa fa-recycle mr-1"></i>
-        {% trans "Delete" %}
+      <a href="{% url 'gifting:delete' ad.pk %}" class="btn btn-lg btn-purple flex mx-5">
+        <i class="fa fa-recycle mr-1"></i> {% trans "Delete" %}
       </a>
-
       <div class="mt-4 flex-shrink-0 flex md:mt-0 md:ml-4">
-        <span class="shadow-sm rounded-md">
-          <a href="{% url "gifting:edit" ad.pk %}" class="btn inline-flex items-center">
-            <i class="fa fa-edit mr-1"></i>
-            {% trans "Edit" %}
-          </a>
-        </span>
+        <a href="{% url 'gifting:edit' ad.pk %}" class="btn btn-lg">
+          <i class="fa fa-edit mr-1"></i> {% trans "Edit" %}
+        </a>
       </div>
     {% endif %}
   </div>
 
-  {% comment %} content {% endcomment %}
+  {# ── Description ── #}
   <div class="mt-10">
     <p>{{ ad.description }}</p>
   </div>
-</div>
+
+  {# ── Owner block ── #}
+  {% if ad.owner %}
+  <div class="mt-8">
+    <h2 class="text-lg font-semibold mb-4">
+      {% if ad.type == 'offer' %}{% trans "Offer from" %}{% else %}{% trans "Wish from" %}{% endif %}
+    </h2>
+    <div class="flex flex-col items-center gap-3 p-4 border rounded bg-primary bg-opacity-5">
+      <a href="{{ ad.owner.get_absolute_url }}" class="block">
+        {% if ad.owner.image %}
+          <img src="{{ ad.owner.image.url }}"
+            alt="{% if ad.owner.name %}{{ ad.owner.name }}{% else %}{{ ad.owner.username }}{% endif %}"
+            class="w-20 h-20 rounded-full object-cover mx-auto">
+        {% else %}
+          <div class="w-20 h-20 rounded-full bg-primary flex items-center justify-center text-secondary mx-auto">
+            <i class="fa fa-user text-3xl"></i>
+          </div>
+        {% endif %}
+      </a>
+      <a href="{{ ad.owner.get_absolute_url }}" class="font-serif text-primary">
+        {% if ad.owner.name %}{{ ad.owner.name }}
+        {% elif ad.owner.get_full_name %}{{ ad.owner.get_full_name }}
+        {% else %}{{ ad.owner.username }}{% endif %}
+      </a>
+      {% if ad.owner.location_name %}
+        <div class="text-sm"><i class="fa fa-map-marker mr-2"></i>{{ ad.owner.location_name }}</div>
+      {% endif %}
+      <div>
+        {% if request.user.is_authenticated %}
+          <button type="button" @click="contactOpen = true" class="btn">
+            <i class="fa fa-envelope mr-2"></i>
+            {% if ad.type == 'offer' %}{% trans "Request offer" %}{% else %}{% trans "Fulfill wish" %}{% endif %}
+          </button>
+        {% else %}
+          <a class="btn" href="{% url 'users:login' %}?next={{ request.path }}">
+            <i class="fa fa-envelope mr-2"></i>
+            {% if ad.type == 'offer' %}{% trans "Request offer" %}{% else %}{% trans "Fulfill wish" %}{% endif %}
+          </a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  {# ── Location map ── #}
+  {% if ad.location %}
+  <div class="mt-10">
+    <h2 class="text-lg font-semibold mb-3">{% trans "Location" %}</h2>
+    <div class="relative">
+      <div id="ad-detail-map" class="w-full h-96 rounded shadow overflow-hidden"></div>
+    </div>
+  </div>
+  {% endif %}
+
+  {# ── Contact modal ── #}
+  {% if ad.owner %}
+  <div x-show="contactOpen" x-cloak
+    class="modal-overlay flex"
+    @click.self="contactOpen = false"
+    @keydown.escape.window="contactOpen = false">
+    <div class="modal relative rounded-lg shadow-xl w-full max-w-lg">
+      <button type="button" @click="contactOpen = false"
+        class="absolute top-3 right-3 text-2xl w-10 h-10 flex items-center justify-center bg-secondary bg-opacity-80 rounded-full"
+        aria-label="{% trans 'Close' %}">&times;</button>
+      <div class="px-6 pb-6">
+        <h2 class="text-2xl font-semibold mt-4 mb-4">
+          {% if ad.type == 'offer' %}
+            {% trans "Ask for" %}
+          {% else %}
+            {% trans "Fulfill wish" %}
+          {% endif %}: {{ ad.title }}</h2>
+        <form method="post" action="{% url 'postman:write' %}">
+          {% csrf_token %}
+          <input type="hidden" name="recipients"    value="{{ ad.owner.email }}">
+          <input type="hidden" name="subject"       value="{{ ad.title }}">
+          <input type="hidden" name="ad_random_id"  value="{{ ad.random_id }}">
+          <div class="grid grid-cols-1 gap-3">
+            <label class="text-sm">{% trans "Message" %}
+              <textarea name="body" rows="6" class="form-textarea w-full mt-1"
+                placeholder="{% trans 'Write a short message about why you\'re interested' %}"></textarea>
+            </label>
+          </div>
+          <div class="mt-4 flex justify-end gap-3">
+            <button type="button" @click="contactOpen = false" class="btn btn-purple"><i class="fa fa-times mr-2"></i>{% trans "Cancel" %}</button>
+            <button type="submit" class="btn"><i class="fa fa-paper-plane mr-2"></i>{% trans "Send" %}</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+</div>{# /x-data #}
 {% endblock content %}
+
+
+{% block javascript %}
+  {{ block.super }}
+  {% if ad.location %}
+  <script src="https://cdn.jsdelivr.net/npm/ol@v7.2.2/dist/ol.js"></script>
+  <script>
+  /* ================================================================
+     Ad detail map — single marker + layer switcher.
+     ================================================================ */
+  (function () {
+    const LAT  = {{ ad.location.y|floatformat:"6" }};
+    const LON  = {{ ad.location.x|floatformat:"6" }};
+
+    document.addEventListener('DOMContentLoaded', function () {
+      const mapEl = document.getElementById('ad-detail-map');
+      if (!mapEl) return;
+
+      const tiles = EcoMap.buildBaseLayers();
+      const center = ol.proj.fromLonLat([LON, LAT]);
+
+      const marker = new ol.Feature({ geometry: new ol.geom.Point(center) });
+      {% if ad.type == 'wish' %}
+      marker.setStyle(EcoMap.makeIconStyle(0xF004, '#de7a08')); //  fa-heart
+      {% else %}
+      marker.setStyle(EcoMap.makeIconStyle(0xF06B, '#da6137')); //  fa-gift
+      {% endif %}
+
+      const map = new ol.Map({
+        target: mapEl,
+        layers: tiles.all.concat([
+          new ol.layer.Vector({ source: new ol.source.Vector({ features: [marker] }) })
+        ]),
+        view: new ol.View({ center, zoom: 13 })
+      });
+
+      const menu = EcoMap.buildLayerToggle(map, 'ad-detail-layer');
+      menu.querySelectorAll('input').forEach(function (r) {
+        r.addEventListener('change', function (e) { if (e.target.checked) { tiles.setBaseLayer(e.target.value); map.renderSync(); } });
+      });
+
+      // Simple popup showing title + location
+      const popupEl = document.createElement('div');
+      popupEl.className = 'freemarket-popup';
+      popupEl.innerHTML = '<strong>{{ ad.title|escapejs }}</strong>'
+        + '{% if ad.location_name %}<div>{{ ad.location_name|escapejs }}</div>{% endif %}';
+      const overlay = new ol.Overlay({
+        element: popupEl, positioning: 'bottom-center', offset: [0, -12], stopEvent: false
+      });
+      map.addOverlay(overlay);
+      overlay.setPosition(center);
+
+      window.addEventListener('resize', () => map.updateSize());
+      (function ensureRender(n) {
+        const rect = mapEl.getBoundingClientRect();
+        if (rect.width && rect.height) {
+          tiles.setBaseLayer('ecobasa');
+          map.updateSize();
+          map.renderSync();
+          return;
+        }
+        if (n < 30) requestAnimationFrame(() => ensureRender(n + 1));
+      })(0);
+    });
+  })();
+  </script>
+  {% endif %}
+{% endblock javascript %}
