@@ -12,18 +12,18 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.AddField(
-            model_name='ad',
+            model_name='listing',
             name='created_at',
             field=models.DateTimeField(auto_now_add=True, default=django.utils.timezone.now),
             preserve_default=False,
         ),
         migrations.AddField(
-            model_name='ad',
+            model_name='listing',
             name='updated_at',
             field=models.DateTimeField(auto_now=True),
         ),
         migrations.AlterField(
-            model_name='ad',
+            model_name='listing',
             name='random_id',
             field=models.CharField(editable=False, max_length=8, primary_key=True, serialize=False, verbose_name='Random Id'),
         ),

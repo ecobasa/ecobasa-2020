@@ -14,16 +14,16 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.AlterModelOptions(
-            name='ad',
-            options={'ordering': ['-created_at'], 'verbose_name': 'Ad', 'verbose_name_plural': 'Ads'},
+            name='listing',
+            options={'ordering': ['-created_at'], 'verbose_name': 'Listing', 'verbose_name_plural': 'Listings'},
         ),
         migrations.AddField(
-            model_name='ad',
+            model_name='listing',
             name='owner',
-            field=models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='ads', to=settings.AUTH_USER_MODEL, verbose_name='Owner'),
+            field=models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='listings', to=settings.AUTH_USER_MODEL, verbose_name='Owner'),
         ),
         migrations.AlterField(
-            model_name='ad',
+            model_name='listing',
             name='type',
             field=models.CharField(choices=[('offer', 'Offer'), ('wish', 'Wish')], default='offer', max_length=5, verbose_name='Type'),
         ),

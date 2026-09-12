@@ -13,19 +13,19 @@
       {% csrf_token %}
 
       <h1 class="text-xl text-purple font-bold mb-6">
-        {% blocktrans with ad_type=ad.get_type_display %}
-          Delete {{ ad_type }}?
+        {% blocktrans with listing_type=listing.get_type_display %}
+          Delete {{ listing_type }}?
         {% endblocktrans %}
       </h1>
 
       <p>
-        {% blocktrans with ad_type=ad.get_type_display ad_title=ad.title %}
-          Are you sure you want to delete the {{ ad_type }} <b>{{ ad_title }}</b>?
+        {% blocktrans with listing_type=listing.get_type_display listing_title=listing.title %}
+          Are you sure you want to delete the {{ listing_type }} <b>{{ listing_title }}</b>?
         {% endblocktrans %}
       </p>
 
       <div class="flex items-center justify-end -mx-5 mt-8">
-        <a class="mx-5 btn flex" href="{{ ad.get_absolute_url }}"><i class="fa fa-ban mr-1"></i>{% trans "Cancel" %}</a>
+        <a class="mx-5 btn flex" href="{{ listing.get_absolute_url }}"><i class="fa fa-ban mr-1"></i>{% trans "Cancel" %}</a>
         <button class="mx-5 btn btn-purple"><i class="fa fa-recycle mr-1"></i>{% trans "Delete" %}</button>
       </div>
     </form>

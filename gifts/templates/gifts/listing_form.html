@@ -9,7 +9,7 @@
 {% block content %}
 <div class="container-content">
 
-  <button type="button" class="btn flex items-center text-sm leading-5 font-medium mb-10" href="{% if ad.pk %}{% url "gifts:detail" ad.pk %}{% else %}{% url "gifts:search" %}{% endif %}">
+  <button type="button" class="btn flex items-center text-sm leading-5 font-medium mb-10" href="{% if listing.pk %}{% url "gifts:detail" listing.pk %}{% else %}{% url "gifts:search" %}{% endif %}">
     <svg class="flex-shrink-0 -ml-1 mr-1 h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
       <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
     </svg>
@@ -17,8 +17,8 @@
   </button>
 
   <h1 class="text-3xl md:text-5xl">
-    {% if ad.pk %}
-      Edit {{ ad.get_type_display }} {{ ad.title }}
+    {% if listing.pk %}
+      Edit {{ listing.get_type_display }} {{ listing.title }}
     {% else %}
       Create new Offer or Wish
     {% endif %}
@@ -30,13 +30,13 @@
 
     <!-- Location picker (rendered manually; form.location and form.location_name are hidden inputs) -->
     <h3 class="text-lg font-semibold text-primary mb-2">{% trans "Location" %}</h3>
-    {% include "maps/_location_picker.html" with map_id="ad-location-map" set_point_fn="setAdPoint" locate_fn="locateAd" map_height="h-80" %}
+    {% include "maps/_location_picker.html" with map_id="listing-location-map" set_point_fn="setListingPoint" locate_fn="locateListing" map_height="h-80" %}
 
     <div class="flex items-center justify-end gap-4 mt-12">
-      {% if ad.pk %}
-      <a href="{% url "gifts:delete" ad.pk %}" class="btn btn-lg btn-red"><i class="fa fa-recycle mr-2"></i>{% trans "Delete" %}</a>
+      {% if listing.pk %}
+      <a href="{% url "gifts:delete" listing.pk %}" class="btn btn-lg btn-red"><i class="fa fa-recycle mr-2"></i>{% trans "Delete" %}</a>
       {% endif %}
-      <a class="btn btn-lg btn-purple flex" href="{% if ad.pk %}{% url "gifts:detail" ad.pk %}{% else %}{% url "gifts:search" %}{% endif %}"><i class="fa fa-times mr-2"></i>{% trans "Cancel" %}</a>
+      <a class="btn btn-lg btn-purple flex" href="{% if listing.pk %}{% url "gifts:detail" listing.pk %}{% else %}{% url "gifts:search" %}{% endif %}"><i class="fa fa-times mr-2"></i>{% trans "Cancel" %}</a>
       <button class="btn btn-lg" type="submit">
         <i class="fa fa-check mr-2"></i>{% trans "Save" %}
       </button>
@@ -53,18 +53,18 @@
     document.addEventListener('DOMContentLoaded', () => {
       const locationInput = document.getElementById('id_location');
       const picker = EcoMap.initLocationPicker({
-        mapTarget:     'ad-location-map',
+        mapTarget:     'listing-location-map',
         locationInput: locationInput,
         countryInput:  null,
         nameInput:     document.getElementById('id_location_name'),
-        groupName:     'ad-layer',
-        setPointFn:    'setAdPoint',
-        locateFn:      'locateAd',
+        groupName:     'listing-layer',
+        setPointFn:    'setListingPoint',
+        locateFn:      'locateListing',
         existingWkt:   locationInput ? locationInput.value : '',
       });
 
       // Wish/offer icon changes with type selection
-      const applyAdStyle = () => {
+      const applyListingStyle = () => {
         const typeEl = document.querySelector('input[name="type"]:checked');
         const isWish = typeEl && typeEl.value === 'wish';
         picker.vectorLayer.setStyle(
@@ -75,9 +75,9 @@
         );
       };
 
-      applyAdStyle();
+      applyListingStyle();
       document.querySelectorAll('input[name="type"]').forEach(r =>
-        r.addEventListener('change', applyAdStyle)
+        r.addEventListener('change', applyListingStyle)
       );
     });
   </script>

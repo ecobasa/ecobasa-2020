@@ -11,11 +11,11 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.AlterModelOptions(
-            name='adcategory',
-            options={'ordering': ['order', 'name'], 'verbose_name': 'Ad Category', 'verbose_name_plural': 'Ad Categories'},
+            name='listingcategory',
+            options={'ordering': ['order', 'name'], 'verbose_name': 'Listing Category', 'verbose_name_plural': 'Listing Categories'},
         ),
         migrations.AddField(
-            model_name='adcategory',
+            model_name='listingcategory',
             name='order',
             field=models.IntegerField(default='0', verbose_name='Order'),
         ),

@@ -2,7 +2,7 @@ import pytest
 
 from django.test import Client
 
-from gifts.models import Ad
+from gifts.models import Listing
 from users.models import User
 
 from ..models import Match, MatchMessage
@@ -24,15 +24,15 @@ def stranger():
 
 
 @pytest.fixture
-def ad(owner):
-    return Ad.objects.create(title="Old Bicycle", type="offer", owner=owner)
+def listing(owner):
+    return Listing.objects.create(title="Old Bicycle", type="offer", owner=owner)
 
 
 @pytest.fixture
-def match(requester, ad):
+def match(requester, listing):
     m = Match(from_user=requester, message="Interested!")
-    m.target = ad
-    m.recipient = ad.get_match_owner()
+    m.target = listing
+    m.recipient = listing.get_match_owner()
     m.save()
     return m
 

@@ -11,7 +11,7 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.AddField(
-            model_name='ad',
+            model_name='listing',
             name='random_id',
             field=models.CharField(default='afjzhuop', editable=False, max_length=8, verbose_name='Random Id'),
             preserve_default=False,

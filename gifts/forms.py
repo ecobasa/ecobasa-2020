@@ -7,7 +7,7 @@ from crispy_forms.layout import Layout, Field, Fieldset as CrispyFieldset
 from django.contrib.gis import forms
 
 from .widgets import LocationWidget
-from .models import Ad
+from .models import Listing
 
 
 class Fieldset(CrispyFieldset):
@@ -16,7 +16,7 @@ class Fieldset(CrispyFieldset):
         super().__init__(*args, **kwargs)
 
 
-class AdForm(forms.ModelForm):
+class ListingForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper()
@@ -33,7 +33,7 @@ class AdForm(forms.ModelForm):
         )
 
     class Meta:
-        model = Ad
+        model = Listing
         fields = (
             "type",
             "title",

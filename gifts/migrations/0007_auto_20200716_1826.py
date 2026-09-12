@@ -11,20 +11,20 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name='AdCategory',
+            name='ListingCategory',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('name', models.CharField(max_length=50, verbose_name='Name')),
             ],
             options={
-                'verbose_name': 'Ad Category',
-                'verbose_name_plural': 'Ad Categories',
+                'verbose_name': 'Listing Category',
+                'verbose_name_plural': 'Listing Categories',
                 'ordering': ['name'],
             },
         ),
         migrations.AddField(
-            model_name='ad',
+            model_name='listing',
             name='categories',
-            field=models.ManyToManyField(related_name='ads', to='gifts.AdCategory', verbose_name='Categories'),
+            field=models.ManyToManyField(related_name='listings', to='gifts.ListingCategory', verbose_name='Categories'),
         ),
     ]

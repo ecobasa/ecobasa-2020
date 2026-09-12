@@ -11,8 +11,8 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.AlterField(
-            model_name='ad',
+            model_name='listing',
             name='categories',
-            field=models.ManyToManyField(blank=True, related_name='ads', to='gifts.AdCategory', verbose_name='Categories'),
+            field=models.ManyToManyField(blank=True, related_name='listings', to='gifts.ListingCategory', verbose_name='Categories'),
         ),
     ]

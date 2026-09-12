@@ -156,7 +156,7 @@ def format_message_body(message):
     from django.utils.formats import date_format
     import datetime
 
-    body = re.sub(r"\n?Ad-ID:\s*[A-Za-z0-9-_]+\s*$", "", body, flags=re.IGNORECASE)
+    body = re.sub(r"\n?Listing-ID:\s*[A-Za-z0-9-_]+\s*$", "", body, flags=re.IGNORECASE)
 
     parts = re.split(r"Requested stay:\s*", body, maxsplit=1)
 
@@ -272,14 +272,14 @@ def parse_requested_dates(body):
 
 @register.filter(is_safe=False)
 def strip_requested_block(body):
-    """Remove structured metadata blocks (Requested stay, Skills, Sender-Skills, Ad-ID) from message body."""
+    """Remove structured metadata blocks (Requested stay, Skills, Sender-Skills, Listing-ID) from message body."""
     if not body:
         return ""
     import re
     cleaned = re.sub(r"Requested stay:\s*.*$", "", body, flags=re.IGNORECASE | re.DOTALL).strip()
     cleaned, _ = _extract_sender_skills_from_text(cleaned)
     cleaned, _ = _extract_skills_from_text(cleaned)
-    cleaned = re.sub(r"\n?Ad-ID:\s*[A-Za-z0-9-_]+\s*$", "", cleaned, flags=re.IGNORECASE).strip()
+    cleaned = re.sub(r"\n?Listing-ID:\s*[A-Za-z0-9-_]+\s*$", "", cleaned, flags=re.IGNORECASE).strip()
     return cleaned
 
 

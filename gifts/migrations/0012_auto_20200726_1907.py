@@ -12,12 +12,12 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.AddField(
-            model_name='ad',
+            model_name='listing',
             name='location_name',
             field=models.CharField(blank=True, max_length=255, null=True, verbose_name='Location'),
         ),
         migrations.AlterField(
-            model_name='ad',
+            model_name='listing',
             name='location',
             field=django.contrib.gis.db.models.fields.PointField(blank=True, geography=True, null=True, srid=4326, verbose_name='Geo Location'),
         ),

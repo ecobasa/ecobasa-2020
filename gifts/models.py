@@ -7,8 +7,8 @@ from users.models import User
 from .mixins import RandomIdMixin
 
 
-class AdCategory(models.Model):
-    """Category for Ads"""
+class ListingCategory(models.Model):
+    """Category for Listings"""
 
     name = models.CharField(_("Name"), max_length=50)
     order = models.IntegerField(_("Order"), default="0")
@@ -17,13 +17,13 @@ class AdCategory(models.Model):
         return self.name
 
     class Meta:
-        verbose_name = _("Ad Category")
-        verbose_name_plural = _("Ad Categories")
+        verbose_name = _("Listing Category")
+        verbose_name_plural = _("Listing Categories")
         ordering = ["order", "name"]
 
 
-class Ad(RandomIdMixin, models.Model):
-    """An Ad for either an offer or a wish"""
+class Listing(RandomIdMixin, models.Model):
+    """A Listing for either an offer or a wish"""
 
     TYPE_CHOICES = [("offer", _("Offer")), ("wish", _("Wish"))]
 
@@ -41,12 +41,12 @@ class Ad(RandomIdMixin, models.Model):
     owner = models.ForeignKey(
         User,
         on_delete=models.SET_NULL,
-        related_name="ads",
+        related_name="listings",
         verbose_name=_("Owner"),
         null=True,
     )
     categories = models.ManyToManyField(
-        AdCategory, related_name="ads", verbose_name=_("Categories"), blank=True
+        ListingCategory, related_name="listings", verbose_name=_("Categories"), blank=True
     )
     location_name = models.CharField(
         _("Location"), null=True, blank=True, max_length=255
@@ -83,6 +83,6 @@ class Ad(RandomIdMixin, models.Model):
         return _("is interested in your offer") if self.type == "offer" else _("wants to fulfill your wish")
 
     class Meta:
-        verbose_name = _("Ad")
-        verbose_name_plural = _("Ads")
+        verbose_name = _("Listing")
+        verbose_name_plural = _("Listings")
         ordering = ["-created_at"]

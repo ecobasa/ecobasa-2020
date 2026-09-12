@@ -136,23 +136,23 @@
 		</div>
 	</div>
 
-	{% if ads %}
+	{% if listings %}
 	<div class="mt-10">
-		<h1>{% trans "Gift offers and needs" %}</h1>
+		<h1>{% trans "Gift offers and wishes" %}</h1>
 		<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-			{% for ad in ads %}
+			{% for listing in listings %}
 			<div class="border drop-shadow border-primary rounded-lg p-3 bg-secondary bg-opacity-60 shadow-sm">
-				<a href="{{ ad.get_absolute_url }}" class="block">
-					{% if ad.image %}
-						<img src="{{ ad.image.url }}" alt="{{ ad.title }}" class="w-full h-40 object-cover rounded mb-2">
+				<a href="{{ listing.get_absolute_url }}" class="block">
+					{% if listing.image %}
+						<img src="{{ listing.image.url }}" alt="{{ listing.title }}" class="w-full h-40 object-cover rounded mb-2">
 					{% endif %}
-					<h3 class="text-lg font-medium">{{ ad.title }}</h3>
+					<h3 class="text-lg font-medium">{{ listing.title }}</h3>
 				</a>
-				<p class="text-sm mt-1">{{ ad.description|truncatechars:100 }}</p>
-				{% if ad.get_type_display == "Offer" %}
-				<p class="pill bg-primary"><i class="fa fa-gift mr-1"></i>{{ ad.get_type_display }}</p>
-				{% elif ad.get_type_display == "Request" %}
-				<p class="pill bg-yellow"><i class="fa fa-holding-heart mr-1"></i>{{ ad.get_type_display }}</p>
+				<p class="text-sm mt-1">{{ listing.description|truncatechars:100 }}</p>
+				{% if listing.get_type_display == "Offer" %}
+				<p class="pill bg-primary"><i class="fa fa-gift mr-1"></i>{{ listing.get_type_display }}</p>
+				{% elif listing.get_type_display == "Request" %}
+				<p class="pill bg-yellow"><i class="fa fa-holding-heart mr-1"></i>{{ listing.get_type_display }}</p>
 				{% endif %}
 			</div>
 			{% endfor %}

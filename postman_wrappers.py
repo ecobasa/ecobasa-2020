@@ -97,7 +97,7 @@ def postman_write_wrapper(request, recipients=None):
         return WriteViewToSent.as_view()(request, recipients=recipients) if recipients else WriteViewToSent.as_view()(request)
 
     if request.method == "POST":
-        # Normalize a mutable copy and append special metadata (skills, ad id)
+        # Normalize a mutable copy and append special metadata (skills, listing id)
         try:
             new_post = request.POST.copy()
             user = request.user
@@ -124,12 +124,12 @@ def postman_write_wrapper(request, recipients=None):
                     body = body + "\n\nSkills: " + skills_list
                     new_post['body'] = body
 
-            # If an ad id was posted, append it to the body so we can link back later
+            # If a listing id was posted, append it to the body so we can link back later
             try:
-                ad_id = (new_post.get('ad_random_id') or '').strip()
-                if ad_id:
+                listing_id = (new_post.get('listing_random_id') or '').strip()
+                if listing_id:
                     body = new_post.get('body', '') or ''
-                    body = body + "\n\nAd-ID: " + ad_id
+                    body = body + "\n\nListing-ID: " + listing_id
                     new_post['body'] = body
             except Exception:
                 pass

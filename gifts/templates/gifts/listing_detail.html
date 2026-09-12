@@ -3,7 +3,7 @@
 
 {% block extrahead %}
   {{ block.super }}
-  {% if ad.location %}
+  {% if listing.location %}
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v7.2.2/ol.css">
   {% endif %}
 {% endblock %}
@@ -27,16 +27,16 @@
   <nav class="hidden sm:flex items-center text-sm font-medium gap-2">
     <a href="{% url 'gifts:search' %}" class="text-yellow hover:text-purple transition">{% trans "Gifts" %}</a>
     <svg class="h-5 w-5 text-yellow" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/></svg>
-    <a href="{% url 'gifts:search' %}?type={{ ad.type }}" class="text-yellow hover:text-purple transition">{{ ad.get_type_display }}</a>
+    <a href="{% url 'gifts:search' %}?type={{ listing.type }}" class="text-yellow hover:text-purple transition">{{ listing.get_type_display }}</a>
     <svg class="h-5 w-5 text-yellow" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/></svg>
-    <span class="text-primary">{{ ad.title }}</span>
+    <span class="text-primary">{{ listing.title }}</span>
   </nav>
 
   {# ── Hero image (opens lightbox) ── #}
-  {% if ad.image %}
+  {% if listing.image %}
   <div class="mt-6 flex justify-center">
     <button type="button" @click="imageOpen = true" aria-label="{% trans 'Open image' %}" class="inline-block w-full">
-      <img src="{{ ad.image.url }}" alt="{{ ad.title }}"
+      <img src="{{ listing.image.url }}" alt="{{ listing.title }}"
         class="w-full h-52 object-cover rounded-lg shadow mb-4">
     </button>
   </div>
@@ -50,7 +50,7 @@
       <button type="button" @click="imageOpen = false"
         class="modal-close absolute top-0 right-0"
         aria-label="{% trans 'Close' %}">&times;</button>
-      <img src="{{ ad.image.url }}" alt="{{ ad.title }}"
+      <img src="{{ listing.image.url }}" alt="{{ listing.title }}"
         class="max-h-[80vh] max-w-full rounded-lg shadow-lg">
     </div>
   </div>
@@ -59,25 +59,25 @@
   {# ── Header ── #}
   <div class="mt-4 md:mt-10 md:flex md:items-center md:justify-between">
     <div class="flex-1 min-w-0">
-      <div class="text-primary font-bold">{{ ad.get_type_display }}</div>
-      <h1 class="sm:text-3xl sm:leading-9 sm:truncate">{{ ad.title }}</h1>
+      <div class="text-primary font-bold">{{ listing.get_type_display }}</div>
+      <h1 class="sm:text-3xl sm:leading-9 sm:truncate">{{ listing.title }}</h1>
       <div class="my-1">
-        {% if ad.owner == request.user %}
+        {% if listing.owner == request.user %}
           <span class="border mx-px py-px px-1 rounded text-xs text-secondary bg-purple">{% trans "from me" %}</span>
         {% endif %}
-        {% for cat in ad.categories.all %}
+        {% for cat in listing.categories.all %}
           <span class="border mx-px py-px px-1 rounded text-xs text-secondary bg-primary">{{ cat.name }}</span>
         {% endfor %}
-        <span class="text-sm mx-2">{{ ad.location_name }}</span>
+        <span class="text-sm mx-2">{{ listing.location_name }}</span>
       </div>
     </div>
 
-    {% if ad.owner == request.user %}
-      <a href="{% url 'gifts:delete' ad.pk %}" class="btn btn-lg btn-purple flex mx-5">
+    {% if listing.owner == request.user %}
+      <a href="{% url 'gifts:delete' listing.pk %}" class="btn btn-lg btn-purple flex mx-5">
         <i class="fa fa-recycle mr-1"></i> {% trans "Delete" %}
       </a>
       <div class="mt-4 flex-shrink-0 flex md:mt-0 md:ml-4">
-        <a href="{% url 'gifts:edit' ad.pk %}" class="btn btn-lg">
+        <a href="{% url 'gifts:edit' listing.pk %}" class="btn btn-lg">
           <i class="fa fa-edit mr-1"></i> {% trans "Edit" %}
         </a>
       </div>
@@ -86,20 +86,20 @@
 
   {# ── Description ── #}
   <div class="mt-10">
-    <p>{{ ad.description }}</p>
+    <p>{{ listing.description }}</p>
   </div>
 
   {# ── Owner block ── #}
-  {% if ad.owner %}
+  {% if listing.owner %}
   <div class="mt-8">
     <h2 class="text-lg font-semibold mb-4">
-      {% if ad.type == 'offer' %}{% trans "Offer from" %}{% else %}{% trans "Wish from" %}{% endif %}
+      {% if listing.type == 'offer' %}{% trans "Offer from" %}{% else %}{% trans "Wish from" %}{% endif %}
     </h2>
     <div class="flex flex-col items-center gap-3 p-4 border rounded bg-primary bg-opacity-5">
-      <a href="{{ ad.owner.get_absolute_url }}" class="block">
-        {% if ad.owner.image %}
-          <img src="{{ ad.owner.image.url }}"
-            alt="{% if ad.owner.name %}{{ ad.owner.name }}{% else %}{{ ad.owner.username }}{% endif %}"
+      <a href="{{ listing.owner.get_absolute_url }}" class="block">
+        {% if listing.owner.image %}
+          <img src="{{ listing.owner.image.url }}"
+            alt="{% if listing.owner.name %}{{ listing.owner.name }}{% else %}{{ listing.owner.username }}{% endif %}"
             class="w-20 h-20 rounded-full object-cover mx-auto">
         {% else %}
           <div class="w-20 h-20 rounded-full bg-primary flex items-center justify-center text-secondary mx-auto">
@@ -107,13 +107,13 @@
           </div>
         {% endif %}
       </a>
-      <a href="{{ ad.owner.get_absolute_url }}" class="font-serif text-primary">
-        {% if ad.owner.name %}{{ ad.owner.name }}
-        {% elif ad.owner.get_full_name %}{{ ad.owner.get_full_name }}
-        {% else %}{{ ad.owner.username }}{% endif %}
+      <a href="{{ listing.owner.get_absolute_url }}" class="font-serif text-primary">
+        {% if listing.owner.name %}{{ listing.owner.name }}
+        {% elif listing.owner.get_full_name %}{{ listing.owner.get_full_name }}
+        {% else %}{{ listing.owner.username }}{% endif %}
       </a>
-      {% if ad.owner.location_name %}
-        <div class="text-sm"><i class="fa fa-map-marker mr-2"></i>{{ ad.owner.location_name }}</div>
+      {% if listing.owner.location_name %}
+        <div class="text-sm"><i class="fa fa-map-marker mr-2"></i>{{ listing.owner.location_name }}</div>
       {% endif %}
     </div>
   </div>
@@ -123,7 +123,7 @@
   {% if form %}
   <div class="mt-8">
     <h2 class="text-lg font-semibold mb-4">
-      {% if ad.type == 'offer' %}{% trans "Express Interest" %}{% else %}{% trans "Offer to fulfill this wish" %}{% endif %}
+      {% if listing.type == 'offer' %}{% trans "Express Interest" %}{% else %}{% trans "Offer to fulfill this wish" %}{% endif %}
     </h2>
     <div class="border rounded-xl bg-secondary p-6" x-data="{ showLoc: false }">
       <form method="post">
@@ -151,16 +151,16 @@
         </div>
         <button type="submit" class="btn">
           <i class="fa fa-paper-plane mr-2"></i>
-          {% if ad.type == 'offer' %}{% trans "Express Interest" %}{% else %}{% trans "Send offer" %}{% endif %}
+          {% if listing.type == 'offer' %}{% trans "Express Interest" %}{% else %}{% trans "Send offer" %}{% endif %}
         </button>
       </form>
     </div>
   </div>
-  {% elif not request.user.is_authenticated and ad.owner %}
+  {% elif not request.user.is_authenticated and listing.owner %}
   <div class="mt-8">
     <a class="btn" href="{% url 'users:login' %}?next={{ request.path }}">
       <i class="fa fa-envelope mr-2"></i>
-      {% if ad.type == 'offer' %}{% trans "Log in to express interest" %}{% else %}{% trans "Log in to fulfill this wish" %}{% endif %}
+      {% if listing.type == 'offer' %}{% trans "Log in to express interest" %}{% else %}{% trans "Log in to fulfill this wish" %}{% endif %}
     </a>
   </div>
   {% endif %}
@@ -210,11 +210,11 @@
   {% endif %}
 
   {# ── Location map ── #}
-  {% if ad.location %}
+  {% if listing.location %}
   <div class="mt-10">
     <h2 class="text-lg font-semibold mb-3">{% trans "Location" %}</h2>
     <div class="relative">
-      <div id="ad-detail-map" class="w-full h-96 rounded shadow overflow-hidden"></div>
+      <div id="listing-detail-map" class="w-full h-96 rounded shadow overflow-hidden"></div>
     </div>
   </div>
   {% endif %}
@@ -226,25 +226,25 @@
 
 {% block javascript %}
   {{ block.super }}
-  {% if ad.location %}
+  {% if listing.location %}
   <script src="https://cdn.jsdelivr.net/npm/ol@v7.2.2/dist/ol.js"></script>
   <script>
   /* ================================================================
-     Ad detail map — single marker + layer switcher.
+     Listing detail map — single marker + layer switcher.
      ================================================================ */
   (function () {
-    const LAT  = {{ ad.location.y|floatformat:"6" }};
-    const LON  = {{ ad.location.x|floatformat:"6" }};
+    const LAT  = {{ listing.location.y|floatformat:"6" }};
+    const LON  = {{ listing.location.x|floatformat:"6" }};
 
     document.addEventListener('DOMContentLoaded', function () {
-      const mapEl = document.getElementById('ad-detail-map');
+      const mapEl = document.getElementById('listing-detail-map');
       if (!mapEl) return;
 
       const tiles = EcoMap.buildBaseLayers();
       const center = ol.proj.fromLonLat([LON, LAT]);
 
       const marker = new ol.Feature({ geometry: new ol.geom.Point(center) });
-      {% if ad.type == 'wish' %}
+      {% if listing.type == 'wish' %}
       marker.setStyle(EcoMap.makeIconStyle(0xF004, '#de7a08')); //  fa-heart
       {% else %}
       marker.setStyle(EcoMap.makeIconStyle(0xF06B, '#da6137')); //  fa-gift
@@ -258,7 +258,7 @@
         view: new ol.View({ center, zoom: 13 })
       });
 
-      const menu = EcoMap.buildLayerToggle(map, 'ad-detail-layer');
+      const menu = EcoMap.buildLayerToggle(map, 'listing-detail-layer');
       menu.querySelectorAll('input').forEach(function (r) {
         r.addEventListener('change', function (e) { if (e.target.checked) { tiles.setBaseLayer(e.target.value); map.renderSync(); } });
       });
@@ -266,8 +266,8 @@
       // Simple popup showing title + location
       const popupEl = document.createElement('div');
       popupEl.className = 'freemarket-popup';
-      popupEl.innerHTML = '<strong>{{ ad.title|escapejs }}</strong>'
-        + '{% if ad.location_name %}<div>{{ ad.location_name|escapejs }}</div>{% endif %}';
+      popupEl.innerHTML = '<strong>{{ listing.title|escapejs }}</strong>'
+        + '{% if listing.location_name %}<div>{{ listing.location_name|escapejs }}</div>{% endif %}';
       const overlay = new ol.Overlay({
         element: popupEl, positioning: 'bottom-center', offset: [0, -12], stopEvent: false
       });

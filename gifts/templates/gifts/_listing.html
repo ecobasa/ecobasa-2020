@@ -1,0 +1,43 @@
+{% load i18n %}
+<a href="{% url "gifts:detail" listing.pk %}" class="relative w-full max-w-4xl group flex items-stretch justify-between my-5 sm:my-10 md:mb-20 bg-secondary bg-opacity-50 p-5 rounded-md hover:text-primary hover:shadow-lg">
+  <div class="text-xs absolute bottom-0 right-0 rounded-full p-2 text-secondary{% if listing.get_type_display == "Offer" %} bg-primary{% elif listing.get_type_display == "Wish" %} bg-yellow{% else %} bg-purple{% endif %}">
+    {% if listing.get_type_display == "Offer" %}
+      <i class="fa fa-gift mr-1"></i>
+    {% elif listing.get_type_display == "Wish" %}
+      <i class="fa fa-heart mr-1"></i>
+    {% endif %}
+    {{ listing.get_type_display }}
+  </div>
+  <div class="flex w-full">
+    {% if listing.image %}
+      <img class="flex-shrink-0 h-20 w-20 sm:h-32 sm:w-48" src="{{ listing.image.url }}">
+    {% else %}
+      <div class="flex-shrink-0 h-20 w-20 sm:h-32 sm:w-48 bg-primary"></div>
+    {% endif %}
+
+    <div class="pl-2 sm:pl-6 w-full">
+      {% if listing.location_name %}
+        <i class="fa fa-map-marker text-primary"></i>
+        {% if listing.distance != None %}
+          <span class="text-xs">{{ listing.distance.km|floatformat:1 }} km {% trans "to" %}</span>
+        {% endif %}
+        <div class="text-xs inline hover:text-pr">{{ listing.location_name }}</div>
+      {% endif %}
+      <time class="text-xs text-brown opacity-60 float-right mt-1"><i class="fa fa-calendar mr-2"></i>{{ listing.created_at }}</time>
+      <div>
+        {% for cat in listing.categories.all %}
+          <span class="border mx-px py-px px-1 rounded-full text-xs text-secondary bg-primary">{{ cat.name }}</span>
+        {% endfor %}
+        <span class="font-serif sm:text-lg group-hover:text-primary">{{ listing.title }}</span>
+      </div>
+      <p class="text-sm text-brown">{{ listing.description|truncatewords:20 }}</p>
+      <div>
+        {% if listing.owner == request.user %}
+          <span class="absolute bottom-5 border mx-px py-1 px-2 rounded text-xs text-secondary bg-purple"><i class="fa fa-user mr-2"></i>from me</span>
+        {% else %}
+          <span class="absolute bottom-5"><i class="fa fa-user mr-2"></i>{{ request.user.name }}</span>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</a>

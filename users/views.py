@@ -57,7 +57,7 @@ class DetailView(DetailView):
         ctx = super().get_context_data(**kwargs)
         try:
             user = self.get_object()
-            ctx["ads"] = user.ads.all()
+            ctx["listings"] = user.listings.all()
             ctx["user_skills"] = (
                 user.user_skills.select_related("skill").order_by("skill__name")
             )
@@ -65,7 +65,7 @@ class DetailView(DetailView):
                 user.skill_wishes.select_related("skill").order_by("skill__name")
             )
         except Exception:
-            ctx["ads"] = []
+            ctx["listings"] = []
             ctx["user_skills"] = []
             ctx["skill_wishes"] = []
         return ctx

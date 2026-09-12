@@ -13,10 +13,10 @@
     {% if not m %}
       <div class="text-brown">{% trans "Message not found." %}</div>
     {% else %}
-      {# Try to find a related Ad from the root message (subject first, then body Ad-ID) #}
-      {% find_ad_by_title m.subject as related_ad %}
-      {% if not related_ad %}
-        {% find_ad_by_body m.body as related_ad %}
+      {# Try to find a related Listing from the root message (subject first, then body Listing-ID) #}
+      {% find_listing_by_title m.subject as related_listing %}
+      {% if not related_listing %}
+        {% find_listing_by_body m.body as related_listing %}
       {% endif %}
 
       {% conversation_messages m as convo %}
@@ -29,9 +29,9 @@
                   <div class="absolute right-4 top-3 text-xs text-brown">{% if part.sent_at %}{{ part.sent_at|date:"SHORT_DATETIME_FORMAT" }}{% endif %}</div>
                   {% if forloop.first and part.subject %}
                     <h3 class="font-semibold font-serif m-0">{{ part.subject }}</h3>
-                    {% if related_ad %}
+                    {% if related_listing %}
                       <div class="mt-1 text-sm">
-                        <a href="{{ related_ad.get_absolute_url }}" class="text-primary hover:underline">&larr; {% trans "View offer" %}</a>
+                        <a href="{{ related_listing.get_absolute_url }}" class="text-primary hover:underline">&larr; {% trans "View offer" %}</a>
                       </div>
                     {% endif %}
                   {% endif %}
@@ -84,9 +84,9 @@
                   <div class="absolute right-4 top-3 text-xs text-brown">{% if part.sent_at %}{{ part.sent_at|date:"SHORT_DATETIME_FORMAT" }}{% endif %}</div>
                   {% if forloop.first and part.subject %}
                     <h3 class="font-semibold font-serif m-0">{{ part.subject }}</h3>
-                    {% if related_ad %}
+                    {% if related_listing %}
                       <div class="mt-1 text-sm">
-                        <a href="{{ related_ad.get_absolute_url }}" class="text-primary hover:underline">&larr; {% trans "View offer" %}</a>
+                        <a href="{{ related_listing.get_absolute_url }}" class="text-primary hover:underline">&larr; {% trans "View offer" %}</a>
                       </div>
                     {% endif %}
                   {% endif %}

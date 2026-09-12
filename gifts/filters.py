@@ -6,19 +6,19 @@ from django.contrib.gis.db.models.functions import Distance
 
 import django_filters
 
-from .models import Ad, AdCategory
+from .models import Listing, ListingCategory
 
 
-_AD_TYPE_CHOICES = list(Ad.TYPE_CHOICES) + [("skill", _("Skills"))]
+_LISTING_TYPE_CHOICES = list(Listing.TYPE_CHOICES) + [("skill", _("Skills"))]
 
 
-class AdFilter(django_filters.FilterSet):
+class ListingFilter(django_filters.FilterSet):
     search = django_filters.CharFilter(label=_("Search"), method="do_search")
     type = django_filters.MultipleChoiceFilter(
-        choices=_AD_TYPE_CHOICES, widget=forms.CheckboxSelectMultiple
+        choices=_LISTING_TYPE_CHOICES, widget=forms.CheckboxSelectMultiple
     )
     categories = django_filters.ModelMultipleChoiceFilter(
-        queryset=AdCategory.objects.all(), widget=forms.CheckboxSelectMultiple
+        queryset=ListingCategory.objects.all(), widget=forms.CheckboxSelectMultiple
     )
     location = django_filters.CharFilter(label=_("Location"), method="do_location")
     location_name = django_filters.CharFilter(
@@ -26,7 +26,7 @@ class AdFilter(django_filters.FilterSet):
     )
 
     class Meta:
-        model = Ad
+        model = Listing
         fields = ["search", "type", "categories"]
 
     def do_search(self, queryset, name, value):

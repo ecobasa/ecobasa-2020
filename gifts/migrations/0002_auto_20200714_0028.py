@@ -11,7 +11,7 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.AlterModelOptions(
-            name='ad',
-            options={'verbose_name': 'Ad', 'verbose_name_plural': 'Ads'},
+            name='listing',
+            options={'verbose_name': 'Listing', 'verbose_name_plural': 'Listings'},
         ),
     ]

@@ -1,15 +1,15 @@
 import pytest
 
-from ..models import Ad
+from ..models import Listing
 
 
 @pytest.mark.django_db
-class TestAd:
+class TestListing:
     def test_creation(self):
-        ad = Ad(title="Test", type="offer")
-        ad.save()
+        listing = Listing(title="Test", type="offer")
+        listing.save()
 
     def test_short_random_id(self):
-        ad = Ad(title="Test", type="offer")
-        ad.save()
-        assert len(ad.pk) == 8
+        listing = Listing(title="Test", type="offer")
+        listing.save()
+        assert len(listing.pk) == 8

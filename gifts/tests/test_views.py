@@ -5,7 +5,7 @@ from django.shortcuts import reverse
 from pytest_django.asserts import assertRedirects
 
 from users.models import User
-from ..models import Ad
+from ..models import Listing
 
 
 @pytest.fixture
@@ -16,20 +16,20 @@ def user():
 
 
 @pytest.fixture
-def ads(user):
+def listings(user):
     return [
-        Ad.objects.create(
+        Listing.objects.create(
             title="Test", type="offer", description="testdesc", owner=user
         ),
-        Ad.objects.create(
+        Listing.objects.create(
             title="Foobar", type="wish", description="foobardesc", owner=user
         ),
     ]
 
 
 @pytest.fixture
-def ad(user):
-    return Ad.objects.create(type="offer", title="test", owner=user)
+def listing(user):
+    return Listing.objects.create(type="offer", title="test", owner=user)
 
 
 @pytest.fixture
@@ -46,8 +46,8 @@ class TestSearch:
         response = client.get("/gifts/")
         assert response.status_code == 200
 
-    def test_get(self, client: Client, ads: [Ad]):
-        """The search shell page itself never renders ad titles directly —
+    def test_get(self, client: Client, listings: [Listing]):
+        """The search shell page itself never renders listing titles directly —
         results are fetched separately by the client via gifts:api-list."""
         response = client.get("/gifts/")
         assert response.status_code == 200
@@ -57,7 +57,7 @@ class TestSearch:
         assert "Test" in str(response.content)
         assert "Foobar" in str(response.content)
 
-    def test_filter_by_type(self, client: Client, ads: [Ad]):
+    def test_filter_by_type(self, client: Client, listings: [Listing]):
         response = client.get(reverse("gifts:api-list"), {"type": "offer"})
         assert "Test" in str(response.content)
         assert "Foobar" not in str(response.content)
@@ -66,7 +66,7 @@ class TestSearch:
         assert "Test" not in str(response.content)
         assert "Foobar" in str(response.content)
 
-    def test_filter_search(self, client: Client, ads: [Ad]):
+    def test_filter_search(self, client: Client, listings: [Listing]):
         response = client.get(reverse("gifts:api-list"), {"search": "testdesc"})
         assert "Test" in str(response.content)
         assert "Foobar" not in str(response.content)
@@ -78,8 +78,8 @@ class TestSearch:
 
 @pytest.mark.django_db
 class TestDetail:
-    def test_get(self, client: Client, ad: Ad):
-        response = client.get(f"/gifts/{ad.pk}/")
+    def test_get(self, client: Client, listing: Listing):
+        response = client.get(f"/gifts/{listing.pk}/")
         assert response.status_code == 200
         assert "test" in str(response.content)
 
@@ -110,53 +110,53 @@ class TestCreate:
             {"type": "offer", "title": "new test offer"},
             follow=True,
         )
-        assert Ad.objects.count() == 1
+        assert Listing.objects.count() == 1
         assertRedirects(
             response,
-            Ad.objects.get().get_absolute_url(),
+            Listing.objects.get().get_absolute_url(),
             status_code=302,
             target_status_code=200,
         )
-        ad = Ad.objects.get()
-        assert ad.owner == user
+        listing = Listing.objects.get()
+        assert listing.owner == user
         assert "new test offer" in str(response.content)
 
 
 @pytest.mark.django_db
 class TestEdit:
-    def test_get(self, user_client: Client, ad: Ad):
-        response = user_client.get(f"/gifts/{ad.pk}/edit/")
+    def test_get(self, user_client: Client, listing: Listing):
+        response = user_client.get(f"/gifts/{listing.pk}/edit/")
         assert response.status_code == 200
 
-    def test_get_unauth(self, client: Client, ad: Ad):
-        response = client.get(f"/gifts/{ad.pk}/edit/", follow=True)
+    def test_get_unauth(self, client: Client, listing: Listing):
+        response = client.get(f"/gifts/{listing.pk}/edit/", follow=True)
         assertRedirects(
             response,
-            f"/users/login/?next=/gifts/{ad.pk}/edit/",
+            f"/users/login/?next=/gifts/{listing.pk}/edit/",
             status_code=302,
             target_status_code=200,
         )
 
-    def test_404(self, user_client: Client, ad: Ad):
+    def test_404(self, user_client: Client, listing: Listing):
         response = user_client.get("/gifts/abcdefgh/edit/")
         assert response.status_code == 404
 
-    def test_post_invalid(self, user_client: Client, ad: Ad):
-        response = user_client.post(f"/gifts/{ad.pk}/edit/")
+    def test_post_invalid(self, user_client: Client, listing: Listing):
+        response = user_client.post(f"/gifts/{listing.pk}/edit/")
         assert response.status_code == 200
         assert "This field is required." in str(response.content)
 
-    def test_post_valid(self, user_client: Client, ad: Ad):
-        assert Ad.objects.count() == 1
+    def test_post_valid(self, user_client: Client, listing: Listing):
+        assert Listing.objects.count() == 1
         response = user_client.post(
-            f"/gifts/{ad.pk}/edit/",
+            f"/gifts/{listing.pk}/edit/",
             {"type": "offer", "title": "new test offer"},
             follow=True,
         )
-        assert Ad.objects.count() == 1
+        assert Listing.objects.count() == 1
         assertRedirects(
             response,
-            Ad.objects.get().get_absolute_url(),
+            Listing.objects.get().get_absolute_url(),
             status_code=302,
             target_status_code=200,
         )
@@ -169,26 +169,26 @@ class TestDelete:
         response = user_client.get("/gifts/abcdefgh/delete/")
         assert response.status_code == 404
 
-    def test_get_unauth(self, client: Client, ad: Ad):
-        response = client.get(f"/gifts/{ad.pk}/delete/", follow=True)
+    def test_get_unauth(self, client: Client, listing: Listing):
+        response = client.get(f"/gifts/{listing.pk}/delete/", follow=True)
         assertRedirects(
             response,
-            f"/users/login/?next=/gifts/{ad.pk}/delete/",
+            f"/users/login/?next=/gifts/{listing.pk}/delete/",
             status_code=302,
             target_status_code=200,
         )
 
-    def test_get(self, user_client: Client, ad: Ad):
-        response = user_client.get(f"/gifts/{ad.pk}/delete/")
+    def test_get(self, user_client: Client, listing: Listing):
+        response = user_client.get(f"/gifts/{listing.pk}/delete/")
         assert response.status_code == 200
 
-    def test_post(self, user_client: Client, ad: Ad):
-        response = user_client.post(f"/gifts/{ad.pk}/delete/", follow=True)
+    def test_post(self, user_client: Client, listing: Listing):
+        response = user_client.post(f"/gifts/{listing.pk}/delete/", follow=True)
         assertRedirects(
             response,
             reverse("gifts:search"),
             status_code=302,
             target_status_code=200,
         )
-        assert Ad.objects.all().exists() == False
+        assert Listing.objects.all().exists() == False
         # assert "deleted" in str(response.content)

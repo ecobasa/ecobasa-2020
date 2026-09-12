@@ -1,9 +1,9 @@
 from django.contrib.gis import admin
-from .models import Ad, AdCategory
+from .models import Listing, ListingCategory
 
 
-@admin.register(Ad)
-class AdAdmin(admin.OSMGeoAdmin):
+@admin.register(Listing)
+class ListingAdmin(admin.OSMGeoAdmin):
     list_display = (
         "title",
         "type",
@@ -13,8 +13,8 @@ class AdAdmin(admin.OSMGeoAdmin):
     list_filter = ("type",)
 
 
-@admin.register(AdCategory)
-class AdCategoryAdmin(admin.ModelAdmin):
+@admin.register(ListingCategory)
+class ListingCategoryAdmin(admin.ModelAdmin):
     list_display = ("name", "order")
     ordering = (
         "order",

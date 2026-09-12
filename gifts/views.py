@@ -15,9 +15,9 @@ from django.contrib.gis.geos import Polygon
 from django.views.decorators.http import require_GET
 from django.core.cache import cache
 
-from .forms import AdForm
-from .filters import AdFilter
-from .models import Ad
+from .forms import ListingForm
+from .filters import ListingFilter
+from .models import Listing
 from communities.models import Community
 from users.models import User
 from skills.models import UserSkill, CommunitySkill
@@ -26,25 +26,25 @@ from matches.emails import notify_match_created
 
 
 def search(request):
-    """Show all ads with filter ability"""
-    f = AdFilter(request.GET, queryset=Ad.objects.none(), request=request)
+    """Show all listings with filter ability"""
+    f = ListingFilter(request.GET, queryset=Listing.objects.none(), request=request)
 
     return render(request, "gifts/search.html", {"f": f})
 
 
 def detail(request, pk):
-    """Show details for an Ad"""
-    ad = get_object_or_404(Ad, pk=pk)
-    context = {"ad": ad}
+    """Show details for a Listing"""
+    listing = get_object_or_404(Listing, pk=pk)
+    context = {"listing": listing}
 
-    if request.user.is_authenticated and request.user != ad.owner:
+    if request.user.is_authenticated and request.user != listing.owner:
         if request.method == "POST":
             form = MatchForm(request.POST)
             if form.is_valid():
                 match = form.save(commit=False)
                 match.from_user = request.user
-                match.recipient = ad.get_match_owner()
-                match.target = ad
+                match.recipient = listing.get_match_owner()
+                match.target = listing
                 match.save()
                 notify_match_created(match, http_request=request)
                 messages.success(request, _("Your request has been sent."))
@@ -53,61 +53,61 @@ def detail(request, pk):
             form = MatchForm()
         context["form"] = form
 
-    is_owner = request.user.is_authenticated and request.user == ad.owner
+    is_owner = request.user.is_authenticated and request.user == listing.owner
     context["is_owner"] = is_owner
     if is_owner:
-        context["incoming_requests"] = list(ad.matches.select_related("from_user").order_by("-created_at")[:20])
+        context["incoming_requests"] = list(listing.matches.select_related("from_user").order_by("-created_at")[:20])
 
-    return render(request, "gifts/ad_detail.html", context)
+    return render(request, "gifts/listing_detail.html", context)
 
 
 @login_required
 def create(request):
-    """Create a new Ad"""
-    form = AdForm()
+    """Create a new Listing"""
+    form = ListingForm()
     if request.method == "POST":
-        form = AdForm(request.POST, request.FILES)
+        form = ListingForm(request.POST, request.FILES)
         if form.is_valid():
-            ad = form.save(commit=False)
-            ad.owner = request.user
+            listing = form.save(commit=False)
+            listing.owner = request.user
             form.save()
             messages.success(
-                request, _("%(ad_type)s created") % {"ad_type": ad.get_type_display()}
+                request, _("%(listing_type)s created") % {"listing_type": listing.get_type_display()}
             )
             return redirect(form.instance.get_absolute_url())
-    return render(request, "gifts/ad_form.html", {"form": form})
+    return render(request, "gifts/listing_form.html", {"form": form})
 
 
 def edit(request, pk):
-    """Edit an existing Ad"""
-    ad = get_object_or_404(Ad, pk=pk)
-    if not ad.owner == request.user:
+    """Edit an existing Listing"""
+    listing = get_object_or_404(Listing, pk=pk)
+    if not listing.owner == request.user:
         return redirect("/users/login?next=%s" % request.path)
 
-    form = AdForm(instance=ad)
+    form = ListingForm(instance=listing)
     if request.method == "POST":
-        form = AdForm(request.POST, request.FILES, instance=ad)
+        form = ListingForm(request.POST, request.FILES, instance=listing)
         if form.is_valid():
             form.save()
-            ad = form.instance
+            listing = form.instance
             messages.success(request, _("changes saved"))
             return redirect(form.instance.get_absolute_url())
-    return render(request, "gifts/ad_form.html", {"form": form, "ad": ad})
+    return render(request, "gifts/listing_form.html", {"form": form, "listing": listing})
 
 
 def delete(request, pk):
-    ad = get_object_or_404(Ad, pk=pk)
-    if not ad.owner == request.user:
+    listing = get_object_or_404(Listing, pk=pk)
+    if not listing.owner == request.user:
         return redirect("/users/login?next=%s" % request.path)
 
     if request.method == "POST":
-        ad.delete()
+        listing.delete()
         messages.success(
-            request, _("%(ad_type)s deleted") % {"ad_type": ad.get_type_display()}
+            request, _("%(listing_type)s deleted") % {"listing_type": listing.get_type_display()}
         )
         return redirect(reverse("gifts:search"))
     else:
-        return render(request, "gifts/ad_delete_confirm.html", {"ad": ad})
+        return render(request, "gifts/listing_delete_confirm.html", {"listing": listing})
 
 
 # ── Shared helpers ───────────────────────────────────────────────────
@@ -125,23 +125,23 @@ def _apply_bbox(qs, bbox_param, location_field="location"):
         return qs
 
 
-def _filtered_ads(request, require_location=True):
+def _filtered_listings(request, require_location=True):
     types = request.GET.getlist("type")
-    ad_types = [t for t in types if t != "skill"]
+    listing_types = [t for t in types if t != "skill"]
 
-    if types and not ad_types:
-        return Ad.objects.none()
+    if types and not listing_types:
+        return Listing.objects.none()
 
-    base_qs = Ad.objects.select_related("owner")
+    base_qs = Listing.objects.select_related("owner")
     if require_location:
         base_qs = base_qs.filter(location__isnull=False)
 
     if "skill" in types:
         data = request.GET.copy()
-        data.setlist("type", ad_types)
-        f = AdFilter(data, queryset=base_qs, request=request)
+        data.setlist("type", listing_types)
+        f = ListingFilter(data, queryset=base_qs, request=request)
     else:
-        f = AdFilter(request.GET, queryset=base_qs, request=request)
+        f = ListingFilter(request.GET, queryset=base_qs, request=request)
 
     return f.qs
 
@@ -197,40 +197,40 @@ def _skill_users(request, require_location=True):
 @require_GET
 def gifts_markers(request):
     """
-    GeoJSON FeatureCollection — Ad markers + community skill markers
+    GeoJSON FeatureCollection — Listing markers + community skill markers
     within the current map viewport bounding box.
 
-    Each feature carries a `source` property ('ad' | 'skill') so the
+    Each feature carries a `source` property ('listing' | 'skill') so the
     frontend can render different marker icons.
 
     Query params (all optional):
         bbox        west,south,east,north  (WGS84)
         q           search term
-        type        ad type filter (repeatable)
+        type        listing type filter (repeatable)
         categories  category id filter (repeatable)
-        location    lat,lon  → distance-ordered results via AdFilter
-        from_me     truthy → only current user's ads
+        location    lat,lon  → distance-ordered results via ListingFilter
+        from_me     truthy → only current user's listings
     """
     bbox_param = request.GET.get("bbox", "")
     features   = []
 
-    # ── Ad features ──────────────────────────────────────────────────
-    ad_qs = _apply_bbox(_filtered_ads(request), bbox_param)
+    # ── Listing features ─────────────────────────────────────────────
+    listing_qs = _apply_bbox(_filtered_listings(request), bbox_param)
 
-    for ad in ad_qs[:500]:
+    for listing in listing_qs[:500]:
         features.append({
             "type": "Feature",
             "geometry": {
                 "type":        "Point",
-                "coordinates": [ad.location.x, ad.location.y],
+                "coordinates": [listing.location.x, listing.location.y],
             },
             "properties": {
-                "source":       "ad",
-                "title":        ad.title,
-                "description":  ad.description,
-                "image":        ad.image.url if ad.image else None,
-                "type_display": ad.get_type_display(),
-                "url":          ad.get_absolute_url(),
+                "source":       "listing",
+                "title":        listing.title,
+                "description":  listing.description,
+                "image":        listing.image.url if listing.image else None,
+                "type_display": listing.get_type_display(),
+                "url":          listing.get_absolute_url(),
             },
         })
 
@@ -286,11 +286,11 @@ def gifts_markers(request):
 def gifts_list_partial(request):
     page_num = int(request.GET.get("page", 1))
 
-    ads_queryset = _filtered_ads(request, require_location=False)
+    listings_queryset = _filtered_listings(request, require_location=False)
     if not request.GET.get('location'):
-        ads_queryset = ads_queryset.order_by("-created_at")
+        listings_queryset = listings_queryset.order_by("-created_at")
 
-    paginator = Paginator(ads_queryset, 20)
+    paginator = Paginator(listings_queryset, 20)
     page = paginator.get_page(page_num)
 
     sc_qs = _skill_communities(request, require_location=False)
@@ -304,7 +304,7 @@ def gifts_list_partial(request):
         skill_users = list(su_qs[:10])
 
     return render(request, "gifts/_gifts_list_partial.html", {
-        "ads":               page,
+        "listings":          page,
         "skill_communities": skill_communities,
         "skill_users":       skill_users,
         "has_next":          page.has_next(),
@@ -350,18 +350,18 @@ def gifts_suggest(request):
             seen.add(value)
             suggestions.append({"value": value, "type": kind})
 
-    # Ad titles
-    for ad in (
-        Ad.objects
+    # Listing titles
+    for listing in (
+        Listing.objects
         .filter(title__icontains=q)
         .values('title', 'type')[:4]
     ):
-        add(ad['title'], ad['type'])
+        add(listing['title'], listing['type'])
 
     # Owner names — placed early so they aren't cut off by the 8-item limit
     for user in (
         User.objects
-        .filter(Q(name__icontains=q) | Q(email__icontains=q), ads__isnull=False)
+        .filter(Q(name__icontains=q) | Q(email__icontains=q), listings__isnull=False)
         .only("name", "email")
         .distinct()[:2]
     ):
@@ -394,7 +394,7 @@ def gifts_suggest(request):
                     yield word.lower()
 
     for desc, in (
-        Ad.objects
+        Listing.objects
         .filter(Q(description__icontains=q))
         .exclude(title__icontains=q)
         .values_list("description")[:5]

@@ -71,9 +71,9 @@
   {% endfor %}
 {% endfor %}
 
-{# ── Ad cards — reuse existing _ad.html exactly as-is ─────────── #}
-{% for ad in ads %}
-  {% include "gifts/_ad.html" %}
+{# ── Listing cards — reuse existing _listing.html exactly as-is ─ #}
+{% for listing in listings %}
+  {% include "gifts/_listing.html" %}
 {% empty %}
   {% if not skill_communities and not skill_users %}
     <p class="text-primary py-8 text-center">{% trans "No results found." %}</p>
