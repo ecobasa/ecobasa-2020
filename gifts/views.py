@@ -29,7 +29,7 @@ def search(request):
     """Show all ads with filter ability"""
     f = AdFilter(request.GET, queryset=Ad.objects.none(), request=request)
 
-    return render(request, "gifting/search.html", {"f": f})
+    return render(request, "gifts/search.html", {"f": f})
 
 
 def detail(request, pk):
@@ -58,7 +58,7 @@ def detail(request, pk):
     if is_owner:
         context["incoming_requests"] = list(ad.matches.select_related("from_user").order_by("-created_at")[:20])
 
-    return render(request, "gifting/ad_detail.html", context)
+    return render(request, "gifts/ad_detail.html", context)
 
 
 @login_required
@@ -75,7 +75,7 @@ def create(request):
                 request, _("%(ad_type)s created") % {"ad_type": ad.get_type_display()}
             )
             return redirect(form.instance.get_absolute_url())
-    return render(request, "gifting/ad_form.html", {"form": form})
+    return render(request, "gifts/ad_form.html", {"form": form})
 
 
 def edit(request, pk):
@@ -92,7 +92,7 @@ def edit(request, pk):
             ad = form.instance
             messages.success(request, _("changes saved"))
             return redirect(form.instance.get_absolute_url())
-    return render(request, "gifting/ad_form.html", {"form": form, "ad": ad})
+    return render(request, "gifts/ad_form.html", {"form": form, "ad": ad})
 
 
 def delete(request, pk):
@@ -105,9 +105,9 @@ def delete(request, pk):
         messages.success(
             request, _("%(ad_type)s deleted") % {"ad_type": ad.get_type_display()}
         )
-        return redirect(reverse("gifting:search"))
+        return redirect(reverse("gifts:search"))
     else:
-        return render(request, "gifting/ad_delete_confirm.html", {"ad": ad})
+        return render(request, "gifts/ad_delete_confirm.html", {"ad": ad})
 
 
 # ── Shared helpers ───────────────────────────────────────────────────
@@ -195,7 +195,7 @@ def _skill_users(request, require_location=True):
 # ── Endpoints ────────────────────────────────────────────────────────
 
 @require_GET
-def gifting_markers(request):
+def gifts_markers(request):
     """
     GeoJSON FeatureCollection — Ad markers + community skill markers
     within the current map viewport bounding box.
@@ -283,7 +283,7 @@ def gifting_markers(request):
 
 
 @require_GET
-def gifting_list_partial(request):
+def gifts_list_partial(request):
     page_num = int(request.GET.get("page", 1))
 
     ads_queryset = _filtered_ads(request, require_location=False)
@@ -303,7 +303,7 @@ def gifting_list_partial(request):
         skill_communities = list(sc_qs[:10])
         skill_users = list(su_qs[:10])
 
-    return render(request, "gifting/_gifting_list_partial.html", {
+    return render(request, "gifts/_gifts_list_partial.html", {
         "ads":               page,
         "skill_communities": skill_communities,
         "skill_users":       skill_users,
@@ -337,7 +337,7 @@ def nominatim_proxy(request):
 
 
 @require_GET
-def gifting_suggest(request):
+def gifts_suggest(request):
     q = request.GET.get("q", "").strip()
     if len(q) < 2:
         return JsonResponse([], safe=False)

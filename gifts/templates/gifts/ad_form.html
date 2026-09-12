@@ -9,7 +9,7 @@
 {% block content %}
 <div class="container-content">
 
-  <button type="button" class="btn flex items-center text-sm leading-5 font-medium mb-10" href="{% if ad.pk %}{% url "gifting:detail" ad.pk %}{% else %}{% url "gifting:search" %}{% endif %}">
+  <button type="button" class="btn flex items-center text-sm leading-5 font-medium mb-10" href="{% if ad.pk %}{% url "gifts:detail" ad.pk %}{% else %}{% url "gifts:search" %}{% endif %}">
     <svg class="flex-shrink-0 -ml-1 mr-1 h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
       <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
     </svg>
@@ -34,9 +34,9 @@
 
     <div class="flex items-center justify-end gap-4 mt-12">
       {% if ad.pk %}
-      <a href="{% url "gifting:delete" ad.pk %}" class="btn btn-lg btn-red"><i class="fa fa-recycle mr-2"></i>{% trans "Delete" %}</a>
+      <a href="{% url "gifts:delete" ad.pk %}" class="btn btn-lg btn-red"><i class="fa fa-recycle mr-2"></i>{% trans "Delete" %}</a>
       {% endif %}
-      <a class="btn btn-lg btn-purple flex" href="{% if ad.pk %}{% url "gifting:detail" ad.pk %}{% else %}{% url "gifting:search" %}{% endif %}"><i class="fa fa-times mr-2"></i>{% trans "Cancel" %}</a>
+      <a class="btn btn-lg btn-purple flex" href="{% if ad.pk %}{% url "gifts:detail" ad.pk %}{% else %}{% url "gifts:search" %}{% endif %}"><i class="fa fa-times mr-2"></i>{% trans "Cancel" %}</a>
       <button class="btn btn-lg" type="submit">
         <i class="fa fa-check mr-2"></i>{% trans "Save" %}
       </button>

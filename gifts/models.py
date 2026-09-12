@@ -35,7 +35,7 @@ class Ad(RandomIdMixin, models.Model):
         _("Type"), choices=TYPE_CHOICES, max_length=5, default="offer"
     )
     description = models.TextField(_("Description"), blank=True)
-    image = models.ImageField(_('image'), upload_to='gifting-images', null=True, blank=True)
+    image = models.ImageField(_('image'), upload_to='gifts-images', null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     owner = models.ForeignKey(
@@ -60,7 +60,7 @@ class Ad(RandomIdMixin, models.Model):
         return self.title
 
     def get_absolute_url(self) -> str:
-        return reverse("gifting:detail", kwargs={"pk": self.pk})
+        return reverse("gifts:detail", kwargs={"pk": self.pk})
 
     # ── matches.Match target protocol ───────────────────────────────
     def get_match_owner(self):

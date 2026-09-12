@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('gifting', '0006_auto_20200716_1533'),
+        ('gifts', '0006_auto_20200716_1533'),
     ]
 
     operations = [
@@ -25,6 +25,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='ad',
             name='categories',
-            field=models.ManyToManyField(related_name='ads', to='gifting.AdCategory', verbose_name='Categories'),
+            field=models.ManyToManyField(related_name='ads', to='gifts.AdCategory', verbose_name='Categories'),
         ),
     ]

@@ -2,7 +2,7 @@ import pytest
 
 from django.test import Client
 
-from gifting.models import Ad
+from gifts.models import Ad
 from users.models import User
 
 from ..models import Match, MatchMessage

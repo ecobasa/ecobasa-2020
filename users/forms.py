@@ -9,7 +9,7 @@ from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Field
 from croppie.fields import CroppieField
 
-from gifting.forms import Fieldset
+from gifts.forms import Fieldset
 from .models import User
 from skills.models import Skill, UserSkill, SkillWish
 

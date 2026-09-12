@@ -10,7 +10,7 @@ class Match(models.Model):
     """A negotiation between two users over something one of them has: a gift, a skill,
     or a stay at a community. `target` is whatever is being negotiated over — an Ad,
     UserSkill, CommunitySkill, SkillWish, or Community — via a generic reference, so this
-    app never has to import gifting/skills/communities models to work with it.
+    app never has to import gifts/skills/communities models to work with it.
     """
 
     LOC_MY_PLACE = "my_place"
@@ -46,7 +46,7 @@ class Match(models.Model):
     )
 
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
-    # CharField, not PositiveIntegerField: gifting.Ad uses a random string primary key
+    # CharField, not PositiveIntegerField: gifts.Ad uses a random string primary key
     # (RandomIdMixin), so object_id has to accommodate non-numeric PKs too.
     object_id = models.CharField(max_length=255)
     target = GenericForeignKey("content_type", "object_id")

@@ -60,7 +60,7 @@
       return 12;
     }
 
-    const _geocodeURL = '{% url "gifting:api-geocode" %}';
+    const _geocodeURL = '{% url "gifts:api-geocode" %}';
 
     function _nominatimFetch(query) {
       if (_nominatimCache.has(query)) return Promise.resolve(_nominatimCache.get(query));
@@ -184,7 +184,7 @@
           class="btn-pill-select bg-primary transition-all"
           aria-label="{% trans 'Show list view' %}"
           @click="$store.fm.showList()"
-          hx-get="{% url 'gifting:api-list' %}"
+          hx-get="{% url 'gifts:api-list' %}"
           hx-target="#freemarket-list-results"
           hx-swap="innerHTML"
           hx-include="#freemarket-filters"
@@ -225,7 +225,7 @@
 
         {# Search input #}
         <div class="relative"
-          x-data="suggestions('{% url 'gifting:api-suggest' %}')"
+          x-data="suggestions('{% url 'gifts:api-suggest' %}')"
           @click.outside="close()">
           <div class="absolute inset-y-0 left-3 flex items-center text-primary opacity-80 pointer-events-none">
             <i class="fa fa-search"></i>
@@ -301,7 +301,7 @@
       </div>
 
       {% if user.is_authenticated %}
-        <a href="{% url 'gifting:create' %}" class="btn shadow self-start">
+        <a href="{% url 'gifts:create' %}" class="btn shadow self-start">
           <i class="fa fa-plus mr-1"></i> {% trans "Add your Wish or Offer" %}
         </a>
       {% endif %}
@@ -359,14 +359,14 @@
       <div class="space-y-3">
 
         <div class="flex items-center gap-3">
-          <a href="{% url 'gifting:create' %}" class="btn shadow ml-auto">
+          <a href="{% url 'gifts:create' %}" class="btn shadow ml-auto">
             <i class="fa fa-plus mr-1"></i> {% trans "Add your Wish or Offer" %}
           </a>
         </div>
 
         {# Modal search #}
         <div class="relative"
-          x-data="suggestions('{% url 'gifting:api-suggest' %}')"
+          x-data="suggestions('{% url 'gifts:api-suggest' %}')"
           @click.outside="close()"
         >
           <div class="absolute inset-y-0 left-3 flex items-center text-primary opacity-80 pointer-events-none">
@@ -377,7 +377,7 @@
             :value="$store.fm.q"
             placeholder="{% trans 'Search offers, wishes or skills…' %}"
             autocomplete="off"
-            hx-get="{% url 'gifting:api-list' %}"
+            hx-get="{% url 'gifts:api-list' %}"
             hx-target="#freemarket-list-results"
             hx-swap="innerHTML"
             hx-trigger="input changed delay:400ms"
@@ -468,7 +468,7 @@
         {# HTMX list target #}
         <div id="freemarket-list-results"
           class="max-h-[65vh] overflow-y-auto space-y-3 pr-1"
-          hx-get="{% url 'gifting:api-list' %}"
+          hx-get="{% url 'gifts:api-list' %}"
           hx-target="this"
           hx-swap="innerHTML"
           hx-include="#freemarket-filters"
@@ -516,7 +516,7 @@
     });
   }
 
-  const MARKERS_URL = '{% url "gifting:api-markers" %}';
+  const MARKERS_URL = '{% url "gifts:api-markers" %}';
 
   function truncate(text, limit) {
     if (!text || text.length <= limit) return text || '';

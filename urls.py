@@ -9,7 +9,7 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("", include("homepage.urls")),
     path("users/", include("users.urls")),
-    path("gifting/", include("gifting.urls")),
+    path("gifts/", include("gifts.urls")),
     path("communities/", include("communities.urls")),
     path("skills/", include("skills.urls")),
     path("notifications/", include("notifications.urls")),

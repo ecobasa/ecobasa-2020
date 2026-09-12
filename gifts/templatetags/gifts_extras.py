@@ -1,5 +1,5 @@
 from django import template
-from gifting.models import Ad
+from gifts.models import Ad
 import re
 
 register = template.Library()

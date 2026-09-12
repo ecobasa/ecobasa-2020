@@ -16,7 +16,7 @@
 
   {# ── Breadcrumbs ── #}
   <nav class="sm:hidden">
-    <a href="{% url 'gifting:search' %}"
+    <a href="{% url 'gifts:search' %}"
       class="flex items-center text-sm font-medium text-yellow hover:text-purple transition">
       <svg class="flex-shrink-0 -ml-1 mr-1 h-5 w-5 text-yellow" viewBox="0 0 20 20" fill="currentColor">
         <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd"/>
@@ -25,9 +25,9 @@
     </a>
   </nav>
   <nav class="hidden sm:flex items-center text-sm font-medium gap-2">
-    <a href="{% url 'gifting:search' %}" class="text-yellow hover:text-purple transition">{% trans "Gifts" %}</a>
+    <a href="{% url 'gifts:search' %}" class="text-yellow hover:text-purple transition">{% trans "Gifts" %}</a>
     <svg class="h-5 w-5 text-yellow" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/></svg>
-    <a href="{% url 'gifting:search' %}?type={{ ad.type }}" class="text-yellow hover:text-purple transition">{{ ad.get_type_display }}</a>
+    <a href="{% url 'gifts:search' %}?type={{ ad.type }}" class="text-yellow hover:text-purple transition">{{ ad.get_type_display }}</a>
     <svg class="h-5 w-5 text-yellow" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/></svg>
     <span class="text-primary">{{ ad.title }}</span>
   </nav>
@@ -73,11 +73,11 @@
     </div>
 
     {% if ad.owner == request.user %}
-      <a href="{% url 'gifting:delete' ad.pk %}" class="btn btn-lg btn-purple flex mx-5">
+      <a href="{% url 'gifts:delete' ad.pk %}" class="btn btn-lg btn-purple flex mx-5">
         <i class="fa fa-recycle mr-1"></i> {% trans "Delete" %}
       </a>
       <div class="mt-4 flex-shrink-0 flex md:mt-0 md:ml-4">
-        <a href="{% url 'gifting:edit' ad.pk %}" class="btn btn-lg">
+        <a href="{% url 'gifts:edit' ad.pk %}" class="btn btn-lg">
           <i class="fa fa-edit mr-1"></i> {% trans "Edit" %}
         </a>
       </div>

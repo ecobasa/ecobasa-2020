@@ -13,10 +13,10 @@ from .forms import MatchMessageForm
 from .models import Match, MatchMessage
 
 # Maps the list view's "type" query param to the app that owns that kind of match.
-# Kept as gifting/skills/communities app labels rather than importing their models —
+# Kept as gifts/skills/communities app labels rather than importing their models —
 # matches never needs to import a domain app to work with a Match generically.
 _TAB_APP_LABELS = {
-    "freemarket": "gifting",
+    "freemarket": "gifts",
     "skills":     "skills",
     "volunteer":  "communities",
 }

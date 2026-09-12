@@ -73,7 +73,7 @@
 
 {# ── Ad cards — reuse existing _ad.html exactly as-is ─────────── #}
 {% for ad in ads %}
-  {% include "gifting/_ad.html" %}
+  {% include "gifts/_ad.html" %}
 {% empty %}
   {% if not skill_communities and not skill_users %}
     <p class="text-primary py-8 text-center">{% trans "No results found." %}</p>
@@ -84,7 +84,7 @@
 
 {% if has_next %}
 <div class="py-4 text-center"
-  hx-get="{% url 'gifting:api-list' %}?page={{ next_page }}"
+  hx-get="{% url 'gifts:api-list' %}?page={{ next_page }}"
   hx-target="#freemarket-list-results"
   hx-swap="beforeend"
   hx-trigger="revealed"
