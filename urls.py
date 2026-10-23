@@ -18,6 +18,7 @@ urlpatterns = [
     path("notifications/", include("notifications.urls")),
     path("messages/", include(("postman_urls", "postman"), namespace="postman")),
     path("matches/", include("matches.urls", namespace="matches")),
+    path("references/", include("references.urls", namespace="references")),
 ]
 
 if settings.DEBUG:
