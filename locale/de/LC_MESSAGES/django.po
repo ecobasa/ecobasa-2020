@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ecobasa\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-23 15:02+0200\n"
+"POT-Creation-Date: 2026-10-23 15:09+0200\n"
 "PO-Revision-Date: 2026-10-23 12:00+0200\n"
 "Last-Translator: ecobasa\n"
 "Language-Team: de\n"
@@ -446,7 +446,7 @@ msgstr ""
 #: gifts/templates/gifts/listing_delete_confirm.html:29
 #: gifts/templates/gifts/listing_form.html:39
 #: matches/templates/matches/match_detail.html:345
-#: references/templates/references/_references.html:62
+#: references/templates/references/_references.html:68
 #: skills/templates/skills/communityskill_confirm_delete.html:17
 #: skills/templates/skills/communityskill_form.html:95
 #: skills/templates/skills/skillwish_form.html:35
@@ -1378,7 +1378,7 @@ msgstr "Alle als gelesen markieren"
 msgid "No notifications yet."
 msgstr "Noch keine Benachrichtigungen."
 
-#: references/apps.py:8 references/models.py:67
+#: references/apps.py:8 references/models.py:89
 #: references/templates/references/_references.html:3
 msgid "References"
 msgstr "Referenzen"
@@ -1387,27 +1387,27 @@ msgstr "Referenzen"
 msgid "What was it like? What should others know?"
 msgstr "Wie war es? Was sollten andere wissen?"
 
-#: references/models.py:39
+#: references/models.py:61
 msgid "Positive"
 msgstr "Positiv"
 
-#: references/models.py:40
+#: references/models.py:62
 msgid "Neutral"
 msgstr "Neutral"
 
-#: references/models.py:41
+#: references/models.py:63
 msgid "Negative"
 msgstr "Negativ"
 
-#: references/models.py:59
+#: references/models.py:81
 msgid "Impression"
 msgstr "Eindruck"
 
-#: references/models.py:60
+#: references/models.py:82
 msgid "Your experience"
 msgstr "Deine Erfahrung"
 
-#: references/models.py:66
+#: references/models.py:88
 msgid "Reference"
 msgstr "Referenz"
 
@@ -1432,27 +1432,32 @@ msgid_plural "%(counter)s negative"
 msgstr[0] "%(counter)s negative"
 msgstr[1] "%(counter)s negative"
 
-#: references/templates/references/_references.html:38
+#: references/templates/references/_references.html:33
+msgctxt "reference subject"
+msgid "about"
+msgstr "zu"
+
+#: references/templates/references/_references.html:44
 msgid "No references yet."
 msgstr "Noch keine Referenzen."
 
-#: references/templates/references/_references.html:44
+#: references/templates/references/_references.html:50
 msgid "Edit your reference"
 msgstr "Deine Referenz bearbeiten"
 
-#: references/templates/references/_references.html:44
+#: references/templates/references/_references.html:50
 msgid "Write a reference"
 msgstr "Referenz schreiben"
 
-#: references/templates/references/_references.html:61
+#: references/templates/references/_references.html:67
 msgid "Save reference"
 msgstr "Referenz speichern"
 
-#: references/templates/references/_references.html:68
+#: references/templates/references/_references.html:74
 msgid "Remove your reference"
 msgstr "Deine Referenz entfernen"
 
-#: references/templates/references/_references.html:74
+#: references/templates/references/_references.html:80
 msgid "Log in to write a reference"
 msgstr "Melde dich an, um eine Referenz zu schreiben"
 

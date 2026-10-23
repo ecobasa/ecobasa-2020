@@ -7,9 +7,9 @@ from .models import Reference
 class ReferenceForm(forms.ModelForm):
     class Meta:
         model = Reference
-        fields = ("tone", "text")
+        fields = ("impression", "text")
         widgets = {
-            "tone": forms.RadioSelect,
+            "impression": forms.RadioSelect,
             "text": forms.Textarea(attrs={
                 "rows": 4, "class": "form-input",
                 "placeholder": _("What was it like? What should others know?"),
