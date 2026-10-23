@@ -1,7 +1,7 @@
 {% load i18n %}
 
 {# OOB result count badge — updates the counter in the modal header #}
-<span id="freemarket-result-count" hx-swap-oob="true" class="text-xs text-brown">
+<span id="gift-result-count" hx-swap-oob="true" class="text-xs text-brown">
   {% if total %}
     {{ total }} {% trans "result" %}{% if total != 1 %}s{% endif %}
   {% else %}
@@ -85,10 +85,10 @@
 {% if has_next %}
 <div class="py-4 text-center"
   hx-get="{% url 'gifts:api-list' %}?page={{ next_page }}"
-  hx-target="#freemarket-list-results"
+  hx-target="#gift-list-results"
   hx-swap="beforeend"
   hx-trigger="revealed"
-  hx-include="#freemarket-filters">
+  hx-include="#gift-filters">
   <i class="fa fa-spinner fa-spin text-brown"></i>
 </div>
 {% endif %}

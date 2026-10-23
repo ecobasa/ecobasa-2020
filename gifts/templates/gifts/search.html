@@ -163,11 +163,11 @@
 
 {# ═══════════════════════════════════════════════════════════════════ #}
 {% block content %}
-<div x-data>
+<div x-data="{ showToolbar: true }">
 
   {# ── Map shell ── #}
   <div class="relative w-full map-shell">
-    <div id="freemarket-map" class="absolute inset-0 w-full h-full rounded shadow bg-secondary bg-opacity-50"></div>
+    <div id="gift-map" class="absolute inset-0 w-full h-full rounded shadow bg-secondary bg-opacity-50"></div>
 
     {# ── View toggle (top center) ── #}
     <div class="absolute top-4 left-1/2 -translate-x-1/2 z-10">
@@ -185,9 +185,10 @@
           aria-label="{% trans 'Show list view' %}"
           @click="$store.fm.showList()"
           hx-get="{% url 'gifts:api-list' %}"
-          hx-target="#freemarket-list-results"
+          hx-target="#gift-list-results"
           hx-swap="innerHTML"
-          hx-include="#freemarket-filters"
+          hx-include="#gift-filters"
+          hx-sync="#gift-list-results:replace"
           hx-trigger="click once">
           <i class="fa fa-list-alt"></i><span>{% trans "List" %}</span>
         </button>
@@ -195,10 +196,11 @@
     </div>
 
     {# ── Left toolbar ── #}
-    <div class="absolute top-4 left-4 flex flex-col gap-3 w-full max-w-40 md:max-w-60 lg:max-w-xs xl:max-w-md z-10">
-      <div id="freemarket-filters" class="bg-secondary bg-opacity-30 backdrop-blur rounded-lg shadow p-4 flex flex-col gap-3">
+    <div class="absolute top-4 left-4 flex flex-col gap-3 w-full max-w-40 md:max-w-60 lg:max-w-xs xl:max-w-md z-10"
+      :class="{ 'hidden': !showToolbar }">
+      <div id="gift-filters" class="bg-secondary bg-opacity-30 backdrop-blur rounded-lg shadow p-4 flex flex-col gap-3">
 
-        {# Hidden state synced from Alpine — picked up by all hx-include="#freemarket-filters" #}
+        {# Hidden state synced from Alpine — picked up by all hx-include="#gift-filters" #}
         <input type="hidden" name="search"        :value="$store.fm.q">
         <input type="hidden" name="location_name" :value="$store.fm.locationName">
         <input type="hidden" name="location"      :value="$store.fm.location">
@@ -293,17 +295,23 @@
 
         <div class="flex items-center justify-between">
           <span class="text-sm text-brown" x-text="$store.fm.markerCount + ' {% trans "results on map" %}'"></span>
-          <button type="button" class="btn"
-            @click="window._fmReloadMarkers && window._fmReloadMarkers()">
-            <i class="fa fa-search mr-1"></i> {% trans "Search" %}
+          <button type="button" class="btn text-primary opacity-70 hover:opacity-100 px-1.5 py-1"
+            @click="showToolbar = !showToolbar">
+            <i class="fa fa-times mr-1" x-show="showToolbar"></i>
+            <i class="fa fa-chevron-left mr-1" x-show="!showToolbar"></i>
           </button>
         </div>
       </div>
 
       {% if user.is_authenticated %}
+      <div class="flex flex-row justify-between gap-2">
         <a href="{% url 'gifts:create' %}" class="btn shadow self-start">
           <i class="fa fa-plus mr-1"></i> {% trans "Add your Wish or Offer" %}
         </a>
+        <a href="{% url 'skills:userskill_add' %}" class="btn shadow self-start">
+          <i class="fa fa-graduation-cap mr-1"></i> {% trans "Add your Skill" %}
+        </a>
+      </div>
       {% endif %}
     </div>
 
@@ -343,7 +351,22 @@
       class="absolute bottom-16 left-1/2 -translate-x-1/2 z-10 bg-primary text-secondary px-3 py-1 rounded-full shadow opacity-80">
       <i class="fa fa-spinner fa-spin mr-1"></i> {% trans "Loading…" %}
     </div>
+
   </div>{# /map shell #}
+  {# ── Primary Search Button when Toolbar is Hidden ── #}
+    <div class="absolute top-4 left-4 -translate-x-1/2 z-10 hidden"
+      x-show="!showToolbar">
+      <button type="button"
+        class="btn shadow self-start"
+        hx-get="{% url 'gifts:api-list' %}"
+        hx-target="#gift-list-results"
+        hx-swap="innerHTML"
+        hx-include="#gift-filters"
+        hx-sync="#gift-list-results:replace"
+        hx-trigger="click once">
+        <i class="fa fa-search mr-1"></i> {% trans "Search" %}
+      </button>
+    </div>
 
   {# ── List modal ── #}
   <div x-show="$store.fm.view === 'list'" x-cloak
@@ -378,10 +401,11 @@
             placeholder="{% trans 'Search offers, wishes or skills…' %}"
             autocomplete="off"
             hx-get="{% url 'gifts:api-list' %}"
-            hx-target="#freemarket-list-results"
+            hx-target="#gift-list-results"
             hx-swap="innerHTML"
             hx-trigger="input changed delay:400ms"
-            hx-include="#freemarket-filters"
+            hx-include="#gift-filters"
+            hx-sync="#gift-list-results:replace"
             @input="$store.fm.q = $el.value; suggest($el.value); if (!$el.value) window._fmResetView && window._fmResetView()"
             @keydown.arrow-down.prevent="moveDown()"
             @keydown.arrow-up.prevent="moveUp()"
@@ -462,16 +486,17 @@
 
         {# Result count (OOB-swapped by partial) #}
         <div class="flex justify-between items-center text-sm text-brown">
-          <span id="freemarket-result-count" hx-swap-oob="true"></span>
+          <span id="gift-result-count" hx-swap-oob="true"></span>
         </div>
 
         {# HTMX list target #}
-        <div id="freemarket-list-results"
+        <div id="gift-list-results"
           class="max-h-[65vh] overflow-y-auto space-y-3 pr-1"
           hx-get="{% url 'gifts:api-list' %}"
           hx-target="this"
           hx-swap="innerHTML"
-          hx-include="#freemarket-filters"
+          hx-include="#gift-filters"
+          hx-sync="this:replace"
           hx-trigger="revealed, filter-updated from:body">
           <div class="text-center py-8 text-brown">
             <i class="fa fa-spinner fa-spin text-2xl"></i>
@@ -483,6 +508,7 @@
   </div>
 
 </div>{# /x-data root #}
+
 {% endblock %}
 
 
@@ -599,7 +625,7 @@
   }
 
   function initMap() {
-    var mapEl = document.getElementById('freemarket-map');
+    var mapEl = document.getElementById('gift-map');
     if (!mapEl || !window.ol) return;
 
     var tiles = EcoMap.buildBaseLayers();

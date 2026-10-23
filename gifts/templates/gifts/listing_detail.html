@@ -265,7 +265,7 @@
 
       // Simple popup showing title + location
       const popupEl = document.createElement('div');
-      popupEl.className = 'freemarket-popup';
+      popupEl.className = 'gift-popup';
       popupEl.innerHTML = '<strong>{{ listing.title|escapejs }}</strong>'
         + '{% if listing.location_name %}<div>{{ listing.location_name|escapejs }}</div>{% endif %}';
       const overlay = new ol.Overlay({

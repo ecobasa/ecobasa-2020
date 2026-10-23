@@ -9,13 +9,20 @@ import django_filters
 from .models import Listing, ListingCategory
 
 
-_LISTING_TYPE_CHOICES = list(Listing.TYPE_CHOICES) + [("skill", _("Skills"))]
+# Plural labels here are deliberately distinct from Listing.TYPE_CHOICES (singular,
+# used for a single listing's own badge/heading elsewhere) — these describe the
+# filter's checkbox categories, e.g. "show me things in: Offers, Wishes, Skills".
+_LISTING_TYPE_FILTER_CHOICES = [
+    ("offer", _("Offers")),
+    ("wish", _("Wishes")),
+    ("skill", _("Skills")),
+]
 
 
 class ListingFilter(django_filters.FilterSet):
     search = django_filters.CharFilter(label=_("Search"), method="do_search")
     type = django_filters.MultipleChoiceFilter(
-        choices=_LISTING_TYPE_CHOICES, widget=forms.CheckboxSelectMultiple
+        choices=_LISTING_TYPE_FILTER_CHOICES, widget=forms.CheckboxSelectMultiple
     )
     categories = django_filters.ModelMultipleChoiceFilter(
         queryset=ListingCategory.objects.all(), widget=forms.CheckboxSelectMultiple

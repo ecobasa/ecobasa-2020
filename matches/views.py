@@ -16,7 +16,7 @@ from .models import Match, MatchMessage
 # Kept as gifts/skills/communities app labels rather than importing their models —
 # matches never needs to import a domain app to work with a Match generically.
 _TAB_APP_LABELS = {
-    "freemarket": "gifts",
+    "gift": "gifts",
     "skills":     "skills",
     "volunteer":  "communities",
 }
@@ -43,9 +43,9 @@ def matches_list(request):
         ctx["volunteer_theirs"] = _matches_for(request.user, "recipient", "volunteer")
         ctx["volunteer_mine"]   = _matches_for(request.user, "from_user", "volunteer")
 
-    if t in ("", "freemarket"):
-        ctx["fm_theirs"] = _matches_for(request.user, "recipient", "freemarket")
-        ctx["fm_mine"]   = _matches_for(request.user, "from_user", "freemarket")
+    if t in ("", "gift"):
+        ctx["fm_theirs"] = _matches_for(request.user, "recipient", "gift")
+        ctx["fm_mine"]   = _matches_for(request.user, "from_user", "gift")
 
     if t in ("", "skills"):
         ctx["skill_theirs"] = _matches_for(request.user, "recipient", "skills")

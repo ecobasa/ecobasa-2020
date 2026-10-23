@@ -12,8 +12,8 @@
         <a href="{% url 'postman:write' %}" @click="$dispatch('close-user-menu')" class="block px-3 py-2 rounded text-secondary hover:bg-secondary"> <i class="fa fa-pencil-alt mr-2"></i> {% trans "Compose" %}</a>
 
         <div class="pt-3 pb-1 px-3 text-xs text-secondary opacity-60 uppercase tracking-wide">{% trans "Matches" %}</div>
-        <a href="{% url 'matches:list' %}?type=freemarket"
-           class="block px-3 py-2 rounded {% if request_type == 'freemarket' %}bg-secondary text-primary font-semibold{% else %}text-secondary hover:bg-secondary hover:text-primary{% endif %}">
+        <a href="{% url 'matches:list' %}?type=gift"
+           class="block px-3 py-2 rounded {% if request_type == 'gift' %}bg-secondary text-primary font-semibold{% else %}text-secondary hover:bg-secondary hover:text-primary{% endif %}">
           <i class="fa fa-gift mr-2"></i>{% trans "Gifts" %}
         </a>
         <a href="{% url 'matches:list' %}?type=skills"
