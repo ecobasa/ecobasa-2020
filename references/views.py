@@ -10,7 +10,7 @@ from django.utils.translation import gettext as _
 from django.views.decorators.http import require_POST
 
 from .forms import ReferenceForm
-from .models import Reference, ReferenceSkill, is_referenceable, references_received, subject_owner
+from .models import Reference, ReferenceSkill, is_referenceable, references_about, subject_owner
 
 
 def _redirect_to(subject):
@@ -79,33 +79,52 @@ def skill_tag(request, pk, action):
     return _redirect_to(subject)
 
 
-@login_required
-def references_list(request):
-    """Dashboard: references received (about you and what you hold) or given (by you)."""
-    tab = "given" if request.GET.get("type") == "given" else "received"
-    user = request.user
-    if tab == "given":
-        references = Reference.objects.filter(author=user)
-    else:
-        references = references_received(user)
+def _load(references, user, tab, holder=None):
+    """Fetch references for the dashboard and mark how each card is shown. Within a
+    group, cards about the group's holder itself (you, or the community) skip the
+    "about" line."""
     references = list(
         references.select_related("author", "content_type").prefetch_related(
             "subject", Prefetch("skill_tags", queryset=ReferenceSkill.objects.select_related("skill"))
         ).order_by("-created_at")
     )
-    pending = []
     for reference in references:
-        # Every card says what it is about, except received ones about yourself
         about_you = (reference.content_type.model, reference.object_id) == ("user", str(user.pk))
-        reference.about_other = tab == "given" or not about_you
+        about_holder = holder is not None and (reference.content_type_id, reference.object_id) == (
+            ContentType.objects.get_for_model(holder).pk, str(holder.pk)
+        )
+        reference.about_other = not about_holder
         reference.about_you = about_you
-        tags = [t for t in reference.skill_tags.all() if t.status != ReferenceSkill.STATUS_DECLINED]
-        reference.visible_skill_tags = tags
-        if tab == "received":
-            reference.can_confirm = True
-            pending += [t for t in tags if t.status == ReferenceSkill.STATUS_PENDING]
+        reference.visible_skill_tags = [
+            t for t in reference.skill_tags.all() if t.status != ReferenceSkill.STATUS_DECLINED
+        ]
+        reference.can_confirm = tab == "received"
+    return references
+
+
+@login_required
+def references_list(request):
+    """Dashboard: references received or given. Received is grouped: about you (and your
+    listings and skills) first, then one group per community you own."""
+    tab = "given" if request.GET.get("type") == "given" else "received"
+    user = request.user
+    if tab == "given":
+        groups = [{"community": None, "references": _load(Reference.objects.filter(author=user), user, tab)}]
+    else:
+        groups = [{"community": None, "references": _load(references_about(user), user, tab, holder=user)}]
+        for community in user.communities.prefetch_related("photos").order_by("name"):
+            groups.append({
+                "community": community,
+                "header_photo": next(iter(community.photos.all()), None),
+                "references": _load(references_about(community), user, tab, holder=community),
+            })
+    pending = [
+        tag for group in groups for reference in group["references"]
+        for tag in reference.visible_skill_tags if tag.status == ReferenceSkill.STATUS_PENDING
+    ]
     return render(request, "references/references_list.html", {
         "tab": tab,
-        "references": references,
+        "groups": groups,
+        "has_references": any(group["references"] for group in groups),
         "pending_tags": pending,
     })

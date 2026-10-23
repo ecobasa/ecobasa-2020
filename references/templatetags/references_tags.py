@@ -69,6 +69,8 @@ def references_for(context, subject):
             for impression, _label in Reference.IMPRESSION_CHOICES
         },
         "is_owner": is_owner,
+        # A community (or one of its skills): the guide adds a note about writing to a group
+        "about_community": content_type.model in ("community", "communityskill"),
         "own_reference": own,
         "form": form,
         "gift_names": gift_names,

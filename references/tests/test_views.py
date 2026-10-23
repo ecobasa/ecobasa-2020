@@ -293,3 +293,14 @@ class TestDashboard:
         assert owner.get_absolute_url() + "?edit_reference=1#references" in given
         page = _client_for(author).get(owner.get_absolute_url() + "?edit_reference=1").content.decode()
         assert "x-data=\"{ open: true" in page
+
+    def test_community_guide_only_on_community_pages(self, author, owner, community):
+        assert "Writing about a community" in _client_for(author).get(community.get_absolute_url()).content.decode()
+        assert "Writing about a community" not in _client_for(author).get(owner.get_absolute_url()).content.decode()
+
+    def test_received_is_grouped_by_owned_community(self, author, owner, community):
+        Reference(author=author, recipient=owner, subject=community, text="About the farm.").save()
+        content = _client_for(owner).get(reverse("references:list")).content.decode()
+        about_you = content.index("About you")
+        # The community header comes after "About you", and its reference after the header
+        assert about_you < content.index("Goat Farm", about_you) < content.index("About the farm.")

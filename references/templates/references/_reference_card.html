@@ -25,6 +25,7 @@
             {% if ref.content_type.model == 'listing' %}{% if ref.subject.type == 'wish' %}fa-solid fa-hand-holding-heart{% else %}fa fa-gift{% endif %}
             {% elif ref.content_type.model == 'userskill' or ref.content_type.model == 'communityskill' %}fa fa-graduation-cap
             {% elif ref.content_type.model == 'user' %}fa fa-user
+            {% elif ref.content_type.model == 'community' %}fa-solid {{ ref.subject.get_type_icon }}
             {% else %}fa {{ ref.subject.get_match_icon }}{% endif %}"></i>{% if ref.content_type.model == 'user' %}{{ ref.subject.name|default:ref.subject.username }}{% else %}{{ ref.subject.get_match_display_name }}{% endif %}</a>
         </div>
       {% endif %}

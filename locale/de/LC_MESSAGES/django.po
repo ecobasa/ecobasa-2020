@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ecobasa\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-23 16:21+0200\n"
+"POT-Creation-Date: 2026-10-23 16:29+0200\n"
 "PO-Revision-Date: 2026-10-23 12:00+0200\n"
 "Last-Translator: ecobasa\n"
 "Language-Team: de\n"
@@ -337,7 +337,7 @@ msgstr "Schließen"
 
 #: communities/templates/communities/community_detail.html:103
 #: gifts/templates/gifts/listing_detail.html:81
-#: references/templates/references/_reference_card.html:33
+#: references/templates/references/_reference_card.html:34
 msgid "Edit"
 msgstr "Bearbeiten"
 
@@ -448,7 +448,7 @@ msgstr ""
 #: gifts/templates/gifts/listing_delete_confirm.html:29
 #: gifts/templates/gifts/listing_form.html:39
 #: matches/templates/matches/match_detail.html:351
-#: references/templates/references/_references.html:64
+#: references/templates/references/_references.html:68
 #: skills/templates/skills/communityskill_confirm_delete.html:17
 #: skills/templates/skills/communityskill_form.html:95
 #: skills/templates/skills/skillwish_form.html:35
@@ -1169,7 +1169,7 @@ msgstr "Annehmen"
 #: matches/templates/matches/email/match_request.txt:20
 #: matches/templates/matches/match_detail.html:320
 #: matches/templates/matches/match_detail.html:360
-#: references/templates/references/_reference_card.html:50
+#: references/templates/references/_reference_card.html:51
 #: references/templates/references/references_list.html:33
 msgid "Decline"
 msgstr "Ablehnen"
@@ -1222,7 +1222,7 @@ msgid "Counter-proposal pending"
 msgstr "Gegenvorschlag offen"
 
 #: matches/templates/matches/match_detail.html:72
-#: references/templates/references/_references.html:24
+#: references/templates/references/_references.html:28
 msgid "Write a reference"
 msgstr "Referenz schreiben"
 
@@ -1426,8 +1426,8 @@ msgid "Reference"
 msgstr "Referenz"
 
 #: references/models.py:131
-#: references/templates/references/_reference_card.html:43
-#: references/templates/references/_reference_card.html:53
+#: references/templates/references/_reference_card.html:44
+#: references/templates/references/_reference_card.html:54
 msgid "Waiting for confirmation"
 msgstr "Wartet auf Bestätigung"
 
@@ -1520,7 +1520,29 @@ msgstr "Schreib so, als würde die Person mitlesen."
 msgid "They will. Be honest and kind at the same time."
 msgstr "Das wird sie. Sei ehrlich und freundlich zugleich."
 
-#: references/templates/references/_guidelines.html:20
+#: references/templates/references/_guidelines.html:21
+msgid "Writing about a community"
+msgstr "Wenn du über eine Gemeinschaft schreibst"
+
+#: references/templates/references/_guidelines.html:22
+msgid ""
+"You are writing about a place and a whole group of people. Describe what the "
+"place and living or staying together were like for you."
+msgstr "Du schreibst über einen Ort und eine ganze Gruppe von Menschen. Beschreibe, wie du den Ort und das Zusammenleben oder deinen Aufenthalt erlebt hast."
+
+#: references/templates/references/_guidelines.html:23
+msgid ""
+"Was your experience mainly with one person? Say so explicitly, and don't let "
+"it colour your impression of the whole community: a difficult encounter with "
+"one person is no reason for a negative community reference."
+msgstr "Hattest du deine Erfahrung vor allem mit einer Person? Sag das ausdrücklich, und lass sie nicht deinen Eindruck von der ganzen Gemeinschaft färben: Eine schwierige Begegnung mit einem Menschen ist kein Grund für eine negative Referenz über die Gemeinschaft."
+
+#: references/templates/references/_guidelines.html:24
+msgid ""
+"Even better: if that person is on ecobasa, write them a personal reference."
+msgstr "Noch besser: Wenn die Person auf ecobasa ist, schreib ihr eine persönliche Referenz."
+
+#: references/templates/references/_guidelines.html:28
 msgid ""
 "If something went wrong: have you talked about it with them? A reference is "
 "not the place to settle a conflict, but it can help others to know about it. "
@@ -1530,7 +1552,7 @@ msgstr ""
 "ist nicht der Ort, einen Konflikt auszutragen, aber sie kann anderen helfen, "
 "davon zu wissen. Wenn du dich nicht sicher gefühlt hast, sag es klar."
 
-#: references/templates/references/_guidelines.html:22
+#: references/templates/references/_guidelines.html:30
 msgid ""
 "You can edit your reference at any time, for example after you have talked "
 "it through."
@@ -1543,7 +1565,7 @@ msgctxt "reference subject"
 msgid "about"
 msgstr "zu"
 
-#: references/templates/references/_reference_card.html:47
+#: references/templates/references/_reference_card.html:48
 #: references/templates/references/references_list.html:29
 msgid "Add to my skills"
 msgstr "Zu meinen Fähigkeiten hinzufügen"
@@ -1569,42 +1591,43 @@ msgid_plural "%(counter)s negative"
 msgstr[0] "%(counter)s negative"
 msgstr[1] "%(counter)s negative"
 
-#: references/templates/references/_references.html:18
-#: references/templates/references/references_list.html:50
+#: references/templates/references/_references.html:22
+#: references/templates/references/references_list.html:67
+#: references/templates/references/references_list.html:73
 msgid "No references yet."
 msgstr "Noch keine Referenzen."
 
-#: references/templates/references/_references.html:24
+#: references/templates/references/_references.html:28
 msgid "Edit your reference"
 msgstr "Deine Referenz bearbeiten"
 
-#: references/templates/references/_references.html:43
+#: references/templates/references/_references.html:47
 msgid "Which skills was it about?"
 msgstr "Um welche Fähigkeiten ging es?"
 
-#: references/templates/references/_references.html:45
+#: references/templates/references/_references.html:49
 msgid "Skills they don't list yet are added once they confirm."
 msgstr ""
 "Fähigkeiten, die noch nicht im Profil stehen, werden erst nach Bestätigung "
 "hinzugefügt."
 
-#: references/templates/references/_references.html:50
+#: references/templates/references/_references.html:54
 msgid "Which gifts was it about?"
 msgstr "Um welche Geschenke ging es?"
 
-#: references/templates/references/_references.html:59
+#: references/templates/references/_references.html:63
 msgid "Only the name is kept, nothing else."
 msgstr "Gespeichert wird nur der Name, sonst nichts."
 
-#: references/templates/references/_references.html:63
+#: references/templates/references/_references.html:67
 msgid "Save reference"
 msgstr "Referenz speichern"
 
-#: references/templates/references/_references.html:70
+#: references/templates/references/_references.html:74
 msgid "Remove your reference"
 msgstr "Deine Referenz entfernen"
 
-#: references/templates/references/_references.html:136
+#: references/templates/references/_references.html:140
 msgid "Log in to write a reference"
 msgstr "Melde dich an, um eine Referenz zu schreiben"
 
@@ -1629,7 +1652,12 @@ msgstr "%(author)s hat sie in einer Referenz über dich erwähnt."
 msgid "%(author)s mentioned it in a reference about %(subject)s."
 msgstr "%(author)s hat sie in einer Referenz über %(subject)s erwähnt."
 
-#: references/templates/references/references_list.html:48
+#: references/templates/references/references_list.html:58 users/forms.py:93
+#: users/models.py:94
+msgid "About you"
+msgstr "Über dich"
+
+#: references/templates/references/references_list.html:71
 msgid ""
 "You haven't written a reference yet. You can write one on any profile, "
 "community, gift or skill page."
@@ -1637,7 +1665,7 @@ msgstr ""
 "Du hast noch keine Referenz geschrieben. Das geht auf jeder Profil-, "
 "Gemeinschafts-, Geschenk- oder Fähigkeitsseite."
 
-#: references/templatetags/references_tags.py:80
+#: references/templatetags/references_tags.py:82
 msgid "Skills listed here"
 msgstr "Fähigkeiten hier im Profil"
 
@@ -2430,10 +2458,6 @@ msgstr "Konto"
 #: users/forms.py:90
 msgid "Required to log in."
 msgstr "Wird für die Anmeldung benötigt."
-
-#: users/forms.py:93 users/models.py:94
-msgid "About you"
-msgstr "Über dich"
 
 #: users/forms.py:99
 msgid ""
