@@ -127,11 +127,15 @@
       {% endif %}
     </div>
     {% if form.can_tag %}
+      {{ held_skills|json_script:"reference-held-skills" }}
       <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.css">
       <script>
       (function () {
         const AUTOCOMPLETE_URL = '{% url "skills:api_autocomplete" %}';
         const PROPOSALS_URL    = '{% url "skills:api_proposals" %}';
+        // Skills this person or community already lists: suggested first
+        const HELD = JSON.parse(document.getElementById('reference-held-skills').textContent);
+        const HELD_HEADER = '{{ held_skills_header|escapejs }}';
 
         function init() {
           const input = document.getElementById('reference-skill-names');
@@ -139,25 +143,35 @@
           const tagify = new Tagify(input, {
             editTags: false,
             enforceWhitelist: true,
-            whitelist: input.value.split(',').map(s => s.trim()).filter(Boolean).map(s => ({ value: s })),
+            whitelist: [...new Set([...HELD, ...input.value.split(',').map(s => s.trim()).filter(Boolean)])].map(s => ({ value: s })),
             dropdown: { enabled: 0, maxItems: 20, closeOnSelect: true, highlightFirst: true },
             originalInputValueFormat: vals => vals.map(v => v.value).join(', '),
           });
-          let timer = null;
-          function load(url, q) {
-            fetch(url).then(r => r.json()).then(data => {
-              tagify.settings.whitelist = (data.results || []).map(r => ({ value: r.text }));
-              tagify.loading(false).dropdown.show.call(tagify, q);
-            });
+          function show(names, q, header) {
+            tagify.settings.whitelist = [...new Set(names)].map(s => ({ value: s }));
+            tagify.settings.dropdown.header = header || '';
+            tagify.loading(false).dropdown.show.call(tagify, q);
           }
+          function suggest() {
+            // Nothing typed yet: their own skills, or curated proposals if they list none
+            if (HELD.length) return show(HELD, '', HELD_HEADER);
+            fetch(PROPOSALS_URL).then(r => r.json()).then(data => show((data.results || []).map(r => r.text), ''));
+          }
+          let timer = null;
           tagify.on('input', e => {
             clearTimeout(timer);
             const q = (e.detail.value || '').trim();
-            timer = setTimeout(() => q.length >= 2
-              ? load(AUTOCOMPLETE_URL + '?q=' + encodeURIComponent(q), q)
-              : load(PROPOSALS_URL, q), q.length >= 2 ? 300 : 0);
+            if (q.length < 2) return suggest();
+            // Typing: their matching skills first, then the taxonomy
+            const lower = q.toLowerCase();
+            const held = HELD.filter(name => name.toLowerCase().includes(lower));
+            timer = setTimeout(() => {
+              fetch(AUTOCOMPLETE_URL + '?q=' + encodeURIComponent(q)).then(r => r.json()).then(data => {
+                show([...held, ...(data.results || []).map(r => r.text)], q);
+              });
+            }, 300);
           });
-          tagify.on('focus', () => { if (!tagify.state.inputText) load(PROPOSALS_URL, ''); });
+          tagify.on('focus', () => { if (!tagify.state.inputText) suggest(); });
         }
 
         function start() {

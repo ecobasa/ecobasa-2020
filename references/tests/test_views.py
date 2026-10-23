@@ -236,3 +236,12 @@ class TestReferenceFromMatch:
     def test_prefilled_gift_name_lands_in_the_form(self, author, owner):
         content = _client_for(author).get(owner.get_absolute_url() + "?reference_gift=Old+Bicycle").content.decode()
         assert "Old Bicycle" in content
+
+
+@pytest.mark.django_db
+class TestSkillSuggestions:
+    def test_profile_skills_are_suggested_in_the_form(self, author, owner):
+        skill = Skill.objects.create(name="Cob building", slug="cob-building")
+        UserSkill.objects.create(user=owner, skill=skill)
+        content = _client_for(author).get(owner.get_absolute_url()).content.decode()
+        assert '<script id="reference-held-skills" type="application/json">["Cob Building"]</script>' in content

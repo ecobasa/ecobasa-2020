@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ecobasa\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-23 15:24+0200\n"
+"POT-Creation-Date: 2026-10-23 15:32+0200\n"
 "PO-Revision-Date: 2026-10-23 12:00+0200\n"
 "Last-Translator: ecobasa\n"
 "Language-Team: fr\n"
@@ -449,7 +449,7 @@ msgstr "Écris un court message sur ta motivation et tes compétences"
 #: gifts/templates/gifts/listing_delete_confirm.html:29
 #: gifts/templates/gifts/listing_form.html:39
 #: matches/templates/matches/match_detail.html:351
-#: references/templates/references/_references.html:115
+#: references/templates/references/_references.html:119
 #: skills/templates/skills/communityskill_confirm_delete.html:17
 #: skills/templates/skills/communityskill_form.html:95
 #: skills/templates/skills/skillwish_form.html:35
@@ -1170,7 +1170,7 @@ msgstr "Accepter"
 #: matches/templates/matches/email/match_request.txt:20
 #: matches/templates/matches/match_detail.html:320
 #: matches/templates/matches/match_detail.html:360
-#: references/templates/references/_references.html:53
+#: references/templates/references/_references.html:57
 msgid "Decline"
 msgstr "Refuser"
 
@@ -1222,7 +1222,7 @@ msgid "Counter-proposal pending"
 msgstr "Contre-proposition en attente"
 
 #: matches/templates/matches/match_detail.html:72
-#: references/templates/references/_references.html:76
+#: references/templates/references/_references.html:80
 msgid "Write a reference"
 msgstr "Écrire une référence"
 
@@ -1419,8 +1419,8 @@ msgstr "Ton expérience"
 msgid "Reference"
 msgstr "Référence"
 
-#: references/models.py:122 references/templates/references/_references.html:46
-#: references/templates/references/_references.html:56
+#: references/models.py:122 references/templates/references/_references.html:50
+#: references/templates/references/_references.html:60
 msgid "Waiting for confirmation"
 msgstr "En attente de confirmation"
 
@@ -1462,45 +1462,51 @@ msgctxt "reference subject"
 msgid "about"
 msgstr "à propos de"
 
-#: references/templates/references/_references.html:50
+#: references/templates/references/_references.html:54
 msgid "Add to my skills"
 msgstr "Ajouter à mes compétences"
 
-#: references/templates/references/_references.html:70
+#: references/templates/references/_references.html:74
 msgid "No references yet."
 msgstr "Pas encore de références."
 
-#: references/templates/references/_references.html:76
+#: references/templates/references/_references.html:80
 msgid "Edit your reference"
 msgstr "Modifier ta référence"
 
-#: references/templates/references/_references.html:94
+#: references/templates/references/_references.html:98
 msgid "Which skills was it about?"
 msgstr "De quelles compétences s'agissait-il ?"
 
-#: references/templates/references/_references.html:96
+#: references/templates/references/_references.html:100
 msgid "Skills they don't list yet are added once they confirm."
-msgstr "Les compétences qui ne figurent pas encore sur son profil sont ajoutées après confirmation."
+msgstr ""
+"Les compétences qui ne figurent pas encore sur son profil sont ajoutées "
+"après confirmation."
 
-#: references/templates/references/_references.html:101
+#: references/templates/references/_references.html:105
 msgid "Which gifts was it about?"
 msgstr "De quels dons s'agissait-il ?"
 
-#: references/templates/references/_references.html:110
+#: references/templates/references/_references.html:114
 msgid "Only the name is kept, nothing else."
 msgstr "Seul le nom est conservé, rien d'autre."
 
-#: references/templates/references/_references.html:114
+#: references/templates/references/_references.html:118
 msgid "Save reference"
 msgstr "Enregistrer la référence"
 
-#: references/templates/references/_references.html:121
+#: references/templates/references/_references.html:125
 msgid "Remove your reference"
 msgstr "Supprimer ta référence"
 
-#: references/templates/references/_references.html:173
+#: references/templates/references/_references.html:191
 msgid "Log in to write a reference"
 msgstr "Connecte-toi pour écrire une référence"
+
+#: references/templatetags/references_tags.py:79
+msgid "Skills listed here"
+msgstr "Compétences de ce profil"
 
 #: references/views.py:44
 msgid "Thank you for sharing your experience."

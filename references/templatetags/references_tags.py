@@ -3,6 +3,7 @@ from urllib.parse import urlencode
 from django import template
 from django.contrib.contenttypes.models import ContentType
 from django.db.models import Prefetch
+from django.utils.translation import gettext as _
 
 from ..forms import ReferenceForm
 from ..models import Reference, ReferenceSkill, references_about, subject_owner
@@ -70,6 +71,12 @@ def references_for(context, subject):
         "own_reference": own,
         "form": form,
         "gift_names": gift_names,
+        # Skills they already list, suggested first in the skill input
+        "held_skills": [
+            s.get_match_display_name() for s in getattr(subject, "get_reference_subjects", lambda: [])()
+            if hasattr(s, "get_skill_holder")
+        ] if form and form.can_tag else [],
+        "held_skills_header": _("Skills listed here"),
         "gift_suggestions": [l.title for l in listings.all()] if form and form.can_tag and listings is not None else [],
         "open_form": bool(prefill_gift or prefill_skill),
     }
