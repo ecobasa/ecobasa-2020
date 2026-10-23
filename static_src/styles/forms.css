@@ -56,59 +56,43 @@
     @apply bg-transparent shadow-none;
   }
 
-  input[type="radio"].light {
-    @apply border-secondary ring-0;
+  input[type="radio"] {
+    @apply border-brown ring-0;
   }
 
   .form-checkbox:checked,
   input[type="checkbox"]:checked,
   .form-radio:checked,
   input[type="radio"]:checked {
-    @apply bg-primary;
-  }
-
-  .dark.form-checkbox {
-    @apply border-primary;
-  }
-
-  .dark.form-checkbox:checked,
-  .dark.form-checkbox:checked:hover {
-    @apply bg-primary;
-  }
-
-  .light.form-checkbox,
-  .light.input[type="checkbox"],
-  .light.form-checkbox:focus,
-  .light.form-checkbox:checked:hover {
-    @apply bg-transparent ring-secondary border-secondary;
-  }
-
-  .form-radio:focus,
-  input[type="radio"]:focus {
-    @apply bg-transparent;
+    @apply bg-primary border-brown;
   }
 
   input[type='radio']:checked,
   input[type='radio']:checked:hover,
   input[type='radio']:checked:focus {
-    @apply bg-primary ring-0;
-  }
-
-  input.light[type='radio']:checked {
-    @apply bg-transparent;
-    &:hover {
-      @apply border-secondary;
-    }
-  }
-
-  input[type='checkbox']:focus,
-  .form-checkbox:focus {
-    @apply ring-0 border-none shadow-none outline-0;
+    @apply bg-primary ring-primary;
   }
 
   input[type='radio']:hover,
   input[type='radio']:focus {
-    @apply rounded-full;
+    @apply ring-primary;
+  }
+
+  .form-checkbox:checked,
+  .form-checkbox:checked:hover {
+    @apply bg-primary;
+  }
+
+  .form-checkbox,
+  .input[type="checkbox"],
+  .form-checkbox:checked:hover {
+    @apply bg-transparent ring-brown border-brown;
+  }
+
+  input[type='checkbox']:checked:focus,
+  .form-checkbox:focus,
+  .form-checkbox:checked:focus {
+    @apply ring-0 bg-primary shadow-none outline-0;
   }
 
 
