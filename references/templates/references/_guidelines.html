@@ -16,6 +16,14 @@
     <li><strong>{% trans "Take responsibility for your feelings." %}</strong> {% trans "What others do can touch your feelings; the feelings come from your own needs. Say what you would have wished for." %}</li>
     <li><strong>{% trans "Write as if they were reading along." %}</strong> {% trans "They will. Be honest and kind at the same time." %}</li>
   </ul>
+  {% if about_community %}
+    <div class="mt-3 rounded border border-primary border-opacity-40 bg-secondary p-3">
+      <p class="mt-0 mb-2"><strong><i class="fa-solid fa-people-roof mr-1"></i>{% trans "Writing about a community" %}</strong></p>
+      <p class="mt-0 mb-2">{% trans "You are writing about a place and a whole group of people. Describe what the place and living or staying together were like for you." %}</p>
+      <p class="mt-0 mb-2">{% trans "Was your experience mainly with one person? Say so explicitly, and don't let it colour your impression of the whole community: a difficult encounter with one person is no reason for a negative community reference." %}</p>
+      <p class="m-0">{% trans "Even better: if that person is on ecobasa, write them a personal reference." %}</p>
+    </div>
+  {% endif %}
   <div x-show="impression === 'negative'" x-cloak class="mt-3 rounded border border-red border-opacity-50 bg-red bg-opacity-5 p-3">
     <p class="m-0">{% trans "If something went wrong: have you talked about it with them? A reference is not the place to settle a conflict, but it can help others to know about it. If you felt unsafe, say so clearly." %}</p>
   </div>
