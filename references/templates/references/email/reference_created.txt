@@ -1,0 +1,17 @@
+{% load i18n %}{% blocktrans with name=recipient.name|default:recipient.email %}Hello {{ name }},{% endblocktrans %}
+
+{{ headline }}
+
+{% trans "Impression" %}: {{ reference.get_impression_display }}
+
+{{ reference.text }}
+{% if skills %}
+{% trans "Skills" %}: {{ skills|join:", " }}{% endif %}{% if reference.gift_names %}
+{% trans "Gifts" %}: {{ reference.gift_names|join:", " }}{% endif %}
+{% if community %}
+{% blocktrans with name=community.name %}You receive this as ambassador of {{ name }}.{% endblocktrans %}
+{% endif %}
+{% trans "View reference" %}: {{ detail_url }}
+
+--
+ecobasa.org

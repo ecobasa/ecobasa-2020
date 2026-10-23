@@ -1,0 +1,143 @@
+{% load i18n %}
+<section id="references" class="mt-10">
+  <h2>{% trans "References" %}</h2>
+
+  {% if references %}
+    <div class="flex flex-wrap gap-2 mb-4 text-xs">
+      {% if counts.positive %}<span class="pill bg-green"><i class="fa-regular fa-face-smile mr-1"></i>{% blocktrans count counter=counts.positive %}{{ counter }} positive{% plural %}{{ counter }} positive{% endblocktrans %}</span>{% endif %}
+      {% if counts.neutral %}<span class="pill bg-yellow"><i class="fa-regular fa-face-meh mr-1"></i>{% blocktrans count counter=counts.neutral %}{{ counter }} neutral{% plural %}{{ counter }} neutral{% endblocktrans %}</span>{% endif %}
+      {% if counts.negative %}<span class="pill bg-red"><i class="fa-regular fa-face-frown mr-1"></i>{% blocktrans count counter=counts.negative %}{{ counter }} negative{% plural %}{{ counter }} negative{% endblocktrans %}</span>{% endif %}
+    </div>
+
+    <div class="space-y-3 mb-6">
+      {% for ref in references %}
+        {% if ref.author_id == request.user.pk and not ref.about_other %}
+          {% include "references/_reference_card.html" with show_edit=True %}
+        {% else %}
+          {% include "references/_reference_card.html" %}
+        {% endif %}
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="text-sm text-brown">{% trans "No references yet." %}</p>
+  {% endif %}
+
+  {% if form %}
+    <div class="border rounded-xl bg-secondary p-6" x-data="{ open: {{ open_form|yesno:'true,false' }}, impression: '{{ form.impression.value|default:'positive' }}' }">
+      <button type="button" class="btn" x-show="!open" @click="open = true">
+        <i class="fa fa-pencil mr-2"></i>{% if own_reference %}{% trans "Edit your reference" %}{% else %}{% trans "Write a reference" %}{% endif %}
+      </button>
+      <form x-show="open" x-cloak method="post" action="{% url 'references:save' content_type.pk subject.pk %}">
+        {% csrf_token %}
+        <div class="form-group mb-4">
+          <label class="form-label">{{ form.impression.label }}</label>
+          <div class="flex flex-wrap gap-4" @change="impression = $event.target.value">
+            {% for radio in form.impression %}
+              <label class="flex items-center gap-2 text-sm text-brown cursor-pointer">{{ radio.tag }} {{ radio.choice_label }}</label>
+            {% endfor %}
+          </div>
+        </div>
+        {% include "references/_guidelines.html" %}
+        <div class="form-group mb-4">
+          <label class="form-label" for="{{ form.text.id_for_label }}">{{ form.text.label }}</label>
+          {{ form.text }}
+        </div>
+        {% if form.can_tag %}
+          <div class="form-group mb-4">
+            <label class="form-label" for="reference-skill-names">{% trans "Which skills was it about?" %}</label>
+            <input type="text" name="skill_names" id="reference-skill-names" value="{{ form.skill_names.value|default:'' }}" class="form-input">
+            <p class="text-xs text-brown mt-1">{% trans "Skills they don't list yet are added once they confirm." %}</p>
+          </div>
+          {{ gift_names|json_script:"reference-gift-names" }}
+          <div class="form-group mb-4"
+               x-data="{ gifts: JSON.parse(document.getElementById('reference-gift-names').textContent).concat(['']) }">
+            <label class="form-label">{% trans "Which gifts was it about?" %}</label>
+            <template x-for="(gift, i) in gifts" :key="i">
+              <input type="text" name="gift_names" x-model="gifts[i]" list="reference-gift-suggestions"
+                     maxlength="200" class="form-input mb-2"
+                     @input="if (i === gifts.length - 1 && gifts[i]) gifts.push('')">
+            </template>
+            <datalist id="reference-gift-suggestions">
+              {% for title in gift_suggestions %}<option value="{{ title }}">{% endfor %}
+            </datalist>
+            <p class="text-xs text-brown mt-1">{% trans "Only the name is kept, nothing else." %}</p>
+          </div>
+        {% endif %}
+        <div class="flex flex-wrap gap-2">
+          <button type="submit" class="btn"><i class="fa fa-check mr-2"></i>{% trans "Save reference" %}</button>
+          <button type="button" class="btn btn-purple" @click="open = false">{% trans "Cancel" %}</button>
+        </div>
+      </form>
+      {% if own_reference %}
+        <form method="post" action="{% url 'references:delete' own_reference.pk %}" class="mt-3" x-show="open" x-cloak>
+          {% csrf_token %}
+          <button type="submit" class="text-sm text-brown underline">{% trans "Remove your reference" %}</button>
+        </form>
+      {% endif %}
+    </div>
+    {% if form.can_tag %}
+      {{ held_skills|json_script:"reference-held-skills" }}
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.css">
+      <script>
+      (function () {
+        const AUTOCOMPLETE_URL = '{% url "skills:api_autocomplete" %}';
+        const PROPOSALS_URL    = '{% url "skills:api_proposals" %}';
+        // Skills this person or community already lists: suggested first
+        const HELD = JSON.parse(document.getElementById('reference-held-skills').textContent);
+        const HELD_HEADER = '{{ held_skills_header|escapejs }}';
+
+        function init() {
+          const input = document.getElementById('reference-skill-names');
+          if (!input || input._tagify) return;
+          const tagify = new Tagify(input, {
+            editTags: false,
+            enforceWhitelist: true,
+            whitelist: [...new Set([...HELD, ...input.value.split(',').map(s => s.trim()).filter(Boolean)])].map(s => ({ value: s })),
+            dropdown: { enabled: 0, maxItems: 20, closeOnSelect: true, highlightFirst: true },
+            originalInputValueFormat: vals => vals.map(v => v.value).join(', '),
+          });
+          function show(names, q, header) {
+            tagify.settings.whitelist = [...new Set(names)].map(s => ({ value: s }));
+            tagify.settings.dropdown.header = header || '';
+            tagify.loading(false).dropdown.show.call(tagify, q);
+          }
+          function suggest() {
+            // Nothing typed yet: their own skills, or curated proposals if they list none
+            if (HELD.length) return show(HELD, '', HELD_HEADER);
+            fetch(PROPOSALS_URL).then(r => r.json()).then(data => show((data.results || []).map(r => r.text), ''));
+          }
+          let timer = null;
+          tagify.on('input', e => {
+            clearTimeout(timer);
+            const q = (e.detail.value || '').trim();
+            if (q.length < 2) return suggest();
+            // Typing: their matching skills first, then the taxonomy
+            const lower = q.toLowerCase();
+            const held = HELD.filter(name => name.toLowerCase().includes(lower));
+            timer = setTimeout(() => {
+              fetch(AUTOCOMPLETE_URL + '?q=' + encodeURIComponent(q)).then(r => r.json()).then(data => {
+                show([...held, ...(data.results || []).map(r => r.text)], q);
+              });
+            }, 300);
+          });
+          tagify.on('focus', () => { if (!tagify.state.inputText) suggest(); });
+        }
+
+        function start() {
+          if (window.Tagify) return init();
+          const script = document.createElement('script');
+          script.src = 'https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.min.js';
+          script.onload = init;
+          document.head.appendChild(script);
+        }
+        if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+        else start();
+      })();
+      </script>
+    {% endif %}
+  {% elif not request.user.is_authenticated %}
+    <a class="btn" href="{% url 'users:login' %}?next={{ request.path }}%23references">
+      <i class="fa fa-pencil mr-2"></i>{% trans "Log in to write a reference" %}
+    </a>
+  {% endif %}
+</section>

@@ -124,6 +124,16 @@ class Community(UniqueSlugMixin, models.Model):
     def get_type_icon(self):
         return self.TYPE_ICONS.get(self.type, "fa-house")
 
+    def get_reference_subjects(self):
+        """What references on this page can be about: the community and its skills."""
+        return [self, *self.community_skills.all()]
+
+    def has_skill(self, skill):
+        return self.community_skills.filter(skill=skill).exists()
+
+    def add_skill(self, skill):
+        return self.community_skills.get_or_create(skill=skill)[0]
+
     # ── matches.Match target protocol ───────────────────────────────
     def get_match_owner(self):
         return self.owner

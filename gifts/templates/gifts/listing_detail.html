@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% load static i18n l10n %}
+{% load static i18n l10n references_tags %}
 
 {% block extrahead %}
   {{ block.super }}
@@ -208,6 +208,8 @@
     <div class="mt-8 text-sm text-brown">{% trans "No interests yet." %}</div>
     {% endif %}
   {% endif %}
+
+  {% references_for listing %}
 
   {# ── Location map ── #}
   {% if listing.location %}

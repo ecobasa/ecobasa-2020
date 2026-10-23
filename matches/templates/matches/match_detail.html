@@ -1,5 +1,5 @@
 {% extends 'matches/base.html' %}
-{% load i18n l10n %}
+{% load i18n l10n references_tags %}
 
 {% block head_title %}{% trans "Match" %} — ecobasa{% endblock %}
 
@@ -65,6 +65,12 @@
             <i class="fa fa-calendar text-primary"></i>
             <span>{{ match.proposed_date|date:"d M Y H:i" }}</span>
           </div>
+        {% endif %}
+        {% reference_url_for_match match as reference_url %}
+        {% if reference_url %}
+          <a href="{{ reference_url }}" class="btn mt-3">
+            <i class="fa fa-pencil mr-2"></i>{% trans "Write a reference" %}
+          </a>
         {% endif %}
 
       {% elif match.status == 'counter' and latest_status_msg %}

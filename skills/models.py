@@ -192,6 +192,9 @@ class UserSkill(models.Model):
             "user_slug":  _user_slug(self.user),
         })
 
+    def get_skill_holder(self):
+        return self.user
+
     # ── matches.Match target protocol ───────────────────────────────
     def get_match_owner(self):
         return self.user
@@ -235,6 +238,9 @@ class CommunitySkill(models.Model):
             "skill_slug":     self.skill.slug,
             "community_slug": self.community.slug,
         })
+
+    def get_skill_holder(self):
+        return self.community
 
     # ── matches.Match target protocol ───────────────────────────────
     def get_match_owner(self):

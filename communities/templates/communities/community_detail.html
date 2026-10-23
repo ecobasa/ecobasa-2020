@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% load i18n embed_video_tags static l10n %}
+{% load i18n embed_video_tags static l10n references_tags %}
 
 {% block extrahead %}
 	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.css">
@@ -153,6 +153,8 @@
 					<i class="fa fa-plus mr-1"></i>{% trans "Add skills you're looking for" %}
 				</a>
 			{% endif %}
+
+			{% references_for community %}
 		</div>
 
 		<!-- Sidebar -->
