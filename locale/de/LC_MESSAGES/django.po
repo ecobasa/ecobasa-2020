@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ecobasa\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-23 16:29+0200\n"
+"POT-Creation-Date: 2026-10-23 16:36+0200\n"
 "PO-Revision-Date: 2026-10-23 12:00+0200\n"
 "Last-Translator: ecobasa\n"
 "Language-Team: de\n"
@@ -1528,19 +1528,27 @@ msgstr "Wenn du über eine Gemeinschaft schreibst"
 msgid ""
 "You are writing about a place and a whole group of people. Describe what the "
 "place and living or staying together were like for you."
-msgstr "Du schreibst über einen Ort und eine ganze Gruppe von Menschen. Beschreibe, wie du den Ort und das Zusammenleben oder deinen Aufenthalt erlebt hast."
+msgstr ""
+"Du schreibst über einen Ort und eine ganze Gruppe von Menschen. Beschreibe, "
+"wie du den Ort und das Zusammenleben oder deinen Aufenthalt erlebt hast."
 
 #: references/templates/references/_guidelines.html:23
 msgid ""
 "Was your experience mainly with one person? Say so explicitly, and don't let "
 "it colour your impression of the whole community: a difficult encounter with "
 "one person is no reason for a negative community reference."
-msgstr "Hattest du deine Erfahrung vor allem mit einer Person? Sag das ausdrücklich, und lass sie nicht deinen Eindruck von der ganzen Gemeinschaft färben: Eine schwierige Begegnung mit einem Menschen ist kein Grund für eine negative Referenz über die Gemeinschaft."
+msgstr ""
+"Hattest du deine Erfahrung vor allem mit einer Person? Sag das ausdrücklich, "
+"und lass sie nicht deinen Eindruck von der ganzen Gemeinschaft färben: Eine "
+"schwierige Begegnung mit einem Menschen ist kein Grund für eine negative "
+"Referenz über die Gemeinschaft."
 
 #: references/templates/references/_guidelines.html:24
 msgid ""
 "Even better: if that person is on ecobasa, write them a personal reference."
-msgstr "Noch besser: Wenn die Person auf ecobasa ist, schreib ihr eine persönliche Referenz."
+msgstr ""
+"Noch besser: Wenn die Person auf ecobasa ist, schreib ihr eine persönliche "
+"Referenz."
 
 #: references/templates/references/_guidelines.html:28
 msgid ""
@@ -1644,13 +1652,17 @@ msgstr "Wartet auf deine Bestätigung"
 
 #: references/templates/references/references_list.html:22
 #, python-format
-msgid "%(author)s mentioned it in a reference about you."
-msgstr "%(author)s hat sie in einer Referenz über dich erwähnt."
+msgid ""
+"%(author)s mentioned it in a <a href=\"#reference-%(anchor)s\" "
+"class=\"underline\">reference</a> about you."
+msgstr "%(author)s hat sie in einer <a href=\"#reference-%(anchor)s\" class=\"underline\">Referenz</a> über dich erwähnt."
 
 #: references/templates/references/references_list.html:24
 #, python-format
-msgid "%(author)s mentioned it in a reference about %(subject)s."
-msgstr "%(author)s hat sie in einer Referenz über %(subject)s erwähnt."
+msgid ""
+"%(author)s mentioned it in a <a href=\"#reference-%(anchor)s\" "
+"class=\"underline\">reference</a> about %(subject)s."
+msgstr "%(author)s hat sie in einer <a href=\"#reference-%(anchor)s\" class=\"underline\">Referenz</a> über %(subject)s erwähnt."
 
 #: references/templates/references/references_list.html:58 users/forms.py:93
 #: users/models.py:94

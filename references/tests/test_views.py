@@ -310,3 +310,10 @@ class TestDashboard:
         content = _client_for(author).get(reverse("references:list") + "?type=given").content.decode()
         assert "Waiting for your confirmation</h3>" not in content
         assert "Add to my skills</button>" not in content
+
+    def test_pending_skill_links_to_its_reference(self, author, owner):
+        _client_for(author).post(_save_url(owner), {"impression": "positive", "text": "Great.", "skill_names": "Beekeeping"})
+        reference = Reference.objects.get()
+        content = _client_for(owner).get(reverse("references:list")).content.decode()
+        assert f'href="#reference-{reference.pk}"' in content
+        assert f'id="reference-{reference.pk}"' in content

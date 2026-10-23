@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ecobasa\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-23 16:29+0200\n"
+"POT-Creation-Date: 2026-10-23 16:36+0200\n"
 "PO-Revision-Date: 2026-10-23 12:00+0200\n"
 "Last-Translator: ecobasa\n"
 "Language-Team: fr\n"
@@ -1530,19 +1530,27 @@ msgstr "Si tu écris sur une communauté"
 msgid ""
 "You are writing about a place and a whole group of people. Describe what the "
 "place and living or staying together were like for you."
-msgstr "Tu écris sur un lieu et tout un groupe de personnes. Décris comment tu as vécu le lieu et la vie commune ou ton séjour."
+msgstr ""
+"Tu écris sur un lieu et tout un groupe de personnes. Décris comment tu as "
+"vécu le lieu et la vie commune ou ton séjour."
 
 #: references/templates/references/_guidelines.html:23
 msgid ""
 "Was your experience mainly with one person? Say so explicitly, and don't let "
 "it colour your impression of the whole community: a difficult encounter with "
 "one person is no reason for a negative community reference."
-msgstr "Ton expérience concernait surtout une personne ? Dis-le explicitement, et ne la laisse pas teinter ton impression de toute la communauté : une rencontre difficile avec une personne n'est pas une raison pour une référence négative sur la communauté."
+msgstr ""
+"Ton expérience concernait surtout une personne ? Dis-le explicitement, et ne "
+"la laisse pas teinter ton impression de toute la communauté : une rencontre "
+"difficile avec une personne n'est pas une raison pour une référence négative "
+"sur la communauté."
 
 #: references/templates/references/_guidelines.html:24
 msgid ""
 "Even better: if that person is on ecobasa, write them a personal reference."
-msgstr "Mieux encore : si cette personne est sur ecobasa, écris-lui une référence personnelle."
+msgstr ""
+"Mieux encore : si cette personne est sur ecobasa, écris-lui une référence "
+"personnelle."
 
 #: references/templates/references/_guidelines.html:28
 msgid ""
@@ -1646,13 +1654,17 @@ msgstr "En attente de ta confirmation"
 
 #: references/templates/references/references_list.html:22
 #, python-format
-msgid "%(author)s mentioned it in a reference about you."
-msgstr "%(author)s l'a mentionnée dans une référence sur toi."
+msgid ""
+"%(author)s mentioned it in a <a href=\"#reference-%(anchor)s\" "
+"class=\"underline\">reference</a> about you."
+msgstr "%(author)s l'a mentionnée dans une <a href=\"#reference-%(anchor)s\" class=\"underline\">référence</a> sur toi."
 
 #: references/templates/references/references_list.html:24
 #, python-format
-msgid "%(author)s mentioned it in a reference about %(subject)s."
-msgstr "%(author)s l'a mentionnée dans une référence sur %(subject)s."
+msgid ""
+"%(author)s mentioned it in a <a href=\"#reference-%(anchor)s\" "
+"class=\"underline\">reference</a> about %(subject)s."
+msgstr "%(author)s l'a mentionnée dans une <a href=\"#reference-%(anchor)s\" class=\"underline\">référence</a> sur %(subject)s."
 
 #: references/templates/references/references_list.html:58 users/forms.py:93
 #: users/models.py:94
