@@ -44,8 +44,11 @@ class ListingFilter(django_filters.FilterSet):
         )
 
     def do_location(self, queryset, name, value):
-        lat, lon = value.split(",")
-        loc = Point(float(lon), float(lat), srid=4326)
+        try:
+            lat, lon = map(float, value.split(","))
+        except ValueError:
+            return queryset
+        loc = Point(lon, lat, srid=4326)
         return queryset.annotate(distance=Distance("location", loc)).order_by("distance")
 
     def do_location_name(self, queryset, name, value):
