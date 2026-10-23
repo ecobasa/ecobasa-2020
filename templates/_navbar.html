@@ -89,12 +89,6 @@
                                 n.tag === 'declined' ? 'fa-solid fa-handshake-simple-slash' :
                                 n.tag === 'counter' ? 'fa-solid fa-hand-holding-hand' :
                                 n.tag === 'requested' ? 'fa-solid fa-graduation-cap' :
-                                n.tag === 'gift_request' ? 'fa-solid fa-gift' :
-                                n.tag === 'wish_request' ? 'fa-solid fa-hand-holding-heart' :
-                                n.tag === 'gift_accepted' ? 'fa-solid fa-handshake-simple' :
-                                n.tag === 'gift_declined' ? 'fa-solid fa-handshake-simple-slash' :
-                                n.tag === 'gift_counter' ? 'fa-solid fa-hand-holding-hand' :
-                                n.tag === 'volunteer_request' ? 'fa-solid fa-campground' :
                                 'fa fa-bell'"></i>
                     </span>
                     <span class="text-xs leading-snug flex-1 self-center" :class="n.is_read ? 'opacity-70' : 'font-semibold'" x-text="n.verb"></span>

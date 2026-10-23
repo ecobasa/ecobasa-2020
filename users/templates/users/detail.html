@@ -149,10 +149,10 @@
 					<h3 class="text-lg font-medium">{{ listing.title }}</h3>
 				</a>
 				<p class="text-sm mt-1">{{ listing.description|truncatechars:100 }}</p>
-				{% if listing.get_type_display == "Offer" %}
+				{% if listing.type == "offer" %}
 				<p class="pill bg-primary"><i class="fa fa-gift mr-1"></i>{{ listing.get_type_display }}</p>
-				{% elif listing.get_type_display == "Request" %}
-				<p class="pill bg-yellow"><i class="fa fa-holding-heart mr-1"></i>{{ listing.get_type_display }}</p>
+				{% elif listing.type == "wish" %}
+				<p class="pill bg-yellow"><i class="fa-solid fa-hand-holding-heart mr-1"></i>{{ listing.get_type_display }}</p>
 				{% endif %}
 			</div>
 			{% endfor %}

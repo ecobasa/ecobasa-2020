@@ -1,9 +1,9 @@
 {% load i18n %}
 <a href="{% url "gifts:detail" listing.pk %}" class="relative w-full max-w-4xl group flex items-stretch justify-between my-5 sm:my-10 md:mb-20 bg-secondary bg-opacity-50 p-5 rounded-md hover:text-primary hover:shadow-lg">
-  <div class="text-xs absolute bottom-0 right-0 rounded-full p-2 text-secondary{% if listing.get_type_display == "Offer" %} bg-primary{% elif listing.get_type_display == "Wish" %} bg-yellow{% else %} bg-purple{% endif %}">
-    {% if listing.get_type_display == "Offer" %}
+  <div class="text-xs absolute bottom-0 right-0 rounded-full p-2 text-secondary{% if listing.type == "offer" %} bg-primary{% elif listing.type == "wish" %} bg-yellow{% else %} bg-purple{% endif %}">
+    {% if listing.type == "offer" %}
       <i class="fa fa-gift mr-1"></i>
-    {% elif listing.get_type_display == "Wish" %}
+    {% elif listing.type == "wish" %}
       <i class="fa fa-heart mr-1"></i>
     {% endif %}
     {{ listing.get_type_display }}
