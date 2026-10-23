@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% load static i18n %}
+{% load static i18n l10n %}
 
 {% block extrahead %}
   {{ block.super }}
@@ -233,8 +233,8 @@
      Listing detail map — single marker + layer switcher.
      ================================================================ */
   (function () {
-    const LAT  = {{ listing.location.y|floatformat:"6" }};
-    const LON  = {{ listing.location.x|floatformat:"6" }};
+    const LAT  = {{ listing.location.y|unlocalize }};
+    const LON  = {{ listing.location.x|unlocalize }};
 
     document.addEventListener('DOMContentLoaded', function () {
       const mapEl = document.getElementById('listing-detail-map');

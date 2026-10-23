@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% load i18n embed_video_tags static %}
+{% load i18n embed_video_tags static l10n %}
 
 {% block extrahead %}
 {{ block.super }}
@@ -63,7 +63,7 @@
 				{% if user.location %}
 					<div class="rounded shadow overflow-hidden" style="height: 260px;">
 						<div id="user-profile-map" class="w-full h-full bg-secondary bg-opacity-40"
-							data-lon="{{ user.location.x }}" data-lat="{{ user.location.y }}"></div>
+							data-lon="{{ user.location.x|unlocalize }}" data-lat="{{ user.location.y|unlocalize }}"></div>
 					</div>
 				{% endif %}
 			</div>

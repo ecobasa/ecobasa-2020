@@ -1,5 +1,5 @@
 {% extends 'matches/base.html' %}
-{% load i18n %}
+{% load i18n l10n %}
 
 {% block head_title %}{% trans "Match" %} — ecobasa{% endblock %}
 
@@ -456,8 +456,8 @@ document.fonts.ready.then(function () {
     }
 
     var knownCoords = {
-      my_place:   {% if match.recipient.location %}[{{ match.recipient.location.x }}, {{ match.recipient.location.y }}, '{{ match.recipient.location_name|escapejs }}']{% else %}null{% endif %},
-      your_place: {% if match.from_user.location %}[{{ match.from_user.location.x }}, {{ match.from_user.location.y }}, '{{ match.from_user.location_name|escapejs }}']{% else %}null{% endif %},
+      my_place:   {% if match.recipient.location %}[{{ match.recipient.location.x|unlocalize }}, {{ match.recipient.location.y|unlocalize }}, '{{ match.recipient.location_name|escapejs }}']{% else %}null{% endif %},
+      your_place: {% if match.from_user.location %}[{{ match.from_user.location.x|unlocalize }}, {{ match.from_user.location.y|unlocalize }}, '{{ match.from_user.location_name|escapejs }}']{% else %}null{% endif %},
     };
 
     window.updateCounterMode = function (locType) {

@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% load i18n %}
+{% load i18n l10n %}
 
 {% block head_title %}{{ profile.name|default:profile.username }} — {% trans "wants to learn or needs help with" %} {{ skill.name }} — ecobasa{% endblock %}
 
@@ -223,7 +223,7 @@
       if (initialized || !entries[0].contentRect.height) return;
       initialized = true;
       ro.disconnect();
-      var lon = {{ profile.location.x }}, lat = {{ profile.location.y }};
+      var lon = {{ profile.location.x|unlocalize }}, lat = {{ profile.location.y|unlocalize }};
       var coords = ol.proj.fromLonLat([lon, lat]);
       var icon = EcoMap.makeIconStyle(0xF007, '#da6137');
       var feature = new ol.Feature({ geometry: new ol.geom.Point(coords) });
@@ -253,7 +253,7 @@
       pinColor:   '#da6137',
       groupName:  'my-place-layer',
       {% if request.user.location %}
-      existingWkt: 'POINT ({{ request.user.location.x }} {{ request.user.location.y }})',
+      existingWkt: 'POINT ({{ request.user.location.x|unlocalize }} {{ request.user.location.y|unlocalize }})',
       {% endif %}
     });
   };

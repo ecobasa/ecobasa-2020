@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% load i18n embed_video_tags static %}
+{% load i18n embed_video_tags static l10n %}
 
 {% block extrahead %}
 	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.css">
@@ -446,8 +446,8 @@ document.addEventListener('DOMContentLoaded', () => {
 			const mapEl = document.getElementById('community-detail-map');
 			if (!mapEl) return;
 			const data = {
-				lat: {{ community.location.y|floatformat:"6" }},
-				lon: {{ community.location.x|floatformat:"6" }},
+				lat: {{ community.location.y|unlocalize }},
+				lon: {{ community.location.x|unlocalize }},
 				title: "{{ community.name|escapejs }}",
 				location_name: "{{ community.location_name|default:""|escapejs }}"
 			};
