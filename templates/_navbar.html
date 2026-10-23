@@ -161,7 +161,7 @@
                       </a>
                       {# Its references, seen as ambassador #}
                       <a href="{% url 'references:list' %}?community={{ item.community.slug }}" class="dropdown-link">
-                        <span class="flex items-center ml-6"><i class="fa fa-comments mr-2"></i>{% trans "References" %}
+                        <span class="flex items-center"><i class="fa fa-comments mr-2"></i>{% trans "References" %}
                         {% if item.pending %}<span class="ml-auto pill bg-purple text-secondary text-xs" title="{% trans 'Waiting for your confirmation' %}">{{ item.pending }}</span>{% endif %}</span>
                       </a>
                     {% endfor %}
@@ -252,7 +252,7 @@
               <span class="block px-4 py-1 text-xs opacity-50 uppercase tracking-wide">{% trans "My Communities" %}</span>
               {% for item in reference_communities %}
                 <a href="{{ item.community.get_absolute_url }}" class="mt-1 block px-4 py-2 text-base text-secondary hover:text-primary hover:bg-secondary focus:text-primary focus:bg-secondary" role="menuitem"><i class="fa-solid {{ item.community.get_type_icon }} mr-2"></i>{{ item.community.name }}</a>
-                <a href="{% url 'references:list' %}?community={{ item.community.slug }}" class="mt-1 flex items-center pl-10 pr-4 py-2 text-base text-secondary hover:text-primary hover:bg-secondary focus:text-primary focus:bg-secondary" role="menuitem"><i class="fa fa-comments mr-2"></i>{% trans "References" %}{% if item.pending %}<span class="ml-auto pill bg-purple text-secondary text-xs">{{ item.pending }}</span>{% endif %}</a>
+                <a href="{% url 'references:list' %}?community={{ item.community.slug }}" class="mt-1 flex items-center px-4 py-2 text-base text-secondary hover:text-primary hover:bg-secondary focus:text-primary focus:bg-secondary" role="menuitem"><i class="fa fa-comments mr-2"></i>{% trans "References" %}{% if item.pending %}<span class="ml-auto pill bg-purple text-secondary text-xs">{{ item.pending }}</span>{% endif %}</a>
               {% endfor %}
               <a href="{% url 'matches:list' %}?type=volunteer" class="mt-1 block px-4 py-2 text-base text-secondary hover:text-primary hover:bg-secondary focus:text-primary focus:bg-secondary" role="menuitem"><i class="fa-solid fa-campground mr-2"></i>{% trans "Volunteer Visits" %}</a>
             </div>
