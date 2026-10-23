@@ -20,7 +20,7 @@ def owner():
 
 @pytest.fixture
 def author():
-    return User.objects.create_user(email="author@example.com", password="secret", username="author")
+    return User.objects.create_user(email="author@example.com", password="secret", username="author", name="Ann")
 
 
 @pytest.fixture
@@ -330,3 +330,42 @@ class TestDashboard:
         assert "Waiting for your confirmation</h3>" not in received
         page = _client_for(owner).get(reverse("references:list") + f"?community={community.slug}").content.decode()
         assert "Add to the community's skills" in page
+
+
+@pytest.mark.django_db
+class TestNotifications:
+    def _notifications(self, user):
+        from notifications.models import Notification
+        return Notification.objects.filter(recipient=user, tag=Notification.TAG_REFERENCE)
+
+    def test_new_reference_about_you(self, author, owner):
+        _client_for(author).post(_save_url(owner), {"impression": "positive", "text": "Great."})
+        reference = Reference.objects.get()
+        notification = self._notifications(owner).get()
+        assert notification.text == "Ann wrote a reference about you."
+        assert notification.link == reverse("references:list") + f"#reference-{reference.pk}"
+
+    def test_about_your_listing(self, author, owner, listing):
+        _client_for(author).post(_save_url(listing), {"impression": "neutral", "text": "Fine."})
+        assert self._notifications(owner).get().text == "Ann wrote a reference about Old Bicycle."
+
+    def test_ambassador_gets_community_references(self, author, owner, community):
+        _client_for(author).post(_save_url(community), {"impression": "positive", "text": "Great.", "skill_names": "Beekeeping"})
+        notification = self._notifications(owner).get()
+        assert notification.text == (
+            "Ann wrote a reference about Goat Farm. It mentions skills that wait for your confirmation."
+        )
+        assert notification.link.startswith(reverse("references:list") + f"?community={community.slug}#reference-")
+
+    def test_editing_does_not_notify_again(self, author, owner):
+        client = _client_for(author)
+        client.post(_save_url(owner), {"impression": "positive", "text": "Great."})
+        client.post(_save_url(owner), {"impression": "neutral", "text": "Second thoughts."})
+        assert self._notifications(owner).count() == 1
+
+    def test_shown_in_the_readers_language(self, author, owner):
+        from django.utils import translation
+        _client_for(author).post(_save_url(owner), {"impression": "positive", "text": "Great."})
+        notification = self._notifications(owner).get()
+        with translation.override("de"):
+            assert notification.text == "Ann hat eine Referenz über dich geschrieben."

@@ -11,6 +11,7 @@ from django.views.decorators.http import require_POST
 
 from .forms import ReferenceForm
 from .models import Reference, ReferenceSkill, is_referenceable, references_about, subject_owner
+from .notifications import notify_reference_created
 
 
 def _redirect_to(subject):
@@ -43,6 +44,8 @@ def save(request, content_type_id, object_id):
         reference.subject = subject
         reference.save()
         form.save_tags(reference, holder=subject)
+        if existing is None:
+            notify_reference_created(reference)
         messages.success(request, _("Thank you for sharing your experience."))
     else:
         messages.error(request, _("Please choose an impression and describe your experience."))
