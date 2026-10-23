@@ -6,9 +6,14 @@ from django.views.decorators.http import require_POST
 from .models import Notification
 
 
+def _with_matches(qs):
+    # text/icon read the match's target and content type for each notification
+    return qs.select_related("actor", "match__content_type").prefetch_related("match__target")
+
+
 @login_required
 def notification_list(request):
-    notifications = list(request.user.notifications.select_related("actor").all()[:50])
+    notifications = list(_with_matches(request.user.notifications.all())[:50])
     request.user.notifications.filter(is_read=False).update(is_read=True)
     return render(request, "notifications/list.html", {"notifications": notifications})
 
@@ -16,12 +21,13 @@ def notification_list(request):
 @login_required
 def recent_json(request):
     """HTMX / fetch endpoint: last 7 notifications with unread count and has_more flag."""
-    qs = list(request.user.notifications.select_related("actor").all()[:8])
+    qs = list(_with_matches(request.user.notifications.all())[:8])
     has_more = len(qs) == 8
     data = [
         {
             "id":         n.pk,
-            "verb":       n.verb,
+            "text":       n.text,
+            "icon":       n.icon,
             "link":       n.link,
             "is_read":    n.is_read,
             "tag":        n.tag,

@@ -40,24 +40,13 @@
             {% elif n.tag == 'counter' %}bg-yellow bg-opacity-20
             {% else %}bg-primary bg-opacity-20{% endif %}
             {% if n.is_read %}opacity-50{% endif %}">
-            {% if n.tag == 'accepted' %}
-              <i class="fa-solid fa-handshake-simple text-sm text-green"></i>
-            {% elif n.tag == 'declined' %}
-              <i class="fa-solid fa-handshake-simple-slash text-sm text-red"></i>
-            {% elif n.tag == 'counter' %}
-              <i class="fa-solid fa-hand-holding-hand text-sm text-yellow"></i>
-            {% elif n.tag == 'requested' %}
-              <i class="fa-solid fa-graduation-cap text-sm text-primary"></i>
-            {% elif n.tag == 'skill_nudge' %}
-              <i class="fa fa-graduation-cap text-sm text-primary"></i>
-            {% else %}
-              <i class="fa fa-bell text-sm text-primary"></i>
-            {% endif %}
+            <i class="fa-solid {{ n.icon }} text-sm
+              {% if n.tag == 'accepted' %}text-green{% elif n.tag == 'declined' %}text-red{% elif n.tag == 'counter' %}text-yellow{% else %}text-primary{% endif %}"></i>
           </div>
 
           <div class="min-w-0 flex-1">
             <p class="text-sm {% if not n.is_read %}font-semibold text-primary{% else %}text-brown{% endif %}">
-              {{ n.verb }}
+              {{ n.text }}
             </p>
             <p class="text-xs text-brown mt-0.5">{{ n.created_at|naturaltime }}</p>
           </div>

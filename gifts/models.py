@@ -82,6 +82,11 @@ class Listing(RandomIdMixin, models.Model):
     def get_match_verb(self):
         return _("is interested in your offer") if self.type == "offer" else _("wants to fulfill your wish")
 
+    def get_match_request_text(self):
+        if self.type == "offer":
+            return _("%(actor)s is interested in your offer: %(title)s")
+        return _("%(actor)s wants to fulfill your wish: %(title)s")
+
     class Meta:
         verbose_name = _("Listing")
         verbose_name_plural = _("Listings")

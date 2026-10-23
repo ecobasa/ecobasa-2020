@@ -128,6 +128,9 @@ class Community(UniqueSlugMixin, models.Model):
     def get_match_verb(self):
         return _("requested to volunteer at")
 
+    def get_match_request_text(self):
+        return _("%(actor)s requested a volunteer stay at %(title)s")
+
     class Meta:
         verbose_name = _("Community")
         verbose_name_plural = _("Communities")

@@ -30,24 +30,26 @@ def _action_url(http_request, match_pk, action):
 
 # ── Notification + email orchestration ─────────────────────────────────────────
 
+def _notify(match, recipient, actor, tag):
+    """Create an in-app notification. Its text is built per reader at display time;
+    `verb` only keeps a creation-time copy as a fallback."""
+    from notifications.models import Notification
+
+    notification = Notification(
+        recipient=recipient, actor=actor, match=match, tag=tag, link=match.get_absolute_url(),
+    )
+    notification.verb = notification.text[:255]
+    notification.save()
+    return notification
+
+
 def notify_match_created(match, http_request=None):
     """In-app notification (+ email, if a request is available) to the recipient."""
     from notifications.models import Notification
 
-    recipient = match.recipient
-    if recipient is None:
+    if match.recipient is None:
         return
-
-    target = match.target
-    verb_text = _("%(actor)s %(verb)s: %(title)s") % {
-        "actor": match.from_user.name or match.from_user.email,
-        "verb":  target.get_match_verb(),
-        "title": target.get_match_display_name(),
-    }
-    Notification.objects.create(
-        recipient=recipient, actor=match.from_user,
-        verb=str(verb_text), link=match.get_absolute_url(), tag="requested",
-    )
+    _notify(match, match.recipient, match.from_user, Notification.TAG_REQUESTED)
 
     if http_request:
         _send_request_email(match, http_request)
@@ -63,24 +65,32 @@ def notify_match_response(match, actor, http_request=None):
         return
 
     tag_map = {
-        Match.STATUS_ACCEPTED: "accepted",
-        Match.STATUS_DECLINED: "declined",
-        Match.STATUS_COUNTER:  "counter",
+        Match.STATUS_ACCEPTED: Notification.TAG_ACCEPTED,
+        Match.STATUS_DECLINED: Notification.TAG_DECLINED,
+        Match.STATUS_COUNTER:  Notification.TAG_COUNTER,
     }
-    tag = tag_map.get(match.status, "")
-    actor_name = actor.name or actor.email
-    verb_text = _("%(actor)s %(status)s your interest in: %(title)s") % {
-        "actor":  actor_name,
-        "status": match.get_status_display().lower(),
-        "title":  match.target.get_match_display_name(),
-    }
-    Notification.objects.create(
-        recipient=recipient, actor=actor,
-        verb=str(verb_text), link=match.get_absolute_url(), tag=tag,
-    )
+    _notify(match, recipient, actor, tag_map.get(match.status, ""))
 
     if http_request:
         _send_response_email(match, actor, http_request)
+
+
+def notify_match_message(match, sender):
+    """In-app notification to the other party about a new message in the match.
+    While an earlier message notification is still unread, it is moved to the top
+    instead of piling up a new one per message."""
+    from django.utils import timezone
+    from notifications.models import Notification
+
+    recipient = match.from_user if sender == match.recipient else match.recipient
+    if recipient is None:
+        return
+
+    bumped = Notification.objects.filter(
+        recipient=recipient, match=match, tag=Notification.TAG_MESSAGE, is_read=False,
+    ).update(actor=sender, created_at=timezone.now())
+    if not bumped:
+        _notify(match, recipient, sender, Notification.TAG_MESSAGE)
 
 
 # ── Email sending ───────────────────────────────────────────────────────────────

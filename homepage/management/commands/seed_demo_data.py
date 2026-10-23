@@ -26,7 +26,7 @@ from django.utils import timezone
 from communities.models import Community, CommunityPhoto
 from gifts.models import Listing, ListingCategory
 from matches.models import Match, MatchMessage, VolunteerDetails
-from notifications.models import Notification
+from notifications.models import Notification, SKILL_NUDGE_TEXT
 from skills.models import CommunitySkill, Skill, SkillWish, UserSkill
 from users.models import User
 
@@ -424,15 +424,20 @@ class Command(BaseCommand):
         )
         return match, created
 
-    def _notify(self, recipient, actor, tag, verb, link="", is_read=False, age_days=0):
+    def _notify(self, recipient, actor, tag, match=None, verb="", is_read=False, age_days=0):
+        # Notifications about a match build their text from tag + match at display time;
+        # `verb` is only the stored fallback copy.
         notification, created = Notification.objects.get_or_create(
-            recipient=recipient, actor=actor, tag=tag, verb=verb,
-            defaults={"link": link, "is_read": is_read},
+            recipient=recipient, actor=actor, tag=tag, match=match,
+            defaults={"link": match.get_absolute_url() if match else "", "is_read": is_read},
         )
-        if created and age_days:
-            Notification.objects.filter(pk=notification.pk).update(
-                created_at=timezone.now() - timedelta(days=age_days)
-            )
+        if created:
+            notification.verb = verb or notification.text[:255]
+            notification.save(update_fields=["verb"])
+            if age_days:
+                Notification.objects.filter(pk=notification.pk).update(
+                    created_at=timezone.now() - timedelta(days=age_days)
+                )
         return notification
 
     def _seed_matches_and_notifications(self, users, communities):
@@ -459,8 +464,7 @@ class Command(BaseCommand):
             Match.objects.filter(pk=match1.pk).update(created_at=timezone.now() - timedelta(days=2))
         self._notify(
             recipient=luna, actor=bjorn, tag=Notification.TAG_REQUESTED,
-            verb="is interested in your offer “17kg of surplus zucchini (please, we beg you)”",
-            link=match1.get_absolute_url(), age_days=2,
+            match=match1, age_days=2,
         )
 
         # 2. Listing wish target — accepted, with a small conversation
@@ -481,13 +485,11 @@ class Command(BaseCommand):
             match2.save()
         self._notify(
             recipient=ana, actor=mireille, tag=Notification.TAG_ACCEPTED,
-            verb="accepted your request for “Wish: someone who understands sourdough starters better than my ex”",
-            link=match2.get_absolute_url(), is_read=True, age_days=4,
+            match=match2, is_read=True, age_days=4,
         )
         self._notify(
             recipient=mireille, actor=ana, tag=Notification.TAG_MESSAGE,
-            verb="sent you a new message", link=match2.get_absolute_url(),
-            is_read=True, age_days=5,
+            match=match2, is_read=True, age_days=5,
         )
 
         # 3. UserSkill target — declined
@@ -508,8 +510,7 @@ class Command(BaseCommand):
             match3.save()
         self._notify(
             recipient=sam, actor=luna, tag=Notification.TAG_DECLINED,
-            verb="declined your request to learn Permaculture Design",
-            link=match3.get_absolute_url(), age_days=5,
+            match=match3, age_days=5,
         )
 
         # 4. CommunitySkill target — counter-proposed
@@ -531,8 +532,7 @@ class Command(BaseCommand):
             match4.save()
         self._notify(
             recipient=diego, actor=mireille, tag=Notification.TAG_COUNTER,
-            verb="proposed a new time to talk about Fermentation",
-            link=match4.get_absolute_url(), age_days=1,
+            match=match4, age_days=1,
         )
 
         # 5. SkillWish target — pending
@@ -543,8 +543,7 @@ class Command(BaseCommand):
         )
         self._notify(
             recipient=bjorn, actor=mireille, tag=Notification.TAG_REQUESTED,
-            verb="offered to teach you Fermentation",
-            link=match5.get_absolute_url(),
+            match=match5,
         )
 
         # 6. Community target (volunteering) — accepted, with VolunteerDetails
@@ -576,13 +575,11 @@ class Command(BaseCommand):
             match6.save()
         self._notify(
             recipient=sam, actor=diego, tag=Notification.TAG_ACCEPTED,
-            verb="accepted your volunteering request at Three Goats and a Dream Farm",
-            link=match6.get_absolute_url(), is_read=True, age_days=9,
+            match=match6, is_read=True, age_days=9,
         )
 
         # Skill nudge — no actor, just a system-ish prompt
         self._notify(
-            recipient=bjorn, actor=None, tag=Notification.TAG_SKILL_NUDGE,
-            verb="Your profile is looking a little empty — add a skill you can offer or teach.",
-            link="", age_days=3,
+            recipient=bjorn, actor=None, tag=Notification.TAG_SKILL_NUDGE, verb=str(SKILL_NUDGE_TEXT),
+            age_days=3,
         )

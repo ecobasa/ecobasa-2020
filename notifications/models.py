@@ -4,6 +4,21 @@ from django.utils.translation import gettext_lazy as _
 from users.models import User
 
 
+SKILL_NUDGE_TEXT = _(
+    "Your profile has no skills yet — add what you can offer and "
+    "what you want to learn or need help with so communities and "
+    "people can find you."
+)
+
+# Icon per kind of match, keyed by the target's app label (same approach as
+# matches.views._TAB_APP_LABELS, so this app never imports gifts/skills/communities).
+_MATCH_TYPE_ICONS = {
+    "gifts":       "fa-gift",
+    "skills":      "fa-graduation-cap",
+    "communities": "fa-campground",
+}
+
+
 class Notification(models.Model):
     TAG_REQUESTED   = "requested"
     TAG_ACCEPTED    = "accepted"
@@ -14,6 +29,13 @@ class Notification(models.Model):
 
     recipient   = models.ForeignKey(User, on_delete=models.CASCADE, related_name="notifications")
     actor       = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name="notifications_sent")
+    # The match this notification is about. Its text is built from tag + match at display
+    # time, so it shows in the reader's language rather than the actor's.
+    match       = models.ForeignKey(
+        "matches.Match", on_delete=models.CASCADE, null=True, blank=True, related_name="notifications",
+    )
+    # Fallback text, rendered at creation time: used for notifications without a match
+    # (or whose match target has since been deleted) and in the admin.
     verb        = models.CharField(_("Message"), max_length=255)
     link        = models.CharField(_("Link"), max_length=500, blank=True)
     tag         = models.CharField(max_length=20, blank=True)
@@ -32,3 +54,54 @@ class Notification(models.Model):
         if not self.is_read:
             self.is_read = True
             self.save(update_fields=["is_read"])
+
+    def _target(self):
+        return self.match.target if self.match_id else None
+
+    @property
+    def text(self):
+        """The notification sentence in the currently active language."""
+        if self.tag == self.TAG_SKILL_NUDGE:
+            return str(SKILL_NUDGE_TEXT)
+        target = self._target()
+        if target is None:
+            return self.verb
+
+        if self.tag == self.TAG_REQUESTED:
+            template = target.get_match_request_text()
+        elif self.tag == self.TAG_ACCEPTED:
+            # The requester can only accept/decline a counter-proposal from the owner.
+            template = (_("%(actor)s accepted your counter-proposal for: %(title)s")
+                        if self.actor_id == self.match.from_user_id
+                        else _("%(actor)s accepted your request: %(title)s"))
+        elif self.tag == self.TAG_DECLINED:
+            template = (_("%(actor)s declined your counter-proposal for: %(title)s")
+                        if self.actor_id == self.match.from_user_id
+                        else _("%(actor)s declined your request: %(title)s"))
+        elif self.tag == self.TAG_COUNTER:
+            template = _("%(actor)s suggested another time or place for: %(title)s")
+        elif self.tag == self.TAG_MESSAGE:
+            template = _("%(actor)s sent you a message about: %(title)s")
+        else:
+            return self.verb
+
+        actor = (self.actor.name or self.actor.email) if self.actor else _("Someone")
+        return str(template) % {"actor": actor, "title": target.get_match_display_name()}
+
+    @property
+    def icon(self):
+        """Font Awesome (solid) icon class for this notification."""
+        if self.tag == self.TAG_REQUESTED:
+            target = self._target()
+            if target is None:
+                return "fa-bell"
+            if getattr(target, "type", None) == "wish":
+                return "fa-hand-holding-heart"
+            return _MATCH_TYPE_ICONS.get(self.match.content_type.app_label, "fa-bell")
+        return {
+            self.TAG_ACCEPTED:    "fa-handshake-simple",
+            self.TAG_DECLINED:    "fa-handshake-simple-slash",
+            self.TAG_COUNTER:     "fa-hand-holding-hand",
+            self.TAG_MESSAGE:     "fa-comment",
+            self.TAG_SKILL_NUDGE: "fa-graduation-cap",
+        }.get(self.tag, "fa-bell")

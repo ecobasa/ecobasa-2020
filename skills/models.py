@@ -210,6 +210,9 @@ class UserSkill(models.Model):
     def get_match_verb(self):
         return _("expressed interest")
 
+    def get_match_request_text(self):
+        return _("%(actor)s is interested in your skill: %(title)s")
+
 
 class CommunitySkill(models.Model):
     community   = models.ForeignKey(Community, on_delete=models.CASCADE, related_name="community_skills")
@@ -249,6 +252,9 @@ class CommunitySkill(models.Model):
 
     def get_match_verb(self):
         return _("expressed interest")
+
+    def get_match_request_text(self):
+        return _("%(actor)s is interested in your community's skill: %(title)s")
 
 
 class SkillWish(models.Model):
@@ -314,3 +320,6 @@ class SkillWish(models.Model):
 
     def get_match_verb(self):
         return _("offered to teach you")
+
+    def get_match_request_text(self):
+        return _("%(actor)s offered to teach you: %(title)s")

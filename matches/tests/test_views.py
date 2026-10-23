@@ -97,3 +97,20 @@ class TestMatchDetail:
         match.refresh_from_db()
         assert match.status == Match.STATUS_PENDING
         assert match.thread.filter(body="just checking in").exists()
+
+    def test_message_notifies_the_other_party_once_while_unread(self, owner, requester, match):
+        from notifications.models import Notification
+
+        client = _client_for(requester)
+        client.post(match.get_absolute_url(), {"action": "message", "body": "hello"})
+        client.post(match.get_absolute_url(), {"action": "message", "body": "hello again"})
+
+        notifications = Notification.objects.filter(tag=Notification.TAG_MESSAGE)
+        assert notifications.count() == 1
+        assert notifications.get().recipient == owner
+        assert not Notification.objects.filter(recipient=requester, tag=Notification.TAG_MESSAGE).exists()
+
+        # once read, the next message notifies again
+        notifications.update(is_read=True)
+        client.post(match.get_absolute_url(), {"action": "message", "body": "still there?"})
+        assert Notification.objects.filter(tag=Notification.TAG_MESSAGE, is_read=False).count() == 1

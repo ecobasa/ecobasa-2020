@@ -8,7 +8,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
-from .emails import notify_match_response, read_action_token
+from .emails import notify_match_message, notify_match_response, read_action_token
 from .forms import MatchMessageForm
 from .models import Match, MatchMessage
 
@@ -98,6 +98,7 @@ def match_detail(request, pk):
             body = request.POST.get("body", "").strip()
             if body:
                 MatchMessage.objects.create(match=match, sender=request.user, body=body)
+                notify_match_message(match, sender=request.user)
             return redirect(match.get_absolute_url())
 
         if action in ("accept", "decline") and (owner_can_decide or requester_can_decide):
