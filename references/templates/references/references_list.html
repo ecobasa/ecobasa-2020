@@ -36,18 +36,16 @@
       <h3 class="text-lg font-semibold mt-0 mb-3">{% trans "Waiting for your confirmation" %}</h3>
       <ul class="list-none pl-0 space-y-4">
         {% for tag in pending_tags %}
-          {# Skill and sentence on one line, the buttons below, so long labels don't squeeze the text #}
-          <li class="text-sm">
-            <div class="flex flex-wrap items-center gap-2 mb-2">
+          {# One row; the sentence keeps a minimum width, so the buttons wrap below rather than squeezing it #}
+          <li class="flex flex-wrap items-center gap-3 text-sm">
             <span class="pill bg-purple text-xs"><i class="fa fa-graduation-cap mr-1"></i>{{ tag.skill.get_name }}</span>
-            <span class="flex-1 min-w-[12rem]">
+            <span class="flex-1 min-w-[16rem]">
               {% if tag.reference.about_you %}
                 {% blocktrans with author=tag.reference.author.name|default:tag.reference.author.username anchor=tag.reference.pk %}{{ author }} mentioned it in a <a href="#reference-{{ anchor }}" class="underline">reference</a> about you.{% endblocktrans %}
               {% else %}
                 {% blocktrans with author=tag.reference.author.name|default:tag.reference.author.username subject=tag.reference.subject.get_match_display_name anchor=tag.reference.pk %}{{ author }} mentioned it in a <a href="#reference-{{ anchor }}" class="underline">reference</a> about {{ subject }}.{% endblocktrans %}
               {% endif %}
             </span>
-            </div>
             <div class="flex flex-wrap gap-2">
             <form method="post" action="{% url 'references:skill_tag' tag.pk 'confirm' %}" class="inline">
               {% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}">
