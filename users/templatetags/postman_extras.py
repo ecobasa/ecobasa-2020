@@ -1,4 +1,5 @@
 from django import template
+from django.utils.translation import gettext as _
 from django.db.models import Q
 from postman.models import Message
 
@@ -58,13 +59,12 @@ def _render_skill_pills(skills_list, sender_username):
     falling back to the general skill page, or plain text if the skill isn't in the database."""
     from django.urls import reverse
     from django.db.models import Q
-    from skills.models import Skill as SkillModel, UserSkill
+    from skills.models import Skill as SkillModel, UserSkill, skill_slug_for_name
 
     # Case-insensitive slug lookup for all skill names at once
-    q = Q()
-    for name in skills_list:
-        q |= Q(name__iexact=name)
-    skill_slugs = {s.name.lower(): s.slug for s in SkillModel.objects.filter(q)}
+    wanted = {name.lower(): skill_slug_for_name(name) for name in skills_list}
+    existing = set(SkillModel.objects.filter(slug__in=wanted.values()).values_list('slug', flat=True))
+    skill_slugs = {name: slug for name, slug in wanted.items() if slug in existing}
 
     # Skills the sender actually has in their profile
     sender_skill_slugs = set()
@@ -99,12 +99,11 @@ def _render_sender_skill_pills(skills_list, sender_username):
     """Return HTML for purple sender-skill pills with graduation cap icons."""
     from django.urls import reverse
     from django.db.models import Q
-    from skills.models import Skill as SkillModel, UserSkill
+    from skills.models import Skill as SkillModel, UserSkill, skill_slug_for_name
 
-    q = Q()
-    for name in skills_list:
-        q |= Q(name__iexact=name)
-    skill_slugs = {s.name.lower(): s.slug for s in SkillModel.objects.filter(q)}
+    wanted = {name.lower(): skill_slug_for_name(name) for name in skills_list}
+    existing = set(SkillModel.objects.filter(slug__in=wanted.values()).values_list('slug', flat=True))
+    skill_slugs = {name: slug for name, slug in wanted.items() if slug in existing}
 
     sender_skill_slugs = set()
     if sender_username:
@@ -115,7 +114,7 @@ def _render_sender_skill_pills(skills_list, sender_username):
 
     html = [
         '<div class="mt-3">',
-        '<div class="font-semibold mb-1 opacity-70">Other skills that I can help with</div>',
+        '<div class="font-semibold mb-1 opacity-70">%s</div>' % _('Other skills I can help with'),
         '<div class="flex flex-wrap gap-2">',
     ]
     for name in skills_list:

@@ -99,7 +99,7 @@
 						<a href="{% if request.user.pk == user.pk %}{{ us.get_edit_url }}{% else %}{{ us.get_absolute_url }}{% endif %}"
 						   class="pill pill-lg inline-flex gap-1 bg-purple hover:opacity-80 transition-opacity">
 							<i class="fa fa-graduation-cap"></i>
-							{{ us.skill.name }}
+							{{ us.skill }}
 							{% if us.level %}<span class="opacity-70 text-xs">({{ us.get_level_display }})</span>{% endif %}
 						</a>
 					{% endfor %}
@@ -121,7 +121,7 @@
 						   class="pill pill-lg inline-flex gap-1 bg-yellow hover:bg-purple transition-opacity"
 						   {% if request.user.is_authenticated and request.user.pk != user.pk %}title="{% trans "Offer to teach this skill" %}"{% endif %}>
 							<i class="{% if request.user.is_authenticated and request.user.pk != user.pk %}fa fa-paper-plane{% else %}fa fa-book{% endif %}"></i>
-							{{ sw.skill.name }}
+							{{ sw.skill }}
 							{% if sw.level %}<span class="opacity-70 text-xs">({{ sw.get_level_display }})</span>{% endif %}
 						</a>
 					{% endfor %}

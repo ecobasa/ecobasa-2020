@@ -400,15 +400,14 @@
   function getDynamicStyle(feature) {
     const props = feature.getProperties();
     const source = props.source;
-    const type_display = (props.type_display || '').toLowerCase();
     let iconCode = '';
     let color = '#da6137';
     if (source === 'skill' || source === 'user_skill') {
       iconCode = '';
       color = '#80143b';
     } else if (source === 'listing') {
-      if (type_display.includes('offer')) { iconCode = ''; }
-      else if (type_display.includes('wish')) { iconCode = ''; color = '#de7a08'; }
+      if (props.listing_type === 'offer') { iconCode = ''; }
+      else if (props.listing_type === 'wish') { iconCode = ''; color = '#de7a08'; }
     }
     return new ol.style.Style({
       image: new ol.style.Icon({
@@ -430,8 +429,8 @@
     let badge = '';
     if (props.source === 'skill')      badge = `<span class="pill bg-purple"><i class="fa fa-graduation-cap mr-1"></i>${td || 'Skill'}</span>`;
     else if (props.source === 'user_skill') badge = `<span class="pill bg-purple"><i class="fa fa-graduation-cap mr-1"></i>{% trans "skill / teaching" %}</span>`;
-    else if (td.includes('offer'))     badge = `<span class="pill bg-primary"><i class="fa fa-gift mr-1"></i>${td}</span>`;
-    else if (td.includes('wish'))      badge = `<span class="pill bg-yellow"><i class="fa fa-heart mr-1"></i>${td}</span>`;
+    else if (props.listing_type === 'offer') badge = `<span class="pill bg-primary"><i class="fa fa-gift mr-1"></i>${td}</span>`;
+    else if (props.listing_type === 'wish')  badge = `<span class="pill bg-yellow"><i class="fa fa-heart mr-1"></i>${td}</span>`;
     else                               badge = `<span class="pill bg-primary">${td}</span>`;
     let html = badge;
     if (props.title) html += props.url ? `<h3><a href="${props.url}" class="hover:underline">${props.title}</a></h3>` : `<h3>${props.title}</h3>`;

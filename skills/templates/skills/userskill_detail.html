@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load i18n l10n %}
 
-{% block head_title %}{{ profile.name|default:profile.username }} — {{ skill.name }} — ecobasa{% endblock %}
+{% block head_title %}{{ profile.name|default:profile.username }} — {{ skill }} — ecobasa{% endblock %}
 
 {% block extrahead %}
 {{ block.super }}
@@ -9,12 +9,12 @@
 {% endblock %}
 
 {% block content %}
-<div class="container-narrow">
+<div class="container-content">
 
   <div class="mb-2 text-sm text-brown">
     <a href="{% url 'skills:skill_list' %}" class="hover:underline">{% trans "Skills" %}</a>
     <span class="mx-1">/</span>
-    <a href="{{ skill.get_absolute_url }}" class="hover:underline">{{ skill.name }}</a>
+    <a href="{{ skill.get_absolute_url }}" class="hover:underline">{{ skill }}</a>
     <span class="mx-1">/</span>
     <span>{{ profile.name|default:profile.username }}</span>
   </div>
@@ -34,7 +34,7 @@
         </a>
         <div class="flex items-center gap-2 mt-1">
           <span class="pill bg-purple">
-            <i class="fa fa-graduation-cap mr-1"></i>{{ skill.name }}
+            <i class="fa fa-graduation-cap mr-1"></i>{{ skill }}
           </span>
           {% if user_skill.level %}
             <span class="pill bg-primary text-xs">{{ user_skill.get_level_display }}</span>

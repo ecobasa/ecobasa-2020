@@ -7,7 +7,7 @@
 <div class="max-w-sm mx-auto px-4 py-12 text-center">
   <h1 class="text-2xl text-primary mb-4">{% trans "Remove skill?" %}</h1>
   <p class="text-brown mb-6">
-    {% blocktrans with skill=comm_skill.skill.name community=community.name %}
+    {% blocktrans with skill=comm_skill.skill community=community.name %}
       Remove <strong>{{ skill }}</strong> from {{ community }}?
     {% endblocktrans %}
   </p>

@@ -20,7 +20,7 @@
       {% for skill in skills %}
         <a href="{{ skill.get_absolute_url }}"
           class="block border rounded-lg p-4 bg-secondary hover:border-primary transition-colors">
-          <div class="font-semibold text-primary text-lg">{{ skill.name }}</div>
+          <div class="font-semibold text-primary text-lg">{{ skill }}</div>
           <div class="text-sm text-brown mt-1 flex gap-4">
             {% if skill.user_count %}
               <span><i class="fa fa-user mr-1"></i>{{ skill.user_count }}</span>

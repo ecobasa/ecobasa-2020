@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load i18n l10n %}
 
-{% block head_title %}{{ profile.name|default:profile.username }} — {% trans "wants to learn or needs help with" %} {{ skill.name }} — ecobasa{% endblock %}
+{% block head_title %}{{ profile.name|default:profile.username }} — {% trans "wants to learn or needs help with" %} {{ skill }} — ecobasa{% endblock %}
 
 {% block extrahead %}
 {{ block.super }}
@@ -9,12 +9,12 @@
 {% endblock %}
 
 {% block content %}
-<div class="container-narrow">
+<div class="container-content">
 
   <div class="mb-2 text-sm text-brown">
     <a href="{% url 'skills:skill_list' %}" class="hover:underline">{% trans "Skills" %}</a>
     <span class="mx-1">/</span>
-    <a href="{{ skill.get_absolute_url }}" class="hover:underline">{{ skill.name }}</a>
+    <a href="{{ skill.get_absolute_url }}" class="hover:underline">{{ skill }}</a>
     <span class="mx-1">/</span>
     <span>{{ profile.name|default:profile.username }}</span>
   </div>
@@ -35,7 +35,7 @@
         </a>
         <div class="flex items-center gap-2 mt-1">
           <span class="pill bg-yellow">
-            <i class="fa fa-book mr-1"></i>{% trans "wants to learn or needs help with" %} {{ skill.name }}
+            <i class="fa fa-book mr-1"></i>{% trans "wants to learn or needs help with" %} {{ skill }}
           </span>
           {% if wish.level %}
             <span class="pill bg-primary text-xs">{% trans "current level:" %} {{ wish.get_level_display }}</span>
@@ -194,7 +194,7 @@
         <i class="fa fa-graduation-cap mr-2"></i>{% trans "Offer to teach this skill" %}
       </h2>
       <p class="text-sm text-brown mb-4">{% trans "Add this skill to your profile first to send an offer." %}</p>
-      <a href="{% url 'skills:userskill_add' %}?skill={{ skill.name|urlencode }}" class="btn">
+      <a href="{% url 'skills:userskill_add' %}?skill={{ skill|urlencode }}" class="btn">
         <i class="fa fa-plus mr-1"></i>{% trans "Add this skill to your profile" %}
       </a>
     </div>

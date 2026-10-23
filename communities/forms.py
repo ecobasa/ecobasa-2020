@@ -46,7 +46,7 @@ class CommunityForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         if self.instance and self.instance.pk:
             wishes_initial = ', '.join(
-                self.instance.skill_wishes.select_related("skill").values_list("skill__name", flat=True)
+                sw.skill.get_name() for sw in self.instance.skill_wishes.select_related("skill")
             )
             self.fields['skill_wishes'].initial = wishes_initial
             self.initial['skill_wishes'] = wishes_initial

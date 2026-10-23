@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load i18n l10n %}
 
-{% block head_title %}{{ community.name }} — {{ skill.name }} — ecobasa{% endblock %}
+{% block head_title %}{{ community.name }} — {{ skill }} — ecobasa{% endblock %}
 
 {% block extrahead %}
 {{ block.super }}
@@ -9,12 +9,12 @@
 {% endblock %}
 
 {% block content %}
-<div class="container-narrow">
+<div class="container-content">
 
   <div class="mb-2 text-sm text-brown">
     <a href="{% url 'skills:skill_list' %}" class="hover:underline">{% trans "Skills" %}</a>
     <span class="mx-1">/</span>
-    <a href="{{ skill.get_absolute_url }}" class="hover:underline">{{ skill.name }}</a>
+    <a href="{{ skill.get_absolute_url }}" class="hover:underline">{{ skill }}</a>
     <span class="mx-1">/</span>
     <span>{{ community.name }}</span>
   </div>
@@ -27,7 +27,7 @@
         </a>
         <div class="mt-1">
           <span class="pill bg-purple">
-            <i class="fa fa-graduation-cap mr-1"></i>{{ skill.name }}
+            <i class="fa fa-graduation-cap mr-1"></i>{{ skill }}
           </span>
         </div>
       </div>

@@ -29,7 +29,7 @@
           <i class="fa fa-map-marker text-primary mb-1"></i>
           <div class="text-xs inline">{{ community.location_name }}</div>
         {% endif %}
-        <div class="font-serif sm:text-lg group-hover:text-primary">{{ cs.skill.name }}</div>
+        <div class="font-serif sm:text-lg group-hover:text-primary">{{ cs.skill }}</div>
         <p class="text-sm text-brown mt-1">
           {% if cs.description %}{{ cs.description|truncatewords:20 }}{% else %}{{ cs.skill.description|truncatewords:20 }}{% endif %}
         </p>
@@ -60,7 +60,7 @@
           <i class="fa fa-map-marker text-primary mb-1"></i>
           <div class="text-xs inline">{{ user.location_name }}</div>
         {% endif %}
-        <div class="font-serif sm:text-lg group-hover:text-primary">{{ us.skill.name }}</div>
+        <div class="font-serif sm:text-lg group-hover:text-primary">{{ us.skill }}</div>
         <p class="text-sm text-brown mt-1">
           {% if us.description %}{{ us.description|truncatewords:20 }}{% else %}{{ us.skill.description|truncatewords:20 }}{% endif %}
         </p>

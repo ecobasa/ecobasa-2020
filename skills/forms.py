@@ -3,7 +3,7 @@ from django.utils.translation import gettext_lazy as _
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Field, Submit
 
-from .models import UserSkill, CommunitySkill, Skill, SkillTaxonomy, SkillWish
+from .models import UserSkill, CommunitySkill, Skill, SkillTaxonomy, SkillWish, get_or_create_skill
 
 
 def _skill_from_taxonomy_data(data_json, lang="en"):
@@ -11,8 +11,7 @@ def _skill_from_taxonomy_data(data_json, lang="en"):
     import json as _json
     data = _json.loads(data_json)
     taxonomy = SkillTaxonomy.objects.get(slug=data["slug"])
-    name = taxonomy.get_name(lang)
-    return Skill.objects.get_or_create(name__iexact=name, defaults={"name": name})
+    return get_or_create_skill(slug=taxonomy.slug)
 
 
 class SkillAutocompleteWidget(forms.TextInput):
@@ -41,7 +40,7 @@ class UserSkillForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if self.instance and self.instance.pk:
-            self.fields["skill_name"].initial = self.instance.skill.name
+            self.fields["skill_name"].initial = self.instance.skill.get_name()
         self.helper = FormHelper()
         self.helper.layout = Layout(
             Field("skill_name"),
@@ -206,7 +205,7 @@ class CommunitySkillForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if self.instance and self.instance.pk:
-            self.fields["skill_name"].initial = self.instance.skill.name
+            self.fields["skill_name"].initial = self.instance.skill.get_name()
         self.helper = FormHelper()
         self.helper.layout = Layout(
             Field("skill_name"),

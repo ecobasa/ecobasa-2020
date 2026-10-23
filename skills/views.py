@@ -18,20 +18,8 @@ from matches.emails import notify_match_created
 
 
 def _get_user_by_slug(user_slug):
-    """Mirrors User.DetailView lookup: username → slugified name → pk."""
-    try:
-        return User.objects.get(username=user_slug)
-    except User.DoesNotExist:
-        pass
-    try:
-        return User.objects.get(name__iexact=user_slug.replace("-", " "))
-    except User.DoesNotExist:
-        pass
-    try:
-        return User.objects.get(pk=user_slug)
-    except (User.DoesNotExist, ValueError, TypeError):
-        pass
-    return None
+    """Same lookup as the user profile page, see UserManager.get_by_slug."""
+    return User.objects.get_by_slug(user_slug)
 
 
 def skill_list(request):

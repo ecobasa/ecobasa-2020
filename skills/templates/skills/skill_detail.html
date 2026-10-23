@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load i18n %}
 
-{% block head_title %}{{ skill.name }} — {% trans "Skills" %} — ecobasa{% endblock %}
+{% block head_title %}{{ skill }} — {% trans "Skills" %} — ecobasa{% endblock %}
 
 {% block content %}
 <div class="container-content">
@@ -9,18 +9,18 @@
   <div class="mb-2 text-sm text-brown">
     <a href="{% url 'skills:skill_list' %}" class="hover:underline">{% trans "Skills" %}</a>
     <span class="mx-1">/</span>
-    <span>{{ skill.name }}</span>
+    <span>{{ skill }}</span>
   </div>
 
   <div class="flex items-start justify-between mb-6 gap-4">
     <div>
-      <h1 class="text-3xl text-primary">{{ skill.name }}</h1>
+      <h1 class="text-3xl text-primary">{{ skill }}</h1>
       {% if skill.description %}
         <p class="text-brown mt-2">{{ skill.description }}</p>
       {% endif %}
     </div>
     {% if user.is_authenticated %}
-      <a href="{% url 'skills:userskill_add' %}?skill={{ skill.name|urlencode }}" class="btn flex-shrink-0">
+      <a href="{% url 'skills:userskill_add' %}?skill={{ skill|urlencode }}" class="btn flex-shrink-0">
         <i class="fa fa-plus mr-1"></i> {% trans "Add to my profile" %}
       </a>
     {% endif %}
@@ -83,7 +83,7 @@
       {% blocktrans count wish_count as n %}{{ n }} person wants to learn or needs help with this skill.{% plural %}{{ n }} people want to learn or need help with this skill.{% endblocktrans %}
     </p>
     <p class="text-sm text-brown mb-3">{% trans "Can you teach or share it? Add it to your profile and they'll be able to find you." %}</p>
-    <a href="{% url 'skills:userskill_add' %}?skill={{ skill.name|urlencode }}" class="btn">
+    <a href="{% url 'skills:userskill_add' %}?skill={{ skill|urlencode }}" class="btn">
       <i class="fa fa-plus mr-2"></i>{% trans "Add to my profile" %}
     </a>
   </div>

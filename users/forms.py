@@ -11,7 +11,7 @@ from croppie.fields import CroppieField
 
 from gifts.forms import Fieldset
 from .models import User
-from skills.models import Skill, UserSkill, SkillWish
+from skills.models import Skill, UserSkill, SkillWish, get_or_create_skill
 
 
 class SafeCroppieField(CroppieField):
@@ -125,16 +125,12 @@ class RegisterForm(forms.ModelForm):
             skills_val = self.cleaned_data.get("skills", "")
             if skills_val:
                 for name in [s.strip() for s in skills_val.split(",") if s.strip()]:
-                    skill, _ = Skill.objects.get_or_create(
-                        name__iexact=name, defaults={"name": name}
-                    )
+                    skill, _ = get_or_create_skill(name)
                     UserSkill.objects.get_or_create(user=user, skill=skill)
             wish_val = self.cleaned_data.get("skill_wishes", "")
             if wish_val:
                 for name in [s.strip() for s in wish_val.split(",") if s.strip()]:
-                    skill, _ = Skill.objects.get_or_create(
-                        name__iexact=name, defaults={"name": name}
-                    )
+                    skill, _ = get_or_create_skill(name)
                     SkillWish.objects.get_or_create(user=user, skill=skill)
         return user
 
@@ -176,13 +172,13 @@ class ProfileUpdateForm(forms.ModelForm):
         has_image = bool(instance and instance.image)
         if instance is not None:
             skills_initial = ', '.join(
-                instance.user_skills.select_related("skill").values_list("skill__name", flat=True)
+                us.skill.get_name() for us in instance.user_skills.select_related("skill")
             )
             self.fields['skills'].initial = skills_initial
             self.initial['skills'] = skills_initial
             self.fields['skills'].widget.attrs.update({'value': skills_initial})
             wishes_initial = ', '.join(
-                instance.skill_wishes.select_related("skill").values_list("skill__name", flat=True)
+                sw.skill.get_name() for sw in instance.skill_wishes.select_related("skill")
             )
             self.fields['skill_wishes'].initial = wishes_initial
             self.initial['skill_wishes'] = wishes_initial
@@ -219,14 +215,12 @@ class ProfileUpdateForm(forms.ModelForm):
             user.save()
             skills_val = self.cleaned_data.get('skills', '') or ''
             for name in [s.strip() for s in skills_val.split(',') if s.strip()]:
-                skill, _ = Skill.objects.get_or_create(
-                    name__iexact=name, defaults={"name": name}
-                )
+                skill, _ = get_or_create_skill(name)
                 UserSkill.objects.get_or_create(user=user, skill=skill)
             wish_val = self.cleaned_data.get('skill_wishes', '') or ''
             new_wish_names = [s.strip() for s in wish_val.split(',') if s.strip()]
             user.skill_wishes.all().delete()
             for name in new_wish_names:
-                skill, _ = Skill.objects.get_or_create(name__iexact=name, defaults={"name": name})
+                skill, _ = get_or_create_skill(name)
                 SkillWish.objects.create(user=user, skill=skill)
         return user

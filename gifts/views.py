@@ -21,7 +21,7 @@ from .filters import ListingFilter
 from .models import Listing
 from communities.models import Community
 from users.models import User
-from skills.models import UserSkill, CommunitySkill
+from skills.models import UserSkill, CommunitySkill, Skill, skill_name_q
 from matches.forms import MatchForm
 from matches.emails import notify_match_created
 
@@ -171,7 +171,7 @@ def _skill_communities(request, require_location=True):
     q = request.GET.get("search", "").strip()
     if q:
         qs = qs.filter(
-            Q(community_skills__skill__name__icontains=q)
+            skill_name_q(q, "community_skills__skill__")
             | Q(community_skills__skill__description__icontains=q)
             | Q(community_skills__description__icontains=q)
             | Q(description__icontains=q)
@@ -194,7 +194,7 @@ def _skill_users(request, require_location=True):
     q = request.GET.get("search", "").strip()
     if q:
         qs = qs.filter(
-            Q(user_skills__skill__name__icontains=q)
+            skill_name_q(q, "user_skills__skill__")
             | Q(user_skills__skill__description__icontains=q)
             | Q(user_skills__description__icontains=q)
             | Q(about__icontains=q)
@@ -240,6 +240,7 @@ def gifts_markers(request):
                 "title":        listing.title,
                 "description":  listing.description,
                 "image":        listing.image.url if listing.image else None,
+                "listing_type": listing.type,
                 "type_display": listing.get_type_display(),
                 "url":          listing.get_absolute_url(),
             },
@@ -250,7 +251,7 @@ def gifts_markers(request):
 
     for community in skill_qs[:200]:
         first_photo = community.photos.first()
-        skill_names = [cs.skill.name for cs in community.community_skills.all()]
+        skill_names = [cs.skill.get_name() for cs in community.community_skills.all()]
         features.append({
             "type": "Feature",
             "geometry": {
@@ -262,7 +263,7 @@ def gifts_markers(request):
                 "title":          ", ".join(skill_names[:3]),
                 "description":    community.description,
                 "image":          first_photo.image.url if first_photo and first_photo.image else None,
-                "type_display":   "Skill / Teaching",
+                "type_display":   str(_("Skill / Teaching")),
                 "url":            community.get_absolute_url(),
                 "community_name": community.name,
             },
@@ -272,7 +273,7 @@ def gifts_markers(request):
     user_skill_qs = _apply_bbox(_skill_users(request), bbox_param)
 
     for user in user_skill_qs[:200]:
-        skill_names = [us.skill.name for us in user.user_skills.all()]
+        skill_names = [us.skill.get_name() for us in user.user_skills.all()]
         features.append({
             "type": "Feature",
             "geometry": {
@@ -284,7 +285,7 @@ def gifts_markers(request):
                 "title":        ", ".join(skill_names[:3]),
                 "description":  user.about or "",
                 "image":        user.image.url if user.image else None,
-                "type_display": "User Skill",
+                "type_display": str(_("User Skill")),
                 "url":          user.get_absolute_url(),
                 "user_name":    user.name or user.email,
             },
@@ -378,23 +379,14 @@ def gifts_suggest(request):
     ):
         add(user.name or user.email, "owner")
 
-    # Community skill names
+    # Skill names held by communities or people, matched and shown in the active language
     for skill in (
-        CommunitySkill.objects
-        .filter(skill__name__icontains=q)
-        .values_list("skill__name", flat=True)
-        .distinct()[:3]
+        Skill.objects
+        .filter(skill_name_q(q, ""))
+        .filter(Q(community_skills__isnull=False) | Q(user_skills__isnull=False))
+        .distinct()[:6]
     ):
-        add(skill, "skill")
-
-    # User skill names
-    for skill in (
-        UserSkill.objects
-        .filter(skill__name__icontains=q)
-        .values_list("skill__name", flat=True)
-        .distinct()[:3]
-    ):
-        add(skill, "skill")
+        add(skill.get_name(), "skill")
 
     # Description match — extract words that start with the query
     def _desc_words(*texts):
@@ -416,7 +408,7 @@ def gifts_suggest(request):
     for desc, skill_desc in (
         CommunitySkill.objects
         .filter(Q(description__icontains=q) | Q(skill__description__icontains=q))
-        .exclude(skill__name__icontains=q)
+        .exclude(skill_name_q(q))
         .values_list("description", "skill__description")[:5]
     ):
         for word in _desc_words(desc, skill_desc):
@@ -425,7 +417,7 @@ def gifts_suggest(request):
     for desc, skill_desc in (
         UserSkill.objects
         .filter(Q(description__icontains=q) | Q(skill__description__icontains=q))
-        .exclude(skill__name__icontains=q)
+        .exclude(skill_name_q(q))
         .values_list("description", "skill__description")[:5]
     ):
         for word in _desc_words(desc, skill_desc):

@@ -123,9 +123,9 @@
 				<h2>{% trans "Skills you can learn here" %}</h2>
 				<div class="flex flex-wrap gap-2 mb-2">
 					{% for cs in community_skills %}
-						<a {% if request.user == community.owner %}href="{% url 'skills:communityskill_edit' cs.skill.slug community.slug %}"{% elif request.user.is_authenticated %}href="#" @click.prevent="openVolunteer('{{ cs.skill.name|escapejs }}', 'offer', {{ cs.skill_id }})"{% else %}href="{% url 'users:login' %}?next={{ request.path }}"{% endif %}
+						<a {% if request.user == community.owner %}href="{% url 'skills:communityskill_edit' cs.skill.slug community.slug %}"{% elif request.user.is_authenticated %}href="#" @click.prevent="openVolunteer('{{ cs.skill|escapejs }}', 'offer', {{ cs.skill_id }})"{% else %}href="{% url 'users:login' %}?next={{ request.path }}"{% endif %}
 							class="pill pill-lg bg-purple transition-opacity">
-							<i class="mr-1 fa fa-graduation-cap"></i>{{ cs.skill.name }}
+							<i class="mr-1 fa fa-graduation-cap"></i>{{ cs.skill }}
 						</a>
 					{% endfor %}
 				</div>
@@ -140,9 +140,9 @@
 				<h2>{% trans "Looking for people with these skills" %}</h2>
 				<div class="flex flex-wrap gap-2 mb-2">
 					{% for sw in skill_wishes %}
-						<a {% if request.user == community.owner %}href="{% url 'skills:skillwish_community_edit' sw.pk community.slug %}"{% elif request.user.is_authenticated %}href="#" @click.prevent="openVolunteer('{{ sw.skill.name|escapejs }}', 'wish', {{ sw.skill_id }})"{% else %}href="{% url 'users:login' %}?next={{ request.path }}"{% endif %}
+						<a {% if request.user == community.owner %}href="{% url 'skills:skillwish_community_edit' sw.pk community.slug %}"{% elif request.user.is_authenticated %}href="#" @click.prevent="openVolunteer('{{ sw.skill|escapejs }}', 'wish', {{ sw.skill_id }})"{% else %}href="{% url 'users:login' %}?next={{ request.path }}"{% endif %}
 							class="pill pill-lg bg-yellow hover:bg-purple transition-opacity">
-							<i class="mr-1 fa fa-search"></i>{{ sw.skill.name }}
+							<i class="mr-1 fa fa-search"></i>{{ sw.skill }}
 							{% if sw.level %}<span class="opacity-70 text-xs ml-1">({{ sw.get_level_display }}+)</span>{% endif %}
 						</a>
 					{% endfor %}
@@ -298,7 +298,7 @@
 					</div>
 					<label class="text-sm">{% trans "Your skills (comma separated)" %}
 						<input type="text" name="sender_skills" id="volunteer-sender-skills" class="form-input mt-1"
-									value="{% if request.user.is_authenticated %}{% for us in request.user.user_skills.all %}{{ us.skill.name }}{% if not forloop.last %}, {% endif %}{% endfor %}{% endif %}">
+									value="{% if request.user.is_authenticated %}{% for us in request.user.user_skills.all %}{{ us.skill }}{% if not forloop.last %}, {% endif %}{% endfor %}{% endif %}">
 					</label>
 					<label class="text-sm">{% trans "From" %}
 						<input type="datetime-local" name="stay_from" class="form-input w-full mt-1">
@@ -338,7 +338,7 @@ document.addEventListener('alpine:init', () => {
 		get vLevel()        { return this.vSkillId ? (this.userLevels[String(this.vSkillId)] || null) : null; },
 		get vPracticeLabel(){ return this.vMode === 'wish' ? this.labelWish : this.labelOffer; },
 		get vLevelLabel()   { return this.vMode === 'wish' ? this.levelLabelWish : this.levelLabelOffer; },
-		wishNames: [{% for sw in skill_wishes %}"{{ sw.skill.name|escapejs }}"{% if not forloop.last %},{% endif %}{% endfor %}],
+		wishNames: [{% for sw in skill_wishes %}"{{ sw.skill|escapejs }}"{% if not forloop.last %},{% endif %}{% endfor %}],
 		openVolunteer(skill, mode, skillId) {
 			this.vSkill   = skill   || '';
 			this.vMode    = mode    || '';

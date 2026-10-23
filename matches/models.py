@@ -181,15 +181,13 @@ class VolunteerDetails(models.Model):
 
     @property
     def sender_skills_with_levels(self):
-        from skills.models import UserSkill
+        from skills.models import UserSkill, skill_slug_for_name
         names = self.sender_skills_list
         if not names:
             return []
         level_map = {
-            us.skill.name: us.get_level_display()
-            for us in UserSkill.objects.filter(
-                user=self.match.from_user, skill__name__in=names,
-            ).select_related("skill")
+            us.skill.slug: us.get_level_display()
+            for us in UserSkill.objects.filter(user=self.match.from_user).select_related("skill")
             if us.level
         }
-        return [(name, level_map.get(name)) for name in names]
+        return [(name, level_map.get(skill_slug_for_name(name))) for name in names]

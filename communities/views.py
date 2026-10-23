@@ -13,7 +13,7 @@ from django.views.decorators.http import require_GET, require_POST
 from .models import Community
 from .models import CommunityPhoto
 from .forms import CommunityForm
-from skills.models import CommunitySkill, Skill, SkillWish, UserSkill
+from skills.models import CommunitySkill, Skill, SkillWish, UserSkill, get_or_create_skill, skill_name_q, skill_slug_for_name
 
 from django.contrib.gis.geos import Polygon, Point
 from django.contrib.gis.db.models.functions import Distance
@@ -45,7 +45,7 @@ def index(request):
             Q(name__icontains=q)
             | Q(description__icontains=q)
             | Q(location_name__icontains=q)
-            | Q(community_skills__skill__name__icontains=q)
+            | skill_name_q(q, "community_skills__skill__")
         ).distinct()
     country = (request.GET.get('country') or '').strip()
     if country:
@@ -150,14 +150,10 @@ def volunteer_request(request, community_slug):
     wish_list  = [s.strip() for s in practice_skills.split(",") if s.strip()]
 
     if offer_list or wish_list:
-        existing_offers = set(
-            request.user.user_skills.values_list("skill__name", flat=True)
-        )
-        existing_wishes = set(
-            request.user.skill_wishes.values_list("skill__name", flat=True)
-        )
-        offer_list = [s for s in offer_list if s.lower() not in {n.lower() for n in existing_offers}]
-        wish_list  = [s for s in wish_list  if s.lower() not in {n.lower() for n in existing_wishes}]
+        existing_offers = set(request.user.user_skills.values_list("skill__slug", flat=True))
+        existing_wishes = set(request.user.skill_wishes.values_list("skill__slug", flat=True))
+        offer_list = [s for s in offer_list if skill_slug_for_name(s) not in existing_offers]
+        wish_list  = [s for s in wish_list  if skill_slug_for_name(s) not in existing_wishes]
 
     if request.headers.get("HX-Request") and (offer_list or wish_list):
         params = {}
@@ -181,7 +177,7 @@ def _sync_community_skill_wishes(community, form):
     wish_val = form.cleaned_data.get('skill_wishes', '') or ''
     community.skill_wishes.all().delete()
     for name in [s.strip() for s in wish_val.split(',') if s.strip()]:
-        skill, _ = Skill.objects.get_or_create(name__iexact=name, defaults={"name": name})
+        skill, _ = get_or_create_skill(name)
         SkillWish.objects.create(community=community, skill=skill)
 
 
@@ -296,7 +292,7 @@ def _base_qs(request, require_location=True):
             Q(name__icontains=q) |
             Q(description__icontains=q) |
             Q(location_name__icontains=q) |
-            Q(community_skills__skill__name__icontains=q)
+            skill_name_q(q, "community_skills__skill__")
         )
     country = request.GET.get("country", "").strip()
     if country:
@@ -373,7 +369,7 @@ def community_markers(request):
                 "inhabitants": c.inhabitants,
                 "children":    c.children,
                 "max_guests":  c.max_guests,
-                "skills":      [cs.skill.name for cs in c.community_skills.all()],
+                "skills":      [cs.skill.get_name() for cs in c.community_skills.all()],
             },
         })
 
@@ -477,12 +473,7 @@ def community_suggest(request):
             break
 
     # Skills attached to a Community
-    for skill in (
-        CommunitySkill.objects
-        .filter(skill__name__icontains=q)
-        .values_list("skill__name", flat=True)
-        .distinct()[:5]
-    ):
-        add(skill, "skill")
+    for skill in Skill.objects.filter(skill_name_q(q, ""), community_skills__isnull=False).distinct()[:5]:
+        add(skill.get_name(), "skill")
 
     return JsonResponse(suggestions[:12], safe=False)
