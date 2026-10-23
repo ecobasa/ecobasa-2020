@@ -45,7 +45,7 @@
 				<i class="fa fa-user text-6xl text-primary rounded-full border border-dashed border-primary p-10 mt-15"></i>
 			{% endif %}
 			{% if request.user.is_authenticated and request.user.pk != user.pk %}
-				<a class="btn block mt-10" href="{% url 'postman:write' user.name %}"><i class="fa fa-envelope mr-2"></i>{% trans "Message" %}</a>
+				<a class="btn block mt-10" href="{% url 'postman:write_with_recipients' user.pk %}"><i class="fa fa-envelope mr-2"></i>{% trans "Message" %}</a>
 			{% endif %}
 
 

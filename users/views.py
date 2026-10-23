@@ -68,16 +68,21 @@ def logout(request):
 
 @require_GET
 def autocomplete(request):
-    """Simple user autocomplete for recipients (returns JSON)."""
+    """Simple user autocomplete for recipients (returns JSON). `value` is the user id, which
+    is what postman looks recipients up by; `?id=` returns that one user (prefilled recipient)."""
     q = request.GET.get("q", "").strip()
+    user_id = request.GET.get("id", "").strip()
     results = []
-    if q:
-        qs = User.objects.filter(
-            Q(name__icontains=q) | Q(username__istartswith=q)
-        ).order_by('name')[:20]
+    if q or user_id.isdigit():
+        if user_id.isdigit():
+            qs = User.objects.filter(pk=user_id)
+        else:
+            qs = User.objects.filter(
+                Q(name__icontains=q) | Q(username__istartswith=q)
+            ).order_by('name')[:20]
         for u in qs:
             results.append({
-                "value": u.name or u.username,
+                "value": str(u.pk),
                 "name": u.name or u.username,
                 "username": u.username,
                 "image_url": u.image.url if u.image else None,

@@ -149,3 +149,29 @@ def test_profile_lists_owned_communities(user_client):
     content = user_client.get(owner.get_absolute_url()).content.decode()
     assert community.get_absolute_url() in content
     assert "Sonnenkraut" in content
+
+
+@pytest.mark.django_db
+class TestMessageRecipientById:
+    """Postman looks recipients up by id: names aren't unique and username is usually empty."""
+
+    def test_profile_without_name_or_username_renders_message_link(self, user_client):
+        nameless = User.objects.create_user(email="nameless@example.com", password="pw", name="")
+        response = user_client.get(nameless.get_absolute_url())
+        assert response.status_code == 200
+        assert reverse("postman:write_with_recipients", args=[nameless.pk]) in response.content.decode()
+
+    def test_autocomplete_returns_id_as_value(self, user_client):
+        other = User.objects.create_user(email="ana@example.com", password="pw", name="Ana Costa")
+        data = user_client.get(reverse("users:autocomplete"), {"q": "Ana"}).json()
+        assert data[0]["value"] == str(other.pk)
+        data = user_client.get(reverse("users:autocomplete"), {"id": other.pk}).json()
+        assert data[0]["name"] == "Ana Costa"
+
+    def test_message_reaches_only_that_user_when_names_collide(self, user_client):
+        from postman.models import Message
+
+        first = User.objects.create_user(email="arne1@example.com", password="pw", name="Arne")
+        User.objects.create_user(email="arne2@example.com", password="pw", name="Arne")
+        user_client.post(reverse("postman:write"), {"recipients": str(first.pk), "subject": "Hi", "body": "Hello"})
+        assert list(Message.objects.values_list("recipient", flat=True)) == [first.pk]
