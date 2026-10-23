@@ -1,0 +1,59 @@
+{% load i18n %}
+{# Filter popover button + panel, bound to $store.fm — used on the map toolbar and in the list modal #}
+<div class="relative h-full" x-data="{ filterOpen: false }">
+  <button type="button"
+    @click="filterOpen = !filterOpen"
+    :class="$store.fm.filterCount > 0 ? 'ring-2 ring-offset-1 ring-primary' : ''"
+    class="btn h-full px-3 flex items-center gap-1 text-sm"
+    title="{% trans 'Filters' %}">
+    <i class="fa fa-sliders-h"></i>
+    <span x-show="$store.fm.filterCount > 0" x-text="$store.fm.filterCount"
+      class="text-xs font-bold leading-none">
+    </span>
+  </button>
+
+  <div x-show="filterOpen" x-cloak
+    @click.away="filterOpen = false"
+    @keydown.escape.window="filterOpen = false"
+    class="absolute left-0 top-full mt-2 w-64 bg-primary text-secondary rounded-lg shadow-xl border border-red p-4 z-30 space-y-4">
+
+    <div>
+      <div class="text-xs font-bold uppercase tracking-wider opacity-70 mb-2">{% trans "Type" %}</div>
+      <div class="space-y-1">
+        {% for t in f.form.type %}
+        <label class="flex items-center gap-2 cursor-pointer text-sm hover:bg-secondary hover:bg-opacity-10 rounded px-1 py-0.5">
+          <input type="checkbox" value="{{ t.data.value }}"
+            class="form-checkbox light h-4 w-4 flex-shrink-0"
+            :checked="$store.fm.types.includes('{{ t.data.value|escapejs }}')"
+            @change="$store.fm.toggle('types', '{{ t.data.value|escapejs }}')">
+          <span>{{ t.choice_label }}</span>
+        </label>
+        {% endfor %}
+      </div>
+    </div>
+
+    {% if f.form.categories.field.queryset.exists %}
+    <div>
+      <div class="text-xs font-bold uppercase tracking-wider opacity-70 mb-2">{% trans "Category" %}</div>
+      <div class="space-y-1">
+        {% for t in f.form.categories %}
+        <label class="flex items-center gap-2 cursor-pointer text-sm hover:bg-secondary hover:bg-opacity-10 rounded px-1 py-0.5">
+          <input type="checkbox" value="{{ t.data.value }}"
+            class="form-checkbox light h-4 w-4 flex-shrink-0"
+            :checked="$store.fm.categories.includes('{{ t.data.value|escapejs }}')"
+            @change="$store.fm.toggle('categories', '{{ t.data.value|escapejs }}')">
+          <span>{{ t.choice_label }}</span>
+        </label>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    <button type="button"
+      x-show="$store.fm.filterCount > 0"
+      class="text-xs underline opacity-70 hover:opacity-100"
+      @click="$store.fm.clearFilters()">
+      {% trans "Clear filters" %}
+    </button>
+  </div>
+</div>

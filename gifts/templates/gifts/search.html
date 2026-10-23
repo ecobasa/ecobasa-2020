@@ -5,42 +5,69 @@
   {{ block.super }}
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v7.2.2/ol.css">
   <script>
-    function suggestions(endpoint) {
-      return {
-        items: [], active: -1, open: false, _timer: null,
+    const giftTypeLabels     = { {% for t in f.form.type %}'{{ t.data.value|escapejs }}': '{{ t.choice_label|escapejs }}',{% endfor %} };
+    const giftCategoryLabels = { {% for t in f.form.categories %}'{{ t.data.value|escapejs }}': '{{ t.choice_label|escapejs }}',{% endfor %} };
 
-        suggest(term) {
-          clearTimeout(this._timer);
-          if (!term || term.length < 2) { this.close(); return; }
-          const self = this;
-          this._timer = setTimeout(function () {
-            fetch(endpoint + '?q=' + encodeURIComponent(term))
-              .then(r => r.json())
-              .then(data => { self.items = data.slice(0, 8); self.open = self.items.length > 0; self.active = -1; })
-              .catch(() => self.close());
-          }, 200);
-        },
+    document.addEventListener('alpine:init', function () {
+      Alpine.store('fm', {
+        view:         'map',
+        layer:        'ecobasa',
+        loading:      false,
+        q:            '{{ f.form.search.data|default:""|escapejs }}',
+        locationName: '{{ f.form.location_name.data|default:""|escapejs }}',
+        location:     '{{ f.form.location.data|default:""|escapejs }}',
+        types:        [{% for v in f.form.type.value %}"{{ v|escapejs }}"{% if not forloop.last %}, {% endif %}{% endfor %}],
+        categories:   [{% for v in f.form.categories.value %}"{{ v|escapejs }}"{% if not forloop.last %}, {% endif %}{% endfor %}],
+        markerCount:  0,
 
-        moveDown() { if (this.open) this.active = Math.min(this.active + 1, this.items.length - 1); },
-        moveUp()   { if (this.open) this.active = Math.max(this.active - 1, 0); },
-        choose()   { if (this.active >= 0 && this.items[this.active]) { this.selectItem(this.items[this.active]); return true; } return false; },
+        get filterCount() { return this.types.length + this.categories.length; },
+        get activeCount() { return this.filterCount + (this.q ? 1 : 0) + (this.location ? 1 : 0); },
 
-        selectItem(item) {
-          Alpine.store('fm').q = item.value;
-          this.close();
-          this.$nextTick(() => {
+        showMap()  { this.view = 'map'; },
+        showList() { this.view = 'list'; },
+
+        // Refresh map markers and the list modal once Alpine has synced the hidden inputs
+        reload(fitToResults) {
+          setTimeout(function () {
             document.body.dispatchEvent(new CustomEvent('filter-updated'));
-            window._fmReloadMarkers && window._fmReloadMarkers(true);
-          });
+            window._fmReloadMarkers && window._fmReloadMarkers(fitToResults);
+          }, 0);
         },
 
-        triggerSearch() { window._fmReloadMarkers && window._fmReloadMarkers(); },
-        close() { this.open = false; this.items = []; this.active = -1; }
-      };
-    }
+        toggle(list, value) {
+          if (this[list].includes(value)) this[list] = this[list].filter(v => v !== value);
+          else this[list].push(value);
+          this.reload();
+        },
 
-    const _nominatimCache = new Map();
-    let   _nominatimLastFetch = 0;
+        clearFilters() {
+          this.types = [];
+          this.categories = [];
+          this.reload();
+        },
+
+        clearAll() {
+          this.types = [];
+          this.categories = [];
+          this.q = '';
+          this.location = '';
+          this.locationName = '';
+          window._fmResetView && window._fmResetView();
+          this.reload();
+        },
+
+        nearMe() {
+          if (!navigator.geolocation) return;
+          const self = this;
+          navigator.geolocation.getCurrentPosition(function (pos) {
+            self.location     = pos.coords.latitude + ',' + pos.coords.longitude;
+            self.locationName = '{% trans "Current Location" %}';
+            window._fmZoomTo && window._fmZoomTo(pos.coords.latitude, pos.coords.longitude, null, 9);
+            self.reload();
+          });
+        }
+      });
+    });
 
     function nominatimLabel(d) {
       const parts = d.display_name.split(',')
@@ -54,116 +81,84 @@
     function nominatimZoom(d) {
       const rank = d.place_rank || 30;
       const imp  = parseFloat(d.importance) || 0;
-      if (rank <= 4)  return imp > 0.95 ? 4 : imp > 0.88 ? 6 : 9;
-      if (rank <= 8)  return 8;
-      if (rank <= 14) return 10;
-      return 12;
+      if (rank <= 4)  return imp > 0.95 ? 4 : imp > 0.88 ? 6 : 9;  // country: RU / USA+AUS / DE+IT+ES
+      if (rank <= 8)  return 8;                     // state / city-state (Berlin etc.)
+      if (rank <= 14) return 10;                    // city
+      return 12;                                    // town / village
     }
 
-    const _geocodeURL = '{% url "gifts:api-geocode" %}';
+    const _geocodeURL     = '{% url "gifts:api-geocode" %}';
+    const _nominatimCache = new Map();
 
     function _nominatimFetch(query) {
       if (_nominatimCache.has(query)) return Promise.resolve(_nominatimCache.get(query));
       return fetch(_geocodeURL + '?q=' + encodeURIComponent(query))
-        .then(function (r) { return r.json(); })
-        .then(function (data) { _nominatimCache.set(query, data); return data; });
+        .then(r => r.json())
+        .then(data => { _nominatimCache.set(query, data); return data; });
     }
 
-    function locationDropdown() {
+    // Combined suggestions: listings / owners / skills from our API, plus places via the geocode proxy
+    function suggestions(endpoint) {
       return {
-        results: [], open: false, _timer: null,
-
-        geocode(input) {
+        items: [], active: -1, open: false, _timer: null,
+        suggest(term) {
           clearTimeout(this._timer);
-          if (!input || input.length < 3) { this.results = []; this.open = false; return; }
+          if (!term || term.length < 2) return this.close();
           const self = this;
           this._timer = setTimeout(function () {
-            _nominatimFetch(input)
-              .then(function (json) {
-                const seen = new Set(), perCountry = {};
-                self.results = json.reduce(function (acc, d) {
-                  const label = nominatimLabel(d);
-                  const cc    = (d.address && d.address.country_code) || '??';
-                  if (!seen.has(label)) {
-                    seen.add(label);
-                    perCountry[cc] = (perCountry[cc] || 0) + 1;
-                    if (perCountry[cc] <= 2)
-                      acc.push(Object.assign({}, d, { _label: label, _zoom: nominatimZoom(d) }));
+            const giftFetch = fetch(endpoint + '?q=' + encodeURIComponent(term))
+              .then(r => r.json()).catch(() => []);
+            const placeFetch = term.length < 3 ? Promise.resolve([]) : _nominatimFetch(term).then(data => {
+              const seen = new Set();
+              const perCountry = {};
+              return data.reduce((acc, d) => {
+                const label = nominatimLabel(d);
+                const cc = (d.address && d.address.country_code) || '??';
+                if (!seen.has(label)) {
+                  seen.add(label);
+                  perCountry[cc] = (perCountry[cc] || 0) + 1;
+                  if (perCountry[cc] <= 2) {
+                    acc.push({ value: label, type: 'place', lon: parseFloat(d.lon), lat: parseFloat(d.lat), zoom: nominatimZoom(d) });
                   }
-                  return acc;
-                }, []).slice(0, 5);
-                self.open = self.results.length > 0;
-              })
-              .catch(function () { self.open = false; });
+                }
+                return acc;
+              }, []).slice(0, 5);
+            }).catch(() => []);
+            Promise.all([giftFetch, placeFetch]).then(([giftItems, placeItems]) => {
+              const merged = (giftItems || []).slice(0, 6).concat(placeItems || []);
+              self.items = merged.slice(0, 10);
+              self.open = self.items.length > 0;
+              self.active = -1;
+            }).catch(() => self.close());
           }, 350);
         },
-
-        pick(res) {
-          Alpine.store('fm').locationName = res._label;
-          Alpine.store('fm').location     = res.lat + ',' + res.lon;
-          this.closeDropdown();
-          this.$nextTick(() => {
-            if (window._fmZoomTo) window._fmZoomTo(res.lat, res.lon, res.boundingbox, res._zoom);
-            if (window._fmReloadMarkers) window._fmReloadMarkers();
-            document.body.dispatchEvent(new CustomEvent('filter-updated'));
-          });
+        selectItem(item) {
+          const store = Alpine.store('fm');
+          this.close();
+          if (item.type === 'place') {
+            store.location     = item.lat + ',' + item.lon;
+            store.locationName = item.value;
+            store.q = '';
+            window._fmZoomTo && window._fmZoomTo(item.lat, item.lon, null, item.zoom);
+            store.reload();
+          } else {
+            store.q = item.value;
+            store.reload(true);
+          }
         },
-
-        useGPS() {
-          if (!navigator.geolocation) return;
-          navigator.geolocation.getCurrentPosition(function (pos) {
-            const lat = pos.coords.latitude, lon = pos.coords.longitude;
-            Alpine.store('fm').locationName = '{% trans "Current Location" %}';
-            Alpine.store('fm').location     = lat + ',' + lon;
-            window._fmZoomTo && window._fmZoomTo(lat, lon, null, 9);
-            setTimeout(function () {
-              window._fmReloadMarkers && window._fmReloadMarkers();
-              document.body.dispatchEvent(new CustomEvent('filter-updated'));
-            }, 50);
-          });
-        },
-
-        closeDropdown() { clearTimeout(this._timer); this.open = false; this.results = []; }
+        moveDown() { if (this.open) this.active = Math.min(this.active + 1, this.items.length - 1); },
+        moveUp()   { if (this.open) this.active = Math.max(this.active - 1, 0); },
+        choose()   { if (this.active >= 0 && this.items[this.active]) { this.selectItem(this.items[this.active]); return true; } return false; },
+        close()    { this.open = false; this.items = []; this.active = -1; clearTimeout(this._timer); }
       };
     }
-
-    document.addEventListener('alpine:init', function () {
-      Alpine.store('fm', {
-        view:          'map',
-        layerMenuOpen: false,
-        layer:         'ecobasa',
-        loading:       false,
-        q:             '{{ f.form.search.data|default:""|escapejs }}',
-        locationName:  '{{ f.form.location_name.data|default:""|escapejs }}',
-        location:      '{{ f.form.location.data|default:""|escapejs }}',
-        types:         [{% for v in f.form.type.value %}"{{ v|escapejs }}"{% if not forloop.last %}, {% endif %}{% endfor %}],
-        categories:    [{% for v in f.form.categories.value %}"{{ v|escapejs }}"{% if not forloop.last %}, {% endif %}{% endfor %}],
-        markerCount:   0,
-
-        showMap:  function () { this.view = 'map'; },
-        showList: function () { this.view = 'list'; },
-
-        clearLocation() {
-          this.location = '';
-          this.locationName = '';
-          window._fmResetView && window._fmResetView();
-          setTimeout(() => document.body.dispatchEvent(new CustomEvent('filter-updated')), 0);
-        },
-
-        clearSearch() {
-          this.q = '';
-          window._fmResetView && window._fmResetView();
-          setTimeout(() => document.body.dispatchEvent(new CustomEvent('filter-updated')), 0);
-        }
-      });
-    });
   </script>
 {% endblock %}
 
 
 {# ═══════════════════════════════════════════════════════════════════ #}
 {% block content %}
-<div x-data="{ showToolbar: true }">
+<div x-data>
 
   {# ── Map shell ── #}
   <div class="relative w-full map-shell">
@@ -195,120 +190,64 @@
       </div>
     </div>
 
-    {# ── Left toolbar ── #}
-    <div class="absolute top-4 left-4 flex flex-col gap-3 w-full max-w-40 md:max-w-60 lg:max-w-xs xl:max-w-md z-10"
-      :class="{ 'hidden': !showToolbar }">
-      <div id="gift-filters" class="bg-secondary bg-opacity-30 backdrop-blur rounded-lg shadow p-4 flex flex-col gap-3">
+    {# ── Left toolbar — search row + filter popover + add buttons ── #}
+    <div class="absolute top-4 left-4 flex flex-col gap-3 z-10 w-full max-w-40 md:max-w-60 lg:max-w-xs xl:max-w-md">
+      <div class="bg-secondary bg-opacity-30 backdrop-blur rounded-lg shadow p-3 flex flex-col gap-2">
 
-        {# Hidden state synced from Alpine — picked up by all hx-include="#gift-filters" #}
-        <input type="hidden" name="search"        :value="$store.fm.q">
-        <input type="hidden" name="location_name" :value="$store.fm.locationName">
-        <input type="hidden" name="location"      :value="$store.fm.location">
-        <div class="flex flex-wrap gap-4"
-          @change="$store.fm.view === 'list' && document.body.dispatchEvent(new CustomEvent('filter-updated'));
-                   window._fmReloadMarkers && window._fmReloadMarkers();">
-          {% for t in f.form.type %}
-            <label class="inline-flex text-primary items-center gap-2 cursor-pointer">
-              <input type="checkbox" name="type" value="{{ t.data.value }}"
-                x-model="$store.fm.types"
-                class="form-checkbox dark h-5 w-5">
-              <span>{{ t.choice_label }}</span>
-            </label>
-          {% endfor %}
-          {% for t in f.form.categories %}
-            <label class="inline-flex text-primary items-center gap-2 cursor-pointer">
-              <input type="checkbox" name="categories" value="{{ t.data.value }}"
-                x-model="$store.fm.categories"
-                class="form-checkbox dark h-5 w-5">
-              <span>{{ t.choice_label }}</span>
-            </label>
-          {% endfor %}
-        </div>
+        <div class="flex flex-col lg:flex-row gap-2 items-stretch">
 
-        {# Search input #}
-        <div class="relative"
-          x-data="suggestions('{% url 'gifts:api-suggest' %}')"
-          @click.outside="close()">
-          <div class="absolute inset-y-0 left-3 flex items-center text-primary opacity-80 pointer-events-none">
-            <i class="fa fa-search"></i>
+          {# Search input with suggestions #}
+          <div class="relative flex-1" x-data="suggestions('{% url 'gifts:api-suggest' %}')">
+            <div class="absolute inset-y-0 left-3 flex items-center text-primary opacity-80 pointer-events-none">
+              <i class="fa fa-search"></i>
+            </div>
+            <input
+              class="form-input icon-input"
+              type="text"
+              placeholder="{% trans 'Offer, wish, skill or place…' %}"
+              autocomplete="off"
+              :value="$store.fm.q"
+              @input="$store.fm.q = $el.value; suggest($el.value); clearTimeout(window._fmInputTimer); window._fmInputTimer = setTimeout(() => { if (!$el.value) window._fmResetView && window._fmResetView(); $store.fm.reload(); }, 600)"
+              @keydown.arrow-down.prevent="moveDown()"
+              @keydown.arrow-up.prevent="moveUp()"
+              @keydown.enter.prevent="choose() || $store.fm.reload($store.fm.activeCount > 0)"
+              @keydown.escape="close()"
+              @blur="setTimeout(() => close(), 200)">
+            {% include "gifts/_suggestions_dropdown.html" %}
           </div>
-          <input class="form-input icon-input bg-secondary w-full"
-            type="text"
-            :value="$store.fm.q"
-            placeholder="{% trans 'Search offers, wishes or skills…' %}"
-            autocomplete="off"
-            @input="$store.fm.q = $el.value; suggest($el.value); if (!$el.value) { window._fmResetView && window._fmResetView(); document.body.dispatchEvent(new CustomEvent('filter-updated')); }"
-            @keydown.arrow-down.prevent="moveDown()"
-            @keydown.arrow-up.prevent="moveUp()"
-            @keydown.enter.prevent="choose() || triggerSearch()"
-            @keydown.escape="if (open) { close(); } else if ($store.fm.q) { $store.fm.clearSearch(); }">
-          <ul x-show="open" x-cloak
-            class="suggestions-dropdown"
-            role="listbox">
-            <template x-for="(item, i) in items" :key="i">
-              <li :class="i === active ? 'is-active' : ''"
-                class="px-3 py-1 cursor-pointer justify-between hover:bg-primary hover:text-secondary text-sm flex items-center gap-2"
-                @mousedown.prevent="selectItem(item)" role="option">
-                <span x-text="item.value"></span>
-                <i x-show="item.type === 'skill'" class="fa fa-graduation-cap text-xs opacity-50 flex-shrink-0 w-3"></i>
-                <i x-show="item.type === 'offer'" class="fa fa-gift         text-xs opacity-50 flex-shrink-0 w-3"></i>
-                <i x-show="item.type === 'wish'"  class="fa fa-heart        text-xs opacity-50 flex-shrink-0 w-3"></i>
-                <i x-show="item.type === 'owner'" class="fa fa-user         text-xs opacity-50 flex-shrink-0 w-3"></i>
-                <i x-show="item.type === 'text'"  class="fa fa-align-left   text-xs opacity-50 flex-shrink-0 w-3"></i>
-              </li>
-            </template>
-          </ul>
-        </div>
 
-        {# Location input #}
-        <div class="relative"
-          x-data="locationDropdown()"
-          @click.outside="closeDropdown()">
-          <div class="absolute inset-y-0 left-3 flex items-center text-primary opacity-50 pointer-events-none">
-            <i class="fa fa-location-dot"></i>
-          </div>
-          <input class="form-input icon-input bg-secondary w-full pr-16"
-            type="text"
-            :value="$store.fm.locationName"
-            placeholder="{% trans 'Near a place…' %}"
-            autocomplete="off"
-            @input="$store.fm.locationName = $el.value; if (!$el.value) $store.fm.clearLocation(); else geocode($el.value)"
-            @keydown.escape="if (open) { closeDropdown(); } else if ($store.fm.location) { $store.fm.clearLocation(); }">
-          <div class="absolute inset-y-0 right-0 flex items-center gap-0.5 pr-2">
-            <button type="button" @click="useGPS()" title="{% trans 'Use my location' %}"
-              class="text-primary opacity-70 hover:opacity-100 px-1.5 py-1">
+          <div class="flex gap-2 flex-shrink-0">
+            {% include "gifts/_filter_popover.html" %}
+
+            {# Near me button #}
+            <button type="button" class="btn px-3"
+              title="{% trans 'Show gifts near me' %}"
+              @click="$store.fm.nearMe()">
               <i class="fa fa-crosshairs"></i>
             </button>
-            <button type="button" x-show="$store.fm.locationName" @click="$store.fm.clearLocation()"
-              class="text-primary opacity-70 hover:opacity-100 px-1.5 py-1">
-              <i class="fa fa-times"></i>
-            </button>
           </div>
-          <ul x-show="open" x-cloak
-            class="list-none absolute z-20 inset-x-0 mt-1 bg-secondary bg-opacity-95 rounded shadow-lg border text-sm">
-            <template x-for="res in results" :key="res.place_id">
-              <li><a href="#" class="block px-3 py-2 hover:bg-primary hover:text-secondary"
-                @click.prevent="pick(res)" x-text="res._label"></a></li>
-            </template>
-          </ul>
         </div>
 
-        <div class="flex items-center justify-between">
-          <span class="text-sm text-brown" x-text="$store.fm.markerCount + ' {% trans "results on map" %}'"></span>
-          <button type="button" class="btn text-primary opacity-70 hover:opacity-100 px-1.5 py-1"
-            @click="showToolbar = !showToolbar">
-            <i class="fa fa-times mr-1" x-show="showToolbar"></i>
-            <i class="fa fa-chevron-left mr-1" x-show="!showToolbar"></i>
+        {% include "gifts/_filter_pills.html" %}
+
+        {# Count + clear row #}
+        <div class="flex items-center justify-between text-brown">
+          <span x-text="$store.fm.markerCount + ' {% trans "results on map" %}'"></span>
+          <button type="button" x-cloak
+            x-show="$store.fm.activeCount > 0"
+            class="underline opacity-70 hover:opacity-100"
+            @click="$store.fm.clearAll()">
+            {% trans "Clear filters" %}
           </button>
         </div>
       </div>
 
       {% if user.is_authenticated %}
-      <div class="flex flex-row justify-between gap-2">
-        <a href="{% url 'gifts:create' %}" class="btn shadow self-start">
+      <div class="flex flex-wrap gap-2">
+        <a href="{% url 'gifts:create' %}" class="btn shadow self-start text-sm">
           <i class="fa fa-plus mr-1"></i> {% trans "Add your Wish or Offer" %}
         </a>
-        <a href="{% url 'skills:userskill_add' %}" class="btn shadow self-start">
+        <a href="{% url 'skills:userskill_add' %}" class="btn shadow self-start text-sm">
           <i class="fa fa-graduation-cap mr-1"></i> {% trans "Add your Skill" %}
         </a>
       </div>
@@ -316,31 +255,32 @@
     </div>
 
     {# ── Layer switcher – top-right ── #}
-    <div class="absolute top-4 right-4 z-10" @mouseleave="$store.fm.layerMenuOpen = false">
+    <div class="absolute top-4 right-4 z-10" x-data="{ layerOpen: false }">
       <button type="button"
-        x-show="!$store.fm.layerMenuOpen"
-        @mouseenter="$store.fm.layerMenuOpen = true"
-        @click="$store.fm.layerMenuOpen = true"
-        class="flex items-center justify-center w-14 h-14 rounded-md bg-primary bg-opacity-80 text-secondary shadow-lg border backdrop-blur border-red">
+        x-show="!layerOpen"
+        @mouseenter="layerOpen = !layerOpen"
+        @click="layerOpen = !layerOpen"
+        class="w-14 h-14 rounded-md bg-primary bg-opacity-80 text-secondary shadow-lg border border-red backdrop-blur hover:bg-opacity-90 transition-colors"
+        aria-label="{% trans 'Switch map layer' %}">
         <i class="fa fa-layer-group"></i>
       </button>
-      <div x-show="$store.fm.layerMenuOpen" x-cloak
-        class="w-48 bg-primary text-secondary bg-opacity-80 backdrop-blur rounded-lg shadow-xl border py-2 border-red">
-        <div class="px-3 pb-1 text-xs font-semibold uppercase tracking-wider">{% trans "Map style" %}</div>
+      <div x-show="layerOpen" x-cloak @click.away="layerOpen = false"
+        class="absolute right-0 mt-2 w-48 bg-primary text-secondary bg-opacity-80 backdrop-blur rounded-lg shadow-xl border py-2 border-red">
+        <div class="px-3 py-1 text-xs font-bold uppercase tracking-wider">{% trans "Map style" %}</div>
         <hr class="border-secondary opacity-20 my-1">
         <label class="flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-secondary hover:bg-opacity-10">
           <input type="radio" name="map-layer" class="light" :checked="$store.fm.layer === 'ecobasa'"
-            @change="$store.fm.layer = 'ecobasa'; window._fmSetLayer('ecobasa'); $store.fm.layerMenuOpen = false;">
+            @change="$store.fm.layer = 'ecobasa'; window._fmSetLayer('ecobasa'); layerOpen = false;">
           <span class="text-sm">{% trans "ecobasa" %}</span>
         </label>
         <label class="flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-secondary hover:bg-opacity-10">
           <input type="radio" name="map-layer" class="light" :checked="$store.fm.layer === 'osm'"
-            @change="$store.fm.layer = 'osm'; window._fmSetLayer('osm'); $store.fm.layerMenuOpen = false;">
+            @change="$store.fm.layer = 'osm'; window._fmSetLayer('osm'); layerOpen = false;">
           <span class="text-sm">{% trans "OpenStreetMap" %}</span>
         </label>
         <label class="flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-secondary hover:bg-opacity-10">
           <input type="radio" name="map-layer" class="light" :checked="$store.fm.layer === 'satellite'"
-            @change="$store.fm.layer = 'satellite'; window._fmSetLayer('satellite'); $store.fm.layerMenuOpen = false;">
+            @change="$store.fm.layer = 'satellite'; window._fmSetLayer('satellite'); layerOpen = false;">
           <span class="text-sm">{% trans "Satellite" %}</span>
         </label>
       </div>
@@ -348,25 +288,12 @@
 
     {# ── Loading indicator ── #}
     <div x-show="$store.fm.loading" x-cloak
-      class="absolute bottom-16 left-1/2 -translate-x-1/2 z-10 bg-primary text-secondary px-3 py-1 rounded-full shadow opacity-80">
+      class="absolute bottom-16 left-1/2 -translate-x-1/2 z-10 bg-primary text-secondary px-3 py-1 rounded-full shadow text-xs">
       <i class="fa fa-spinner fa-spin mr-1"></i> {% trans "Loading…" %}
     </div>
 
   </div>{# /map shell #}
-  {# ── Primary Search Button when Toolbar is Hidden ── #}
-    <div class="absolute top-4 left-4 -translate-x-1/2 z-10 hidden"
-      x-show="!showToolbar">
-      <button type="button"
-        class="btn shadow self-start"
-        hx-get="{% url 'gifts:api-list' %}"
-        hx-target="#gift-list-results"
-        hx-swap="innerHTML"
-        hx-include="#gift-filters"
-        hx-sync="#gift-list-results:replace"
-        hx-trigger="click once">
-        <i class="fa fa-search mr-1"></i> {% trans "Search" %}
-      </button>
-    </div>
+
 
   {# ── List modal ── #}
   <div x-show="$store.fm.view === 'list'" x-cloak
@@ -376,135 +303,84 @@
 
     <div class="modal-content"
       role="dialog" aria-modal="true">
-
       <button type="button" class="modal-close" @click="$store.fm.showMap()">&times;</button>
 
-      <div class="space-y-3">
+      <div class="space-y-3 mb-4">
 
-        <div class="flex items-center gap-3">
-          <a href="{% url 'gifts:create' %}" class="btn shadow ml-auto">
-            <i class="fa fa-plus mr-1"></i> {% trans "Add your Wish or Offer" %}
-          </a>
-        </div>
+        {# Search + filter button + near me row #}
+        <div class="flex gap-2 items-stretch">
 
-        {# Modal search #}
-        <div class="relative"
-          x-data="suggestions('{% url 'gifts:api-suggest' %}')"
-          @click.outside="close()"
-        >
-          <div class="absolute inset-y-0 left-3 flex items-center text-primary opacity-80 pointer-events-none">
-            <i class="fa fa-search"></i>
+          <div class="relative flex-1" x-data="suggestions('{% url 'gifts:api-suggest' %}')">
+            <div class="absolute inset-y-0 left-3 flex items-center text-primary opacity-80 pointer-events-none">
+              <i class="fa fa-search"></i>
+            </div>
+            <input
+              type="text"
+              class="form-input icon-input w-full"
+              placeholder="{% trans 'Search by offer, wish, skill or place' %}"
+              autocomplete="off"
+              :value="$store.fm.q"
+              @input="$store.fm.q = $el.value; suggest($el.value); clearTimeout(window._fmInputTimer); window._fmInputTimer = setTimeout(() => { if (!$el.value) window._fmResetView && window._fmResetView(); $store.fm.reload(); }, 400)"
+              @keydown.arrow-down.prevent="moveDown()"
+              @keydown.arrow-up.prevent="moveUp()"
+              @keydown.enter.prevent="choose() || $store.fm.reload()"
+              @keydown.escape="close()"
+              @blur="setTimeout(() => close(), 200)">
+            {% include "gifts/_suggestions_dropdown.html" %}
           </div>
-          <input class="form-input icon-input w-full"
-            type="text"
-            :value="$store.fm.q"
-            placeholder="{% trans 'Search offers, wishes or skills…' %}"
-            autocomplete="off"
-            hx-get="{% url 'gifts:api-list' %}"
-            hx-target="#gift-list-results"
-            hx-swap="innerHTML"
-            hx-trigger="input changed delay:400ms"
-            hx-include="#gift-filters"
-            hx-sync="#gift-list-results:replace"
-            @input="$store.fm.q = $el.value; suggest($el.value); if (!$el.value) window._fmResetView && window._fmResetView()"
-            @keydown.arrow-down.prevent="moveDown()"
-            @keydown.arrow-up.prevent="moveUp()"
-            @keydown.enter.prevent="choose() || triggerSearch()"
-            @keydown.escape="if (open) { $event.stopPropagation(); close(); } else if ($store.fm.q) { $store.fm.clearSearch(); $event.stopPropagation(); }">
-          <ul x-show="open" x-cloak
-            class="suggestions-dropdown"
-            role="listbox">
-            <template x-for="(item, i) in items" :key="i">
-              <li :class="i === active ? 'is-active' : ''"
-                class="px-3 py-1 cursor-pointer justify-between hover:bg-primary hover:text-secondary text-sm flex items-center gap-2"
-                @mousedown.prevent="selectItem(item)" role="option">
-                <span x-text="item.value"></span>
-                <i x-show="item.type === 'skill'" class="fa fa-graduation-cap text-xs opacity-60 flex-shrink-0 w-3"></i>
-                <i x-show="item.type === 'offer'" class="fa fa-gift         text-xs opacity-60 flex-shrink-0 w-3"></i>
-                <i x-show="item.type === 'wish'"  class="fa fa-heart        text-xs opacity-60 flex-shrink-0 w-3"></i>
-                <i x-show="item.type === 'owner'" class="fa fa-user         text-xs opacity-60 flex-shrink-0 w-3"></i>
-                <i x-show="item.type === 'text'"  class="fa fa-align-left   text-xs opacity-60 flex-shrink-0 w-3"></i>
-              </li>
-            </template>
-          </ul>
-        </div>
 
-        {# Modal location #}
-        <div class="relative"
-          x-data="locationDropdown()"
-          @click.outside="closeDropdown()">
-          <div class="absolute inset-y-0 left-3 flex items-center text-primary opacity-50 pointer-events-none">
-            <i class="fa fa-location-dot"></i>
+          <div class="flex-shrink-0">
+            {% include "gifts/_filter_popover.html" %}
           </div>
-          <input class="form-input icon-input w-full pr-16"
-            type="text"
-            :value="$store.fm.locationName"
-            placeholder="{% trans 'Near a place…' %}"
-            autocomplete="off"
-            @input="$store.fm.locationName = $el.value; if (!$el.value) $store.fm.clearLocation(); else geocode($el.value)"
-            @keydown.escape="if (open) { $event.stopPropagation(); closeDropdown(); } else if ($store.fm.location) { $store.fm.clearLocation(); $event.stopPropagation(); }">
-          <div class="absolute inset-y-0 right-0 flex items-center gap-0.5 pr-2">
-            <button type="button" @click="useGPS()" title="{% trans 'Use my location' %}"
-              class="text-primary opacity-70 hover:opacity-100 px-1.5 py-1">
-              <i class="fa fa-crosshairs"></i>
-            </button>
-            <button type="button" x-show="$store.fm.locationName" @click="$store.fm.clearLocation()"
-              class="text-primary opacity-70 hover:opacity-100 px-1.5 py-1">
-              <i class="fa fa-times"></i>
-            </button>
-          </div>
-          <ul x-show="open" x-cloak
-            class="list-none absolute z-20 inset-x-0 mt-1 bg-secondary bg-opacity-95 rounded shadow-lg border text-sm">
-            <template x-for="res in results" :key="res.place_id">
-              <li><a href="#" class="block px-3 py-2 hover:bg-primary hover:text-secondary"
-                @click.prevent="pick(res)" x-text="res._label"></a></li>
-            </template>
-          </ul>
+
+          <button type="button" class="btn"
+            title="{% trans 'Show gifts near me' %}"
+            @click="$store.fm.nearMe()">
+            <i class="fa fa-crosshairs"></i>
+          </button>
         </div>
 
-        {# Modal filters — same x-model as panel, always in sync #}
-        <div class="flex flex-wrap gap-4 pt-1 border-t"
-          @change="document.body.dispatchEvent(new CustomEvent('filter-updated'));
-                   window._fmReloadMarkers && window._fmReloadMarkers();">
-          {% for t in f.form.type %}
-            <label class="inline-flex items-center gap-2 cursor-pointer text-sm">
-              <input type="checkbox" value="{{ t.data.value }}"
-                x-model="$store.fm.types"
-                class="form-checkbox h-4 w-4">
-              <span>{{ t.choice_label }}</span>
-            </label>
-          {% endfor %}
-          {% for t in f.form.categories %}
-            <label class="inline-flex items-center gap-2 cursor-pointer text-sm">
-              <input type="checkbox" value="{{ t.data.value }}"
-                x-model="$store.fm.categories"
-                class="form-checkbox h-4 w-4">
-              <span>{{ t.choice_label }}</span>
-            </label>
-          {% endfor %}
-        </div>
+        {% include "gifts/_filter_pills.html" %}
 
-        {# Result count (OOB-swapped by partial) #}
-        <div class="flex justify-between items-center text-sm text-brown">
+        {# Result count (OOB-swapped by partial) + clear-all button #}
+        <div class="text-xs text-brown flex items-center justify-between gap-2">
           <span id="gift-result-count" hx-swap-oob="true"></span>
+          <button type="button" x-cloak
+            x-show="$store.fm.activeCount > 0"
+            class="underline opacity-70 hover:opacity-100 whitespace-nowrap"
+            @click="$store.fm.clearAll()">
+            {% trans "Clear all filters" %}
+          </button>
         </div>
+      </div>
 
-        {# HTMX list target #}
-        <div id="gift-list-results"
-          class="max-h-[65vh] overflow-y-auto space-y-3 pr-1"
-          hx-get="{% url 'gifts:api-list' %}"
-          hx-target="this"
-          hx-swap="innerHTML"
-          hx-include="#gift-filters"
-          hx-sync="this:replace"
-          hx-trigger="revealed, filter-updated from:body">
-          <div class="text-center py-8 text-brown">
-            <i class="fa fa-spinner fa-spin text-2xl"></i>
-          </div>
+      {# HTMX list target #}
+      <div id="gift-list-results"
+        class="max-h-[60vh] overflow-y-auto space-y-3"
+        hx-get="{% url 'gifts:api-list' %}"
+        hx-target="this"
+        hx-swap="innerHTML"
+        hx-include="#gift-filters"
+        hx-sync="this:replace"
+        hx-trigger="revealed, filter-updated from:body">
+        <div class="text-center py-8 text-brown">
+          <i class="fa fa-spinner fa-spin text-2xl"></i>
         </div>
-
       </div>
     </div>
+  </div>
+
+  {# Hidden filter inputs shared by all HTMX requests — synced from the Alpine store #}
+  <div id="gift-filters" style="display:none" aria-hidden="true">
+    <input type="hidden" name="search"        :value="$store.fm.q">
+    <input type="hidden" name="location_name" :value="$store.fm.locationName">
+    <input type="hidden" name="location"      :value="$store.fm.location">
+    <template x-for="t in $store.fm.types" :key="t">
+      <input type="hidden" name="type" :value="t">
+    </template>
+    <template x-for="c in $store.fm.categories" :key="c">
+      <input type="hidden" name="categories" :value="c">
+    </template>
   </div>
 
 </div>{# /x-data root #}

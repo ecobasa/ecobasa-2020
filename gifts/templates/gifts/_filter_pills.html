@@ -1,0 +1,20 @@
+{# Active filter pills — compact summary row, bound to $store.fm #}
+<div x-show="$store.fm.filterCount > 0 || $store.fm.location" x-cloak class="flex flex-wrap gap-1">
+  <span x-show="$store.fm.location" class="inline-flex items-center gap-1 text-xs bg-primary text-secondary rounded-full px-2 py-0.5">
+    <i class="fa fa-map-marker-alt"></i>
+    <span x-text="$store.fm.locationName" class="truncate max-w-[12rem]"></span>
+    <button @click="$store.fm.location = ''; $store.fm.locationName = ''; $store.fm.reload();" class="opacity-70 hover:opacity-100">&times;</button>
+  </span>
+  <template x-for="t in $store.fm.types" :key="t">
+    <span class="inline-flex items-center gap-1 text-xs bg-primary text-secondary rounded-full px-2 py-0.5">
+      <span x-text="giftTypeLabels[t] || t"></span>
+      <button @click="$store.fm.toggle('types', t)" class="opacity-70 hover:opacity-100">&times;</button>
+    </span>
+  </template>
+  <template x-for="c in $store.fm.categories" :key="c">
+    <span class="inline-flex items-center gap-1 text-xs bg-primary text-secondary rounded-full px-2 py-0.5">
+      <span x-text="giftCategoryLabels[c] || c"></span>
+      <button @click="$store.fm.toggle('categories', c)" class="opacity-70 hover:opacity-100">&times;</button>
+    </span>
+  </template>
+</div>
