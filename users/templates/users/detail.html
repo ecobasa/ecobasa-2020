@@ -27,8 +27,8 @@
 		<div class="md:col-span-4">
 			{% if user.image %}
 				<div x-data="{ open: false }" x-effect="document.body.classList.toggle('overflow-hidden', open)">
-				{# Scales with the sidebar, capped so it doesn't take over the mobile layout. A dashed
-				   ring with a gap, around a circle kept square by padding-top: 100%. #}
+				{% comment %}Scales with the sidebar, capped so it doesn't take over the mobile layout. A dashed
+				   ring with a gap, around a circle kept square by padding-top: 100%.{% endcomment %}
 				<button type="button" @click="open = true" class="block mx-auto mt-15 w-2/3 sm:w-1/2 md:w-full max-w-sm rounded-full border border-dashed border-primary p-1 shadow">
 					<span class="block relative w-full rounded-full overflow-hidden" style="padding-top: 100%;">
 						<img class="cursor-zoom-in absolute inset-0 w-full h-full object-cover" src="{{ user.image.url }}" alt="{{ user.name }}">
@@ -45,9 +45,10 @@
 				</div>
 			{% else %}
 				<div class="mx-auto mt-15 w-2/3 sm:w-1/2 md:w-full max-w-sm rounded-full border border-dashed border-primary p-1">
-					<div class="relative w-full rounded-full bg-primary bg-opacity-10" style="padding-top: 100%;">
+					{# Size container, so the icon is half the circle's width at any size #}
+					<div class="relative w-full rounded-full bg-primary bg-opacity-10" style="padding-top: 100%; container-type: inline-size;">
 						<span class="absolute inset-0 flex items-center justify-center">
-							<i class="fa fa-user text-primary" style="font-size: clamp(4rem, 12vw, 9rem);"></i>
+							<i class="fa fa-user text-primary" style="font-size: 50cqw;"></i>
 						</span>
 					</div>
 				</div>
