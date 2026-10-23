@@ -249,3 +249,40 @@ class TestSkillSuggestions:
     def test_form_shows_the_writing_guide(self, author, owner):
         content = _client_for(author).get(owner.get_absolute_url()).content.decode()
         assert "How to write a reference" in content
+
+
+@pytest.mark.django_db
+class TestDashboard:
+    def test_received_lists_references_about_me_my_listings_and_my_communities(self, author, owner, listing, community):
+        Reference(author=author, recipient=owner, subject=owner, text="About the person.").save()
+        Reference(author=author, recipient=owner, subject=listing, text="About the bicycle.").save()
+        Reference(author=author, recipient=owner, subject=community, text="About the farm.").save()
+        content = _client_for(owner).get(reverse("references:list")).content.decode()
+        for text in ("About the person.", "About the bicycle.", "About the farm."):
+            assert text in content
+
+    def test_given_lists_what_i_wrote(self, author, owner):
+        Reference(author=author, recipient=owner, subject=owner, text="Lovely host.").save()
+        assert "Lovely host." in _client_for(author).get(reverse("references:list") + "?type=given").content.decode()
+        assert "Lovely host." not in _client_for(author).get(reverse("references:list")).content.decode()
+
+    def test_pending_skills_are_listed_and_counted(self, author, owner):
+        _client_for(author).post(_save_url(owner), {"impression": "positive", "text": "Great.", "skill_names": "Beekeeping"})
+        content = _client_for(owner).get(reverse("references:list")).content.decode()
+        assert "Waiting for your confirmation" in content
+        assert 'title="Waiting for your confirmation">1</span>' in content
+
+    def test_confirming_from_the_dashboard_returns_there(self, author, owner):
+        _client_for(author).post(_save_url(owner), {"impression": "positive", "text": "Great.", "skill_names": "Beekeeping"})
+        tag = ReferenceSkill.objects.get()
+        url = reverse("references:skill_tag", args=[tag.pk, "confirm"])
+        response = _client_for(owner).post(url, {"next": reverse("references:list")})
+        assert response["Location"] == reverse("references:list")
+        # Foreign hosts are ignored
+        tag.status = ReferenceSkill.STATUS_PENDING
+        tag.save()
+        response = _client_for(owner).post(url, {"next": "https://evil.example/"})
+        assert response["Location"] == owner.get_absolute_url() + "#references"
+
+    def test_requires_login(self):
+        assert Client().get(reverse("references:list")).status_code == 302

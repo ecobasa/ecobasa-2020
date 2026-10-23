@@ -25,6 +25,19 @@
           <i class="fa fa-graduation-cap mr-2"></i>{% trans "Skills" %}
         </a>
 
+        <div class="pt-4 pb-1 px-3 text-xs text-secondary opacity-60 uppercase tracking-wide">{% trans "References" %}</div>
+        {% with on_references=request.resolver_match.namespace %}
+        <a href="{% url 'references:list' %}"
+           class="flex items-center px-3 py-2 rounded {% if on_references == 'references' and request.GET.type != 'given' %}bg-secondary text-primary font-semibold{% else %}text-secondary hover:bg-secondary hover:text-primary{% endif %}">
+          <i class="fa fa-inbox mr-2"></i>{% trans "Received" %}
+          {% if pending_reference_skills %}<span class="ml-auto pill bg-purple text-secondary text-xs" title="{% trans 'Waiting for your confirmation' %}">{{ pending_reference_skills }}</span>{% endif %}
+        </a>
+        <a href="{% url 'references:list' %}?type=given"
+           class="block px-3 py-2 rounded {% if on_references == 'references' and request.GET.type == 'given' %}bg-secondary text-primary font-semibold{% else %}text-secondary hover:bg-secondary hover:text-primary{% endif %}">
+          <i class="fa fa-feather-pointed mr-2"></i>{% translate "Given" context "references" %}
+        </a>
+        {% endwith %}
+
         <div class="pt-4 pb-1 px-3 text-xs text-secondary opacity-60 uppercase tracking-wide">{% trans "Communities" %}</div>
 
         <a href="{% url 'matches:list' %}?type=volunteer"
