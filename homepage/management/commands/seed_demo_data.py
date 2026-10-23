@@ -29,6 +29,7 @@ from gifts.models import Listing, ListingCategory
 from matches.models import Match, MatchMessage, VolunteerDetails
 from notifications.models import Notification, SKILL_NUDGE_TEXT
 from references.models import Reference, ReferenceSkill
+from references.notifications import notify_reference_created
 from skills.models import CommunitySkill, Skill, SkillWish, UserSkill
 from users.models import User
 
@@ -650,3 +651,7 @@ class Command(BaseCommand):
             for skill_name, status in spec.get("skills", []):
                 skill, _created = Skill.objects.get_or_create(name=skill_name)
                 ReferenceSkill.objects.create(reference=reference, skill=skill, status=status)
+            notify_reference_created(reference)
+            Notification.objects.filter(reference=reference).update(
+                created_at=timezone.now() - timedelta(days=spec["age_days"])
+            )

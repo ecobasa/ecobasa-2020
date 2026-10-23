@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ecobasa\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-23 17:28+0200\n"
+"POT-Creation-Date: 2026-10-23 17:39+0200\n"
 "PO-Revision-Date: 2026-10-23 12:00+0200\n"
 "Last-Translator: ecobasa\n"
 "Language-Team: es\n"
@@ -105,7 +105,7 @@ msgstr "Slug"
 #: skills/templates/skills/skill_list.html:10
 #: skills/templates/skills/skillwish_user_detail.html:15
 #: skills/templates/skills/userskill_detail.html:15
-#: templates/dashboard/base.html:25 users/templates/users/detail.html:129
+#: templates/dashboard/base.html:26 users/templates/users/detail.html:129
 msgid "Skills"
 msgstr "Habilidades"
 
@@ -256,7 +256,7 @@ msgid "Community"
 msgstr "Comunidad"
 
 #: communities/models.py:158 templates/_navbar.html:28
-#: templates/_navbar.html:214 templates/dashboard/base.html:48
+#: templates/_navbar.html:214 templates/dashboard/base.html:49
 #: users/templates/users/detail.html:64
 msgid "Communities"
 msgstr "Comunidades"
@@ -433,7 +433,7 @@ msgstr "Hasta"
 #: matches/templates/matches/email/match_request.txt:15
 #: matches/templates/matches/email/match_response.html:34
 #: matches/templates/matches/email/match_response.txt:5
-#: notifications/models.py:39 templates/postman/write.html:77
+#: notifications/models.py:44 templates/postman/write.html:77
 #: users/templates/users/detail.html:58
 msgid "Message"
 msgstr "Mensaje"
@@ -806,7 +806,7 @@ msgstr "Volver"
 #: gifts/templates/gifts/listing_detail.html:28
 #: matches/templates/matches/matches_list.html:37 references/models.py:94
 #: templates/_navbar.html:32 templates/_navbar.html:213
-#: templates/dashboard/base.html:21
+#: templates/dashboard/base.html:22
 msgid "Gifts"
 msgstr "Regalos"
 
@@ -1030,7 +1030,7 @@ msgstr "Apóyanos en Flattr"
 
 #: matches/apps.py:8 matches/models.py:71
 #: matches/templates/matches/match_detail.html:15 templates/_navbar.html:143
-#: templates/_navbar.html:236 templates/dashboard/base.html:18
+#: templates/_navbar.html:236 templates/dashboard/base.html:19
 msgid "Matches"
 msgstr "Matches"
 
@@ -1167,7 +1167,7 @@ msgstr "Aceptar"
 #: matches/templates/matches/match_detail.html:320
 #: matches/templates/matches/match_detail.html:360
 #: references/templates/references/_reference_card.html:51
-#: references/templates/references/references_list.html:54
+#: references/templates/references/references_list.html:56
 msgid "Decline"
 msgstr "Rechazar"
 
@@ -1285,14 +1285,14 @@ msgstr "Estancias en comunidad"
 #: matches/templates/matches/matches_list.html:41
 #: matches/templates/matches/matches_list.html:68
 #: references/templates/references/references_list.html:30
-#: templates/dashboard/base.html:32
+#: templates/dashboard/base.html:33
 msgid "Received"
 msgstr "Recibidos"
 
 #: matches/templates/matches/matches_list.html:21
 #: matches/templates/matches/matches_list.html:48
 #: matches/templates/matches/matches_list.html:75
-#: templates/dashboard/base.html:14
+#: templates/dashboard/base.html:15
 msgid "Sent"
 msgstr "Enviados"
 
@@ -1329,53 +1329,67 @@ msgstr ""
 "quieres aprender o en qué necesitas ayuda, para que comunidades y personas "
 "puedan encontrarte."
 
-#: notifications/models.py:40
+#: notifications/models.py:45
 msgid "Link"
 msgstr "Enlace"
 
-#: notifications/models.py:47
+#: notifications/models.py:52
 msgid "Notification"
 msgstr "Notificación"
 
-#: notifications/models.py:48 notifications/templates/notifications/list.html:4
+#: notifications/models.py:53 notifications/templates/notifications/list.html:4
 #: notifications/templates/notifications/list.html:9 templates/_navbar.html:59
-#: templates/_navbar.html:78 templates/dashboard/base.html:10
+#: templates/_navbar.html:78 templates/dashboard/base.html:11
 msgid "Notifications"
 msgstr "Notificaciones"
 
-#: notifications/models.py:74
+#: notifications/models.py:81
 #, python-format
 msgid "%(actor)s accepted your counter-proposal for: %(title)s"
 msgstr "%(actor)s ha aceptado tu contrapropuesta para: %(title)s"
 
-#: notifications/models.py:76
+#: notifications/models.py:83
 #, python-format
 msgid "%(actor)s accepted your request: %(title)s"
 msgstr "%(actor)s ha aceptado tu solicitud: %(title)s"
 
-#: notifications/models.py:78
+#: notifications/models.py:85
 #, python-format
 msgid "%(actor)s declined your counter-proposal for: %(title)s"
 msgstr "%(actor)s ha rechazado tu contrapropuesta para: %(title)s"
 
-#: notifications/models.py:80
+#: notifications/models.py:87
 #, python-format
 msgid "%(actor)s declined your request: %(title)s"
 msgstr "%(actor)s ha rechazado tu solicitud: %(title)s"
 
-#: notifications/models.py:82
+#: notifications/models.py:89
 #, python-format
 msgid "%(actor)s suggested another time or place for: %(title)s"
 msgstr "%(actor)s ha propuesto otro momento u otro lugar para: %(title)s"
 
-#: notifications/models.py:84
+#: notifications/models.py:91
 #, python-format
 msgid "%(actor)s sent you a message about: %(title)s"
 msgstr "%(actor)s te ha enviado un mensaje sobre: %(title)s"
 
-#: notifications/models.py:88
+#: notifications/models.py:95 notifications/models.py:102
 msgid "Someone"
 msgstr "Alguien"
+
+#: notifications/models.py:104
+#, python-format
+msgid "%(actor)s wrote a reference about you."
+msgstr "%(actor)s escribió una referencia sobre ti."
+
+#: notifications/models.py:107
+#, python-format
+msgid "%(actor)s wrote a reference about %(title)s."
+msgstr "%(actor)s escribió una referencia sobre %(title)s."
+
+#: notifications/models.py:109
+msgid "It mentions skills that wait for your confirmation."
+msgstr "Menciona habilidades que esperan tu confirmación."
 
 #: notifications/templates/notifications/list.html:15
 msgid "Mark all as read"
@@ -1388,7 +1402,7 @@ msgstr "Todavía no hay notificaciones."
 #: references/apps.py:8 references/models.py:101
 #: references/templates/references/_references.html:3
 #: references/templates/references/references_list.html:7
-#: templates/dashboard/base.html:28
+#: templates/dashboard/base.html:29
 msgid "References"
 msgstr "Referencias"
 
@@ -1437,6 +1451,10 @@ msgstr "Habilidad en referencia"
 #: references/models.py:134
 msgid "Reference Skills"
 msgstr "Habilidades en referencias"
+
+#: references/notifications.py:24
+msgid "New reference"
+msgstr "Nueva referencia"
 
 #: references/templates/references/_guidelines.html:7
 msgid "How to write a reference"
@@ -1565,7 +1583,7 @@ msgid "about"
 msgstr "sobre"
 
 #: references/templates/references/_reference_card.html:48
-#: references/templates/references/references_list.html:50
+#: references/templates/references/references_list.html:52
 msgid "Add to my skills"
 msgstr "Añadir a mis habilidades"
 
@@ -1591,7 +1609,7 @@ msgstr[0] "%(counter)s negativa"
 msgstr[1] "%(counter)s negativas"
 
 #: references/templates/references/_references.html:22
-#: references/templates/references/references_list.html:71
+#: references/templates/references/references_list.html:74
 msgid "No references yet."
 msgstr "Aún no hay referencias."
 
@@ -1635,38 +1653,45 @@ msgid ""
 "You see these references as ambassador of %(name)s: you represent %(name)s "
 "in the gift-economy network, and the network in %(name)s. Share what you "
 "learn here with your community."
-msgstr "Ves estas referencias como embajador/a de %(name)s: representas a %(name)s en la red de la economía del regalo, y a la red en %(name)s. Comparte con tu comunidad lo que aprendas aquí."
+msgstr ""
+"Ves estas referencias como embajador/a de %(name)s: representas a %(name)s "
+"en la red de la economía del regalo, y a la red en %(name)s. Comparte con tu "
+"comunidad lo que aprendas aquí."
 
 #: references/templates/references/references_list.html:30
-#: templates/dashboard/base.html:37
+#: templates/dashboard/base.html:38
 msgctxt "references"
 msgid "Given"
 msgstr "Dadas"
 
 #: references/templates/references/references_list.html:36
-#: templates/dashboard/base.html:33 templates/dashboard/base.html:43
+#: templates/dashboard/base.html:34 templates/dashboard/base.html:44
 msgid "Waiting for your confirmation"
 msgstr "Pendiente de tu confirmación"
 
-#: references/templates/references/references_list.html:43
+#: references/templates/references/references_list.html:44
 #, python-format
 msgid ""
 "%(author)s mentioned it in a <a href=\"#reference-%(anchor)s\" "
 "class=\"underline\">reference</a> about you."
-msgstr "%(author)s mencionó esta habilidad en una <a href=\"#reference-%(anchor)s\" class=\"underline\">referencia</a> sobre ti."
+msgstr ""
+"%(author)s mencionó esta habilidad en una <a href=\"#reference-%(anchor)s\" "
+"class=\"underline\">referencia</a> sobre ti."
 
-#: references/templates/references/references_list.html:45
+#: references/templates/references/references_list.html:46
 #, python-format
 msgid ""
 "%(author)s mentioned it in a <a href=\"#reference-%(anchor)s\" "
 "class=\"underline\">reference</a> about %(subject)s."
-msgstr "%(author)s mencionó esta habilidad en una <a href=\"#reference-%(anchor)s\" class=\"underline\">referencia</a> sobre %(subject)s."
+msgstr ""
+"%(author)s mencionó esta habilidad en una <a href=\"#reference-%(anchor)s\" "
+"class=\"underline\">referencia</a> sobre %(subject)s."
 
-#: references/templates/references/references_list.html:50
+#: references/templates/references/references_list.html:52
 msgid "Add to the community's skills"
 msgstr "Añadir a las habilidades de la comunidad"
 
-#: references/templates/references/references_list.html:69
+#: references/templates/references/references_list.html:72
 msgid ""
 "You haven't written a reference yet. You can write one on any profile, "
 "community, gift or skill page."
@@ -1678,19 +1703,19 @@ msgstr ""
 msgid "Skills listed here"
 msgstr "Habilidades de este perfil"
 
-#: references/views.py:46
+#: references/views.py:49
 msgid "Thank you for sharing your experience."
 msgstr "Gracias por compartir tu experiencia."
 
-#: references/views.py:48
+#: references/views.py:51
 msgid "Please choose an impression and describe your experience."
 msgstr "Elige una impresión y describe tu experiencia."
 
-#: references/views.py:58
+#: references/views.py:61
 msgid "Your reference was removed."
 msgstr "Tu referencia se ha eliminado."
 
-#: references/views.py:73
+#: references/views.py:76
 #, python-format
 msgid "%(skill)s was added to your skills."
 msgstr "%(skill)s se ha añadido a tus habilidades."
@@ -2215,12 +2240,12 @@ msgstr "Tu perfil"
 msgid "Volunteer Requests"
 msgstr "Solicitudes de estancia"
 
-#: templates/_navbar.html:139 templates/dashboard/base.html:52
+#: templates/_navbar.html:139 templates/dashboard/base.html:53
 msgid "Community Volunteering"
 msgstr "Estancia en comunidad"
 
 #: templates/_navbar.html:147 templates/_navbar.html:235
-#: templates/dashboard/base.html:13 templates/postman/inbox.html:7
+#: templates/dashboard/base.html:14 templates/postman/inbox.html:7
 #: templates/postman/view.html:7
 msgid "Inbox"
 msgstr "Bandeja de entrada"
@@ -2243,7 +2268,7 @@ msgstr "Cerrar sesión"
 msgid "Log in"
 msgstr "Iniciar sesión"
 
-#: templates/_navbar.html:243 templates/dashboard/base.html:52
+#: templates/_navbar.html:243 templates/dashboard/base.html:53
 msgid "Volunteer Visits"
 msgstr "Estancias en comunidad"
 
@@ -2254,27 +2279,27 @@ msgstr "Estancias en comunidad"
 msgid "optional"
 msgstr "opcional"
 
-#: templates/dashboard/base.html:12
+#: templates/dashboard/base.html:13
 msgid "Messaging"
 msgstr "Mensajes"
 
-#: templates/dashboard/base.html:15
+#: templates/dashboard/base.html:16
 msgid "Compose"
 msgstr "Redactar"
 
-#: templates/dashboard/base.html:56
+#: templates/dashboard/base.html:57
 msgid "Member Applications"
 msgstr "Solicitudes de membresía"
 
-#: templates/dashboard/base.html:56 templates/dashboard/base.html:62
+#: templates/dashboard/base.html:57 templates/dashboard/base.html:63
 msgid "coming soon"
 msgstr "próximamente"
 
-#: templates/dashboard/base.html:59
+#: templates/dashboard/base.html:60
 msgid "Tours"
 msgstr "Tours"
 
-#: templates/dashboard/base.html:62
+#: templates/dashboard/base.html:63
 msgid "Community-Tour Applications"
 msgstr "Solicitudes de Community-Tour"
 
