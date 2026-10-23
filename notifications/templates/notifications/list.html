@@ -1,10 +1,9 @@
-{% extends 'base.html' %}
+{% extends 'dashboard/base.html' %}
 {% load i18n humanize %}
 
 {% block head_title %}{% trans "Notifications" %} — ecobasa{% endblock %}
 
-{% block content %}
-<div class="container-narrow">
+{% block dashboard_content %}
 
   <div class="flex items-center justify-between mb-6">
     <h1 class="text-2xl text-primary">{% trans "Notifications" %}</h1>
@@ -97,5 +96,4 @@
     <p class="text-brown text-center py-12">{% trans "No notifications yet." %}</p>
   {% endif %}
 
-</div>
-{% endblock %}
+{% endblock dashboard_content %}

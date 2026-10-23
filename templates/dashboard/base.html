@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block content %}
+<div class="container-dashboard">
+  <aside class="md:col-span-1">
+    <div class="bg-primary bg-opacity-75 p-4 rounded">
+      <nav class="space-y-1">
+        {% with ns=request.resolver_match.namespace u=request.resolver_match.url_name %}
+        <a href="{% url 'notifications:list' %}" class="block px-3 py-2 rounded {% if ns == 'notifications' %}bg-secondary text-primary font-semibold{% else %}text-secondary hover:bg-secondary hover:text-primary{% endif %}"><i class="fa fa-bell mr-2"></i>{% trans "Notifications" %}</a>
+
+        <div class="pt-3 pb-1 px-3 text-xs text-secondary opacity-60 uppercase tracking-wide">{% trans "Messaging" %}</div>
+        <a href="{% url 'postman:inbox' %}" class="block px-3 py-2 rounded {% if ns == 'postman' and u == 'inbox' or ns == 'postman' and u == 'view' or ns == 'postman' and u == 'view_conversation' %}bg-secondary text-primary font-semibold{% else %}text-secondary hover:bg-secondary hover:text-primary{% endif %}"><i class="fa fa-envelope mr-2"></i>{% trans "Inbox" %}</a>
+        <a href="{% url 'postman:sent' %}" class="block px-3 py-2 rounded {% if ns == 'postman' and u == 'sent' %}bg-secondary text-primary font-semibold{% else %}text-secondary hover:bg-secondary hover:text-primary{% endif %}"><i class="fa fa-paper-plane mr-2"></i>{% trans "Sent" %}</a>
+        <a href="{% url 'postman:write' %}" class="block px-3 py-2 rounded {% if ns == 'postman' and u == 'write' or ns == 'postman' and u == 'reply' %}bg-secondary text-primary font-semibold{% else %}text-secondary hover:bg-secondary hover:text-primary{% endif %}"><i class="fa fa-pencil-alt mr-2"></i>{% trans "Compose" %}</a>
+        {% endwith %}
+
+        <div class="pt-3 pb-1 px-3 text-xs text-secondary opacity-60 uppercase tracking-wide">{% trans "Matches" %}</div>
+        <a href="{% url 'matches:list' %}?type=gift"
+           class="block px-3 py-2 rounded {% if request_type == 'gift' %}bg-secondary text-primary font-semibold{% else %}text-secondary hover:bg-secondary hover:text-primary{% endif %}">
+          <i class="fa fa-gift mr-2"></i>{% trans "Gifts" %}
+        </a>
+        <a href="{% url 'matches:list' %}?type=skills"
+           class="block px-3 py-2 rounded {% if request_type == 'skills' %}bg-secondary text-primary font-semibold{% else %}text-secondary hover:bg-secondary hover:text-primary{% endif %}">
+          <i class="fa fa-graduation-cap mr-2"></i>{% trans "Skills" %}
+        </a>
+
+        <div class="pt-4 pb-1 px-3 text-xs text-secondary opacity-60 uppercase tracking-wide">{% trans "Communities" %}</div>
+
+        <a href="{% url 'matches:list' %}?type=volunteer"
+          class="block px-3 py-2 rounded {% if request_type == 'volunteer' %}bg-secondary text-primary font-semibold{% else %}text-secondary hover:bg-secondary hover:text-primary{% endif %}">
+          <i class="fa-solid fa-tools mr-2"></i>{% if owned_communities %}{% trans "Volunteer Visits" %}{% else %}{% trans "Community Volunteering" %}{% endif %}
+        </a>
+      {% if owned_communities %}
+        <span class="block px-3 py-2 rounded text-secondary opacity-40 cursor-default text-sm">
+          <i class="fa-solid fa-door-open mr-2"></i>{% trans "Member Applications" %} <span class="text-xs opacity-60">({% trans "coming soon" %})</span>
+        </span>
+      {% endif %}
+        <div class="pt-4 pb-1 px-3 text-xs text-secondary opacity-60 uppercase tracking-wide">{% trans "Tours" %}</div>
+
+        <span class="block px-3 py-2 rounded text-secondary opacity-40 cursor-default text-sm">
+          <i class="fa-solid fa-route mr-2"></i>{% trans "Community-Tour Applications" %} <span class="text-xs opacity-60">({% trans "coming soon" %})</span>
+        </span>
+      </nav>
+    </div>
+  </aside>
+
+  <main class="md:col-span-3 md:pl-6">
+    {% block dashboard_content %}{% endblock dashboard_content %}
+  </main>
+</div>
+{% endblock content %}
