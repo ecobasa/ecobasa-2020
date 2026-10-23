@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ecobasa\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-23 17:39+0200\n"
+"POT-Creation-Date: 2026-10-23 17:43+0200\n"
 "PO-Revision-Date: 2026-10-23 12:00+0200\n"
 "Last-Translator: ecobasa\n"
 "Language-Team: fr\n"
@@ -100,6 +100,8 @@ msgstr "Slug"
 
 #: communities/models.py:24 gifts/filters.py:18
 #: matches/templates/matches/matches_list.html:64 references/forms.py:12
+#: references/templates/references/email/reference_created.html:35
+#: references/templates/references/email/reference_created.txt:9
 #: skills/models.py:122 skills/templates/skills/communityskill_detail.html:15
 #: skills/templates/skills/skill_detail.html:4
 #: skills/templates/skills/skill_detail.html:10
@@ -809,6 +811,8 @@ msgstr "Retour"
 
 #: gifts/templates/gifts/listing_detail.html:28
 #: matches/templates/matches/matches_list.html:37 references/models.py:94
+#: references/templates/references/email/reference_created.html:36
+#: references/templates/references/email/reference_created.txt:10
 #: templates/_navbar.html:32 templates/_navbar.html:213
 #: templates/dashboard/base.html:22
 msgid "Gifts"
@@ -1112,6 +1116,8 @@ msgstr "Nouveau message"
 #: matches/templates/matches/email/match_request.txt:1
 #: matches/templates/matches/email/match_response.html:27
 #: matches/templates/matches/email/match_response.txt:1
+#: references/templates/references/email/reference_created.html:27
+#: references/templates/references/email/reference_created.txt:1
 #, python-format
 msgid "Hello %(name)s,"
 msgstr "Bonjour %(name)s,"
@@ -1124,6 +1130,7 @@ msgstr "Répondre"
 #: matches/templates/matches/email/match_message.html:53
 #: matches/templates/matches/email/match_request.html:87
 #: matches/templates/matches/email/match_response.html:53
+#: references/templates/references/email/reference_created.html:56
 msgid "the sustainable gift-economy community"
 msgstr "la communauté durable de l'économie du don"
 
@@ -1430,6 +1437,8 @@ msgid "Negative"
 msgstr "Négatif"
 
 #: references/models.py:87
+#: references/templates/references/email/reference_created.html:33
+#: references/templates/references/email/reference_created.txt:5
 msgid "Impression"
 msgstr "Impression"
 
@@ -1459,7 +1468,8 @@ msgstr "Compétence dans une référence"
 msgid "Reference Skills"
 msgstr "Compétences dans des références"
 
-#: references/notifications.py:24
+#: references/notifications.py:34
+#: references/templates/references/email/reference_created.html:19
 msgid "New reference"
 msgstr "Nouvelle référence"
 
@@ -1657,6 +1667,17 @@ msgstr "Supprimer ta référence"
 #: references/templates/references/_references.html:140
 msgid "Log in to write a reference"
 msgstr "Connecte-toi pour écrire une référence"
+
+#: references/templates/references/email/reference_created.html:41
+#: references/templates/references/email/reference_created.txt:12
+#, python-format
+msgid "You receive this as ambassador of %(name)s."
+msgstr "Tu reçois ceci en tant qu'ambassadeur·rice de %(name)s."
+
+#: references/templates/references/email/reference_created.html:47
+#: references/templates/references/email/reference_created.txt:14
+msgid "View reference"
+msgstr "Voir la référence"
 
 #: references/templates/references/references_list.html:26
 #, python-format

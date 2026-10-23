@@ -45,7 +45,7 @@ def save(request, content_type_id, object_id):
         reference.save()
         form.save_tags(reference, holder=subject)
         if existing is None:
-            notify_reference_created(reference)
+            notify_reference_created(reference, http_request=request)
         messages.success(request, _("Thank you for sharing your experience."))
     else:
         messages.error(request, _("Please choose an impression and describe your experience."))
