@@ -286,3 +286,10 @@ class TestDashboard:
 
     def test_requires_login(self):
         assert Client().get(reverse("references:list")).status_code == 302
+
+    def test_edit_link_opens_the_form(self, author, owner):
+        Reference(author=author, recipient=owner, subject=owner, text="Lovely host.").save()
+        given = _client_for(author).get(reverse("references:list") + "?type=given").content.decode()
+        assert owner.get_absolute_url() + "?edit_reference=1#references" in given
+        page = _client_for(author).get(owner.get_absolute_url() + "?edit_reference=1").content.decode()
+        assert "x-data=\"{ open: true" in page

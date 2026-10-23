@@ -30,7 +30,7 @@
       {% endif %}
     </div>
     {% if show_edit and ref.subject %}
-      <a href="{{ ref.subject.get_absolute_url }}#references" class="text-xs text-primary flex-shrink-0"><i class="fa fa-pencil mr-1"></i>{% trans "Edit" %}</a>
+      <a href="{{ ref.subject.get_absolute_url }}?edit_reference=1#references" class="text-xs text-primary flex-shrink-0"><i class="fa fa-pencil mr-1"></i>{% trans "Edit" %}</a>
     {% endif %}
   </header>
   <p class="text-sm m-0">{{ ref.text|linebreaksbr }}</p>
