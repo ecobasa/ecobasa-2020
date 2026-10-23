@@ -38,7 +38,7 @@ class Migration(migrations.Migration):
                         ],
                         default="positive",
                         max_length=20,
-                        verbose_name="Tone",
+                        verbose_name="Impression",
                     ),
                 ),
                 ("text", models.TextField(verbose_name="Your experience")),

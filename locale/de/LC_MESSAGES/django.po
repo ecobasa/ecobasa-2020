@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ecobasa\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-23 14:52+0200\n"
+"POT-Creation-Date: 2026-10-23 15:02+0200\n"
 "PO-Revision-Date: 2026-10-23 12:00+0200\n"
 "Last-Translator: ecobasa\n"
 "Language-Team: de\n"
@@ -1028,6 +1028,12 @@ msgstr "Mit Krypto spenden"
 msgid "Flattr us"
 msgstr "Flattr uns"
 
+#: matches/apps.py:8 matches/models.py:71
+#: matches/templates/matches/match_detail.html:15 templates/_navbar.html:143
+#: templates/_navbar.html:236 templates/dashboard/base.html:18
+msgid "Matches"
+msgstr "Matches"
+
 #: matches/forms.py:20
 msgid "Write a short message about why you're interested…"
 msgstr "Schreib kurz, warum du interessiert bist…"
@@ -1073,12 +1079,6 @@ msgstr "Vorgeschlagenes Datum"
 #: matches/templates/matches/match_detail.html:19
 msgid "Match"
 msgstr "Match"
-
-#: matches/models.py:71 matches/templates/matches/match_detail.html:15
-#: templates/_navbar.html:143 templates/_navbar.html:236
-#: templates/dashboard/base.html:18
-msgid "Matches"
-msgstr "Matches"
 
 #: matches/models.py:111
 msgid "Decision"
@@ -1400,7 +1400,7 @@ msgid "Negative"
 msgstr "Negativ"
 
 #: references/models.py:59
-msgid "Tone"
+msgid "Impression"
 msgstr "Eindruck"
 
 #: references/models.py:60
@@ -1461,7 +1461,7 @@ msgid "Thank you for sharing your experience."
 msgstr "Danke, dass du deine Erfahrung teilst."
 
 #: references/views.py:45
-msgid "Please choose a tone and describe your experience."
+msgid "Please choose an impression and describe your experience."
 msgstr "Bitte wähle einen Eindruck und beschreibe deine Erfahrung."
 
 #: references/views.py:55
