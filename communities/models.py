@@ -112,6 +112,18 @@ class Community(UniqueSlugMixin, models.Model):
     def get_absolute_url(self) -> str:
         return reverse("communities:detail", kwargs={"slug": self.slug})
 
+    # Same icons as the community map markers
+    TYPE_ICONS = {
+        COMMUNITY_TYPE_ECOVILLAGE: "fa-people-roof",
+        COMMUNITY_TYPE_COMUNE: "fa-house-chimney",
+        COMMUNITY_TYPE_HOUSEPROJECT: "fa-house-chimney",
+        COMMUNITY_TYPE_FARM: "fa-seedling",
+        COMMUNITY_TYPE_PROJECT: "fa-hammer",
+    }
+
+    def get_type_icon(self):
+        return self.TYPE_ICONS.get(self.type, "fa-house")
+
     # ── matches.Match target protocol ───────────────────────────────
     def get_match_owner(self):
         return self.owner
