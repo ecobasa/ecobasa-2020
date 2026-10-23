@@ -11,7 +11,8 @@ from django.contrib import messages
 from django.http import JsonResponse
 from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.decorators import login_required
-from django.contrib.gis.geos import Polygon
+from django.contrib.gis.geos import Point, Polygon
+from django.contrib.gis.db.models.functions import Distance
 from django.views.decorators.http import require_GET
 from django.core.cache import cache
 
@@ -125,6 +126,16 @@ def _apply_bbox(qs, bbox_param, location_field="location"):
         return qs
 
 
+def _order_by_distance(qs, request):
+    """Sort nearest-first when a 'lat,lon' location param is given (same format as ListingFilter)."""
+    try:
+        lat, lon = map(float, request.GET.get("location", "").split(","))
+    except ValueError:
+        return qs
+    loc = Point(lon, lat, srid=4326)
+    return qs.annotate(distance=Distance("location", loc)).order_by("distance")
+
+
 def _filtered_listings(request, require_location=True):
     types = request.GET.getlist("type")
     listing_types = [t for t in types if t != "skill"]
@@ -166,7 +177,7 @@ def _skill_communities(request, require_location=True):
             | Q(description__icontains=q)
         ).distinct()
 
-    return qs
+    return _order_by_distance(qs, request)
 
 
 def _skill_users(request, require_location=True):
@@ -189,7 +200,7 @@ def _skill_users(request, require_location=True):
             | Q(about__icontains=q)
         ).distinct()
 
-    return qs
+    return _order_by_distance(qs, request)
 
 
 # ── Endpoints ────────────────────────────────────────────────────────
