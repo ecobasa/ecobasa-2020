@@ -3,12 +3,14 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import PermissionDenied
 from django.http import Http404
-from django.shortcuts import get_object_or_404, redirect
+from django.db.models import Prefetch
+from django.shortcuts import get_object_or_404, redirect, render
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.translation import gettext as _
 from django.views.decorators.http import require_POST
 
 from .forms import ReferenceForm
-from .models import Reference, ReferenceSkill, is_referenceable, subject_owner
+from .models import Reference, ReferenceSkill, is_referenceable, references_received, subject_owner
 
 
 def _redirect_to(subject):
@@ -71,4 +73,39 @@ def skill_tag(request, pk, action):
         messages.success(request, _("%(skill)s was added to your skills.") % {"skill": tag.skill.get_name()})
     else:
         tag.decline()
+    next_url = request.POST.get("next", "")
+    if next_url and url_has_allowed_host_and_scheme(next_url, allowed_hosts={request.get_host()}):
+        return redirect(next_url)
     return _redirect_to(subject)
+
+
+@login_required
+def references_list(request):
+    """Dashboard: references received (about you and what you hold) or given (by you)."""
+    tab = "given" if request.GET.get("type") == "given" else "received"
+    user = request.user
+    if tab == "given":
+        references = Reference.objects.filter(author=user)
+    else:
+        references = references_received(user)
+    references = list(
+        references.select_related("author", "content_type").prefetch_related(
+            "subject", Prefetch("skill_tags", queryset=ReferenceSkill.objects.select_related("skill"))
+        ).order_by("-created_at")
+    )
+    pending = []
+    for reference in references:
+        # Every card says what it is about, except received ones about yourself
+        about_you = (reference.content_type.model, reference.object_id) == ("user", str(user.pk))
+        reference.about_other = tab == "given" or not about_you
+        reference.about_you = about_you
+        tags = [t for t in reference.skill_tags.all() if t.status != ReferenceSkill.STATUS_DECLINED]
+        reference.visible_skill_tags = tags
+        if tab == "received":
+            reference.can_confirm = True
+            pending += [t for t in tags if t.status == ReferenceSkill.STATUS_PENDING]
+    return render(request, "references/references_list.html", {
+        "tab": tab,
+        "references": references,
+        "pending_tags": pending,
+    })

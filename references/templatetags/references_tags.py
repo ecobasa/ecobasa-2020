@@ -29,6 +29,7 @@ def references_for(context, subject):
     for reference in references:
         # On a profile, references about the person's listings and skills are listed too
         reference.about_other = (reference.content_type_id, reference.object_id) != (content_type.pk, str(subject.pk))
+        reference.can_confirm = is_owner and not reference.about_other
         # Pending skills are only shown to whoever can confirm them, and to the author
         reference.visible_skill_tags = [
             tag for tag in reference.skill_tags.all()

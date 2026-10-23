@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ecobasa\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-23 16:11+0200\n"
+"POT-Creation-Date: 2026-10-23 16:21+0200\n"
 "PO-Revision-Date: 2026-10-23 12:00+0200\n"
 "Last-Translator: ecobasa\n"
 "Language-Team: de\n"
@@ -256,7 +256,7 @@ msgid "Community"
 msgstr "Gemeinschaft"
 
 #: communities/models.py:158 templates/_navbar.html:28
-#: templates/_navbar.html:214 templates/dashboard/base.html:28
+#: templates/_navbar.html:214 templates/dashboard/base.html:41
 #: users/templates/users/detail.html:64
 msgid "Communities"
 msgstr "Gemeinschaften"
@@ -337,6 +337,7 @@ msgstr "Schließen"
 
 #: communities/templates/communities/community_detail.html:103
 #: gifts/templates/gifts/listing_detail.html:81
+#: references/templates/references/_reference_card.html:33
 msgid "Edit"
 msgstr "Bearbeiten"
 
@@ -447,7 +448,7 @@ msgstr ""
 #: gifts/templates/gifts/listing_delete_confirm.html:29
 #: gifts/templates/gifts/listing_form.html:39
 #: matches/templates/matches/match_detail.html:351
-#: references/templates/references/_references.html:120
+#: references/templates/references/_references.html:64
 #: skills/templates/skills/communityskill_confirm_delete.html:17
 #: skills/templates/skills/communityskill_form.html:95
 #: skills/templates/skills/skillwish_form.html:35
@@ -567,7 +568,7 @@ msgstr "Art"
 
 #: communities/templates/communities/community_list.html:235
 #: communities/templates/communities/community_list.html:479
-#: matches/models.py:63 references/models.py:129
+#: matches/models.py:63 references/models.py:138
 msgid "Status"
 msgstr "Status"
 
@@ -804,7 +805,7 @@ msgid "Back"
 msgstr "Zurück"
 
 #: gifts/templates/gifts/listing_detail.html:28
-#: matches/templates/matches/matches_list.html:37 references/models.py:94
+#: matches/templates/matches/matches_list.html:37 references/models.py:103
 #: templates/_navbar.html:32 templates/_navbar.html:213
 #: templates/dashboard/base.html:21
 msgid "Gifts"
@@ -878,7 +879,7 @@ msgstr "Angenommen"
 #: matches/templates/matches/_match_row.html:49
 #: matches/templates/matches/match_detail.html:36
 #: matches/templates/matches/match_detail.html:116
-#: matches/templates/matches/match_detail.html:196 references/models.py:124
+#: matches/templates/matches/match_detail.html:196 references/models.py:133
 msgid "Declined"
 msgstr "Abgelehnt"
 
@@ -1168,7 +1169,8 @@ msgstr "Annehmen"
 #: matches/templates/matches/email/match_request.txt:20
 #: matches/templates/matches/match_detail.html:320
 #: matches/templates/matches/match_detail.html:360
-#: references/templates/references/_references.html:57
+#: references/templates/references/_reference_card.html:50
+#: references/templates/references/references_list.html:33
 msgid "Decline"
 msgstr "Ablehnen"
 
@@ -1220,7 +1222,7 @@ msgid "Counter-proposal pending"
 msgstr "Gegenvorschlag offen"
 
 #: matches/templates/matches/match_detail.html:72
-#: references/templates/references/_references.html:80
+#: references/templates/references/_references.html:24
 msgid "Write a reference"
 msgstr "Referenz schreiben"
 
@@ -1285,6 +1287,8 @@ msgstr "Gemeinschaftsaufenthalte"
 #: matches/templates/matches/matches_list.html:14
 #: matches/templates/matches/matches_list.html:41
 #: matches/templates/matches/matches_list.html:68
+#: references/templates/references/references_list.html:10
+#: templates/dashboard/base.html:32
 msgid "Received"
 msgstr "Erhalten"
 
@@ -1386,8 +1390,10 @@ msgstr "Alle als gelesen markieren"
 msgid "No notifications yet."
 msgstr "Noch keine Benachrichtigungen."
 
-#: references/apps.py:8 references/models.py:101
+#: references/apps.py:8 references/models.py:110
 #: references/templates/references/_references.html:3
+#: references/templates/references/references_list.html:7
+#: templates/dashboard/base.html:28
 msgid "References"
 msgstr "Referenzen"
 
@@ -1395,124 +1401,152 @@ msgstr "Referenzen"
 msgid "What happened? How did you feel, and what did you need?"
 msgstr "Was ist passiert? Wie ging es dir, und was hast du gebraucht?"
 
-#: references/models.py:67
+#: references/models.py:76
 msgid "Positive"
 msgstr "Positiv"
 
-#: references/models.py:68
+#: references/models.py:77
 msgid "Neutral"
 msgstr "Neutral"
 
-#: references/models.py:69
+#: references/models.py:78
 msgid "Negative"
 msgstr "Negativ"
 
-#: references/models.py:87
+#: references/models.py:96
 msgid "Impression"
 msgstr "Eindruck"
 
-#: references/models.py:88
+#: references/models.py:97
 msgid "Your experience"
 msgstr "Deine Erfahrung"
 
-#: references/models.py:100
+#: references/models.py:109
 msgid "Reference"
 msgstr "Referenz"
 
-#: references/models.py:122 references/templates/references/_references.html:50
-#: references/templates/references/_references.html:60
+#: references/models.py:131
+#: references/templates/references/_reference_card.html:43
+#: references/templates/references/_reference_card.html:53
 msgid "Waiting for confirmation"
 msgstr "Wartet auf Bestätigung"
 
-#: references/models.py:123
+#: references/models.py:132
 msgid "Confirmed"
 msgstr "Bestätigt"
 
-#: references/models.py:133
+#: references/models.py:142
 msgid "Reference Skill"
 msgstr "Fähigkeit in Referenz"
 
-#: references/models.py:134
+#: references/models.py:143
 msgid "Reference Skills"
 msgstr "Fähigkeiten in Referenzen"
 
-#: references/templates/references/_guidelines.html:5
+#: references/templates/references/_guidelines.html:7
 msgid "How to write a reference"
 msgstr "So schreibst du eine Referenz"
 
-#: references/templates/references/_guidelines.html:7
+#: references/templates/references/_guidelines.html:10
 msgid ""
 "A reference shares your experience. It is not a verdict on another person."
-msgstr "Eine Referenz teilt deine Erfahrung. Sie ist kein Urteil über einen anderen Menschen."
+msgstr ""
+"Eine Referenz teilt deine Erfahrung. Sie ist kein Urteil über einen anderen "
+"Menschen."
 
-#: references/templates/references/_guidelines.html:9
+#: references/templates/references/_guidelines.html:12
 msgid "Describe what happened."
 msgstr "Beschreibe, was passiert ist."
 
-#: references/templates/references/_guidelines.html:9
+#: references/templates/references/_guidelines.html:12
 msgid ""
 "What did you see, hear and do together? Stay concrete, the way a camera "
 "would have recorded it."
-msgstr "Was hast du gesehen und gehört, was habt ihr zusammen gemacht? Bleib konkret, so wie eine Kamera es aufgenommen hätte."
+msgstr ""
+"Was hast du gesehen und gehört, was habt ihr zusammen gemacht? Bleib "
+"konkret, so wie eine Kamera es aufgenommen hätte."
 
-#: references/templates/references/_guidelines.html:10
+#: references/templates/references/_guidelines.html:13
 msgid "Speak from yourself."
 msgstr "Sprich von dir."
 
-#: references/templates/references/_guidelines.html:10
+#: references/templates/references/_guidelines.html:13
 msgid "Write “I felt …” or “I was glad that …” rather than “they are …”."
-msgstr "Schreib „Ich habe mich … gefühlt“ oder „Ich habe mich gefreut, dass …“ statt „die Person ist …“."
+msgstr ""
+"Schreib „Ich habe mich … gefühlt“ oder „Ich habe mich gefreut, dass …“ statt "
+"„die Person ist …“."
 
-#: references/templates/references/_guidelines.html:11
+#: references/templates/references/_guidelines.html:14
 msgid "Name your feelings and needs."
 msgstr "Benenne deine Gefühle und Bedürfnisse."
 
-#: references/templates/references/_guidelines.html:11
+#: references/templates/references/_guidelines.html:14
 msgid ""
 "“I felt uneasy because I need clear agreements” tells others more than "
 "“unreliable”."
-msgstr "„Ich war unruhig, weil mir klare Absprachen wichtig sind“ sagt anderen mehr als „unzuverlässig“."
+msgstr ""
+"„Ich war unruhig, weil mir klare Absprachen wichtig sind“ sagt anderen mehr "
+"als „unzuverlässig“."
 
-#: references/templates/references/_guidelines.html:12
+#: references/templates/references/_guidelines.html:15
 msgid "Leave out labels and judgements."
 msgstr "Lass Etiketten und Urteile weg."
 
-#: references/templates/references/_guidelines.html:12
+#: references/templates/references/_guidelines.html:15
 msgid ""
 "Words like rude, lazy, toxic or perfect describe your judgement, not the "
 "person. Let your experience speak."
-msgstr "Wörter wie unhöflich, faul, toxisch oder perfekt beschreiben dein Urteil, nicht den Menschen. Lass deine Erfahrung sprechen."
+msgstr ""
+"Wörter wie unhöflich, faul, toxisch oder perfekt beschreiben dein Urteil, "
+"nicht den Menschen. Lass deine Erfahrung sprechen."
 
-#: references/templates/references/_guidelines.html:13
+#: references/templates/references/_guidelines.html:16
 msgid "Take responsibility for your feelings."
 msgstr "Übernimm Verantwortung für deine Gefühle."
 
-#: references/templates/references/_guidelines.html:13
+#: references/templates/references/_guidelines.html:16
 msgid ""
 "What others do can touch your feelings; the feelings come from your own "
 "needs. Say what you would have wished for."
-msgstr "Was andere tun, kann Gefühle in dir auslösen; ihre Wurzel sind deine eigenen Bedürfnisse. Sag, was du dir gewünscht hättest."
+msgstr ""
+"Was andere tun, kann Gefühle in dir auslösen; ihre Wurzel sind deine eigenen "
+"Bedürfnisse. Sag, was du dir gewünscht hättest."
 
-#: references/templates/references/_guidelines.html:14
+#: references/templates/references/_guidelines.html:17
 msgid "Write as if they were reading along."
 msgstr "Schreib so, als würde die Person mitlesen."
 
-#: references/templates/references/_guidelines.html:14
+#: references/templates/references/_guidelines.html:17
 msgid "They will. Be honest and kind at the same time."
 msgstr "Das wird sie. Sei ehrlich und freundlich zugleich."
 
-#: references/templates/references/_guidelines.html:17
+#: references/templates/references/_guidelines.html:20
 msgid ""
 "If something went wrong: have you talked about it with them? A reference is "
 "not the place to settle a conflict, but it can help others to know about it. "
 "If you felt unsafe, say so clearly."
-msgstr "Wenn etwas schiefgelaufen ist: Habt ihr darüber gesprochen? Eine Referenz ist nicht der Ort, einen Konflikt auszutragen, aber sie kann anderen helfen, davon zu wissen. Wenn du dich nicht sicher gefühlt hast, sag es klar."
+msgstr ""
+"Wenn etwas schiefgelaufen ist: Habt ihr darüber gesprochen? Eine Referenz "
+"ist nicht der Ort, einen Konflikt auszutragen, aber sie kann anderen helfen, "
+"davon zu wissen. Wenn du dich nicht sicher gefühlt hast, sag es klar."
 
-#: references/templates/references/_guidelines.html:19
+#: references/templates/references/_guidelines.html:22
 msgid ""
 "You can edit your reference at any time, for example after you have talked "
 "it through."
-msgstr "Du kannst deine Referenz jederzeit ändern, zum Beispiel nachdem ihr darüber gesprochen habt."
+msgstr ""
+"Du kannst deine Referenz jederzeit ändern, zum Beispiel nachdem ihr darüber "
+"gesprochen habt."
+
+#: references/templates/references/_reference_card.html:22
+msgctxt "reference subject"
+msgid "about"
+msgstr "zu"
+
+#: references/templates/references/_reference_card.html:47
+#: references/templates/references/references_list.html:29
+msgid "Add to my skills"
+msgstr "Zu meinen Fähigkeiten hinzufügen"
 
 #: references/templates/references/_references.html:7
 #, python-format
@@ -1535,70 +1569,91 @@ msgid_plural "%(counter)s negative"
 msgstr[0] "%(counter)s negative"
 msgstr[1] "%(counter)s negative"
 
-#: references/templates/references/_references.html:33
-msgctxt "reference subject"
-msgid "about"
-msgstr "zu"
-
-#: references/templates/references/_references.html:54
-msgid "Add to my skills"
-msgstr "Zu meinen Fähigkeiten hinzufügen"
-
-#: references/templates/references/_references.html:74
+#: references/templates/references/_references.html:18
+#: references/templates/references/references_list.html:50
 msgid "No references yet."
 msgstr "Noch keine Referenzen."
 
-#: references/templates/references/_references.html:80
+#: references/templates/references/_references.html:24
 msgid "Edit your reference"
 msgstr "Deine Referenz bearbeiten"
 
-#: references/templates/references/_references.html:99
+#: references/templates/references/_references.html:43
 msgid "Which skills was it about?"
 msgstr "Um welche Fähigkeiten ging es?"
 
-#: references/templates/references/_references.html:101
+#: references/templates/references/_references.html:45
 msgid "Skills they don't list yet are added once they confirm."
 msgstr ""
 "Fähigkeiten, die noch nicht im Profil stehen, werden erst nach Bestätigung "
 "hinzugefügt."
 
-#: references/templates/references/_references.html:106
+#: references/templates/references/_references.html:50
 msgid "Which gifts was it about?"
 msgstr "Um welche Geschenke ging es?"
 
-#: references/templates/references/_references.html:115
+#: references/templates/references/_references.html:59
 msgid "Only the name is kept, nothing else."
 msgstr "Gespeichert wird nur der Name, sonst nichts."
 
-#: references/templates/references/_references.html:119
+#: references/templates/references/_references.html:63
 msgid "Save reference"
 msgstr "Referenz speichern"
 
-#: references/templates/references/_references.html:126
+#: references/templates/references/_references.html:70
 msgid "Remove your reference"
 msgstr "Deine Referenz entfernen"
 
-#: references/templates/references/_references.html:192
+#: references/templates/references/_references.html:136
 msgid "Log in to write a reference"
 msgstr "Melde dich an, um eine Referenz zu schreiben"
 
-#: references/templatetags/references_tags.py:79
+#: references/templates/references/references_list.html:10
+#: templates/dashboard/base.html:37
+msgctxt "references"
+msgid "Given"
+msgstr "Gegeben"
+
+#: references/templates/references/references_list.html:15
+#: templates/dashboard/base.html:33
+msgid "Waiting for your confirmation"
+msgstr "Wartet auf deine Bestätigung"
+
+#: references/templates/references/references_list.html:22
+#, python-format
+msgid "%(author)s mentioned it in a reference about you."
+msgstr "%(author)s hat sie in einer Referenz über dich erwähnt."
+
+#: references/templates/references/references_list.html:24
+#, python-format
+msgid "%(author)s mentioned it in a reference about %(subject)s."
+msgstr "%(author)s hat sie in einer Referenz über %(subject)s erwähnt."
+
+#: references/templates/references/references_list.html:48
+msgid ""
+"You haven't written a reference yet. You can write one on any profile, "
+"community, gift or skill page."
+msgstr ""
+"Du hast noch keine Referenz geschrieben. Das geht auf jeder Profil-, "
+"Gemeinschafts-, Geschenk- oder Fähigkeitsseite."
+
+#: references/templatetags/references_tags.py:80
 msgid "Skills listed here"
 msgstr "Fähigkeiten hier im Profil"
 
-#: references/views.py:44
+#: references/views.py:46
 msgid "Thank you for sharing your experience."
 msgstr "Danke, dass du deine Erfahrung teilst."
 
-#: references/views.py:46
+#: references/views.py:48
 msgid "Please choose an impression and describe your experience."
 msgstr "Bitte wähle einen Eindruck und beschreibe deine Erfahrung."
 
-#: references/views.py:56
+#: references/views.py:58
 msgid "Your reference was removed."
 msgstr "Deine Referenz wurde entfernt."
 
-#: references/views.py:71
+#: references/views.py:73
 #, python-format
 msgid "%(skill)s was added to your skills."
 msgstr "%(skill)s wurde zu deinen Fähigkeiten hinzugefügt."
@@ -2126,7 +2181,7 @@ msgstr "Dein Profil"
 msgid "Volunteer Requests"
 msgstr "Anfragen für Gemeinschaftsaufenthalte"
 
-#: templates/_navbar.html:139 templates/dashboard/base.html:32
+#: templates/_navbar.html:139 templates/dashboard/base.html:45
 msgid "Community Volunteering"
 msgstr "Gemeinschaftsaufenthalt"
 
@@ -2154,7 +2209,7 @@ msgstr "Abmelden"
 msgid "Log in"
 msgstr "Anmelden"
 
-#: templates/_navbar.html:243 templates/dashboard/base.html:32
+#: templates/_navbar.html:243 templates/dashboard/base.html:45
 msgid "Volunteer Visits"
 msgstr "Gemeinschaftsaufenthalte"
 
@@ -2173,19 +2228,19 @@ msgstr "Nachrichten"
 msgid "Compose"
 msgstr "Verfassen"
 
-#: templates/dashboard/base.html:36
+#: templates/dashboard/base.html:49
 msgid "Member Applications"
 msgstr "Mitgliedsanfragen"
 
-#: templates/dashboard/base.html:36 templates/dashboard/base.html:42
+#: templates/dashboard/base.html:49 templates/dashboard/base.html:55
 msgid "coming soon"
 msgstr "bald verfügbar"
 
-#: templates/dashboard/base.html:39
+#: templates/dashboard/base.html:52
 msgid "Tours"
 msgstr "Touren"
 
-#: templates/dashboard/base.html:42
+#: templates/dashboard/base.html:55
 msgid "Community-Tour Applications"
 msgstr "Community-Tour-Anfragen"
 

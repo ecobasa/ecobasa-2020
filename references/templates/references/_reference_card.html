@@ -1,0 +1,63 @@
+{% load i18n %}
+{# One reference: author, impression, what it is about, text, skill tags and gift names #}
+<article class="border rounded-lg p-4
+  {% if ref.impression == 'positive' %}border-green bg-green bg-opacity-5
+  {% elif ref.impression == 'negative' %}border-red bg-red bg-opacity-5
+  {% else %}border-brown bg-secondary bg-opacity-5{% endif %}">
+  <header class="flex items-center gap-3 mb-2">
+    <a href="{{ ref.author.get_absolute_url }}" class="flex-shrink-0">
+      {% if ref.author.image %}
+        <img src="{{ ref.author.image.url }}" alt="" class="w-8 h-8 rounded-full object-cover">
+      {% else %}
+        <div class="w-8 h-8 rounded-full bg-primary bg-opacity-20 flex items-center justify-center">
+          <i class="fa fa-user text-xs text-primary"></i>
+        </div>
+      {% endif %}
+    </a>
+    <div class="flex-1 min-w-0">
+      <a href="{{ ref.author.get_absolute_url }}" class="text-sm font-semibold text-primary">{{ ref.author.name|default:ref.author.username }}</a>
+      <div class="text-xs text-brown">{{ ref.get_impression_display }} · {{ ref.created_at|date:"SHORT_DATE_FORMAT" }}</div>
+      {% if ref.about_other and ref.subject %}
+        <div class="text-xs text-brown">
+          {% translate "about" context "reference subject" %}
+          {# Same icons as the profile: skills, offers, wishes #}
+          <a href="{{ ref.subject.get_absolute_url }}" class="text-primary"><i class="mr-1
+            {% if ref.content_type.model == 'listing' %}{% if ref.subject.type == 'wish' %}fa-solid fa-hand-holding-heart{% else %}fa fa-gift{% endif %}
+            {% elif ref.content_type.model == 'userskill' or ref.content_type.model == 'communityskill' %}fa fa-graduation-cap
+            {% elif ref.content_type.model == 'user' %}fa fa-user
+            {% else %}fa {{ ref.subject.get_match_icon }}{% endif %}"></i>{% if ref.content_type.model == 'user' %}{{ ref.subject.name|default:ref.subject.username }}{% else %}{{ ref.subject.get_match_display_name }}{% endif %}</a>
+        </div>
+      {% endif %}
+    </div>
+    {% if show_edit and ref.subject %}
+      <a href="{{ ref.subject.get_absolute_url }}#references" class="text-xs text-primary flex-shrink-0"><i class="fa fa-pencil mr-1"></i>{% trans "Edit" %}</a>
+    {% endif %}
+  </header>
+  <p class="text-sm m-0">{{ ref.text|linebreaksbr }}</p>
+  {% if ref.visible_skill_tags or ref.gift_names %}
+    <div class="flex flex-wrap items-center gap-2 mt-3 text-xs">
+      {% for tag in ref.visible_skill_tags %}
+        {% if tag.status == 'confirmed' %}
+          <span class="pill bg-purple"><i class="fa fa-graduation-cap mr-1"></i>{{ tag.skill.get_name }}</span>
+        {% else %}
+          <span class="px-3 py-1 rounded-full font-semibold inline-flex items-center border border-dashed border-purple text-purple bg-secondary" title="{% trans 'Waiting for confirmation' %}">
+            <i class="fa fa-graduation-cap mr-1"></i>{{ tag.skill.get_name }}
+            {% if ref.can_confirm %}
+              <form method="post" action="{% url 'references:skill_tag' tag.pk 'confirm' %}" class="inline">
+                {% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}"><button type="submit" class="ml-1 underline" title="{% trans 'Add to my skills' %}"><i class="fa fa-check"></i></button>
+              </form>
+              <form method="post" action="{% url 'references:skill_tag' tag.pk 'decline' %}" class="inline">
+                {% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}"><button type="submit" class="ml-1 underline" title="{% trans 'Decline' %}"><i class="fa fa-times"></i></button>
+              </form>
+            {% else %}
+              <span class="opacity-70">· {% trans "Waiting for confirmation" %}</span>
+            {% endif %}
+          </span>
+        {% endif %}
+      {% endfor %}
+      {% for gift in ref.gift_names %}
+        <span class="pill bg-primary"><i class="fa fa-gift mr-1"></i>{{ gift }}</span>
+      {% endfor %}
+    </div>
+  {% endif %}
+</article>

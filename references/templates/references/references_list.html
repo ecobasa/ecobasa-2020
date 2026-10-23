@@ -1,0 +1,53 @@
+{% extends 'dashboard/base.html' %}
+{% load i18n %}
+
+{% block dashboard_content %}
+<section class="mb-8">
+  <h1 class="text-4xl font-semibold flex items-center gap-2">
+    <i class="fa fa-comments text-primary"></i>{% trans "References" %}
+  </h1>
+  <h2 class="text-2xl font-semibold uppercase tracking-wide mb-4 mt-0">
+    {% if tab == "given" %}{% translate "Given" context "references" %}{% else %}{% trans "Received" %}{% endif %}
+  </h2>
+
+  {% if pending_tags %}
+    <div class="border border-purple rounded-lg p-4 mb-6 bg-purple bg-opacity-5">
+      <h3 class="text-lg font-semibold mt-0 mb-3">{% trans "Waiting for your confirmation" %}</h3>
+      <ul class="space-y-3">
+        {% for tag in pending_tags %}
+          <li class="flex flex-wrap items-center gap-3 text-sm">
+            <span class="pill bg-purple text-xs"><i class="fa fa-graduation-cap mr-1"></i>{{ tag.skill.get_name }}</span>
+            <span class="flex-1 min-w-0">
+              {% if tag.reference.about_you %}
+                {% blocktrans with author=tag.reference.author.name|default:tag.reference.author.username %}{{ author }} mentioned it in a reference about you.{% endblocktrans %}
+              {% else %}
+                {% blocktrans with author=tag.reference.author.name|default:tag.reference.author.username subject=tag.reference.subject.get_match_display_name %}{{ author }} mentioned it in a reference about {{ subject }}.{% endblocktrans %}
+              {% endif %}
+            </span>
+            <form method="post" action="{% url 'references:skill_tag' tag.pk 'confirm' %}" class="inline">
+              {% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}">
+              <button type="submit" class="btn btn-green"><i class="fa fa-check mr-1"></i>{% trans "Add to my skills" %}</button>
+            </form>
+            <form method="post" action="{% url 'references:skill_tag' tag.pk 'decline' %}" class="inline">
+              {% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}">
+              <button type="submit" class="btn btn-red"><i class="fa fa-times mr-1"></i>{% trans "Decline" %}</button>
+            </form>
+          </li>
+        {% endfor %}
+      </ul>
+    </div>
+  {% endif %}
+
+  {% if references %}
+    <div class="space-y-3">
+      {% for ref in references %}
+        {% if tab == "given" %}{% include "references/_reference_card.html" with show_edit=True %}{% else %}{% include "references/_reference_card.html" %}{% endif %}
+      {% endfor %}
+    </div>
+  {% elif tab == "given" %}
+    <p>{% trans "You haven't written a reference yet. You can write one on any profile, community, gift or skill page." %}</p>
+  {% else %}
+    <p>{% trans "No references yet." %}</p>
+  {% endif %}
+</section>
+{% endblock dashboard_content %}
