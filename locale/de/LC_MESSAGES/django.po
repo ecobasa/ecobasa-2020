@@ -1662,18 +1662,14 @@ msgstr "Wartet auf deine Bestätigung"
 msgid ""
 "%(author)s mentioned it in a <a href=\"#reference-%(anchor)s\" "
 "class=\"underline\">reference</a> about you."
-msgstr ""
-"%(author)s hat sie in einer <a href=\"#reference-%(anchor)s\" "
-"class=\"underline\">Referenz</a> über dich erwähnt."
+msgstr "%(author)s hat diese Fähigkeit in einer <a href=\"#reference-%(anchor)s\" class=\"underline\">Referenz</a> über dich erwähnt."
 
 #: references/templates/references/references_list.html:45
 #, python-format
 msgid ""
 "%(author)s mentioned it in a <a href=\"#reference-%(anchor)s\" "
 "class=\"underline\">reference</a> about %(subject)s."
-msgstr ""
-"%(author)s hat sie in einer <a href=\"#reference-%(anchor)s\" "
-"class=\"underline\">Referenz</a> über %(subject)s erwähnt."
+msgstr "%(author)s hat diese Fähigkeit in einer <a href=\"#reference-%(anchor)s\" class=\"underline\">Referenz</a> über %(subject)s erwähnt."
 
 #: references/templates/references/references_list.html:50
 msgid "Add to the community's skills"
