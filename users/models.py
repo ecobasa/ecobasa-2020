@@ -116,6 +116,12 @@ class User(AbstractUser):
         """What references on this profile can be about: the person, their listings and skills."""
         return [self, *self.listings.all(), *self.user_skills.all()]
 
+    def has_skill(self, skill):
+        return self.user_skills.filter(skill=skill).exists()
+
+    def add_skill(self, skill):
+        return self.user_skills.get_or_create(skill=skill)[0]
+
     def email_user(self, subject, message, from_email=None, **kwargs):
         '''
         Sends an email to this User.
