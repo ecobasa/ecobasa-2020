@@ -20,6 +20,31 @@ class UserManager(BaseUserManager):
         except self.model.DoesNotExist:
             return self.get(username=username)
 
+    def get_by_slug(self, slug):
+        """Reverse of User.get_absolute_url(): username, then slugified name, then pk. None if no match.
+
+        Names are compared slugified, so "bjorn-achterberg" finds "Björn Achterberg".
+        """
+        user = self.filter(username=slug).first()
+        if user:
+            return user
+        if slug.isdigit():
+            return self.filter(pk=slug).first()
+        # Narrow by the slug's words (accented words won't match, the others will), then compare exactly
+        query = models.Q()
+        for word in slug.split("-"):
+            if len(word) >= 3:
+                query |= models.Q(name__icontains=word)
+        names = self.exclude(name="").exclude(name__isnull=True)
+        rows = list(names.filter(query).values_list("pk", "name")) if query else []
+        if not rows:
+            # every word is accented or short (e.g. "José", "Zoë"), so no narrowing is possible
+            rows = names.values_list("pk", "name")
+        for pk, name in rows:
+            if slugify(name) == slug:
+                return self.get(pk=pk)
+        return None
+
     def _create_user(self, email, password, **extra_fields):
         """Create and save a User with the given email and password."""
         if not email:

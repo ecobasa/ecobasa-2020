@@ -33,25 +33,10 @@ class DetailView(DetailView):
         if queryset is None:
             queryset = self.get_queryset()
 
-        # Try username match first (legacy behavior)
-        try:
-            return queryset.get(username=slug)
-        except self.model.DoesNotExist:
-            pass
-
-        # Try matching slugified name
-        try:
-            return queryset.get(name__isnull=False, name__iexact=slug.replace("-", " "))
-        except self.model.DoesNotExist:
-            pass
-
-        # Fallback to primary key for users without a username
-        try:
-            return queryset.get(pk=slug)
-        except (self.model.DoesNotExist, ValueError, TypeError):
-            pass
-
-        raise Http404("No user found matching the query")
+        user = User.objects.get_by_slug(slug)
+        if user is None or not queryset.filter(pk=user.pk).exists():
+            raise Http404("No user found matching the query")
+        return user
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
