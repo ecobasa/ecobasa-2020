@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ecobasa\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-23 17:43+0200\n"
+"POT-Creation-Date: 2026-10-23 18:01+0200\n"
 "PO-Revision-Date: 2026-10-23 12:00+0200\n"
 "Last-Translator: ecobasa\n"
 "Language-Team: es\n"
@@ -97,7 +97,7 @@ msgid "Slug"
 msgstr "Slug"
 
 #: communities/models.py:24 gifts/filters.py:18
-#: matches/templates/matches/matches_list.html:64 references/forms.py:12
+#: matches/templates/matches/matches_list.html:69 references/forms.py:12
 #: references/templates/references/email/reference_created.html:35
 #: references/templates/references/email/reference_created.txt:9
 #: skills/models.py:122 skills/templates/skills/communityskill_detail.html:15
@@ -258,7 +258,7 @@ msgid "Community"
 msgstr "Comunidad"
 
 #: communities/models.py:158 templates/_navbar.html:28
-#: templates/_navbar.html:214 templates/dashboard/base.html:49
+#: templates/_navbar.html:233 templates/dashboard/base.html:49
 #: users/templates/users/detail.html:64
 msgid "Communities"
 msgstr "Comunidades"
@@ -806,10 +806,10 @@ msgid "Back"
 msgstr "Volver"
 
 #: gifts/templates/gifts/listing_detail.html:28
-#: matches/templates/matches/matches_list.html:37 references/models.py:94
+#: matches/templates/matches/matches_list.html:42 references/models.py:94
 #: references/templates/references/email/reference_created.html:36
 #: references/templates/references/email/reference_created.txt:10
-#: templates/_navbar.html:32 templates/_navbar.html:213
+#: templates/_navbar.html:32 templates/_navbar.html:232
 #: templates/dashboard/base.html:22
 msgid "Gifts"
 msgstr "Regalos"
@@ -1034,7 +1034,7 @@ msgstr "Apóyanos en Flattr"
 
 #: matches/apps.py:8 matches/models.py:71
 #: matches/templates/matches/match_detail.html:15 templates/_navbar.html:143
-#: templates/_navbar.html:236 templates/dashboard/base.html:19
+#: templates/_navbar.html:255 templates/dashboard/base.html:19
 msgid "Matches"
 msgstr "Matches"
 
@@ -1284,46 +1284,55 @@ msgstr "Proponer otro lugar"
 msgid "Send counter-proposal"
 msgstr "Enviar contrapropuesta"
 
-#: matches/templates/matches/matches_list.html:10
-msgid "Volunteer stays"
-msgstr "Estancias en comunidad"
+#: matches/templates/matches/matches_list.html:10 templates/_navbar.html:174
+#: templates/_navbar.html:269 templates/dashboard/base.html:58
+msgid "Volunteer Visits"
+msgstr "Visitas de voluntarios"
 
-#: matches/templates/matches/matches_list.html:14
-#: matches/templates/matches/matches_list.html:41
-#: matches/templates/matches/matches_list.html:68
+#: matches/templates/matches/matches_list.html:17
+msgid "No volunteer visits yet."
+msgstr "Todavía no hay visitas de voluntarios."
+
+#: matches/templates/matches/matches_list.html:26 templates/_navbar.html:139
+#: templates/_navbar.html:256 templates/dashboard/base.html:53
+msgid "Community Volunteering"
+msgstr "Estancia en comunidad"
+
+#: matches/templates/matches/matches_list.html:33
+msgid "No community volunteering yet."
+msgstr "Todavía no hay estancias en comunidad."
+
+#: matches/templates/matches/matches_list.html:46
+#: matches/templates/matches/matches_list.html:73
 #: references/templates/references/references_list.html:30
+#: templates/_navbar.html:153 templates/_navbar.html:259
 #: templates/dashboard/base.html:33
 msgid "Received"
 msgstr "Recibidos"
 
-#: matches/templates/matches/matches_list.html:21
-#: matches/templates/matches/matches_list.html:48
-#: matches/templates/matches/matches_list.html:75
+#: matches/templates/matches/matches_list.html:53
+#: matches/templates/matches/matches_list.html:80
 #: templates/dashboard/base.html:15
 msgid "Sent"
 msgstr "Enviados"
 
-#: matches/templates/matches/matches_list.html:28
-msgid "No volunteer applications yet."
-msgstr "Todavía no hay solicitudes de estancia."
-
-#: matches/templates/matches/matches_list.html:55
+#: matches/templates/matches/matches_list.html:60
 msgid "No gift offers yet."
 msgstr "Todavía no hay ofertas de regalo."
 
-#: matches/templates/matches/matches_list.html:82
+#: matches/templates/matches/matches_list.html:87
 msgid "No skill offers yet."
 msgstr "Todavía no hay ofertas de habilidades."
 
-#: matches/views.py:112
+#: matches/views.py:117
 msgid "Response sent."
 msgstr "Respuesta enviada."
 
-#: matches/views.py:141
+#: matches/views.py:146
 msgid "Counter-proposal sent."
 msgstr "Contrapropuesta enviada."
 
-#: matches/views.py:172
+#: matches/views.py:177
 msgid "This interest has already been responded to."
 msgstr "Ya se ha respondido a este interés."
 
@@ -1409,6 +1418,8 @@ msgstr "Todavía no hay notificaciones."
 #: references/apps.py:8 references/models.py:101
 #: references/templates/references/_references.html:3
 #: references/templates/references/references_list.html:7
+#: templates/_navbar.html:151 templates/_navbar.html:169
+#: templates/_navbar.html:258 templates/_navbar.html:267
 #: templates/dashboard/base.html:29
 msgid "References"
 msgstr "Referencias"
@@ -1680,12 +1691,14 @@ msgstr ""
 "comunidad lo que aprendas aquí."
 
 #: references/templates/references/references_list.html:30
+#: templates/_navbar.html:157 templates/_navbar.html:260
 #: templates/dashboard/base.html:38
 msgctxt "references"
 msgid "Given"
 msgstr "Dadas"
 
 #: references/templates/references/references_list.html:36
+#: templates/_navbar.html:154 templates/_navbar.html:170
 #: templates/dashboard/base.html:34 templates/dashboard/base.html:44
 msgid "Waiting for your confirmation"
 msgstr "Pendiente de tu confirmación"
@@ -2233,7 +2246,7 @@ msgstr ""
 msgid "Language"
 msgstr "Idioma"
 
-#: templates/_navbar.html:36 templates/_navbar.html:215
+#: templates/_navbar.html:36 templates/_navbar.html:234
 msgid "Support"
 msgstr "Apoyar"
 
@@ -2253,45 +2266,33 @@ msgstr "Marcar todo leído"
 msgid "User menu"
 msgstr "Menú de usuario"
 
-#: templates/_navbar.html:136 templates/_navbar.html:234
+#: templates/_navbar.html:136 templates/_navbar.html:253
 msgid "Your Profile"
 msgstr "Tu perfil"
 
-#: templates/_navbar.html:139
-msgid "Volunteer Requests"
-msgstr "Solicitudes de estancia"
-
-#: templates/_navbar.html:139 templates/dashboard/base.html:53
-msgid "Community Volunteering"
-msgstr "Estancia en comunidad"
-
-#: templates/_navbar.html:147 templates/_navbar.html:235
+#: templates/_navbar.html:147 templates/_navbar.html:254
 #: templates/dashboard/base.html:14 templates/postman/inbox.html:7
 #: templates/postman/view.html:7
 msgid "Inbox"
 msgstr "Bandeja de entrada"
 
-#: templates/_navbar.html:151 templates/_navbar.html:239
+#: templates/_navbar.html:162 templates/_navbar.html:264
 msgid "My Communities"
 msgstr "Mis comunidades"
 
-#: templates/_navbar.html:162 templates/_navbar.html:246
+#: templates/_navbar.html:181 templates/_navbar.html:272
 msgid "Settings"
 msgstr "Ajustes"
 
-#: templates/_navbar.html:168 templates/_navbar.html:247
+#: templates/_navbar.html:187 templates/_navbar.html:273
 msgid "Log out"
 msgstr "Cerrar sesión"
 
-#: templates/_navbar.html:182 templates/_navbar.html:253
+#: templates/_navbar.html:201 templates/_navbar.html:279
 #: users/templates/users/login.html:29
 #: users/templates/users/password_reset/complete.html:16
 msgid "Log in"
 msgstr "Iniciar sesión"
-
-#: templates/_navbar.html:243 templates/dashboard/base.html:53
-msgid "Volunteer Visits"
-msgstr "Estancias en comunidad"
 
 #: templates/crispy_template_pack/field.html:15
 #: templates/crispy_template_pack/field.html:32
@@ -2308,19 +2309,19 @@ msgstr "Mensajes"
 msgid "Compose"
 msgstr "Redactar"
 
-#: templates/dashboard/base.html:57
+#: templates/dashboard/base.html:61
 msgid "Member Applications"
 msgstr "Solicitudes de membresía"
 
-#: templates/dashboard/base.html:57 templates/dashboard/base.html:63
+#: templates/dashboard/base.html:61 templates/dashboard/base.html:67
 msgid "coming soon"
 msgstr "próximamente"
 
-#: templates/dashboard/base.html:60
+#: templates/dashboard/base.html:64
 msgid "Tours"
 msgstr "Tours"
 
-#: templates/dashboard/base.html:63
+#: templates/dashboard/base.html:67
 msgid "Community-Tour Applications"
 msgstr "Solicitudes de Community-Tour"
 
@@ -2747,6 +2748,12 @@ msgstr "Has cerrado sesión."
 #: users/views.py:108
 msgid "Account created and logged in."
 msgstr "Cuenta creada y sesión iniciada."
+
+#~ msgid "Volunteer stays"
+#~ msgstr "Estancias en comunidad"
+
+#~ msgid "Volunteer Requests"
+#~ msgstr "Solicitudes de estancia"
 
 #~ msgid "What was it like? What should others know?"
 #~ msgstr "¿Cómo fue? ¿Qué deberían saber los demás?"
