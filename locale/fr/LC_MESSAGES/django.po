@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ecobasa\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-23 14:27+0200\n"
+"POT-Creation-Date: 2026-10-23 14:34+0200\n"
 "PO-Revision-Date: 2026-10-23 12:00+0200\n"
 "Last-Translator: ecobasa\n"
 "Language-Team: fr\n"
@@ -53,7 +53,7 @@ msgstr "Ajouter des compétences, séparées par des virgules"
 #: matches/templates/matches/match_detail.html:145
 #: skills/templates/skills/communityskill_detail.html:184
 #: skills/templates/skills/skillwish_user_detail.html:152
-#: skills/templates/skills/userskill_detail.html:202 users/models.py:97
+#: skills/templates/skills/userskill_detail.html:202 users/models.py:98
 #: users/templates/users/detail.html:56
 msgid "Location"
 msgstr "Lieu"
@@ -236,12 +236,12 @@ msgstr "Lieu pour projets"
 msgid "Type of community"
 msgstr "Type de communauté"
 
-#: communities/models.py:100 users/models.py:96
+#: communities/models.py:100 users/models.py:97
 #: users/templates/users/detail.html:56
 msgid "Country"
 msgstr "Pays"
 
-#: communities/models.py:105 gifts/models.py:55 users/models.py:98
+#: communities/models.py:105 gifts/models.py:55 users/models.py:99
 msgid "Geo Location"
 msgstr "Géolocalisation"
 
@@ -430,7 +430,11 @@ msgstr "Au"
 #: communities/templates/communities/community_detail.html:309
 #: gifts/templates/gifts/listing_detail.html:132 matches/forms.py:35
 #: matches/models.py:54 matches/models.py:109
-#: matches/templates/matches/email/match_request.html:54
+#: matches/templates/matches/email/match_message.html:34
+#: matches/templates/matches/email/match_request.html:51
+#: matches/templates/matches/email/match_request.txt:15
+#: matches/templates/matches/email/match_response.html:34
+#: matches/templates/matches/email/match_response.txt:5
 #: notifications/models.py:39 templates/postman/write.html:77
 #: users/templates/users/detail.html:48
 msgid "Message"
@@ -708,7 +712,7 @@ msgstr "ID aléatoire"
 msgid "Title"
 msgstr "Titre"
 
-#: gifts/models.py:38 users/models.py:92
+#: gifts/models.py:38 users/models.py:93
 msgid "image"
 msgstr "image"
 
@@ -1026,16 +1030,6 @@ msgstr "Donner en cryptomonnaie"
 msgid "Flattr us"
 msgstr "Soutiens-nous sur Flattr"
 
-#: matches/emails.py:114
-#, python-format
-msgid "%(verb)s: %(title)s"
-msgstr "%(verb)s : %(title)s"
-
-#: matches/emails.py:132
-#, python-format
-msgid "%(status)s: %(title)s"
-msgstr "%(status)s : %(title)s"
-
 #: matches/forms.py:20
 msgid "Write a short message about why you're interested…"
 msgstr "Écris en quelques mots pourquoi cela t'intéresse…"
@@ -1104,54 +1098,80 @@ msgstr "Messages de match"
 msgid "Volunteer Details"
 msgstr "Détails du séjour"
 
-#: matches/templates/matches/email/match_request.html:19
-msgid "New match"
-msgstr "Nouveau match"
+#: matches/templates/matches/email/match_message.html:19
+msgid "New message"
+msgstr "Nouveau message"
 
+#: matches/templates/matches/email/match_message.html:27
+#: matches/templates/matches/email/match_message.txt:1
 #: matches/templates/matches/email/match_request.html:27
+#: matches/templates/matches/email/match_request.txt:1
 #: matches/templates/matches/email/match_response.html:27
+#: matches/templates/matches/email/match_response.txt:1
 #, python-format
 msgid "Hello %(name)s,"
 msgstr "Bonjour %(name)s,"
 
-#: matches/templates/matches/email/match_request.html:40
+#: matches/templates/matches/email/match_message.html:44
+#: matches/templates/matches/email/match_message.txt:7
+msgid "Reply"
+msgstr "Répondre"
+
+#: matches/templates/matches/email/match_message.html:53
+#: matches/templates/matches/email/match_request.html:87
+#: matches/templates/matches/email/match_response.html:53
+msgid "the sustainable gift-economy community"
+msgstr "la communauté durable de l'économie du don"
+
+#: matches/templates/matches/email/match_request.html:19
+msgid "New match"
+msgstr "Nouveau match"
+
+#: matches/templates/matches/email/match_request.html:37
+#: matches/templates/matches/email/match_request.txt:5
 #: matches/templates/matches/match_detail.html:124
 msgid "Proposed stay"
 msgstr "Séjour proposé"
 
-#: matches/templates/matches/email/match_request.html:46
+#: matches/templates/matches/email/match_request.html:43
+#: matches/templates/matches/email/match_request.txt:8
 #: matches/templates/matches/match_detail.html:130
 msgid "Skills to offer"
 msgstr "Compétences proposées"
 
-#: matches/templates/matches/email/match_request.html:46
+#: matches/templates/matches/email/match_request.html:43
+#: matches/templates/matches/email/match_request.txt:8
 #: matches/templates/matches/match_detail.html:130
 msgid "Skills to learn and practice"
 msgstr "Compétences à apprendre et pratiquer"
 
-#: matches/templates/matches/email/match_request.html:47
+#: matches/templates/matches/email/match_request.html:44
+#: matches/templates/matches/email/match_request.txt:9
 #: matches/templates/matches/match_detail.html:131
 msgid "level"
 msgstr "niveau"
 
-#: matches/templates/matches/email/match_request.html:50
+#: matches/templates/matches/email/match_request.html:47
+#: matches/templates/matches/email/match_request.txt:11
 #: templates/postman/inbox.html:75 users/templatetags/postman_extras.py:117
 msgid "Other skills I can help with"
 msgstr "Autres compétences avec lesquelles je peux aider"
 
-#: matches/templates/matches/email/match_request.html:69
+#: matches/templates/matches/email/match_request.html:66
+#: matches/templates/matches/email/match_request.txt:19
 #: matches/templates/matches/match_detail.html:310
 #: matches/templates/matches/match_detail.html:351
 msgid "Accept"
 msgstr "Accepter"
 
-#: matches/templates/matches/email/match_request.html:75
+#: matches/templates/matches/email/match_request.html:72
+#: matches/templates/matches/email/match_request.txt:20
 #: matches/templates/matches/match_detail.html:314
 #: matches/templates/matches/match_detail.html:354
 msgid "Decline"
 msgstr "Refuser"
 
-#: matches/templates/matches/email/match_request.html:82
+#: matches/templates/matches/email/match_request.html:79
 #, python-format
 msgid ""
 "Or <a href=\"%(detail_url)s\" style=\"color:#da6137;\">view the full match</"
@@ -1160,30 +1180,17 @@ msgstr ""
 "Ou <a href=\"%(detail_url)s\" style=\"color:#da6137;\">vois le match "
 "complet</a> pour répondre ou faire une contre-proposition."
 
-#: matches/templates/matches/email/match_request.html:90
-#: matches/templates/matches/email/match_response.html:45
-msgid "the sustainable gift-economy community"
-msgstr "la communauté durable de l'économie du don"
-
-#: matches/templates/matches/email/match_response.html:19
-#, python-format
-msgid "Match %(status_label)s"
-msgstr "Match : %(status_label)s"
-
-#: matches/templates/matches/email/match_response.html:30
-#, python-format
-msgid ""
-"<strong>%(actor)s</strong> has <strong>%(status_label)s</strong> your "
-"interest in: <strong>%(title)s</strong>."
-msgstr ""
-"<strong>%(actor)s</strong> a répondu à ton intérêt pour <strong>%(title)s</"
-"strong> : <strong>%(status_label)s</strong>."
-
-#: matches/templates/matches/email/match_response.html:36
+#: matches/templates/matches/email/match_request.txt:22
+#: matches/templates/matches/email/match_response.html:44
+#: matches/templates/matches/email/match_response.txt:8
 #: skills/templates/skills/communityskill_detail.html:90
 #: skills/templates/skills/userskill_detail.html:106
 msgid "View"
 msgstr "Voir"
+
+#: matches/templates/matches/email/match_response.html:19
+msgid "Match update"
+msgstr "Du nouveau sur ton match"
 
 #: matches/templates/matches/email_action_done.html:8
 msgid "Done — you said yes."
@@ -1294,15 +1301,15 @@ msgstr "Aucune offre de don pour l'instant."
 msgid "No skill offers yet."
 msgstr "Aucune offre de compétence pour l'instant."
 
-#: matches/views.py:114
+#: matches/views.py:112
 msgid "Response sent."
 msgstr "Réponse envoyée."
 
-#: matches/views.py:143
+#: matches/views.py:141
 msgid "Counter-proposal sent."
 msgstr "Contre-proposition envoyée."
 
-#: matches/views.py:174
+#: matches/views.py:172
 msgid "This interest has already been responded to."
 msgstr "Il a déjà été répondu à cet intérêt."
 
@@ -1862,7 +1869,7 @@ msgstr ""
 "Licence Creative Commons Attribution – Pas d'utilisation commerciale – "
 "Partage dans les mêmes conditions 4.0 International"
 
-#: templates/_language_switcher.html:24
+#: templates/_language_switcher.html:24 users/models.py:103
 msgid "Language"
 msgstr "Langue"
 
@@ -2141,7 +2148,7 @@ msgstr "Compte"
 msgid "Required to log in."
 msgstr "Nécessaire pour se connecter."
 
-#: users/forms.py:93 users/models.py:93
+#: users/forms.py:93 users/models.py:94
 msgid "About you"
 msgstr "À propos de toi"
 
@@ -2165,23 +2172,23 @@ msgstr "Ajouter une nouvelle photo"
 msgid "Photo"
 msgstr "Photo"
 
-#: users/models.py:86
+#: users/models.py:87
 msgid "username"
 msgstr "nom d'utilisateur"
 
-#: users/models.py:88
+#: users/models.py:89
 msgid "email address"
 msgstr "adresse e-mail"
 
-#: users/models.py:91
+#: users/models.py:92
 msgid "name"
 msgstr "nom"
 
-#: users/models.py:99 users/templates/users/detail.html:87
+#: users/models.py:100 users/templates/users/detail.html:87
 msgid "What would you like to use ecobasa mainly for?"
 msgstr "Pour quoi aimerais-tu surtout utiliser ecobasa ?"
 
-#: users/models.py:100 users/templates/users/detail.html:83
+#: users/models.py:101 users/templates/users/detail.html:83
 msgid "What do you do to make the world a better place?"
 msgstr "Que fais-tu pour rendre le monde meilleur ?"
 
@@ -2383,3 +2390,23 @@ msgstr "Tu as été déconnecté·e."
 #: users/views.py:106
 msgid "Account created and logged in."
 msgstr "Compte créé et connecté."
+
+#, python-format
+#~ msgid "%(verb)s: %(title)s"
+#~ msgstr "%(verb)s : %(title)s"
+
+#, python-format
+#~ msgid "%(status)s: %(title)s"
+#~ msgstr "%(status)s : %(title)s"
+
+#, python-format
+#~ msgid "Match %(status_label)s"
+#~ msgstr "Match : %(status_label)s"
+
+#, python-format
+#~ msgid ""
+#~ "<strong>%(actor)s</strong> has <strong>%(status_label)s</strong> your "
+#~ "interest in: <strong>%(title)s</strong>."
+#~ msgstr ""
+#~ "<strong>%(actor)s</strong> a répondu à ton intérêt pour "
+#~ "<strong>%(title)s</strong> : <strong>%(status_label)s</strong>."

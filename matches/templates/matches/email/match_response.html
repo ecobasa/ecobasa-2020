@@ -4,7 +4,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{{ status_label|capfirst }}: {{ title }}</title>
+  <title>{{ headline }}</title>
 </head>
 <body style="margin:0;padding:0;background-color:#f5ede0;font-family:Georgia,serif;color:#452912;">
   <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f5ede0;padding:32px 0;">
@@ -16,7 +16,7 @@
           <tr>
             <td style="background-color:#da6137;padding:28px 32px;">
               <p style="margin:0;font-size:24px;font-weight:bold;color:#fcf3e5;font-family:Georgia,serif;">ecobasa.org</p>
-              <p style="margin:8px 0 0;font-size:14px;color:#fcf3e5;opacity:0.85;">{% blocktrans %}Match {{ status_label }}{% endblocktrans %}</p>
+              <p style="margin:8px 0 0;font-size:14px;color:#fcf3e5;opacity:0.85;">{% trans "Match update" %}</p>
             </td>
           </tr>
 
@@ -26,9 +26,17 @@
               <p style="margin:0 0 16px;font-size:16px;">
                 {% if recipient.name %}{% blocktrans with name=recipient.name %}Hello {{ name }},{% endblocktrans %}{% else %}{% blocktrans with name=recipient.email %}Hello {{ name }},{% endblocktrans %}{% endif %}
               </p>
-              <p style="margin:0 0 24px;font-size:15px;line-height:1.6;">
-                {% if actor.name %}{% blocktrans with actor=actor.name %}<strong>{{ actor }}</strong> has <strong>{{ status_label }}</strong> your interest in: <strong>{{ title }}</strong>.{% endblocktrans %}{% else %}{% blocktrans with actor=actor.email %}<strong>{{ actor }}</strong> has <strong>{{ status_label }}</strong> your interest in: <strong>{{ title }}</strong>.{% endblocktrans %}{% endif %}
-              </p>
+              <p style="margin:0 0 24px;font-size:15px;line-height:1.6;">{{ headline }}</p>
+              {% if message %}
+              <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f5ede0;border-radius:6px;border:1px solid #d4b896;margin-bottom:24px;">
+                <tr>
+                  <td style="padding:20px;">
+                    <p style="margin:0 0 4px;font-size:11px;text-transform:uppercase;letter-spacing:0.06em;opacity:0.6;">{% trans "Message" %}</p>
+                    <p style="margin:0;font-size:15px;line-height:1.6;white-space:pre-wrap;">{{ message }}</p>
+                  </td>
+                </tr>
+              </table>
+              {% endif %}
 
               <p style="margin:0 0 24px;font-size:15px;text-align:center;">
                 <a href="{{ detail_url }}"

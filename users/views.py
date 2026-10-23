@@ -150,3 +150,18 @@ class UpdateView(LoginRequiredMixin, django_views.FormView):
     def get_success_url(self):
         return self.object.get_absolute_url() if hasattr(self, "object") else self.request.user.get_absolute_url()
 
+
+
+def set_language(request):
+    """Django's set_language (stores the choice in a cookie), plus remembering it on the
+    profile so emails to this user go out in that language too."""
+    from django.utils.translation import check_for_language
+    from django.views.i18n import set_language as django_set_language
+
+    response = django_set_language(request)
+    code = request.POST.get("language")
+    if (request.method == "POST" and request.user.is_authenticated and code
+            and check_for_language(code) and request.user.language != code):
+        request.user.language = code
+        request.user.save(update_fields=["language"])
+    return response

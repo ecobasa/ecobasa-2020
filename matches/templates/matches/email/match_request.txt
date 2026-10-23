@@ -1,26 +1,25 @@
-Hello {% if recipient.name %}{{ recipient.name }}{% else %}{{ recipient.email }}{% endif %},
+{% load i18n %}{% blocktrans with name=recipient.name|default:recipient.email %}Hello {{ name }},{% endblocktrans %}
 
-{% if match.from_user.name %}{{ match.from_user.name }}{% else %}{{ match.from_user.email }}{% endif %} {{ verb }}: {{ title }}.
+{{ headline }}
 {% with vd=match.volunteer_details %}{% if vd %}
-{% if vd.stay_from or vd.stay_to %}PROPOSED STAY
-{% if vd.stay_from %}From: {{ vd.stay_from|date:"N j, Y" }}{% endif %}
-{% if vd.stay_to %}To:   {{ vd.stay_to|date:"N j, Y" }}{% endif %}
+{% if vd.stay_from or vd.stay_to %}{% trans "Proposed stay" %}:
+{% if vd.stay_from %}{{ vd.stay_from|date:"DATE_FORMAT" }}{% endif %}{% if vd.stay_from and vd.stay_to %} – {% endif %}{% if vd.stay_to %}{{ vd.stay_to|date:"DATE_FORMAT" }}{% endif %}
 
-{% endif %}{% if vd.practice_skills %}{% if vd.volunteer_mode == "wish" %}SKILLS TO OFFER{% else %}SKILLS TO LEARN AND PRACTICE{% endif %}
-{{ vd.practice_skills }}{% if vd.practice_skill_level %} (level: {{ vd.practice_skill_level }}){% endif %}
+{% endif %}{% if vd.practice_skills %}{% if vd.volunteer_mode == "wish" %}{% trans "Skills to offer" %}{% else %}{% trans "Skills to learn and practice" %}{% endif %}:
+{{ vd.practice_skills }}{% if vd.practice_skill_level %} ({% trans "level" %}: {{ vd.practice_skill_level }}){% endif %}
 
-{% endif %}{% if vd.sender_skills %}OTHER SKILLS I CAN HELP WITH
+{% endif %}{% if vd.sender_skills %}{% trans "Other skills I can help with" %}:
 {{ vd.sender_skills }}
 
 {% endif %}{% endif %}{% endwith %}
-{% if match.message %}MESSAGE
+{% if match.message %}{% trans "Message" %}:
 {{ match.message }}
 
 {% endif %}---
-Accept:  {{ accept_url }}
-Decline: {{ decline_url }}
+{% trans "Accept" %}: {{ accept_url }}
+{% trans "Decline" %}: {{ decline_url }}
 
-View: {{ detail_url }}
+{% trans "View" %}: {{ detail_url }}
 
 --
 ecobasa.org

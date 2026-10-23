@@ -4,10 +4,12 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.views import defaults as default_views
 
+from users import views as user_views
+
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path("i18n/", include("django.conf.urls.i18n")),
+    path("i18n/setlang/", user_views.set_language, name="set_language"),
     path("", include("homepage.urls")),
     path("users/", include("users.urls")),
     path("gifts/", include("gifts.urls")),

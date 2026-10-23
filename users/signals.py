@@ -5,6 +5,16 @@ from django.urls import reverse
 
 
 @receiver(user_logged_in)
+def remember_language(sender, request, user, **kwargs):
+    """Users who never touched the language switcher get the language they're
+    browsing in, so emails to them aren't sent in the site default."""
+    from django.utils.translation import get_language
+    if not user.language and request is not None:
+        user.language = get_language() or ""
+        user.save(update_fields=["language"])
+
+
+@receiver(user_logged_in)
 def create_skill_nudge_notification(sender, request, user, **kwargs):
     has_skills = user.user_skills.exists() or user.skill_wishes.exists()
     if has_skills:

@@ -98,19 +98,17 @@ def match_detail(request, pk):
             body = request.POST.get("body", "").strip()
             if body:
                 MatchMessage.objects.create(match=match, sender=request.user, body=body)
-                notify_match_message(match, sender=request.user)
+                notify_match_message(match, sender=request.user, message=body, http_request=request)
             return redirect(match.get_absolute_url())
 
         if action in ("accept", "decline") and (owner_can_decide or requester_can_decide):
             new_status = {"accept": Match.STATUS_ACCEPTED, "decline": Match.STATUS_DECLINED}[action]
-            MatchMessage.objects.create(
-                match=match, sender=request.user,
-                body=request.POST.get("body", "").strip(), status_to=new_status,
-            )
+            body = request.POST.get("body", "").strip()
+            MatchMessage.objects.create(match=match, sender=request.user, body=body, status_to=new_status)
             match.status       = new_status
             match.responded_at = timezone.now()
             match.save()
-            notify_match_response(match, actor=request.user, http_request=request)
+            notify_match_response(match, actor=request.user, http_request=request, message=body)
             flash.success(request, _("Response sent."))
             return redirect(match.get_absolute_url())
 
@@ -139,7 +137,7 @@ def match_detail(request, pk):
             match.status       = Match.STATUS_COUNTER
             match.responded_at = timezone.now()
             match.save()
-            notify_match_response(match, actor=request.user, http_request=request)
+            notify_match_response(match, actor=request.user, http_request=request, message=msg.body)
             flash.success(request, _("Counter-proposal sent."))
             return redirect(match.get_absolute_url())
 

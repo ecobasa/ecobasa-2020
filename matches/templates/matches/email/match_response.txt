@@ -1,8 +1,11 @@
-Hello {% if recipient.name %}{{ recipient.name }}{% else %}{{ recipient.email }}{% endif %},
+{% load i18n %}{% blocktrans with name=recipient.name|default:recipient.email %}Hello {{ name }},{% endblocktrans %}
 
-{% if actor.name %}{{ actor.name }}{% else %}{{ actor.email }}{% endif %} has {{ status_label }} your interest in: {{ title }}.
-
-View: {{ detail_url }}
+{{ headline }}
+{% if message %}
+{% trans "Message" %}:
+{{ message }}
+{% endif %}
+{% trans "View" %}: {{ detail_url }}
 
 --
 ecobasa.org

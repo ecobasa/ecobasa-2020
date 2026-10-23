@@ -2,7 +2,6 @@ from django.core import signing
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
 from django.urls import reverse
-from django.utils.translation import gettext as _
 
 from .models import Match
 
@@ -30,17 +29,22 @@ def _action_url(http_request, match_pk, action):
 
 # ── Notification + email orchestration ─────────────────────────────────────────
 
+def _notification(match, recipient, actor, tag):
+    from notifications.models import Notification
+    return Notification(recipient=recipient, actor=actor, match=match, tag=tag, link=match.get_absolute_url())
+
+
 def _notify(match, recipient, actor, tag):
     """Create an in-app notification. Its text is built per reader at display time;
     `verb` only keeps a creation-time copy as a fallback."""
-    from notifications.models import Notification
-
-    notification = Notification(
-        recipient=recipient, actor=actor, match=match, tag=tag, link=match.get_absolute_url(),
-    )
+    notification = _notification(match, recipient, actor, tag)
     notification.verb = notification.text[:255]
     notification.save()
     return notification
+
+
+def _other_party(match, user):
+    return match.from_user if user == match.recipient else match.recipient
 
 
 def notify_match_created(match, http_request=None):
@@ -49,18 +53,21 @@ def notify_match_created(match, http_request=None):
 
     if match.recipient is None:
         return
-    _notify(match, match.recipient, match.from_user, Notification.TAG_REQUESTED)
+    notification = _notify(match, match.recipient, match.from_user, Notification.TAG_REQUESTED)
 
     if http_request:
-        _send_request_email(match, http_request)
+        _send_email(notification, "matches/email/match_request", http_request, {
+            "accept_url":  _action_url(http_request, match.pk, "accept"),
+            "decline_url": _action_url(http_request, match.pk, "decline"),
+        })
 
 
-def notify_match_response(match, actor, http_request=None):
+def notify_match_response(match, actor, http_request=None, message=""):
     """In-app notification (+ email, if a request is available) to whichever party
-    didn't just act."""
+    didn't just act. `message` is the note sent along with the decision, if any."""
     from notifications.models import Notification
 
-    recipient = match.from_user if actor == match.recipient else match.recipient
+    recipient = _other_party(match, actor)
     if recipient is None:
         return
 
@@ -69,20 +76,21 @@ def notify_match_response(match, actor, http_request=None):
         Match.STATUS_DECLINED: Notification.TAG_DECLINED,
         Match.STATUS_COUNTER:  Notification.TAG_COUNTER,
     }
-    _notify(match, recipient, actor, tag_map.get(match.status, ""))
+    notification = _notify(match, recipient, actor, tag_map.get(match.status, ""))
 
     if http_request:
-        _send_response_email(match, actor, http_request)
+        _send_email(notification, "matches/email/match_response", http_request, {"message": message})
 
 
-def notify_match_message(match, sender):
-    """In-app notification to the other party about a new message in the match.
-    While an earlier message notification is still unread, it is moved to the top
-    instead of piling up a new one per message."""
+def notify_match_message(match, sender, message, http_request=None):
+    """In-app notification (+ email, if a request is available) to the other party
+    about a new message in the match. Every message is emailed, but while an earlier
+    message notification is still unread it is moved to the top instead of piling up
+    a new one per message."""
     from django.utils import timezone
     from notifications.models import Notification
 
-    recipient = match.from_user if sender == match.recipient else match.recipient
+    recipient = _other_party(match, sender)
     if recipient is None:
         return
 
@@ -92,56 +100,38 @@ def notify_match_message(match, sender):
     if not bumped:
         _notify(match, recipient, sender, Notification.TAG_MESSAGE)
 
+    if http_request:
+        notification = _notification(match, recipient, sender, Notification.TAG_MESSAGE)
+        _send_email(notification, "matches/email/match_message", http_request, {"message": message})
+
 
 # ── Email sending ───────────────────────────────────────────────────────────────
 
-def _send_request_email(match, http_request):
-    recipient = match.recipient
-    if not recipient or not recipient.email:
-        return
-    target = match.target
-    verb = target.get_match_verb()
-    title = target.get_match_display_name()
-    context = {
-        "match":       match,
-        "recipient":   recipient,
-        "title":       title,
-        "verb":        verb,
-        "accept_url":  _action_url(http_request, match.pk, "accept"),
-        "decline_url": _action_url(http_request, match.pk, "decline"),
-        "detail_url":  _absolute(http_request, match.get_absolute_url()),
-    }
-    subject = str(_("%(verb)s: %(title)s") % {"verb": verb.capitalize(), "title": title})
-    _send(subject, recipient.email, "matches/email/match_request", context)
-
-
-def _send_response_email(match, actor, http_request):
-    recipient = match.from_user if actor == match.recipient else match.recipient
-    if not recipient or not recipient.email:
-        return
-    title = match.target.get_match_display_name()
-    status_label = match.get_status_display().lower()
-    context = {
-        "match":        match,
-        "actor":        actor,
-        "recipient":    recipient,
-        "title":        title,
-        "status_label": status_label,
-        "detail_url":   _absolute(http_request, match.get_absolute_url()),
-    }
-    subject = str(_("%(status)s: %(title)s") % {"status": status_label.capitalize(), "title": title})
-    _send(subject, recipient.email, "matches/email/match_response", context)
-
-
-def _send(subject, to_email, template_base, context):
+def _send_email(notification, template_base, http_request, extra_context):
+    """Email the notification's recipient, in their own language. The headline is the
+    same sentence the in-app notification shows."""
     from django.conf import settings as conf
-    text_body = render_to_string(f"{template_base}.txt", context)
-    html_body = render_to_string(f"{template_base}.html", context)
+    from django.utils import translation
+
+    recipient = notification.recipient
+    if not recipient.email:
+        return
+    with translation.override(recipient.language or conf.LANGUAGE_CODE):
+        headline = notification.text
+        context = {
+            "match":      notification.match,
+            "recipient":  recipient,
+            "headline":   headline,
+            "detail_url": _absolute(http_request, notification.match.get_absolute_url()),
+            **extra_context,
+        }
+        text_body = render_to_string(f"{template_base}.txt", context)
+        html_body = render_to_string(f"{template_base}.html", context)
     msg = EmailMultiAlternatives(
-        subject=subject,
+        subject=headline,
         body=text_body,
         from_email=conf.DEFAULT_FROM_EMAIL,
-        to=[to_email],
+        to=[recipient.email],
     )
     msg.attach_alternative(html_body, "text/html")
     msg.send(fail_silently=True)

@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib.gis.db import models
 from django.core.mail import send_mail
 from django.urls import reverse
@@ -98,6 +99,8 @@ class User(AbstractUser):
     location = models.PointField(_("Geo Location"), null=True, blank=True, geography=True)
     ecobasa_what = models.TextField(_('What would you like to use ecobasa mainly for?'), blank=True, null=True)
     world = models.TextField(_('What do you do to make the world a better place?'), blank=True, null=True)
+    # Last language picked in the language switcher; emails to this user are sent in it.
+    language = models.CharField(_("Language"), max_length=10, choices=settings.LANGUAGES, blank=True)
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = ["name"]

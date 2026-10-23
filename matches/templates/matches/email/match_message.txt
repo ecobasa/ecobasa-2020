@@ -1,0 +1,10 @@
+{% load i18n %}{% blocktrans with name=recipient.name|default:recipient.email %}Hello {{ name }},{% endblocktrans %}
+
+{{ headline }}
+
+{{ message }}
+
+{% trans "Reply" %}: {{ detail_url }}
+
+--
+ecobasa.org
