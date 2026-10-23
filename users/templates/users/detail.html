@@ -63,7 +63,7 @@
 				<div class="space-y-4">
 					{% for community in communities %}
 						{% with community.photos.all|first as header_photo %}
-						<a href="{{ community.get_absolute_url }}" class="block rounded-lg overflow-hidden border border-primary bg-secondary bg-opacity-60 shadow-sm hover:shadow-md transition-shadow">
+						<a href="{{ community.get_absolute_url }}" class="block overflow-hidden">
 							{% if header_photo %}
 								<img src="{{ header_photo.image.url }}" alt="" class="w-full h-32 object-cover" loading="lazy">
 							{% endif %}
