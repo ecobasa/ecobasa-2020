@@ -19,9 +19,9 @@
             <span class="pill bg-purple text-xs"><i class="fa fa-graduation-cap mr-1"></i>{{ tag.skill.get_name }}</span>
             <span class="flex-1 min-w-0">
               {% if tag.reference.about_you %}
-                {% blocktrans with author=tag.reference.author.name|default:tag.reference.author.username %}{{ author }} mentioned it in a reference about you.{% endblocktrans %}
+                {% blocktrans with author=tag.reference.author.name|default:tag.reference.author.username anchor=tag.reference.pk %}{{ author }} mentioned it in a <a href="#reference-{{ anchor }}" class="underline">reference</a> about you.{% endblocktrans %}
               {% else %}
-                {% blocktrans with author=tag.reference.author.name|default:tag.reference.author.username subject=tag.reference.subject.get_match_display_name %}{{ author }} mentioned it in a reference about {{ subject }}.{% endblocktrans %}
+                {% blocktrans with author=tag.reference.author.name|default:tag.reference.author.username subject=tag.reference.subject.get_match_display_name anchor=tag.reference.pk %}{{ author }} mentioned it in a <a href="#reference-{{ anchor }}" class="underline">reference</a> about {{ subject }}.{% endblocktrans %}
               {% endif %}
             </span>
             <form method="post" action="{% url 'references:skill_tag' tag.pk 'confirm' %}" class="inline">

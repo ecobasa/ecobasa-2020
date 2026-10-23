@@ -1,6 +1,6 @@
 {% load i18n %}
 {# One reference: author, impression, what it is about, text, skill tags and gift names #}
-<article class="border rounded-lg p-4
+<article id="reference-{{ ref.pk }}" class="scroll-mt-24 target:ring-2 target:ring-primary border rounded-lg p-4
   {% if ref.impression == 'positive' %}border-green bg-green bg-opacity-5
   {% elif ref.impression == 'negative' %}border-red bg-red bg-opacity-5
   {% else %}border-brown bg-secondary bg-opacity-5{% endif %}">
