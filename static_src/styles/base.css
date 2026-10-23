@@ -94,7 +94,7 @@ nav {
 /* ── Page layout containers ───────────────────────────────────────── */
 .container-page    { @apply mx-auto max-w-7xl px-6 mt-10 pb-10; }   /* wide detail pages: profile, community, homepage */
 .container-content { @apply mx-auto max-w-4xl px-6 mt-10 mb-12; }  /* offer details (gifts, skills, wishes), multi-field forms & content pages */
-.container-dashboard { @apply mx-auto max-w-5xl px-6 mt-10 mb-12 grid grid-cols-1 md:grid-cols-4 gap-6; } /* internal area with sidebar: notifications, messaging, matches */
+.container-dashboard { @apply mx-auto max-w-7xl px-6 mt-10 mb-12 grid grid-cols-1 md:grid-cols-4 gap-6; } /* internal area with sidebar: notifications, messaging, matches, references */
 .container-narrow  { @apply mx-auto max-w-2xl px-6 py-8; }          /* short reading content */
 .container-form    { @apply mx-auto max-w-lg px-6 py-8; }           /* small focused forms */
 .container-auth    { @apply flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8; } /* centered auth pages */
