@@ -42,7 +42,7 @@ def save(request, content_type_id, object_id):
         reference.save()
         messages.success(request, _("Thank you for sharing your experience."))
     else:
-        messages.error(request, _("Please choose a tone and describe your experience."))
+        messages.error(request, _("Please choose an impression and describe your experience."))
     return _redirect_to(subject)
 
 

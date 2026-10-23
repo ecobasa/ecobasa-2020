@@ -56,7 +56,7 @@ class Reference(models.Model):
     object_id = models.CharField(max_length=255)
     subject = GenericForeignKey("content_type", "object_id")
 
-    tone = models.CharField(_("Tone"), max_length=20, choices=TONE_CHOICES, default=TONE_POSITIVE)
+    tone = models.CharField(_("Impression"), max_length=20, choices=TONE_CHOICES, default=TONE_POSITIVE)
     text = models.TextField(_("Your experience"))
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
