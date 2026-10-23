@@ -429,14 +429,14 @@
       badgeStyles.set(count, new ol.style.Style({
         image: new ol.style.Circle({
           radius: 11,
-          fill: new ol.style.Fill({ color: THEME_BROWN }),
-          stroke: new ol.style.Stroke({ color: THEME_SECONDARY, width: 2 }),
+          fill: new ol.style.Fill({ color: 'rgba(252, 243, 229, 0.5)' }),  // THEME_SECONDARY at 50%
+          stroke: new ol.style.Stroke({ color: 'rgba(69, 41, 18, 0.5)', width: 1 }),  // THEME_BROWN at 50%
           displacement: [20, 44]
         }),
         text: new ol.style.Text({
           text: String(count),
           font: 'bold 12px Lato, sans-serif',
-          fill: new ol.style.Fill({ color: THEME_SECONDARY }),
+          fill: new ol.style.Fill({ color: THEME_BROWN }),
           offsetX: 20, offsetY: -44
         })
       }));
@@ -444,13 +444,16 @@
     return badgeStyles.get(count);
   }
 
-  // The cluster currently fanned out; it is drawn as a centre dot while open.
-  let openCluster = null;
+  // Centre of the cluster currently fanned out; that cluster is drawn as a dot.
+  // Matched by coordinate, since a marker reload replaces the cluster features.
+  let openCenter = null;
 
   // A cluster shows its first marker's icon, plus a count badge if it holds more than one.
   function clusterStyle(cluster) {
-    if (cluster === openCluster) return spiderCenterStyle;
     const features = cluster.get('features');
+    if (openCenter && features.length > 1 && ol.coordinate.equals(cluster.getGeometry().getCoordinates(), openCenter)) {
+      return spiderCenterStyle;
+    }
     const icon = features[0].getStyle();
     return features.length > 1 ? [icon, getBadgeStyle(features.length)] : icon;
   }
@@ -508,13 +511,14 @@
     return MARKERS_URL + '?' + params.toString();
   }
 
-  function fetchMarkers(map, vectorSource, fitToResults) {
+  // keepFan: a reload after panning keeps an open fan; filter changes close it.
+  function fetchMarkers(map, vectorSource, fitToResults, keepFan) {
     const store = Alpine.store('fm');
     store.loading = true;
     fetch(buildMarkersURL(map, fitToResults))
       .then(r => r.json())
       .then(geojson => {
-        if (window._fmCloseClusters) window._fmCloseClusters();
+        if (!keepFan && window._fmCloseClusters) window._fmCloseClusters();
         vectorSource.clear();
         const features = (geojson.features || []).map(feat => {
           const f = new ol.Feature({
@@ -572,7 +576,7 @@
     var fetchTimer;
     map.on('moveend', function () {
       clearTimeout(fetchTimer);
-      fetchTimer = setTimeout(function () { fetchMarkers(map, vectorSource); }, 300);
+      fetchTimer = setTimeout(function () { fetchMarkers(map, vectorSource, false, true); }, 300);
     });
 
     var popupEl = document.createElement('div');
@@ -620,7 +624,7 @@
     map.addInteraction(selectCluster);
 
     function setOpenCluster(cluster) {
-      openCluster = cluster;
+      openCenter = cluster ? cluster.getGeometry().getCoordinates() : null;
       clusterLayer.changed();
     }
     window._fmCloseClusters = function () { selectCluster.clear(); setOpenCluster(null); };
