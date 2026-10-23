@@ -28,7 +28,7 @@
         <div class="pt-4 pb-1 px-3 text-xs text-secondary opacity-60 uppercase tracking-wide">{% trans "References" %}</div>
         {% with on_references=request.resolver_match.namespace %}
         <a href="{% url 'references:list' %}"
-           class="flex items-center px-3 py-2 rounded {% if on_references == 'references' and request.GET.type != 'given' %}bg-secondary text-primary font-semibold{% else %}text-secondary hover:bg-secondary hover:text-primary{% endif %}">
+           class="flex items-center px-3 py-2 rounded {% if on_references == 'references' and request.GET.type != 'given' and not request.GET.community %}bg-secondary text-primary font-semibold{% else %}text-secondary hover:bg-secondary hover:text-primary{% endif %}">
           <i class="fa fa-inbox mr-2"></i>{% trans "Received" %}
           {% if pending_reference_skills %}<span class="ml-auto pill bg-purple text-secondary text-xs" title="{% trans 'Waiting for your confirmation' %}">{{ pending_reference_skills }}</span>{% endif %}
         </a>
@@ -36,6 +36,13 @@
            class="block px-3 py-2 rounded {% if on_references == 'references' and request.GET.type == 'given' %}bg-secondary text-primary font-semibold{% else %}text-secondary hover:bg-secondary hover:text-primary{% endif %}">
           <i class="fa fa-feather-pointed mr-2"></i>{% translate "Given" context "references" %}
         </a>
+        {% for item in reference_communities %}
+          <a href="{% url 'references:list' %}?community={{ item.community.slug }}"
+             class="flex items-center px-3 py-2 rounded {% if on_references == 'references' and request.GET.community == item.community.slug %}bg-secondary text-primary font-semibold{% else %}text-secondary hover:bg-secondary hover:text-primary{% endif %}">
+            <i class="fa-solid {{ item.community.get_type_icon }} mr-2 self-start mt-1"></i><span class="leading-snug">{{ item.community.name }}</span>
+            {% if item.pending %}<span class="ml-auto pl-2 pill bg-purple text-secondary text-xs" title="{% trans 'Waiting for your confirmation' %}">{{ item.pending }}</span>{% endif %}
+          </a>
+        {% endfor %}
         {% endwith %}
 
         <div class="pt-4 pb-1 px-3 text-xs text-secondary opacity-60 uppercase tracking-wide">{% trans "Communities" %}</div>

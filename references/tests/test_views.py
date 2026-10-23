@@ -253,14 +253,6 @@ class TestSkillSuggestions:
 
 @pytest.mark.django_db
 class TestDashboard:
-    def test_received_lists_references_about_me_my_listings_and_my_communities(self, author, owner, listing, community):
-        Reference(author=author, recipient=owner, subject=owner, text="About the person.").save()
-        Reference(author=author, recipient=owner, subject=listing, text="About the bicycle.").save()
-        Reference(author=author, recipient=owner, subject=community, text="About the farm.").save()
-        content = _client_for(owner).get(reverse("references:list")).content.decode()
-        for text in ("About the person.", "About the bicycle.", "About the farm."):
-            assert text in content
-
     def test_given_lists_what_i_wrote(self, author, owner):
         Reference(author=author, recipient=owner, subject=owner, text="Lovely host.").save()
         assert "Lovely host." in _client_for(author).get(reverse("references:list") + "?type=given").content.decode()
@@ -298,13 +290,6 @@ class TestDashboard:
         assert "Writing about a community" in _client_for(author).get(community.get_absolute_url()).content.decode()
         assert "Writing about a community" not in _client_for(author).get(owner.get_absolute_url()).content.decode()
 
-    def test_received_is_grouped_by_owned_community(self, author, owner, community):
-        Reference(author=author, recipient=owner, subject=community, text="About the farm.").save()
-        content = _client_for(owner).get(reverse("references:list")).content.decode()
-        about_you = content.index("About you")
-        # The community header comes after "About you", and its reference after the header
-        assert about_you < content.index("Goat Farm", about_you) < content.index("About the farm.")
-
     def test_given_does_not_ask_me_to_confirm_skills_i_tagged(self, author, owner):
         _client_for(author).post(_save_url(owner), {"impression": "positive", "text": "Great.", "skill_names": "Beekeeping"})
         content = _client_for(author).get(reverse("references:list") + "?type=given").content.decode()
@@ -317,3 +302,31 @@ class TestDashboard:
         content = _client_for(owner).get(reverse("references:list")).content.decode()
         assert f'href="#reference-{reference.pk}"' in content
         assert f'id="reference-{reference.pk}"' in content
+
+    def test_received_is_about_me_and_my_listings_not_my_communities(self, author, owner, listing, community):
+        Reference(author=author, recipient=owner, subject=owner, text="About the person.").save()
+        Reference(author=author, recipient=owner, subject=listing, text="About the bicycle.").save()
+        Reference(author=author, recipient=owner, subject=community, text="About the farm.").save()
+        content = _client_for(owner).get(reverse("references:list")).content.decode()
+        assert "About the person." in content and "About the bicycle." in content
+        assert "About the farm." not in content
+
+    def test_ambassador_sees_community_references_on_their_own_page(self, author, owner, community):
+        Reference(author=author, recipient=owner, subject=community, text="About the farm.").save()
+        url = reverse("references:list") + f"?community={community.slug}"
+        content = _client_for(owner).get(url).content.decode()
+        assert "About the farm." in content
+        assert "ambassador of Goat Farm" in content
+        # The sidebar links to it
+        assert f"?community={community.slug}" in _client_for(owner).get(reverse("references:list")).content.decode()
+
+    def test_only_the_ambassador_sees_the_community_page(self, author, community):
+        url = reverse("references:list") + f"?community={community.slug}"
+        assert _client_for(author).get(url).status_code == 404
+
+    def test_community_pending_skills_count_separately(self, author, owner, community):
+        _client_for(author).post(_save_url(community), {"impression": "positive", "text": "Great.", "skill_names": "Beekeeping"})
+        received = _client_for(owner).get(reverse("references:list")).content.decode()
+        assert "Waiting for your confirmation</h3>" not in received
+        page = _client_for(owner).get(reverse("references:list") + f"?community={community.slug}").content.decode()
+        assert "Add to the community's skills" in page
