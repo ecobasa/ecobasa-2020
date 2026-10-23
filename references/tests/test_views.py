@@ -245,3 +245,7 @@ class TestSkillSuggestions:
         UserSkill.objects.create(user=owner, skill=skill)
         content = _client_for(author).get(owner.get_absolute_url()).content.decode()
         assert '<script id="reference-held-skills" type="application/json">["Cob Building"]</script>' in content
+
+    def test_form_shows_the_writing_guide(self, author, owner):
+        content = _client_for(author).get(owner.get_absolute_url()).content.decode()
+        assert "How to write a reference" in content
