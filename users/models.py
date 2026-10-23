@@ -112,6 +112,10 @@ class User(AbstractUser):
         slug = self.username or slugify(self.name) or str(self.pk)
         return reverse("users:detail", kwargs={"slug": slug})
 
+    def get_reference_subjects(self):
+        """What references on this profile can be about: the person, their listings and skills."""
+        return [self, *self.listings.all(), *self.user_skills.all()]
+
     def email_user(self, subject, message, from_email=None, **kwargs):
         '''
         Sends an email to this User.

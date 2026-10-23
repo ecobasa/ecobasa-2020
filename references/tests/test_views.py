@@ -6,6 +6,7 @@ from django.urls import reverse
 
 from communities.models import Community
 from gifts.models import Listing
+from skills.models import CommunitySkill, Skill
 from users.models import User
 
 from ..models import Reference
@@ -139,3 +140,11 @@ class TestReferencesSection:
         Reference(author=author, recipient=owner, subject=listing, text="Bike was great.").save()
         content = _client_for(author).get(owner.get_absolute_url()).content.decode()
         assert "Write a reference" in content
+
+    def test_community_page_lists_references_about_its_skills(self, author, owner, community):
+        skill = Skill.objects.create(name="Cob building", slug="cob-building")
+        community_skill = CommunitySkill.objects.create(community=community, skill=skill)
+        Reference(author=author, recipient=owner, subject=community_skill, text="Learned a lot.").save()
+        content = Client().get(community.get_absolute_url()).content.decode()
+        assert "Learned a lot." in content
+        assert community_skill.get_absolute_url() in content
