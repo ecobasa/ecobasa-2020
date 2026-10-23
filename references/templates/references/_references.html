@@ -75,7 +75,7 @@
   {% endif %}
 
   {% if form %}
-    <div class="border rounded-xl bg-secondary p-6" x-data="{ open: {{ open_form|yesno:'true,false' }} }">
+    <div class="border rounded-xl bg-secondary p-6" x-data="{ open: {{ open_form|yesno:'true,false' }}, impression: '{{ form.impression.value|default:'positive' }}' }">
       <button type="button" class="btn" x-show="!open" @click="open = true">
         <i class="fa fa-pencil mr-2"></i>{% if own_reference %}{% trans "Edit your reference" %}{% else %}{% trans "Write a reference" %}{% endif %}
       </button>
@@ -83,12 +83,13 @@
         {% csrf_token %}
         <div class="form-group mb-4">
           <label class="form-label">{{ form.impression.label }}</label>
-          <div class="flex flex-wrap gap-4">
+          <div class="flex flex-wrap gap-4" @change="impression = $event.target.value">
             {% for radio in form.impression %}
               <label class="flex items-center gap-2 text-sm text-brown cursor-pointer">{{ radio.tag }} {{ radio.choice_label }}</label>
             {% endfor %}
           </div>
         </div>
+        {% include "references/_guidelines.html" %}
         <div class="form-group mb-4">
           <label class="form-label" for="{{ form.text.id_for_label }}">{{ form.text.label }}</label>
           {{ form.text }}

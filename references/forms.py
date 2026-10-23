@@ -18,7 +18,7 @@ class ReferenceForm(forms.ModelForm):
             "impression": forms.RadioSelect,
             "text": forms.Textarea(attrs={
                 "rows": 4, "class": "form-input",
-                "placeholder": _("What was it like? What should others know?"),
+                "placeholder": _("What happened? How did you feel, and what did you need?"),
             }),
         }
 
