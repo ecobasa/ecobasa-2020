@@ -31,7 +31,11 @@
               {% if ref.about_other and ref.subject %}
                 <div class="text-xs text-brown">
                   {% translate "about" context "reference subject" %}
-                  <a href="{{ ref.subject.get_absolute_url }}" class="text-primary"><i class="fa {{ ref.subject.get_match_icon }} mr-1"></i>{{ ref.subject.get_match_display_name }}</a>
+                  {# Same icons as the profile: skills, offers, wishes #}
+                  <a href="{{ ref.subject.get_absolute_url }}" class="text-primary"><i class="mr-1
+                    {% if ref.content_type.model == 'listing' %}{% if ref.subject.type == 'wish' %}fa-solid fa-hand-holding-heart{% else %}fa fa-gift{% endif %}
+                    {% elif ref.content_type.model == 'userskill' or ref.content_type.model == 'communityskill' %}fa fa-graduation-cap
+                    {% else %}fa {{ ref.subject.get_match_icon }}{% endif %}"></i>{{ ref.subject.get_match_display_name }}</a>
                 </div>
               {% endif %}
             </div>
