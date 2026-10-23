@@ -14,7 +14,7 @@
         <article class="border rounded-lg p-4
           {% if ref.impression == 'positive' %}border-green bg-green bg-opacity-5
           {% elif ref.impression == 'negative' %}border-red bg-red bg-opacity-5
-          {% else %}bg-secondary{% endif %}">
+          {% else %}border-brown bg-secondary bg-opacity-5{% endif %}">
           <header class="flex items-center gap-3 mb-2">
             <a href="{{ ref.author.get_absolute_url }}" class="flex-shrink-0">
               {% if ref.author.image %}
