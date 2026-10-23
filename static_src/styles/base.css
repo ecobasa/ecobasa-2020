@@ -201,6 +201,11 @@ nav {
 
 .map-popup {
 	@apply relative bg-secondary bg-opacity-80 text-brown rounded-xl p-4 shadow-lg text-xs leading-snug max-w-[300px] -top-[20px];
+
+	.map-popup-close {
+		@apply absolute top-2 right-2 w-7 h-7 flex items-center justify-center rounded-full text-brown opacity-60 text-sm;
+		&:hover { @apply opacity-100 bg-primary bg-opacity-10; }
+	}
 	
 	&:before {
 		content: '';

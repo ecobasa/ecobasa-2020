@@ -205,6 +205,13 @@ def _skill_users(request, require_location=True):
 
 # ── Endpoints ────────────────────────────────────────────────────────
 
+def _public_name(user):
+    """Name shown on public map popups; never falls back to the email address."""
+    if not user:
+        return ""
+    return user.name or user.username or ""
+
+
 @require_GET
 def gifts_markers(request):
     """
@@ -243,53 +250,69 @@ def gifts_markers(request):
                 "listing_type": listing.type,
                 "type_display": listing.get_type_display(),
                 "url":          listing.get_absolute_url(),
+                "user_name":    _public_name(listing.owner),
             },
         })
+
+    q = request.GET.get("search", "").strip()
+
+    def _matching_skills(skills, owner_text):
+        """With a search term, keep only the skills that match it themselves,
+        unless the owner's own text (about / description) already matched."""
+        if not q or q.lower() in (owner_text or "").lower():
+            return skills.all()
+        return skills.select_related("skill").filter(
+            skill_name_q(q)
+            | Q(skill__description__icontains=q)
+            | Q(description__icontains=q)
+        )
 
     # ── Community skill features ─────────────────────────────────────
     skill_qs = _apply_bbox(_skill_communities(request), bbox_param)
 
+    # One marker per skill, so every marker links to exactly one detail page.
+    # Skills at the same spot are fanned out on the map.
     for community in skill_qs[:200]:
         first_photo = community.photos.first()
-        skill_names = [cs.skill.get_name() for cs in community.community_skills.all()]
-        features.append({
-            "type": "Feature",
-            "geometry": {
-                "type":        "Point",
-                "coordinates": [community.location.x, community.location.y],
-            },
-            "properties": {
-                "source":         "skill",
-                "title":          ", ".join(skill_names[:3]),
-                "description":    community.description,
-                "image":          first_photo.image.url if first_photo and first_photo.image else None,
-                "type_display":   str(_("Skill / Teaching")),
-                "url":            community.get_absolute_url(),
-                "community_name": community.name,
-            },
-        })
+        for cs in _matching_skills(community.community_skills, community.description):
+            features.append({
+                "type": "Feature",
+                "geometry": {
+                    "type":        "Point",
+                    "coordinates": [community.location.x, community.location.y],
+                },
+                "properties": {
+                    "source":         "skill",
+                    "title":          cs.skill.get_name(),
+                    "description":    cs.description or community.description,
+                    "image":          first_photo.image.url if first_photo and first_photo.image else None,
+                    "type_display":   str(_("Skill / Teaching")),
+                    "url":            cs.get_absolute_url(),
+                    "community_name": community.name,
+                },
+            })
 
     # ── User skill features ──────────────────────────────────────────
     user_skill_qs = _apply_bbox(_skill_users(request), bbox_param)
 
     for user in user_skill_qs[:200]:
-        skill_names = [us.skill.get_name() for us in user.user_skills.all()]
-        features.append({
-            "type": "Feature",
-            "geometry": {
-                "type":        "Point",
-                "coordinates": [user.location.x, user.location.y],
-            },
-            "properties": {
-                "source":       "user_skill",
-                "title":        ", ".join(skill_names[:3]),
-                "description":  user.about or "",
-                "image":        user.image.url if user.image else None,
-                "type_display": str(_("User Skill")),
-                "url":          user.get_absolute_url(),
-                "user_name":    user.name or user.email,
-            },
-        })
+        for us in _matching_skills(user.user_skills, user.about):
+            features.append({
+                "type": "Feature",
+                "geometry": {
+                    "type":        "Point",
+                    "coordinates": [user.location.x, user.location.y],
+                },
+                "properties": {
+                    "source":       "user_skill",
+                    "title":        us.skill.get_name(),
+                    "description":  us.description or user.about or "",
+                    "image":        user.image.url if user.image else None,
+                    "type_display": str(_("User Skill")),
+                    "url":          us.get_absolute_url(),
+                    "user_name":    _public_name(user),
+                },
+            })
 
     return JsonResponse({"type": "FeatureCollection", "features": features})
 

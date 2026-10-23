@@ -392,6 +392,7 @@
 {% block javascript %}
 {{ block.super }}
 <script src="https://cdn.jsdelivr.net/npm/ol@v7.2.2/dist/ol.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/ol-ext@4.0.6/dist/ol-ext.min.js"></script>
 
 <script>
 (function () {
@@ -417,6 +418,54 @@
     });
   }
 
+  // Theme colours (tailwind.config.js) for cluster badges and spider legs.
+  const THEME_BROWN     = '#452912';
+  const THEME_SECONDARY = '#fcf3e5';
+
+  // Count badge on a clustered marker; cached per count.
+  const badgeStyles = new Map();
+  function getBadgeStyle(count) {
+    if (!badgeStyles.has(count)) {
+      badgeStyles.set(count, new ol.style.Style({
+        image: new ol.style.Circle({
+          radius: 11,
+          fill: new ol.style.Fill({ color: THEME_BROWN }),
+          stroke: new ol.style.Stroke({ color: THEME_SECONDARY, width: 2 }),
+          displacement: [20, 44]
+        }),
+        text: new ol.style.Text({
+          text: String(count),
+          font: 'bold 12px Lato, sans-serif',
+          fill: new ol.style.Fill({ color: THEME_SECONDARY }),
+          offsetX: 20, offsetY: -44
+        })
+      }));
+    }
+    return badgeStyles.get(count);
+  }
+
+  // The cluster currently fanned out; it is drawn as a centre dot while open.
+  let openCluster = null;
+
+  // A cluster shows its first marker's icon, plus a count badge if it holds more than one.
+  function clusterStyle(cluster) {
+    if (cluster === openCluster) return spiderCenterStyle;
+    const features = cluster.get('features');
+    const icon = features[0].getStyle();
+    return features.length > 1 ? [icon, getBadgeStyle(features.length)] : icon;
+  }
+
+  const spiderLegStyle = new ol.style.Style({
+    stroke: new ol.style.Stroke({ color: 'rgba(69, 41, 18, 0.5)', width: 1.5, lineDash: [4, 4] })  // THEME_BROWN at 50%
+  });
+  const spiderCenterStyle = new ol.style.Style({
+    image: new ol.style.Circle({
+      radius: 5,
+      fill: new ol.style.Fill({ color: THEME_BROWN }),
+      stroke: new ol.style.Stroke({ color: THEME_SECONDARY, width: 2 })
+    })
+  });
+
   const MARKERS_URL = '{% url "gifts:api-markers" %}';
 
   function truncate(text, limit) {
@@ -432,14 +481,14 @@
     else if (props.listing_type === 'offer') badge = `<span class="pill bg-primary"><i class="fa fa-gift mr-1"></i>${td}</span>`;
     else if (props.listing_type === 'wish')  badge = `<span class="pill bg-yellow"><i class="fa fa-heart mr-1"></i>${td}</span>`;
     else                               badge = `<span class="pill bg-primary">${td}</span>`;
-    let html = badge;
+    let html = `<button type="button" class="map-popup-close" aria-label="{% trans "Close" %}"><i class="fa fa-times"></i></button>` + badge;
     if (props.title) html += props.url ? `<h3><a href="${props.url}" class="hover:underline">${props.title}</a></h3>` : `<h3>${props.title}</h3>`;
     if (props.image) html += `<div class="mb-2">${props.url ? `<a href="${props.url}">` : ''}<img src="${props.image}" alt="" class="w-full max-w-xs rounded shadow">${props.url ? '</a>' : ''}</div>`;
     const desc = truncate(props.description, 150);
     if (desc) html += `<div class="text-sm text-brown mt-2">${desc}</div>`;
     if (props.source === 'skill' && props.community_name) html += `<div class="text-xs text-brown mt-1"><i class="fa fa-home mr-1"></i>${props.community_name}</div>`;
-    if (props.source === 'user_skill' && props.user_name) html += `<div class="text-xs mt-1"><i class="fa fa-user mr-1"></i>${props.user_name}</div>`;
-    if (props.url) html += `<a class="text-primary underline" href="${props.url}">{% trans "Open profile" %}</a>`;
+    if ((props.source === 'user_skill' || props.source === 'listing') && props.user_name) html += `<div class="text-xs mt-1"><i class="fa fa-user mr-1"></i>${props.user_name}</div>`;
+    if (props.url) html += `<a class="text-primary underline" href="${props.url}">{% trans "Open" %}</a>`;
     return html;
   }
 
@@ -465,6 +514,7 @@
     fetch(buildMarkersURL(map, fitToResults))
       .then(r => r.json())
       .then(geojson => {
+        if (window._fmCloseClusters) window._fmCloseClusters();
         vectorSource.clear();
         const features = (geojson.features || []).map(feat => {
           const f = new ol.Feature({
@@ -505,11 +555,13 @@
 
     var tiles = EcoMap.buildBaseLayers();
     var vectorSource = new ol.source.Vector();
-    var vectorLayer  = new ol.layer.Vector({ source: vectorSource });
+    // Only markers at the very same spot are clustered (e.g. members of one community).
+    var clusterSource = new ol.source.Cluster({ distance: 0, source: vectorSource });
+    var clusterLayer  = new ol.layer.Vector({ source: clusterSource, style: clusterStyle });
 
     var map = new ol.Map({
       target: mapEl,
-      layers: tiles.all.concat([vectorLayer]),
+      layers: tiles.all.concat([clusterLayer]),
       view: new ol.View({ center: ol.proj.fromLonLat([0, 20]), zoom: 2, maxZoom: 20 })
     });
 
@@ -526,17 +578,87 @@
     var popupEl = document.createElement('div');
     popupEl.className = 'map-popup';
     var overlay = new ol.Overlay({
-      element: popupEl, positioning: 'bottom-center', offset: [0, -12], stopEvent: false
+      element: popupEl, positioning: 'bottom-center', offset: [0, -12], stopEvent: true
     });
     map.addOverlay(overlay);
+    popupEl.addEventListener('click', function (e) {
+      if (e.target.closest('.map-popup-close')) overlay.setPosition(undefined);
+    });
 
+    // ── Spiderfy: clicking a cluster fans its markers out (ol-ext) ──
+    function popupOpen() { return overlay.getPosition() !== undefined; }
+    function markerAtPixel(pixel) {
+      return !!map.forEachFeatureAtPixel(pixel, function (f) { return !f.get('selectclusterlink'); });
+    }
+
+    var selectCluster = new ol.interaction.SelectCluster({
+      layers: [clusterLayer],
+      // A click off the markers while a popup is open only closes the popup;
+      // the fan stays open until the next click outside it.
+      condition: function (evt) {
+        if (!ol.events.condition.singleClick(evt)) return false;
+        if (popupOpen() && !markerAtPixel(evt.pixel)) {
+          overlay.setPosition(undefined);
+          return false;
+        }
+        return true;
+      },
+      pointRadius: 38,
+      circleMaxObjects: 8,
+      spiral: true,
+      animate: true,
+      animationDuration: 300,
+      // Links from the cluster centre to each revealed marker.
+      featureStyle: function () { return spiderLegStyle; },
+      // Selected cluster becomes a centre dot; selected markers keep their icon.
+      style: function (f) {
+        var features = f.get('features');
+        if (f.get('selectclusterfeature') || features.length === 1) return features[0].getStyle();
+        return spiderCenterStyle;
+      }
+    });
+    map.addInteraction(selectCluster);
+
+    function setOpenCluster(cluster) {
+      openCluster = cluster;
+      clusterLayer.changed();
+    }
+    window._fmCloseClusters = function () { selectCluster.clear(); setOpenCluster(null); };
+    // ol-ext closes the fan-out itself on zoom
+    map.getView().on('change:resolution', function () { setOpenCluster(null); });
+
+    // The interaction only manages which fan is open ...
+    selectCluster.on('select', function (evt) {
+      var selected = evt.selected[0];
+      if (!selected) { setOpenCluster(null); return; }
+      if (selected.get('selectclusterfeature')) return;
+      var isStack = selected.get('features').length > 1;
+      setOpenCluster(isStack ? selected : null);
+      if (isStack) overlay.setPosition(undefined);
+    });
+
+    // ... the popup opens on every click on a single marker, including one
+    // that is already selected (e.g. after closing its popup with the X).
     map.on('singleclick', function (evt) {
-      var feature = map.forEachFeatureAtPixel(evt.pixel, function (f) { return f; });
-      if (!feature) { overlay.setPosition(undefined); return; }
+      var hit = map.forEachFeatureAtPixel(evt.pixel, function (f) { return f.get('selectclusterlink') ? null : f; });
+      if (!hit) return;
+      var features = hit.get('features');
+      if (!hit.get('selectclusterfeature') && features.length > 1) return;
+      var feature = features[0];
       var props = {};
       feature.getKeys().forEach(function (k) { if (k !== 'geometry') props[k] = feature.get(k); });
       popupEl.innerHTML = buildPopupHTML(props);
       overlay.setPosition(evt.coordinate);
+    });
+
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') { overlay.setPosition(undefined); window._fmCloseClusters(); }
+    });
+
+    map.on('pointermove', function (evt) {
+      if (evt.dragging) return;
+      var hit = map.hasFeatureAtPixel(evt.pixel, { layerFilter: function () { return true; } });
+      mapEl.style.cursor = hit ? 'pointer' : '';
     });
 
     window.addEventListener('resize', function () { map.updateSize(); });
