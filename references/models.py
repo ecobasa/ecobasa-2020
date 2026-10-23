@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.fields import GenericForeignKey
@@ -16,17 +18,9 @@ REFERENCEABLE_MODELS = {
     "skills.communityskill",
 }
 
-# Subjects a person holds themselves. References about these are also listed on the
-# owner's profile; community skills belong to the community, not its owner.
-PERSONAL_MODELS = {"users.user", "gifts.listing", "skills.userskill"}
-
-
-def _label(content_type):
-    return f"{content_type.app_label}.{content_type.model}"
-
 
 def is_referenceable(content_type):
-    return _label(content_type) in REFERENCEABLE_MODELS
+    return f"{content_type.app_label}.{content_type.model}" in REFERENCEABLE_MODELS
 
 
 def subject_owner(subject):
@@ -38,16 +32,20 @@ def subject_owner(subject):
 
 
 def references_about(subject):
-    """References about `subject`. For a user, this includes the references about their
-    gift listings and skills too, so their profile shows everything about them in one place."""
-    if isinstance(subject, get_user_model()):
-        personal = Q()
-        for label in PERSONAL_MODELS:
-            app_label, model = label.split(".")
-            personal |= Q(content_type__app_label=app_label, content_type__model=model)
-        return Reference.objects.filter(personal, recipient=subject)
-    content_type = ContentType.objects.get_for_model(subject)
-    return Reference.objects.filter(content_type=content_type, object_id=str(subject.pk))
+    """References about `subject` and everything it holds. A user or community lists the
+    subjects that belong to it via get_reference_subjects() (themself plus their listings
+    and skills), so its page shows all references about it in one place."""
+    if hasattr(subject, "get_reference_subjects"):
+        subjects = subject.get_reference_subjects()
+    else:
+        subjects = [subject]
+    ids_by_type = defaultdict(list)
+    for s in subjects:
+        ids_by_type[ContentType.objects.get_for_model(s)].append(str(s.pk))
+    query = Q()
+    for content_type, ids in ids_by_type.items():
+        query |= Q(content_type=content_type, object_id__in=ids)
+    return Reference.objects.filter(query)
 
 
 class Reference(models.Model):
