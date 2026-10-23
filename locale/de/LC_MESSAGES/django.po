@@ -1,0 +1,2310 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: ecobasa\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-10-23 13:08+0200\n"
+"PO-Revision-Date: 2026-10-23 12:00+0200\n"
+"Last-Translator: ecobasa\n"
+"Language-Team: de\n"
+"Language: de\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: communities/forms.py:36
+msgid "Upload one or more additional images."
+msgstr "Lade ein oder mehrere weitere Bilder hoch."
+
+#: communities/forms.py:41
+msgid "Skills we're looking for"
+msgstr "Fähigkeiten, die wir suchen"
+
+#: communities/forms.py:42
+msgid ""
+"Comma-separated list of skills you're looking for in visitors or new "
+"members."
+msgstr ""
+"Kommagetrennte Liste von Fähigkeiten, die ihr bei Besucher*innen oder neuen "
+"Mitgliedern sucht."
+
+#: communities/forms.py:61
+msgid "e.g. 25"
+msgstr "z. B. 25"
+
+#: communities/forms.py:104
+msgid "YouTube or Vimeo link"
+msgstr "YouTube- oder Vimeo-Link"
+
+#: communities/forms.py:105
+msgid "Add skills, comma separated"
+msgstr "Fähigkeiten hinzufügen, durch Komma getrennt"
+
+#: communities/forms.py:108 communities/models.py:102
+#: communities/templates/communities/community_detail.html:213
+#: gifts/filters.py:30 gifts/filters.py:32 gifts/models.py:52
+#: gifts/templates/gifts/listing_detail.html:215
+#: gifts/templates/gifts/listing_form.html:32
+#: matches/templates/matches/match_detail.html:145
+#: skills/templates/skills/communityskill_detail.html:184
+#: skills/templates/skills/skillwish_user_detail.html:152
+#: skills/templates/skills/userskill_detail.html:202 users/models.py:72
+#: users/templates/users/detail.html:56
+msgid "Location"
+msgstr "Ort"
+
+#: communities/forms.py:109
+msgid "Geo location"
+msgstr "Geoposition"
+
+#: communities/forms.py:110 communities/models.py:52
+msgid "How many people live in your community?"
+msgstr "Wie viele Menschen leben in eurer Gemeinschaft?"
+
+#: communities/forms.py:111
+msgid "How many of them are under 18?"
+msgstr "Wie viele davon sind unter 18?"
+
+#: communities/forms.py:112 communities/models.py:57
+msgid "Maximum number of people you can host"
+msgstr "Maximale Anzahl an Gästen, die ihr aufnehmen könnt"
+
+#: communities/forms.py:113 communities/models.py:59
+msgid ""
+"Do you have workshop spaces where people can build/construct/manufacture "
+"things?"
+msgstr "Habt ihr Werkstätten, in denen man Dinge bauen und herstellen kann?"
+
+#: communities/forms.py:114 communities/models.py:62
+msgid "Do you offer any seminars that visitors could attend?"
+msgstr "Bietet ihr Seminare an, an denen Besucher*innen teilnehmen können?"
+
+#: communities/forms.py:115 communities/models.py:65
+msgid "Requirements for visitors"
+msgstr "Voraussetzungen für Besucher*innen"
+
+#: communities/models.py:22 gifts/models.py:13 skills/models.py:44
+msgid "Name"
+msgstr "Name"
+
+#: communities/models.py:23
+msgid "Slug"
+msgstr "Slug"
+
+#: communities/models.py:24 gifts/filters.py:18
+#: matches/templates/matches/base.html:21
+#: matches/templates/matches/matches_list.html:64 skills/models.py:51
+#: skills/templates/skills/communityskill_detail.html:15
+#: skills/templates/skills/skill_detail.html:4
+#: skills/templates/skills/skill_detail.html:10
+#: skills/templates/skills/skill_list.html:4
+#: skills/templates/skills/skill_list.html:10
+#: skills/templates/skills/skillwish_user_detail.html:15
+#: skills/templates/skills/userskill_detail.html:15
+#: templates/postman/base.html:23 users/templates/users/detail.html:95
+msgid "Skills"
+msgstr "Fähigkeiten"
+
+#: communities/models.py:26
+msgid ""
+"Skills that people can learn by volunteering or staying in your community"
+msgstr ""
+"Fähigkeiten, die Menschen bei einem Aufenthalt oder beim Mithelfen in eurer "
+"Gemeinschaft lernen können"
+
+#: communities/models.py:27 gifts/models.py:37 skills/forms.py:111
+#: skills/forms.py:172 skills/forms.py:243 skills/models.py:46
+#: skills/templates/skills/communityskill_form.html:76
+#: skills/templates/skills/skillwish_form.html:24
+#: skills/templates/skills/userskill_form.html:87
+msgid "Description"
+msgstr "Beschreibung"
+
+#: communities/models.py:28
+#: communities/templates/communities/community_detail.html:115
+msgid "What brings this community together?"
+msgstr "Was bringt diese Gemeinschaft zusammen?"
+
+#: communities/models.py:29
+msgid "Accomodation for Guests"
+msgstr "Unterkunft für Gäste"
+
+#: communities/models.py:29
+msgid ""
+"Where can your visitors sleep? Do you have space for a bus, tents? How is "
+"the indoor sleeping situation? Do you have mattresses, a couch? Donations or"
+" pricing model? Required daily work or experience?"
+msgstr ""
+"Wo können eure Gäste schlafen? Habt ihr Platz für einen Bus oder Zelte? Wie "
+"sieht es drinnen aus – gibt es Matratzen, ein Sofa? Spenden oder "
+"Preismodell? Erwartet ihr tägliche Mitarbeit oder Erfahrung?"
+
+#: communities/models.py:30
+msgid "link of your communities website"
+msgstr "Link zur Webseite eurer Gemeinschaft"
+
+#: communities/models.py:32
+msgid "telephone"
+msgstr "Telefon"
+
+#: communities/models.py:37
+#: communities/templates/communities/community_detail.html:201
+msgid "Video"
+msgstr "Video"
+
+#: communities/models.py:38
+msgid "Link to a video showing your community"
+msgstr "Link zu einem Video, das eure Gemeinschaft zeigt"
+
+#: communities/models.py:48 gifts/models.py:45
+msgid "Owner"
+msgstr "Verantwortlich"
+
+#: communities/models.py:55
+msgid "how many children live at your place?"
+msgstr "Wie viele Kinder leben bei euch?"
+
+#: communities/models.py:60
+msgid ""
+"Describe your workshop spaces and what people can "
+"build/construct/manufacture."
+msgstr ""
+"Beschreibt eure Werkstätten und was man dort bauen und herstellen kann."
+
+#: communities/models.py:63
+msgid "List seminars, topics, and how visitors can join."
+msgstr "Nennt Seminare, Themen und wie Besucher*innen teilnehmen können."
+
+#: communities/models.py:66
+msgid ""
+"Anything guests must know before arriving: expectations, minimum length of "
+"stay, costs, working hours, house rules."
+msgstr ""
+"Alles, was Gäste vor der Ankunft wissen müssen: Erwartungen, "
+"Mindestaufenthalt, Kosten, Arbeitszeiten, Hausregeln."
+
+#: communities/models.py:72
+msgid "Future Project (looking for co-founders)"
+msgstr "Zukunftsprojekt (sucht Mitgründer*innen)"
+
+#: communities/models.py:73
+#: communities/templates/communities/community_detail.html:180
+msgid "Starting Project (first years)"
+msgstr "Junges Projekt (erste Jahre)"
+
+#: communities/models.py:74
+#: communities/templates/communities/community_detail.html:182
+msgid "Established (+4 years)"
+msgstr "Etabliert (über 4 Jahre)"
+
+#: communities/models.py:76
+msgid "Project status"
+msgstr "Projektstatus"
+
+#: communities/models.py:88
+#: communities/templates/communities/community_detail.html:167
+msgid "Ecovillage"
+msgstr "Ökodorf"
+
+#: communities/models.py:89
+#: communities/templates/communities/community_detail.html:171
+msgid "Commune"
+msgstr "Kommune"
+
+#: communities/models.py:90
+#: communities/templates/communities/community_detail.html:173
+msgid "Houseproject"
+msgstr "Hausprojekt"
+
+#: communities/models.py:91
+#: communities/templates/communities/community_detail.html:175
+msgid "Permaculture Farm"
+msgstr "Permakultur-Hof"
+
+#: communities/models.py:92
+msgid "Place for Projects"
+msgstr "Ort für Projekte"
+
+#: communities/models.py:94
+msgid "Type of community"
+msgstr "Art der Gemeinschaft"
+
+#: communities/models.py:100 users/models.py:71
+#: users/templates/users/detail.html:56
+msgid "Country"
+msgstr "Land"
+
+#: communities/models.py:105 gifts/models.py:55 users/models.py:73
+msgid "Geo Location"
+msgstr "Geoposition"
+
+#: communities/models.py:129
+msgid "requested to volunteer at"
+msgstr "hat einen Gemeinschaftsaufenthalt angefragt bei"
+
+#: communities/models.py:132
+msgid "Community"
+msgstr "Gemeinschaft"
+
+#: communities/models.py:133 matches/templates/matches/base.html:24
+#: templates/_navbar.html:28 templates/_navbar.html:225
+#: templates/postman/base.html:26
+msgid "Communities"
+msgstr "Gemeinschaften"
+
+#: communities/models.py:143
+msgid "Image"
+msgstr "Bild"
+
+#: communities/templates/communities/_community_list_modal.html:6
+#: gifts/templates/gifts/_gifts_list_partial.html:6
+msgid "result"
+msgstr "Ergebnis"
+
+#: communities/templates/communities/_community_list_modal.html:7
+msgid "sorted by distance"
+msgstr "nach Entfernung sortiert"
+
+#: communities/templates/communities/_community_list_modal.html:9
+#: communities/templates/communities/_community_list_modal.html:76
+msgid "No communities found."
+msgstr "Keine Gemeinschaften gefunden."
+
+#: communities/templates/communities/_community_list_modal.html:71
+msgid "Open"
+msgstr "Öffnen"
+
+#: communities/templates/communities/_volunteer_skill_proposal.html:19
+msgid ""
+"Your application mentioned skills that you dont have on your profile yet — "
+"Do you want to add them now, so others can find you by them too?"
+msgstr ""
+"Deine Bewerbung nennt Fähigkeiten, die noch nicht in deinem Profil stehen – "
+"möchtest du sie jetzt hinzufügen, damit andere dich auch darüber finden?"
+
+#: communities/templates/communities/_volunteer_skill_proposal.html:21
+msgid "Dismiss"
+msgstr "Ausblenden"
+
+#: communities/templates/communities/_volunteer_skill_proposal.html:26
+#: gifts/filters.py:16
+msgid "Offers"
+msgstr "Angebote"
+
+#: communities/templates/communities/_volunteer_skill_proposal.html:35
+msgid "Learning goals"
+msgstr "Lernziele"
+
+#: communities/templates/communities/_volunteer_skill_proposal.html:43
+msgid "No thanks"
+msgstr "Nein, danke"
+
+#: communities/templates/communities/_volunteer_skill_proposal.html:44
+msgid "Review and add"
+msgstr "Prüfen und hinzufügen"
+
+#: communities/templates/communities/community_detail.html:31
+#: communities/templates/communities/community_detail.html:86
+msgid "View fullscreen"
+msgstr "Vollbild"
+
+#: communities/templates/communities/community_detail.html:40
+#: communities/templates/communities/community_detail.html:70
+msgid "Previous"
+msgstr "Zurück"
+
+#: communities/templates/communities/community_detail.html:44
+#: communities/templates/communities/community_detail.html:74
+msgid "Next"
+msgstr "Weiter"
+
+#: communities/templates/communities/community_detail.html:60
+#: communities/templates/communities/community_detail.html:91
+#: gifts/templates/gifts/listing_detail.html:52
+#: users/templates/users/detail.html:38
+msgid "Close"
+msgstr "Schließen"
+
+#: communities/templates/communities/community_detail.html:103
+#: gifts/templates/gifts/listing_detail.html:81
+msgid "Edit"
+msgstr "Bearbeiten"
+
+#: communities/templates/communities/community_detail.html:123
+#: communities/templates/communities/community_detail.html:133
+msgid "Skills you can learn here"
+msgstr "Fähigkeiten, die du hier lernen kannst"
+
+#: communities/templates/communities/community_detail.html:135
+#: skills/templates/skills/skill_list.html:13
+msgid "Add a skill"
+msgstr "Eine Fähigkeit hinzufügen"
+
+#: communities/templates/communities/community_detail.html:140
+#: communities/templates/communities/community_detail.html:151
+msgid "Looking for people with these skills"
+msgstr "Sucht Menschen mit diesen Fähigkeiten"
+
+#: communities/templates/communities/community_detail.html:153
+msgid "Add skills you're looking for"
+msgstr "Gesuchte Fähigkeiten hinzufügen"
+
+#: communities/templates/communities/community_detail.html:164
+msgid "Statistics"
+msgstr "Zahlen"
+
+#: communities/templates/communities/community_detail.html:169
+msgid "Planning Initiative"
+msgstr "Planungsinitiative"
+
+#: communities/templates/communities/community_detail.html:184
+msgid "Land Offer"
+msgstr "Landangebot"
+
+#: communities/templates/communities/community_detail.html:189
+#, python-format
+msgid "%(count)s person living there"
+msgid_plural "%(count)s people living there"
+msgstr[0] "%(count)s Person lebt dort"
+msgstr[1] "%(count)s Personen leben dort"
+
+#: communities/templates/communities/community_detail.html:194
+#, python-format
+msgid "%(count)s child"
+msgid_plural "%(count)s children"
+msgstr[0] "%(count)s Kind"
+msgstr[1] "%(count)s Kinder"
+
+#: communities/templates/communities/community_detail.html:207
+msgid "Accomodation for guests"
+msgstr "Unterkunft für Gäste"
+
+#: communities/templates/communities/community_detail.html:225
+msgid "Contact Information"
+msgstr "Kontakt"
+
+#: communities/templates/communities/community_detail.html:243
+msgid "Gift-economy Ambassador"
+msgstr "Schenkökonomie-Botschafter*in"
+
+#: communities/templates/communities/community_detail.html:263
+#: communities/templates/communities/community_detail.html:267
+msgid "Apply for volunteering stay"
+msgstr "Für einen Gemeinschaftsaufenthalt bewerben"
+
+#: communities/templates/communities/community_detail.html:283
+msgid "Offer to volunteer"
+msgstr "Mithilfe anbieten"
+
+#: communities/templates/communities/community_detail.html:294
+msgid "Type a skill and press Enter…"
+msgstr "Fähigkeit eingeben und Enter drücken…"
+
+#: communities/templates/communities/community_detail.html:299
+msgid "Your skills (comma separated)"
+msgstr "Deine Fähigkeiten (durch Komma getrennt)"
+
+#: communities/templates/communities/community_detail.html:303
+#: templates/postman/inbox.html:91
+msgid "From"
+msgstr "Von"
+
+#: communities/templates/communities/community_detail.html:306
+#: templates/postman/inbox.html:92 templates/postman/write.html:14
+msgid "To"
+msgstr "Bis"
+
+#: communities/templates/communities/community_detail.html:309
+#: gifts/templates/gifts/listing_detail.html:132 matches/forms.py:35
+#: matches/models.py:54 matches/models.py:109
+#: matches/templates/matches/email/match_request.html:54
+#: notifications/models.py:17 templates/postman/write.html:77
+#: users/templates/users/detail.html:48
+msgid "Message"
+msgstr "Nachricht"
+
+#: communities/templates/communities/community_detail.html:310
+msgid "Write a short message explaining your motivation and skills"
+msgstr ""
+"Schreib eine kurze Nachricht über deine Motivation und deine Fähigkeiten"
+
+#: communities/templates/communities/community_detail.html:314
+#: communities/templates/communities/community_form.html:180
+#: gifts/templates/gifts/listing_delete_confirm.html:29
+#: gifts/templates/gifts/listing_form.html:39
+#: matches/templates/matches/match_detail.html:345
+#: skills/templates/skills/communityskill_confirm_delete.html:17
+#: skills/templates/skills/communityskill_form.html:95
+#: skills/templates/skills/skillwish_form.html:35
+#: skills/templates/skills/skillwish_form.html:39
+#: skills/templates/skills/userskill_confirm_delete.html:17
+#: skills/templates/skills/userskill_form.html:115
+#: templates/postman/write.html:87 users/templates/users/register.html:37
+#: users/templates/users/update.html:43
+msgid "Cancel"
+msgstr "Abbrechen"
+
+#: communities/templates/communities/community_detail.html:315
+msgid "Send Application"
+msgstr "Bewerbung senden"
+
+#: communities/templates/communities/community_detail.html:334
+msgid "Skills you would like to practice here"
+msgstr "Fähigkeiten, die du hier üben möchtest"
+
+#: communities/templates/communities/community_detail.html:335
+msgid "Skills you would like to help with"
+msgstr "Fähigkeiten, mit denen du helfen möchtest"
+
+#: communities/templates/communities/community_detail.html:336
+msgid "Your current level with this skill"
+msgstr "Dein aktuelles Niveau in dieser Fähigkeit"
+
+#: communities/templates/communities/community_detail.html:337
+msgid "Your level with this skill"
+msgstr "Dein Niveau in dieser Fähigkeit"
+
+#: communities/templates/communities/community_detail.html:388
+#: communities/templates/communities/community_detail.html:398
+msgid "Suggested community skills"
+msgstr "Vorgeschlagene Fähigkeiten der Gemeinschaft"
+
+#: communities/templates/communities/community_form.html:16
+#: users/templates/users/update.html:16
+msgid "Back to profile"
+msgstr "Zurück zum Profil"
+
+#: communities/templates/communities/community_form.html:18
+#, python-format
+msgid "Edit %(name)s"
+msgstr "%(name)s bearbeiten"
+
+#: communities/templates/communities/community_form.html:18
+msgid "Add your community"
+msgstr "Eure Gemeinschaft eintragen"
+
+#: communities/templates/communities/community_form.html:62
+msgid "Gallery images"
+msgstr "Galeriebilder"
+
+#: communities/templates/communities/community_form.html:68
+msgid "Existing photos"
+msgstr "Vorhandene Fotos"
+
+#: communities/templates/communities/community_form.html:73
+#: communities/templates/communities/community_form.html:172
+#: gifts/templates/gifts/listing_delete_confirm.html:30
+#: gifts/templates/gifts/listing_detail.html:77
+#: gifts/templates/gifts/listing_form.html:37
+msgid "Delete"
+msgstr "Löschen"
+
+#: communities/templates/communities/community_form.html:100
+msgid "Visitor information"
+msgstr "Infos für Besucher*innen"
+
+#: communities/templates/communities/community_form.html:137
+msgid ""
+"What skills can people learn by volunteering or staying in your community?"
+msgstr ""
+"Welche Fähigkeiten können Menschen bei einem Aufenthalt oder beim Mithelfen "
+"in eurer Gemeinschaft lernen?"
+
+#: communities/templates/communities/community_form.html:143
+msgid "Skills we're looking for in visitors or new members"
+msgstr "Fähigkeiten, die wir bei Besucher*innen oder neuen Mitgliedern suchen"
+
+#: communities/templates/communities/community_form.html:172
+msgid "Sure?"
+msgstr "Sicher?"
+
+#: communities/templates/communities/community_form.html:184
+#: gifts/templates/gifts/listing_form.html:41
+#: skills/templates/skills/skillwish_form.html:31
+msgid "Save"
+msgstr "Speichern"
+
+#: communities/templates/communities/community_list.html:130
+#: gifts/templates/gifts/search.html:175
+msgid "Map"
+msgstr "Karte"
+
+#: communities/templates/communities/community_list.html:141
+#: gifts/templates/gifts/search.html:188
+msgid "List"
+msgstr "Liste"
+
+#: communities/templates/communities/community_list.html:165
+msgid "Name, location or skill…"
+msgstr "Name, Ort oder Fähigkeit…"
+
+#: communities/templates/communities/community_list.html:200
+#: communities/templates/communities/community_list.html:445
+#: gifts/templates/gifts/_filter_popover.html:8
+msgid "Filters"
+msgstr "Filter"
+
+#: communities/templates/communities/community_list.html:216
+#: communities/templates/communities/community_list.html:459
+#: gifts/models.py:35 gifts/templates/gifts/_filter_popover.html:21
+msgid "Type"
+msgstr "Art"
+
+#: communities/templates/communities/community_list.html:235
+#: communities/templates/communities/community_list.html:479
+#: matches/models.py:63
+msgid "Status"
+msgstr "Status"
+
+#: communities/templates/communities/community_list.html:257
+#: communities/templates/communities/community_list.html:315
+#: communities/templates/communities/community_list.html:507
+#: gifts/templates/gifts/_filter_popover.html:56
+#: gifts/templates/gifts/search.html:240
+msgid "Clear filters"
+msgstr "Filter zurücksetzen"
+
+#: communities/templates/communities/community_list.html:266
+#: communities/templates/communities/community_list.html:516
+msgid "Show communities near me"
+msgstr "Gemeinschaften in meiner Nähe zeigen"
+
+#: communities/templates/communities/community_list.html:302
+#: gifts/templates/gifts/search.html:235
+msgid "results on map"
+msgstr "Ergebnisse auf der Karte"
+
+#: communities/templates/communities/community_list.html:323
+msgid "Add community"
+msgstr "Gemeinschaft eintragen"
+
+#: communities/templates/communities/community_list.html:335
+#: gifts/templates/gifts/search.html:264
+msgid "Switch map layer"
+msgstr "Kartenstil wechseln"
+
+#: communities/templates/communities/community_list.html:340
+#: gifts/templates/gifts/search.html:269
+msgid "Map style"
+msgstr "Kartenstil"
+
+#: communities/templates/communities/community_list.html:349
+#: gifts/templates/gifts/search.html:274
+msgid "ecobasa"
+msgstr "ecobasa"
+
+#: communities/templates/communities/community_list.html:358
+#: gifts/templates/gifts/search.html:279
+msgid "OpenStreetMap"
+msgstr "OpenStreetMap"
+
+#: communities/templates/communities/community_list.html:365
+#: gifts/templates/gifts/search.html:284
+msgid "Satellite"
+msgstr "Satellit"
+
+#: communities/templates/communities/community_list.html:374
+#: gifts/templates/gifts/search.html:292
+msgid "Loading…"
+msgstr "Lädt…"
+
+#: communities/templates/communities/community_list.html:409
+msgid "Search by name, location or skill"
+msgstr "Nach Name, Ort oder Fähigkeit suchen"
+
+#: communities/templates/communities/community_list.html:541
+msgid "All countries"
+msgstr "Alle Länder"
+
+#: communities/templates/communities/community_list.html:594
+#: gifts/templates/gifts/search.html:352
+msgid "Clear all filters"
+msgstr "Alle Filter zurücksetzen"
+
+#: communities/templates/communities/community_list.html:688
+#: gifts/templates/gifts/search.html:443
+msgid "Open profile"
+msgstr "Profil öffnen"
+
+#: communities/views.py:102
+msgid "This community has no contact person."
+msgstr "Diese Gemeinschaft hat keine Ansprechperson."
+
+#: communities/views.py:147
+#, python-format
+msgid "Your request has been sent to %(community)s!"
+msgstr "Deine Anfrage wurde an %(community)s gesendet!"
+
+#: communities/views.py:222 communities/views.py:269
+#, python-format
+msgid "Uploaded %(count)s image(s)."
+msgstr "%(count)s Bild(er) hochgeladen."
+
+#: communities/views.py:227 communities/views.py:275
+#, python-format
+msgid "Form invalid: %(errors)s"
+msgstr "Formular ungültig: %(errors)s"
+
+#: communities/views.py:245
+msgid "Community deleted."
+msgstr "Gemeinschaft gelöscht."
+
+#: communities/views.py:270
+msgid "Community updated."
+msgstr "Gemeinschaft aktualisiert."
+
+#: gifts/filters.py:17
+msgid "Wishes"
+msgstr "Wünsche"
+
+#: gifts/filters.py:23
+msgid "Search"
+msgstr "Suche"
+
+#: gifts/forms.py:27
+msgid "Content"
+msgstr "Inhalt"
+
+#: gifts/forms.py:31
+msgid "Describe your wish or offer here"
+msgstr "Beschreibe hier deinen Wunsch oder dein Angebot"
+
+#: gifts/models.py:14
+msgid "Order"
+msgstr "Reihenfolge"
+
+#: gifts/models.py:20
+msgid "Listing Category"
+msgstr "Kategorie"
+
+#: gifts/models.py:21
+msgid "Listing Categories"
+msgstr "Kategorien"
+
+#: gifts/models.py:28
+msgid "Offer"
+msgstr "Angebot"
+
+#: gifts/models.py:28
+msgid "Wish"
+msgstr "Wunsch"
+
+#: gifts/models.py:31
+msgid "Random Id"
+msgstr "Zufalls-ID"
+
+#: gifts/models.py:33
+msgid "Title"
+msgstr "Titel"
+
+#: gifts/models.py:38 users/models.py:67
+msgid "image"
+msgstr "Bild"
+
+#: gifts/models.py:49
+msgid "Categories"
+msgstr "Kategorien"
+
+#: gifts/models.py:83
+msgid "is interested in your offer"
+msgstr "interessiert sich für dein Angebot"
+
+#: gifts/models.py:83
+msgid "wants to fulfill your wish"
+msgstr "möchte deinen Wunsch erfüllen"
+
+#: gifts/models.py:86
+msgid "Listing"
+msgstr "Eintrag"
+
+#: gifts/models.py:87
+msgid "Listings"
+msgstr "Einträge"
+
+#: gifts/templates/gifts/_filter_popover.html:37
+msgid "Category"
+msgstr "Kategorie"
+
+#: gifts/templates/gifts/_gifts_list_partial.html:8
+msgid "No results"
+msgstr "Keine Ergebnisse"
+
+#: gifts/templates/gifts/_gifts_list_partial.html:18
+#: gifts/templates/gifts/_gifts_list_partial.html:49 skills/forms.py:28
+#: skills/forms.py:85 skills/forms.py:158 skills/forms.py:193
+#: skills/models.py:50 skills/templates/skills/communityskill_form.html:53
+#: skills/templates/skills/userskill_form.html:53
+msgid "Skill"
+msgstr "Fähigkeit"
+
+#: gifts/templates/gifts/_gifts_list_partial.html:79
+msgid "No results found."
+msgstr "Keine Ergebnisse gefunden."
+
+#: gifts/templates/gifts/_listing.html:22
+msgid "to"
+msgstr "bis"
+
+#: gifts/templates/gifts/_listing.html:36
+#: gifts/templates/gifts/listing_detail.html:66
+msgid "from me"
+msgstr "von mir"
+
+#: gifts/templates/gifts/listing_delete_confirm.html:17
+#, python-format
+msgid ""
+"\n"
+"          Delete %(listing_type)s?\n"
+"        "
+msgstr ""
+"\n"
+"          %(listing_type)s löschen?\n"
+"        "
+
+#: gifts/templates/gifts/listing_delete_confirm.html:23
+#, python-format
+msgid ""
+"\n"
+"          Are you sure you want to delete the %(listing_type)s <b>%(listing_title)s</b>?\n"
+"        "
+msgstr ""
+"\n"
+"          Möchtest du %(listing_type)s <b>%(listing_title)s</b> wirklich löschen?\n"
+"        "
+
+#: gifts/templates/gifts/listing_detail.html:24
+#: gifts/templates/gifts/listing_form.html:16
+msgid "Back"
+msgstr "Zurück"
+
+#: gifts/templates/gifts/listing_detail.html:28
+#: matches/templates/matches/base.html:17
+#: matches/templates/matches/matches_list.html:37 templates/_navbar.html:32
+#: templates/_navbar.html:224 templates/postman/base.html:19
+msgid "Gifts"
+msgstr "Geschenke"
+
+#: gifts/templates/gifts/listing_detail.html:38
+msgid "Open image"
+msgstr "Bild öffnen"
+
+#: gifts/templates/gifts/listing_detail.html:96
+msgid "Offer from"
+msgstr "Angebot von"
+
+#: gifts/templates/gifts/listing_detail.html:96
+msgid "Wish from"
+msgstr "Wunsch von"
+
+#: gifts/templates/gifts/listing_detail.html:126
+#: gifts/templates/gifts/listing_detail.html:154
+#: skills/templates/skills/communityskill_detail.html:112
+#: skills/templates/skills/communityskill_detail.html:217
+#: skills/templates/skills/userskill_detail.html:128
+#: skills/templates/skills/userskill_detail.html:237
+msgid "Express Interest"
+msgstr "Interesse zeigen"
+
+#: gifts/templates/gifts/listing_detail.html:126
+msgid "Offer to fulfill this wish"
+msgstr "Anbieten, diesen Wunsch zu erfüllen"
+
+#: gifts/templates/gifts/listing_detail.html:136
+msgid "Proposed meeting location"
+msgstr "Vorgeschlagener Treffpunkt"
+
+#: gifts/templates/gifts/listing_detail.html:149
+msgid "Proposed date (optional)"
+msgstr "Vorgeschlagenes Datum (optional)"
+
+#: gifts/templates/gifts/listing_detail.html:154
+msgid "Send offer"
+msgstr "Angebot senden"
+
+#: gifts/templates/gifts/listing_detail.html:163
+#: skills/templates/skills/communityskill_detail.html:224
+#: skills/templates/skills/userskill_detail.html:244
+msgid "Log in to express interest"
+msgstr "Melde dich an, um Interesse zu zeigen"
+
+#: gifts/templates/gifts/listing_detail.html:163
+msgid "Log in to fulfill this wish"
+msgstr "Melde dich an, um diesen Wunsch zu erfüllen"
+
+#: gifts/templates/gifts/listing_detail.html:172
+msgid "Incoming Interests"
+msgstr "Eingegangenes Interesse"
+
+#: gifts/templates/gifts/listing_detail.html:194 matches/models.py:30
+#: matches/templates/matches/_match_row.html:41
+#: matches/templates/matches/match_detail.html:106
+msgid "Pending"
+msgstr "Offen"
+
+#: gifts/templates/gifts/listing_detail.html:196 matches/models.py:31
+#: matches/templates/matches/_match_row.html:45
+#: matches/templates/matches/match_detail.html:108
+#: matches/templates/matches/match_detail.html:189
+msgid "Accepted"
+msgstr "Angenommen"
+
+#: gifts/templates/gifts/listing_detail.html:198 matches/models.py:32
+#: matches/templates/matches/_match_row.html:49
+#: matches/templates/matches/match_detail.html:36
+#: matches/templates/matches/match_detail.html:110
+#: matches/templates/matches/match_detail.html:190
+msgid "Declined"
+msgstr "Abgelehnt"
+
+#: gifts/templates/gifts/listing_detail.html:200
+#: matches/templates/matches/_match_row.html:53
+msgid "Counter"
+msgstr "Gegenvorschlag"
+
+#: gifts/templates/gifts/listing_detail.html:208
+msgid "No interests yet."
+msgstr "Noch kein Interesse."
+
+#: gifts/templates/gifts/listing_form.html:21
+#, python-format
+msgid "Edit %(type)s %(title)s"
+msgstr "%(type)s „%(title)s“ bearbeiten"
+
+#: gifts/templates/gifts/listing_form.html:23
+msgid "Create new Offer or Wish"
+msgstr "Neues Angebot oder neuen Wunsch erstellen"
+
+#: gifts/templates/gifts/search.html:64
+msgid "Current Location"
+msgstr "Aktueller Standort"
+
+#: gifts/templates/gifts/search.html:173
+msgid "Show map view"
+msgstr "Kartenansicht zeigen"
+
+#: gifts/templates/gifts/search.html:180
+msgid "Show list view"
+msgstr "Listenansicht zeigen"
+
+#: gifts/templates/gifts/search.html:207
+msgid "Offer, wish, skill or place…"
+msgstr "Angebot, Wunsch, Fähigkeit oder Ort…"
+
+#: gifts/templates/gifts/search.html:224 gifts/templates/gifts/search.html:337
+msgid "Show gifts near me"
+msgstr "Geschenke in meiner Nähe zeigen"
+
+#: gifts/templates/gifts/search.html:248
+msgid "Add your Wish or Offer"
+msgstr "Wunsch oder Angebot eintragen"
+
+#: gifts/templates/gifts/search.html:251
+msgid "Add your Skill"
+msgstr "Fähigkeit eintragen"
+
+#: gifts/templates/gifts/search.html:320
+msgid "Search by offer, wish, skill or place"
+msgstr "Nach Angebot, Wunsch, Fähigkeit oder Ort suchen"
+
+#: gifts/templates/gifts/search.html:432
+msgid "skill / teaching"
+msgstr "Fähigkeit / Lehren"
+
+#: gifts/views.py:51
+msgid "Your request has been sent."
+msgstr "Deine Anfrage wurde gesendet."
+
+#: gifts/views.py:76
+#, python-format
+msgid "%(listing_type)s created"
+msgstr "%(listing_type)s erstellt"
+
+#: gifts/views.py:94
+msgid "changes saved"
+msgstr "Änderungen gespeichert"
+
+#: gifts/views.py:107
+#, python-format
+msgid "%(listing_type)s deleted"
+msgstr "%(listing_type)s gelöscht"
+
+#: homepage/templates/homepage/support.html:8
+msgid ""
+"\n"
+"        <h1>We need your help!</h1>\n"
+"        <a href=\"/contact\" target=\"_blank\">Get in contact with us</a>, if you want to help with written communication and social media, design, programming or legal counceling, organising of events or your own creative ideas.\n"
+"        <p>The gift-economy network and this online platform are all run by <a href=\"/team/\">volunteers</a>. \n"
+"          You can help developing this open-source project on <a href=\"http://github.com/ecobasa/ecobasa-2020/\" target=\"_blank\">github</a> and translate the platform on <a href=\"http://translate.ecobasa.org\" target=\"_blank\">crowdin</a>. Thanks for your support!</p>\n"
+"        <h2>Your gifts keep us giving</h2>\n"
+"        <p><strong>We try to cover running costs through donations:</strong></p>\n"
+"        <ul>\n"
+"          <li>First we will try to cover external costs for the webserver and domain: 120€ (Green-hosting by ecobytes.net) <a href=\"/contact\" target=\"_blank\">Alternatively you can help us with free hosting!</a></li>\n"
+"          <li>Additional donations we will put to our most urgent needs, like legal counseling.</li>\n"
+"          <li>Monthly donations make it possible for us to plan ahead and to spend more time away from day jobs to follow our passion.</li>\n"
+"        </ul>\n"
+"\n"
+"        <p><i>Happy giving!</i></p>\n"
+"      "
+msgstr ""
+"\n"
+"        <h1>Wir brauchen deine Hilfe!</h1>\n"
+"        <a href=\"/contact\" target=\"_blank\">Melde dich bei uns</a>, wenn du bei Texten und Social Media, Design, Programmierung oder Rechtsberatung, bei der Organisation von Veranstaltungen oder mit deinen eigenen kreativen Ideen helfen möchtest.\n"
+"        <p>Das Schenkökonomie-Netzwerk und diese Online-Plattform werden komplett von <a href=\"/team/\">Freiwilligen</a> getragen.\n"
+"          Du kannst dieses Open-Source-Projekt auf <a href=\"http://github.com/ecobasa/ecobasa-2020/\" target=\"_blank\">GitHub</a> mitentwickeln und die Plattform auf <a href=\"http://translate.ecobasa.org\" target=\"_blank\">Crowdin</a> übersetzen. Danke für deine Unterstützung!</p>\n"
+"        <h2>Deine Geschenke halten uns am Geben</h2>\n"
+"        <p><strong>Wir versuchen, die laufenden Kosten durch Spenden zu decken:</strong></p>\n"
+"        <ul>\n"
+"          <li>Zuerst möchten wir die externen Kosten für Webserver und Domain decken: 120 € (Green Hosting bei ecobytes.net). <a href=\"/contact\" target=\"_blank\">Alternativ kannst du uns mit kostenlosem Hosting helfen!</a></li>\n"
+"          <li>Weitere Spenden setzen wir für das Dringendste ein, zum Beispiel Rechtsberatung.</li>\n"
+"          <li>Monatliche Spenden ermöglichen es uns, vorauszuplanen und mehr Zeit abseits unserer Brotjobs unserer Leidenschaft zu widmen.</li>\n"
+"        </ul>\n"
+"\n"
+"        <p><i>Frohes Schenken!</i></p>\n"
+"      "
+
+#: homepage/templates/homepage/support.html:24
+msgid "Donate with Crypto"
+msgstr "Mit Krypto spenden"
+
+#: homepage/templates/homepage/support.html:27
+msgid "Flattr us"
+msgstr "Flattr uns"
+
+#: matches/emails.py:42
+#, python-format
+msgid "%(actor)s %(verb)s: %(title)s"
+msgstr "%(actor)s %(verb)s: %(title)s"
+
+#: matches/emails.py:72
+#, python-format
+msgid "%(actor)s %(status)s your interest in: %(title)s"
+msgstr "%(actor)s hat auf dein Interesse an %(title)s reagiert: %(status)s"
+
+#: matches/emails.py:104
+#, python-format
+msgid "%(verb)s: %(title)s"
+msgstr "%(verb)s: %(title)s"
+
+#: matches/emails.py:122
+#, python-format
+msgid "%(status)s: %(title)s"
+msgstr "%(status)s: %(title)s"
+
+#: matches/forms.py:20
+msgid "Write a short message about why you're interested…"
+msgstr "Schreib kurz, warum du interessiert bist…"
+
+#: matches/forms.py:24
+msgid "City, region, address…"
+msgstr "Stadt, Region, Adresse…"
+
+#: matches/forms.py:37
+msgid "Write a message…"
+msgstr "Schreib eine Nachricht…"
+
+#: matches/models.py:20
+msgid "My place — come visit me"
+msgstr "Bei mir – komm mich besuchen"
+
+#: matches/models.py:21
+msgid "Your place — I will visit you"
+msgstr "Bei dir – ich komme zu dir"
+
+#: matches/models.py:22
+msgid "Somewhere else"
+msgstr "Woanders"
+
+#: matches/models.py:33 matches/templates/matches/match_detail.html:112
+#: matches/templates/matches/match_detail.html:191
+msgid "Counter-proposed"
+msgstr "Gegenvorschlag gemacht"
+
+#: matches/models.py:56
+msgid "Meeting location"
+msgstr "Treffpunkt"
+
+#: matches/models.py:58
+msgid "Custom location"
+msgstr "Eigener Ort"
+
+#: matches/models.py:61 matches/templates/matches/match_detail.html:151
+msgid "Proposed date"
+msgstr "Vorgeschlagenes Datum"
+
+#: matches/models.py:70 matches/templates/matches/match_detail.html:4
+#: matches/templates/matches/match_detail.html:19
+msgid "Match"
+msgstr "Match"
+
+#: matches/models.py:71 matches/templates/matches/base.html:14
+#: matches/templates/matches/match_detail.html:15 templates/_navbar.html:154
+#: templates/_navbar.html:247 templates/postman/base.html:16
+msgid "Matches"
+msgstr "Matches"
+
+#: matches/models.py:111
+msgid "Decision"
+msgstr "Entscheidung"
+
+#: matches/models.py:122
+msgid "Match Message"
+msgstr "Match-Nachricht"
+
+#: matches/models.py:123
+msgid "Match Messages"
+msgstr "Match-Nachrichten"
+
+#: matches/models.py:168 matches/models.py:169
+msgid "Volunteer Details"
+msgstr "Details zum Aufenthalt"
+
+#: matches/templates/matches/base.html:9 templates/postman/base.html:9
+msgid "Messaging"
+msgstr "Nachrichten"
+
+#: matches/templates/matches/base.html:10 templates/_navbar.html:158
+#: templates/_navbar.html:246 templates/postman/base.html:11
+#: templates/postman/inbox.html:7 templates/postman/view.html:7
+msgid "Inbox"
+msgstr "Posteingang"
+
+#: matches/templates/matches/base.html:11
+#: matches/templates/matches/matches_list.html:21
+#: matches/templates/matches/matches_list.html:48
+#: matches/templates/matches/matches_list.html:75
+#: templates/postman/base.html:12
+msgid "Sent"
+msgstr "Gesendet"
+
+#: matches/templates/matches/base.html:12 templates/postman/base.html:13
+msgid "Compose"
+msgstr "Verfassen"
+
+#: matches/templates/matches/base.html:28 templates/_navbar.html:254
+#: templates/postman/base.html:30
+msgid "Volunteer Visits"
+msgstr "Gemeinschaftsaufenthalte"
+
+#: matches/templates/matches/base.html:28 templates/_navbar.html:150
+#: templates/postman/base.html:30
+msgid "Community Volunteering"
+msgstr "Gemeinschaftsaufenthalt"
+
+#: matches/templates/matches/base.html:32 templates/postman/base.html:34
+msgid "Member Applications"
+msgstr "Mitgliedsanfragen"
+
+#: matches/templates/matches/base.html:32
+#: matches/templates/matches/base.html:38 templates/postman/base.html:34
+#: templates/postman/base.html:40
+msgid "coming soon"
+msgstr "bald verfügbar"
+
+#: matches/templates/matches/base.html:35 templates/postman/base.html:37
+msgid "Tours"
+msgstr "Touren"
+
+#: matches/templates/matches/base.html:38 templates/postman/base.html:40
+msgid "Community-Tour Applications"
+msgstr "Community-Tour-Anfragen"
+
+#: matches/templates/matches/email/match_request.html:19
+msgid "New match"
+msgstr "Neues Match"
+
+#: matches/templates/matches/email/match_request.html:27
+#: matches/templates/matches/email/match_response.html:27
+#, python-format
+msgid "Hello %(name)s,"
+msgstr "Hallo %(name)s,"
+
+#: matches/templates/matches/email/match_request.html:40
+#: matches/templates/matches/match_detail.html:124
+msgid "Proposed stay"
+msgstr "Vorgeschlagener Aufenthalt"
+
+#: matches/templates/matches/email/match_request.html:46
+#: matches/templates/matches/match_detail.html:130
+msgid "Skills to offer"
+msgstr "Angebotene Fähigkeiten"
+
+#: matches/templates/matches/email/match_request.html:46
+#: matches/templates/matches/match_detail.html:130
+msgid "Skills to learn and practice"
+msgstr "Fähigkeiten zum Lernen und Üben"
+
+#: matches/templates/matches/email/match_request.html:47
+#: matches/templates/matches/match_detail.html:131
+msgid "level"
+msgstr "Niveau"
+
+#: matches/templates/matches/email/match_request.html:50
+#: templates/postman/inbox.html:75
+msgid "Other skills I can help with"
+msgstr "Weitere Fähigkeiten, mit denen ich helfen kann"
+
+#: matches/templates/matches/email/match_request.html:69
+#: matches/templates/matches/match_detail.html:310
+#: matches/templates/matches/match_detail.html:351
+msgid "Accept"
+msgstr "Annehmen"
+
+#: matches/templates/matches/email/match_request.html:75
+#: matches/templates/matches/match_detail.html:314
+#: matches/templates/matches/match_detail.html:354
+msgid "Decline"
+msgstr "Ablehnen"
+
+#: matches/templates/matches/email/match_request.html:82
+#, python-format
+msgid ""
+"Or <a href=\"%(detail_url)s\" style=\"color:#da6137;\">view the full "
+"match</a> to reply or make a counter-proposal."
+msgstr ""
+"Oder <a href=\"%(detail_url)s\" style=\"color:#da6137;\">sieh dir das ganze "
+"Match an</a>, um zu antworten oder einen Gegenvorschlag zu machen."
+
+#: matches/templates/matches/email/match_request.html:90
+#: matches/templates/matches/email/match_response.html:45
+msgid "the sustainable gift-economy community"
+msgstr "die nachhaltige Schenkökonomie-Gemeinschaft"
+
+#: matches/templates/matches/email/match_response.html:19
+#, python-format
+msgid "Match %(status_label)s"
+msgstr "Match: %(status_label)s"
+
+#: matches/templates/matches/email/match_response.html:30
+#, python-format
+msgid ""
+"<strong>%(actor)s</strong> has <strong>%(status_label)s</strong> your "
+"interest in: <strong>%(title)s</strong>."
+msgstr ""
+"<strong>%(actor)s</strong> hat auf dein Interesse an "
+"<strong>%(title)s</strong> reagiert: <strong>%(status_label)s</strong>."
+
+#: matches/templates/matches/email/match_response.html:36
+#: skills/templates/skills/communityskill_detail.html:90
+#: skills/templates/skills/userskill_detail.html:106
+msgid "View"
+msgstr "Ansehen"
+
+#: matches/templates/matches/email_action_done.html:8
+msgid "Done — you said yes."
+msgstr "Erledigt – du hast zugesagt."
+
+#: matches/templates/matches/email_action_done.html:9
+#: matches/templates/matches/email_action_done.html:13
+#, python-format
+msgid "Your answer about <strong>%(t)s</strong> has been sent."
+msgstr "Deine Antwort zu <strong>%(t)s</strong> wurde gesendet."
+
+#: matches/templates/matches/email_action_done.html:12
+msgid "Done — you passed on this."
+msgstr "Erledigt – du hast abgesagt."
+
+#: matches/templates/matches/email_action_done.html:16
+msgid "View conversation"
+msgstr "Unterhaltung ansehen"
+
+#: matches/templates/matches/match_detail.html:33
+msgid "Match confirmed"
+msgstr "Match bestätigt"
+
+#: matches/templates/matches/match_detail.html:39
+msgid "Counter-proposal pending"
+msgstr "Gegenvorschlag offen"
+
+#: matches/templates/matches/match_detail.html:136
+msgid "Other skills offered"
+msgstr "Weitere angebotene Fähigkeiten"
+
+#: matches/templates/matches/match_detail.html:206
+#: matches/templates/matches/match_detail.html:256
+msgid "Counter location"
+msgstr "Gegenvorschlag Ort"
+
+#: matches/templates/matches/match_detail.html:212
+#: matches/templates/matches/match_detail.html:286
+msgid "Counter date"
+msgstr "Gegenvorschlag Datum"
+
+#: matches/templates/matches/match_detail.html:237
+msgid "Counter-proposal details"
+msgstr "Details zum Gegenvorschlag"
+
+#: matches/templates/matches/match_detail.html:240
+msgid "Counter location type"
+msgstr "Art des vorgeschlagenen Orts"
+
+#: matches/templates/matches/match_detail.html:259
+#: skills/templates/skills/communityskill_detail.html:187
+#: skills/templates/skills/skillwish_user_detail.html:155
+#: skills/templates/skills/userskill_detail.html:205
+msgid "Search for a location…"
+msgstr "Ort suchen…"
+
+#: matches/templates/matches/match_detail.html:302
+#: templates/postman/write.html:84
+msgid "Send"
+msgstr "Senden"
+
+#: matches/templates/matches/match_detail.html:319
+msgid "Change to Declined"
+msgstr "Doch ablehnen"
+
+#: matches/templates/matches/match_detail.html:324
+msgid "Change to Accepted"
+msgstr "Doch annehmen"
+
+#: matches/templates/matches/match_detail.html:329
+msgid "Waiting for the other party's response…"
+msgstr "Warte auf die Antwort der anderen Seite…"
+
+#: matches/templates/matches/match_detail.html:336
+msgid "Propose different location"
+msgstr "Anderen Ort vorschlagen"
+
+#: matches/templates/matches/match_detail.html:341
+msgid "Send counter-proposal"
+msgstr "Gegenvorschlag senden"
+
+#: matches/templates/matches/matches_list.html:10
+msgid "Volunteer stays"
+msgstr "Gemeinschaftsaufenthalte"
+
+#: matches/templates/matches/matches_list.html:14
+#: matches/templates/matches/matches_list.html:41
+#: matches/templates/matches/matches_list.html:68
+msgid "Received"
+msgstr "Erhalten"
+
+#: matches/templates/matches/matches_list.html:28
+msgid "No volunteer applications yet."
+msgstr "Noch keine Anfragen für Gemeinschaftsaufenthalte."
+
+#: matches/templates/matches/matches_list.html:55
+msgid "No gift offers yet."
+msgstr "Noch keine Geschenkangebote."
+
+#: matches/templates/matches/matches_list.html:82
+msgid "No skill offers yet."
+msgstr "Noch keine Fähigkeitsangebote."
+
+#: matches/views.py:113
+msgid "Response sent."
+msgstr "Antwort gesendet."
+
+#: matches/views.py:142
+msgid "Counter-proposal sent."
+msgstr "Gegenvorschlag gesendet."
+
+#: matches/views.py:173
+msgid "This interest has already been responded to."
+msgstr "Auf dieses Interesse wurde bereits geantwortet."
+
+#: notifications/models.py:18
+msgid "Link"
+msgstr "Link"
+
+#: notifications/models.py:25
+msgid "Notification"
+msgstr "Benachrichtigung"
+
+#: notifications/models.py:26
+#: notifications/templates/notifications/list.html:4
+#: notifications/templates/notifications/list.html:10
+#: templates/_navbar.html:59 templates/_navbar.html:78
+msgid "Notifications"
+msgstr "Benachrichtigungen"
+
+#: notifications/templates/notifications/list.html:16
+msgid "Mark all as read"
+msgstr "Alle als gelesen markieren"
+
+#: notifications/templates/notifications/list.html:97
+#: templates/_navbar.html:82
+msgid "No notifications yet."
+msgstr "Noch keine Benachrichtigungen."
+
+#: settings/base.py:34
+msgid "German"
+msgstr "Deutsch"
+
+#: settings/base.py:35
+msgid "English"
+msgstr "Englisch"
+
+#: settings/base.py:36
+msgid "Spanish"
+msgstr "Spanisch"
+
+#: settings/base.py:37
+msgid "French"
+msgstr "Französisch"
+
+#: skills/forms.py:30 skills/forms.py:87
+msgid "e.g. Carpentry, Solar Energy…"
+msgstr "z. B. Zimmerei, Solarenergie…"
+
+#: skills/forms.py:52 skills/forms.py:215
+msgid "Save skill"
+msgstr "Fähigkeit speichern"
+
+#: skills/forms.py:60 skills/forms.py:119 skills/forms.py:223
+msgid "Please select a skill from the suggestions."
+msgstr "Bitte wähle eine Fähigkeit aus den Vorschlägen."
+
+#: skills/forms.py:74 skills/templates/skills/userskill_form.html:32
+msgid "I can offer / teach this skill"
+msgstr "Ich kann diese Fähigkeit anbieten / weitergeben"
+
+#: skills/forms.py:75 skills/templates/skills/userskill_form.html:44
+msgid "I want to learn this or need help with it"
+msgstr "Ich möchte das lernen oder brauche Hilfe dabei"
+
+#: skills/forms.py:82 skills/templates/skills/userskill_form.html:24
+msgid "How do you relate to this skill?"
+msgstr "Wie stehst du zu dieser Fähigkeit?"
+
+#: skills/forms.py:93 skills/models.py:79
+#: skills/templates/skills/userskill_form.html:64
+msgid "Level"
+msgstr "Niveau"
+
+#: skills/forms.py:97 skills/forms.py:235
+msgid "Any level"
+msgstr "Jedes Niveau"
+
+#: skills/forms.py:99 skills/forms.py:237
+#: skills/templates/skills/userskill_form.html:75
+msgid "My current level"
+msgstr "Mein aktuelles Niveau"
+
+#: skills/forms.py:105 skills/models.py:84
+#: skills/templates/skills/userskill_form.html:102
+msgid "Available to teach / share"
+msgstr "Bereit zum Weitergeben / Teilen"
+
+#: skills/forms.py:147 skills/templates/skills/communityskill_form.html:32
+msgid "We can offer / teach this skill"
+msgstr "Wir können diese Fähigkeit anbieten / weitergeben"
+
+#: skills/forms.py:148 skills/templates/skills/communityskill_form.html:44
+msgid "We're looking for people with this skill"
+msgstr "Wir suchen Menschen mit dieser Fähigkeit"
+
+#: skills/forms.py:155
+msgid "How does your community relate to this skill?"
+msgstr "Wie steht eure Gemeinschaft zu dieser Fähigkeit?"
+
+#: skills/forms.py:160 skills/forms.py:195
+msgid "e.g. Permaculture, Natural Building…"
+msgstr "z. B. Permakultur, Naturbau…"
+
+#: skills/forms.py:164 skills/views.py:318
+msgid "Any level — beginners welcome"
+msgstr "Jedes Niveau – Anfänger*innen willkommen"
+
+#: skills/forms.py:166 skills/templates/skills/communityskill_form.html:64
+#: skills/views.py:312
+msgid "Minimum level sought"
+msgstr "Gesuchtes Mindestniveau"
+
+#: skills/models.py:23 skills/models.py:24
+msgid "Skill taxonomy"
+msgstr "Fähigkeiten-Taxonomie"
+
+#: skills/models.py:71
+msgid "Beginner"
+msgstr "Anfänger*in"
+
+#: skills/models.py:72
+msgid "Intermediate"
+msgstr "Fortgeschritten"
+
+#: skills/models.py:73
+msgid "Advanced"
+msgstr "Erfahren"
+
+#: skills/models.py:74
+msgid "Expert"
+msgstr "Expert*in"
+
+#: skills/models.py:81 skills/templates/skills/userskill_form.html:89
+msgid "How did you learn this? What can you offer?"
+msgstr "Wie hast du das gelernt? Was kannst du anbieten?"
+
+#: skills/models.py:92
+msgid "User Skill"
+msgstr "Fähigkeit (Person)"
+
+#: skills/models.py:93
+msgid "User Skills"
+msgstr "Fähigkeiten (Personen)"
+
+#: skills/models.py:132 skills/models.py:172
+msgid "expressed interest"
+msgstr "hat Interesse gezeigt"
+
+#: skills/models.py:138
+msgid "What can visitors learn here?"
+msgstr "Was können Besucher*innen hier lernen?"
+
+#: skills/models.py:145
+msgid "Community Skill"
+msgstr "Fähigkeit (Gemeinschaft)"
+
+#: skills/models.py:146
+msgid "Community Skills"
+msgstr "Fähigkeiten (Gemeinschaften)"
+
+#: skills/models.py:204
+msgid "What do you want to learn, or what do you need?"
+msgstr "Was möchtest du lernen oder was brauchst du?"
+
+#: skills/models.py:211
+msgid "Skill Wish"
+msgstr "Fähigkeitswunsch"
+
+#: skills/models.py:212
+msgid "Skill Wishes"
+msgstr "Fähigkeitswünsche"
+
+#: skills/models.py:237
+msgid "offered to teach you"
+msgstr "hat angeboten, es dir beizubringen"
+
+#: skills/templates/skills/_skill_autocomplete_js.html:27
+msgid "No results — try a different term"
+msgstr "Keine Ergebnisse – versuch einen anderen Begriff"
+
+#: skills/templates/skills/_skill_autocomplete_js.html:35
+msgid "Popular community skills — click to select"
+msgstr "Beliebte Fähigkeiten in Gemeinschaften – zum Auswählen klicken"
+
+#: skills/templates/skills/_skill_autocomplete_js.html:92
+msgid "Please select a skill from the list."
+msgstr "Bitte wähle eine Fähigkeit aus der Liste."
+
+#: skills/templates/skills/communityskill_confirm_delete.html:4
+#: skills/templates/skills/userskill_confirm_delete.html:4
+msgid "Remove skill"
+msgstr "Fähigkeit entfernen"
+
+#: skills/templates/skills/communityskill_confirm_delete.html:8
+#: skills/templates/skills/userskill_confirm_delete.html:8
+msgid "Remove skill?"
+msgstr "Fähigkeit entfernen?"
+
+#: skills/templates/skills/communityskill_confirm_delete.html:10
+#, python-format
+msgid ""
+"\n"
+"      Remove <strong>%(skill)s</strong> from %(community)s?\n"
+"    "
+msgstr ""
+"\n"
+"      <strong>%(skill)s</strong> von %(community)s entfernen?\n"
+"    "
+
+#: skills/templates/skills/communityskill_confirm_delete.html:16
+#: skills/templates/skills/userskill_confirm_delete.html:16
+msgid "Remove"
+msgstr "Entfernen"
+
+#: skills/templates/skills/communityskill_detail.html:50
+#: skills/templates/skills/skillwish_user_detail.html:58
+#: skills/templates/skills/userskill_detail.html:60
+msgid "No description provided."
+msgstr "Keine Beschreibung vorhanden."
+
+#: skills/templates/skills/communityskill_detail.html:58
+#: skills/templates/skills/userskill_detail.html:74
+msgid "Incoming interests"
+msgstr "Eingegangenes Interesse"
+
+#: skills/templates/skills/communityskill_detail.html:88
+#: skills/templates/skills/userskill_detail.html:104
+msgid "Respond"
+msgstr "Antworten"
+
+#: skills/templates/skills/communityskill_detail.html:144
+msgid "Community has not set a location."
+msgstr "Die Gemeinschaft hat keinen Ort angegeben."
+
+#: skills/templates/skills/communityskill_detail.html:152
+#: skills/templates/skills/skillwish_user_detail.html:120
+#: skills/templates/skills/userskill_detail.html:170
+#: users/templates/users/register.html:30
+msgid "Your location"
+msgstr "Dein Ort"
+
+#: skills/templates/skills/communityskill_detail.html:156
+#: skills/templates/skills/skillwish_user_detail.html:124
+#: skills/templates/skills/userskill_detail.html:174
+msgid "City, address…"
+msgstr "Stadt, Adresse…"
+
+#: skills/templates/skills/communityskill_detail.html:161
+#: skills/templates/skills/skillwish_user_detail.html:129
+#: skills/templates/skills/userskill_detail.html:179
+#: templates/maps/_location_picker.html:18
+msgid "Use my current location"
+msgstr "Meinen aktuellen Standort verwenden"
+
+#: skills/templates/skills/communityskill_form.html:5
+#: skills/templates/skills/userskill_form.html:5
+msgid "Add skill"
+msgstr "Fähigkeit hinzufügen"
+
+#: skills/templates/skills/communityskill_form.html:5
+#: skills/templates/skills/communityskill_form.html:106
+#: skills/templates/skills/userskill_form.html:5
+#: skills/templates/skills/userskill_form.html:126
+msgid "Edit skill"
+msgstr "Fähigkeit bearbeiten"
+
+#: skills/templates/skills/communityskill_form.html:14
+msgid "Add a skill for"
+msgstr "Fähigkeit hinzufügen für"
+
+#: skills/templates/skills/communityskill_form.html:24
+msgid "Do you offer or need this skill?"
+msgstr "Bietet ihr diese Fähigkeit an oder braucht ihr sie?"
+
+#: skills/templates/skills/communityskill_form.html:34
+msgid ""
+"Visitors and volunteers can learn this skill by staying or working with your"
+" community."
+msgstr ""
+"Besucher*innen und Helfer*innen können diese Fähigkeit bei einem Aufenthalt "
+"oder beim Mitarbeiten in eurer Gemeinschaft lernen."
+
+#: skills/templates/skills/communityskill_form.html:46
+msgid ""
+"You need this expertise in your community — for a project, permanent "
+"membership, or a volunteer stay."
+msgstr ""
+"Ihr braucht dieses Wissen in eurer Gemeinschaft – für ein Projekt, eine "
+"dauerhafte Mitgliedschaft oder einen Gemeinschaftsaufenthalt."
+
+#: skills/templates/skills/communityskill_form.html:65
+msgid ""
+"Leave as 'Any level' if beginners are welcome — communities often provide "
+"on-the-job training."
+msgstr ""
+"Lass „Jedes Niveau“ stehen, wenn Anfänger*innen willkommen sind – "
+"Gemeinschaften lernen oft direkt bei der Arbeit an."
+
+#: skills/templates/skills/communityskill_form.html:78
+msgid "What will visitors learn? How is it taught or practised here?"
+msgstr "Was lernen Besucher*innen? Wie wird es hier vermittelt oder geübt?"
+
+#: skills/templates/skills/communityskill_form.html:81
+msgid ""
+"Why does your community need this skill and what do you need it for exactly?"
+msgstr "Warum braucht eure Gemeinschaft diese Fähigkeit und wofür genau?"
+
+#: skills/templates/skills/communityskill_form.html:89
+#: skills/templates/skills/userskill_form.html:109
+msgid "Add skill offer"
+msgstr "Fähigkeit anbieten"
+
+#: skills/templates/skills/communityskill_form.html:92
+msgid "Add skill wish"
+msgstr "Fähigkeitswunsch hinzufügen"
+
+#: skills/templates/skills/skill_detail.html:24
+#: skills/templates/skills/skill_detail.html:87
+msgid "Add to my profile"
+msgstr "Zu meinem Profil hinzufügen"
+
+#: skills/templates/skills/skill_detail.html:31
+msgid "People with this skill"
+msgstr "Menschen mit dieser Fähigkeit"
+
+#: skills/templates/skills/skill_detail.html:60
+msgid "Communities offering this skill"
+msgstr "Gemeinschaften, die diese Fähigkeit anbieten"
+
+#: skills/templates/skills/skill_detail.html:76
+msgid "Nobody has listed this skill yet."
+msgstr "Noch niemand hat diese Fähigkeit eingetragen."
+
+#: skills/templates/skills/skill_detail.html:83
+#, python-format
+msgid "%(n)s person wants to learn or needs help with this skill."
+msgid_plural "%(n)s people want to learn or need help with this skill."
+msgstr[0] ""
+"%(n)s Person möchte diese Fähigkeit lernen oder braucht Hilfe dabei."
+msgstr[1] ""
+"%(n)s Personen möchten diese Fähigkeit lernen oder brauchen Hilfe dabei."
+
+#: skills/templates/skills/skill_detail.html:85
+msgid ""
+"Can you teach or share it? Add it to your profile and they'll be able to "
+"find you."
+msgstr ""
+"Kannst du sie weitergeben oder teilen? Füge sie deinem Profil hinzu, dann "
+"können sie dich finden."
+
+#: skills/templates/skills/skill_list.html:39
+msgid "No skills listed yet."
+msgstr "Noch keine Fähigkeiten eingetragen."
+
+#: skills/templates/skills/skillwish_form.html:4
+#: skills/templates/skills/skillwish_form.html:10
+msgid "Edit skill wish"
+msgstr "Fähigkeitswunsch bearbeiten"
+
+#: skills/templates/skills/skillwish_user_detail.html:4
+#: skills/templates/skills/skillwish_user_detail.html:38
+msgid "wants to learn or needs help with"
+msgstr "möchte lernen oder braucht Hilfe bei"
+
+#: skills/templates/skills/skillwish_user_detail.html:41
+msgid "current level:"
+msgstr "aktuelles Niveau:"
+
+#: skills/templates/skills/skillwish_user_detail.html:67
+#: skills/templates/skills/skillwish_user_detail.html:194
+#: users/templates/users/detail.html:122
+msgid "Offer to teach this skill"
+msgstr "Anbieten, diese Fähigkeit weiterzugeben"
+
+#: skills/templates/skills/skillwish_user_detail.html:112
+msgid "This person has not set a location."
+msgstr "Diese Person hat keinen Ort angegeben."
+
+#: skills/templates/skills/skillwish_user_detail.html:185
+msgid "Offer to teach"
+msgstr "Weitergeben anbieten"
+
+#: skills/templates/skills/skillwish_user_detail.html:196
+msgid "Add this skill to your profile first to send an offer."
+msgstr ""
+"Füge diese Fähigkeit zuerst deinem Profil hinzu, um ein Angebot zu senden."
+
+#: skills/templates/skills/skillwish_user_detail.html:198
+msgid "Add this skill to your profile"
+msgstr "Diese Fähigkeit deinem Profil hinzufügen"
+
+#: skills/templates/skills/skillwish_user_detail.html:205
+msgid "Log in to offer teaching this skill"
+msgstr "Melde dich an, um anzubieten, diese Fähigkeit weiterzugeben"
+
+#: skills/templates/skills/userskill_confirm_delete.html:10
+#, python-format
+msgid ""
+"\n"
+"      Remove <strong>%(skill)s</strong> from your profile?\n"
+"    "
+msgstr ""
+"\n"
+"      <strong>%(skill)s</strong> aus deinem Profil entfernen?\n"
+"    "
+
+#: skills/templates/skills/userskill_detail.html:65
+msgid "Currently not available to teach / share."
+msgstr "Gerade nicht verfügbar zum Weitergeben / Teilen."
+
+#: skills/templates/skills/userskill_detail.html:162
+msgid "Owner has not set a location."
+msgstr "Kein Ort angegeben."
+
+#: skills/templates/skills/userskill_form.html:14
+msgid "Add a skill to your profile"
+msgstr "Eine Fähigkeit zu deinem Profil hinzufügen"
+
+#: skills/templates/skills/userskill_form.html:34
+msgid ""
+"You have experience with this skill and are willing to share it with others "
+"— visitors, community members, or through skill exchanges."
+msgstr ""
+"Du hast Erfahrung mit dieser Fähigkeit und teilst sie gerne mit anderen – "
+"mit Besucher*innen, Gemeinschaftsmitgliedern oder im Austausch von "
+"Fähigkeiten."
+
+#: skills/templates/skills/userskill_form.html:46
+msgid ""
+"You're interested in learning this skill and would love to find someone who "
+"can teach or share it with you."
+msgstr ""
+"Du möchtest diese Fähigkeit lernen und würdest gerne jemanden finden, der "
+"sie mit dir teilt."
+
+#: skills/templates/skills/userskill_form.html:76
+msgid ""
+"Select your existing level — most people start as beginners, which is "
+"perfectly fine."
+msgstr ""
+"Wähle dein aktuelles Niveau – die meisten fangen als Anfänger*innen an, und "
+"das ist völlig in Ordnung."
+
+#: skills/templates/skills/userskill_form.html:92
+msgid ""
+"Why do you want to learn this or need help with it? What would you like to "
+"be able to do?"
+msgstr ""
+"Warum möchtest du das lernen oder brauchst Hilfe dabei? Was möchtest du "
+"danach können?"
+
+#: skills/templates/skills/userskill_form.html:112
+msgid "Add skill need"
+msgstr "Fähigkeitswunsch hinzufügen"
+
+#: skills/views.py:91 skills/views.py:123
+msgid "Your interest has been sent."
+msgstr "Dein Interesse wurde gesendet."
+
+#: skills/views.py:149 skills/views.py:203
+msgid "Skill wish added."
+msgstr "Fähigkeitswunsch hinzugefügt."
+
+#: skills/views.py:152 skills/views.py:206
+msgid "Skill added."
+msgstr "Fähigkeit hinzugefügt."
+
+#: skills/views.py:169 skills/views.py:225
+msgid "Skill updated."
+msgstr "Fähigkeit aktualisiert."
+
+#: skills/views.py:183 skills/views.py:241
+msgid "Skill removed."
+msgstr "Fähigkeit entfernt."
+
+#: skills/views.py:272
+msgid "Your offer has been sent."
+msgstr "Dein Angebot wurde gesendet."
+
+#: skills/views.py:299 skills/views.py:321
+msgid "Skill wish updated."
+msgstr "Fähigkeitswunsch aktualisiert."
+
+#: templates/_footer.html:4
+msgid "Newsletter"
+msgstr "Newsletter"
+
+#: templates/_footer.html:5
+msgid "Contact ecobasa"
+msgstr "Kontakt zu ecobasa"
+
+#: templates/_footer.html:10
+msgid "Creative Commons License BY-NC-SA 4.0"
+msgstr "Creative-Commons-Lizenz BY-NC-SA 4.0"
+
+#: templates/_footer.html:13
+msgid "is licensed under a"
+msgstr "steht unter einer"
+
+#: templates/_footer.html:13
+msgid ""
+"Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International "
+"License"
+msgstr ""
+"Creative Commons Namensnennung – Nicht kommerziell – Weitergabe unter "
+"gleichen Bedingungen 4.0 International Lizenz"
+
+#: templates/_language_switcher.html:24
+msgid "Language"
+msgstr "Sprache"
+
+#: templates/_navbar.html:36 templates/_navbar.html:226
+msgid "Support"
+msgstr "Unterstützen"
+
+#: templates/_navbar.html:79
+msgid "See all"
+msgstr "Alle ansehen"
+
+#: templates/_navbar.html:109
+msgid "More notifications — view all"
+msgstr "Weitere Benachrichtigungen – alle ansehen"
+
+#: templates/_navbar.html:115
+msgid "Mark all read"
+msgstr "Alle gelesen"
+
+#: templates/_navbar.html:126
+msgid "User menu"
+msgstr "Benutzermenü"
+
+#: templates/_navbar.html:147 templates/_navbar.html:245
+msgid "Your Profile"
+msgstr "Dein Profil"
+
+#: templates/_navbar.html:150
+msgid "Volunteer Requests"
+msgstr "Anfragen für Gemeinschaftsaufenthalte"
+
+#: templates/_navbar.html:162 templates/_navbar.html:250
+msgid "My Communities"
+msgstr "Meine Gemeinschaften"
+
+#: templates/_navbar.html:173 templates/_navbar.html:257
+msgid "Settings"
+msgstr "Einstellungen"
+
+#: templates/_navbar.html:179 templates/_navbar.html:258
+msgid "Log out"
+msgstr "Abmelden"
+
+#: templates/_navbar.html:193 templates/_navbar.html:264
+#: users/templates/users/login.html:29
+#: users/templates/users/password_reset/complete.html:16
+msgid "Log in"
+msgstr "Anmelden"
+
+#: templates/crispy_template_pack/field.html:15
+#: templates/crispy_template_pack/field.html:32
+#: templates/crispy_template_pack/table_inline_formset.html:25
+#: users/templates/users/register.html:30
+msgid "optional"
+msgstr "optional"
+
+#: templates/django/forms/widgets/password.html:7
+msgid "Show password"
+msgstr "Passwort anzeigen"
+
+#: templates/maps/_location_picker.html:14
+msgid "City, country…"
+msgstr "Stadt, Land…"
+
+#: templates/maps/_location_picker.html:43
+msgid "Click the map or drag the pin to set your exact location."
+msgstr ""
+"Klick auf die Karte oder zieh die Markierung, um deinen genauen Ort "
+"festzulegen."
+
+#: templates/maps/_location_picker.html:48
+msgid "Auto-filled from map — you can also set it manually."
+msgstr ""
+"Automatisch aus der Karte übernommen – du kannst es auch selbst eintragen."
+
+#: templates/postman/inbox.html:11
+msgid "Sort"
+msgstr "Sortieren"
+
+#: templates/postman/inbox.html:13
+msgid "Sent (newest)"
+msgstr "Gesendet (neueste)"
+
+#: templates/postman/inbox.html:14
+msgid "Sent (oldest)"
+msgstr "Gesendet (älteste)"
+
+#: templates/postman/inbox.html:15
+msgid "Requested From (earliest)"
+msgstr "Gewünscht ab (früheste)"
+
+#: templates/postman/inbox.html:16
+msgid "Requested From (latest)"
+msgstr "Gewünscht ab (späteste)"
+
+#: templates/postman/inbox.html:17
+msgid "Requested To (earliest)"
+msgstr "Gewünscht bis (früheste)"
+
+#: templates/postman/inbox.html:18
+msgid "Requested To (latest)"
+msgstr "Gewünscht bis (späteste)"
+
+#: templates/postman/inbox.html:57
+msgid "(no sender)"
+msgstr "(kein Absender)"
+
+#: templates/postman/inbox.html:63 templates/postman/inbox.html:103
+#: templates/postman/outbox.html:41 templates/postman/outbox.html:53
+#: templates/postman/sent.html:41 templates/postman/sent.html:54
+msgid "(no subject)"
+msgstr "(kein Betreff)"
+
+#: templates/postman/inbox.html:89
+msgid "Requested stay"
+msgstr "Gewünschter Aufenthalt"
+
+#: templates/postman/inbox.html:109 templates/postman/outbox.html:59
+#: templates/postman/sent.html:61
+msgid "No messages to display."
+msgstr "Keine Nachrichten vorhanden."
+
+#: templates/postman/outbox.html:5
+msgid "Outbox"
+msgstr "Postausgang"
+
+#: templates/postman/outbox.html:35 templates/postman/sent.html:35
+msgid "(no recipient)"
+msgstr "(kein Empfänger)"
+
+#: templates/postman/sent.html:5
+msgid "Sent messages"
+msgstr "Gesendete Nachrichten"
+
+#: templates/postman/view.html:6
+msgid "Conversation"
+msgstr "Unterhaltung"
+
+#: templates/postman/view.html:14
+msgid "Message not found."
+msgstr "Nachricht nicht gefunden."
+
+#: templates/postman/view.html:34 templates/postman/view.html:89
+msgid "View offer"
+msgstr "Angebot ansehen"
+
+#: templates/postman/view.html:55 templates/postman/view.html:77
+msgid "(system)"
+msgstr "(System)"
+
+#: templates/postman/view.html:110
+msgid "Your message"
+msgstr "Deine Nachricht"
+
+#: templates/postman/view.html:112
+msgid "Write a reply..."
+msgstr "Schreib eine Antwort…"
+
+#: templates/postman/write.html:5
+msgid "Compose message"
+msgstr "Nachricht verfassen"
+
+#: templates/postman/write.html:41
+msgid "Start typing a name…"
+msgstr "Namen eingeben…"
+
+#: templates/postman/write.html:70
+msgid "Subject"
+msgstr "Betreff"
+
+#: users/admin.py:14
+msgid "Personal info"
+msgstr "Persönliche Angaben"
+
+#: users/admin.py:16
+msgid "Permissions"
+msgstr "Berechtigungen"
+
+#: users/admin.py:27
+msgid "Important dates"
+msgstr "Wichtige Daten"
+
+#: users/forms.py:28
+msgid "Email (use your account email to log in)"
+msgstr "E-Mail (mit dieser E-Mail meldest du dich an)"
+
+#: users/forms.py:29
+msgid "email@example.com"
+msgstr "email@beispiel.de"
+
+#: users/forms.py:30
+msgid "Credentials are not correct."
+msgstr "Die Zugangsdaten sind nicht korrekt."
+
+#: users/forms.py:35
+msgid "Password"
+msgstr "Passwort"
+
+#: users/forms.py:50 users/forms.py:153
+msgid "What can you offer or teach?"
+msgstr "Was kannst du anbieten oder weitergeben?"
+
+#: users/forms.py:51 users/forms.py:154
+msgid ""
+"Everyday skills count just as much as professional ones — cooking, "
+"gardening, basic repairs, childcare are all valuable to communities."
+msgstr ""
+"Alltägliche Fähigkeiten zählen genauso wie berufliche – Kochen, Gärtnern, "
+"einfache Reparaturen und Kinderbetreuung sind für Gemeinschaften alle "
+"wertvoll."
+
+#: users/forms.py:55 users/forms.py:158
+msgid "What do you want to learn or need help with?"
+msgstr "Was möchtest du lernen oder wobei brauchst du Hilfe?"
+
+#: users/forms.py:56 users/forms.py:159
+msgid ""
+"Sharing what you need helps communities match you with the right people and "
+"experiences."
+msgstr ""
+"Wenn du teilst, was du brauchst, können Gemeinschaften dich mit den "
+"richtigen Menschen und Erfahrungen zusammenbringen."
+
+#: users/forms.py:81
+msgid "Personal Info"
+msgstr "Persönliche Angaben"
+
+#: users/forms.py:84
+msgid ""
+"Trust is the only currency in our gift-economy network — real names help to "
+"build trust."
+msgstr ""
+"Vertrauen ist die einzige Währung in unserem Schenkökonomie-Netzwerk – echte"
+" Namen helfen, Vertrauen aufzubauen."
+
+#: users/forms.py:87
+msgid "Account"
+msgstr "Konto"
+
+#: users/forms.py:90
+msgid "Required to log in."
+msgstr "Wird für die Anmeldung benötigt."
+
+#: users/forms.py:93 users/models.py:68
+msgid "About you"
+msgstr "Über dich"
+
+#: users/forms.py:99
+msgid ""
+"Tell communities you want to visit or join who you are and what you have to "
+"offer."
+msgstr ""
+"Erzähl den Gemeinschaften, die du besuchen oder denen du beitreten möchtest,"
+" wer du bist und was du mitbringst."
+
+#: users/forms.py:170
+msgid "Remove current photo"
+msgstr "Aktuelles Foto entfernen"
+
+#: users/forms.py:200
+msgid "Upload new photo"
+msgstr "Neues Foto hochladen"
+
+#: users/forms.py:200
+msgid "Photo"
+msgstr "Foto"
+
+#: users/models.py:61
+msgid "username"
+msgstr "Benutzername"
+
+#: users/models.py:63
+msgid "email address"
+msgstr "E-Mail-Adresse"
+
+#: users/models.py:66
+msgid "name"
+msgstr "Name"
+
+#: users/models.py:74 users/templates/users/detail.html:87
+msgid "What would you like to use ecobasa mainly for?"
+msgstr "Wofür möchtest du ecobasa hauptsächlich nutzen?"
+
+#: users/models.py:75 users/templates/users/detail.html:83
+msgid "What do you do to make the world a better place?"
+msgstr "Was tust du, um die Welt zu einem besseren Ort zu machen?"
+
+#: users/signals.py:21
+msgid ""
+"Your profile has no skills yet — add what you can offer and what you want to"
+" learn or need help with so communities and people can find you."
+msgstr ""
+"Dein Profil hat noch keine Fähigkeiten – trag ein, was du anbieten kannst "
+"und was du lernen möchtest oder wobei du Hilfe brauchst, damit "
+"Gemeinschaften und Menschen dich finden."
+
+#: users/templates/users/_skill_tagify_js.html:64
+msgid "Skills communities always need"
+msgstr "Fähigkeiten, die Gemeinschaften immer brauchen"
+
+#: users/templates/users/_skill_tagify_js.html:71
+msgid "Popular skills to explore"
+msgstr "Beliebte Fähigkeiten zum Entdecken"
+
+#: users/templates/users/detail.html:17 users/templates/users/detail.html:21
+#: users/templates/users/update.html:18
+msgid "Edit profile"
+msgstr "Profil bearbeiten"
+
+#: users/templates/users/detail.html:79
+msgid "About me"
+msgstr "Über mich"
+
+#: users/templates/users/detail.html:110
+msgid "Add skills you have to offer"
+msgstr "Fähigkeiten hinzufügen, die du anbietest"
+
+#: users/templates/users/detail.html:116
+msgid "Skills I want to learn or need help with"
+msgstr "Fähigkeiten, die ich lernen möchte oder bei denen ich Hilfe brauche"
+
+#: users/templates/users/detail.html:132
+msgid "Add skills I want to learn or need help with"
+msgstr ""
+"Fähigkeiten hinzufügen, die ich lernen möchte oder bei denen ich Hilfe "
+"brauche"
+
+#: users/templates/users/detail.html:141
+msgid "Gift offers and wishes"
+msgstr "Geschenkangebote und Wünsche"
+
+#: users/templates/users/login.html:12
+msgid "Log in to your ecobasa account"
+msgstr "Bei deinem ecobasa-Konto anmelden"
+
+#: users/templates/users/login.html:15
+msgid "Log in with your email address (usernames are legacy only)."
+msgstr ""
+"Melde dich mit deiner E-Mail-Adresse an (Benutzernamen gibt es nur noch für "
+"alte Konten)."
+
+#: users/templates/users/login.html:25
+msgid "Forgot your password?"
+msgstr "Passwort vergessen?"
+
+#: users/templates/users/login.html:32
+msgid "Create a new account"
+msgstr "Neues Konto erstellen"
+
+#: users/templates/users/password_reset/complete.html:10
+msgid "Password was reset"
+msgstr "Passwort wurde zurückgesetzt"
+
+#: users/templates/users/password_reset/complete.html:14
+msgid "Your password has been set.  You may go ahead and log in now."
+msgstr "Dein Passwort wurde gesetzt. Du kannst dich jetzt anmelden."
+
+#: users/templates/users/password_reset/confirm.html:10
+msgid "Reset your password"
+msgstr "Passwort zurücksetzen"
+
+#: users/templates/users/password_reset/confirm.html:15
+msgid ""
+"Please enter your new password twice so we can verify you typed it in "
+"correctly."
+msgstr ""
+"Bitte gib dein neues Passwort zweimal ein, damit wir prüfen können, dass du "
+"es richtig eingegeben hast."
+
+#: users/templates/users/password_reset/confirm.html:20
+msgid "Change my password"
+msgstr "Mein Passwort ändern"
+
+#: users/templates/users/password_reset/confirm.html:24
+msgid "Invalid Link"
+msgstr "Ungültiger Link"
+
+#: users/templates/users/password_reset/confirm.html:25
+msgid ""
+"The password reset link was invalid, possibly because it has already been "
+"used.  Please request a new password reset."
+msgstr ""
+"Der Link zum Zurücksetzen des Passworts ist ungültig, vielleicht wurde er "
+"schon benutzt. Bitte fordere einen neuen an."
+
+#: users/templates/users/password_reset/confirm.html:26
+msgid "Reenter your email"
+msgstr "E-Mail erneut eingeben"
+
+#: users/templates/users/password_reset/done.html:10
+msgid "Check your mail"
+msgstr "Schau in dein Postfach"
+
+#: users/templates/users/password_reset/done.html:14
+msgid ""
+"We’ve emailed you instructions for setting your password, if an account "
+"exists with the email you entered. You should receive them shortly."
+msgstr ""
+"Falls ein Konto mit dieser E-Mail-Adresse existiert, haben wir dir eine "
+"Anleitung zum Setzen deines Passworts geschickt. Sie sollte in Kürze "
+"ankommen."
+
+#: users/templates/users/password_reset/done.html:15
+msgid ""
+"If you don’t receive an email, please make sure you’ve entered the address "
+"you registered with, and check your spam folder."
+msgstr ""
+"Falls keine E-Mail ankommt, prüf bitte, ob du die Adresse angegeben hast, "
+"mit der du dich registriert hast, und schau in deinen Spam-Ordner."
+
+#: users/templates/users/password_reset/email.html:2
+#, python-format
+msgid ""
+"You're receiving this email because you requested a password reset for your "
+"user account at %(site_name)s."
+msgstr ""
+"Du erhältst diese E-Mail, weil du für dein Konto bei %(site_name)s ein neues"
+" Passwort angefordert hast."
+
+#: users/templates/users/password_reset/email.html:4
+msgid "Please go to the following page and choose a new password:"
+msgstr "Bitte öffne die folgende Seite und wähle ein neues Passwort:"
+
+#: users/templates/users/password_reset/email.html:8
+msgid "Your username, in case you’ve forgotten:"
+msgstr "Dein Benutzername, falls du ihn vergessen hast:"
+
+#: users/templates/users/password_reset/email.html:10
+msgid "Thanks for using our site!"
+msgstr "Danke, dass du ecobasa nutzt!"
+
+#: users/templates/users/password_reset/email.html:12
+#, python-format
+msgid "The %(site_name)s team"
+msgstr "Das %(site_name)s-Team"
+
+#: users/templates/users/password_reset/form.html:13
+msgid "Login"
+msgstr "Anmelden"
+
+#: users/templates/users/password_reset/form.html:18
+msgid "Forgotten your password?"
+msgstr "Passwort vergessen?"
+
+#: users/templates/users/password_reset/form.html:22
+msgid ""
+"Forgotten your password? Enter your email address below, and we’ll email "
+"instructions for setting a new one."
+msgstr ""
+"Passwort vergessen? Gib unten deine E-Mail-Adresse ein, dann schicken wir "
+"dir eine Anleitung zum Setzen eines neuen Passworts."
+
+#: users/templates/users/password_reset/form.html:27
+msgid "Reset my password"
+msgstr "Mein Passwort zurücksetzen"
+
+#: users/templates/users/register.html:17
+msgid "Back to log in"
+msgstr "Zurück zur Anmeldung"
+
+#: users/templates/users/register.html:21
+msgid "Register for an account at ecobasa"
+msgstr "Registriere dich bei ecobasa"
+
+#: users/templates/users/register.html:32
+msgid ""
+"Enables other ecobasa members to find you with your skills and as a "
+"potential member of their community or community-tour."
+msgstr ""
+"So können andere ecobasa-Mitglieder dich über deine Fähigkeiten finden – "
+"auch als mögliches Mitglied ihrer Gemeinschaft oder Community-Tour."
+
+#: users/templates/users/register.html:40
+msgid "Register"
+msgstr "Registrieren"
+
+#: users/templates/users/update.html:27
+msgid "Current photo"
+msgstr "Aktuelles Foto"
+
+#: users/templates/users/update.html:30
+msgid "Remove photo"
+msgstr "Foto entfernen"
+
+#: users/templates/users/update.html:44
+msgid "Save changes"
+msgstr "Änderungen speichern"
+
+#: users/views.py:78
+msgid "You have been logged out."
+msgstr "Du wurdest abgemeldet."
+
+#: users/views.py:121
+msgid "Account created and logged in."
+msgstr "Konto erstellt und angemeldet."

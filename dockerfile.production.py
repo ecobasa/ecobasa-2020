@@ -25,6 +25,9 @@ RUN pip install --no-cache-dir pipenv \
 # copy our project code
 COPY ./ ${PROJECT_DIR}
 
+# compile translations (.mo files are not committed)
+RUN django-admin compilemessages --ignore=node_modules --ignore=.venv
+
 # expose the port 8000
 EXPOSE 8000
 
