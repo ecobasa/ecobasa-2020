@@ -104,28 +104,30 @@ def _load(references, user, tab, holder=None):
 
 @login_required
 def references_list(request):
-    """Dashboard: references received or given. Received is grouped: about you (and your
-    listings and skills) first, then one group per community you own."""
-    tab = "given" if request.GET.get("type") == "given" else "received"
+    """Dashboard: references received (about you, your listings and skills), given (by
+    you), or about a community you are ambassador of (?community=<slug>). A community
+    can't write references itself, so its references are a page of their own."""
     user = request.user
-    if tab == "given":
-        groups = [{"community": None, "references": _load(Reference.objects.filter(author=user), user, tab)}]
+    community = None
+    if request.GET.get("community"):
+        community = get_object_or_404(user.communities.prefetch_related("photos"), slug=request.GET["community"])
+        tab = "community"
+        references = _load(references_about(community), user, "received", holder=community)
+    elif request.GET.get("type") == "given":
+        tab = "given"
+        references = _load(Reference.objects.filter(author=user), user, tab)
     else:
-        groups = [{"community": None, "references": _load(references_about(user), user, tab, holder=user)}]
-        for community in user.communities.prefetch_related("photos").order_by("name"):
-            groups.append({
-                "community": community,
-                "header_photo": next(iter(community.photos.all()), None),
-                "references": _load(references_about(community), user, tab, holder=community),
-            })
-    # Only skills tagged on references about you wait for *your* confirmation
+        tab = "received"
+        references = _load(references_about(user), user, tab, holder=user)
+    # Only skills tagged on references about you (or your community) wait for *your* confirmation
     pending = [
-        tag for group in groups for reference in group["references"]
+        tag for reference in references
         for tag in reference.visible_skill_tags if tag.status == ReferenceSkill.STATUS_PENDING
-    ] if tab == "received" else []
+    ] if tab != "given" else []
     return render(request, "references/references_list.html", {
         "tab": tab,
-        "groups": groups,
-        "has_references": any(group["references"] for group in groups),
+        "community": community,
+        "header_photo": next(iter(community.photos.all()), None) if community else None,
+        "references": references,
         "pending_tags": pending,
     })

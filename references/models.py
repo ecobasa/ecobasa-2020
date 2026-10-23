@@ -56,15 +56,6 @@ def references_about(subject):
     return Reference.objects.filter(query).distinct()
 
 
-def references_received(user):
-    """References about a user and everything they hold: themself, their listings and
-    skills, and the communities they own with their skills."""
-    query = references_about(user)
-    for community in user.communities.all():
-        query = query | references_about(community)
-    return query
-
-
 class Reference(models.Model):
     """Someone's experience with a person, community, gift or skill. Free to write —
     it doesn't require a Match, since much of what happens never goes through the platform."""
