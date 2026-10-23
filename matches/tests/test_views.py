@@ -114,3 +114,31 @@ class TestMatchDetail:
         notifications.update(is_read=True)
         client.post(match.get_absolute_url(), {"action": "message", "body": "still there?"})
         assert Notification.objects.filter(tag=Notification.TAG_MESSAGE, is_read=False).count() == 1
+
+
+@pytest.mark.django_db
+class TestVolunteeringLists:
+    """Community volunteering lists the stays you applied for; volunteer visits
+    the ones others applied for at your community."""
+
+    @pytest.fixture
+    def stay(self, owner, requester):
+        from communities.models import Community
+        community = Community.objects.create(name="Hof Lindenblüte", owner=owner)
+        m = Match(from_user=requester, message="May I come in May?")
+        m.target = community
+        m.recipient = community.get_match_owner()
+        m.save()
+        return m
+
+    def test_volunteer_shows_only_own_applications(self, owner, requester, stay):
+        assert list(_client_for(requester).get("/matches/?type=volunteer").context["volunteer_mine"]) == [stay]
+        response = _client_for(owner).get("/matches/?type=volunteer")
+        assert response.context["volunteer_mine"] == []
+        assert "visits" not in response.context
+
+    def test_visits_shows_applications_to_own_community(self, owner, requester, stay):
+        response = _client_for(owner).get("/matches/?type=visits")
+        assert response.context["visits"] == [stay]
+        assert "volunteer_mine" not in response.context
+        assert _client_for(requester).get("/matches/?type=visits").context["visits"] == []

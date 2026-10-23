@@ -19,6 +19,7 @@ _TAB_APP_LABELS = {
     "gift": "gifts",
     "skills":     "skills",
     "volunteer":  "communities",
+    "visits":     "communities",
 }
 
 
@@ -39,9 +40,13 @@ def matches_list(request):
     t = request.GET.get("type", "")
     ctx = {"request_type": t}
 
+    # Volunteering is split by side: the stays you applied for, and — for
+    # ambassadors — the visits others applied for at your communities.
     if t in ("", "volunteer"):
-        ctx["volunteer_theirs"] = _matches_for(request.user, "recipient", "volunteer")
-        ctx["volunteer_mine"]   = _matches_for(request.user, "from_user", "volunteer")
+        ctx["volunteer_mine"] = _matches_for(request.user, "from_user", "volunteer")
+
+    if t in ("", "visits"):
+        ctx["visits"] = _matches_for(request.user, "recipient", "visits")
 
     if t in ("", "gift"):
         ctx["fm_theirs"] = _matches_for(request.user, "recipient", "gift")

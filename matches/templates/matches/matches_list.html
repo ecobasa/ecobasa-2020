@@ -3,29 +3,34 @@
 
 {% block giving_content %}
 
-{# ── Volunteer stays ─────────────────────────────────────────────── #}
-{% if volunteer_mine is not None or volunteer_theirs is not None %}
+{# ── Volunteer visits (to communities you are ambassador of) ─────── #}
+{% if visits is not None and owned_communities or visits %}
 <section class="mb-8">
   <h1 class="text-4xl font-semibold flex items-center gap-2">
-    <i class="fa-solid fa-campground text-primary"></i>{% trans "Volunteer stays" %}
+    <i class="fa-solid fa-tools text-primary"></i>{% trans "Volunteer Visits" %}
   </h1>
-
-  {% if volunteer_theirs %}
-    <h2 class="text-2xl font-semibold uppercase tracking-wide mb-4 mt-0">{% trans "Received" %}</h2>
-    <div class="space-y-2 mb-6">
-      {% for match in volunteer_theirs %}{% include "matches/_match_row.html" with match=match show_from=True %}{% endfor %}
+  {% if visits %}
+    <div class="space-y-2">
+      {% for match in visits %}{% include "matches/_match_row.html" with match=match show_from=True %}{% endfor %}
     </div>
+  {% else %}
+    <p>{% trans "No volunteer visits yet." %}</p>
   {% endif %}
+</section>
+{% endif %}
 
+{# ── Community volunteering (stays you applied for) ──────────────── #}
+{% if volunteer_mine is not None %}
+<section class="mb-8">
+  <h1 class="text-4xl font-semibold flex items-center gap-2">
+    <i class="fa-solid fa-campground text-primary"></i>{% trans "Community Volunteering" %}
+  </h1>
   {% if volunteer_mine %}
-    <h2 class="text-2xl font-semibold uppercase tracking-wide mb-4">{% trans "Sent" %}</h2>
     <div class="space-y-2">
       {% for match in volunteer_mine %}{% include "matches/_match_row.html" with match=match show_from=False %}{% endfor %}
     </div>
-  {% endif %}
-
-  {% if not volunteer_mine and not volunteer_theirs %}
-    <p>{% trans "No volunteer applications yet." %}</p>
+  {% else %}
+    <p>{% trans "No community volunteering yet." %}</p>
   {% endif %}
 </section>
 {% endif %}

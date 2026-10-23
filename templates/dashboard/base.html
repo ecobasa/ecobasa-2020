@@ -50,9 +50,13 @@
 
         <a href="{% url 'matches:list' %}?type=volunteer"
           class="block px-3 py-2 rounded {% if request_type == 'volunteer' %}bg-secondary text-primary font-semibold{% else %}text-secondary hover:bg-secondary hover:text-primary{% endif %}">
-          <i class="fa-solid fa-tools mr-2"></i>{% if owned_communities %}{% trans "Volunteer Visits" %}{% else %}{% trans "Community Volunteering" %}{% endif %}
+          <i class="fa-solid fa-campground mr-2"></i>{% trans "Community Volunteering" %}
         </a>
       {% if owned_communities %}
+        <a href="{% url 'matches:list' %}?type=visits"
+          class="block px-3 py-2 rounded {% if request_type == 'visits' %}bg-secondary text-primary font-semibold{% else %}text-secondary hover:bg-secondary hover:text-primary{% endif %}">
+          <i class="fa-solid fa-tools mr-2"></i>{% trans "Volunteer Visits" %}
+        </a>
         <span class="block px-3 py-2 rounded text-secondary opacity-40 cursor-default text-sm">
           <i class="fa-solid fa-door-open mr-2"></i>{% trans "Member Applications" %} <span class="text-xs opacity-60">({% trans "coming soon" %})</span>
         </span>
