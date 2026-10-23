@@ -3,8 +3,9 @@ Seeds the local dev database with a small, tongue-in-cheek but structurally
 complete demo dataset: users, communities (every type/status), listing
 categories, listings (offers & wishes, some with photos), skills (every
 level), skill wishes (user + community), matches (every status, every
-target type), match messages, volunteer details, and notifications
-(every tag).
+target type), match messages, volunteer details, notifications
+(every tag), and references (every impression and subject type, with
+confirmed/pending/declined skill tags and gift names).
 
 Safe to re-run — everything is get_or_create'd on a natural-ish key, so
 running it twice won't duplicate data.
@@ -27,6 +28,7 @@ from communities.models import Community, CommunityPhoto
 from gifts.models import Listing, ListingCategory
 from matches.models import Match, MatchMessage, VolunteerDetails
 from notifications.models import Notification, SKILL_NUDGE_TEXT
+from references.models import Reference, ReferenceSkill
 from skills.models import CommunitySkill, Skill, SkillWish, UserSkill
 from users.models import User
 
@@ -57,6 +59,7 @@ class Command(BaseCommand):
         self._seed_community_skills(communities, skills)
         self._seed_skill_wishes(users, communities, skills)
         self._seed_matches_and_notifications(users, communities)
+        self._seed_references(users, communities)
 
         self.stdout.write(self.style.SUCCESS(
             "\nDone. Log in as any of these (password: %s):" % DEMO_PASSWORD
@@ -583,3 +586,67 @@ class Command(BaseCommand):
             recipient=bjorn, actor=None, tag=Notification.TAG_SKILL_NUDGE, verb=str(SKILL_NUDGE_TEXT),
             age_days=3,
         )
+
+    # ── References ───────────────────────────────────────────────────────
+
+    def _seed_references(self, users, communities):
+        self.stdout.write("Seeding references…")
+        luna, bjorn, mireille = users["luna@ecobasa.demo"], users["bjorn@ecobasa.demo"], users["mireille@ecobasa.demo"]
+        diego, sam, ana = users["diego@ecobasa.demo"], users["sam@ecobasa.demo"], users["ana@ecobasa.demo"]
+        P, N, X = Reference.IMPRESSION_POSITIVE, Reference.IMPRESSION_NEUTRAL, Reference.IMPRESSION_NEGATIVE
+        CONFIRMED, PENDING, DECLINED = (
+            ReferenceSkill.STATUS_CONFIRMED, ReferenceSkill.STATUS_PENDING, ReferenceSkill.STATUS_DECLINED,
+        )
+
+        specs = [
+            # About a person — from the accepted sourdough match: gift name + a skill Ana
+            # doesn't list yet, waiting for her to confirm it
+            dict(author=mireille, subject=ana, impression=P, age_days=3,
+                 text="Her starter argued with mine for an hour, then they made the best loaf of my life.",
+                 gift_names=["Sourdough starter (opinionated)"], skills=[("Bread Baking", PENDING)]),
+            # About a person — a skill they have (confirmed) and one of their offers by name
+            dict(author=diego, subject=bjorn, impression=P, age_days=12,
+                 text="Built us a gate the goat can't open. The goat is furious. We are delighted.",
+                 gift_names=["Slightly judgmental goat"], skills=[("Woodworking", CONFIRMED)]),
+            # About a community — from the accepted volunteer stay; one tag declined
+            dict(author=sam, subject=communities["Three Goats and a Dream Farm"], impression=P, age_days=8,
+                 text="Two weeks of mud walls and goat supervision. Came for solar, stayed for the cob.",
+                 skills=[("Natural Building", CONFIRMED), ("Yoga", DECLINED)]),
+            dict(author=mireille, subject=communities["Sonnenkraut Ecovillage"], impression=N, age_days=20,
+                 text="Lovely people. I now own more zucchini than I own furniture."),
+            # About a listing
+            dict(author=bjorn, subject=Listing.objects.get(title__startswith="17kg of surplus zucchini", owner=luna),
+                 impression=N, age_days=6,
+                 text="Took three kilos. Fourteen more followed me home. I did not ask questions."),
+            # About a user skill
+            dict(author=luna, subject=UserSkill.objects.get(user=diego, skill__name="Natural Building"),
+                 impression=P, age_days=15,
+                 text="Taught me to read a wall by knocking on it. The wall now knocks back. Highly recommended."),
+            # About a community skill — the one negative
+            dict(author=ana, subject=CommunitySkill.objects.get(
+                    community=communities["Kombucha Commune"], skill__name="Fermentation"),
+                 impression=X, age_days=2,
+                 text="The lecture lasted three hours and had an intermission. The SCOBY was lovely though."),
+        ]
+
+        for spec in specs:
+            subject = spec["subject"]
+            reference, created = Reference.objects.get_or_create(
+                author=spec["author"],
+                content_type=ContentType.objects.get_for_model(subject),
+                object_id=str(subject.pk),
+                defaults={
+                    "recipient": subject if isinstance(subject, User) else subject.get_match_owner(),
+                    "impression": spec["impression"],
+                    "text": spec["text"],
+                    "gift_names": spec.get("gift_names", []),
+                },
+            )
+            if not created:
+                continue
+            Reference.objects.filter(pk=reference.pk).update(
+                created_at=timezone.now() - timedelta(days=spec["age_days"])
+            )
+            for skill_name, status in spec.get("skills", []):
+                skill, _created = Skill.objects.get_or_create(name=skill_name)
+                ReferenceSkill.objects.create(reference=reference, skill=skill, status=status)

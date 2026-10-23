@@ -19,7 +19,7 @@ def references_for(context, subject):
     is_owner = user.is_authenticated and subject_owner(subject) == user
     references = list(
         references_about(subject)
-        .select_related("author")
+        .select_related("author", "content_type")
         .prefetch_related(
             "subject",
             Prefetch("skill_tags", queryset=ReferenceSkill.objects.select_related("skill")),
