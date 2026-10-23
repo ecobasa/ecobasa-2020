@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% load i18n %}
+{% load i18n humanize %}
 
 {% block head_title %}{% trans "Notifications" %} — ecobasa{% endblock %}
 
@@ -72,7 +72,7 @@
             <p class="text-sm {% if not n.is_read %}font-semibold text-primary{% else %}text-brown{% endif %}">
               {{ n.verb }}
             </p>
-            <p class="text-xs text-brown mt-0.5">{{ n.created_at|timesince }} {% trans "ago" %}</p>
+            <p class="text-xs text-brown mt-0.5">{{ n.created_at|naturaltime }}</p>
           </div>
 
           {% if n.actor %}

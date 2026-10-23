@@ -18,9 +18,9 @@
 
   <h1 class="text-3xl md:text-5xl">
     {% if listing.pk %}
-      Edit {{ listing.get_type_display }} {{ listing.title }}
+      {% blocktrans with type=listing.get_type_display title=listing.title %}Edit {{ type }} {{ title }}{% endblocktrans %}
     {% else %}
-      Create new Offer or Wish
+      {% trans "Create new Offer or Wish" %}
     {% endif %}
   </h1>
 

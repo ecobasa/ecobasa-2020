@@ -1,4 +1,4 @@
-{% load crispy_forms_field my_crispy_helpers %}
+{% load crispy_forms_field my_crispy_helpers i18n %}
 
 {% if field.is_hidden %}
     {{ field }}
@@ -12,7 +12,7 @@
     <{% if tag %}{{ tag }}{% else %}div{% endif %} id="div_{{ field.auto_id }}" class="{% if not field|is_checkbox %}form-group{% if 'form-horizontal' in form_class %} row{% endif %}{% else %}form-check-dis{% endif %}{% if wrapper_class %} {{ wrapper_class }}{% endif %}{% if field.css_classes %} {{ field.css_classes }}{% endif %}">
         {% if field.label and not field|is_checkbox and form_show_labels %}
             <label for="{{ field.id_for_label }}" class="col-form-label {{ label_class }}{% if field.field.required %} requiredField{% endif %}">
-                {{ field.label|safe }}{% if not field.field.required %} <small class="text-secondary optionalField">(optional)</small>{% endif %}
+                {{ field.label|safe }}{% if not field.field.required %} <small class="text-secondary optionalField">({% trans "optional" %})</small>{% endif %}
             </label>
         {% endif %}
 
@@ -29,7 +29,7 @@
                 <div>
                     <label for="{{ field.id_for_label }}" class="inline-flex items-baseline {% if field.field.required %}requiredField{% endif %}">
                         {% crispy_field field 'class' 'form-checkbox' %}
-                        <span class="col-form-label ml-2 select-none">{{ field.label|safe }}{% if not field.field.required %} <small class="text-secondary optionalField">(optional)</small>{% endif %}</span>
+                        <span class="col-form-label ml-2 select-none">{{ field.label|safe }}{% if not field.field.required %} <small class="text-secondary optionalField">({% trans "optional" %})</small>{% endif %}</span>
                     </label>
                 </div>
                 {% include './layout/help_text_and_errors.html' %}

@@ -1,0 +1,40 @@
+{% load i18n %}
+{% get_current_language as LANGUAGE_CODE %}
+{% get_available_languages as LANGUAGES %}
+{% get_language_info_list for LANGUAGES as languages %}
+{% comment %}Posts to Django's set_language view, which stores the choice in a cookie and redirects back.{% endcomment %}
+<form action="{% url 'set_language' %}" method="post" class="{{ form_class }}">
+  {% csrf_token %}
+  <input name="next" type="hidden" value="{{ request.get_full_path }}">
+  {% if mobile %}
+    <div class="flex flex-wrap gap-2 px-4 py-2">
+      <i class="fa fa-globe self-center mr-1" aria-hidden="true"></i>
+      {% for language in languages %}
+        <button type="submit" name="language" value="{{ language.code }}" lang="{{ language.code }}"
+          class="px-2 py-1 rounded text-sm {% if language.code == LANGUAGE_CODE %}bg-secondary text-primary{% else %}hover:bg-secondary hover:text-primary{% endif %}">
+          {{ language.name_local|capfirst }}
+        </button>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="relative" x-data="{ open: false }">
+      <button type="button" @click="open = !open" @keydown.escape="open = false" :aria-expanded="open"
+        class="flex items-center gap-1 px-2 py-1 rounded hover:text-brown focus:outline-none transition duration-150 ease-in-out"
+        aria-label="{% trans 'Language' %}" aria-haspopup="true">
+        <i class="fa fa-globe"></i>
+        <span class="uppercase text-sm">{{ LANGUAGE_CODE }}</span>
+      </button>
+      <div x-show="open" x-cloak @click.away="open = false"
+        class="origin-top-right absolute right-0 mt-3 w-40 rounded-md shadow-lg z-40">
+        <div class="py-1 rounded-md bg-primary bg-opacity-75 backdrop-blur shadow-xs">
+          {% for language in languages %}
+            <button type="submit" name="language" value="{{ language.code }}" lang="{{ language.code }}"
+              class="dropdown-link w-full text-left {% if language.code == LANGUAGE_CODE %}text-brown{% endif %}">
+              {{ language.name_local|capfirst }}
+            </button>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  {% endif %}
+</form>
