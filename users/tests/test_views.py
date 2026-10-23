@@ -138,3 +138,14 @@ class TestPasswordReset:
         # check that new pw works
         newuser = authenticate(email=user.email, password=new_password)
         assert newuser == user
+
+
+@pytest.mark.django_db
+def test_profile_lists_owned_communities(user_client):
+    from communities.models import Community
+
+    owner = User.objects.create_user(email="luna@example.com", password="pw", name="Luna")
+    community = Community.objects.create(name="Sonnenkraut", owner=owner)
+    content = user_client.get(owner.get_absolute_url()).content.decode()
+    assert community.get_absolute_url() in content
+    assert "Sonnenkraut" in content

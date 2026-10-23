@@ -43,6 +43,7 @@ class DetailView(DetailView):
         try:
             user = self.get_object()
             ctx["listings"] = user.listings.all()
+            ctx["communities"] = user.communities.order_by("name")
             ctx["user_skills"] = (
                 user.user_skills.select_related("skill").order_by("skill__name")
             )
@@ -51,6 +52,7 @@ class DetailView(DetailView):
             )
         except Exception:
             ctx["listings"] = []
+            ctx["communities"] = []
             ctx["user_skills"] = []
             ctx["skill_wishes"] = []
         return ctx
