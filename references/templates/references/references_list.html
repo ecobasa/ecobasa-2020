@@ -39,7 +39,7 @@
           {# One row; the sentence keeps a minimum width, so the buttons wrap below rather than squeezing it #}
           <li class="flex flex-wrap items-center gap-3 text-sm">
             <span class="pill bg-purple text-xs"><i class="fa fa-graduation-cap mr-1"></i>{{ tag.skill.get_name }}</span>
-            <span class="flex-1 min-w-[16rem]">
+            <span class="flex-1 min-w-[12rem]">
               {% if tag.reference.about_you %}
                 {% blocktrans with author=tag.reference.author.name|default:tag.reference.author.username anchor=tag.reference.pk %}{{ author }} mentioned it in a <a href="#reference-{{ anchor }}" class="underline">reference</a> about you.{% endblocktrans %}
               {% else %}
