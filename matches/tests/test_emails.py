@@ -92,3 +92,21 @@ class TestLanguagePreference:
         client.post("/users/login/", {"username": "new@example.com", "password": "secret"})
         user.refresh_from_db()
         assert user.language == "fr"
+
+    def test_login_on_a_new_device_switches_to_the_saved_language(self, owner):
+        client = Client()
+        client.cookies["django_language"] = "en"
+        response = client.post("/users/login/", {"username": owner.email, "password": "secret"})
+        assert response.cookies["django_language"].value == "de"
+
+    def test_saved_language_wins_for_logged_in_users(self, owner):
+        response = _client_for(owner, "fr").get("/")
+        assert response.headers["Content-Language"] == "de"
+        assert '<html lang="de"' in response.content.decode()
+
+    def test_visitors_keep_their_cookie_language(self):
+        client = Client()
+        client.cookies["django_language"] = "fr"
+        response = client.get("/")
+        assert response.headers["Content-Language"] == "fr"
+        assert "django_language" not in response.cookies
