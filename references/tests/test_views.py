@@ -369,3 +369,33 @@ class TestNotifications:
         notification = self._notifications(owner).get()
         with translation.override("de"):
             assert notification.text == "Ann hat eine Referenz über dich geschrieben."
+
+
+@pytest.mark.django_db
+class TestEmails:
+    def test_email_in_the_recipients_language(self, author, owner):
+        from django.core import mail
+        owner.language = "de"
+        owner.save()
+        _client_for(author).post(_save_url(owner), {"impression": "positive", "text": "Lovely host.", "gift_names": ["Tent"]})
+        email = mail.outbox[-1]
+        assert email.to == [owner.email]
+        assert email.subject == "Ann hat eine Referenz über dich geschrieben."
+        assert "Lovely host." in email.body and "Tent" in email.body
+        assert "Referenz ansehen" in email.alternatives[0][0]
+
+    def test_ambassador_email_for_a_community(self, author, owner, community):
+        from django.core import mail
+        _client_for(author).post(_save_url(community), {"impression": "positive", "text": "Great farm."})
+        email = mail.outbox[-1]
+        assert email.to == [owner.email]
+        assert "You receive this as ambassador of Goat Farm." in email.body
+        assert f"?community={community.slug}#reference-" in email.body
+
+    def test_editing_sends_no_email(self, author, owner):
+        from django.core import mail
+        client = _client_for(author)
+        client.post(_save_url(owner), {"impression": "positive", "text": "Great."})
+        sent = len(mail.outbox)
+        client.post(_save_url(owner), {"impression": "neutral", "text": "Second thoughts."})
+        assert len(mail.outbox) == sent
