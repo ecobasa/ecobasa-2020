@@ -29,7 +29,7 @@ class Migration(migrations.Migration):
                 ),
                 ("object_id", models.CharField(max_length=255)),
                 (
-                    "tone",
+                    "impression",
                     models.CharField(
                         choices=[
                             ("positive", "Positive"),

@@ -13,7 +13,7 @@ from ..models import Reference
 
 @pytest.fixture
 def owner():
-    return User.objects.create_user(email="owner@example.com", password="secret", username="owner")
+    return User.objects.create_user(email="owner@example.com", password="secret", username="owner", name="Owner")
 
 
 @pytest.fixture
@@ -45,7 +45,7 @@ def _save_url(subject):
 @pytest.mark.django_db
 class TestSaveReference:
     def test_about_a_user(self, author, owner):
-        response = _client_for(author).post(_save_url(owner), {"tone": "positive", "text": "Lovely host."})
+        response = _client_for(author).post(_save_url(owner), {"impression": "positive", "text": "Lovely host."})
         assert response.status_code == 302
         assert response["Location"] == owner.get_absolute_url() + "#references"
 
@@ -53,44 +53,44 @@ class TestSaveReference:
         assert reference.author == author
         assert reference.recipient == owner
         assert reference.subject == owner
-        assert reference.tone == Reference.TONE_POSITIVE
+        assert reference.impression == Reference.IMPRESSION_POSITIVE
 
     def test_about_a_listing_goes_to_its_owner(self, author, owner, listing):
-        _client_for(author).post(_save_url(listing), {"tone": "neutral", "text": "Fine."})
+        _client_for(author).post(_save_url(listing), {"impression": "neutral", "text": "Fine."})
         reference = Reference.objects.get()
         assert reference.subject == listing
         assert reference.recipient == owner
 
     def test_about_a_community_goes_to_its_owner(self, author, owner, community):
-        _client_for(author).post(_save_url(community), {"tone": "negative", "text": "Nobody was there."})
+        _client_for(author).post(_save_url(community), {"impression": "negative", "text": "Nobody was there."})
         assert Reference.objects.get().recipient == owner
 
     def test_second_save_updates_instead_of_duplicating(self, author, owner):
         client = _client_for(author)
-        client.post(_save_url(owner), {"tone": "positive", "text": "First."})
-        client.post(_save_url(owner), {"tone": "neutral", "text": "Second thoughts."})
+        client.post(_save_url(owner), {"impression": "positive", "text": "First."})
+        client.post(_save_url(owner), {"impression": "neutral", "text": "Second thoughts."})
         reference = Reference.objects.get()
-        assert reference.tone == Reference.TONE_NEUTRAL
+        assert reference.impression == Reference.IMPRESSION_NEUTRAL
         assert reference.text == "Second thoughts."
 
     def test_not_about_yourself(self, owner, listing):
         client = _client_for(owner)
-        assert client.post(_save_url(owner), {"tone": "positive", "text": "I'm great."}).status_code == 403
-        assert client.post(_save_url(listing), {"tone": "positive", "text": "Mine."}).status_code == 403
+        assert client.post(_save_url(owner), {"impression": "positive", "text": "I'm great."}).status_code == 403
+        assert client.post(_save_url(listing), {"impression": "positive", "text": "Mine."}).status_code == 403
         assert not Reference.objects.exists()
 
     def test_requires_login(self, owner):
-        response = Client().post(_save_url(owner), {"tone": "positive", "text": "Hi."})
+        response = Client().post(_save_url(owner), {"impression": "positive", "text": "Hi."})
         assert response.status_code == 302
         assert not Reference.objects.exists()
 
     def test_unsupported_subject_type(self, author, owner):
         content_type = ContentType.objects.get_for_model(ContentType)
         url = reverse("references:save", args=[content_type.pk, content_type.pk])
-        assert _client_for(author).post(url, {"tone": "positive", "text": "x"}).status_code == 404
+        assert _client_for(author).post(url, {"impression": "positive", "text": "x"}).status_code == 404
 
     def test_empty_text_is_rejected(self, author, owner):
-        _client_for(author).post(_save_url(owner), {"tone": "positive", "text": ""})
+        _client_for(author).post(_save_url(owner), {"impression": "positive", "text": ""})
         assert not Reference.objects.exists()
 
 
@@ -120,8 +120,22 @@ class TestReferencesSection:
         assert "Lovely host." in response.content.decode()
 
     def test_form_shown_to_others_but_not_owner(self, author, owner, listing):
-        assert 'name="tone"' in _client_for(author).get(listing.get_absolute_url()).content.decode()
-        assert 'name="tone"' not in _client_for(owner).get(listing.get_absolute_url()).content.decode()
+        assert 'name="impression"' in _client_for(author).get(listing.get_absolute_url()).content.decode()
+        assert 'name="impression"' not in _client_for(owner).get(listing.get_absolute_url()).content.decode()
 
     def test_rendered_on_community_page(self, community):
         assert 'id="references"' in Client().get(community.get_absolute_url()).content.decode()
+
+    def test_profile_lists_references_about_their_listings_and_skills(self, author, owner, listing, community):
+        Reference(author=author, recipient=owner, subject=listing, text="Bike was great.").save()
+        Reference(author=author, recipient=owner, subject=community, text="Community stay.").save()
+        content = Client().get(owner.get_absolute_url()).content.decode()
+        assert "Bike was great." in content
+        assert listing.get_absolute_url() in content
+        # The community has its own page; its references don't belong to the owner personally
+        assert "Community stay." not in content
+
+    def test_reference_about_a_listing_does_not_count_as_own_profile_reference(self, author, owner, listing):
+        Reference(author=author, recipient=owner, subject=listing, text="Bike was great.").save()
+        content = _client_for(author).get(owner.get_absolute_url()).content.decode()
+        assert "Write a reference" in content

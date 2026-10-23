@@ -12,8 +12,8 @@
     <div class="space-y-3 mb-6">
       {% for ref in references %}
         <article class="border rounded-lg p-4
-          {% if ref.tone == 'positive' %}border-green bg-green bg-opacity-5
-          {% elif ref.tone == 'negative' %}border-red bg-red bg-opacity-5
+          {% if ref.impression == 'positive' %}border-green bg-green bg-opacity-5
+          {% elif ref.impression == 'negative' %}border-red bg-red bg-opacity-5
           {% else %}bg-secondary{% endif %}">
           <header class="flex items-center gap-3 mb-2">
             <a href="{{ ref.author.get_absolute_url }}" class="flex-shrink-0">
@@ -27,7 +27,13 @@
             </a>
             <div class="flex-1 min-w-0">
               <a href="{{ ref.author.get_absolute_url }}" class="text-sm font-semibold text-primary">{{ ref.author.name|default:ref.author.username }}</a>
-              <div class="text-xs text-brown">{{ ref.get_tone_display }} · {{ ref.created_at|date:"SHORT_DATE_FORMAT" }}</div>
+              <div class="text-xs text-brown">{{ ref.get_impression_display }} · {{ ref.created_at|date:"SHORT_DATE_FORMAT" }}</div>
+              {% if ref.about_other and ref.subject %}
+                <div class="text-xs text-brown">
+                  {% translate "about" context "reference subject" %}
+                  <a href="{{ ref.subject.get_absolute_url }}" class="text-primary"><i class="fa {{ ref.subject.get_match_icon }} mr-1"></i>{{ ref.subject.get_match_display_name }}</a>
+                </div>
+              {% endif %}
             </div>
           </header>
           <p class="text-sm m-0">{{ ref.text|linebreaksbr }}</p>
@@ -46,9 +52,9 @@
       <form x-show="open" x-cloak method="post" action="{% url 'references:save' content_type.pk subject.pk %}">
         {% csrf_token %}
         <div class="form-group mb-4">
-          <label class="form-label">{{ form.tone.label }}</label>
+          <label class="form-label">{{ form.impression.label }}</label>
           <div class="flex flex-wrap gap-4">
-            {% for radio in form.tone %}
+            {% for radio in form.impression %}
               <label class="flex items-center gap-2 text-sm text-brown cursor-pointer">{{ radio.tag }} {{ radio.choice_label }}</label>
             {% endfor %}
           </div>
