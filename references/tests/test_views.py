@@ -6,10 +6,11 @@ from django.urls import reverse
 
 from communities.models import Community
 from gifts.models import Listing
-from skills.models import CommunitySkill, Skill
+from matches.models import Match
+from skills.models import CommunitySkill, Skill, UserSkill
 from users.models import User
 
-from ..models import Reference
+from ..models import Reference, ReferenceSkill
 
 
 @pytest.fixture
@@ -148,3 +149,90 @@ class TestReferencesSection:
         content = Client().get(community.get_absolute_url()).content.decode()
         assert "Learned a lot." in content
         assert community_skill.get_absolute_url() in content
+
+
+@pytest.mark.django_db
+class TestTagging:
+    def _post(self, client, subject, **extra):
+        data = {"impression": "positive", "text": "Great.", **extra}
+        return client.post(_save_url(subject), data)
+
+    def test_skill_the_person_has_is_confirmed_right_away(self, author, owner):
+        skill = Skill.objects.create(name="Cob building", slug="cob-building")
+        UserSkill.objects.create(user=owner, skill=skill)
+        self._post(_client_for(author), owner, skill_names="Cob building")
+        assert Reference.objects.get().skill_tags.get().status == ReferenceSkill.STATUS_CONFIRMED
+
+    def test_new_skill_waits_until_the_person_confirms(self, author, owner):
+        self._post(_client_for(author), owner, skill_names="Beekeeping")
+        tag = ReferenceSkill.objects.get()
+        assert tag.status == ReferenceSkill.STATUS_PENDING
+        assert not UserSkill.objects.filter(user=owner).exists()
+
+        # Only the person it is about can confirm
+        url = reverse("references:skill_tag", args=[tag.pk, "confirm"])
+        assert _client_for(author).post(url).status_code == 404
+        _client_for(owner).post(url)
+        tag.refresh_from_db()
+        assert tag.status == ReferenceSkill.STATUS_CONFIRMED
+        assert UserSkill.objects.filter(user=owner, skill=tag.skill).exists()
+
+    def test_declined_skill_is_not_added(self, author, owner):
+        self._post(_client_for(author), owner, skill_names="Beekeeping")
+        tag = ReferenceSkill.objects.get()
+        _client_for(owner).post(reverse("references:skill_tag", args=[tag.pk, "decline"]))
+        tag.refresh_from_db()
+        assert tag.status == ReferenceSkill.STATUS_DECLINED
+        assert not UserSkill.objects.filter(user=owner).exists()
+
+    def test_confirming_on_a_community_adds_a_community_skill(self, author, owner, community):
+        self._post(_client_for(author), community, skill_names="Beekeeping")
+        tag = ReferenceSkill.objects.get()
+        _client_for(owner).post(reverse("references:skill_tag", args=[tag.pk, "confirm"]))
+        assert CommunitySkill.objects.filter(community=community, skill=tag.skill).exists()
+
+    def test_gift_names_are_kept_as_names_only(self, author, owner):
+        self._post(_client_for(author), owner, gift_names=["Old Bicycle", " ", "Old Bicycle", "Tent"])
+        assert Reference.objects.get().gift_names == ["Old Bicycle", "Tent"]
+
+    def test_no_tags_on_references_about_a_listing(self, author, listing):
+        self._post(_client_for(author), listing, skill_names="Beekeeping", gift_names=["Tent"])
+        reference = Reference.objects.get()
+        assert reference.gift_names == []
+        assert not reference.skill_tags.exists()
+
+    def test_editing_keeps_status_and_drops_removed_skills(self, author, owner):
+        client = _client_for(author)
+        self._post(client, owner, skill_names="Beekeeping, Carpentry")
+        beekeeping = ReferenceSkill.objects.get(skill__name="Beekeeping")
+        _client_for(owner).post(reverse("references:skill_tag", args=[beekeeping.pk, "confirm"]))
+        self._post(client, owner, skill_names="Beekeeping")
+        assert list(ReferenceSkill.objects.values_list("skill__name", "status")) == [
+            ("Beekeeping", ReferenceSkill.STATUS_CONFIRMED)
+        ]
+
+    def test_confirmed_tag_shows_on_the_skill_page(self, author, owner):
+        skill = Skill.objects.create(name="Cob building", slug="cob-building")
+        user_skill = UserSkill.objects.create(user=owner, skill=skill)
+        self._post(_client_for(author), owner, skill_names="Cob building", text="Built a wall together.")
+        assert "Built a wall together." in Client().get(user_skill.get_absolute_url()).content.decode()
+
+    def test_pending_tag_is_hidden_from_others(self, author, owner, listing):
+        self._post(_client_for(author), owner, skill_names="Beekeeping")
+        stranger = User.objects.create_user(email="s@example.com", password="secret", name="S")
+        content = _client_for(stranger).get(owner.get_absolute_url()).content.decode()
+        assert "Beekeeping" not in content
+
+
+@pytest.mark.django_db
+class TestReferenceFromMatch:
+    def test_accepted_listing_match_links_to_owner_with_gift_name(self, author, owner, listing):
+        match = Match(from_user=author, recipient=owner, message="Hi", status=Match.STATUS_ACCEPTED)
+        match.target = listing
+        match.save()
+        content = _client_for(author).get(match.get_absolute_url()).content.decode()
+        assert owner.get_absolute_url() + "?reference_gift=Old+Bicycle#references" in content
+
+    def test_prefilled_gift_name_lands_in_the_form(self, author, owner):
+        content = _client_for(author).get(owner.get_absolute_url() + "?reference_gift=Old+Bicycle").content.decode()
+        assert "Old Bicycle" in content

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ecobasa\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-23 15:09+0200\n"
+"POT-Creation-Date: 2026-10-23 15:24+0200\n"
 "PO-Revision-Date: 2026-10-23 12:00+0200\n"
 "Last-Translator: ecobasa\n"
 "Language-Team: de\n"
@@ -50,7 +50,7 @@ msgstr "Fähigkeiten hinzufügen, durch Komma getrennt"
 #: gifts/filters.py:30 gifts/filters.py:32 gifts/models.py:52
 #: gifts/templates/gifts/listing_detail.html:217
 #: gifts/templates/gifts/listing_form.html:32
-#: matches/templates/matches/match_detail.html:145
+#: matches/templates/matches/match_detail.html:151
 #: skills/templates/skills/communityskill_detail.html:184
 #: skills/templates/skills/skillwish_user_detail.html:152
 #: skills/templates/skills/userskill_detail.html:202 users/models.py:98
@@ -97,8 +97,8 @@ msgid "Slug"
 msgstr "Slug"
 
 #: communities/models.py:24 gifts/filters.py:18
-#: matches/templates/matches/matches_list.html:64 skills/models.py:122
-#: skills/templates/skills/communityskill_detail.html:15
+#: matches/templates/matches/matches_list.html:64 references/forms.py:12
+#: skills/models.py:122 skills/templates/skills/communityskill_detail.html:15
 #: skills/templates/skills/skill_detail.html:4
 #: skills/templates/skills/skill_detail.html:10
 #: skills/templates/skills/skill_list.html:4
@@ -242,25 +242,25 @@ msgstr "Land"
 msgid "Geo Location"
 msgstr "Geoposition"
 
-#: communities/models.py:129
+#: communities/models.py:139
 msgid "requested to volunteer at"
 msgstr "hat einen Gemeinschaftsaufenthalt angefragt bei"
 
-#: communities/models.py:132
+#: communities/models.py:142
 #, python-format
 msgid "%(actor)s requested a volunteer stay at %(title)s"
 msgstr "%(actor)s hat einen Gemeinschaftsaufenthalt bei %(title)s angefragt"
 
-#: communities/models.py:135
+#: communities/models.py:145
 msgid "Community"
 msgstr "Gemeinschaft"
 
-#: communities/models.py:136 templates/_navbar.html:28
+#: communities/models.py:146 templates/_navbar.html:28
 #: templates/_navbar.html:214 templates/dashboard/base.html:28
 msgid "Communities"
 msgstr "Gemeinschaften"
 
-#: communities/models.py:146
+#: communities/models.py:156
 msgid "Image"
 msgstr "Bild"
 
@@ -445,8 +445,8 @@ msgstr ""
 #: communities/templates/communities/community_form.html:180
 #: gifts/templates/gifts/listing_delete_confirm.html:29
 #: gifts/templates/gifts/listing_form.html:39
-#: matches/templates/matches/match_detail.html:345
-#: references/templates/references/_references.html:68
+#: matches/templates/matches/match_detail.html:351
+#: references/templates/references/_references.html:115
 #: skills/templates/skills/communityskill_confirm_delete.html:17
 #: skills/templates/skills/communityskill_form.html:95
 #: skills/templates/skills/skillwish_form.html:35
@@ -566,7 +566,7 @@ msgstr "Art"
 
 #: communities/templates/communities/community_list.html:235
 #: communities/templates/communities/community_list.html:479
-#: matches/models.py:63
+#: matches/models.py:63 references/models.py:129
 msgid "Status"
 msgstr "Status"
 
@@ -803,8 +803,9 @@ msgid "Back"
 msgstr "Zurück"
 
 #: gifts/templates/gifts/listing_detail.html:28
-#: matches/templates/matches/matches_list.html:37 templates/_navbar.html:32
-#: templates/_navbar.html:213 templates/dashboard/base.html:21
+#: matches/templates/matches/matches_list.html:37 references/models.py:94
+#: templates/_navbar.html:32 templates/_navbar.html:213
+#: templates/dashboard/base.html:21
 msgid "Gifts"
 msgstr "Geschenke"
 
@@ -861,22 +862,22 @@ msgstr "Eingegangenes Interesse"
 
 #: gifts/templates/gifts/listing_detail.html:194 matches/models.py:30
 #: matches/templates/matches/_match_row.html:41
-#: matches/templates/matches/match_detail.html:106
+#: matches/templates/matches/match_detail.html:112
 msgid "Pending"
 msgstr "Offen"
 
 #: gifts/templates/gifts/listing_detail.html:196 matches/models.py:31
 #: matches/templates/matches/_match_row.html:45
-#: matches/templates/matches/match_detail.html:108
-#: matches/templates/matches/match_detail.html:189
+#: matches/templates/matches/match_detail.html:114
+#: matches/templates/matches/match_detail.html:195
 msgid "Accepted"
 msgstr "Angenommen"
 
 #: gifts/templates/gifts/listing_detail.html:198 matches/models.py:32
 #: matches/templates/matches/_match_row.html:49
 #: matches/templates/matches/match_detail.html:36
-#: matches/templates/matches/match_detail.html:110
-#: matches/templates/matches/match_detail.html:190
+#: matches/templates/matches/match_detail.html:116
+#: matches/templates/matches/match_detail.html:196 references/models.py:124
 msgid "Declined"
 msgstr "Abgelehnt"
 
@@ -1058,8 +1059,8 @@ msgstr "Bei dir – ich komme zu dir"
 msgid "Somewhere else"
 msgstr "Woanders"
 
-#: matches/models.py:33 matches/templates/matches/match_detail.html:112
-#: matches/templates/matches/match_detail.html:191
+#: matches/models.py:33 matches/templates/matches/match_detail.html:118
+#: matches/templates/matches/match_detail.html:197
 msgid "Counter-proposed"
 msgstr "Gegenvorschlag gemacht"
 
@@ -1071,7 +1072,7 @@ msgstr "Treffpunkt"
 msgid "Custom location"
 msgstr "Eigener Ort"
 
-#: matches/models.py:61 matches/templates/matches/match_detail.html:151
+#: matches/models.py:61 matches/templates/matches/match_detail.html:157
 msgid "Proposed date"
 msgstr "Vorgeschlagenes Datum"
 
@@ -1127,25 +1128,25 @@ msgstr "Neues Match"
 
 #: matches/templates/matches/email/match_request.html:37
 #: matches/templates/matches/email/match_request.txt:5
-#: matches/templates/matches/match_detail.html:124
+#: matches/templates/matches/match_detail.html:130
 msgid "Proposed stay"
 msgstr "Vorgeschlagener Aufenthalt"
 
 #: matches/templates/matches/email/match_request.html:43
 #: matches/templates/matches/email/match_request.txt:8
-#: matches/templates/matches/match_detail.html:130
+#: matches/templates/matches/match_detail.html:136
 msgid "Skills to offer"
 msgstr "Angebotene Fähigkeiten"
 
 #: matches/templates/matches/email/match_request.html:43
 #: matches/templates/matches/email/match_request.txt:8
-#: matches/templates/matches/match_detail.html:130
+#: matches/templates/matches/match_detail.html:136
 msgid "Skills to learn and practice"
 msgstr "Fähigkeiten zum Lernen und Üben"
 
 #: matches/templates/matches/email/match_request.html:44
 #: matches/templates/matches/email/match_request.txt:9
-#: matches/templates/matches/match_detail.html:131
+#: matches/templates/matches/match_detail.html:137
 msgid "level"
 msgstr "Niveau"
 
@@ -1157,15 +1158,16 @@ msgstr "Weitere Fähigkeiten, mit denen ich helfen kann"
 
 #: matches/templates/matches/email/match_request.html:66
 #: matches/templates/matches/email/match_request.txt:19
-#: matches/templates/matches/match_detail.html:310
-#: matches/templates/matches/match_detail.html:351
+#: matches/templates/matches/match_detail.html:316
+#: matches/templates/matches/match_detail.html:357
 msgid "Accept"
 msgstr "Annehmen"
 
 #: matches/templates/matches/email/match_request.html:72
 #: matches/templates/matches/email/match_request.txt:20
-#: matches/templates/matches/match_detail.html:314
-#: matches/templates/matches/match_detail.html:354
+#: matches/templates/matches/match_detail.html:320
+#: matches/templates/matches/match_detail.html:360
+#: references/templates/references/_references.html:53
 msgid "Decline"
 msgstr "Ablehnen"
 
@@ -1216,57 +1218,62 @@ msgstr "Match bestätigt"
 msgid "Counter-proposal pending"
 msgstr "Gegenvorschlag offen"
 
-#: matches/templates/matches/match_detail.html:136
+#: matches/templates/matches/match_detail.html:72
+#: references/templates/references/_references.html:76
+msgid "Write a reference"
+msgstr "Referenz schreiben"
+
+#: matches/templates/matches/match_detail.html:142
 msgid "Other skills offered"
 msgstr "Weitere angebotene Fähigkeiten"
 
-#: matches/templates/matches/match_detail.html:206
-#: matches/templates/matches/match_detail.html:256
+#: matches/templates/matches/match_detail.html:212
+#: matches/templates/matches/match_detail.html:262
 msgid "Counter location"
 msgstr "Gegenvorschlag Ort"
 
-#: matches/templates/matches/match_detail.html:212
-#: matches/templates/matches/match_detail.html:286
+#: matches/templates/matches/match_detail.html:218
+#: matches/templates/matches/match_detail.html:292
 msgid "Counter date"
 msgstr "Gegenvorschlag Datum"
 
-#: matches/templates/matches/match_detail.html:237
+#: matches/templates/matches/match_detail.html:243
 msgid "Counter-proposal details"
 msgstr "Details zum Gegenvorschlag"
 
-#: matches/templates/matches/match_detail.html:240
+#: matches/templates/matches/match_detail.html:246
 msgid "Counter location type"
 msgstr "Art des vorgeschlagenen Orts"
 
-#: matches/templates/matches/match_detail.html:259
+#: matches/templates/matches/match_detail.html:265
 #: skills/templates/skills/communityskill_detail.html:187
 #: skills/templates/skills/skillwish_user_detail.html:155
 #: skills/templates/skills/userskill_detail.html:205
 msgid "Search for a location…"
 msgstr "Ort suchen…"
 
-#: matches/templates/matches/match_detail.html:302
+#: matches/templates/matches/match_detail.html:308
 #: templates/postman/write.html:84
 msgid "Send"
 msgstr "Senden"
 
-#: matches/templates/matches/match_detail.html:319
+#: matches/templates/matches/match_detail.html:325
 msgid "Change to Declined"
 msgstr "Doch ablehnen"
 
-#: matches/templates/matches/match_detail.html:324
+#: matches/templates/matches/match_detail.html:330
 msgid "Change to Accepted"
 msgstr "Doch annehmen"
 
-#: matches/templates/matches/match_detail.html:329
+#: matches/templates/matches/match_detail.html:335
 msgid "Waiting for the other party's response…"
 msgstr "Warte auf die Antwort der anderen Seite…"
 
-#: matches/templates/matches/match_detail.html:336
+#: matches/templates/matches/match_detail.html:342
 msgid "Propose different location"
 msgstr "Anderen Ort vorschlagen"
 
-#: matches/templates/matches/match_detail.html:341
+#: matches/templates/matches/match_detail.html:347
 msgid "Send counter-proposal"
 msgstr "Gegenvorschlag senden"
 
@@ -1378,38 +1385,55 @@ msgstr "Alle als gelesen markieren"
 msgid "No notifications yet."
 msgstr "Noch keine Benachrichtigungen."
 
-#: references/apps.py:8 references/models.py:89
+#: references/apps.py:8 references/models.py:101
 #: references/templates/references/_references.html:3
 msgid "References"
 msgstr "Referenzen"
 
-#: references/forms.py:15
+#: references/forms.py:21
 msgid "What was it like? What should others know?"
 msgstr "Wie war es? Was sollten andere wissen?"
 
-#: references/models.py:61
+#: references/models.py:67
 msgid "Positive"
 msgstr "Positiv"
 
-#: references/models.py:62
+#: references/models.py:68
 msgid "Neutral"
 msgstr "Neutral"
 
-#: references/models.py:63
+#: references/models.py:69
 msgid "Negative"
 msgstr "Negativ"
 
-#: references/models.py:81
+#: references/models.py:87
 msgid "Impression"
 msgstr "Eindruck"
 
-#: references/models.py:82
+#: references/models.py:88
 msgid "Your experience"
 msgstr "Deine Erfahrung"
 
-#: references/models.py:88
+#: references/models.py:100
 msgid "Reference"
 msgstr "Referenz"
+
+#: references/models.py:122 references/templates/references/_references.html:46
+#: references/templates/references/_references.html:56
+msgid "Waiting for confirmation"
+msgstr "Wartet auf Bestätigung"
+
+#: references/models.py:123
+msgid "Confirmed"
+msgstr "Bestätigt"
+
+#: references/models.py:133
+msgid "Reference Skill"
+msgstr "Fähigkeit in Referenz"
+
+#: references/models.py:134
+msgid "Reference Skills"
+msgstr "Fähigkeiten in Referenzen"
 
 #: references/templates/references/_references.html:7
 #, python-format
@@ -1437,41 +1461,62 @@ msgctxt "reference subject"
 msgid "about"
 msgstr "zu"
 
-#: references/templates/references/_references.html:44
+#: references/templates/references/_references.html:50
+msgid "Add to my skills"
+msgstr "Zu meinen Fähigkeiten hinzufügen"
+
+#: references/templates/references/_references.html:70
 msgid "No references yet."
 msgstr "Noch keine Referenzen."
 
-#: references/templates/references/_references.html:50
+#: references/templates/references/_references.html:76
 msgid "Edit your reference"
 msgstr "Deine Referenz bearbeiten"
 
-#: references/templates/references/_references.html:50
-msgid "Write a reference"
-msgstr "Referenz schreiben"
+#: references/templates/references/_references.html:94
+msgid "Which skills was it about?"
+msgstr "Um welche Fähigkeiten ging es?"
 
-#: references/templates/references/_references.html:67
+#: references/templates/references/_references.html:96
+msgid "Skills they don't list yet are added once they confirm."
+msgstr "Fähigkeiten, die noch nicht im Profil stehen, werden erst nach Bestätigung hinzugefügt."
+
+#: references/templates/references/_references.html:101
+msgid "Which gifts was it about?"
+msgstr "Um welche Geschenke ging es?"
+
+#: references/templates/references/_references.html:110
+msgid "Only the name is kept, nothing else."
+msgstr "Gespeichert wird nur der Name, sonst nichts."
+
+#: references/templates/references/_references.html:114
 msgid "Save reference"
 msgstr "Referenz speichern"
 
-#: references/templates/references/_references.html:74
+#: references/templates/references/_references.html:121
 msgid "Remove your reference"
 msgstr "Deine Referenz entfernen"
 
-#: references/templates/references/_references.html:80
+#: references/templates/references/_references.html:173
 msgid "Log in to write a reference"
 msgstr "Melde dich an, um eine Referenz zu schreiben"
 
-#: references/views.py:43
+#: references/views.py:44
 msgid "Thank you for sharing your experience."
 msgstr "Danke, dass du deine Erfahrung teilst."
 
-#: references/views.py:45
+#: references/views.py:46
 msgid "Please choose an impression and describe your experience."
 msgstr "Bitte wähle einen Eindruck und beschreibe deine Erfahrung."
 
-#: references/views.py:55
+#: references/views.py:56
 msgid "Your reference was removed."
 msgstr "Deine Referenz wurde entfernt."
+
+#: references/views.py:71
+#, python-format
+msgid "%(skill)s was added to your skills."
+msgstr "%(skill)s wurde zu deinen Fähigkeiten hinzugefügt."
 
 #: settings/base.py:34
 msgid "German"
@@ -1585,50 +1630,50 @@ msgstr "Wie hast du das gelernt? Was kannst du anbieten?"
 msgid "User Skills"
 msgstr "Fähigkeiten (Personen)"
 
-#: skills/models.py:211 skills/models.py:254
+#: skills/models.py:214 skills/models.py:260
 msgid "expressed interest"
 msgstr "hat Interesse gezeigt"
 
-#: skills/models.py:214
+#: skills/models.py:217
 #, python-format
 msgid "%(actor)s is interested in your skill: %(title)s"
 msgstr "%(actor)s interessiert sich für deine Fähigkeit: %(title)s"
 
-#: skills/models.py:220
+#: skills/models.py:223
 msgid "What can visitors learn here?"
 msgstr "Was können Besucher*innen hier lernen?"
 
-#: skills/models.py:227
+#: skills/models.py:230
 msgid "Community Skill"
 msgstr "Fähigkeit (Gemeinschaft)"
 
-#: skills/models.py:228
+#: skills/models.py:231
 msgid "Community Skills"
 msgstr "Fähigkeiten (Gemeinschaften)"
 
-#: skills/models.py:257
+#: skills/models.py:263
 #, python-format
 msgid "%(actor)s is interested in your community's skill: %(title)s"
 msgstr ""
 "%(actor)s interessiert sich für eine Fähigkeit deiner Gemeinschaft: %(title)s"
 
-#: skills/models.py:289
+#: skills/models.py:295
 msgid "What do you want to learn, or what do you need?"
 msgstr "Was möchtest du lernen oder was brauchst du?"
 
-#: skills/models.py:296
+#: skills/models.py:302
 msgid "Skill Wish"
 msgstr "Fähigkeitswunsch"
 
-#: skills/models.py:297
+#: skills/models.py:303
 msgid "Skill Wishes"
 msgstr "Fähigkeitswünsche"
 
-#: skills/models.py:322
+#: skills/models.py:328
 msgid "offered to teach you"
 msgstr "hat angeboten, es dir beizubringen"
 
-#: skills/models.py:325
+#: skills/models.py:331
 #, python-format
 msgid "%(actor)s offered to teach you: %(title)s"
 msgstr "%(actor)s hat angeboten, es dir beizubringen: %(title)s"
