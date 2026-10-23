@@ -1,0 +1,77 @@
+{% load i18n %}
+<section id="references" class="mt-10">
+  <h2>{% trans "References" %}</h2>
+
+  {% if references %}
+    <div class="flex flex-wrap gap-2 mb-4 text-xs">
+      {% if counts.positive %}<span class="pill bg-green"><i class="fa-regular fa-face-smile mr-1"></i>{% blocktrans count counter=counts.positive %}{{ counter }} positive{% plural %}{{ counter }} positive{% endblocktrans %}</span>{% endif %}
+      {% if counts.neutral %}<span class="pill bg-yellow"><i class="fa-regular fa-face-meh mr-1"></i>{% blocktrans count counter=counts.neutral %}{{ counter }} neutral{% plural %}{{ counter }} neutral{% endblocktrans %}</span>{% endif %}
+      {% if counts.negative %}<span class="pill bg-red"><i class="fa-regular fa-face-frown mr-1"></i>{% blocktrans count counter=counts.negative %}{{ counter }} negative{% plural %}{{ counter }} negative{% endblocktrans %}</span>{% endif %}
+    </div>
+
+    <div class="space-y-3 mb-6">
+      {% for ref in references %}
+        <article class="border rounded-lg p-4
+          {% if ref.tone == 'positive' %}border-green bg-green bg-opacity-5
+          {% elif ref.tone == 'negative' %}border-red bg-red bg-opacity-5
+          {% else %}bg-secondary{% endif %}">
+          <header class="flex items-center gap-3 mb-2">
+            <a href="{{ ref.author.get_absolute_url }}" class="flex-shrink-0">
+              {% if ref.author.image %}
+                <img src="{{ ref.author.image.url }}" alt="" class="w-8 h-8 rounded-full object-cover">
+              {% else %}
+                <div class="w-8 h-8 rounded-full bg-primary bg-opacity-20 flex items-center justify-center">
+                  <i class="fa fa-user text-xs text-primary"></i>
+                </div>
+              {% endif %}
+            </a>
+            <div class="flex-1 min-w-0">
+              <a href="{{ ref.author.get_absolute_url }}" class="text-sm font-semibold text-primary">{{ ref.author.name|default:ref.author.username }}</a>
+              <div class="text-xs text-brown">{{ ref.get_tone_display }} · {{ ref.created_at|date:"SHORT_DATE_FORMAT" }}</div>
+            </div>
+          </header>
+          <p class="text-sm m-0">{{ ref.text|linebreaksbr }}</p>
+        </article>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="text-sm text-brown">{% trans "No references yet." %}</p>
+  {% endif %}
+
+  {% if form %}
+    <div class="border rounded-xl bg-secondary p-6" x-data="{ open: false }">
+      <button type="button" class="btn" x-show="!open" @click="open = true">
+        <i class="fa fa-pencil mr-2"></i>{% if own_reference %}{% trans "Edit your reference" %}{% else %}{% trans "Write a reference" %}{% endif %}
+      </button>
+      <form x-show="open" x-cloak method="post" action="{% url 'references:save' content_type.pk subject.pk %}">
+        {% csrf_token %}
+        <div class="form-group mb-4">
+          <label class="form-label">{{ form.tone.label }}</label>
+          <div class="flex flex-wrap gap-4">
+            {% for radio in form.tone %}
+              <label class="flex items-center gap-2 text-sm text-brown cursor-pointer">{{ radio.tag }} {{ radio.choice_label }}</label>
+            {% endfor %}
+          </div>
+        </div>
+        <div class="form-group mb-4">
+          <label class="form-label" for="{{ form.text.id_for_label }}">{{ form.text.label }}</label>
+          {{ form.text }}
+        </div>
+        <div class="flex flex-wrap gap-2">
+          <button type="submit" class="btn"><i class="fa fa-check mr-2"></i>{% trans "Save reference" %}</button>
+          <button type="button" class="btn btn-purple" @click="open = false">{% trans "Cancel" %}</button>
+        </div>
+      </form>
+      {% if own_reference %}
+        <form method="post" action="{% url 'references:delete' own_reference.pk %}" class="mt-3" x-show="open" x-cloak>
+          {% csrf_token %}
+          <button type="submit" class="text-sm text-brown underline">{% trans "Remove your reference" %}</button>
+        </form>
+      {% endif %}
+    </div>
+  {% elif not request.user.is_authenticated %}
+    <a class="btn" href="{% url 'users:login' %}?next={{ request.path }}%23references">
+      <i class="fa fa-pencil mr-2"></i>{% trans "Log in to write a reference" %}
+    </a>
+  {% endif %}
+</section>
