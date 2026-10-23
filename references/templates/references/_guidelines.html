@@ -1,8 +1,11 @@
 {% load i18n %}
 {# Writing guide in the spirit of Nonviolent Communication: observation, feelings, needs, wishes #}
-<details class="mb-4 rounded-lg border border-primary border-opacity-40 bg-primary bg-opacity-5 p-4 text-sm" {% if not own_reference %}open{% endif %}>
-  <summary class="cursor-pointer font-semibold text-primary">
-    <i class="fa fa-feather-pointed mr-1"></i>{% trans "How to write a reference" %}
+{# Collapsed by default; opens by itself when a negative impression is chosen #}
+<details class="group mb-4 rounded-lg border border-primary border-opacity-40 bg-primary bg-opacity-5 p-4 text-sm"
+         x-effect="if (impression === 'negative') $el.open = true">
+  <summary class="flex items-center cursor-pointer list-none font-semibold text-primary [&::-webkit-details-marker]:hidden">
+    <i class="fa fa-feather-pointed mr-2"></i>{% trans "How to write a reference" %}
+    <i class="fa fa-chevron-down ml-auto transition-transform group-open:rotate-180"></i>
   </summary>
   <p class="mt-3 mb-2">{% trans "A reference shares your experience. It is not a verdict on another person." %}</p>
   <ul class="space-y-2 pl-1">
