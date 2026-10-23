@@ -79,7 +79,8 @@ def references_for(context, subject):
         ] if form and form.can_tag else [],
         "held_skills_header": _("Skills listed here"),
         "gift_suggestions": [l.title for l in listings.all()] if form and form.can_tag and listings is not None else [],
-        "open_form": bool(prefill_gift or prefill_skill),
+        # Opened right away when coming from a match or from an "Edit" link
+        "open_form": bool(prefill_gift or prefill_skill or request.GET.get("edit_reference")),
     }
 
 
