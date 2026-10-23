@@ -399,3 +399,10 @@ class TestEmails:
         sent = len(mail.outbox)
         client.post(_save_url(owner), {"impression": "neutral", "text": "Second thoughts."})
         assert len(mail.outbox) == sent
+
+    def test_user_menu_lists_references_and_community_references(self, author, owner, community):
+        content = _client_for(owner).get("/").content.decode()
+        assert f'href="{reverse("references:list")}?type=given"' in content
+        assert f'href="{reverse("references:list")}?community={community.slug}"' in content
+        # Not ambassador of any community: no community entries
+        assert "?community=" not in _client_for(author).get("/").content.decode()
