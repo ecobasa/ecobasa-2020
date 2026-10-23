@@ -118,10 +118,11 @@ def references_list(request):
                 "header_photo": next(iter(community.photos.all()), None),
                 "references": _load(references_about(community), user, tab, holder=community),
             })
+    # Only skills tagged on references about you wait for *your* confirmation
     pending = [
         tag for group in groups for reference in group["references"]
         for tag in reference.visible_skill_tags if tag.status == ReferenceSkill.STATUS_PENDING
-    ]
+    ] if tab == "received" else []
     return render(request, "references/references_list.html", {
         "tab": tab,
         "groups": groups,

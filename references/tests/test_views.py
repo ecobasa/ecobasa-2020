@@ -304,3 +304,9 @@ class TestDashboard:
         about_you = content.index("About you")
         # The community header comes after "About you", and its reference after the header
         assert about_you < content.index("Goat Farm", about_you) < content.index("About the farm.")
+
+    def test_given_does_not_ask_me_to_confirm_skills_i_tagged(self, author, owner):
+        _client_for(author).post(_save_url(owner), {"impression": "positive", "text": "Great.", "skill_names": "Beekeeping"})
+        content = _client_for(author).get(reverse("references:list") + "?type=given").content.decode()
+        assert "Waiting for your confirmation</h3>" not in content
+        assert "Add to my skills</button>" not in content
