@@ -11,7 +11,10 @@
 {% endif %}{% if vd.sender_skills %}{% trans "Other skills I can help with" %}:
 {{ vd.sender_skills }}
 
-{% endif %}{% endif %}{% endwith %}
+{% endif %}{% endif %}{% endwith %}{% with needs=match.needs.all %}{% if needs %}{% trans "Offers to help with" %}:
+{% for need in needs %}- {{ need.display_title }}{% if need.amount %} ({{ need.amount }}){% endif %}
+{% endfor %}
+{% endif %}{% endwith %}
 {% if match.message %}{% trans "Message" %}:
 {{ match.message }}
 

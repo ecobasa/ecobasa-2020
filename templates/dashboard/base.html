@@ -51,6 +51,12 @@
           class="block px-3 py-2 rounded {% if request_type == 'volunteer' %}bg-secondary text-primary font-semibold{% else %}text-secondary hover:bg-secondary hover:text-primary{% endif %}">
           <i class="fa-solid fa-campground mr-2"></i>{% trans "Volunteer Visits" %}
         </a>
+        {% for item in reference_communities %}
+          <a href="{% url 'projects:calendar' item.community.slug %}"
+             class="flex items-center px-3 py-2 rounded {% if request.resolver_match.url_name == 'calendar' and calendar_community == item.community %}bg-secondary text-primary font-semibold{% else %}text-secondary hover:bg-secondary hover:text-primary{% endif %}">
+            <i class="fa-regular fa-calendar mr-2 self-start mt-1"></i><span class="leading-snug">{% blocktrans with name=item.community.name %}Calendar · {{ name }}{% endblocktrans %}</span>
+          </a>
+        {% endfor %}
       {% if owned_communities %}
         <span class="block px-3 py-2 rounded text-secondary opacity-40 cursor-default text-sm">
           <i class="fa-solid fa-door-open mr-2"></i>{% trans "Member Applications" %} <span class="text-xs opacity-60">({% trans "coming soon" %})</span>

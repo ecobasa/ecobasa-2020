@@ -1,0 +1,5 @@
+{% load i18n %}{# One need as a pill, coloured by how far it is covered #}
+<span class="pill text-xs {% if need.status == 'open' %}bg-yellow{% elif need.status == 'offered' %}bg-secondary border border-dashed border-primary !text-primary hover:bg-secondary{% else %}bg-green text-secondary line-through decoration-1{% endif %}"
+      title="{% if need.status == 'open' %}{% trans 'Still needed' %}{% elif need.status == 'offered' %}{% trans 'Someone offered this' %}{% else %}{% trans 'Covered' %}{% endif %}">
+  <i class="fa-solid {{ need.icon }} mr-1"></i>{{ need.display_title }}{% if need.amount %}<span class="opacity-70 ml-1">({{ need.amount }})</span>{% endif %}
+</span>

@@ -69,6 +69,7 @@
           <span class="border mx-px py-px px-1 rounded text-xs text-secondary bg-primary">{{ cat.name }}</span>
         {% endfor %}
         <span class="text-sm mx-2">{{ listing.location_name }}</span>
+        <span class="text-xs">{% include "projects/_freshness.html" with when=listing.updated_at label_updated=True %}</span>
       </div>
     </div>
 
@@ -115,6 +116,7 @@
       {% if listing.owner.location_name %}
         <div class="text-sm"><i class="fa fa-map-marker mr-2"></i>{{ listing.owner.location_name }}</div>
       {% endif %}
+      <div class="text-xs">{% include "projects/_freshness.html" with when=listing.owner.last_active %}</div>
     </div>
   </div>
   {% endif %}

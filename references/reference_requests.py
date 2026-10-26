@@ -64,6 +64,8 @@ def exchange_text(match, user):
     model = match.content_type.model
     if model == "community":
         text = _("Your stay at %(title)s") if is_requester else _("%(name)s's stay at %(title)s")
+    elif model == "project":
+        text = _("Your help with %(title)s at %(name)s") if is_requester else _("%(name)s's help with %(title)s")
     elif model == "listing":
         # On an offer the owner gives; on a wish whoever answered it does
         gave = (target.type == "wish") == is_requester

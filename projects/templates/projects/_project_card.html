@@ -1,0 +1,27 @@
+{% load i18n site_tags %}
+<article class="border rounded-xl bg-secondary bg-opacity-60 p-4 flex flex-col gap-2 {% if not project.is_current %}opacity-60{% endif %}">
+  <div class="flex items-start gap-3">
+    <i class="fa-solid fa-person-digging text-2xl text-primary opacity-70 mt-1"></i>
+    <div class="flex-1 min-w-0">
+      <a href="{{ project.get_absolute_url }}" class="font-serif font-bold text-lg leading-snug hover:underline">{{ project.title }}</a>
+      {% if show_community %}
+        <div class="text-sm"><a href="{{ project.community.get_absolute_url }}" class="hover:underline"><i class="fa-solid {{ project.community.get_type_icon }} mr-1"></i>{{ project.community.name }}</a>{% if project.community.location_name %} <span class="opacity-70">· {{ project.community.location_name }}</span>{% endif %}</div>
+      {% endif %}
+      <div class="text-sm opacity-80"><i class="fa-regular fa-calendar mr-1"></i>{% include "projects/_project_dates.html" %}
+        {% if project.food_provided %}<span class="ml-2" title="{% trans 'Food provided' %}"><i class="fa-solid fa-utensils"></i></span>{% endif %}
+        {% if project.bed_provided %}<span class="ml-1" title="{% trans 'Bed provided' %}"><i class="fa-solid fa-bed"></i></span>{% endif %}
+      </div>
+    </div>
+  </div>
+  {% with needs=project.needs.all %}
+    {% if needs %}
+      <div class="flex flex-wrap gap-1">
+        {% for need in needs %}{% include "projects/_need_pill.html" %}{% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+  <div class="text-xs mt-auto flex items-center gap-2">
+    {% include "projects/_freshness.html" with when=project.updated_at label_updated=True %}
+    {% if project.archived_at %}<span class="pill bg-primary bg-opacity-20 text-xs">{% trans "Archived" %}</span>{% endif %}
+  </div>
+</article>

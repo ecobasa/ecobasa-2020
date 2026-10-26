@@ -19,6 +19,7 @@ urlpatterns = [
     path("messages/", include(("postman_urls", "postman"), namespace="postman")),
     path("matches/", include("matches.urls", namespace="matches")),
     path("references/", include("references.urls", namespace="references")),
+    path("projects/", include("projects.urls", namespace="projects")),
 ]
 
 if settings.DEBUG:

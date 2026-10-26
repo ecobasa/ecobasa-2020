@@ -1,0 +1,156 @@
+{% extends 'base.html' %}
+{% load i18n site_tags %}
+
+{% block head_title %}{{ project.title }} — {{ community.name }} — ecobasa{% endblock %}
+
+{% block content %}
+<div class="container-page">
+  <div class="mb-2 text-sm">
+    <a href="{% url 'projects:list' %}" class="hover:underline">{% trans "Projects" %}</a>
+    <span class="mx-1">/</span>
+    <a href="{{ community.get_absolute_url }}" class="hover:underline">{{ community.name }}</a>
+  </div>
+
+  {% if project.archived_at or project.is_over %}
+    <div class="rounded-xl p-4 mb-6 border border-primary bg-primary bg-opacity-10 text-sm">
+      <i class="fa-solid fa-box-archive mr-2"></i>
+      {% if project.is_over %}{% trans "This project has ended." %}{% else %}{% trans "This project has been archived." %}{% endif %}
+      {% if can_edit %}
+        {% if project.is_over %}
+          <a href="{% url 'projects:edit' project.pk %}" class="underline ml-1">{% trans "Change its dates to bring it back." %}</a>
+        {% else %}
+          <form method="post" action="{% url 'projects:confirm' project.pk %}" class="inline">{% csrf_token %}
+            <button type="submit" class="underline ml-1">{% trans "Bring it back" %}</button>
+          </form>
+        {% endif %}
+      {% endif %}
+    </div>
+  {% elif can_edit and project.stale_reminder_sent_at %}
+    <div class="rounded-xl p-4 mb-6 border border-yellow bg-yellow bg-opacity-10 text-sm flex flex-wrap items-center gap-3">
+      <span><i class="fa-solid fa-clock-rotate-left mr-2"></i>{% trans "Nobody has updated this project for a while. Is it still current? Otherwise it will be archived soon." %}</span>
+      <form method="post" action="{% url 'projects:confirm' project.pk %}">{% csrf_token %}
+        <button type="submit" class="btn"><i class="fa fa-check mr-1"></i>{% trans "Yes, still current" %}</button>
+      </form>
+    </div>
+  {% endif %}
+
+  <div class="grid grid-cols-1 sm:grid-cols-12 gap-6">
+    <div class="sm:col-span-8">
+      <h1 class="mb-1">{{ project.title }}</h1>
+      <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm mb-6">
+        <span><i class="fa-regular fa-calendar mr-1"></i>{% include "projects/_project_dates.html" %}</span>
+        {% include "projects/_freshness.html" with when=project.updated_at label_updated=True %}
+      </div>
+
+      {% if can_edit %}
+        <div class="flex flex-wrap gap-2 mb-6">
+          <a href="{% url 'projects:edit' project.pk %}" class="btn"><i class="fa fa-edit mr-1"></i>{% trans "Edit" %}</a>
+          {% if project.is_current %}
+            <form method="post" action="{% url 'projects:confirm' project.pk %}">{% csrf_token %}
+              <button type="submit" class="btn btn-purple" title="{% trans 'Shows visitors that this project is up to date' %}"><i class="fa fa-check mr-1"></i>{% trans "Still current" %}</button>
+            </form>
+            <form method="post" action="{% url 'projects:archive' project.pk %}" onsubmit="return confirm('{% trans "Archive this project? It will no longer be listed." as archive_question %}{{ archive_question|escapejs }}')">{% csrf_token %}
+              <button type="submit" class="btn btn-purple"><i class="fa-solid fa-box-archive mr-1"></i>{% trans "Archive" %}</button>
+            </form>
+          {% endif %}
+          <a href="{% url 'projects:calendar' community.slug %}" class="btn btn-purple"><i class="fa-regular fa-calendar mr-1"></i>{% trans "Calendar" %}</a>
+        </div>
+      {% endif %}
+
+      {% if project.description %}<p>{{ project.description|linebreaksbr }}</p>{% endif %}
+
+      <h2>{% trans "What is needed" %}</h2>
+      {% if needs %}
+        <ul class="list-none p-0 space-y-2">
+          {% for need in needs %}
+            <li class="flex flex-wrap items-center gap-3 p-3 rounded border bg-secondary bg-opacity-50 {% if need.is_done %}opacity-70{% endif %}">
+              <i class="fa-solid {{ need.icon }} text-primary w-5 text-center"></i>
+              <div class="flex-1 min-w-0">
+                <span class="font-semibold {% if need.is_done %}line-through{% endif %}">{{ need.display_title }}</span>
+                {% if need.amount %}<span class="opacity-70"> · {{ need.amount }}</span>{% endif %}
+                <span class="text-xs opacity-70 block">{{ need.get_kind_display }}
+                  {% if need.status == 'covered' %}· {% trans "covered" %}
+                  {% elif need.status == 'promised' %}· {% trans "promised by" %} {% for person in need.promised_by %}{{ person.name|default:person.email }}{% if not forloop.last %}, {% endif %}{% endfor %}
+                  {% elif need.status == 'offered' %}· {% trans "someone offered this, waiting for an answer" %}{% endif %}
+                </span>
+              </div>
+              {% if can_edit %}
+                <form method="post" action="{% url 'projects:toggle_need' project.pk need.pk %}">{% csrf_token %}
+                  <button type="submit" class="text-sm underline">{% if need.covered_at %}{% trans "Needed again" %}{% else %}{% trans "Mark as covered" %}{% endif %}</button>
+                </form>
+              {% elif project.is_current and not need.is_done and community.owner %}
+                <a href="{% url 'projects:offer_help' project.pk %}?need={{ need.pk }}" class="btn text-sm py-1 px-3">{% trans "I can help" %}</a>
+              {% endif %}
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="italic">{% trans "No specific needs listed. Helping hands are welcome!" %}</p>
+      {% endif %}
+
+      {% if can_edit %}
+        <h2>{% trans "Offers" %}</h2>
+        {% if offers %}
+          <div class="space-y-2">
+            {% for match in offers %}
+              <a href="{{ match.get_absolute_url }}" class="block p-3 rounded border-2 bg-secondary bg-opacity-50 hover:bg-opacity-80 {% if match.status == 'accepted' %}border-green{% elif match.status == 'counter' %}border-primary{% else %}border-yellow border-dashed{% endif %}">
+                <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
+                  <span class="font-semibold">{{ match.from_user.name|default:match.from_user.email }}</span>
+                  {% with period=match.stay_period %}{% if period.0 or period.1 %}
+                    <span class="text-sm"><i class="fa-regular fa-calendar mr-1"></i>{% include "matches/_stay_period.html" with stay_from=period.0 stay_to=period.1 %}</span>
+                  {% endif %}{% endwith %}
+                  <span class="ml-auto pill text-xs {% if match.status == 'accepted' %}bg-green{% elif match.status == 'counter' %}bg-primary{% else %}bg-yellow{% endif %}">{{ match.get_status_display }}</span>
+                </div>
+                {% with needs=match.needs.all %}{% if needs %}
+                  <div class="flex flex-wrap gap-1 mt-2">
+                    {% for need in needs %}<span class="pill bg-yellow text-xs"><i class="fa-solid {{ need.icon }} mr-1"></i>{{ need.display_title }}</span>{% endfor %}
+                  </div>
+                {% endif %}{% endwith %}
+              </a>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="italic">{% trans "No offers yet." %}</p>
+        {% endif %}
+      {% endif %}
+    </div>
+
+    <aside class="sm:col-span-4">
+      <h2 class="mt-0">{% trans "What the community provides" %}</h2>
+      <ul class="list-none p-0 space-y-1 text-sm">
+        {% if project.food_provided %}<li><i class="fa-solid fa-utensils w-5 mr-1 text-primary"></i>{% trans "Food" %}</li>{% endif %}
+        {% if project.bed_provided %}<li><i class="fa-solid fa-bed w-5 mr-1 text-primary"></i>{% trans "A bed" %}</li>{% endif %}
+        {% if project.provided_note %}<li><i class="fa-solid fa-gift w-5 mr-1 text-primary"></i>{{ project.provided_note }}</li>{% endif %}
+        {% if project.volunteers_wanted %}<li><i class="fa-solid fa-users w-5 mr-1 text-primary"></i>{% blocktrans count count=project.volunteers_wanted %}Room for {{ count }} volunteer at a time{% plural %}Room for {{ count }} volunteers at a time{% endblocktrans %}</li>{% endif %}
+        {% if not project.food_provided and not project.bed_provided and not project.provided_note and not project.volunteers_wanted %}<li class="italic">{% trans "Ask the community." %}</li>{% endif %}
+      </ul>
+
+      <h2>{% trans "Community" %}</h2>
+      <a href="{{ community.get_absolute_url }}" class="font-serif font-bold text-lg hover:underline"><i class="fa-solid {{ community.get_type_icon }} mr-1"></i>{{ community.name }}</a>
+      {% if community.location_name %}<p class="text-sm mt-1"><i class="fa fa-map-marker mr-1"></i>{{ community.location_name }}</p>{% endif %}
+      {% if community.owner %}
+        <div class="flex items-center gap-3 mt-4">
+          <a href="{{ community.owner.get_absolute_url }}">
+            {% if community.owner.image %}<img src="{{ community.owner.image.url }}" class="rounded-full h-12 w-12 object-cover" alt="">{% else %}<span class="inline-flex h-12 w-12 rounded-full bg-primary bg-opacity-20 items-center justify-center"><i class="fa fa-user text-primary"></i></span>{% endif %}
+          </a>
+          <div class="text-sm">
+            <a href="{{ community.owner.get_absolute_url }}" class="font-semibold hover:underline">{{ community.owner.name|default:community.owner.email }}</a>
+            <div class="text-xs opacity-70">{% trans "Gift-economy Ambassador" %}</div>
+            <div class="text-xs">{% include "projects/_freshness.html" with when=community.owner.last_active %}</div>
+          </div>
+        </div>
+      {% endif %}
+
+      {% if project.is_current and community.owner and request.user != community.owner %}
+        {% if own_offer %}
+          <a href="{{ own_offer.get_absolute_url }}" class="btn btn-lg w-full mt-8"><i class="fa-solid fa-handshake mr-2"></i>{% trans "Your offer" %}</a>
+        {% else %}
+          <a href="{% if request.user.is_authenticated %}{% url 'projects:offer_help' project.pk %}{% else %}{% url 'users:login' %}?next={% url 'projects:offer_help' project.pk %}{% endif %}" class="btn btn-lg w-full mt-8">
+            <i class="fa fa-hands-helping mr-2"></i>{% trans "Offer help" %}
+          </a>
+        {% endif %}
+      {% endif %}
+    </aside>
+  </div>
+</div>
+{% endblock %}

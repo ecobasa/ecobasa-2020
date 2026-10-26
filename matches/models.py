@@ -6,6 +6,11 @@ from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
 
+# Matches whose target is in one of these apps are volunteer stays: at a community, or
+# helping with one of its projects.
+STAY_APP_LABELS = ("communities", "projects")
+
+
 class Match(models.Model):
     """A negotiation between two users over something one of them has: a gift, a skill,
     or a stay at a community. `target` is whatever is being negotiated over — a Listing,
@@ -78,9 +83,24 @@ class Match(models.Model):
 
     @property
     def is_community_stay(self):
-        """A volunteer stay happens at the community itself, so only its dates are open
-        to a counter-proposal, never the place."""
-        return self.content_type.app_label == "communities"
+        """A volunteer stay happens at the community itself (also when helping with one
+        of its projects), so only its dates are open to a counter-proposal, never the place."""
+        return self.content_type.app_label in STAY_APP_LABELS
+
+    def stay_period(self):
+        """(from, to) of a stay as currently proposed: the latest counter-proposed period,
+        else what the volunteer asked for. (None, None) without dates."""
+        counter = (
+            self.thread.filter(status_to=self.STATUS_COUNTER)
+            .exclude(counter_stay_from=None, counter_stay_to=None)
+            .last()
+        )
+        if counter:
+            return counter.counter_stay_from, counter.counter_stay_to
+        details = getattr(self, "volunteer_details", None)
+        if details:
+            return details.stay_from, details.stay_to
+        return None, None
 
     def resolved_location(self):
         """Human-readable meeting location, resolving my/your place from profiles."""

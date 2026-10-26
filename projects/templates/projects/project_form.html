@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block head_title %}{% if project %}{% trans "Edit project" %}{% else %}{% trans "New project" %}{% endif %} — {{ community.name }} — ecobasa{% endblock %}
+
+{% block content %}
+<div class="container-form">
+  <div class="mb-2 text-sm"><a href="{{ community.get_absolute_url }}" class="hover:underline">{{ community.name }}</a></div>
+  <h1>{% if project %}{% trans "Edit project" %}{% else %}{% trans "New project" %}{% endif %}</h1>
+  <p class="text-sm">{% blocktrans trimmed %}
+    Describe something concrete you want to realise with help from the gift network, and list
+    what you need for it. Keep it short and current: projects nobody updates are archived
+    after a while.
+  {% endblocktrans %}</p>
+
+  <form method="post" class="border rounded-xl bg-secondary p-6 space-y-4" x-data="needRows()">
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+
+    {% for field in form %}
+      {% if field.name == "food_provided" %}
+        <fieldset class="form-group">
+          <legend class="form-label">{% trans "What you provide" %}</legend>
+          <label class="inline-flex items-center gap-2 mr-6">{{ form.food_provided }} <i class="fa-solid fa-utensils"></i> {{ form.food_provided.label }}</label>
+          <label class="inline-flex items-center gap-2">{{ form.bed_provided }} <i class="fa-solid fa-bed"></i> {{ form.bed_provided.label }}</label>
+        </fieldset>
+      {% elif field.name != "bed_provided" %}
+        <div class="form-group {% if field.name == 'starts_on' or field.name == 'ends_on' %}inline-block w-full sm:w-[48%] sm:mr-[2%] align-top{% endif %}">
+          <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+          {{ field }}
+          {% if field.help_text %}<p class="text-xs mt-1">{{ field.help_text }}</p>{% endif %}
+          {% for error in field.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+        </div>
+      {% endif %}
+    {% endfor %}
+
+    <h2>{% trans "What do you need?" %}</h2>
+    <p class="text-xs">{% trans "One line per thing: people with a skill, a material, a tool or knowledge. Skills from the list let us find people who have them." %}</p>
+    {{ formset.management_form }}
+    {{ formset.non_form_errors }}
+    <div id="need-rows" class="space-y-2">
+      {% for need_form in formset %}
+        {% include "projects/_need_row.html" with need_form=need_form %}
+      {% endfor %}
+    </div>
+    <template id="need-row-template">{% include "projects/_need_row.html" with need_form=formset.empty_form %}</template>
+    <button type="button" class="btn btn-purple" @click="add()"><i class="fa fa-plus mr-1"></i>{% trans "Add a need" %}</button>
+
+    <datalist id="need-skill-suggestions"></datalist>
+
+    <div class="flex justify-end gap-3 pt-4">
+      <a href="{% if project %}{{ project.get_absolute_url }}{% else %}{{ community.get_absolute_url }}{% endif %}" class="btn btn-lg btn-purple">{% trans "Cancel" %}</a>
+      <button type="submit" class="btn btn-lg"><i class="fa fa-save mr-2"></i>{% trans "Save" %}</button>
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+{% block javascript %}
+{{ block.super }}
+<script>
+document.addEventListener('alpine:init', () => {
+  Alpine.data('needRows', () => ({
+    init() {
+      if (!document.querySelectorAll('#need-rows [data-need-row]').length) this.add();
+      // Skill suggestions for "helping hands / skill" and "knowledge" lines
+      const list = document.getElementById('need-skill-suggestions');
+      let timer = null;
+      this.$el.addEventListener('input', (e) => {
+        if (!e.target.matches('[data-need-title]')) return;
+        const row = e.target.closest('[data-need-row]');
+        const kind = row.querySelector('select').value;
+        const q = e.target.value.trim();
+        if (!['skill', 'knowledge'].includes(kind) || q.length < 2) { list.innerHTML = ''; return; }
+        clearTimeout(timer);
+        timer = setTimeout(() => {
+          fetch('{% url "skills:api_autocomplete" %}?q=' + encodeURIComponent(q))
+            .then(r => r.json())
+            .then(data => {
+              list.innerHTML = '';
+              (data.results || []).forEach(r => { const o = document.createElement('option'); o.value = r.text; list.appendChild(o); });
+            });
+        }, 250);
+      });
+    },
+    add() {
+      const total = document.getElementById('id_needs-TOTAL_FORMS');
+      const html = document.getElementById('need-row-template').innerHTML.replace(/__prefix__/g, total.value);
+      document.getElementById('need-rows').insertAdjacentHTML('beforeend', html);
+      total.value = parseInt(total.value, 10) + 1;
+    },
+  }));
+});
+</script>
+{% endblock %}

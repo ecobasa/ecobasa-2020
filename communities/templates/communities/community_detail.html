@@ -154,6 +154,30 @@
 				</a>
 			{% endif %}
 
+			<!-- Projects -->
+			{% if projects or is_ambassador %}
+				<h2 id="projects">{% trans "Projects" %}</h2>
+				{% if projects %}
+					<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+						{% for project in projects %}{% include "projects/_project_card.html" %}{% endfor %}
+					</div>
+				{% endif %}
+				{% if is_ambassador %}
+					<div class="flex flex-wrap gap-2">
+						<a href="{% url 'projects:create' community.slug %}" class="btn"><i class="fa fa-plus mr-1"></i>{% trans "Start a project" %}</a>
+						<a href="{% url 'projects:calendar' community.slug %}" class="btn btn-purple"><i class="fa-regular fa-calendar mr-1"></i>{% trans "Calendar" %}</a>
+					</div>
+					{% if past_projects %}
+						<details class="mt-4">
+							<summary class="cursor-pointer text-sm">{% trans "Ended and archived projects" %}</summary>
+							<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
+								{% for project in past_projects %}{% include "projects/_project_card.html" %}{% endfor %}
+							</div>
+						</details>
+					{% endif %}
+				{% endif %}
+			{% endif %}
+
 			{% references_for community %}
 		</div>
 
@@ -251,6 +275,7 @@
 						{% endif %}
 						<div class="font-serif font-bold text-xl">{{ community.owner.name }}</div>
 					</a>
+					<div class="text-sm -mt-2">{% include "projects/_freshness.html" with when=community.owner.last_active %}</div>
 				</div>
 			{% endif %}
 

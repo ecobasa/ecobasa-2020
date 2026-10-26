@@ -1,0 +1,14 @@
+{% load i18n %}
+<div data-need-row class="grid grid-cols-12 gap-2 items-start p-2 rounded border bg-secondary bg-opacity-50" x-data="{ removed: false }" :class="removed && 'opacity-40'">
+  {{ need_form.id }}
+  <div class="col-span-12 sm:col-span-4">{{ need_form.kind }}</div>
+  <div class="col-span-12 sm:col-span-8">
+    {{ need_form.title }}
+    {% for error in need_form.title.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+  </div>
+  <div class="col-span-10">{{ need_form.amount }}</div>
+  <label class="col-span-2 flex items-center justify-end gap-1 pt-2 text-sm cursor-pointer" title="{% trans 'Remove' %}">
+    <input type="checkbox" name="{{ need_form.DELETE.html_name }}" class="hidden" x-model="removed" {% if need_form.DELETE.value %}checked{% endif %}>
+    <i class="fa fa-trash"></i><span class="sr-only">{% trans "Remove" %}</span>
+  </label>
+</div>

@@ -16,6 +16,7 @@ _MATCH_TYPE_ICONS = {
     "gifts":       "fa-gift",
     "skills":      "fa-graduation-cap",
     "communities": "fa-campground",
+    "projects":    "fa-person-digging",
 }
 
 

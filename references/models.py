@@ -180,6 +180,9 @@ def match_reference_subject(match, user):
     is_requester = user == match.from_user
     if model == "community" and is_requester:
         return target, "", ""
+    if model == "project" and is_requester:
+        # Who helped with a project writes about the community that runs it
+        return target.community, "", ""
     if hasattr(target, "get_skill_holder") and is_requester:
         return target.get_skill_holder(), "", target.get_match_display_name()
     if model == "skillwish":

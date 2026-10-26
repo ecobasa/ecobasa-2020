@@ -101,6 +101,9 @@ class User(AbstractUser):
     world = models.TextField(_('What do you do to make the world a better place?'), blank=True, null=True)
     # Last language picked in the language switcher; emails to this user are sent in it.
     language = models.CharField(_("Language"), max_length=10, choices=settings.LANGUAGES, blank=True)
+    # When they last used the site while logged in (LastSeenMiddleware, at most every few
+    # minutes), shown as "last active" so visitors can tell who is likely to answer.
+    last_seen = models.DateTimeField(_("Last active"), null=True, blank=True)
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = ["name"]
@@ -111,6 +114,11 @@ class User(AbstractUser):
         # Prefer username; otherwise slugified name; finally primary key
         slug = self.username or slugify(self.name) or str(self.pk)
         return reverse("users:detail", kwargs={"slug": slug})
+
+    @property
+    def last_active(self):
+        """Last time they were around: last_seen, or their last login before it existed."""
+        return self.last_seen or self.last_login
 
     def get_reference_subjects(self):
         """What references on this profile can be about: the person, their listings and skills."""

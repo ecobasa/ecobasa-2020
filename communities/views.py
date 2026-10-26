@@ -83,8 +83,19 @@ def detail(request, slug):
             for us in UserSkill.objects.filter(user=request.user, skill_id__in=skill_ids)
         })
 
+    from projects.models import Need
+    projects = (
+        community.projects.select_related("community")
+        .prefetch_related(Prefetch("needs", queryset=Need.objects.select_related("skill").prefetch_related("offers")))
+    )
+    is_ambassador = request.user.is_authenticated and (request.user.is_staff or request.user == community.owner)
+
     return render(request, "communities/community_detail.html", {
         "community":        community,
+        "projects":         projects.current(),
+        # The ambassador also sees archived and ended projects, to bring one back
+        "past_projects":    projects.exclude(pk__in=projects.current()).order_by("-updated_at")[:10] if is_ambassador else [],
+        "is_ambassador":    is_ambassador,
         "photos":           photos,
         "hero_image":       hero_image,
         "community_skills": community_skills,

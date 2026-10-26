@@ -25,6 +25,10 @@
             <i class="fa fa-home mr-2"></i>
             {% trans "Communities" %}
           </a>
+          <a href="{% url "projects:list" %}" class="{% if namespace == "projects" %}text-brown{% endif %} ml-8 inline-flex items-center px-1 pt-1 border-b-2 border-transparent leading-5 focus:outline-none focus:text-brown transition duration-150 ease-in-out">
+            <i class="fa-solid fa-person-digging mr-2"></i>
+            {% trans "Projects" %}
+          </a>
           <a href="{% url "gifts:search" %}" class="{% if namespace == "gifts" %}text-brown{% endif %} ml-8 inline-flex items-center px-1 pt-1 border-b-2 border-transparent leading-5 focus:outline-none focus:text-brown transition duration-150 ease-in-out">
             <i class="fa fa-recycle mr-2"></i>
             {% trans "Gifts" %}
@@ -152,6 +156,9 @@
                       <a href="{{ item.community.get_absolute_url }}" class="dropdown-link">
                         <i class="fa-solid {{ item.community.get_type_icon }} mr-2"></i>{{ item.community.name }}
                       </a>
+                      <a href="{% url 'projects:calendar' item.community.slug %}" class="dropdown-link">
+                        <i class="fa-regular fa-calendar mr-2"></i>{% trans "Calendar" %}
+                      </a>
                       {# Its references, seen as ambassador #}
                       <a href="{% url 'references:list' %}?community={{ item.community.slug }}" class="dropdown-link">
                         <span class="flex items-center"><i class="fa fa-comments mr-2"></i>{% trans "References" %}
@@ -221,6 +228,7 @@
     <div class="pt-2 pb-3">
       <a href="{% url "gifts:search" %}" class="mt-1 block pl-3 pr-4 py-2 border-l-4 border-transparent {% if namespace == "gifts" %}border-brown text-brown focus:text-brown focus:border-brown{% else %}text-secondary hover:text-primary hover:bg-secondary hover:border-brown focus:text-brown focus:bg-secondary focus:border-brown{% endif %} text-base focus:outline-none"><i class="fa fa-recycle mr-2"></i>{% trans "Gifts" %}</a>
       <a href="{% url "communities:list" %}" class="mt-1 block pl-3 pr-4 py-2 border-l-4 border-transparent {% if namespace == "communities" %}border-brown text-brown focus:text-brown focus:border-brown{% else %}text-secondary hover:text-primary hover:bg-secondary hover:border-brown focus:text-brown focus:bg-secondary focus:border-brown{% endif %} text-base focus:outline-none"><i class="fa fa-home mr-2"></i>{% trans "Communities" %}</a>
+      <a href="{% url "projects:list" %}" class="mt-1 block pl-3 pr-4 py-2 border-l-4 border-transparent {% if namespace == "projects" %}border-brown text-brown focus:text-brown focus:border-brown{% else %}text-secondary hover:text-primary hover:bg-secondary hover:border-brown focus:text-brown focus:bg-secondary focus:border-brown{% endif %} text-base focus:outline-none"><i class="fa-solid fa-person-digging mr-2"></i>{% trans "Projects" %}</a>
       <a href="{% url "homepage:support" %}" class="mt-1 block pl-3 pr-4 py-2 border-l-4 border-transparent {% if request.path == "/support/" %}border-brown text-brown focus:text-brown focus:border-brown{% else %}text-secondary hover:text-primary hover:bg-secondary hover:border-brown focus:text-brown focus:bg-secondary focus:border-brown{% endif %} text-base focus:outline-none"><i class="fa fa-recycle mr-2"></i>{% trans "Support" %}</a>
     </div>
 
@@ -250,6 +258,7 @@
               <span class="block px-4 py-1 text-xs opacity-50 uppercase tracking-wide">{% trans "My Communities" %}</span>
               {% for item in reference_communities %}
                 <a href="{{ item.community.get_absolute_url }}" class="mt-1 block px-4 py-2 text-base text-secondary hover:text-primary hover:bg-secondary focus:text-primary focus:bg-secondary" role="menuitem"><i class="fa-solid {{ item.community.get_type_icon }} mr-2"></i>{{ item.community.name }}</a>
+                <a href="{% url 'projects:calendar' item.community.slug %}" class="mt-1 block px-4 py-2 text-base text-secondary hover:text-primary hover:bg-secondary focus:text-primary focus:bg-secondary" role="menuitem"><i class="fa-regular fa-calendar mr-2"></i>{% trans "Calendar" %}</a>
                 <a href="{% url 'references:list' %}?community={{ item.community.slug }}" class="mt-1 flex items-center px-4 py-2 text-base text-secondary hover:text-primary hover:bg-secondary focus:text-primary focus:bg-secondary" role="menuitem"><i class="fa fa-comments mr-2"></i>{% trans "References" %}{% if item.pending %}<span class="ml-auto pill bg-purple text-secondary text-xs">{{ item.pending }}</span>{% endif %}</a>
               {% endfor %}
             </div>

@@ -14,22 +14,22 @@ from dashboard_lists import Choice, paginate, query_url
 
 from .emails import notify_match_message, notify_match_response, read_action_token
 from .forms import MatchMessageForm
-from .models import Match, MatchMessage
+from .models import STAY_APP_LABELS, Match, MatchMessage
 
 # The kinds of match, by the list view's "type" query param. Kept as gifts/skills/
-# communities app labels rather than importing their models — matches never needs to
+# communities/projects app labels rather than importing their models — matches never needs to
 # import a domain app to work with a Match generically.
 _KINDS = {
     "gift": {
-        "app_label": "gifts", "title": _("Gifts"), "icon": "fa fa-gift",
+        "app_labels": ("gifts",), "title": _("Gifts"), "icon": "fa fa-gift",
         "empty": _("No gift offers yet."),
     },
     "skills": {
-        "app_label": "skills", "title": _("Skills"), "icon": "fa fa-graduation-cap",
+        "app_labels": ("skills",), "title": _("Skills"), "icon": "fa fa-graduation-cap",
         "empty": _("No skill offers yet."),
     },
     "volunteer": {
-        "app_label": "communities", "title": _("Volunteer Visits"), "icon": "fa-solid fa-campground",
+        "app_labels": STAY_APP_LABELS, "title": _("Volunteer Visits"), "icon": "fa-solid fa-campground",
         "empty": _("No volunteer visits yet."),
     },
 }
@@ -49,7 +49,7 @@ _OVERVIEW_ROWS = 5
 def _matches_of(kind):
     return (
         Match.objects
-        .filter(content_type__app_label=_KINDS[kind]["app_label"])
+        .filter(content_type__app_label__in=_KINDS[kind]["app_labels"])
         .select_related("content_type", "from_user", "recipient")
         .prefetch_related("target")
     )

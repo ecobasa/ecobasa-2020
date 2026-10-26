@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block head_title %}{% trans "Projects" %} — ecobasa{% endblock %}
+
+{% block content %}
+<div class="container-page">
+  <h1>{% trans "Projects" %}</h1>
+  <p class="max-w-3xl">{% blocktrans trimmed %}
+    Communities realise projects together with people from the gift network: without money,
+    with helping hands, materials, tools and knowledge. Every project is current: old ones are
+    archived automatically.
+  {% endblocktrans %}</p>
+
+  <form method="get" class="flex flex-wrap items-center gap-2 my-6">
+    <input type="search" name="q" value="{{ q }}" class="form-input flex-1 min-w-0" placeholder="{% trans 'Search projects, skills, materials, places…' %}">
+    <button type="submit" class="btn"><i class="fa fa-search mr-1"></i>{% trans "Search" %}</button>
+  </form>
+  <div class="flex flex-wrap gap-2 mb-6">
+    <a href="?{% if q %}q={{ q|urlencode }}{% endif %}" class="pill {% if not kind %}bg-primary text-secondary{% else %}bg-secondary border{% endif %}">{% trans "All" %}</a>
+    {% for value, label in kinds %}
+      <a href="?kind={{ value }}{% if q %}&q={{ q|urlencode }}{% endif %}" class="pill {% if kind == value %}bg-primary text-secondary{% else %}bg-secondary border{% endif %}">{{ label }}</a>
+    {% endfor %}
+  </div>
+
+  {% if projects %}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      {% for project in projects %}
+        {% include "projects/_project_card.html" with show_community=True %}
+      {% endfor %}
+    </div>
+    {% include "dashboard/_pager.html" %}
+  {% else %}
+    <p class="italic">{% trans "No current projects found." %}</p>
+  {% endif %}
+</div>
+{% endblock %}
