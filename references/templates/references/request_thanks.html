@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block content %}
+<div class="container-form text-center text-brown">
+  <i class="fa-solid fa-heart text-5xl text-primary mb-4 block"></i>
+  <h1 class="text-2xl font-semibold font-serif mb-2">{% trans "Thank you for your story!" %}</h1>
+  <p class="opacity-70">
+    {% if shared %}{% trans "We may show it on the homepage, so others can see what giving makes possible." %}
+    {% else %}{% trans "It is now shown with the references on ecobasa." %}{% endif %}
+  </p>
+  {% if subject.get_absolute_url %}
+    <a href="{{ subject.get_absolute_url }}#references" class="mt-6 inline-flex items-center bg-primary text-secondary rounded px-4 py-2 font-semibold hover:opacity-90">
+      <i class="fa fa-comments mr-2"></i>{% trans "View references" %}
+    </a>
+  {% endif %}
+</div>
+{% endblock %}

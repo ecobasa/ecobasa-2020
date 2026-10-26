@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% load i18n l10n %}
+{% load i18n l10n references_tags %}
 
 {% block head_title %}{{ profile.name|default:profile.username }} — {{ skill }} — ecobasa{% endblock %}
 
@@ -247,6 +247,8 @@
   {% elif user == profile %}
     {# Owner sees nothing here — request form not shown to self #}
   {% endif %}
+
+  {% references_for user_skill %}
 
 </div>
 {% endblock %}

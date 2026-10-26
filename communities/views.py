@@ -156,21 +156,38 @@ def volunteer_request(request, community_slug):
         wish_list  = [s for s in wish_list  if skill_slug_for_name(s) not in existing_wishes]
 
     if request.headers.get("HX-Request") and (offer_list or wish_list):
-        params = {}
-        if offer_list:
-            params["offer_skills"] = ",".join(offer_list)
-        if wish_list:
-            params["wish_skills"] = ",".join(wish_list)
         return render(request, "communities/_volunteer_skill_proposal.html", {
             "community":  community,
             "offer_list": offer_list,
             "wish_list":  wish_list,
-            "review_url": reverse("users:update") + "?" + urlencode(params),
+            "single_skill": len(offer_list) + len(wish_list) == 1,
+            "review_url": _skill_proposal_url(offer_list, wish_list),
         })
 
     if request.headers.get("HX-Request"):
         return render(request, "_messages.html")
     return redirect(vr.get_absolute_url())
+
+
+def _skill_proposal_url(offer_list, wish_list):
+    """Where to add skills from a volunteer request to the profile.
+
+    One skill goes straight to the add-skill form, prefilled, so a level and
+    description can be set; several go to a short page with a level per skill.
+    """
+    if len(offer_list) + len(wish_list) == 1:
+        name, mode = (offer_list[0], "offer") if offer_list else (wish_list[0], "wish")
+        skill = Skill.objects.filter(slug=skill_slug_for_name(name)).first()
+        return reverse("skills:userskill_add") + "?" + urlencode({
+            "skill": skill.get_name() if skill else name,
+            "mode":  mode,
+        })
+    params = {}
+    if offer_list:
+        params["offer"] = ",".join(skill_slug_for_name(s) for s in offer_list)
+    if wish_list:
+        params["wish"] = ",".join(skill_slug_for_name(s) for s in wish_list)
+    return reverse("skills:userskill_add_several") + "?" + urlencode(params)
 
 
 def _sync_community_skill_wishes(community, form):

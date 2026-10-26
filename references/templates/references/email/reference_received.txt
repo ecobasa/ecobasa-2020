@@ -1,0 +1,13 @@
+{% load i18n %}{% autoescape off %}{% blocktrans with name=recipient.name|default:recipient.email %}Hello {{ name }},{% endblocktrans %}
+
+{% trans "Thank you, we saved your story:" %}
+
+{% trans "Impression" %}: {{ reference.get_impression_display }}
+
+{{ reference.text }}
+
+{% if reference.share_publicly %}{% blocktrans with impression=reference.get_impression_display %}We saved it as “{{ impression }}”. You can change the impression or add a photo here:{% endblocktrans %}{% else %}{% blocktrans with impression=reference.get_impression_display %}We saved it as “{{ impression }}”. May we show it on the ecobasa homepage? You can allow this, change the impression or add a photo here:{% endblocktrans %}{% endif %}
+{{ share_url }}
+
+--
+ecobasa.org{% endautoescape %}

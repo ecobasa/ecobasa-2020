@@ -1,5 +1,5 @@
 {% extends 'matches/base.html' %}
-{% load i18n l10n %}
+{% load i18n l10n references_tags %}
 
 {% block head_title %}{% trans "Match" %} — ecobasa{% endblock %}
 
@@ -55,7 +55,21 @@
             <span>{{ match.resolved_location }}</span>
           </div>
         {% endif %}
-        {% if latest_counter_msg and latest_counter_msg.counter_date %}
+        {% if match.is_community_stay %}
+          {% with vd=match.volunteer_details %}
+          {% if latest_counter_msg.counter_stay_from or latest_counter_msg.counter_stay_to %}
+            <div class="flex items-center gap-2 text-sm">
+              <i class="fa fa-campground text-primary"></i>
+              <span>{% include "matches/_stay_period.html" with stay_from=latest_counter_msg.counter_stay_from stay_to=latest_counter_msg.counter_stay_to %}</span>
+            </div>
+          {% elif vd.stay_from or vd.stay_to %}
+            <div class="flex items-center gap-2 text-sm">
+              <i class="fa fa-campground text-primary"></i>
+              <span>{% include "matches/_stay_period.html" with stay_from=vd.stay_from stay_to=vd.stay_to %}</span>
+            </div>
+          {% endif %}
+          {% endwith %}
+        {% elif latest_counter_msg and latest_counter_msg.counter_date %}
           <div class="flex items-center gap-2 text-sm">
             <i class="fa fa-calendar text-primary"></i>
             <span>{{ latest_counter_msg.counter_date|date:"d M Y H:i" }}</span>
@@ -65,6 +79,12 @@
             <i class="fa fa-calendar text-primary"></i>
             <span>{{ match.proposed_date|date:"d M Y H:i" }}</span>
           </div>
+        {% endif %}
+        {% reference_url_for_match match as reference_url %}
+        {% if reference_url %}
+          <a href="{{ reference_url }}" class="btn mt-3">
+            <i class="fa fa-pencil mr-2"></i>{% trans "Write a reference" %}
+          </a>
         {% endif %}
 
       {% elif match.status == 'counter' and latest_status_msg %}
@@ -78,6 +98,12 @@
           <div class="flex items-center gap-2 text-sm">
             <i class="fa fa-calendar text-primary"></i>
             <span>{{ latest_status_msg.counter_date|date:"d M Y H:i" }}</span>
+          </div>
+        {% endif %}
+        {% if latest_status_msg.counter_stay_from or latest_status_msg.counter_stay_to %}
+          <div class="flex items-center gap-2 text-sm">
+            <i class="fa fa-campground text-primary"></i>
+            <span>{% include "matches/_stay_period.html" with stay_from=latest_status_msg.counter_stay_from stay_to=latest_status_msg.counter_stay_to %}</span>
           </div>
         {% endif %}
       {% endif %}
@@ -122,7 +148,7 @@
         <div class="text-sm mb-2">
           <i class="fa fa-campground mr-1 text-primary"></i>
           <strong>{% trans "Proposed stay" %}:</strong>
-          {% if vd.stay_from %}{{ vd.stay_from|date:"d M Y" }}{% endif %}{% if vd.stay_from and vd.stay_to %}&ndash;{% endif %}{% if vd.stay_to %}{{ vd.stay_to|date:"d M Y" }}{% endif %}
+          {% include "matches/_stay_period.html" with stay_from=vd.stay_from stay_to=vd.stay_to %}
         </div>
       {% endif %}
       {% if vd.practice_skills %}
@@ -212,6 +238,13 @@
                 <strong>{% trans "Counter date" %}:</strong> {{ msg.counter_date|date:"d M Y H:i" }}
               </div>
             {% endif %}
+            {% if msg.counter_stay_from or msg.counter_stay_to %}
+              <div class="text-sm mb-2">
+                <i class="fa fa-campground mr-1 text-primary"></i>
+                <strong>{% trans "Suggested stay" %}:</strong>
+                {% include "matches/_stay_period.html" with stay_from=msg.counter_stay_from stay_to=msg.counter_stay_to %}
+              </div>
+            {% endif %}
             {% with coords=msg.counter_location_coords %}
               {% if coords.0 and coords.1 %}
                 <div class="rounded shadow overflow-hidden h-[180px] mt-2" id="thread-map-{{ msg.pk }}"></div>
@@ -236,6 +269,21 @@
       <div x-show="isCounter" style="display:none" class="mb-5 pb-5 border-b space-y-4">
         <h3 class="text-sm font-semibold">{% trans "Counter-proposal details" %}</h3>
 
+        {% if match.is_community_stay %}
+        {# The stay is at the community, so only its dates are up for a counter-proposal. #}
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div class="form-group">
+            <label class="form-label" for="counter-stay-from">{% trans "Stay from" %}</label>
+            <input type="date" name="counter_stay_from" id="counter-stay-from" class="form-input"
+              value="{{ match.volunteer_details.stay_from|date:'Y-m-d' }}">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="counter-stay-to">{% trans "Stay until" %}</label>
+            <input type="date" name="counter_stay_to" id="counter-stay-to" class="form-input"
+              value="{{ match.volunteer_details.stay_to|date:'Y-m-d' }}">
+          </div>
+        </div>
+        {% else %}
         <div class="form-group">
           <label class="form-label">{% trans "Counter location type" %}</label>
           <div class="space-y-1">
@@ -286,6 +334,7 @@
           <label class="form-label">{% trans "Counter date" %}</label>
           <input type="datetime-local" name="counter_date" class="form-input">
         </div>
+        {% endif %}
       </div>
       {% endif %}
 
@@ -330,11 +379,17 @@
             </span>
           {% endif %}
 
+          {% if match.is_community_stay %}
+          <button type="button" x-show="!isCounter" @click="isCounter = true" class="btn btn-yellow">
+            <i class="fa-solid fa-calendar-days mr-2"></i>{% trans "Propose different dates" %}
+          </button>
+          {% else %}
           <button type="button" x-show="!isCounter"
             @click="isCounter = true; $nextTick(() => window.initCounterPicker && window.initCounterPicker())"
             class="btn btn-yellow">
             <i class="fa-solid fa-location-dot mr-2"></i>{% trans "Propose different location" %}
           </button>
+          {% endif %}
 
           <button type="submit" name="action" value="counter"
             x-show="isCounter" style="display:none" class="btn">
@@ -403,7 +458,7 @@ document.fonts.ready.then(function () {
     {% endif %}
   {% endfor %}
 
-  {% if is_owner %}
+  {% if is_owner and not match.is_community_stay %}
   var counterMapInst = null;
   window.initCounterPicker = function () {
     if (counterMapInst) return;

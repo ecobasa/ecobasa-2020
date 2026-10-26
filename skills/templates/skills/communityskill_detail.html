@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% load i18n l10n %}
+{% load i18n l10n references_tags %}
 
 {% block head_title %}{{ community.name }} — {{ skill }} — ecobasa{% endblock %}
 
@@ -225,6 +225,8 @@
       </a>
     </div>
   {% endif %}
+
+  {% references_for comm_skill %}
 
 </div>
 {% endblock %}

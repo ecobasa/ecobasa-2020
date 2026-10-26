@@ -30,6 +30,9 @@ from django.contrib.auth.decorators import login_required
 from users.templatetags.postman_extras import parse_requested_dates
 import datetime
 from django.utils import timezone
+from django.utils.translation import gettext as _
+
+from dashboard_lists import Choice, paginate
 
 
 def message_view_wrapper(request, message_id):
@@ -171,7 +174,7 @@ def inbox_wrapper(request):
         pm_messages = list(qs.order_by(order))
         # compute whether any message contains requested from/to dates
         has_requested_dates = any(parse_requested_dates(m.body).get('from_iso') or parse_requested_dates(m.body).get('to_iso') for m in pm_messages)
-        return render(request, 'postman/inbox.html', {'pm_messages': pm_messages, 'has_requested_dates': has_requested_dates})
+        return _render_inbox(request, pm_messages, has_requested_dates)
 
     # otherwise we'll sort in Python using parsed requested dates
     msgs = list(qs)
@@ -205,4 +208,36 @@ def inbox_wrapper(request):
 
     has_requested_dates = any(parse_requested_dates(m.body).get('from_iso') or parse_requested_dates(m.body).get('to_iso') for m in msgs)
 
-    return render(request, 'postman/inbox.html', {'pm_messages': msgs, 'has_requested_dates': has_requested_dates})
+    return _render_inbox(request, msgs, has_requested_dates)
+
+
+def _message_tabs(request, active):
+    """Received and sent messages are the two tabs of one Messages page; unread
+    messages wait for you."""
+    user = request.user
+    return [
+        Choice(_("Received"), reverse('postman:inbox'), active == 'received',
+               Message.objects.filter(recipient=user).count(), Message.objects.inbox_unread_count(user)),
+        Choice(_("Sent"), reverse('postman:sent'), active == 'sent', Message.objects.sent(user).count()),
+    ]
+
+
+def _render_inbox(request, msgs, has_requested_dates):
+    page = paginate(request, msgs)
+    return render(request, 'postman/inbox.html', {
+        'pm_messages': page.object_list,
+        'page': page,
+        'tabs': _message_tabs(request, 'received'),
+        'has_requested_dates': has_requested_dates,
+    })
+
+
+@login_required
+def sent_wrapper(request):
+    """Sent messages, paged, as the second tab of the Messages page."""
+    page = paginate(request, Message.objects.sent(request.user).order_by('-sent_at'))
+    return render(request, 'postman/sent.html', {
+        'pm_messages': page.object_list,
+        'page': page,
+        'tabs': _message_tabs(request, 'sent'),
+    })

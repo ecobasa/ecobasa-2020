@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block head_title %}{% trans "Share your story" %} — ecobasa{% endblock %}
+
+{% block content %}
+<div class="container-form">
+  <h1 class="text-2xl text-primary mb-2"><i class="fa-solid fa-hand-holding-heart mr-2"></i>{% trans "Share your story" %}</h1>
+  {# They may have had several exchanges with the same person: say which one #}
+  <div class="border border-brown border-opacity-30 rounded-lg p-4 mb-4">
+    <p class="font-semibold m-0">{{ exchange }}</p>
+    {% if exchange_start %}<p class="text-sm text-brown opacity-70 m-0">{{ exchange_start|date:"DATE_FORMAT" }}{% if exchange_end %} – {{ exchange_end|date:"DATE_FORMAT" }}{% endif %}</p>{% endif %}
+    {% if match_message %}
+      <p class="text-sm text-brown mt-2 mb-0"><span class="opacity-70">{% if match_message_author %}{% blocktrans with name=match_message_author %}{{ name }} wrote:{% endblocktrans %}{% else %}{% trans "You wrote:" %}{% endif %}</span> <em>“{{ match_message|truncatewords:30 }}”</em></p>
+    {% endif %}
+  </div>
+  <p class="text-brown mb-6">{% trans "How was it? A few sentences are enough. Stories like yours show that the gift economy works." %}</p>
+
+  <div class="border rounded-xl bg-secondary p-4 sm:p-6">
+    <form method="post" enctype="multipart/form-data" x-data="{ preview: '', impression: '{{ form.impression.value|default:'positive' }}' }">
+      {% csrf_token %}
+      {% include "references/_reference_form_fields.html" %}
+      <button type="submit" class="btn w-full sm:w-auto"><i class="fa fa-paper-plane mr-2"></i>{% trans "Send story" %}</button>
+    </form>
+  </div>
+</div>
+{% include "references/_reference_skills_js.html" %}
+{% endblock %}

@@ -1,0 +1,1 @@
+{% if stay_from %}{{ stay_from|date:"d M Y" }}{% endif %}{% if stay_from and stay_to %}&ndash;{% endif %}{% if stay_to %}{{ stay_to|date:"d M Y" }}{% endif %}

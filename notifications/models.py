@@ -26,6 +26,7 @@ class Notification(models.Model):
     TAG_COUNTER     = "counter"
     TAG_MESSAGE     = "message"
     TAG_SKILL_NUDGE = "skill_nudge"
+    TAG_REFERENCE   = "reference"
 
     recipient   = models.ForeignKey(User, on_delete=models.CASCADE, related_name="notifications")
     actor       = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name="notifications_sent")
@@ -33,6 +34,10 @@ class Notification(models.Model):
     # time, so it shows in the reader's language rather than the actor's.
     match       = models.ForeignKey(
         "matches.Match", on_delete=models.CASCADE, null=True, blank=True, related_name="notifications",
+    )
+    # Same for a new reference about you (or something you hold, or your community)
+    reference   = models.ForeignKey(
+        "references.Reference", on_delete=models.CASCADE, null=True, blank=True, related_name="notifications",
     )
     # Fallback text, rendered at creation time: used for notifications without a match
     # (or whose match target has since been deleted) and in the admin.
@@ -63,6 +68,8 @@ class Notification(models.Model):
         """The notification sentence in the currently active language."""
         if self.tag == self.TAG_SKILL_NUDGE:
             return str(SKILL_NUDGE_TEXT)
+        if self.tag == self.TAG_REFERENCE:
+            return self._reference_text()
         target = self._target()
         if target is None:
             return self.verb
@@ -79,7 +86,9 @@ class Notification(models.Model):
                         if self.actor_id == self.match.from_user_id
                         else _("%(actor)s declined your request: %(title)s"))
         elif self.tag == self.TAG_COUNTER:
-            template = _("%(actor)s suggested another time or place for: %(title)s")
+            template = (_("%(actor)s suggested other dates for your stay at: %(title)s")
+                        if self.match.is_community_stay
+                        else _("%(actor)s suggested another time or place for: %(title)s"))
         elif self.tag == self.TAG_MESSAGE:
             template = _("%(actor)s sent you a message about: %(title)s")
         else:
@@ -87,6 +96,20 @@ class Notification(models.Model):
 
         actor = (self.actor.name or self.actor.email) if self.actor else _("Someone")
         return str(template) % {"actor": actor, "title": target.get_match_display_name()}
+
+    def _reference_text(self):
+        subject = self.reference.subject if self.reference_id else None
+        if subject is None:
+            return self.verb
+        actor = (self.actor.name or self.actor.email) if self.actor else _("Someone")
+        if subject == self.recipient:
+            text = _("%(actor)s wrote a reference about you.") % {"actor": actor}
+        else:
+            title = getattr(subject, "get_match_display_name", lambda: str(subject))()
+            text = _("%(actor)s wrote a reference about %(title)s.") % {"actor": actor, "title": title}
+        if self.reference.skill_tags.filter(status="pending").exists():
+            text = "%s %s" % (text, _("It mentions skills that wait for your confirmation."))
+        return str(text)
 
     @property
     def icon(self):
@@ -104,4 +127,5 @@ class Notification(models.Model):
             self.TAG_COUNTER:     "fa-hand-holding-hand",
             self.TAG_MESSAGE:     "fa-comment",
             self.TAG_SKILL_NUDGE: "fa-graduation-cap",
+            self.TAG_REFERENCE:   "fa-comments",
         }.get(self.tag, "fa-bell")

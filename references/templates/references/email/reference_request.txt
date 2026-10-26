@@ -1,0 +1,18 @@
+{% load i18n %}{% autoescape off %}{% if can_reply %}{{ reply_marker }}
+
+{% endif %}{% blocktrans with name=recipient.name|default:recipient.email %}Hello {{ name }},{% endblocktrans %}
+
+{{ exchange }}{% if exchange_start %}
+{{ exchange_start|date:"DATE_FORMAT" }}{% if exchange_end %} – {{ exchange_end|date:"DATE_FORMAT" }}{% endif %}{% endif %}{% if match_message %}
+{% if match_message_author %}{% blocktrans with name=match_message_author %}{{ name }} wrote:{% endblocktrans %}{% else %}{% trans "You wrote:" %}{% endif %} “{{ match_message|truncatewords:30 }}”{% endif %}
+
+{% trans "How was it? Tell us in a few sentences what happened and what you are grateful for." %}
+
+{% trans "Stories like yours show others that the gift economy actually works." %}
+
+{% trans "Share your story" %}: {{ request_url }}
+{% if can_reply %}
+{% trans "Or simply reply to this email. A photo as attachment is welcome." %}
+{% endif %}
+--
+ecobasa.org{% endautoescape %}

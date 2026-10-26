@@ -1,0 +1,51 @@
+{% load i18n %}
+<section id="references" class="mt-10">
+  <h2>{% trans "References" %}</h2>
+
+  {% if references %}
+    <div class="flex flex-wrap gap-2 mb-4 text-xs">
+      {% if counts.positive %}<span class="pill bg-green"><i class="fa-regular fa-face-smile mr-1"></i>{% blocktrans count counter=counts.positive %}{{ counter }} positive{% plural %}{{ counter }} positive{% endblocktrans %}</span>{% endif %}
+      {% if counts.neutral %}<span class="pill bg-yellow"><i class="fa-regular fa-face-meh mr-1"></i>{% blocktrans count counter=counts.neutral %}{{ counter }} neutral{% plural %}{{ counter }} neutral{% endblocktrans %}</span>{% endif %}
+      {% if counts.negative %}<span class="pill bg-red"><i class="fa-regular fa-face-frown mr-1"></i>{% blocktrans count counter=counts.negative %}{{ counter }} negative{% plural %}{{ counter }} negative{% endblocktrans %}</span>{% endif %}
+    </div>
+
+    <div class="space-y-3 mb-6">
+      {% for ref in references %}
+        {% if ref.author_id == request.user.pk and not ref.about_other %}
+          {% include "references/_reference_card.html" with show_edit=True %}
+        {% else %}
+          {% include "references/_reference_card.html" %}
+        {% endif %}
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="text-sm text-brown">{% trans "No references yet." %}</p>
+  {% endif %}
+
+  {% if form %}
+    <div class="border rounded-xl bg-secondary p-6" x-data="{ open: {{ open_form|yesno:'true,false' }}, impression: '{{ form.impression.value|default:'positive' }}', preview: '' }">
+      <button type="button" class="btn" x-show="!open" @click="open = true">
+        <i class="fa fa-pencil mr-2"></i>{% if own_reference %}{% trans "Edit your reference" %}{% else %}{% trans "Write a reference" %}{% endif %}
+      </button>
+      <form x-show="open" x-cloak method="post" enctype="multipart/form-data" action="{% url 'references:save' content_type.pk subject.pk %}">
+        {% csrf_token %}
+        {% include "references/_reference_form_fields.html" %}
+        <div class="flex flex-wrap gap-2">
+          <button type="submit" class="btn"><i class="fa fa-check mr-2"></i>{% trans "Save reference" %}</button>
+          <button type="button" class="btn btn-purple" @click="open = false">{% trans "Cancel" %}</button>
+        </div>
+      </form>
+      {% if own_reference %}
+        <form method="post" action="{% url 'references:delete' own_reference.pk %}" class="mt-3" x-show="open" x-cloak>
+          {% csrf_token %}
+          <button type="submit" class="text-sm text-brown underline">{% trans "Remove your reference" %}</button>
+        </form>
+      {% endif %}
+    </div>
+    {% include "references/_reference_skills_js.html" %}
+  {% elif not request.user.is_authenticated %}
+    <a class="btn" href="{% url 'users:login' %}?next={{ request.path }}%23references">
+      <i class="fa fa-pencil mr-2"></i>{% trans "Log in to write a reference" %}
+    </a>
+  {% endif %}
+</section>

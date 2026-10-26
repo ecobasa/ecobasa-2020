@@ -1,0 +1,22 @@
+{% load i18n %}
+<div class="p-3 rounded-lg border mb-2" x-data="{ on: true }" :class="on ? 'border-primary' : 'opacity-60'">
+  <div class="flex flex-wrap sm:flex-nowrap items-center gap-3">
+    <label class="flex items-center gap-2 flex-1 cursor-pointer min-w-0">
+      <input type="checkbox" name="{{ row.kind }}" value="{{ row.skill.slug }}" class="form-checkbox flex-shrink-0"
+             x-model="on" checked>
+      <span class="pill {% if row.kind == 'offer' %}bg-purple{% else %}bg-yellow{% endif %}">
+        <i class="fa fa-graduation-cap mr-1"></i>{{ row.skill.get_name }}
+      </span>
+    </label>
+    <select name="{{ row.level_field }}" class="form-select sm:w-48" aria-label="{{ level_label }}: {{ row.skill.get_name }}"
+            :disabled="!on">
+      <option value="">{{ empty_label }}</option>
+      {% for val, label in level_choices %}
+        <option value="{{ val }}">{{ label }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <textarea name="{{ row.description_field }}" rows="2" class="form-input w-full mt-3" x-show="on"
+            placeholder="{{ description_hint }}" aria-label="{% trans 'Description' %}: {{ row.skill.get_name }}"
+            :disabled="!on"></textarea>
+</div>

@@ -6,6 +6,7 @@ app_name = "skills"
 urlpatterns = [
     path("",                                                          views.skill_list,              name="skill_list"),
     path("add/",                                                      views.userskill_add,           name="userskill_add"),
+    path("add/several/",                                              views.userskill_add_several,   name="userskill_add_several"),
     path("api/autocomplete/",                                         views.skill_autocomplete,      name="api_autocomplete"),
     path("api/proposals/",                                            views.skill_proposals,         name="api_proposals"),
     path("community/<slug:community_slug>/add/",                      views.communityskill_add,      name="communityskill_add"),

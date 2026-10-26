@@ -1,0 +1,35 @@
+{% extends 'matches/base.html' %}
+{% load i18n %}
+
+{% block giving_content %}
+<h1 class="text-4xl font-semibold flex items-center gap-2">
+  <i class="fa-solid fa-handshake text-primary"></i>{% trans "Matches" %}
+</h1>
+<p class="mb-6">{% trans "What's open right now. Everything else, accepted or declined, is on each list." %}</p>
+
+{% for section in sections %}
+<section class="mb-8">
+  <h2 class="text-2xl font-semibold flex items-center gap-2 mb-3">
+    <i class="{{ section.icon }} text-primary"></i>
+    <a href="{{ section.url }}" class="hover:underline">{{ section.title }}</a>
+    {% if section.open_count %}<span class="text-sm opacity-60">{{ section.open_count }}</span>{% endif %}
+  </h2>
+  {% if section.matches %}
+    <div class="space-y-2">
+      {% for match in section.matches %}
+        {% if match.recipient_id == request.user.pk %}
+          {% include "matches/_match_row.html" with match=match show_from=True %}
+        {% else %}
+          {% include "matches/_match_row.html" with match=match show_from=False %}
+        {% endif %}
+      {% endfor %}
+    </div>
+    {% if section.open_count > section.matches|length %}
+      <a href="{{ section.url }}" class="inline-block mt-2 text-sm text-primary hover:underline">{% trans "See all" %}<i class="fa fa-chevron-right ml-1"></i></a>
+    {% endif %}
+  {% else %}
+    <p class="text-sm">{% trans "Nothing open." %} <a href="{{ section.url }}" class="text-primary hover:underline">{% trans "See the full list" %}</a></p>
+  {% endif %}
+</section>
+{% endfor %}
+{% endblock %}

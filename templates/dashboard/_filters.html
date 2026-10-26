@@ -1,0 +1,10 @@
+{# Status filters of a dashboard list page (Open / Accepted / Declined / All) #}
+<div class="flex flex-wrap gap-2 mb-4">
+  {% for filter in filters %}
+    <a href="{{ filter.url }}"
+       class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm border border-primary {% if filter.active %}bg-primary text-secondary{% else %}text-primary hover:bg-primary hover:bg-opacity-10{% endif %}"
+       {% if filter.active %}aria-current="true"{% endif %}>
+      {{ filter.label }}{% if filter.count is not None %} <span class="opacity-70">{{ filter.count }}</span>{% endif %}
+    </a>
+  {% endfor %}
+</div>

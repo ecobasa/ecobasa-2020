@@ -11,4 +11,5 @@ urlpatterns = [
     path("write/", postman_wrappers.postman_write_wrapper, name="write"),
     path("write/<path:recipients>/", postman_wrappers.postman_write_wrapper, name="write_with_recipients"),
     path("inbox/", postman_wrappers.inbox_wrapper, name="inbox"),
+    path("sent/", postman_wrappers.sent_wrapper, name="sent"),
 ] + getattr(_postman_urls, "urlpatterns", [])
