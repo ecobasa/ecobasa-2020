@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ecobasa\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-26 14:02+0100\n"
+"POT-Creation-Date: 2026-10-26 14:10+0100\n"
 "PO-Revision-Date: 2026-10-23 12:00+0200\n"
 "Last-Translator: ecobasa\n"
 "Language-Team: fr\n"
@@ -98,8 +98,8 @@ msgstr "Nom"
 msgid "Slug"
 msgstr "Slug"
 
-#: communities/models.py:24 gifts/filters.py:18
-#: matches/templates/matches/matches_list.html:64 references/forms.py:14
+#: communities/models.py:24 gifts/filters.py:18 matches/views.py:28
+#: references/forms.py:14
 #: references/templates/references/email/reference_created.html:35
 #: references/templates/references/email/reference_created.txt:9
 #: skills/models.py:122 skills/templates/skills/communityskill_detail.html:15
@@ -109,7 +109,7 @@ msgstr "Slug"
 #: skills/templates/skills/skill_list.html:10
 #: skills/templates/skills/skillwish_user_detail.html:15
 #: skills/templates/skills/userskill_detail.html:15
-#: templates/dashboard/base.html:26 users/templates/users/detail.html:129
+#: templates/dashboard/base.html:29 users/templates/users/detail.html:129
 msgid "Skills"
 msgstr "Compétences"
 
@@ -262,7 +262,7 @@ msgid "Community"
 msgstr "Communauté"
 
 #: communities/models.py:158 templates/_navbar.html:28
-#: templates/_navbar.html:238 templates/dashboard/base.html:49
+#: templates/_navbar.html:231 templates/dashboard/base.html:48
 #: users/templates/users/detail.html:64
 msgid "Communities"
 msgstr "Communautés"
@@ -432,12 +432,12 @@ msgid "Your skills (comma separated)"
 msgstr "Tes compétences (séparées par des virgules)"
 
 #: communities/templates/communities/community_detail.html:305
-#: templates/postman/inbox.html:91
+#: templates/postman/inbox.html:92
 msgid "From"
 msgstr "Du"
 
 #: communities/templates/communities/community_detail.html:308
-#: templates/postman/inbox.html:92 templates/postman/write.html:14
+#: templates/postman/inbox.html:93 templates/postman/write.html:14
 msgid "To"
 msgstr "Au"
 
@@ -820,12 +820,12 @@ msgstr ""
 msgid "Back"
 msgstr "Retour"
 
-#: gifts/templates/gifts/listing_detail.html:28
-#: matches/templates/matches/matches_list.html:37 references/models.py:95
+#: gifts/templates/gifts/listing_detail.html:28 matches/views.py:24
+#: references/models.py:95
 #: references/templates/references/email/reference_created.html:36
 #: references/templates/references/email/reference_created.txt:10
-#: templates/_navbar.html:32 templates/_navbar.html:237
-#: templates/dashboard/base.html:22
+#: templates/_navbar.html:32 templates/_navbar.html:230
+#: templates/dashboard/base.html:25
 msgid "Gifts"
 msgstr "Dons"
 
@@ -889,7 +889,7 @@ msgstr "En attente"
 #: gifts/templates/gifts/listing_detail.html:196 matches/models.py:31
 #: matches/templates/matches/_match_row.html:45
 #: matches/templates/matches/match_detail.html:134
-#: matches/templates/matches/match_detail.html:215
+#: matches/templates/matches/match_detail.html:215 matches/views.py:40
 msgid "Accepted"
 msgstr "Accepté"
 
@@ -897,7 +897,8 @@ msgstr "Accepté"
 #: matches/templates/matches/_match_row.html:49
 #: matches/templates/matches/match_detail.html:36
 #: matches/templates/matches/match_detail.html:136
-#: matches/templates/matches/match_detail.html:216 references/models.py:142
+#: matches/templates/matches/match_detail.html:216 matches/views.py:41
+#: references/models.py:142
 msgid "Declined"
 msgstr "Refusé"
 
@@ -1063,8 +1064,9 @@ msgid "Flattr us"
 msgstr "Soutiens-nous sur Flattr"
 
 #: matches/apps.py:8 matches/models.py:71
-#: matches/templates/matches/match_detail.html:15 templates/_navbar.html:143
-#: templates/_navbar.html:260 templates/dashboard/base.html:19
+#: matches/templates/matches/match_detail.html:15
+#: matches/templates/matches/matches_overview.html:6 templates/_navbar.html:143
+#: templates/_navbar.html:253 templates/dashboard/base.html:17
 msgid "Matches"
 msgstr "Matchs"
 
@@ -1194,7 +1196,7 @@ msgstr "niveau"
 
 #: matches/templates/matches/email/match_request.html:47
 #: matches/templates/matches/email/match_request.txt:11
-#: templates/postman/inbox.html:75 users/templatetags/postman_extras.py:117
+#: templates/postman/inbox.html:76 users/templatetags/postman_extras.py:117
 msgid "Other skills I can help with"
 msgstr "Autres compétences avec lesquelles je peux aider"
 
@@ -1210,7 +1212,7 @@ msgstr "Accepter"
 #: matches/templates/matches/match_detail.html:363
 #: matches/templates/matches/match_detail.html:409
 #: references/templates/references/_reference_card.html:52
-#: references/templates/references/references_list.html:56
+#: references/templates/references/references_list.html:54
 msgid "Decline"
 msgstr "Refuser"
 
@@ -1338,56 +1340,81 @@ msgstr "Proposer un autre lieu"
 msgid "Send counter-proposal"
 msgstr "Envoyer la contre-proposition"
 
-#: matches/templates/matches/matches_list.html:10 templates/_navbar.html:139
-#: templates/_navbar.html:261 templates/dashboard/base.html:53
-msgid "Volunteer Visits"
-msgstr "Visites de bénévoles"
+#: matches/templates/matches/matches_list.html:19
+msgid "Nothing here with this status."
+msgstr "Rien avec ce statut."
 
-#: matches/templates/matches/matches_list.html:14
-#: matches/templates/matches/matches_list.html:41
-#: matches/templates/matches/matches_list.html:68
-#: references/templates/references/references_list.html:30
-#: templates/_navbar.html:153 templates/_navbar.html:264
-#: templates/dashboard/base.html:33
-msgid "Received"
-msgstr "Reçus"
+#: matches/templates/matches/matches_overview.html:8
+msgid ""
+"What's open right now. Everything else, accepted or declined, is on each "
+"list."
+msgstr ""
+"Ce qui est ouvert en ce moment. Le reste, accepté ou refusé, se trouve dans "
+"chaque liste."
 
-#: matches/templates/matches/matches_list.html:21
-#: matches/templates/matches/matches_list.html:48
-#: matches/templates/matches/matches_list.html:75
-#: templates/dashboard/base.html:15
-msgid "Sent"
-msgstr "Envoyés"
+#: matches/templates/matches/matches_overview.html:28 templates/_navbar.html:79
+msgid "See all"
+msgstr "Tout voir"
 
-#: matches/templates/matches/matches_list.html:28
-msgid "No volunteer visits yet."
-msgstr "Aucune visite de bénévoles pour l'instant."
+#: matches/templates/matches/matches_overview.html:31
+msgid "Nothing open."
+msgstr "Rien d'ouvert."
 
-#: matches/templates/matches/matches_list.html:55
+#: matches/templates/matches/matches_overview.html:31
+msgid "See the full list"
+msgstr "Voir la liste complète"
+
+#: matches/views.py:25
 msgid "No gift offers yet."
 msgstr "Aucune offre de don pour l'instant."
 
-#: matches/templates/matches/matches_list.html:82
+#: matches/views.py:29
 msgid "No skill offers yet."
 msgstr "Aucune offre de compétence pour l'instant."
 
-#: matches/views.py:121
+#: matches/views.py:32 templates/_navbar.html:139 templates/_navbar.html:254
+#: templates/dashboard/base.html:52
+msgid "Volunteer Visits"
+msgstr "Visites de bénévoles"
+
+#: matches/views.py:33
+msgid "No volunteer visits yet."
+msgstr "Aucune visite de bénévoles pour l'instant."
+
+#: matches/views.py:39
+msgctxt "match status"
+msgid "Open"
+msgstr "Ouvert"
+
+#: matches/views.py:42
+msgid "All"
+msgstr "Tous"
+
+#: matches/views.py:86 postman_wrappers.py:219 references/views.py:128
+msgid "Received"
+msgstr "Reçus"
+
+#: matches/views.py:86 postman_wrappers.py:221
+msgid "Sent"
+msgstr "Envoyés"
+
+#: matches/views.py:194
 msgid "Response sent."
 msgstr "Réponse envoyée."
 
-#: matches/views.py:135
+#: matches/views.py:208
 msgid "Please suggest when the stay could start or end."
 msgstr "Propose quand le séjour pourrait commencer ou se terminer."
 
-#: matches/views.py:138
+#: matches/views.py:211
 msgid "The stay can't end before it starts."
 msgstr "Le séjour ne peut pas se terminer avant de commencer."
 
-#: matches/views.py:161
+#: matches/views.py:234
 msgid "Counter-proposal sent."
 msgstr "Contre-proposition envoyée."
 
-#: matches/views.py:192
+#: matches/views.py:265
 msgid "This interest has already been responded to."
 msgstr "Il a déjà été répondu à cet intérêt."
 
@@ -1478,9 +1505,9 @@ msgstr "Aucune notification pour l'instant."
 #: references/apps.py:8 references/models.py:110
 #: references/templates/references/_references.html:3
 #: references/templates/references/references_list.html:7
-#: templates/_navbar.html:151 templates/_navbar.html:169
-#: templates/_navbar.html:263 templates/_navbar.html:272
-#: templates/dashboard/base.html:29
+#: templates/_navbar.html:150 templates/_navbar.html:162
+#: templates/_navbar.html:255 templates/_navbar.html:261
+#: templates/dashboard/base.html:32
 msgid "References"
 msgstr "Références"
 
@@ -1766,7 +1793,7 @@ msgstr ""
 "parlé."
 
 #: references/templates/references/_reference_card.html:49
-#: references/templates/references/references_list.html:52
+#: references/templates/references/references_list.html:50
 msgid "Add to my skills"
 msgstr "Ajouter à mes compétences"
 
@@ -1822,7 +1849,7 @@ msgstr[0] "%(counter)s négative"
 msgstr[1] "%(counter)s négatives"
 
 #: references/templates/references/_references.html:22
-#: references/templates/references/references_list.html:74
+#: references/templates/references/references_list.html:73
 msgid "No references yet."
 msgstr "Pas encore de références."
 
@@ -1932,8 +1959,8 @@ msgstr ""
 "bienvenue."
 
 #: references/templates/references/featured.html:4
-#: references/templates/references/featured.html:8 templates/_navbar.html:179
-#: templates/_navbar.html:279
+#: references/templates/references/featured.html:8 templates/_navbar.html:172
+#: templates/_navbar.html:268
 msgid "Success stories"
 msgstr "Belles histoires"
 
@@ -1983,20 +2010,13 @@ msgstr ""
 "représentes %(name)s dans le réseau de l'économie du don, et le réseau "
 "auprès de %(name)s. Partage avec ta communauté ce que tu apprends ici."
 
-#: references/templates/references/references_list.html:30
-#: templates/_navbar.html:157 templates/_navbar.html:265
-#: templates/dashboard/base.html:38
-msgctxt "references"
-msgid "Given"
-msgstr "Données"
-
-#: references/templates/references/references_list.html:36
-#: templates/_navbar.html:154 templates/_navbar.html:170
-#: templates/dashboard/base.html:34 templates/dashboard/base.html:44
+#: references/templates/references/references_list.html:34
+#: templates/_navbar.html:151 templates/_navbar.html:163
+#: templates/dashboard/base.html:37 templates/dashboard/base.html:43
 msgid "Waiting for your confirmation"
 msgstr "En attente de ta confirmation"
 
-#: references/templates/references/references_list.html:44
+#: references/templates/references/references_list.html:42
 #, python-format
 msgid ""
 "%(author)s mentioned it in a <a href=\"#reference-%(anchor)s\" "
@@ -2005,7 +2025,7 @@ msgstr ""
 "%(author)s a mentionné cette compétence dans une <a href=\"#reference-"
 "%(anchor)s\" class=\"underline\">référence</a> sur toi."
 
-#: references/templates/references/references_list.html:46
+#: references/templates/references/references_list.html:44
 #, python-format
 msgid ""
 "%(author)s mentioned it in a <a href=\"#reference-%(anchor)s\" "
@@ -2014,11 +2034,11 @@ msgstr ""
 "%(author)s a mentionné cette compétence dans une <a href=\"#reference-"
 "%(anchor)s\" class=\"underline\">référence</a> sur %(subject)s."
 
-#: references/templates/references/references_list.html:52
+#: references/templates/references/references_list.html:50
 msgid "Add to the community's skills"
 msgstr "Ajouter aux compétences de la communauté"
 
-#: references/templates/references/references_list.html:72
+#: references/templates/references/references_list.html:71
 msgid ""
 "You haven't written a reference yet. You can write one on any profile, "
 "community, gift or skill page."
@@ -2065,22 +2085,27 @@ msgstr "Elle apparaît maintenant avec les références sur ecobasa."
 msgid "View references"
 msgstr "Voir les références"
 
-#: references/views.py:47
+#: references/views.py:49
 msgid "Thank you for sharing your experience."
 msgstr "Merci de partager ton expérience."
 
-#: references/views.py:51
+#: references/views.py:53
 msgid "Please choose an impression and describe your experience."
 msgstr "Choisis une impression et décris ton expérience."
 
-#: references/views.py:61
+#: references/views.py:63
 msgid "Your reference was removed."
 msgstr "Ta référence a été supprimée."
 
-#: references/views.py:76
+#: references/views.py:78
 #, python-format
 msgid "%(skill)s was added to your skills."
 msgstr "%(skill)s a été ajoutée à tes compétences."
+
+#: references/views.py:130
+msgctxt "references"
+msgid "Given"
+msgstr "Données"
 
 #: settings/base.py:34
 msgid "German"
@@ -2603,13 +2628,9 @@ msgstr ""
 msgid "Language"
 msgstr "Langue"
 
-#: templates/_navbar.html:36 templates/_navbar.html:239
+#: templates/_navbar.html:36 templates/_navbar.html:232
 msgid "Support"
 msgstr "Soutenir"
-
-#: templates/_navbar.html:79
-msgid "See all"
-msgstr "Tout voir"
 
 #: templates/_navbar.html:98
 msgid "More notifications — view all"
@@ -2623,33 +2644,33 @@ msgstr "Tout marquer lu"
 msgid "User menu"
 msgstr "Menu utilisateur"
 
-#: templates/_navbar.html:136 templates/_navbar.html:258
+#: templates/_navbar.html:136 templates/_navbar.html:251
 msgid "Your Profile"
 msgstr "Ton profil"
 
-#: templates/_navbar.html:147 templates/_navbar.html:259
+#: templates/_navbar.html:147 templates/_navbar.html:252
 #: templates/dashboard/base.html:14 templates/postman/inbox.html:7
-#: templates/postman/view.html:7
-msgid "Inbox"
-msgstr "Boîte de réception"
+#: templates/postman/sent.html:5
+msgid "Messages"
+msgstr "Messages"
 
-#: templates/_navbar.html:162 templates/_navbar.html:269
+#: templates/_navbar.html:155 templates/_navbar.html:258
 msgid "My Communities"
 msgstr "Mes communautés"
 
-#: templates/_navbar.html:177 templates/_navbar.html:278
+#: templates/_navbar.html:170 templates/_navbar.html:267
 msgid "Admin"
 msgstr "Admin"
 
-#: templates/_navbar.html:186 templates/_navbar.html:282
+#: templates/_navbar.html:179 templates/_navbar.html:271
 msgid "Settings"
 msgstr "Paramètres"
 
-#: templates/_navbar.html:192 templates/_navbar.html:283
+#: templates/_navbar.html:185 templates/_navbar.html:272
 msgid "Log out"
 msgstr "Se déconnecter"
 
-#: templates/_navbar.html:206 templates/_navbar.html:289
+#: templates/_navbar.html:199 templates/_navbar.html:278
 #: users/templates/users/login.html:29
 #: users/templates/users/password_reset/complete.html:16
 msgid "Log in"
@@ -2662,27 +2683,60 @@ msgstr "Se connecter"
 msgid "optional"
 msgstr "facultatif"
 
+#: templates/dashboard/_pager.html:4
+msgid "Pages"
+msgstr "Pages"
+
+#: templates/dashboard/_pager.html:5
+#, python-format
+msgid "%(start)s–%(end)s of %(total)s"
+msgstr "%(start)s–%(end)s sur %(total)s"
+
+#: templates/dashboard/_pager.html:7
+msgid "Newer"
+msgstr "Plus récents"
+
+#: templates/dashboard/_pager.html:8
+msgid "Older"
+msgstr "Plus anciens"
+
+#: templates/dashboard/_tabs.html:3
+msgid "Lists"
+msgstr "Listes"
+
+#: templates/dashboard/_tabs.html:10
+msgid "Waiting for you"
+msgstr "En attente de ta part"
+
 #: templates/dashboard/base.html:13
 msgid "Messaging"
 msgstr "Messagerie"
 
-#: templates/dashboard/base.html:16
+#: templates/dashboard/base.html:15
 msgid "Compose"
 msgstr "Écrire"
 
-#: templates/dashboard/base.html:57
+#: templates/dashboard/base.html:20
+msgid "Overview"
+msgstr "Vue d'ensemble"
+
+#: templates/dashboard/base.html:36
+msgid "Your references"
+msgstr "Tes références"
+
+#: templates/dashboard/base.html:56
 msgid "Member Applications"
 msgstr "Demandes d'adhésion"
 
-#: templates/dashboard/base.html:57 templates/dashboard/base.html:63
+#: templates/dashboard/base.html:56 templates/dashboard/base.html:62
 msgid "coming soon"
 msgstr "bientôt disponible"
 
-#: templates/dashboard/base.html:60
+#: templates/dashboard/base.html:59
 msgid "Tours"
 msgstr "Tours"
 
-#: templates/dashboard/base.html:63
+#: templates/dashboard/base.html:62
 msgid "Community-Tour Applications"
 msgstr "Demandes de Community-Tour"
 
@@ -2730,22 +2784,22 @@ msgstr "Jusqu'au (plus tôt)"
 msgid "Requested To (latest)"
 msgstr "Jusqu'au (plus tard)"
 
-#: templates/postman/inbox.html:57
+#: templates/postman/inbox.html:58
 msgid "(no sender)"
 msgstr "(sans expéditeur)"
 
-#: templates/postman/inbox.html:63 templates/postman/inbox.html:103
+#: templates/postman/inbox.html:64 templates/postman/inbox.html:105
 #: templates/postman/outbox.html:41 templates/postman/outbox.html:53
-#: templates/postman/sent.html:41 templates/postman/sent.html:54
+#: templates/postman/sent.html:42 templates/postman/sent.html:56
 msgid "(no subject)"
 msgstr "(sans objet)"
 
-#: templates/postman/inbox.html:89
+#: templates/postman/inbox.html:90
 msgid "Requested stay"
 msgstr "Séjour demandé"
 
-#: templates/postman/inbox.html:109 templates/postman/outbox.html:59
-#: templates/postman/sent.html:61
+#: templates/postman/inbox.html:111 templates/postman/outbox.html:59
+#: templates/postman/sent.html:63
 msgid "No messages to display."
 msgstr "Aucun message."
 
@@ -2753,17 +2807,17 @@ msgstr "Aucun message."
 msgid "Outbox"
 msgstr "Boîte d'envoi"
 
-#: templates/postman/outbox.html:35 templates/postman/sent.html:35
+#: templates/postman/outbox.html:35 templates/postman/sent.html:36
 msgid "(no recipient)"
 msgstr "(sans destinataire)"
-
-#: templates/postman/sent.html:5
-msgid "Sent messages"
-msgstr "Messages envoyés"
 
 #: templates/postman/view.html:6
 msgid "Conversation"
 msgstr "Conversation"
+
+#: templates/postman/view.html:7
+msgid "Inbox"
+msgstr "Boîte de réception"
 
 #: templates/postman/view.html:14
 msgid "Message not found."
@@ -3108,6 +3162,13 @@ msgstr "Tu as été déconnecté·e."
 #: users/views.py:108
 msgid "Account created and logged in."
 msgstr "Compte créé et connecté."
+
+#, fuzzy
+#~ msgid "Show all"
+#~ msgstr "Tout voir"
+
+#~ msgid "Sent messages"
+#~ msgstr "Messages envoyés"
 
 #~ msgid "Community Volunteering"
 #~ msgstr "Séjour en communauté"

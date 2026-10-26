@@ -8,8 +8,10 @@ from django.db.models import Prefetch
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.utils.http import url_has_allowed_host_and_scheme
-from django.utils.translation import gettext as _
+from django.utils.translation import gettext as _, pgettext
 from django.views.decorators.http import require_POST
+
+from dashboard_lists import Choice, paginate, query_url
 
 from .forms import ReferenceForm, form_context
 from .models import Reference, ReferenceSkill, is_referenceable, references_about, match_reference_subject, subject_owner
@@ -107,21 +109,27 @@ def _load(references, user, tab, holder=None):
 
 @login_required
 def references_list(request):
-    """Dashboard: references received (about you, your listings and skills), given (by
-    you), or about a community you are ambassador of (?community=<slug>). A community
-    can't write references itself, so its references are a page of their own."""
+    """Dashboard: references received (about you, your listings and skills) and given
+    (by you) as two tabs, or those about a community you are ambassador of
+    (?community=<slug>). A community can't write references itself, so its references
+    are a page of their own."""
     user = request.user
     community = None
+    tabs = []
     if request.GET.get("community"):
         community = get_object_or_404(user.communities.prefetch_related("photos"), slug=request.GET["community"])
         tab = "community"
         references = _load(references_about(community), user, "received", holder=community)
-    elif request.GET.get("type") == "given":
-        tab = "given"
-        references = _load(Reference.objects.filter(author=user), user, tab)
     else:
-        tab = "received"
-        references = _load(references_about(user), user, tab, holder=user)
+        tab = "given" if request.GET.get("type") == "given" else "received"
+        received = references_about(user)
+        given = Reference.objects.filter(author=user)
+        tabs = [
+            Choice(_("Received"), query_url(request, type=None), tab == "received", received.count(),
+                   ReferenceSkill.objects.filter(status=ReferenceSkill.STATUS_PENDING, reference__in=received).count()),
+            Choice(pgettext("references", "Given"), query_url(request, type="given"), tab == "given", given.count()),
+        ]
+        references = _load(given, user, tab) if tab == "given" else _load(received, user, tab, holder=user)
     # Only skills tagged on references about you (or your community) wait for *your* confirmation
     pending = [
         tag for reference in references
@@ -129,9 +137,10 @@ def references_list(request):
     ] if tab != "given" else []
     return render(request, "references/references_list.html", {
         "tab": tab,
+        "tabs": tabs,
         "community": community,
         "header_photo": next(iter(community.photos.all()), None) if community else None,
-        "references": references,
+        "page": paginate(request, references),
         "pending_tags": pending,
     })
 

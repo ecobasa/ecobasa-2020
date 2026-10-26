@@ -3,8 +3,8 @@
 {% load postman_extras %}
 
 {% block postman_content %}
-  <div class="flex">
-    <h1 class="text-4xl font-semibold">{% trans "Inbox" %}</h1>
+  <div class="flex items-start justify-between gap-4">
+    <h1 class="text-4xl font-semibold flex items-center gap-2"><i class="fa fa-envelope text-primary"></i>{% trans "Messages" %}</h1>
     {% if pm_messages and has_requested_dates %}
       <div id="inbox-sort-wrap" class="text-right">
         <form method="get">
@@ -21,6 +21,7 @@
       </div>
     {% endif %}
   </div>
+  {% include "dashboard/_tabs.html" %}
   {% if pm_messages %}
     <div id="inbox-list" class="space-y-3">
       {% for m in pm_messages %}
@@ -96,6 +97,7 @@
         </div>
       {% endfor %}
     </div>
+    {% include "dashboard/_pager.html" %}
   {% elif object_list %}
     <ul class="space-y-3">
       {% for m in object_list %}

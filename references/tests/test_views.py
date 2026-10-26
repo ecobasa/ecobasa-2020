@@ -332,6 +332,22 @@ class TestDashboard:
         assert "Add to the community's skills" in page
 
 
+    def test_received_and_given_are_tabs_with_counts(self, author, owner):
+        _client_for(author).post(_save_url(owner), {"impression": "positive", "text": "Lovely host."})
+        tabs = _client_for(author).get(reverse("references:list") + "?type=given").context["tabs"]
+        assert [(str(t.label), t.count, t.active) for t in tabs] == [("Received", 0, False), ("Given", 1, True)]
+
+    def test_long_lists_are_paged(self, author, owner):
+        from dashboard_lists import PER_PAGE
+        for i in range(PER_PAGE + 1):
+            Reference.objects.create(author=User.objects.create_user(
+                email=f"a{i}@example.com", password="secret", username=f"a{i}"), subject=owner, text=f"Ref {i}")
+        client = _client_for(owner)
+        first = client.get(reverse("references:list")).context["page"]
+        assert len(first.object_list) == PER_PAGE and first.older_url.endswith("page=2")
+        assert len(client.get(first.older_url).context["page"].object_list) == 1
+
+
 @pytest.mark.django_db
 class TestNotifications:
     def _notifications(self, user):
@@ -402,7 +418,7 @@ class TestEmails:
 
     def test_user_menu_lists_references_and_community_references(self, author, owner, community):
         content = _client_for(owner).get("/").content.decode()
-        assert f'href="{reverse("references:list")}?type=given"' in content
+        assert f'href="{reverse("references:list")}"' in content
         assert f'href="{reverse("references:list")}?community={community.slug}"' in content
         # Not ambassador of any community: no community entries
         assert "?community=" not in _client_for(author).get("/").content.decode()

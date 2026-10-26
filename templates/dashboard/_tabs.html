@@ -1,0 +1,13 @@
+{% load i18n %}
+{# Tabs of a dashboard list page (Received / Sent …), each with its count and how many wait for you #}
+<nav class="flex flex-wrap border-b border-primary border-opacity-30 mb-4" aria-label="{% trans 'Lists' %}">
+  {% for tab in tabs %}
+    <a href="{{ tab.url }}"
+       class="flex items-center gap-2 px-4 py-2 -mb-px border-b-2 {% if tab.active %}border-primary text-primary font-semibold{% else %}border-transparent text-brown hover:text-primary{% endif %}"
+       {% if tab.active %}aria-current="page"{% endif %}>
+      {{ tab.label }}
+      {% if tab.count is not None %}<span class="text-xs opacity-60">{{ tab.count }}</span>{% endif %}
+      {% if tab.waiting %}<span class="pill bg-purple text-secondary text-xs" title="{% trans 'Waiting for you' %}">{{ tab.waiting }}</span>{% endif %}
+    </a>
+  {% endfor %}
+</nav>

@@ -26,9 +26,7 @@
       {% blocktrans with name=community.name %}You see these references as ambassador of {{ name }}: you represent {{ name }} in the gift-economy network, and the network in {{ name }}. Share what you learn here with your community.{% endblocktrans %}
     </p>
   {% else %}
-    <h2 class="text-2xl font-semibold uppercase tracking-wide mb-4 mt-0">
-      {% if tab == "given" %}{% translate "Given" context "references" %}{% else %}{% trans "Received" %}{% endif %}
-    </h2>
+    {% include "dashboard/_tabs.html" %}
   {% endif %}
 
   {% if pending_tags %}
@@ -62,12 +60,13 @@
     </div>
   {% endif %}
 
-  {% if references %}
+  {% if page.object_list %}
     <div class="space-y-3">
-      {% for ref in references %}
+      {% for ref in page %}
         {% if tab == "given" %}{% include "references/_reference_card.html" with show_edit=True %}{% else %}{% include "references/_reference_card.html" %}{% endif %}
       {% endfor %}
     </div>
+    {% include "dashboard/_pager.html" %}
   {% elif tab == "given" %}
     <p>{% trans "You haven't written a reference yet. You can write one on any profile, community, gift or skill page." %}</p>
   {% else %}

@@ -3,55 +3,128 @@ from datetime import datetime as _dt
 from django.contrib import messages as flash
 from django.contrib.auth.decorators import login_required
 from django.core import signing
+from django.db.models import Count, Q
 from django.http import Http404, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.utils import timezone
-from django.utils.translation import gettext_lazy as _
+from django.utils.translation import gettext_lazy as _, pgettext_lazy
+
+from dashboard_lists import Choice, paginate, query_url
 
 from .emails import notify_match_message, notify_match_response, read_action_token
 from .forms import MatchMessageForm
 from .models import Match, MatchMessage
 
-# Maps the list view's "type" query param to the app that owns that kind of match.
-# Kept as gifts/skills/communities app labels rather than importing their models —
-# matches never needs to import a domain app to work with a Match generically.
-_TAB_APP_LABELS = {
-    "gift": "gifts",
-    "skills":     "skills",
-    "volunteer":  "communities",
+# The kinds of match, by the list view's "type" query param. Kept as gifts/skills/
+# communities app labels rather than importing their models — matches never needs to
+# import a domain app to work with a Match generically.
+_KINDS = {
+    "gift": {
+        "app_label": "gifts", "title": _("Gifts"), "icon": "fa fa-gift",
+        "empty": _("No gift offers yet."),
+    },
+    "skills": {
+        "app_label": "skills", "title": _("Skills"), "icon": "fa fa-graduation-cap",
+        "empty": _("No skill offers yet."),
+    },
+    "volunteer": {
+        "app_label": "communities", "title": _("Volunteer Visits"), "icon": "fa-solid fa-campground",
+        "empty": _("No volunteer visits yet."),
+    },
 }
 
+_OPEN = (Match.STATUS_PENDING, Match.STATUS_COUNTER)
+_STATUS_FILTERS = {
+    "open":     (pgettext_lazy("match status", "Open"), _OPEN),
+    "accepted": (_("Accepted"), (Match.STATUS_ACCEPTED,)),
+    "declined": (_("Declined"), (Match.STATUS_DECLINED,)),
+    "all":      (_("All"), None),
+}
 
-def _matches_for(user, direction_field, tab):
-    app_label = _TAB_APP_LABELS[tab]
-    return list(
+# How many open matches of each kind the overview shows before linking to the full list
+_OVERVIEW_ROWS = 5
+
+
+def _matches_of(kind):
+    return (
         Match.objects
-        .filter(content_type__app_label=app_label, **{direction_field: user})
+        .filter(content_type__app_label=_KINDS[kind]["app_label"])
         .select_related("content_type", "from_user", "recipient")
         .prefetch_related("target")
     )
 
 
-# ── Matches list (all types) ──────────────────────────────────────────────────
+# ── Matches lists ──────────────────────────────────────────────────────────────
 
 @login_required
 def matches_list(request):
-    t = request.GET.get("type", "")
-    ctx = {"request_type": t}
+    """One kind of match (?type=gift|skills|volunteer): received and sent as tabs,
+    filtered by status and paged. Without a type, an overview of what's open."""
+    kind = request.GET.get("type", "")
+    if kind not in _KINDS:
+        return _overview(request)
 
-    if t in ("", "volunteer"):
-        ctx["volunteer_theirs"] = _matches_for(request.user, "recipient", "volunteer")
-        ctx["volunteer_mine"]   = _matches_for(request.user, "from_user", "volunteer")
+    user = request.user
+    boxes = {
+        "received": _matches_of(kind).filter(recipient=user),
+        "sent":     _matches_of(kind).filter(from_user=user),
+    }
+    # The owner answers a request; the requester answers the owner's counter-proposal.
+    waiting = {
+        "received": boxes["received"].filter(status=Match.STATUS_PENDING).count(),
+        "sent":     boxes["sent"].filter(status=Match.STATUS_COUNTER).count(),
+    }
+    counts = {key: matches.count() for key, matches in boxes.items()}
+    box = request.GET.get("box")
+    if box not in boxes:
+        # Open on the tab that needs you, otherwise on the one that has anything
+        box = next((key for key in boxes if waiting[key]), None) \
+            or next((key for key in boxes if counts[key]), "received")
+    tabs = [
+        Choice(label, query_url(request, box=key, status=None), key == box, counts[key], waiting[key])
+        for key, label in (("received", _("Received")), ("sent", _("Sent")))
+    ]
 
-    if t in ("", "gift"):
-        ctx["fm_theirs"] = _matches_for(request.user, "recipient", "gift")
-        ctx["fm_mine"]   = _matches_for(request.user, "from_user", "gift")
+    matches = boxes[box]
+    by_status = dict(matches.order_by().values_list("status").annotate(n=Count("pk")))
+    status = request.GET.get("status")
+    if status not in _STATUS_FILTERS:
+        status = "open" if any(by_status.get(s) for s in _OPEN) else "all"
+    filters = [
+        Choice(
+            label, query_url(request, status=key), key == status,
+            sum(by_status.values()) if statuses is None else sum(by_status.get(s, 0) for s in statuses),
+        )
+        for key, (label, statuses) in _STATUS_FILTERS.items()
+    ]
+    statuses = _STATUS_FILTERS[status][1]
+    if statuses is not None:
+        matches = matches.filter(status__in=statuses)
 
-    if t in ("", "skills"):
-        ctx["skill_theirs"] = _matches_for(request.user, "recipient", "skills")
-        ctx["skill_mine"]   = _matches_for(request.user, "from_user", "skills")
+    return render(request, "matches/matches_list.html", {
+        "request_type": kind,
+        "kind":         _KINDS[kind],
+        "show_from":    box == "received",
+        "tabs":         tabs,
+        "filters":      filters if counts[box] else [],
+        "page":         paginate(request, matches),
+    })
 
-    return render(request, "matches/matches_list.html", ctx)
+
+def _overview(request):
+    """What's open across all kinds of match, a few rows each."""
+    user = request.user
+    sections = []
+    for kind, info in _KINDS.items():
+        open_matches = _matches_of(kind).filter(Q(recipient=user) | Q(from_user=user), status__in=_OPEN)
+        sections.append({
+            **info,
+            "url":        f"{reverse('matches:list')}?type={kind}",
+            "matches":    list(open_matches[:_OVERVIEW_ROWS]),
+            "open_count": open_matches.count(),
+        })
+    return render(request, "matches/matches_overview.html", {"request_type": "", "sections": sections})
 
 
 # ── Match detail ────────────────────────────────────────────────────────────────

@@ -2,7 +2,8 @@
 {% load i18n %}
 
 {% block postman_content %}
-  <h1 class="text-4xl font-semibold">{% trans "Sent messages" %}</h1>
+  <h1 class="text-4xl font-semibold flex items-center gap-2"><i class="fa fa-envelope text-primary"></i>{% trans "Messages" %}</h1>
+  {% include "dashboard/_tabs.html" %}
 
   {% if pm_messages %}
     <ul class="space-y-3">
@@ -46,6 +47,7 @@
         </li>
       {% endfor %}
     </ul>
+    {% include "dashboard/_pager.html" %}
   {% elif object_list %}
     <ul class="space-y-3">
       {% for m in object_list %}

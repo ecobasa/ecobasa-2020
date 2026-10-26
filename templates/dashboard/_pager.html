@@ -1,0 +1,11 @@
+{% load i18n %}
+{# Paging of a dashboard list page, from dashboard_lists.paginate #}
+{% if page.paginator.num_pages > 1 %}
+  <nav class="flex items-center justify-between text-sm mt-4" aria-label="{% trans 'Pages' %}">
+    <span class="opacity-70">{% blocktrans with start=page.start_index end=page.end_index total=page.paginator.count %}{{ start }}–{{ end }} of {{ total }}{% endblocktrans %}</span>
+    <span class="flex gap-4">
+      {% if page.newer_url %}<a href="{{ page.newer_url }}" class="text-primary hover:underline"><i class="fa fa-chevron-left mr-1"></i>{% trans "Newer" %}</a>{% endif %}
+      {% if page.older_url %}<a href="{{ page.older_url }}" class="text-primary hover:underline">{% trans "Older" %}<i class="fa fa-chevron-right ml-1"></i></a>{% endif %}
+    </span>
+  </nav>
+{% endif %}
