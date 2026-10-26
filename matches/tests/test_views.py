@@ -142,3 +142,93 @@ class TestVolunteeringLists:
         assert response.context["visits"] == [stay]
         assert "volunteer_mine" not in response.context
         assert _client_for(requester).get("/matches/?type=visits").context["visits"] == []
+
+
+@pytest.fixture
+def stay(requester, owner):
+    """A volunteer stay request at a community."""
+    from datetime import datetime
+
+    from django.utils import timezone
+
+    from communities.models import Community
+
+    from ..models import VolunteerDetails
+
+    community = Community.objects.create(name="Green Valley", owner=owner)
+    m = Match(from_user=requester, message="Can I come help?")
+    m.target = community
+    m.recipient = community.get_match_owner()
+    m.save()
+    VolunteerDetails.objects.create(
+        match=m,
+        stay_from=timezone.make_aware(datetime(2027, 5, 1)),
+        stay_to=timezone.make_aware(datetime(2027, 5, 14)),
+    )
+    return m
+
+
+@pytest.mark.django_db
+class TestCommunityStayCounter:
+    """A stay happens at the community, so the owner can only suggest other dates."""
+
+    def test_owner_sees_only_the_date_option(self, owner, stay):
+        content = _client_for(owner).get(stay.get_absolute_url()).content.decode()
+        assert 'name="counter_stay_from"' in content
+        assert 'value="2027-05-01"' in content
+        assert 'name="counter_location_type"' not in content
+        assert "counter-pick-map" not in content
+
+    def test_gifts_keep_the_location_option(self, owner, match):
+        content = _client_for(owner).get(match.get_absolute_url()).content.decode()
+        assert 'name="counter_location_type"' in content
+        assert 'name="counter_stay_from"' not in content
+
+    def test_owner_suggests_other_dates(self, owner, requester, stay, mailoutbox):
+        from django.utils import timezone
+
+        _client_for(owner).post(stay.get_absolute_url(), {
+            "action": "counter",
+            "counter_stay_from": "2027-06-01",
+            "counter_stay_to": "2027-06-10",
+            # a crafted location is ignored for stays
+            "counter_location_type": Match.LOC_CUSTOM,
+            "counter_location": "Elsewhere",
+        })
+        stay.refresh_from_db()
+        assert stay.status == Match.STATUS_COUNTER
+
+        counter_msg = stay.thread.get(status_to=Match.STATUS_COUNTER)
+        assert timezone.localdate(counter_msg.counter_stay_from).isoformat() == "2027-06-01"
+        assert timezone.localdate(counter_msg.counter_stay_to).isoformat() == "2027-06-10"
+        assert counter_msg.counter_location == ""
+        assert counter_msg.counter_location_type == ""
+
+        notification = requester.notifications.get()
+        assert "other dates for your stay at" in notification.text
+        assert "place" not in notification.text
+        assert "01 Jun 2027" in mailoutbox[0].body
+
+        content = _client_for(requester).get(stay.get_absolute_url()).content.decode()
+        assert "Suggested stay" in content
+        assert "01 Jun 2027&ndash;10 Jun 2027" in content
+
+        # the requester can then accept the new dates
+        _client_for(requester).post(stay.get_absolute_url(), {"action": "accept"})
+        stay.refresh_from_db()
+        assert stay.status == Match.STATUS_ACCEPTED
+        content = _client_for(requester).get(stay.get_absolute_url()).content.decode()
+        assert "01 Jun 2027&ndash;10 Jun 2027" in content
+
+    def test_counter_needs_a_date(self, owner, stay):
+        _client_for(owner).post(stay.get_absolute_url(), {"action": "counter", "body": "Hmm"})
+        stay.refresh_from_db()
+        assert stay.status == Match.STATUS_PENDING
+        assert not stay.thread.exists()
+
+    def test_stay_cannot_end_before_it_starts(self, owner, stay):
+        _client_for(owner).post(stay.get_absolute_url(), {
+            "action": "counter", "counter_stay_from": "2027-06-10", "counter_stay_to": "2027-06-01",
+        })
+        stay.refresh_from_db()
+        assert stay.status == Match.STATUS_PENDING

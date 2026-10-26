@@ -86,7 +86,9 @@ class Notification(models.Model):
                         if self.actor_id == self.match.from_user_id
                         else _("%(actor)s declined your request: %(title)s"))
         elif self.tag == self.TAG_COUNTER:
-            template = _("%(actor)s suggested another time or place for: %(title)s")
+            template = (_("%(actor)s suggested other dates for your stay at: %(title)s")
+                        if self.match.is_community_stay
+                        else _("%(actor)s suggested another time or place for: %(title)s"))
         elif self.tag == self.TAG_MESSAGE:
             template = _("%(actor)s sent you a message about: %(title)s")
         else:

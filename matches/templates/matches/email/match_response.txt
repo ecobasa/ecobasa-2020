@@ -1,7 +1,9 @@
 {% load i18n %}{% blocktrans with name=recipient.name|default:recipient.email %}Hello {{ name }},{% endblocktrans %}
 
 {{ headline }}
-{% if message %}
+{% if counter.counter_stay_from or counter.counter_stay_to %}
+{% trans "Suggested stay" %}: {% if counter.counter_stay_from %}{{ counter.counter_stay_from|date:"d M Y" }}{% endif %}{% if counter.counter_stay_from and counter.counter_stay_to %} – {% endif %}{% if counter.counter_stay_to %}{{ counter.counter_stay_to|date:"d M Y" }}{% endif %}
+{% endif %}{% if message %}
 {% trans "Message" %}:
 {{ message }}
 {% endif %}

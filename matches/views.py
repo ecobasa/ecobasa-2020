@@ -61,6 +61,15 @@ def matches_list(request):
 
 # ── Match detail ────────────────────────────────────────────────────────────────
 
+def _parse_day(raw):
+    """A day from a date input, as an aware datetime at its start; None if blank or invalid."""
+    try:
+        day = _dt.fromisoformat(raw) if raw else None
+    except ValueError:
+        return None
+    return timezone.make_aware(day) if day and timezone.is_naive(day) else day
+
+
 @login_required
 def match_detail(request, pk):
     match = get_object_or_404(
@@ -123,26 +132,37 @@ def match_detail(request, pk):
                 body=request.POST.get("body", "").strip(),
                 status_to=Match.STATUS_COUNTER,
             )
-            msg.counter_location_type = request.POST.get("counter_location_type", "")
-            msg.counter_location      = request.POST.get("counter_location", "")
-            try:
-                msg.counter_lat = float(request.POST.get("counter_lat") or "")
-            except (ValueError, TypeError):
-                msg.counter_lat = None
-            try:
-                msg.counter_lon = float(request.POST.get("counter_lon") or "")
-            except (ValueError, TypeError):
-                msg.counter_lon = None
-            raw_dt = request.POST.get("counter_date", "")
-            try:
-                msg.counter_date = _dt.fromisoformat(raw_dt) if raw_dt else None
-            except ValueError:
-                msg.counter_date = None
+            if match.is_community_stay:
+                # The stay is at the community, so only the dates can change.
+                msg.counter_stay_from = _parse_day(request.POST.get("counter_stay_from", ""))
+                msg.counter_stay_to   = _parse_day(request.POST.get("counter_stay_to", ""))
+                if not (msg.counter_stay_from or msg.counter_stay_to):
+                    flash.error(request, _("Please suggest when the stay could start or end."))
+                    return redirect(match.get_absolute_url())
+                if msg.counter_stay_from and msg.counter_stay_to and msg.counter_stay_to < msg.counter_stay_from:
+                    flash.error(request, _("The stay can't end before it starts."))
+                    return redirect(match.get_absolute_url())
+            else:
+                msg.counter_location_type = request.POST.get("counter_location_type", "")
+                msg.counter_location      = request.POST.get("counter_location", "")
+                try:
+                    msg.counter_lat = float(request.POST.get("counter_lat") or "")
+                except (ValueError, TypeError):
+                    msg.counter_lat = None
+                try:
+                    msg.counter_lon = float(request.POST.get("counter_lon") or "")
+                except (ValueError, TypeError):
+                    msg.counter_lon = None
+                raw_dt = request.POST.get("counter_date", "")
+                try:
+                    msg.counter_date = _dt.fromisoformat(raw_dt) if raw_dt else None
+                except ValueError:
+                    msg.counter_date = None
             msg.save()
             match.status       = Match.STATUS_COUNTER
             match.responded_at = timezone.now()
             match.save()
-            notify_match_response(match, actor=request.user, http_request=request, message=msg.body)
+            notify_match_response(match, actor=request.user, http_request=request, message=msg.body, counter=msg)
             flash.success(request, _("Counter-proposal sent."))
             return redirect(match.get_absolute_url())
 

@@ -27,6 +27,12 @@
                 {% if recipient.name %}{% blocktrans with name=recipient.name %}Hello {{ name }},{% endblocktrans %}{% else %}{% blocktrans with name=recipient.email %}Hello {{ name }},{% endblocktrans %}{% endif %}
               </p>
               <p style="margin:0 0 24px;font-size:15px;line-height:1.6;">{{ headline }}</p>
+              {% if counter.counter_stay_from or counter.counter_stay_to %}
+              <p style="margin:0 0 24px;font-size:15px;line-height:1.6;">
+                <strong>{% trans "Suggested stay" %}:</strong>
+                {% if counter.counter_stay_from %}{{ counter.counter_stay_from|date:"d M Y" }}{% endif %}{% if counter.counter_stay_from and counter.counter_stay_to %}&ndash;{% endif %}{% if counter.counter_stay_to %}{{ counter.counter_stay_to|date:"d M Y" }}{% endif %}
+              </p>
+              {% endif %}
               {% if message %}
               <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f5ede0;border-radius:6px;border:1px solid #d4b896;margin-bottom:24px;">
                 <tr>

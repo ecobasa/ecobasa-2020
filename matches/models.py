@@ -76,6 +76,12 @@ class Match(models.Model):
     def get_absolute_url(self):
         return reverse("matches:detail", args=[self.pk])
 
+    @property
+    def is_community_stay(self):
+        """A volunteer stay happens at the community itself, so only its dates are open
+        to a counter-proposal, never the place."""
+        return self.content_type.app_label == "communities"
+
     def resolved_location(self):
         """Human-readable meeting location, resolving my/your place from profiles."""
         if self.location_type == self.LOC_MY_PLACE:
@@ -115,6 +121,9 @@ class MatchMessage(models.Model):
     counter_lat = models.FloatField(null=True, blank=True)
     counter_lon = models.FloatField(null=True, blank=True)
     counter_date = models.DateTimeField(null=True, blank=True)
+    # Counter-proposed stay period, for community stays (see VolunteerDetails.stay_from/to)
+    counter_stay_from = models.DateTimeField(null=True, blank=True)
+    counter_stay_to = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

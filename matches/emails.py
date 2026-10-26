@@ -62,9 +62,10 @@ def notify_match_created(match, http_request=None):
         })
 
 
-def notify_match_response(match, actor, http_request=None, message=""):
+def notify_match_response(match, actor, http_request=None, message="", counter=None):
     """In-app notification (+ email, if a request is available) to whichever party
-    didn't just act. `message` is the note sent along with the decision, if any."""
+    didn't just act. `message` is the note sent along with the decision, if any;
+    `counter` is the MatchMessage holding a counter-proposal's details."""
     from notifications.models import Notification
 
     recipient = _other_party(match, actor)
@@ -79,7 +80,7 @@ def notify_match_response(match, actor, http_request=None, message=""):
     notification = _notify(match, recipient, actor, tag_map.get(match.status, ""))
 
     if http_request:
-        _send_email(notification, "matches/email/match_response", http_request, {"message": message})
+        _send_email(notification, "matches/email/match_response", http_request, {"message": message, "counter": counter})
 
 
 def notify_match_message(match, sender, message, http_request=None):
