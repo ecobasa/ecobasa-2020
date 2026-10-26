@@ -36,14 +36,30 @@ jobs:
       - name: Start database
         run: docker compose up -d database
 
+      # pg_isready on the container's socket already answers while the image sets up
+      # PostGIS on a temporary server, which then restarts and only then listens on the
+      # network: the next step got "connection refused". So wait the way the tests
+      # connect, from the django container over the network, until it holds three
+      # times in a row.
       - name: Wait for database to be ready
         run: |
-          for i in $(seq 1 30); do
-            docker compose exec -T database pg_isready -U ecobasa && exit 0
-            sleep 2
-          done
-          echo "database never became ready" >&2
-          exit 1
+          docker compose run --rm -T django python - <<'EOF'
+          import os, sys, time
+          import psycopg2
+
+          dsn = os.environ["DATABASE_URL"].replace("postgis://", "postgresql://", 1)
+          in_a_row = 0
+          for _ in range(90):
+              try:
+                  psycopg2.connect(dsn, connect_timeout=3).close()
+                  in_a_row += 1
+                  if in_a_row == 3:
+                      sys.exit(0)
+              except psycopg2.OperationalError:
+                  in_a_row = 0
+              time.sleep(2)
+          sys.exit("database never became ready")
+          EOF
 
       - name: Check for missing migrations
         run: docker compose run --rm django python manage.py makemigrations --check --dry-run
