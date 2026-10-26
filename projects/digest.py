@@ -38,7 +38,8 @@ class Suggestion:
     def reason(self):
         if self.skill_name:
             return _("your skill: %(skill)s") % {"skill": self.skill_name}
-        return _("your gift: %(title)s") % {"title": self.listing.title}
+        title = f"{self.listing.title} ({self.listing.amount})" if self.listing.amount else self.listing.title
+        return _("your gift: %(title)s") % {"title": title}
 
 
 @dataclass

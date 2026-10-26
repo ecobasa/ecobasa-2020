@@ -61,6 +61,7 @@
     <div class="flex-1 min-w-0">
       <div class="text-primary font-bold">{{ listing.get_type_display }}</div>
       <h1 class="sm:text-3xl sm:leading-9 sm:truncate">{{ listing.title }}</h1>
+      {% if listing.amount %}<div class="text-lg mb-1"><i class="fa-solid fa-scale-balanced mr-2 text-primary"></i>{{ listing.amount }}</div>{% endif %}
       <div class="my-1">
         {% if listing.owner == request.user %}
           <span class="border mx-px py-px px-1 rounded text-xs text-secondary bg-purple">{% trans "from me" %}</span>
@@ -68,7 +69,7 @@
         {% for cat in listing.categories.all %}
           <span class="border mx-px py-px px-1 rounded text-xs text-secondary bg-primary">{{ cat.name }}</span>
         {% endfor %}
-        <span class="text-sm mx-2">{{ listing.location_name }}</span>
+        <span class="text-sm mx-2">{{ listing.location_name|default:"" }}</span>
         <span class="text-xs">{% include "projects/_freshness.html" with when=listing.updated_at label_updated=True %}</span>
       </div>
     </div>

@@ -29,13 +29,14 @@
           <span class="border mx-px py-px px-1 rounded-full text-xs text-secondary bg-primary">{{ cat.name }}</span>
         {% endfor %}
         <span class="font-serif sm:text-lg group-hover:text-primary">{{ listing.title }}</span>
+        {% if listing.amount %}<span class="text-sm opacity-80 ml-1">· {{ listing.amount }}</span>{% endif %}
       </div>
       <p class="text-sm text-brown">{{ listing.description|truncatewords:20 }}</p>
       <div>
         {% if listing.owner == request.user %}
           <span class="absolute bottom-5 border mx-px py-1 px-2 rounded text-xs text-secondary bg-purple"><i class="fa fa-user mr-2"></i>{% trans "from me" %}</span>
         {% else %}
-          <span class="absolute bottom-5"><i class="fa fa-user mr-2"></i>{{ request.user.name }}</span>
+          <span class="absolute bottom-5"><i class="fa fa-user mr-2"></i>{{ listing.owner.name }}</span>
         {% endif %}
       </div>
     </div>

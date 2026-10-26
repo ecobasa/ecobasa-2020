@@ -4,6 +4,7 @@ from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
 from users.models import User
+from . import units
 from .mixins import RandomIdMixin
 
 
@@ -36,6 +37,8 @@ class Listing(RandomIdMixin, models.Model):
     )
     description = models.TextField(_("Description"), blank=True)
     image = models.ImageField(_('image'), upload_to='gifts-images', null=True, blank=True)
+    quantity = models.PositiveIntegerField(_("How many / how much?"), null=True, blank=True)
+    unit = models.CharField(_("Unit"), max_length=10, choices=units.UNIT_CHOICES, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     owner = models.ForeignKey(
@@ -61,6 +64,11 @@ class Listing(RandomIdMixin, models.Model):
 
     def get_absolute_url(self) -> str:
         return reverse("gifts:detail", kwargs={"pk": self.pk})
+
+    @property
+    def amount(self):
+        """"200 kg", "3 pieces", "" if no quantity is given."""
+        return units.format_amount(self.quantity, self.unit)
 
     # ── matches.Match target protocol ───────────────────────────────
     def get_match_owner(self):

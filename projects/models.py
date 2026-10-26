@@ -5,9 +5,10 @@ from django.contrib.contenttypes.fields import GenericRelation
 from django.db import models
 from django.urls import reverse
 from django.utils import timezone
-from django.utils.translation import gettext_lazy as _, ngettext_lazy
+from django.utils.translation import gettext_lazy as _
 
 from communities.models import Community
+from gifts import units
 
 
 class ProjectQuerySet(models.QuerySet):
@@ -146,17 +147,8 @@ class Need(models.Model):
     # up with gifts of that category on the map and next to matching gift offers.
     THING_KINDS = (KIND_MATERIAL, KIND_TOOL)
 
-    UNIT_PEOPLE = "people"
-    UNIT_CHOICES = [
-        (UNIT_PEOPLE, _("people")),
-        ("pieces", _("pieces")),
-        ("kg", "kg"),
-        ("m", "m"),
-        ("m2", "m²"),
-        ("m3", "m³"),
-        ("l", _("litres")),
-        ("days", _("days")),
-    ]
+    UNIT_PEOPLE = units.PEOPLE
+    UNIT_CHOICES = units.UNIT_CHOICES
 
     STATUS_OPEN = "open"
     STATUS_OFFERED = "offered"
@@ -202,17 +194,7 @@ class Need(models.Model):
 
     def format_amount(self, quantity):
         """"1 person", "3 people", "200 kg"."""
-        if quantity is None:
-            return ""
-        counted = {
-            self.UNIT_PEOPLE: ngettext_lazy("%(count)s person", "%(count)s people", "count"),
-            "pieces": ngettext_lazy("%(count)s piece", "%(count)s pieces", "count"),
-            "l": ngettext_lazy("%(count)s litre", "%(count)s litres", "count"),
-            "days": ngettext_lazy("%(count)s day", "%(count)s days", "count"),
-        }
-        if self.unit in counted:
-            return counted[self.unit] % {"count": quantity}
-        return f"{quantity} {self.get_unit_display()}" if self.unit else str(quantity)
+        return units.format_amount(quantity, self.unit)
 
     @property
     def amount(self):

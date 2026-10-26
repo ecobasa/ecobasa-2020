@@ -296,6 +296,7 @@ def gifts_markers(request):
                 "description":  listing.description,
                 "image":        listing.image.url if listing.image else None,
                 "listing_type": listing.type,
+                "amount":       listing.amount,
                 "type_display": listing.get_type_display(),
                 "url":          listing.get_absolute_url(),
                 "user_name":    _public_name(listing.owner),

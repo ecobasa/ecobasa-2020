@@ -208,3 +208,25 @@ def test_map_popup_on_detail_page_escapes_the_title(client, user):
     popup = popup[:popup.index(";")]
     assert "\\u003Cimg" not in popup and "\\u0026lt\\u003Bimg" in popup
     assert "\\u003Cb\\u003E" not in popup
+
+
+@pytest.mark.django_db
+def test_listing_with_an_amount(user_client, user):
+    response = user_client.post(reverse("gifts:create"), {
+        "type": "offer", "title": "Clay", "quantity": "50", "unit": "kg", "description": "",
+    })
+    listing = Listing.objects.get(title="Clay")
+    assert response.status_code == 302 and (listing.quantity, listing.unit) == (50, "kg")
+    assert listing.amount == "50 kg"
+    assert "50 kg" in user_client.get(reverse("gifts:detail", args=[listing.pk])).content.decode()
+
+
+@pytest.mark.django_db
+def test_list_card_names_the_giver_not_the_viewer(user, listing):
+    viewer = User.objects.create_user(email="viewer@example.com", password="x", name="Vera")
+    user.name = "Max"
+    user.save()
+    client = Client()
+    client.force_login(viewer)
+    content = client.get(reverse("gifts:api-list")).content.decode()
+    assert "Max" in content and "Vera" not in content
