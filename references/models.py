@@ -119,6 +119,15 @@ class Reference(models.Model):
     def __str__(self):
         return f"Reference from {self.author} → {self.subject} ({self.impression})"
 
+    def get_absolute_url(self):
+        """The reference in full, among the others on its subject's page."""
+        subject = self.subject
+        return f"{subject.get_absolute_url()}#reference-{self.pk}" if subject is not None else ""
+
+    def confirmed_skill_tags(self):
+        """Skills tagged on it that the person or community confirmed (uses a prefetch)."""
+        return [tag for tag in self.skill_tags.all() if tag.status == ReferenceSkill.STATUS_CONFIRMED]
+
 
 class ReferenceSkill(models.Model):
     """A skill tagged on a reference. If the person or community doesn't have the skill yet,

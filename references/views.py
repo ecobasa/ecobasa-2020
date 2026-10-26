@@ -1,4 +1,5 @@
 from django.contrib import messages
+from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import login_required
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import PermissionDenied
@@ -180,3 +181,24 @@ def reference_request(request, key):
         "reference": reference,
     })
 
+
+@staff_member_required
+def featured(request):
+    """Staff pick the references shown on the homepage, from those their authors agreed to
+    share. Made to work on a phone."""
+    if request.method == "POST":
+        reference = get_object_or_404(Reference, pk=request.POST.get("reference"), share_publicly=True)
+        reference.featured_at = timezone.now() if request.POST.get("action") == "feature" else None
+        reference.save(update_fields=["featured_at"])
+        return redirect(f"{request.path}#reference-{reference.pk}")
+    shared = (
+        Reference.objects.filter(share_publicly=True)
+        .select_related("author", "content_type")
+        .prefetch_related("subject", Prefetch("skill_tags", queryset=ReferenceSkill.objects.select_related("skill")))
+        .order_by("featured_at", "-created_at")
+    )
+    return render(request, "references/featured.html", {
+        "featured": sorted((r for r in shared if r.featured_at), key=lambda r: r.featured_at, reverse=True),
+        "candidates": [r for r in shared if not r.featured_at and r.impression == Reference.IMPRESSION_POSITIVE],
+        "others": [r for r in shared if not r.featured_at and r.impression != Reference.IMPRESSION_POSITIVE],
+    })

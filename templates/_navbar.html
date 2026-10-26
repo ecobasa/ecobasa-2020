@@ -170,6 +170,14 @@
                     </a>
                   </div>
                 {% endif %}
+                {% if request.user.is_staff %}
+                  <div class="border-t border-secondary border-opacity-20 mt-1 pt-1">
+                    <span class="block px-4 py-1 text-xs opacity-50 uppercase tracking-wide">{% trans "Admin" %}</span>
+                    <a href="{% url 'references:featured' %}" class="dropdown-link">
+                      <i class="fa fa-star mr-2"></i>{% trans "Success stories" %}
+                    </a>
+                  </div>
+                {% endif %}
                 <div class="border-t border-secondary border-opacity-20 mt-1 pt-1">
                   <a href="#" class="dropdown-link">
                     <i class="fa fa-cog mr-2"></i>
@@ -259,6 +267,12 @@
                 <a href="{% url 'references:list' %}?community={{ item.community.slug }}" class="mt-1 flex items-center px-4 py-2 text-base text-secondary hover:text-primary hover:bg-secondary focus:text-primary focus:bg-secondary" role="menuitem"><i class="fa fa-comments mr-2"></i>{% trans "References" %}{% if item.pending %}<span class="ml-auto pill bg-purple text-secondary text-xs">{{ item.pending }}</span>{% endif %}</a>
               {% endfor %}
               <a href="{% url 'matches:list' %}?type=visits" class="mt-1 block px-4 py-2 text-base text-secondary hover:text-primary hover:bg-secondary focus:text-primary focus:bg-secondary" role="menuitem"><i class="fa-solid fa-tools mr-2"></i>{% trans "Volunteer Visits" %}</a>
+            </div>
+          {% endif %}
+          {% if request.user.is_staff %}
+            <div class="border-t border-gray-200 mt-2 pt-2">
+              <span class="block px-4 py-1 text-xs opacity-50 uppercase tracking-wide">{% trans "Admin" %}</span>
+              <a href="{% url 'references:featured' %}" class="mt-1 block px-4 py-2 text-base text-secondary hover:text-primary hover:bg-secondary focus:text-primary focus:bg-secondary" role="menuitem"><i class="fa fa-star mr-2"></i>{% trans "Success stories" %}</a>
             </div>
           {% endif %}
           <a href="#" class="mt-1 block px-4 py-2 text-base text-secondary hover:text-primary hover:bg-secondary focus:text-primary focus:bg-secondary" role="menuitem"><i class="fa fa-cog mr-2"></i>{% trans "Settings" %}</a>

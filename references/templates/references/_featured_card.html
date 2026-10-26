@@ -1,0 +1,38 @@
+{% load i18n %}
+{# A shared story; photo and text link to it in full on its subject's page, staff (show_impression) see all the text #}
+<article id="reference-{{ ref.pk }}" class="scroll-mt-24 border {% if show_impression and ref.impression == 'negative' %}border-red{% elif show_impression and ref.impression == 'neutral' %}border-brown{% else %}border-green{% endif %} rounded-lg overflow-hidden bg-secondary flex flex-col">
+  {% if ref.photo %}<a href="{{ ref.get_absolute_url }}"><img src="{{ ref.photo.url }}" alt="" loading="lazy" class="w-full h-48 object-cover"></a>{% endif %}
+  <div class="p-4 flex-1 flex flex-col">
+    {% if show_impression %}
+      {# For staff choosing what goes on the homepage #}
+      <p class="mt-0 mb-2 text-xs">
+        {% if ref.impression == 'positive' %}<span class="pill bg-green"><i class="fa-regular fa-face-smile mr-1"></i>{{ ref.get_impression_display }}</span>
+        {% elif ref.impression == 'negative' %}<span class="pill bg-red"><i class="fa-regular fa-face-frown mr-1"></i>{{ ref.get_impression_display }}</span>
+        {% else %}<span class="pill bg-yellow"><i class="fa-regular fa-face-meh mr-1"></i>{{ ref.get_impression_display }}</span>{% endif %}
+      </p>
+    {% endif %}
+    {% if show_impression %}
+      <p class="text-sm m-0 flex-1">{{ ref.text|linebreaksbr }}</p>
+    {% else %}
+      <div class="flex-1">
+        <a href="{{ ref.get_absolute_url }}" class="text-sm text-brown hover:no-underline block">{{ ref.text|truncatewords:40|linebreaksbr }}</a>
+        {% if ref.text|wordcount > 40 %}<a href="{{ ref.get_absolute_url }}" class="text-xs text-primary font-semibold">{% trans "Read more" %} →</a>{% endif %}
+      </div>
+    {% endif %}
+    {% with skills=ref.confirmed_skill_tags %}
+      {% if skills or ref.gift_names %}
+        <div class="flex flex-wrap gap-2 mt-3 text-xs">
+          {% for tag in skills %}<span class="pill bg-purple"><i class="fa fa-graduation-cap mr-1"></i>{{ tag.skill.get_name }}</span>{% endfor %}
+          {% for gift in ref.gift_names %}<span class="pill bg-primary"><i class="fa fa-gift mr-1"></i>{{ gift }}</span>{% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+    <footer class="text-xs text-brown mt-3">
+      <a href="{{ ref.author.get_absolute_url }}" class="font-semibold text-primary">{{ ref.author.name|default:ref.author.username }}</a>
+      {% if ref.subject %}
+        {% translate "about" context "reference subject" %}
+        <a href="{{ ref.subject.get_absolute_url }}" class="text-primary">{% if ref.content_type.model == 'user' %}{{ ref.subject.name|default:ref.subject.username }}{% else %}{{ ref.subject.get_match_display_name }}{% endif %}</a>
+      {% endif %}
+    </footer>
+  </div>
+</article>

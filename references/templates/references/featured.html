@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block head_title %}{% trans "Success stories" %} — ecobasa{% endblock %}
+
+{% block content %}
+<div class="container-page">
+  <h1 class="text-2xl text-primary mb-2"><i class="fa-solid fa-hand-holding-heart mr-2"></i>{% trans "Success stories" %}</h1>
+  <p class="text-sm text-brown mb-6">{% trans "Stories their authors agreed to share. Featured ones are shown on the homepage, newest first." %}</p>
+
+  <h2>{% trans "On the homepage" %}</h2>
+  <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 mb-10">
+    {% for ref in featured %}
+      <div class="flex flex-col gap-2">
+        {% include "references/_featured_card.html" with show_impression=True %}
+        <form method="post">{% csrf_token %}
+          <input type="hidden" name="reference" value="{{ ref.pk }}"><input type="hidden" name="action" value="unfeature">
+          <button type="submit" class="btn btn-purple w-full"><i class="fa fa-eye-slash mr-2"></i>{% trans "Remove from homepage" %}</button>
+        </form>
+      </div>
+    {% empty %}
+      <p class="text-sm text-brown">{% trans "No stories on the homepage yet." %}</p>
+    {% endfor %}
+  </div>
+
+  <h2>{% trans "Positive, shared by their authors" %}</h2>
+  <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 mb-10">
+    {% for ref in candidates %}
+      {% include "references/_featured_candidate.html" %}
+    {% empty %}
+      <p class="text-sm text-brown">{% trans "No new stories." %}</p>
+    {% endfor %}
+  </div>
+
+  {% if others %}
+    {# Neutral and negative ones rarely belong on the homepage, but staff can still see them #}
+    <details class="group">
+      <summary class="cursor-pointer list-none font-semibold text-brown [&::-webkit-details-marker]:hidden">
+        <i class="fa fa-chevron-right mr-2 transition-transform group-open:rotate-90"></i>{% blocktrans count counter=others|length %}{{ counter }} neutral or negative{% plural %}{{ counter }} neutral or negative{% endblocktrans %}
+      </summary>
+      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 mt-4">
+        {% for ref in others %}{% include "references/_featured_candidate.html" %}{% endfor %}
+      </div>
+    </details>
+  {% endif %}
+</div>
+{% endblock %}

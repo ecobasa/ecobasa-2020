@@ -1,0 +1,8 @@
+{% load i18n %}
+<div class="flex flex-col gap-2">
+  {% include "references/_featured_card.html" with show_impression=True %}
+  <form method="post">{% csrf_token %}
+    <input type="hidden" name="reference" value="{{ ref.pk }}"><input type="hidden" name="action" value="feature">
+    <button type="submit" class="btn btn-green w-full"><i class="fa fa-star mr-2"></i>{% trans "Show on homepage" %}</button>
+  </form>
+</div>

@@ -314,3 +314,72 @@ class TestReplyByEmail:
         assert handle_reply(_reply(reference_request, "Who am I?")) is None
         assert not Reference.objects.exists()
 
+
+@pytest.mark.django_db
+class TestFeaturing:
+    @pytest.fixture
+    def staff(self):
+        return User.objects.create_user(email="staff@example.com", password="secret", name="Staff", is_staff=True)
+
+    @pytest.fixture
+    def shared(self, requester, owner):
+        return Reference.objects.create(author=requester, recipient=owner, subject=owner, text="Grateful!", share_publicly=True)
+
+    def _client(self, user):
+        client = Client()
+        client.login(username=user.email, password="secret")
+        return client
+
+    def test_staff_only(self, requester):
+        assert self._client(requester).get(reverse("references:featured")).status_code == 302
+
+    def test_in_the_user_menu_for_staff_only(self, staff, requester):
+        url = reverse("references:featured")
+        assert f'href="{url}"' in self._client(staff).get("/").content.decode()
+        assert f'href="{url}"' not in self._client(requester).get("/").content.decode()
+
+    def test_featured_reference_is_on_the_homepage(self, staff, shared):
+        client = self._client(staff)
+        assert "Grateful!" in client.get(reverse("references:featured")).content.decode()
+        assert "Grateful!" not in Client().get("/").content.decode()
+        client.post(reverse("references:featured"), {"reference": shared.pk, "action": "feature"})
+        assert "Grateful!" in Client().get("/").content.decode()
+        client.post(reverse("references:featured"), {"reference": shared.pk, "action": "unfeature"})
+        assert "Grateful!" not in Client().get("/").content.decode()
+
+    def test_neutral_and_negative_are_marked_and_kept_apart(self, staff, shared, requester, owner):
+        shared.impression = Reference.IMPRESSION_NEGATIVE
+        shared.save()
+        response = self._client(staff).get(reverse("references:featured"))
+        assert response.context["candidates"] == []
+        assert response.context["others"] == [shared]
+        assert "1 neutral or negative" in response.content.decode()
+        assert "fa-face-frown" in response.content.decode()
+
+    def test_homepage_card_links_to_it_in_full_and_shortens_long_text(self, shared, owner):
+        shared.text = " ".join(f"word{i}" for i in range(60))
+        shared.gift_names = ["Old Bicycle"]
+        shared.featured_at = timezone.now()
+        shared.save()
+        skill = Skill.objects.create(name="Cob building")
+        ReferenceSkill.objects.create(reference=shared, skill=skill, status=ReferenceSkill.STATUS_CONFIRMED)
+        pending = Skill.objects.create(name="Beekeeping")
+        ReferenceSkill.objects.create(reference=shared, skill=pending, status=ReferenceSkill.STATUS_PENDING)
+        page = Client().get("/").content.decode()
+        assert f'href="{owner.get_absolute_url()}#reference-{shared.pk}"' in page
+        assert "word39" in page and "word45" not in page and "Read more" in page
+        assert "Old Bicycle" in page and "Cob Building" in page and "Beekeeping" not in page
+        # The linked page has it in full
+        assert "word59" in Client().get(owner.get_absolute_url()).content.decode()
+
+    def test_only_shared_references_can_be_featured(self, staff, shared):
+        shared.share_publicly = False
+        shared.save()
+        response = self._client(staff).post(reverse("references:featured"), {"reference": shared.pk, "action": "feature"})
+        assert response.status_code == 404
+
+    def test_unsharing_takes_it_off_the_homepage(self, shared):
+        shared.featured_at = timezone.now()
+        shared.share_publicly = False
+        shared.save()
+        assert "Grateful!" not in Client().get("/").content.decode()
