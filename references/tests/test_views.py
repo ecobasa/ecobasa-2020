@@ -287,8 +287,8 @@ class TestDashboard:
         assert "x-data=\"{ open: true" in page
 
     def test_community_guide_only_on_community_pages(self, author, owner, community):
-        assert "Writing about a community" in _client_for(author).get(community.get_absolute_url()).content.decode()
-        assert "Writing about a community" not in _client_for(author).get(owner.get_absolute_url()).content.decode()
+        assert "You are writing about a community" in _client_for(author).get(community.get_absolute_url()).content.decode()
+        assert "You are writing about a community" not in _client_for(author).get(owner.get_absolute_url()).content.decode()
 
     def test_given_does_not_ask_me_to_confirm_skills_i_tagged(self, author, owner):
         _client_for(author).post(_save_url(owner), {"impression": "positive", "text": "Great.", "skill_names": "Beekeeping"})
