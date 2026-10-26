@@ -270,8 +270,9 @@
       // Simple popup showing title + location
       const popupEl = document.createElement('div');
       popupEl.className = 'gift-popup';
-      popupEl.innerHTML = '<strong>{{ listing.title|escapejs }}</strong>'
-        + '{% if listing.location_name %}<div>{{ listing.location_name|escapejs }}</div>{% endif %}';
+      // Escaped for HTML first: escapejs alone would let "<" through into innerHTML
+      popupEl.innerHTML = '<strong>{{ listing.title|force_escape|escapejs }}</strong>'
+        + '{% if listing.location_name %}<div>{{ listing.location_name|force_escape|escapejs }}</div>{% endif %}';
       const overlay = new ol.Overlay({
         element: popupEl, positioning: 'bottom-center', offset: [0, -12], stopEvent: false
       });

@@ -192,3 +192,19 @@ class TestDelete:
         )
         assert Listing.objects.all().exists() == False
         # assert "deleted" in str(response.content)
+
+
+@pytest.mark.django_db
+def test_map_popup_on_detail_page_escapes_the_title(client, user):
+    """The popup is set with innerHTML: escapejs alone keeps "<" (as \\u003C, which is "<"
+    again at runtime), so the title has to be HTML-escaped first."""
+    from django.contrib.gis.geos import Point
+    listing = Listing.objects.create(
+        type="offer", owner=user, title="<img src=x onerror=alert(1)>",
+        location_name="<b>here</b>", location=Point(14.98, 51.16, srid=4326),
+    )
+    content = client.get(reverse("gifts:detail", args=[listing.pk])).content.decode()
+    popup = content[content.index("popupEl.innerHTML"):]
+    popup = popup[:popup.index(";")]
+    assert "\\u003Cimg" not in popup and "\\u0026lt\\u003Bimg" in popup
+    assert "\\u003Cb\\u003E" not in popup

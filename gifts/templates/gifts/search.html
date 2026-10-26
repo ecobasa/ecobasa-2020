@@ -474,10 +474,12 @@
 
   const MARKERS_URL = '{% url "gifts:api-markers" %}';
 
+  // Popups are built as HTML; everything users wrote (titles, descriptions, names) and
+  // every attribute value goes through esc().
   function esc(text) {
-    const div = document.createElement('div');
-    div.textContent = text == null ? '' : String(text);
-    return div.innerHTML;
+    return String(text == null ? '' : text)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
   }
 
   function truncate(text, limit) {
@@ -486,7 +488,8 @@
   }
 
   function buildPopupHTML(props) {
-    const td = (props.type_display || '').toLowerCase();
+    const td = esc((props.type_display || '').toLowerCase());
+    const url = esc(props.url);
     let badge = '';
     if (props.source === 'skill')      badge = `<span class="pill bg-purple"><i class="fa fa-graduation-cap mr-1"></i>${td || 'Skill'}</span>`;
     else if (props.source === 'user_skill') badge = `<span class="pill bg-purple"><i class="fa fa-graduation-cap mr-1"></i>{% trans "skill / teaching" %}</span>`;
@@ -495,18 +498,19 @@
     else if (props.listing_type === 'wish')  badge = `<span class="pill bg-yellow"><i class="fa fa-heart mr-1"></i>${td}</span>`;
     else                               badge = `<span class="pill bg-primary">${td}</span>`;
     let html = `<button type="button" class="map-popup-close" aria-label="{% trans "Close" %}"><i class="fa fa-times"></i></button>` + badge;
-    if (props.title) html += props.url ? `<h3><a href="${props.url}" class="hover:underline">${props.title}</a></h3>` : `<h3>${props.title}</h3>`;
-    if (props.image) html += `<div class="mb-2">${props.url ? `<a href="${props.url}">` : ''}<img src="${props.image}" alt="" class="w-full max-w-xs rounded shadow">${props.url ? '</a>' : ''}</div>`;
-    const desc = truncate(props.description, 150);
+    if (props.title) html += url ? `<h3><a href="${url}" class="hover:underline">${esc(props.title)}</a></h3>` : `<h3>${esc(props.title)}</h3>`;
+    if (props.image) html += `<div class="mb-2">${url ? `<a href="${url}">` : ''}<img src="${esc(props.image)}" alt="" class="w-full max-w-xs rounded shadow">${url ? '</a>' : ''}</div>`;
+    // Shortened first, so an escaped character isn't cut in half
+    const desc = esc(truncate(props.description, 150));
     if (desc) html += `<div class="text-sm text-brown mt-2">${desc}</div>`;
     if (props.source === 'need' && props.needs && props.needs.length) {
       html += `<div class="flex flex-wrap gap-1 mt-2">` + props.needs.map(n =>
         `<span class="pill bg-yellow text-xs"><i class="fa-solid ${esc(n.icon)} mr-1"></i>${esc(n.title)}${n.amount ? `<span class="opacity-70 ml-1">(${esc(n.amount)})</span>` : ''}</span>`
       ).join('') + `</div>`;
     }
-    if ((props.source === 'skill' || props.source === 'need') && props.community_name) html += `<div class="text-xs text-brown mt-1"><i class="fa fa-home mr-1"></i>${props.community_name}</div>`;
-    if ((props.source === 'user_skill' || props.source === 'listing') && props.user_name) html += `<div class="text-xs mt-1"><i class="fa fa-user mr-1"></i>${props.user_name}</div>`;
-    if (props.url) html += `<a class="text-primary underline" href="${props.url}">{% trans "Open" %}</a>`;
+    if ((props.source === 'skill' || props.source === 'need') && props.community_name) html += `<div class="text-xs text-brown mt-1"><i class="fa fa-home mr-1"></i>${esc(props.community_name)}</div>`;
+    if ((props.source === 'user_skill' || props.source === 'listing') && props.user_name) html += `<div class="text-xs mt-1"><i class="fa fa-user mr-1"></i>${esc(props.user_name)}</div>`;
+    if (url) html += `<a class="text-primary underline" href="${url}">{% trans "Open" %}</a>`;
     return html;
   }
 
