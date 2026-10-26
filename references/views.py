@@ -5,13 +5,15 @@ from django.core.exceptions import PermissionDenied
 from django.http import Http404
 from django.db.models import Prefetch
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.translation import gettext as _
 from django.views.decorators.http import require_POST
 
-from .forms import ReferenceForm
-from .models import Reference, ReferenceSkill, is_referenceable, references_about, subject_owner
+from .forms import ReferenceForm, ReferenceRequestForm
+from .models import Reference, ReferenceSkill, is_referenceable, references_about, match_reference_subject, subject_owner
 from .notifications import notify_reference_created
+from .reference_requests import exchange_context, existing_reference, find_reference_request, save_requested_reference, shrink_photo, subject_name
 
 
 def _redirect_to(subject):
@@ -134,3 +136,47 @@ def references_list(request):
         "references": references,
         "pending_tags": pending,
     })
+
+
+def reference_request(request, key):
+    """The reference form from the email after a match. The key is the login: it works from
+    a phone's mail app without signing in."""
+    reference_request = find_reference_request(key)
+    if reference_request is None:
+        return render(request, "references/request_expired.html", status=404)
+    subject, _gift, _skill = match_reference_subject(reference_request.match, reference_request.user)
+    reference = existing_reference(reference_request)
+    if request.method == "POST":
+        form = ReferenceRequestForm(request.POST, request.FILES)
+        if form.is_valid():
+            photo = request.FILES.get("photo")
+            try:
+                photo = shrink_photo(photo) if photo else None
+            except ValueError:
+                form.add_error("photo", _("This photo could not be read. Please try another one."))
+            else:
+                save_requested_reference(
+                    reference_request, text=form.cleaned_data["text"], impression=form.cleaned_data["impression"],
+                    photo=photo, share_publicly=form.cleaned_data["share_publicly"], http_request=request,
+                )
+                return render(request, "references/request_thanks.html", {
+                    "subject": subject, "shared": form.cleaned_data["share_publicly"],
+                })
+    else:
+        form = ReferenceRequestForm(initial={
+            "impression": reference.impression if reference else Reference.IMPRESSION_POSITIVE,
+            "text": reference.text if reference else "",
+            # From the email after a reply: "allow sharing" comes pre-ticked
+            "share_publicly": (reference.share_publicly if reference else False) or bool(request.GET.get("share")),
+        })
+    return render(request, "references/request_form.html", {
+        "form": form,
+        "subject": subject,
+        "subject_name": subject_name(subject),
+        **exchange_context(reference_request.match, reference_request.user),
+        # The writing guide adds a note about writing to a group
+        "about_community": subject._meta.model_name == "community",
+        "reference_request": reference_request,
+        "reference": reference,
+    })
+

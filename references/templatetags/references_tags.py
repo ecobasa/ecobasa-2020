@@ -6,7 +6,7 @@ from django.db.models import Prefetch
 from django.utils.translation import gettext as _
 
 from ..forms import ReferenceForm
-from ..models import Reference, ReferenceSkill, references_about, subject_owner
+from ..models import Reference, ReferenceSkill, references_about, match_reference_subject, subject_owner
 
 register = template.Library()
 
@@ -90,24 +90,14 @@ def references_for(context, subject):
 def reference_url_for_match(context, match):
     """Where to write a reference after an accepted match: the other party's page, with the
     gift's name or the skill filled in. Only the name is carried over."""
-    user = context["request"].user
-    target = match.target
-    if target is None:
+    found = match_reference_subject(match, context["request"].user)
+    if found is None:
         return ""
-    model = match.content_type.model
-    is_requester = user == match.from_user
+    page, gift, skill = found
     params = {}
-    if model == "community" and is_requester:
-        page = target
-    elif hasattr(target, "get_skill_holder") and is_requester:
-        # Someone else's skill: write about whoever holds it, tagged with the skill
-        page = target.get_skill_holder()
-        params["reference_skill"] = target.get_match_display_name()
-    else:
-        page = match.recipient if is_requester else match.from_user
-        if page is None:
-            return ""
-        if model == "listing":
-            params["reference_gift"] = target.get_match_display_name()
+    if gift:
+        params["reference_gift"] = gift
+    if skill:
+        params["reference_skill"] = skill
     query = f"?{urlencode(params)}" if params else ""
     return f"{page.get_absolute_url()}{query}#references"

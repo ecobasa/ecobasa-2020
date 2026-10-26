@@ -1,0 +1,64 @@
+{% load i18n %}{% get_current_language as LANGUAGE_CODE %}
+<!DOCTYPE html>
+<html lang="{{ LANGUAGE_CODE|default:'en' }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ headline }}</title>
+</head>
+<body style="margin:0;padding:0;background-color:#f5ede0;font-family:Georgia,serif;color:#452912;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f5ede0;padding:32px 0;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background-color:#fcf3e5;border-radius:8px;overflow:hidden;border:1px solid #d4b896;">
+
+          {# Header #}
+          <tr>
+            <td style="background-color:#da6137;padding:28px 32px;">
+              <p style="margin:0;font-size:24px;font-weight:bold;color:#fcf3e5;font-family:Georgia,serif;">ecobasa.org</p>
+              <p style="margin:8px 0 0;font-size:14px;color:#fcf3e5;opacity:0.85;">{% trans "Share your story" %}</p>
+            </td>
+          </tr>
+
+          {# Body #}
+          <tr>
+            <td style="padding:32px;">
+              {% if can_reply %}<p style="margin:0 0 20px;font-size:11px;color:#9a7b5c;">{{ reply_marker }}</p>{% endif %}
+              <p style="margin:0 0 16px;font-size:16px;">
+                {% if recipient.name %}{% blocktrans with name=recipient.name %}Hello {{ name }},{% endblocktrans %}{% else %}{% blocktrans with name=recipient.email %}Hello {{ name }},{% endblocktrans %}{% endif %}
+              </p>
+              {# They may have had several exchanges with the same person: say which one #}
+              <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f5ede0;border-radius:6px;border:1px solid #d4b896;margin-bottom:20px;">
+                <tr>
+                  <td style="padding:16px 20px;">
+                    <p style="margin:0;font-size:16px;font-weight:bold;">{{ exchange }}</p>
+                    {% if exchange_start %}<p style="margin:4px 0 0;font-size:13px;opacity:0.7;">{{ exchange_start|date:"DATE_FORMAT" }}{% if exchange_end %} – {{ exchange_end|date:"DATE_FORMAT" }}{% endif %}</p>{% endif %}
+                    {% if match_message %}<p style="margin:12px 0 0;font-size:13px;line-height:1.5;"><span style="opacity:0.7;">{% if match_message_author %}{% blocktrans with name=match_message_author %}{{ name }} wrote:{% endblocktrans %}{% else %}{% trans "You wrote:" %}{% endif %}</span> <em>“{{ match_message|truncatewords:30 }}”</em></p>{% endif %}
+                  </td>
+                </tr>
+              </table>
+              <p style="margin:0 0 16px;font-size:15px;line-height:1.6;">{% trans "How was it? Tell us in a few sentences what happened and what you are grateful for." %}</p>
+              <p style="margin:0 0 24px;font-size:15px;line-height:1.6;">{% trans "Stories like yours show others that the gift economy actually works." %}</p>
+              <p style="margin:0 0 24px;font-size:15px;text-align:center;">
+                <a href="{{ request_url }}"
+                   style="display:inline-block;background-color:#da6137;color:#fcf3e5;text-decoration:none;font-size:15px;font-weight:bold;padding:12px 28px;border-radius:6px;font-family:Arial,sans-serif;">
+                  {% trans "Share your story" %}
+                </a>
+              </p>
+              {% if can_reply %}<p style="margin:0 0 8px;font-size:14px;line-height:1.6;text-align:center;">{% trans "Or simply reply to this email. A photo as attachment is welcome." %}</p>{% endif %}
+            </td>
+          </tr>
+
+          {# Footer #}
+          <tr>
+            <td style="background-color:#f5ede0;border-top:1px solid #d4b896;padding:16px 32px;text-align:center;">
+              <p style="margin:0;font-size:12px;opacity:0.6;">ecobasa.org &mdash; {% trans "the sustainable gift-economy community" %}</p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

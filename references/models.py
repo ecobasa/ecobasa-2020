@@ -1,3 +1,4 @@
+import secrets
 from collections import defaultdict
 
 from django.conf import settings
@@ -92,6 +93,14 @@ class Reference(models.Model):
         "skills.Skill", through="ReferenceSkill", related_name="+", blank=True
     )
     gift_names = models.JSONField(_("Gifts"), default=list, blank=True)
+    # Asked for after a match (ReferenceRequest), maybe with a photo. Only references the
+    # author agreed to share can be featured on the homepage by staff.
+    match = models.ForeignKey(
+        "matches.Match", on_delete=models.SET_NULL, null=True, blank=True, related_name="references",
+    )
+    photo = models.ImageField(_("Photo"), upload_to="reference-photos", null=True, blank=True)
+    share_publicly = models.BooleanField(_("ecobasa may show this story on its homepage"), default=False)
+    featured_at = models.DateTimeField(_("Featured"), null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -147,3 +156,62 @@ class ReferenceSkill(models.Model):
     def decline(self):
         self.status = self.STATUS_DECLINED
         self.save(update_fields=["status"])
+
+
+def match_reference_subject(match, user):
+    """What `user` writes about after `match`, as (subject, gift name, skill name): the
+    requester writes about the community, the skill's holder (tagged with the skill) or
+    the owner; the owner writes about the requester. A gift's name is carried along, and
+    a skill that was learned or helped with is tagged.
+    None if the other side is gone."""
+    target = match.target
+    if target is None:
+        return None
+    model = match.content_type.model
+    is_requester = user == match.from_user
+    if model == "community" and is_requester:
+        return target, "", ""
+    if hasattr(target, "get_skill_holder") and is_requester:
+        return target.get_skill_holder(), "", target.get_match_display_name()
+    if model == "skillwish":
+        # Someone helped with a wished-for skill: they write about the community that
+        # wished for it (or the person); who was helped tags the skill on the helper.
+        other = (target.community or match.recipient) if is_requester else match.from_user
+        if other is None:
+            return None
+        return other, "", "" if is_requester else target.get_match_display_name()
+    other = match.recipient if is_requester else match.from_user
+    if other is None:
+        return None
+    return other, target.get_match_display_name() if model == "listing" else "", ""
+
+
+def _request_key():
+    # Lowercase hex: it travels in an email address (stories+<key>@…), which some mail
+    # servers lowercase.
+    return secrets.token_hex(12)
+
+
+class ReferenceRequest(models.Model):
+    """The email asking one side of a match for a reference (their story, as the email
+    puts it). Its key is the reply's
+    address and the form link, so answering needs no login."""
+
+    match = models.ForeignKey("matches.Match", on_delete=models.CASCADE, related_name="reference_requests")
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="reference_requests")
+    key = models.CharField(max_length=32, unique=True, default=_request_key, editable=False)
+    reference = models.ForeignKey(
+        Reference, on_delete=models.SET_NULL, null=True, blank=True, related_name="reference_requests",
+    )
+    sent_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-sent_at"]
+        verbose_name = _("Reference Request")
+        verbose_name_plural = _("Reference Requests")
+        constraints = [
+            models.UniqueConstraint(fields=["match", "user"], name="one_reference_request_per_match_and_user"),
+        ]
+
+    def __str__(self):
+        return f"Reference request to {self.user} about {self.match}"

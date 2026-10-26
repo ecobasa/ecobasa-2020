@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ecobasa\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-23 18:01+0200\n"
+"POT-Creation-Date: 2026-10-26 13:22+0100\n"
 "PO-Revision-Date: 2026-10-23 12:00+0200\n"
 "Last-Translator: ecobasa\n"
 "Language-Team: es\n"
@@ -258,7 +258,7 @@ msgid "Community"
 msgstr "Comunidad"
 
 #: communities/models.py:158 templates/_navbar.html:28
-#: templates/_navbar.html:233 templates/dashboard/base.html:49
+#: templates/_navbar.html:241 templates/dashboard/base.html:49
 #: users/templates/users/detail.html:64
 msgid "Communities"
 msgstr "Comunidades"
@@ -569,7 +569,7 @@ msgstr "Tipo"
 
 #: communities/templates/communities/community_list.html:235
 #: communities/templates/communities/community_list.html:479
-#: matches/models.py:63 references/models.py:129
+#: matches/models.py:63 references/models.py:147
 msgid "Status"
 msgstr "Estado"
 
@@ -806,10 +806,10 @@ msgid "Back"
 msgstr "Volver"
 
 #: gifts/templates/gifts/listing_detail.html:28
-#: matches/templates/matches/matches_list.html:42 references/models.py:94
+#: matches/templates/matches/matches_list.html:42 references/models.py:95
 #: references/templates/references/email/reference_created.html:36
 #: references/templates/references/email/reference_created.txt:10
-#: templates/_navbar.html:32 templates/_navbar.html:232
+#: templates/_navbar.html:32 templates/_navbar.html:240
 #: templates/dashboard/base.html:22
 msgid "Gifts"
 msgstr "Regalos"
@@ -882,7 +882,7 @@ msgstr "Aceptado"
 #: matches/templates/matches/_match_row.html:49
 #: matches/templates/matches/match_detail.html:36
 #: matches/templates/matches/match_detail.html:116
-#: matches/templates/matches/match_detail.html:196 references/models.py:124
+#: matches/templates/matches/match_detail.html:196 references/models.py:142
 msgid "Declined"
 msgstr "Rechazado"
 
@@ -966,6 +966,18 @@ msgstr "Habilidad / enseñanza"
 msgid "User Skill"
 msgstr "Habilidad (persona)"
 
+#: homepage/templates/homepage/homepage.html:20
+msgid "Success stories from the gift network"
+msgstr "Historias de éxito de la red del regalo"
+
+#: homepage/templates/homepage/homepage.html:21
+msgid "What people gave and received on ecobasa, in their own words."
+msgstr "Lo que la gente dio y recibió en ecobasa, con sus propias palabras."
+
+#: homepage/templates/homepage/homepage.html:28
+msgid "Choose stories for the homepage"
+msgstr "Elegir historias para la página de inicio"
+
 #: homepage/templates/homepage/support.html:8
 msgid ""
 "\n"
@@ -1034,7 +1046,7 @@ msgstr "Apóyanos en Flattr"
 
 #: matches/apps.py:8 matches/models.py:71
 #: matches/templates/matches/match_detail.html:15 templates/_navbar.html:143
-#: templates/_navbar.html:255 templates/dashboard/base.html:19
+#: templates/_navbar.html:263 templates/dashboard/base.html:19
 msgid "Matches"
 msgstr "Matches"
 
@@ -1112,6 +1124,10 @@ msgstr "Mensaje nuevo"
 #: matches/templates/matches/email/match_response.txt:1
 #: references/templates/references/email/reference_created.html:27
 #: references/templates/references/email/reference_created.txt:1
+#: references/templates/references/email/reference_received.html:27
+#: references/templates/references/email/reference_received.txt:1
+#: references/templates/references/email/reference_request.html:28
+#: references/templates/references/email/reference_request.txt:3
 #, python-format
 msgid "Hello %(name)s,"
 msgstr "Hola, %(name)s:"
@@ -1125,6 +1141,8 @@ msgstr "Responder"
 #: matches/templates/matches/email/match_request.html:87
 #: matches/templates/matches/email/match_response.html:53
 #: references/templates/references/email/reference_created.html:56
+#: references/templates/references/email/reference_received.html:50
+#: references/templates/references/email/reference_request.html:55
 msgid "the sustainable gift-economy community"
 msgstr "la comunidad sostenible de economía del regalo"
 
@@ -1173,7 +1191,7 @@ msgstr "Aceptar"
 #: matches/templates/matches/email/match_request.txt:20
 #: matches/templates/matches/match_detail.html:320
 #: matches/templates/matches/match_detail.html:360
-#: references/templates/references/_reference_card.html:51
+#: references/templates/references/_reference_card.html:52
 #: references/templates/references/references_list.html:56
 msgid "Decline"
 msgstr "Rechazar"
@@ -1285,7 +1303,7 @@ msgid "Send counter-proposal"
 msgstr "Enviar contrapropuesta"
 
 #: matches/templates/matches/matches_list.html:10 templates/_navbar.html:174
-#: templates/_navbar.html:269 templates/dashboard/base.html:58
+#: templates/_navbar.html:277 templates/dashboard/base.html:58
 msgid "Volunteer Visits"
 msgstr "Visitas de voluntarios"
 
@@ -1294,7 +1312,7 @@ msgid "No volunteer visits yet."
 msgstr "Todavía no hay visitas de voluntarios."
 
 #: matches/templates/matches/matches_list.html:26 templates/_navbar.html:139
-#: templates/_navbar.html:256 templates/dashboard/base.html:53
+#: templates/_navbar.html:264 templates/dashboard/base.html:53
 msgid "Community Volunteering"
 msgstr "Estancia en comunidad"
 
@@ -1305,7 +1323,7 @@ msgstr "Todavía no hay estancias en comunidad."
 #: matches/templates/matches/matches_list.html:46
 #: matches/templates/matches/matches_list.html:73
 #: references/templates/references/references_list.html:30
-#: templates/_navbar.html:153 templates/_navbar.html:259
+#: templates/_navbar.html:153 templates/_navbar.html:267
 #: templates/dashboard/base.html:33
 msgid "Received"
 msgstr "Recibidos"
@@ -1415,11 +1433,11 @@ msgstr "Marcar todo como leído"
 msgid "No notifications yet."
 msgstr "Todavía no hay notificaciones."
 
-#: references/apps.py:8 references/models.py:101
+#: references/apps.py:8 references/models.py:110
 #: references/templates/references/_references.html:3
 #: references/templates/references/references_list.html:7
 #: templates/_navbar.html:151 templates/_navbar.html:169
-#: templates/_navbar.html:258 templates/_navbar.html:267
+#: templates/_navbar.html:266 templates/_navbar.html:275
 #: templates/dashboard/base.html:29
 msgid "References"
 msgstr "Referencias"
@@ -1428,54 +1446,152 @@ msgstr "Referencias"
 msgid "What happened? How did you feel, and what did you need?"
 msgstr "¿Qué pasó? ¿Cómo te sentiste y qué necesitabas?"
 
-#: references/models.py:67
-msgid "Positive"
-msgstr "Positivo"
-
-#: references/models.py:68
-msgid "Neutral"
-msgstr "Neutral"
-
-#: references/models.py:69
-msgid "Negative"
-msgstr "Negativo"
-
-#: references/models.py:87
+#: references/forms.py:65 references/models.py:88
 #: references/templates/references/email/reference_created.html:33
 #: references/templates/references/email/reference_created.txt:5
+#: references/templates/references/email/reference_received.html:32
+#: references/templates/references/email/reference_received.txt:5
 msgid "Impression"
 msgstr "Impresión"
 
-#: references/models.py:88
+#
+#: references/forms.py:69
+msgid "Your story"
+msgstr "Tu historia"
+
+#: references/forms.py:72
+msgid "What happened? What are you grateful for?"
+msgstr "¿Qué pasó? ¿Por qué estás agradecido/a?"
+
+#: references/forms.py:75 references/models.py:101 users/forms.py:196
+msgid "Photo"
+msgstr "Foto"
+
+#: references/models.py:68
+msgid "Positive"
+msgstr "Positivo"
+
+#: references/models.py:69
+msgid "Neutral"
+msgstr "Neutral"
+
+#: references/models.py:70
+msgid "Negative"
+msgstr "Negativo"
+
+#: references/models.py:89
 msgid "Your experience"
 msgstr "Tu experiencia"
 
-#: references/models.py:100
+#: references/models.py:102
+msgid "ecobasa may show this story on its homepage"
+msgstr "ecobasa puede mostrar esta historia en su página de inicio"
+
+#: references/models.py:103
+msgid "Featured"
+msgstr "Destacada"
+
+#: references/models.py:109
 msgid "Reference"
 msgstr "Referencia"
 
-#: references/models.py:122
-#: references/templates/references/_reference_card.html:44
-#: references/templates/references/_reference_card.html:54
+#: references/models.py:140
+#: references/templates/references/_reference_card.html:45
+#: references/templates/references/_reference_card.html:55
 msgid "Waiting for confirmation"
 msgstr "Pendiente de confirmación"
 
-#: references/models.py:123
+#: references/models.py:141
 msgid "Confirmed"
 msgstr "Confirmada"
 
-#: references/models.py:133
+#: references/models.py:151
 msgid "Reference Skill"
 msgstr "Habilidad en referencia"
 
-#: references/models.py:134
+#: references/models.py:152
 msgid "Reference Skills"
 msgstr "Habilidades en referencias"
+
+#
+#: references/models.py:219
+msgid "Reference Request"
+msgstr "Solicitud de referencia"
+
+#
+#: references/models.py:220
+msgid "Reference Requests"
+msgstr "Solicitudes de referencia"
 
 #: references/notifications.py:34
 #: references/templates/references/email/reference_created.html:19
 msgid "New reference"
 msgstr "Nueva referencia"
+
+#: references/reference_requests.py:66
+#, python-format
+msgid "Your stay at %(title)s"
+msgstr "Tu estancia en %(title)s"
+
+#: references/reference_requests.py:66
+#, python-format
+msgid "%(name)s's stay at %(title)s"
+msgstr "Estancia de %(name)s en %(title)s"
+
+#: references/reference_requests.py:70
+#, python-format
+msgid "%(title)s, your gift to %(name)s"
+msgstr "%(title)s, tu regalo para %(name)s"
+
+#: references/reference_requests.py:70
+#, python-format
+msgid "%(title)s, a gift from %(name)s"
+msgstr "%(title)s, un regalo de %(name)s"
+
+#: references/reference_requests.py:72
+#, python-format
+msgid "Your help with %(title)s for %(name)s"
+msgstr "Tu ayuda con %(title)s para %(name)s"
+
+#: references/reference_requests.py:72
+#, python-format
+msgid "%(name)s's help with %(title)s"
+msgstr "La ayuda de %(name)s con %(title)s"
+
+#: references/reference_requests.py:74
+#, python-format
+msgid "Learning %(title)s with %(name)s"
+msgstr "Aprender %(title)s con %(name)s"
+
+#: references/reference_requests.py:74
+#, python-format
+msgid "Sharing %(title)s with %(name)s"
+msgstr "Compartir %(title)s con %(name)s"
+
+#: references/reference_requests.py:251
+#, python-format
+msgid "%(exchange)s: how was it?"
+msgstr "%(exchange)s: ¿qué tal fue?"
+
+#
+#: references/reference_requests.py:262
+#: references/templates/references/email/reference_received.html:19
+msgid "Thank you for your story"
+msgstr "Gracias por tu historia"
+
+#: references/templates/references/_featured_candidate.html:6
+msgid "Show on homepage"
+msgstr "Mostrar en la página de inicio"
+
+#: references/templates/references/_featured_card.html:19
+msgid "Read more"
+msgstr "Seguir leyendo"
+
+#: references/templates/references/_featured_card.html:33
+#: references/templates/references/_reference_card.html:22
+msgctxt "reference subject"
+msgid "about"
+msgstr "sobre"
 
 #: references/templates/references/_guidelines.html:7
 msgid "How to write a reference"
@@ -1553,8 +1669,8 @@ msgid "They will. Be honest and kind at the same time."
 msgstr "Lo hará. Sé sincero/a y amable a la vez."
 
 #: references/templates/references/_guidelines.html:21
-msgid "Writing about a community"
-msgstr "Si escribes sobre una comunidad"
+msgid "You are writing about a community"
+msgstr "Escribes sobre una comunidad"
 
 #: references/templates/references/_guidelines.html:22
 msgid ""
@@ -1598,12 +1714,7 @@ msgstr ""
 "Puedes editar tu referencia en cualquier momento, por ejemplo después de "
 "haberlo hablado."
 
-#: references/templates/references/_reference_card.html:22
-msgctxt "reference subject"
-msgid "about"
-msgstr "sobre"
-
-#: references/templates/references/_reference_card.html:48
+#: references/templates/references/_reference_card.html:49
 #: references/templates/references/references_list.html:52
 msgid "Add to my skills"
 msgstr "Añadir a mis habilidades"
@@ -1679,6 +1790,126 @@ msgstr "Recibes esto como embajador/a de %(name)s."
 msgid "View reference"
 msgstr "Ver referencia"
 
+#: references/templates/references/email/reference_received.html:29
+#: references/templates/references/email/reference_received.txt:3
+msgid "Thank you, we saved your story:"
+msgstr "Gracias, hemos guardado tu historia:"
+
+#: references/templates/references/email/reference_received.html:37
+#: references/templates/references/email/reference_received.txt:9
+#, python-format
+msgid ""
+"We saved it as “%(impression)s”. You can change the impression or add a "
+"photo here:"
+msgstr ""
+"La guardamos como «%(impression)s». Aquí puedes cambiar la impresión o "
+"añadir una foto:"
+
+#: references/templates/references/email/reference_received.html:37
+#: references/templates/references/email/reference_received.txt:9
+#, python-format
+msgid ""
+"We saved it as “%(impression)s”. May we show it on the ecobasa homepage? You "
+"can allow this, change the impression or add a photo here:"
+msgstr ""
+"La guardamos como «%(impression)s». ¿Podemos mostrarla en la página de "
+"inicio de ecobasa? Aquí puedes permitirlo, cambiar la impresión o añadir una "
+"foto:"
+
+#
+#: references/templates/references/email/reference_received.html:41
+msgid "Edit your story"
+msgstr "Editar tu historia"
+
+#: references/templates/references/email/reference_received.html:41
+msgid "Allow sharing"
+msgstr "Permitir compartir"
+
+#: references/templates/references/email/reference_request.html:19
+#: references/templates/references/email/reference_request.html:45
+#: references/templates/references/email/reference_request.txt:13
+#: references/templates/references/request_form.html:4
+#: references/templates/references/request_form.html:8
+msgid "Share your story"
+msgstr "Cuenta tu historia"
+
+#: references/templates/references/email/reference_request.html:36
+#: references/templates/references/email/reference_request.txt:7
+#: references/templates/references/request_form.html:14
+#, python-format
+msgid "%(name)s wrote:"
+msgstr "%(name)s escribió:"
+
+#: references/templates/references/email/reference_request.html:36
+#: references/templates/references/email/reference_request.txt:7
+#: references/templates/references/request_form.html:14
+msgid "You wrote:"
+msgstr "Escribiste:"
+
+#
+#: references/templates/references/email/reference_request.html:40
+#: references/templates/references/email/reference_request.txt:9
+msgid ""
+"How was it? Tell us in a few sentences what happened and what you are "
+"grateful for."
+msgstr ""
+"¿Qué tal fue? Cuéntanos en pocas frases qué pasó y por qué estás agradecido/"
+"a."
+
+#: references/templates/references/email/reference_request.html:41
+#: references/templates/references/email/reference_request.txt:11
+msgid "Stories like yours show others that the gift economy actually works."
+msgstr ""
+"Historias como la tuya muestran a otros que la economía del regalo realmente "
+"funciona."
+
+#: references/templates/references/email/reference_request.html:48
+#: references/templates/references/email/reference_request.txt:15
+msgid "Or simply reply to this email. A photo as attachment is welcome."
+msgstr "O simplemente responde a este correo. Una foto adjunta es bienvenida."
+
+#: references/templates/references/featured.html:4
+#: references/templates/references/featured.html:8 templates/_navbar.html:182
+#: templates/_navbar.html:283
+msgid "Success stories"
+msgstr "Historias de éxito"
+
+#: references/templates/references/featured.html:9
+msgid ""
+"Stories their authors agreed to share. Featured ones are shown on the "
+"homepage, newest first."
+msgstr ""
+"Historias que sus autores aceptan compartir. Las destacadas aparecen en la "
+"página de inicio, las más nuevas primero."
+
+#: references/templates/references/featured.html:11
+msgid "On the homepage"
+msgstr "En la página de inicio"
+
+#: references/templates/references/featured.html:18
+msgid "Remove from homepage"
+msgstr "Quitar de la página de inicio"
+
+#: references/templates/references/featured.html:22
+msgid "No stories on the homepage yet."
+msgstr "Aún no hay historias en la página de inicio."
+
+#
+#: references/templates/references/featured.html:26
+msgid "Positive, shared by their authors"
+msgstr "Positivas, compartidas por sus autores"
+
+#: references/templates/references/featured.html:31
+msgid "No new stories."
+msgstr "No hay historias nuevas."
+
+#: references/templates/references/featured.html:39
+#, python-format
+msgid "%(counter)s neutral or negative"
+msgid_plural "%(counter)s neutral or negative"
+msgstr[0] "%(counter)s neutral o negativa"
+msgstr[1] "%(counter)s neutrales o negativas"
+
 #: references/templates/references/references_list.html:26
 #, python-format
 msgid ""
@@ -1691,7 +1922,7 @@ msgstr ""
 "comunidad lo que aprendas aquí."
 
 #: references/templates/references/references_list.html:30
-#: templates/_navbar.html:157 templates/_navbar.html:260
+#: templates/_navbar.html:157 templates/_navbar.html:268
 #: templates/dashboard/base.html:38
 msgctxt "references"
 msgid "Given"
@@ -1733,26 +1964,86 @@ msgstr ""
 "Aún no has escrito ninguna referencia. Puedes escribir una en cualquier "
 "página de perfil, comunidad, regalo o habilidad."
 
+#: references/templates/references/request_expired.html:7
+msgid "This link has expired"
+msgstr "Este enlace ha caducado"
+
+#: references/templates/references/request_expired.html:8
+msgid "You can still write a reference on their page on ecobasa."
+msgstr "Aún puedes escribir una referencia en su página de ecobasa."
+
+#
+#: references/templates/references/request_form.html:17
+msgid ""
+"How was it? A few sentences are enough. Stories like yours show that the "
+"gift economy works."
+msgstr ""
+"¿Qué tal fue? Bastan unas frases. Historias como la tuya muestran que la "
+"economía del regalo funciona."
+
+#
+#: references/templates/references/request_form.html:46
+msgid "Choose another photo"
+msgstr "Elegir otra foto"
+
+#: references/templates/references/request_form.html:46
+msgid "Add a photo"
+msgstr "Añadir una foto"
+
+#: references/templates/references/request_form.html:56
+msgid "With your name and photo. You can change this here any time."
+msgstr "Con tu nombre y tu foto. Puedes cambiarlo aquí en cualquier momento."
+
+#
+#: references/templates/references/request_form.html:60
+msgid "Send story"
+msgstr "Enviar historia"
+
+#
+#: references/templates/references/request_thanks.html:7
+msgid "Thank you for your story!"
+msgstr "¡Gracias por tu historia!"
+
+#: references/templates/references/request_thanks.html:9
+msgid ""
+"We may show it on the homepage, so others can see what giving makes possible."
+msgstr ""
+"Quizá la mostremos en la página de inicio, para que otros vean lo que "
+"regalar hace posible."
+
+#: references/templates/references/request_thanks.html:10
+msgid "It is now shown with the references on ecobasa."
+msgstr "Ahora aparece con las referencias en ecobasa."
+
+#
+#: references/templates/references/request_thanks.html:14
+msgid "View references"
+msgstr "Ver referencias"
+
 #: references/templatetags/references_tags.py:82
 msgid "Skills listed here"
 msgstr "Habilidades de este perfil"
 
-#: references/views.py:49
+#: references/views.py:52
 msgid "Thank you for sharing your experience."
 msgstr "Gracias por compartir tu experiencia."
 
-#: references/views.py:51
+#: references/views.py:54
 msgid "Please choose an impression and describe your experience."
 msgstr "Elige una impresión y describe tu experiencia."
 
-#: references/views.py:61
+#: references/views.py:64
 msgid "Your reference was removed."
 msgstr "Tu referencia se ha eliminado."
 
-#: references/views.py:76
+#: references/views.py:79
 #, python-format
 msgid "%(skill)s was added to your skills."
 msgstr "%(skill)s se ha añadido a tus habilidades."
+
+#: references/views.py:157
+msgid "This photo could not be read. Please try another one."
+msgstr "No se pudo leer esta foto. Prueba con otra."
 
 #: settings/base.py:34
 msgid "German"
@@ -2246,7 +2537,7 @@ msgstr ""
 msgid "Language"
 msgstr "Idioma"
 
-#: templates/_navbar.html:36 templates/_navbar.html:234
+#: templates/_navbar.html:36 templates/_navbar.html:242
 msgid "Support"
 msgstr "Apoyar"
 
@@ -2266,29 +2557,33 @@ msgstr "Marcar todo leído"
 msgid "User menu"
 msgstr "Menú de usuario"
 
-#: templates/_navbar.html:136 templates/_navbar.html:253
+#: templates/_navbar.html:136 templates/_navbar.html:261
 msgid "Your Profile"
 msgstr "Tu perfil"
 
-#: templates/_navbar.html:147 templates/_navbar.html:254
+#: templates/_navbar.html:147 templates/_navbar.html:262
 #: templates/dashboard/base.html:14 templates/postman/inbox.html:7
 #: templates/postman/view.html:7
 msgid "Inbox"
 msgstr "Bandeja de entrada"
 
-#: templates/_navbar.html:162 templates/_navbar.html:264
+#: templates/_navbar.html:162 templates/_navbar.html:272
 msgid "My Communities"
 msgstr "Mis comunidades"
 
-#: templates/_navbar.html:181 templates/_navbar.html:272
+#: templates/_navbar.html:180 templates/_navbar.html:282
+msgid "Admin"
+msgstr "Administración"
+
+#: templates/_navbar.html:189 templates/_navbar.html:286
 msgid "Settings"
 msgstr "Ajustes"
 
-#: templates/_navbar.html:187 templates/_navbar.html:273
+#: templates/_navbar.html:195 templates/_navbar.html:287
 msgid "Log out"
 msgstr "Cerrar sesión"
 
-#: templates/_navbar.html:201 templates/_navbar.html:279
+#: templates/_navbar.html:209 templates/_navbar.html:293
 #: users/templates/users/login.html:29
 #: users/templates/users/password_reset/complete.html:16
 msgid "Log in"
@@ -2530,10 +2825,6 @@ msgstr "Quitar la foto actual"
 msgid "Upload new photo"
 msgstr "Subir foto nueva"
 
-#: users/forms.py:196
-msgid "Photo"
-msgstr "Foto"
-
 #: users/models.py:87
 msgid "username"
 msgstr "nombre de usuario"
@@ -2749,6 +3040,10 @@ msgstr "Has cerrado sesión."
 msgid "Account created and logged in."
 msgstr "Cuenta creada y sesión iniciada."
 
+#, python-format
+#~ msgid "How was it with %(name)s? Share your story"
+#~ msgstr "¿Qué tal con %(name)s? Cuenta tu historia"
+
 #~ msgid "Volunteer stays"
 #~ msgstr "Estancias en comunidad"
 
@@ -2757,14 +3052,6 @@ msgstr "Cuenta creada y sesión iniciada."
 
 #~ msgid "What was it like? What should others know?"
 #~ msgstr "¿Cómo fue? ¿Qué deberían saber los demás?"
-
-#, python-format
-#~ msgid "%(verb)s: %(title)s"
-#~ msgstr "%(verb)s: %(title)s"
-
-#, python-format
-#~ msgid "%(status)s: %(title)s"
-#~ msgstr "%(status)s: %(title)s"
 
 #, python-format
 #~ msgid "Match %(status_label)s"

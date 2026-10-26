@@ -14,10 +14,10 @@ def _community(reference):
     return subject.get_skill_holder() if hasattr(subject, "get_skill_holder") else subject
 
 
-def notify_reference_created(reference, http_request=None):
+def notify_reference_created(reference, http_request=None, base_url=None):
     """Tell the person a new reference is about (or the ambassador, for a community or
     its skills), linking straight to it in their references dashboard. Also emailed in
-    their language when a request is available to build absolute links."""
+    their language when a request or base URL is available to build absolute links."""
     recipient = reference.recipient
     if recipient is None or recipient == reference.author:
         return
@@ -35,10 +35,12 @@ def notify_reference_created(reference, http_request=None):
         link=f"{url}#reference-{reference.pk}",
     )
     if http_request is not None:
-        _send_email(notification, community, http_request)
+        _send_email(notification, community, http_request.build_absolute_uri(notification.link))
+    elif base_url:
+        _send_email(notification, community, base_url.rstrip("/") + notification.link)
 
 
-def _send_email(notification, community, http_request):
+def _send_email(notification, community, detail_url):
     from django.conf import settings
     from django.utils import translation
 
@@ -54,7 +56,7 @@ def _send_email(notification, community, http_request):
             "reference": reference,
             "skills": [t.skill.get_name() for t in reference.skill_tags.exclude(status="declined")],
             "community": community,
-            "detail_url": http_request.build_absolute_uri(notification.link),
+            "detail_url": detail_url,
         }
         text_body = render_to_string("references/email/reference_created.txt", context)
         html_body = render_to_string("references/email/reference_created.html", context)

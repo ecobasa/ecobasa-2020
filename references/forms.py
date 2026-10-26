@@ -55,3 +55,24 @@ class ReferenceForm(forms.ModelForm):
             if skill.pk not in tagged:
                 status = ReferenceSkill.STATUS_CONFIRMED if holder.has_skill(skill) else ReferenceSkill.STATUS_PENDING
                 ReferenceSkill.objects.create(reference=reference, skill=skill, status=status)
+
+
+class ReferenceRequestForm(forms.Form):
+    """A reference asked for after a match, made for a phone: a few sentences and maybe a
+    photo. Shown to the author as their story."""
+
+    impression = forms.ChoiceField(
+        label=_("Impression"), choices=Reference.IMPRESSION_CHOICES, initial=Reference.IMPRESSION_POSITIVE,
+        widget=forms.RadioSelect,
+    )
+    text = forms.CharField(
+        label=_("Your story"), max_length=5000,
+        widget=forms.Textarea(attrs={
+            "rows": 6, "class": "form-input",
+            "placeholder": _("What happened? What are you grateful for?"),
+        }),
+    )
+    photo = forms.ImageField(label=_("Photo"), required=False)
+    share_publicly = forms.BooleanField(
+        label=Reference._meta.get_field("share_publicly").verbose_name, required=False,
+    )

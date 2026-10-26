@@ -33,6 +33,10 @@ EMAIL_BACKEND = env(
 EMAIL_HOST = env("EMAIL_HOST", default="mailpit")
 EMAIL_PORT = env.int("EMAIL_PORT", default=1025)
 DEFAULT_FROM_EMAIL = env("DJANGO_DEFAULT_FROM_EMAIL", default="ecobasa <noreply@ecobasa.org>")
+SITE_URL = env("DJANGO_SITE_URL", default="http://localhost:8000")
+# Replies to reference requests land in Mailpit too; send_test_reply writes one
+REFERENCE_REPLY_ADDRESS = env("REFERENCE_REPLY_ADDRESS", default="references@ecobasa.org")
+REFERENCE_MAILPIT_URL = env("REFERENCE_MAILPIT_URL", default="http://mailpit:8025")
 
 
 # django-debug-toolbar
