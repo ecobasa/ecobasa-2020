@@ -103,20 +103,18 @@ function recipientSearch() {
     init() {
       const m = window.location.pathname.match(/\/messages\/write\/([^/]+)\/?$/);
       if (m && m[1]) {
-        const name = decodeURIComponent(m[1]);
-        this.query = name;
+        const userId = decodeURIComponent(m[1]);
         this.fixed = true;
-        fetch('/users/autocomplete/?q=' + encodeURIComponent(name))
+        this.$refs.hidden.value = userId;
+        fetch('/users/autocomplete/?id=' + encodeURIComponent(userId))
           .then(r => r.json())
           .then(data => {
             if (data && data[0]) {
               this.selected = data[0];
-              this.$refs.hidden.value = data[0].value;
-            } else {
-              this.$refs.hidden.value = name;
+              this.query = data[0].name;
             }
           })
-          .catch(() => { this.$refs.hidden.value = name; });
+          .catch(() => {});
       }
       // style Django-rendered fields
       ['id_subject', 'id_body'].forEach(id => {
@@ -143,8 +141,9 @@ function recipientSearch() {
 
     onBlur() {
       setTimeout(() => {
+        // Only a picked suggestion carries a user id
         if (!this.selected || this.selected.name !== this.query) {
-          this.$refs.hidden.value = this.query;
+          this.$refs.hidden.value = '';
         }
         this.suggestions = [];
       }, 150);

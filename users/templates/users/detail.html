@@ -54,7 +54,7 @@
 				</div>
 			{% endif %}
 			{% if request.user.is_authenticated and request.user.pk != user.pk %}
-				<a class="btn block mt-10" href="{% url 'postman:write' user.name %}"><i class="fa fa-envelope mr-2"></i>{% trans "Message" %}</a>
+				<a class="btn block mt-10" href="{% url 'postman:write_with_recipients' user.pk %}"><i class="fa fa-envelope mr-2"></i>{% trans "Message" %}</a>
 			{% endif %}
 
 			<!-- Communities (the ones they own, until there is real membership) -->
