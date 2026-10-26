@@ -78,7 +78,7 @@ THIRD_PARTY_APPS = [
     "django_countries",
 ]
 
-LOCAL_APPS = ["users", "homepage", "gifts", "communities", "skills", "notifications", "matches", "references", "projects"]
+LOCAL_APPS = ["users", "homepage", "gifts", "communities", "skills", "notifications", "matches", "references", "projects", "suggestions"]
 
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -188,6 +188,7 @@ TEMPLATES = [
                 "django.contrib.messages.context_processors.messages",
                 "notifications.context_processors.unread_notifications",
                 "references.context_processors.pending_reference_skills",
+                "suggestions.context_processors.new_suggestions",
             ],
         },
     }

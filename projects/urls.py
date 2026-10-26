@@ -9,7 +9,6 @@ urlpatterns = [
     path("new/<slug:community_slug>/", views.create, name="create"),
     path("calendar/<slug:community_slug>/", calendar.calendar, name="calendar"),
     path("confirm/<str:token>/", views.confirm_by_email, name="confirm_by_email"),
-    path("emails/stop/<str:token>/", views.digest_unsubscribe, name="digest_unsubscribe"),
     path("<int:pk>/", views.detail, name="detail"),
     path("<int:pk>/edit/", views.edit, name="edit"),
     path("<int:pk>/archive/", views.archive, name="archive"),

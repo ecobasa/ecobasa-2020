@@ -1,5 +1,5 @@
 from django.db import models
-from django.utils.translation import gettext_lazy as _
+from django.utils.translation import gettext_lazy as _, ngettext
 
 from users.models import User
 
@@ -28,6 +28,7 @@ class Notification(models.Model):
     TAG_MESSAGE     = "message"
     TAG_SKILL_NUDGE = "skill_nudge"
     TAG_REFERENCE   = "reference"
+    TAG_SUGGESTION  = "suggestion"
 
     recipient   = models.ForeignKey(User, on_delete=models.CASCADE, related_name="notifications")
     actor       = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name="notifications_sent")
@@ -71,6 +72,8 @@ class Notification(models.Model):
             return str(SKILL_NUDGE_TEXT)
         if self.tag == self.TAG_REFERENCE:
             return self._reference_text()
+        if self.tag == self.TAG_SUGGESTION:
+            return self._suggestion_text()
         target = self._target()
         if target is None:
             return self.verb
@@ -97,6 +100,17 @@ class Notification(models.Model):
 
         actor = (self.actor.name or self.actor.email) if self.actor else _("Someone")
         return str(template) % {"actor": actor, "title": target.get_match_display_name()}
+
+    def _suggestion_text(self):
+        """Counts what is new for them, so the one notification stays true."""
+        new = self.recipient.suggestions.filter(seen_at=None, dismissed_at=None).count()
+        if not new:
+            return str(_("Matches near you: what fits your wishes, offers and skills."))
+        return ngettext(
+            "%(count)s new match near you: something fits your wishes, offers or skills.",
+            "%(count)s new matches near you: things fit your wishes, offers or skills.",
+            new,
+        ) % {"count": new}
 
     def _reference_text(self):
         subject = self.reference.subject if self.reference_id else None
@@ -129,4 +143,5 @@ class Notification(models.Model):
             self.TAG_MESSAGE:     "fa-comment",
             self.TAG_SKILL_NUDGE: "fa-graduation-cap",
             self.TAG_REFERENCE:   "fa-comments",
+            self.TAG_SUGGESTION:  "fa-handshake-angle",
         }.get(self.tag, "fa-bell")

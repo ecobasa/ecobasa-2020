@@ -219,19 +219,3 @@ def offer_help(request, pk):
 def _day_start(day):
     return timezone.make_aware(datetime.combine(day, time.min)) if day else None
 
-
-def digest_unsubscribe(request, token):
-    """One click from the weekly project email turns it off, no login needed."""
-    from django.contrib.auth import get_user_model
-
-    from .digest import read_unsubscribe_token
-
-    try:
-        pk = read_unsubscribe_token(token)
-    except signing.BadSignature:
-        return HttpResponseBadRequest("Invalid link.")
-    get_user_model().objects.filter(pk=pk).update(project_digest=False)
-    messages.success(request, _(
-        "You won't get emails about projects nearby any more. You can turn them on again in your profile."
-    ))
-    return redirect("projects:list")

@@ -1,0 +1,40 @@
+{% extends 'dashboard/base.html' %}
+{% load i18n %}
+
+{% block head_title %}{% trans "Matches for you" %} — ecobasa{% endblock %}
+
+{% block dashboard_content %}
+<h1>{% trans "Matches for you" %}</h1>
+<p class="text-sm mb-6">{% blocktrans trimmed with km=request.user.match_radius %}
+  What people, communities and projects within {{ km }} km offer or need that fits your wishes,
+  offers and skills. New matches appear as soon as someone adds something.
+{% endblocktrans %} <a href="{% url 'users:update' %}" class="underline">{% trans "Change distance" %}</a></p>
+
+{% if suggestions %}
+  <ul class="list-none p-0 space-y-2">
+    {% for suggestion in suggestions %}
+      <li class="flex items-start gap-3 p-4 rounded border-2 bg-secondary bg-opacity-50 {% if suggestion.pk in new_ids %}border-purple{% else %}border-transparent{% endif %}">
+        <i class="fa-solid {{ suggestion.icon }} text-2xl text-primary opacity-70 mt-1 w-8 text-center"></i>
+        <div class="flex-1 min-w-0">
+          <a href="{{ suggestion.url }}" class="font-semibold hover:underline">{{ suggestion.text }}</a>
+          {% if suggestion.pk in new_ids %}<span class="pill bg-purple text-xs ml-1">{% trans "New" %}</span>{% endif %}
+          <div class="text-xs mt-1 opacity-80">
+            {% blocktrans with own=suggestion.own_text %}fits {{ own }}{% endblocktrans %}
+            {% if suggestion.distance_km is not None %}· {% blocktrans with km=suggestion.distance_km %}{{ km }} km away{% endblocktrans %}{% endif %}
+          </div>
+          <div class="flex flex-wrap items-center gap-3 mt-2">
+            <a href="{{ suggestion.url }}" class="btn text-sm py-1 px-3">{% if suggestion.other_model == "need" %}{% trans "Help with this" %}{% else %}{% trans "Have a look" %}{% endif %}</a>
+            {% if suggestion.other_user %}<a href="{{ suggestion.other_user.get_absolute_url }}" class="text-sm underline">{{ suggestion.other_user.name|default:suggestion.other_user.email }}</a>{% endif %}
+            <form method="post" action="{% url 'suggestions:dismiss' suggestion.pk %}" class="ml-auto">{% csrf_token %}
+              <button type="submit" class="text-sm opacity-70 hover:opacity-100" title="{% trans "Doesn't fit, hide it" %}"><i class="fa fa-times mr-1"></i>{% trans "Hide" %}</button>
+            </form>
+          </div>
+        </div>
+      </li>
+    {% endfor %}
+  </ul>
+  {% include "dashboard/_pager.html" %}
+{% else %}
+  <p class="italic">{% trans "No matches yet. Add what you wish for, what you can give and your skills, and set your place in your profile: we'll let you know when something fits." %}</p>
+{% endif %}
+{% endblock %}

@@ -20,6 +20,7 @@ urlpatterns = [
     path("matches/", include("matches.urls", namespace="matches")),
     path("references/", include("references.urls", namespace="references")),
     path("projects/", include("projects.urls", namespace="projects")),
+    path("suggestions/", include("suggestions.urls", namespace="suggestions")),
 ]
 
 if settings.DEBUG:

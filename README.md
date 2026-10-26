@@ -101,13 +101,25 @@ Needs have an amount ("200 kg", "2 people"); helpers say how much they bring, so
 can cover a need in parts. Material and tool needs can have a gift category, and the open
 needs of current projects show on the gifts map and list ("Project needs").
 
-Once a week, people get an email about projects within their chosen distance
-(`User.project_digest_radius`, 150 km by default) with open needs that match their
-skills or the gifts they offer. Each need is suggested to each person once; the email has a
-one-click unsubscribe link, and the profile has the setting.
+## Matches
+
+As soon as a gift offer or wish, a skill, a skill wish or a project need is saved, the
+matching (`suggestions/engine.py`) looks for what fits it nearby and suggests the pair to
+both sides: gift wishes and offers with similar titles, skill wishes and project needs
+with the people and communities offering that skill, and material/tool needs with gift
+offers (also by gift category). Each side only hears about things within their own
+distance (`User.match_radius`, 150 km by default). New matches show right away in the
+notifications and at `/suggestions/`; once a week, people get an email with what's new
+(also those who only have wishes). The profile has the distance and the email switch, and
+every email a one-click unsubscribe link.
+
+After deploying the matching once, match what already exists:
+```
+python manage.py match_everything
+```
 
 Two more cron jobs:
 ```
 30 8 * * *   python manage.py archive_stale_projects
-0 17 * * 0   python manage.py send_project_digest
+0 17 * * 0   python manage.py send_suggestion_emails
 ```

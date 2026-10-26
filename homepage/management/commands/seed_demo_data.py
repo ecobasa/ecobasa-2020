@@ -729,8 +729,8 @@ class Command(BaseCommand):
         )
         Project.objects.filter(pk=stale.pk).update(updated_at=timezone.now() - timedelta(days=75))
 
-        # Björn (Bautzen, 50 km away) is a woodworker and gives away scythes: the weekly
-        # email (send_project_digest) suggests the food forest to him
+        # Björn (Bautzen, 40 km away) is a woodworker and gives away scythes: the matching
+        # suggests the food forest's needs to him, and him to Luna
         scythes, _created = Listing.objects.get_or_create(
             owner=bjorn, title="Two old scythes", type="offer",
             defaults={"description": "Sharp enough, with a whetstone.", "location_name": bjorn.location_name,

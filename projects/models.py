@@ -292,14 +292,3 @@ class NeedOffer(models.Model):
     def amount(self):
         return self.need.format_amount(self.quantity)
 
-
-class DigestedNeed(models.Model):
-    """A need already suggested to someone in the weekly project email, so each need is
-    suggested to each person only once."""
-
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="+")
-    need = models.ForeignKey(Need, on_delete=models.CASCADE, related_name="+")
-    sent_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        unique_together = [("user", "need")]

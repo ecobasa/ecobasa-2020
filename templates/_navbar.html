@@ -134,6 +134,10 @@
                   <i class="fa fa-user mr-2"></i>
                   {% trans "Your Profile" %}
                 </a>
+                <a href="{% url 'suggestions:list' %}" class="dropdown-link">
+                  <span class="flex items-center"><i class="fa-solid fa-handshake-angle mr-2"></i>{% trans "Matches for you" %}
+                  {% if new_suggestions_count %}<span class="ml-auto pill bg-purple text-secondary text-xs">{{ new_suggestions_count }}</span>{% endif %}</span>
+                </a>
                 <a href="{% url 'matches:list' %}?type=volunteer" class="dropdown-link">
                   <i class="fa-solid fa-campground mr-2"></i>{% trans "Volunteer Visits" %}
                 </a>
@@ -249,6 +253,7 @@
         </div>
         <div class="mt-3" role="menu" aria-orientation="vertical" aria-labelledby="user-menu">
           <a href="{{ request.user.get_absolute_url }}" class="block px-4 py-2 text-base text-secondary hover:text-primary hover:bg-secondary focus:text-primary focus:bg-secondary" role="menuitem"><i class="fa fa-user mr-2"></i>{% trans "Your Profile" %}</a>
+          <a href="{% url 'suggestions:list' %}" class="mt-1 flex items-center px-4 py-2 text-base text-secondary hover:text-primary hover:bg-secondary focus:text-primary focus:bg-secondary" role="menuitem"><i class="fa-solid fa-handshake-angle mr-2"></i>{% trans "Matches for you" %}{% if new_suggestions_count %}<span class="ml-auto pill bg-purple text-secondary text-xs">{{ new_suggestions_count }}</span>{% endif %}</a>
           <a href="{% url 'postman:inbox' %}" class="mt-1 block px-4 py-2 text-base text-secondary hover:text-primary hover:bg-secondary focus:text-primary focus:bg-secondary" role="menuitem"><i class="fa fa-envelope mr-2"></i>{% trans "Messages" %}</a>
           <a href="{% url 'matches:list' %}" class="mt-1 block px-4 py-2 text-base text-secondary hover:text-primary hover:bg-secondary focus:text-primary focus:bg-secondary" role="menuitem"><i class="fa-solid fa-handshake mr-2"></i>{% trans "Matches" %}</a>
           <a href="{% url 'matches:list' %}?type=volunteer" class="mt-1 block px-4 py-2 text-base text-secondary hover:text-primary hover:bg-secondary focus:text-primary focus:bg-secondary" role="menuitem"><i class="fa-solid fa-campground mr-2"></i>{% trans "Volunteer Visits" %}</a>

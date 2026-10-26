@@ -11,7 +11,7 @@ from croppie.fields import CroppieField
 
 from gifts.forms import Fieldset
 from .models import User
-from skills.models import Skill, UserSkill, SkillWish, get_or_create_skill
+from skills.models import sync_skill_wishes, Skill, UserSkill, SkillWish, get_or_create_skill
 
 
 class SafeCroppieField(CroppieField):
@@ -158,7 +158,7 @@ class ProfileUpdateForm(forms.ModelForm):
     class Meta:
         model = User
         fields = ["name", "image", "about", "world", "ecobasa_what", "skills", "skill_wishes",
-                  "location_name", "location", "country", "project_digest", "project_digest_radius"]
+                  "location_name", "location", "country", "match_emails", "match_radius"]
         widgets = {
             "location": forms.HiddenInput(),
         }
@@ -194,9 +194,9 @@ class ProfileUpdateForm(forms.ModelForm):
             if fname in self.fields:
                 self.fields[fname].widget.attrs.update({'class': textarea_class})
         self.fields['image'].label = _("Upload new photo") if has_image else _("Photo")
-        self.fields['project_digest'].widget.attrs.update({'class': 'form-checkbox'})
-        self.fields['project_digest_radius'].widget.attrs.update({'class': 'form-input w-28', 'min': '5', 'max': '2000'})
-        self.fields['project_digest_radius'].required = False
+        self.fields['match_emails'].widget.attrs.update({'class': 'form-checkbox'})
+        self.fields['match_radius'].widget.attrs.update({'class': 'form-input w-28', 'min': '5', 'max': '2000'})
+        self.fields['match_radius'].required = False
         self.helper = FormHelper()
         self.helper.form_tag = False
         self.helper.layout = Layout(
@@ -209,8 +209,8 @@ class ProfileUpdateForm(forms.ModelForm):
             Field("skill_wishes"),
         )
 
-    def clean_project_digest_radius(self):
-        return self.cleaned_data.get("project_digest_radius") or self.instance.project_digest_radius or 150
+    def clean_match_radius(self):
+        return self.cleaned_data.get("match_radius") or self.instance.match_radius or 150
 
     def save(self, commit=True):
         user = super().save(commit=False)
@@ -224,9 +224,5 @@ class ProfileUpdateForm(forms.ModelForm):
                 skill, _ = get_or_create_skill(name)
                 UserSkill.objects.get_or_create(user=user, skill=skill)
             wish_val = self.cleaned_data.get('skill_wishes', '') or ''
-            new_wish_names = [s.strip() for s in wish_val.split(',') if s.strip()]
-            user.skill_wishes.all().delete()
-            for name in new_wish_names:
-                skill, _ = get_or_create_skill(name)
-                SkillWish.objects.create(user=user, skill=skill)
+            sync_skill_wishes(user.skill_wishes, [s.strip() for s in wish_val.split(',') if s.strip()], user=user)
         return user

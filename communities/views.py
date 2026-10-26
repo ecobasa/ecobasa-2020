@@ -13,7 +13,7 @@ from django.views.decorators.http import require_GET, require_POST
 from .models import Community
 from .models import CommunityPhoto
 from .forms import CommunityForm
-from skills.models import CommunitySkill, Skill, SkillWish, UserSkill, get_or_create_skill, skill_name_q, skill_slug_for_name
+from skills.models import sync_skill_wishes, CommunitySkill, Skill, SkillWish, UserSkill, get_or_create_skill, skill_name_q, skill_slug_for_name
 
 from django.contrib.gis.geos import Polygon, Point
 from django.contrib.gis.db.models.functions import Distance
@@ -203,10 +203,7 @@ def _skill_proposal_url(offer_list, wish_list):
 
 def _sync_community_skill_wishes(community, form):
     wish_val = form.cleaned_data.get('skill_wishes', '') or ''
-    community.skill_wishes.all().delete()
-    for name in [s.strip() for s in wish_val.split(',') if s.strip()]:
-        skill, _ = get_or_create_skill(name)
-        SkillWish.objects.create(community=community, skill=skill)
+    sync_skill_wishes(community.skill_wishes, [s.strip() for s in wish_val.split(',') if s.strip()], community=community)
 
 
 def _collect_gallery_files(form, request):

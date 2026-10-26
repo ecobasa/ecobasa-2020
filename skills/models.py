@@ -111,6 +111,17 @@ def get_or_create_skill(name=None, slug=None):
     return Skill.objects.get_or_create(name__iexact=name.strip(), defaults={"name": name.strip()})
 
 
+def sync_skill_wishes(wishes, names, **owner):
+    """Make the skill wishes in `wishes` (a user's or community's related manager) the
+    skills named, keeping the ones that stay. Removing and re-adding them all on every
+    save would make them look new each time (and be matched and announced again)."""
+    wanted = {get_or_create_skill(name)[0].pk for name in names}
+    wishes.exclude(skill_id__in=wanted).delete()
+    existing = set(wishes.values_list("skill_id", flat=True))
+    for skill_id in wanted - existing:
+        SkillWish.objects.create(skill_id=skill_id, **owner)
+
+
 class Skill(models.Model):
     name = models.CharField(_("Name"), max_length=100, unique=True)
     slug = models.SlugField(unique=True, blank=True)
