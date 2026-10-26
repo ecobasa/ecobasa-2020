@@ -264,6 +264,12 @@ class Need(models.Model):
             "promised": promised, "amount": self.format_amount(self.quantity),
         }
 
+    @property
+    def promises(self):
+        """The accepted offers for this need, each with the helper (match.from_user) and
+        how much they bring (amount)."""
+        return self._offers_by_status()[0]
+
     def promised_by(self):
         return [o.match.from_user for o in self._offers_by_status()[0]]
 

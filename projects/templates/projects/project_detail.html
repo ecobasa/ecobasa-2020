@@ -70,8 +70,10 @@
                 {% if need.amount %}<span class="opacity-70"> · {{ need.amount }}</span>{% endif %}
                 <span class="text-xs opacity-70 block">{{ need.get_kind_display }}
                   {% if need.status == 'covered' %}· {% trans "covered" %}
-                  {% elif need.status == 'promised' %}· {% trans "promised by" %} {% for person in need.promised_by %}{{ person.name|default:person.email }}{% if not forloop.last %}, {% endif %}{% endfor %}
-                  {% elif need.progress %}· {{ need.progress }}
+                  {% elif need.status == 'promised' or need.progress %}·
+                    {% if need.progress %}{{ need.progress }},{% endif %}
+                    {% trans "promised by" %}
+                    {% for offer in need.promises %}{% with person=offer.match.from_user %}<a href="{{ person.get_absolute_url }}" class="underline hover:text-primary">{{ person.name|default:person.email }}</a>{% if offer.amount and need.quantity %} ({{ offer.amount }}){% endif %}{% endwith %}{% if not forloop.last %}, {% endif %}{% endfor %}
                   {% elif need.status == 'offered' %}· {% trans "someone offered this, waiting for an answer" %}{% endif %}
                 </span>
               </div>

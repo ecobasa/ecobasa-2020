@@ -579,3 +579,14 @@ def test_gift_titles_match_needs_word_by_word():
     assert _listing_for(SimpleNamespace(title="Scythe", category_id=None), [listing]) is listing
     assert _listing_for(SimpleNamespace(title="Old car", category_id=None), [listing]) is None  # not by "old"
     assert _listing_for(SimpleNamespace(title="Clay", category_id=None), [listing]) is None
+
+
+@pytest.mark.django_db
+def test_project_page_links_the_people_who_promised(project, helper):
+    clay = project.needs.get(title="Clay")  # 200 kg
+    match = _offer(project, helper, Match.STATUS_ACCEPTED)
+    NeedOffer.objects.create(need=clay, match=match, quantity=120)
+    with translation.override("en"):
+        content = Client(HTTP_ACCEPT_LANGUAGE="en").get(project.get_absolute_url()).content.decode()
+    assert "120 of 200 kg promised" in content
+    assert f'<a href="{helper.get_absolute_url()}" class="underline hover:text-primary">Hugo</a> (120 kg)' in content
