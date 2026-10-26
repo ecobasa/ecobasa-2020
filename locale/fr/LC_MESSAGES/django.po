@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ecobasa\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-26 16:38+0100\n"
+"POT-Creation-Date: 2026-10-26 16:45+0100\n"
 "PO-Revision-Date: 2026-10-23 12:00+0200\n"
 "Last-Translator: ecobasa\n"
 "Language-Team: fr\n"
@@ -259,7 +259,7 @@ msgid "%(actor)s requested a volunteer stay at %(title)s"
 msgstr "%(actor)s a demandé un séjour en communauté chez %(title)s"
 
 #: communities/models.py:157 projects/models.py:33
-#: projects/templates/projects/project_detail.html:129
+#: projects/templates/projects/project_detail.html:133
 msgid "Community"
 msgstr "Communauté"
 
@@ -315,7 +315,7 @@ msgid "Dismiss"
 msgstr "Masquer"
 
 #: communities/templates/communities/_volunteer_skill_proposal.html:30
-#: gifts/filters.py:16 projects/templates/projects/project_detail.html:93
+#: gifts/filters.py:16 projects/templates/projects/project_detail.html:97
 msgid "Offers"
 msgstr "Offres"
 
@@ -440,7 +440,7 @@ msgid "Contact Information"
 msgstr "Contact"
 
 #: communities/templates/communities/community_detail.html:269
-#: projects/templates/projects/project_detail.html:139
+#: projects/templates/projects/project_detail.html:138
 msgid "Gift-economy Ambassador"
 msgstr "Ambassadeur·rice de l'économie du don"
 
@@ -1902,7 +1902,6 @@ msgstr "à %(km)s km"
 
 #: projects/templates/projects/email/digest.html:35
 #: projects/templates/projects/email/digest.txt:8
-#: projects/templates/projects/project_detail.html:83
 msgid "I can help"
 msgstr "Je peux aider"
 
@@ -1967,17 +1966,16 @@ msgstr "Mettre à jour le projet"
 
 #: projects/templates/projects/offer_help.html:4
 #: projects/templates/projects/offer_help.html:13
-#: projects/templates/projects/project_detail.html:150
 msgid "Offer help"
 msgstr "Proposer de l'aide"
 
 #: projects/templates/projects/offer_help.html:15
-#: projects/templates/projects/project_detail.html:122
+#: projects/templates/projects/project_detail.html:126
 msgid "Food"
 msgstr "Repas"
 
 #: projects/templates/projects/offer_help.html:16
-#: projects/templates/projects/project_detail.html:123
+#: projects/templates/projects/project_detail.html:127
 msgid "A bed"
 msgstr "Un lit"
 
@@ -2071,40 +2069,52 @@ msgstr "promis par"
 msgid "someone offered this, waiting for an answer"
 msgstr "quelqu'un l'a proposé, en attente de réponse"
 
-#: projects/templates/projects/project_detail.html:80
+#: projects/templates/projects/project_detail.html:81
+msgid "Help with this"
+msgstr "Aider pour ça"
+
+#: projects/templates/projects/project_detail.html:86
 msgid "Needed again"
 msgstr "De nouveau nécessaire"
 
-#: projects/templates/projects/project_detail.html:80
+#: projects/templates/projects/project_detail.html:86
 msgid "Mark as covered"
 msgstr "Marquer comme couvert"
 
-#: projects/templates/projects/project_detail.html:89
+#: projects/templates/projects/project_detail.html:93
 msgid "No specific needs listed. Helping hands are welcome!"
 msgstr "Aucun besoin précis indiqué. Les coups de main sont les bienvenus !"
 
-#: projects/templates/projects/project_detail.html:114
+#: projects/templates/projects/project_detail.html:118
 msgid "No offers yet."
 msgstr "Pas encore de propositions."
 
-#: projects/templates/projects/project_detail.html:120
+#: projects/templates/projects/project_detail.html:124
 msgid "What the community provides"
 msgstr "Ce que la communauté offre"
 
-#: projects/templates/projects/project_detail.html:125
+#: projects/templates/projects/project_detail.html:129
 #, python-format
 msgid "Room for %(count)s volunteer at a time"
 msgid_plural "Room for %(count)s volunteers at a time"
 msgstr[0] "Place pour %(count)s bénévole à la fois"
 msgstr[1] "Place pour %(count)s bénévoles à la fois"
 
-#: projects/templates/projects/project_detail.html:126
+#: projects/templates/projects/project_detail.html:130
 msgid "Ask the community."
 msgstr "Demande à la communauté."
 
-#: projects/templates/projects/project_detail.html:147
-msgid "Your offer"
-msgstr "Ta proposition"
+#: projects/templates/projects/project_detail.html:155
+msgid "Support this project"
+msgstr "Soutenir"
+
+#: projects/templates/projects/project_detail.html:159
+msgid "You already offered help."
+msgstr "Tu as déjà proposé ton aide."
+
+#: projects/templates/projects/project_detail.html:159
+msgid "See your offer"
+msgstr "Voir ta proposition"
 
 #: projects/templates/projects/project_form.html:4
 #: projects/templates/projects/project_form.html:9

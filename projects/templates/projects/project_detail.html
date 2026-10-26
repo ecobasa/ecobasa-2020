@@ -75,12 +75,16 @@
                   {% elif need.status == 'offered' %}· {% trans "someone offered this, waiting for an answer" %}{% endif %}
                 </span>
               </div>
+              {% if project.is_current and not need.is_done and community.owner and request.user != community.owner %}
+                {% url 'projects:offer_help' project.pk as help_url %}
+                <a href="{% if request.user.is_authenticated %}{{ help_url }}?need={{ need.pk }}{% else %}{% url 'users:login' %}?next={{ help_url|urlencode }}%3Fneed%3D{{ need.pk }}{% endif %}" class="btn text-sm py-1 px-3 whitespace-nowrap">
+                  <i class="fa fa-hands-helping mr-1"></i>{% trans "Help with this" %}
+                </a>
+              {% endif %}
               {% if can_edit %}
                 <form method="post" action="{% url 'projects:toggle_need' project.pk need.pk %}">{% csrf_token %}
                   <button type="submit" class="text-sm underline">{% if need.covered_at %}{% trans "Needed again" %}{% else %}{% trans "Mark as covered" %}{% endif %}</button>
                 </form>
-              {% elif project.is_current and not need.is_done and community.owner %}
-                <a href="{% url 'projects:offer_help' project.pk %}?need={{ need.pk }}" class="btn text-sm py-1 px-3">{% trans "I can help" %}</a>
               {% endif %}
             </li>
           {% endfor %}
@@ -130,25 +134,30 @@
       <a href="{{ community.get_absolute_url }}" class="font-serif font-bold text-lg hover:underline"><i class="fa-solid {{ community.get_type_icon }} mr-1"></i>{{ community.name }}</a>
       {% if community.location_name %}<p class="text-sm mt-1"><i class="fa fa-map-marker mr-1"></i>{{ community.location_name }}</p>{% endif %}
       {% if community.owner %}
-        <div class="flex items-center gap-3 mt-4">
-          <a href="{{ community.owner.get_absolute_url }}">
-            {% if community.owner.image %}<img src="{{ community.owner.image.url }}" class="rounded-full h-12 w-12 object-cover" alt="">{% else %}<span class="inline-flex h-12 w-12 rounded-full bg-primary bg-opacity-20 items-center justify-center"><i class="fa fa-user text-primary"></i></span>{% endif %}
+        <div class="text-center mt-6">
+          <h3>{% trans "Gift-economy Ambassador" %}</h3>
+          <a href="{{ community.owner.get_absolute_url }}" class="block mb-4">
+            {% if community.owner.image %}
+              <img src="{{ community.owner.image.url }}" class="rounded-full h-20 w-20 mx-auto mb-2 object-cover" alt="{{ community.owner.name }}">
+            {% else %}
+              <i class="fa fa-user text-6xl text-primary rounded-full border border-dashed border-primary p-10 mt-15"></i>
+            {% endif %}
+            <div class="font-serif font-bold text-xl">{{ community.owner.name|default:community.owner.email }}</div>
           </a>
-          <div class="text-sm">
-            <a href="{{ community.owner.get_absolute_url }}" class="font-semibold hover:underline">{{ community.owner.name|default:community.owner.email }}</a>
-            <div class="text-xs opacity-70">{% trans "Gift-economy Ambassador" %}</div>
-            <div class="text-xs">{% include "projects/_freshness.html" with when=community.owner.last_active %}</div>
-          </div>
+          <div class="text-sm -mt-2">{% include "projects/_freshness.html" with when=community.owner.last_active %}</div>
         </div>
       {% endif %}
 
       {% if project.is_current and community.owner and request.user != community.owner %}
+        {% url 'projects:offer_help' project.pk as help_url %}
+        <a href="{% if request.user.is_authenticated %}{{ help_url }}{% else %}{% url 'users:login' %}?next={{ help_url|urlencode }}{% endif %}"
+           class="btn btn-lg block w-full mt-8 text-center">
+          <i class="fa fa-hands-helping mr-1"></i>{% trans "Support this project" %}
+        </a>
         {% if own_offer %}
-          <a href="{{ own_offer.get_absolute_url }}" class="btn btn-lg w-full mt-8"><i class="fa-solid fa-handshake mr-2"></i>{% trans "Your offer" %}</a>
-        {% else %}
-          <a href="{% if request.user.is_authenticated %}{% url 'projects:offer_help' project.pk %}{% else %}{% url 'users:login' %}?next={% url 'projects:offer_help' project.pk %}{% endif %}" class="btn btn-lg w-full mt-8">
-            <i class="fa fa-hands-helping mr-2"></i>{% trans "Offer help" %}
-          </a>
+          <p class="text-sm text-center mt-2">
+            {% trans "You already offered help." %} <a href="{{ own_offer.get_absolute_url }}" class="underline">{% trans "See your offer" %}</a>
+          </p>
         {% endif %}
       {% endif %}
     </aside>
