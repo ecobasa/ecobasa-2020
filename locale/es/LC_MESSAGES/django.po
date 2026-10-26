@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ecobasa\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-26 13:22+0100\n"
+"POT-Creation-Date: 2026-10-26 13:35+0100\n"
 "PO-Revision-Date: 2026-10-23 12:00+0200\n"
 "Last-Translator: ecobasa\n"
 "Language-Team: es\n"
@@ -97,7 +97,7 @@ msgid "Slug"
 msgstr "Slug"
 
 #: communities/models.py:24 gifts/filters.py:18
-#: matches/templates/matches/matches_list.html:69 references/forms.py:12
+#: matches/templates/matches/matches_list.html:69 references/forms.py:14
 #: references/templates/references/email/reference_created.html:35
 #: references/templates/references/email/reference_created.txt:9
 #: skills/models.py:122 skills/templates/skills/communityskill_detail.html:15
@@ -120,6 +120,7 @@ msgstr ""
 
 #: communities/models.py:27 gifts/models.py:37 skills/forms.py:110
 #: skills/forms.py:171 skills/forms.py:242 skills/models.py:117
+#: skills/templates/skills/_userskill_add_several_row.html:20
 #: skills/templates/skills/communityskill_form.html:76
 #: skills/templates/skills/skillwish_form.html:24
 #: skills/templates/skills/userskill_form.html:87
@@ -286,7 +287,15 @@ msgstr "No se han encontrado comunidades."
 msgid "Open"
 msgstr "Abrir"
 
-#: communities/templates/communities/_volunteer_skill_proposal.html:19
+#: communities/templates/communities/_volunteer_skill_proposal.html:20
+msgid ""
+"Your application mentioned a skill that isn't on your profile yet — do you "
+"want to add it now, so others can find you by it too?"
+msgstr ""
+"Tu solicitud menciona una habilidad que aún no está en tu perfil. ¿Quieres "
+"añadirla ahora para que otras personas también te encuentren por ella?"
+
+#: communities/templates/communities/_volunteer_skill_proposal.html:22
 msgid ""
 "Your application mentioned skills that you dont have on your profile yet — "
 "Do you want to add them now, so others can find you by them too?"
@@ -294,24 +303,24 @@ msgstr ""
 "Tu solicitud menciona habilidades que aún no están en tu perfil. ¿Quieres "
 "añadirlas ahora para que otras personas también te encuentren por ellas?"
 
-#: communities/templates/communities/_volunteer_skill_proposal.html:21
+#: communities/templates/communities/_volunteer_skill_proposal.html:25
 msgid "Dismiss"
 msgstr "Descartar"
 
-#: communities/templates/communities/_volunteer_skill_proposal.html:26
+#: communities/templates/communities/_volunteer_skill_proposal.html:30
 #: gifts/filters.py:16
 msgid "Offers"
 msgstr "Ofertas"
 
-#: communities/templates/communities/_volunteer_skill_proposal.html:35
+#: communities/templates/communities/_volunteer_skill_proposal.html:39
 msgid "Learning goals"
 msgstr "Objetivos de aprendizaje"
 
-#: communities/templates/communities/_volunteer_skill_proposal.html:43
+#: communities/templates/communities/_volunteer_skill_proposal.html:47
 msgid "No thanks"
 msgstr "No, gracias"
 
-#: communities/templates/communities/_volunteer_skill_proposal.html:44
+#: communities/templates/communities/_volunteer_skill_proposal.html:48
 msgid "Review and add"
 msgstr "Revisar y añadir"
 
@@ -449,11 +458,12 @@ msgstr "Escribe un mensaje breve sobre tu motivación y tus habilidades"
 #: gifts/templates/gifts/listing_delete_confirm.html:29
 #: gifts/templates/gifts/listing_form.html:39
 #: matches/templates/matches/match_detail.html:351
-#: references/templates/references/_references.html:68
+#: references/templates/references/_references.html:35
 #: skills/templates/skills/communityskill_confirm_delete.html:17
 #: skills/templates/skills/communityskill_form.html:95
 #: skills/templates/skills/skillwish_form.html:35
 #: skills/templates/skills/skillwish_form.html:39
+#: skills/templates/skills/userskill_add_several.html:44
 #: skills/templates/skills/userskill_confirm_delete.html:17
 #: skills/templates/skills/userskill_form.html:115
 #: templates/postman/write.html:87 users/templates/users/register.html:37
@@ -651,21 +661,21 @@ msgstr "Esta comunidad no tiene persona de contacto."
 msgid "Your request has been sent to %(community)s!"
 msgstr "¡Tu solicitud se ha enviado a %(community)s!"
 
-#: communities/views.py:218 communities/views.py:265
+#: communities/views.py:235 communities/views.py:282
 #, python-format
 msgid "Uploaded %(count)s image(s)."
 msgstr "Se han subido %(count)s imagen(es)."
 
-#: communities/views.py:223 communities/views.py:271
+#: communities/views.py:240 communities/views.py:288
 #, python-format
 msgid "Form invalid: %(errors)s"
 msgstr "Formulario no válido: %(errors)s"
 
-#: communities/views.py:241
+#: communities/views.py:258
 msgid "Community deleted."
 msgstr "Comunidad eliminada."
 
-#: communities/views.py:266
+#: communities/views.py:283
 msgid "Community updated."
 msgstr "Comunidad actualizada."
 
@@ -1442,30 +1452,30 @@ msgstr "Todavía no hay notificaciones."
 msgid "References"
 msgstr "Referencias"
 
-#: references/forms.py:21
+#: references/forms.py:15 references/models.py:101 users/forms.py:196
+msgid "Photo"
+msgstr "Foto"
+
+#: references/forms.py:26
 msgid "What happened? How did you feel, and what did you need?"
 msgstr "¿Qué pasó? ¿Cómo te sentiste y qué necesitabas?"
 
-#: references/forms.py:65 references/models.py:88
-#: references/templates/references/email/reference_created.html:33
-#: references/templates/references/email/reference_created.txt:5
-#: references/templates/references/email/reference_received.html:32
-#: references/templates/references/email/reference_received.txt:5
-msgid "Impression"
-msgstr "Impresión"
-
 #
-#: references/forms.py:69
+#: references/forms.py:34
 msgid "Your story"
 msgstr "Tu historia"
 
-#: references/forms.py:72
+#: references/forms.py:35
 msgid "What happened? What are you grateful for?"
 msgstr "¿Qué pasó? ¿Por qué estás agradecido/a?"
 
-#: references/forms.py:75 references/models.py:101 users/forms.py:196
-msgid "Photo"
-msgstr "Foto"
+#: references/forms.py:54
+msgid "This photo could not be read. Please try another one."
+msgstr "No se pudo leer esta foto. Prueba con otra."
+
+#: references/forms.py:113
+msgid "Skills listed here"
+msgstr "Habilidades de este perfil"
 
 #: references/models.py:68
 msgid "Positive"
@@ -1478,6 +1488,14 @@ msgstr "Neutral"
 #: references/models.py:70
 msgid "Negative"
 msgstr "Negativo"
+
+#: references/models.py:88
+#: references/templates/references/email/reference_created.html:33
+#: references/templates/references/email/reference_created.txt:5
+#: references/templates/references/email/reference_received.html:32
+#: references/templates/references/email/reference_received.txt:5
+msgid "Impression"
+msgstr "Impresión"
 
 #: references/models.py:89
 msgid "Your experience"
@@ -1719,6 +1737,37 @@ msgstr ""
 msgid "Add to my skills"
 msgstr "Añadir a mis habilidades"
 
+#: references/templates/references/_reference_form_fields.html:20
+msgid "Which skills was it about?"
+msgstr "¿De qué habilidades se trataba?"
+
+#: references/templates/references/_reference_form_fields.html:22
+msgid "Skills they don't list yet are added once they confirm."
+msgstr ""
+"Las habilidades que aún no figuran en su perfil se añaden cuando las "
+"confirma."
+
+#: references/templates/references/_reference_form_fields.html:27
+msgid "Which gifts was it about?"
+msgstr "¿De qué regalos se trataba?"
+
+#: references/templates/references/_reference_form_fields.html:36
+msgid "Only the name is kept, nothing else."
+msgstr "Solo se guarda el nombre, nada más."
+
+#
+#: references/templates/references/_reference_form_fields.html:47
+msgid "Choose another photo"
+msgstr "Elegir otra foto"
+
+#: references/templates/references/_reference_form_fields.html:47
+msgid "Add a photo"
+msgstr "Añadir una foto"
+
+#: references/templates/references/_reference_form_fields.html:56
+msgid "With your name and photo. You can change this here any time."
+msgstr "Con tu nombre y tu foto. Puedes cambiarlo aquí en cualquier momento."
+
 #: references/templates/references/_references.html:7
 #, python-format
 msgid "%(counter)s positive"
@@ -1749,33 +1798,15 @@ msgstr "Aún no hay referencias."
 msgid "Edit your reference"
 msgstr "Editar tu referencia"
 
-#: references/templates/references/_references.html:47
-msgid "Which skills was it about?"
-msgstr "¿De qué habilidades se trataba?"
-
-#: references/templates/references/_references.html:49
-msgid "Skills they don't list yet are added once they confirm."
-msgstr ""
-"Las habilidades que aún no figuran en su perfil se añaden cuando las "
-"confirma."
-
-#: references/templates/references/_references.html:54
-msgid "Which gifts was it about?"
-msgstr "¿De qué regalos se trataba?"
-
-#: references/templates/references/_references.html:63
-msgid "Only the name is kept, nothing else."
-msgstr "Solo se guarda el nombre, nada más."
-
-#: references/templates/references/_references.html:67
+#: references/templates/references/_references.html:34
 msgid "Save reference"
 msgstr "Guardar referencia"
 
-#: references/templates/references/_references.html:74
+#: references/templates/references/_references.html:41
 msgid "Remove your reference"
 msgstr "Eliminar tu referencia"
 
-#: references/templates/references/_references.html:140
+#: references/templates/references/_references.html:48
 msgid "Log in to write a reference"
 msgstr "Inicia sesión para escribir una referencia"
 
@@ -1982,20 +2013,7 @@ msgstr ""
 "economía del regalo funciona."
 
 #
-#: references/templates/references/request_form.html:46
-msgid "Choose another photo"
-msgstr "Elegir otra foto"
-
-#: references/templates/references/request_form.html:46
-msgid "Add a photo"
-msgstr "Añadir una foto"
-
-#: references/templates/references/request_form.html:56
-msgid "With your name and photo. You can change this here any time."
-msgstr "Con tu nombre y tu foto. Puedes cambiarlo aquí en cualquier momento."
-
-#
-#: references/templates/references/request_form.html:60
+#: references/templates/references/request_form.html:23
 msgid "Send story"
 msgstr "Enviar historia"
 
@@ -2020,30 +2038,22 @@ msgstr "Ahora aparece con las referencias en ecobasa."
 msgid "View references"
 msgstr "Ver referencias"
 
-#: references/templatetags/references_tags.py:82
-msgid "Skills listed here"
-msgstr "Habilidades de este perfil"
-
-#: references/views.py:52
+#: references/views.py:47
 msgid "Thank you for sharing your experience."
 msgstr "Gracias por compartir tu experiencia."
 
-#: references/views.py:54
+#: references/views.py:51
 msgid "Please choose an impression and describe your experience."
 msgstr "Elige una impresión y describe tu experiencia."
 
-#: references/views.py:64
+#: references/views.py:61
 msgid "Your reference was removed."
 msgstr "Tu referencia se ha eliminado."
 
-#: references/views.py:79
+#: references/views.py:76
 #, python-format
 msgid "%(skill)s was added to your skills."
 msgstr "%(skill)s se ha añadido a tus habilidades."
-
-#: references/views.py:157
-msgid "This photo could not be read. Please try another one."
-msgstr "No se pudo leer esta foto. Prueba con otra."
 
 #: settings/base.py:34
 msgid "German"
@@ -2073,11 +2083,13 @@ msgstr "Guardar habilidad"
 msgid "Please select a skill from the suggestions."
 msgstr "Elige una habilidad de las sugerencias."
 
-#: skills/forms.py:73 skills/templates/skills/userskill_form.html:32
+#: skills/forms.py:73 skills/templates/skills/userskill_add_several.html:21
+#: skills/templates/skills/userskill_form.html:32
 msgid "I can offer / teach this skill"
 msgstr "Puedo ofrecer / enseñar esta habilidad"
 
-#: skills/forms.py:74 skills/templates/skills/userskill_form.html:44
+#: skills/forms.py:74 skills/templates/skills/userskill_add_several.html:30
+#: skills/templates/skills/userskill_form.html:44
 msgid "I want to learn this or need help with it"
 msgstr "Quiero aprenderlo o necesito ayuda con ello"
 
@@ -2086,15 +2098,18 @@ msgid "How do you relate to this skill?"
 msgstr "¿Cuál es tu relación con esta habilidad?"
 
 #: skills/forms.py:92 skills/models.py:158
+#: skills/templates/skills/userskill_add_several.html:24
 #: skills/templates/skills/userskill_form.html:64
 msgid "Level"
 msgstr "Nivel"
 
 #: skills/forms.py:96 skills/forms.py:234
+#: skills/templates/skills/userskill_add_several.html:32
 msgid "Any level"
 msgstr "Cualquier nivel"
 
 #: skills/forms.py:98 skills/forms.py:236
+#: skills/templates/skills/userskill_add_several.html:34
 #: skills/templates/skills/userskill_form.html:75
 msgid "My current level"
 msgstr "Mi nivel actual"
@@ -2120,12 +2135,12 @@ msgstr "¿Cuál es la relación de vuestra comunidad con esta habilidad?"
 msgid "e.g. Permaculture, Natural Building…"
 msgstr "p. ej. Permacultura, Bioconstrucción…"
 
-#: skills/forms.py:163 skills/views.py:306
+#: skills/forms.py:163 skills/views.py:361
 msgid "Any level — beginners welcome"
 msgstr "Cualquier nivel: principiantes bienvenidos"
 
 #: skills/forms.py:165 skills/templates/skills/communityskill_form.html:64
-#: skills/views.py:300
+#: skills/views.py:355
 msgid "Minimum level sought"
 msgstr "Nivel mínimo buscado"
 
@@ -2149,7 +2164,8 @@ msgstr "Avanzado"
 msgid "Expert"
 msgstr "Experto/a"
 
-#: skills/models.py:160 skills/templates/skills/userskill_form.html:89
+#: skills/models.py:160 skills/templates/skills/userskill_add_several.html:24
+#: skills/templates/skills/userskill_form.html:89
 msgid "How did you learn this? What can you offer?"
 msgstr "¿Cómo lo aprendiste? ¿Qué puedes ofrecer?"
 
@@ -2347,6 +2363,7 @@ msgstr "Añadir deseo de habilidad"
 
 #: skills/templates/skills/skill_detail.html:24
 #: skills/templates/skills/skill_detail.html:87
+#: skills/templates/skills/userskill_add_several.html:41
 msgid "Add to my profile"
 msgstr "Añadir a mi perfil"
 
@@ -2422,6 +2439,24 @@ msgstr "Añade esta habilidad a tu perfil"
 msgid "Log in to offer teaching this skill"
 msgstr "Inicia sesión para ofrecerte a enseñar esta habilidad"
 
+#: skills/templates/skills/userskill_add_several.html:4
+#: skills/templates/skills/userskill_add_several.html:10
+msgid "Add skills to your profile"
+msgstr "Añade habilidades a tu perfil"
+
+#: skills/templates/skills/userskill_add_several.html:13
+msgid "Untick what you don't want to add. For each skill, pick a level and, if you like, say a few words about it, so others can find you by it."
+msgstr "Desmarca lo que no quieras añadir. Para cada habilidad, elige un nivel y, si quieres, escribe unas palabras, así otras personas pueden encontrarte por ella."
+
+#: skills/templates/skills/userskill_add_several.html:34
+#: skills/templates/skills/userskill_form.html:92
+msgid ""
+"Why do you want to learn this or need help with it? What would you like to "
+"be able to do?"
+msgstr ""
+"¿Por qué quieres aprenderlo o necesitas ayuda? ¿Qué te gustaría llegar a "
+"hacer?"
+
 #: skills/templates/skills/userskill_confirm_delete.html:10
 #, python-format
 msgid ""
@@ -2469,14 +2504,6 @@ msgstr ""
 "Elige tu nivel actual: la mayoría empieza como principiante, y eso está "
 "perfecto."
 
-#: skills/templates/skills/userskill_form.html:92
-msgid ""
-"Why do you want to learn this or need help with it? What would you like to "
-"be able to do?"
-msgstr ""
-"¿Por qué quieres aprenderlo o necesitas ayuda? ¿Qué te gustaría llegar a "
-"hacer?"
-
 #: skills/templates/skills/userskill_form.html:112
 msgid "Add skill need"
 msgstr "Añadir deseo de habilidad"
@@ -2485,27 +2512,31 @@ msgstr "Añadir deseo de habilidad"
 msgid "Your interest has been sent."
 msgstr "Tu interés se ha enviado."
 
-#: skills/views.py:137 skills/views.py:191
+#: skills/views.py:137 skills/views.py:246
 msgid "Skill wish added."
 msgstr "Deseo de habilidad añadido."
 
-#: skills/views.py:140 skills/views.py:194
+#: skills/views.py:140 skills/views.py:249
 msgid "Skill added."
 msgstr "Habilidad añadida."
 
-#: skills/views.py:157 skills/views.py:213
+#: skills/views.py:190
+msgid "Skills added to your profile."
+msgstr "Habilidades añadidas a tu perfil."
+
+#: skills/views.py:212 skills/views.py:268
 msgid "Skill updated."
 msgstr "Habilidad actualizada."
 
-#: skills/views.py:171 skills/views.py:229
+#: skills/views.py:226 skills/views.py:284
 msgid "Skill removed."
 msgstr "Habilidad quitada."
 
-#: skills/views.py:260
+#: skills/views.py:315
 msgid "Your offer has been sent."
 msgstr "Tu oferta se ha enviado."
 
-#: skills/views.py:287 skills/views.py:309
+#: skills/views.py:342 skills/views.py:364
 msgid "Skill wish updated."
 msgstr "Deseo de habilidad actualizado."
 
@@ -2845,11 +2876,11 @@ msgstr "¿Para qué te gustaría usar ecobasa principalmente?"
 msgid "What do you do to make the world a better place?"
 msgstr "¿Qué haces para que el mundo sea un lugar mejor?"
 
-#: users/templates/users/_skill_tagify_js.html:64
+#: users/templates/users/_skill_tagify_js.html:55
 msgid "Skills communities always need"
 msgstr "Habilidades que las comunidades siempre necesitan"
 
-#: users/templates/users/_skill_tagify_js.html:71
+#: users/templates/users/_skill_tagify_js.html:61
 msgid "Popular skills to explore"
 msgstr "Habilidades populares para descubrir"
 
@@ -3064,24 +3095,3 @@ msgstr "Cuenta creada y sesión iniciada."
 #~ msgstr ""
 #~ "<strong>%(actor)s</strong> ha respondido a tu interés en "
 #~ "<strong>%(title)s</strong>: <strong>%(status_label)s</strong>."
-
-#: communities/templates/communities/_volunteer_skill_proposal.html:20
-msgid ""
-"Your application mentioned a skill that isn't on your profile yet — do you "
-"want to add it now, so others can find you by it too?"
-msgstr ""
-"Tu solicitud menciona una habilidad que aún no está en tu perfil. ¿Quieres "
-"añadirla ahora para que otras personas también te encuentren por ella?"
-
-#: skills/templates/skills/userskill_add_several.html:4
-#: skills/templates/skills/userskill_add_several.html:10
-msgid "Add skills to your profile"
-msgstr "Añade habilidades a tu perfil"
-
-#: skills/templates/skills/userskill_add_several.html:13
-msgid "Untick what you don't want to add. For each skill, pick a level and, if you like, say a few words about it, so others can find you by it."
-msgstr "Desmarca lo que no quieras añadir. Para cada habilidad, elige un nivel y, si quieres, escribe unas palabras, así otras personas pueden encontrarte por ella."
-
-#: skills/views.py:190
-msgid "Skills added to your profile."
-msgstr "Habilidades añadidas a tu perfil."

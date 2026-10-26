@@ -19,46 +19,10 @@
   <div class="border rounded-xl bg-secondary p-4 sm:p-6">
     <form method="post" enctype="multipart/form-data" x-data="{ preview: '', impression: '{{ form.impression.value|default:'positive' }}' }">
       {% csrf_token %}
-      <div class="form-group mb-4">
-        <label class="form-label">{{ form.impression.label }}</label>
-        <div class="flex flex-wrap gap-4" @change="impression = $event.target.value">
-          {% for radio in form.impression %}
-            <label class="flex items-center gap-2 text-sm text-brown cursor-pointer">{{ radio.tag }} {{ radio.choice_label }}</label>
-          {% endfor %}
-        </div>
-      </div>
-
-      {% include "references/_guidelines.html" %}
-      <div class="form-group mb-4">
-        <label class="form-label" for="{{ form.text.id_for_label }}">{{ form.text.label }}</label>
-        {{ form.text }}
-        {% for e in form.text.errors %}<p class="field-error">{{ e }}</p>{% endfor %}
-      </div>
-
-      <div class="form-group mb-4">
-        <label class="form-label">{{ form.photo.label }}</label>
-        {% if reference.photo %}
-          <img src="{{ reference.photo.url }}" alt="" class="rounded-lg mb-2 max-h-48 object-cover" x-show="!preview">
-        {% endif %}
-        <img :src="preview" alt="" class="rounded-lg mb-2 max-h-48 object-cover" x-show="preview" x-cloak>
-        {# accept image/* lets phones offer the camera; they send it as JPEG #}
-        <label class="btn btn-purple inline-flex items-center cursor-pointer">
-          <i class="fa fa-camera mr-2"></i>{% if reference.photo %}{% trans "Choose another photo" %}{% else %}{% trans "Add a photo" %}{% endif %}
-          <input type="file" name="photo" accept="image/*" class="sr-only"
-                 @change="preview = $event.target.files[0] ? URL.createObjectURL($event.target.files[0]) : ''">
-        </label>
-        {% for e in form.photo.errors %}<p class="field-error">{{ e }}</p>{% endfor %}
-      </div>
-
-      <label class="flex items-start gap-3 text-sm text-brown mb-6 cursor-pointer">
-        {{ form.share_publicly }}
-        <span>{{ form.share_publicly.label }}<br>
-          <span class="text-xs opacity-70">{% trans "With your name and photo. You can change this here any time." %}</span>
-        </span>
-      </label>
-
+      {% include "references/_reference_form_fields.html" %}
       <button type="submit" class="btn w-full sm:w-auto"><i class="fa fa-paper-plane mr-2"></i>{% trans "Send story" %}</button>
     </form>
   </div>
 </div>
+{% include "references/_reference_skills_js.html" %}
 {% endblock %}

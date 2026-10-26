@@ -3,9 +3,8 @@ from urllib.parse import urlencode
 from django import template
 from django.contrib.contenttypes.models import ContentType
 from django.db.models import Prefetch
-from django.utils.translation import gettext as _
 
-from ..forms import ReferenceForm
+from ..forms import ReferenceForm, form_context
 from ..models import Reference, ReferenceSkill, references_about, match_reference_subject, subject_owner
 
 register = template.Library()
@@ -42,7 +41,7 @@ def references_for(context, subject):
     can_write = user.is_authenticated and not is_owner
 
     form = None
-    prefill_gift = prefill_skill = ""
+    prefill_gift = ""
     if can_write:
         form = ReferenceForm(instance=own, subject=subject)
         if form.can_tag:
@@ -52,11 +51,6 @@ def references_for(context, subject):
             if prefill_skill:
                 field = form.fields["skill_names"]
                 field.initial = ", ".join(n for n in (field.initial, prefill_skill) if n)
-
-    gift_names = list(own.gift_names) if own else []
-    if prefill_gift and prefill_gift not in gift_names:
-        gift_names.append(prefill_gift)
-    listings = getattr(subject, "listings", None)
 
     return {
         "request": request,
@@ -69,20 +63,10 @@ def references_for(context, subject):
             for impression, _label in Reference.IMPRESSION_CHOICES
         },
         "is_owner": is_owner,
-        # A community (or one of its skills): the guide adds a note about writing to a group
-        "about_community": content_type.model in ("community", "communityskill"),
         "own_reference": own,
-        "form": form,
-        "gift_names": gift_names,
-        # Skills they already list, suggested first in the skill input
-        "held_skills": [
-            s.get_match_display_name() for s in getattr(subject, "get_reference_subjects", lambda: [])()
-            if hasattr(s, "get_skill_holder")
-        ] if form and form.can_tag else [],
-        "held_skills_header": _("Skills listed here"),
-        "gift_suggestions": [l.title for l in listings.all()] if form and form.can_tag and listings is not None else [],
+        **(form_context(subject, form, own, [prefill_gift]) if form else {}),
         # Opened right away when coming from a match or from an "Edit" link
-        "open_form": bool(prefill_gift or prefill_skill or request.GET.get("edit_reference")),
+        "open_form": bool(prefill_gift or request.GET.get("reference_skill") or request.GET.get("edit_reference")),
     }
 
 

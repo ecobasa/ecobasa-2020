@@ -3,6 +3,7 @@ from datetime import timedelta
 from email.message import EmailMessage
 
 import pytest
+from django.contrib.contenttypes.models import ContentType
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client
 from django.urls import reverse
@@ -136,6 +137,19 @@ def _request_url(match, user):
     return reverse("references:request", args=[ReferenceRequest.objects.get(match=match, user=user).key])
 
 
+
+def _as_browser(url, **data):
+    """Post the form the way a browser does: with the prefilled skills and gifts, unless
+    `data` changes them."""
+    context = Client().get(url).context
+    form = context["form"]
+    sent = {"impression": "positive", "text": "Thank you!"}
+    if form.can_tag:
+        sent["skill_names"] = form["skill_names"].value() or ""
+        sent["gift_names"] = context["gift_names"]
+    sent.update(data)
+    return Client().post(url, sent)
+
 @pytest.mark.django_db
 class TestReferenceRequestForm:
     def test_works_without_login(self, stay, requester):
@@ -162,7 +176,7 @@ class TestReferenceRequestForm:
     def test_owner_writes_about_the_requester_naming_the_gift(self, gift_match, owner, requester):
         gift_match.responded_at = timezone.now() - timedelta(days=8)
         gift_match.save()
-        Client().post(_request_url(gift_match, owner), {"impression": "positive", "text": "Rafa fixed it up!"})
+        _as_browser(_request_url(gift_match, owner), text="Rafa fixed it up!")
         reference = Reference.objects.get(author=owner)
         assert reference.subject == requester
         assert reference.gift_names == ["Old Bicycle"]
@@ -174,6 +188,18 @@ class TestReferenceRequestForm:
         assert "Old text" in Client().get(url).content.decode()
         Client().post(url, {"impression": "positive", "text": "New text"})
         assert Reference.objects.get(author=requester).text == "New text"
+
+    def test_the_form_on_a_profile_takes_a_photo_and_sharing_too(self, owner, requester):
+        client = Client()
+        client.login(username=requester.email, password="secret")
+        content_type = ContentType.objects.get_for_model(owner)
+        client.post(reverse("references:save", args=[content_type.pk, owner.pk]), {
+            "impression": "positive", "text": "Lovely host", "share_publicly": "on",
+            "photo": SimpleUploadedFile("tea.jpg", _photo(), content_type="image/jpeg"),
+        })
+        reference = Reference.objects.get(author=requester)
+        assert reference.share_publicly
+        assert Image.open(reference.photo).size == (1600, 1067)
 
     def test_unreadable_photo_is_rejected(self, stay, requester):
         response = Client().post(_request_url(stay, requester), {
@@ -227,8 +253,12 @@ class TestEveryKindOfMatch:
     def _answer(self, match, user, text="Thank you!"):
         url = _request_url(match, user)
         page = Client().get(url).content.decode()
-        Client().post(url, {"impression": "positive", "text": text})
+        _as_browser(url, text=text)
         return page, Reference.objects.get(author=user, match=match)
+
+    def test_what_was_filled_in_can_be_removed(self, gift_match, requester):
+        _as_browser(_request_url(gift_match, requester), gift_names=[])
+        assert Reference.objects.get(author=requester).gift_names == []
 
     def test_gift(self, gift_match, owner, requester, mailoutbox):
         page, reference = self._answer(gift_match, requester)
