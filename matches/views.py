@@ -4,6 +4,7 @@ from django.contrib import messages as flash
 from django.contrib.auth.decorators import login_required
 from django.core import signing
 from django.db.models import Count, Q
+from django.core.exceptions import PermissionDenied
 from django.http import Http404, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -147,8 +148,12 @@ def match_detail(request, pk):
     if target is None:
         raise Http404
 
-    if request.user != match.from_user and request.user != match.recipient:
+    # Only the two sides act on a match; staff may open it too
+    is_party = request.user in (match.from_user, match.recipient)
+    if not (is_party or request.user.is_staff):
         raise Http404
+    if request.method == "POST" and not is_party:
+        raise PermissionDenied
 
     is_owner     = request.user == match.recipient
     is_requester = request.user == match.from_user
@@ -239,6 +244,7 @@ def match_detail(request, pk):
         "target":               target,
         "is_owner":             is_owner,
         "is_requester":         is_requester,
+        "is_party":             is_party,
         "thread":               thread,
         "latest_status_msg":    latest_status_msg,
         "latest_counter_msg":   latest_counter_msg,

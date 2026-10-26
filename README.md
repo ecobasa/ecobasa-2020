@@ -82,3 +82,22 @@ Settings (env):
 In development, replies are read from Mailpit instead of IMAP. Mailpit can't reply itself,
 so `python manage.py send_test_reply "text" [--key KEY] [--photo path]` answers the latest
 (or a given) request like a mail app would; then run `fetch_reference_replies`.
+
+## Projects
+
+Communities post concrete projects ("Build a rocket stove, March–April, food and bed
+provided") with what they need: people with a skill, materials, tools or knowledge.
+People offer help on the project page; the offer is a match like a volunteer stay (date-only
+counter-proposals, references afterwards). Ambassadors see projects, requested and
+confirmed stays and what is still missing in their calendar (`/projects/calendar/<community>/`),
+with a warning when more guests are confirmed than the community's maximum.
+
+Projects stay current: dated ones are archived the day after they end; any project nobody
+updated or confirmed for `PROJECT_STALE_DAYS` (60) gets an "Is this still current?" email
+with a one-click confirm link, and is archived if nobody confirms it within
+`PROJECT_ARCHIVE_GRACE_DAYS` (14). Projects without an end date are ongoing.
+
+One more cron job:
+```
+30 8 * * *   python manage.py archive_stale_projects
+```

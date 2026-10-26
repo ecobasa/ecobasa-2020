@@ -373,3 +373,16 @@ def test_ago_reads_in_days():
     with translation.override("es"):
         assert ago(now - timedelta(days=3)) == "hace 3\xa0días"
     assert ago(None) == ""
+
+
+@pytest.mark.django_db
+def test_staff_read_matches_but_cannot_act(project, helper):
+    staff = User.objects.create_user(email="staff@example.com", password="x", is_staff=True)
+    stranger = User.objects.create_user(email="stranger@example.com", password="x")
+    match = _offer(project, helper)
+    url = reverse("matches:detail", args=[match.pk])
+    assert _client(stranger).get(url).status_code == 404
+    response = _client(staff).get(url)
+    assert response.status_code == 200 and not response.context["is_party"]
+    assert _client(staff).post(url, {"action": "accept"}).status_code == 403
+    assert Match.objects.get(pk=match.pk).status == Match.STATUS_PENDING

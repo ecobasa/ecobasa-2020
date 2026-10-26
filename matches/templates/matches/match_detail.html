@@ -270,6 +270,7 @@
     </div>
   {% endif %}
 
+  {% if is_party %}
   {# ── Bottom compose area ──────────────────────────────────────────── #}
   <div class="border rounded-xl bg-secondary p-6"
        x-data="{ isCounter: false, counterLocType: 'my_place' }">
@@ -426,6 +427,7 @@
       </div>
     </form>
   </div>
+  {% endif %}
 
 </div>
 {% endblock %}

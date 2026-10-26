@@ -61,6 +61,7 @@ class Command(BaseCommand):
         self._seed_skill_wishes(users, communities, skills)
         self._seed_matches_and_notifications(users, communities)
         self._seed_references(users, communities)
+        self._seed_projects(users, communities)
 
         self.stdout.write(self.style.SUCCESS(
             "\nDone. Log in as any of these (password: %s):" % DEMO_PASSWORD
@@ -655,3 +656,83 @@ class Command(BaseCommand):
             Notification.objects.filter(reference=reference).update(
                 created_at=timezone.now() - timedelta(days=spec["age_days"])
             )
+
+    # ── Projects ─────────────────────────────────────────────────────────
+
+    def _seed_projects(self, users, communities):
+        """A dated project with needs and stays (confirmed, requested, overlapping so the
+        calendar warns), an ongoing one, and a stale one whose ambassador gets asked."""
+        from projects.forms import skill_for_title
+        from projects.models import Need, Project
+
+        self.stdout.write("Seeding projects…")
+        luna, bjorn, mireille = users["luna@ecobasa.demo"], users["bjorn@ecobasa.demo"], users["mireille@ecobasa.demo"]
+        sam, diego = users["sam@ecobasa.demo"], users["diego@ecobasa.demo"]
+        sonnenkraut = communities["Sonnenkraut Ecovillage"]
+        kombucha = communities["Kombucha Commune"]
+        today = timezone.localdate()
+
+        def project(community, title, needs, **fields):
+            obj, created = Project.objects.get_or_create(
+                community=community, title=title, defaults={"created_by": community.owner, **fields},
+            )
+            if created:
+                for order, (kind, need_title, amount) in enumerate(needs):
+                    Need.objects.create(
+                        project=obj, kind=kind, title=need_title, amount=amount, order=order,
+                        skill=skill_for_title(need_title) if kind in (Need.KIND_SKILL, Need.KIND_KNOWLEDGE) else None,
+                    )
+            return obj, created
+
+        stove, created = project(
+            sonnenkraut, "Rocket stove for the community kitchen",
+            [
+                (Need.KIND_SKILL, "Natural Building", "2 people"),
+                (Need.KIND_SKILL, "Masonry", "1 person"),
+                (Need.KIND_MATERIAL, "Field stones", "about 300"),
+                (Need.KIND_MATERIAL, "Clay", "200 kg"),
+                (Need.KIND_MATERIAL, "Chimney pipe", "3 m, 15 cm"),
+                (Need.KIND_TOOL, "Cement mixer", ""),
+            ],
+            description="Our old kitchen stove eats a forest a winter. We want to build a rocket stove "
+                        "with a cob bench next to it, and learn how to build more of them.",
+            starts_on=today + timedelta(days=7), ends_on=today + timedelta(days=50),
+            food_provided=True, bed_provided=True, volunteers_wanted=4,
+            provided_note="Tent spots, the workshop, a ride from Görlitz station",
+        )
+        project(
+            sonnenkraut, "Food forest care",
+            [(Need.KIND_SKILL, "Permaculture Design", ""), (Need.KIND_TOOL, "Scythe", "")],
+            description="Mulching, pruning and planting in our young food forest, whenever you are around.",
+            food_provided=True,
+        )
+        stale, _stale_created = project(
+            kombucha, "Straw-bale guest house",
+            [(Need.KIND_MATERIAL, "Straw bales", "120"), (Need.KIND_KNOWLEDGE, "Natural Building", "")],
+            description="Planning a small guest house for the fermentation workshops.",
+            food_provided=True,
+        )
+        Project.objects.filter(pk=stale.pk).update(updated_at=timezone.now() - timedelta(days=75))
+
+        if not created:
+            return
+        needs = {need.title: need for need in stove.needs.all()}
+        stays = [
+            # (who, from, to, status, needs)
+            (bjorn, 7, 21, Match.STATUS_ACCEPTED, ["Natural Building", "Field stones"]),
+            (mireille, 10, 17, Match.STATUS_ACCEPTED, ["Clay"]),
+            (diego, 12, 26, Match.STATUS_PENDING, ["Masonry", "Cement mixer"]),
+            (sam, 14, 20, Match.STATUS_PENDING, ["Natural Building"]),
+        ]
+        for who, start, end, status, need_titles in stays:
+            match = Match(from_user=who, recipient=luna, message="I'd love to help with the rocket stove!", status=status)
+            match.target = stove
+            match.save()
+            VolunteerDetails.objects.create(
+                match=match, volunteer_mode="wish",
+                stay_from=timezone.now() + timedelta(days=start), stay_to=timezone.now() + timedelta(days=end),
+            )
+            match.needs.set([needs[title] for title in need_titles])
+            if status == Match.STATUS_ACCEPTED:
+                MatchMessage.objects.create(match=match, sender=luna, body="Welcome!", status_to=status)
+                Match.objects.filter(pk=match.pk).update(responded_at=timezone.now())
