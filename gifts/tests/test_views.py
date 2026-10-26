@@ -230,3 +230,13 @@ def test_list_card_names_the_giver_not_the_viewer(user, listing):
     client.force_login(viewer)
     content = client.get(reverse("gifts:api-list")).content.decode()
     assert "Max" in content and "Vera" not in content
+
+
+@pytest.mark.django_db
+def test_back_on_the_form_is_a_link(user_client, listing):
+    """It was a <button href=…>, which browsers don't follow."""
+    back = '<a class="btn inline-flex items-center text-sm leading-5 font-medium mb-10" href="%s">'
+    content = user_client.get(reverse("gifts:edit", args=[listing.pk])).content.decode()
+    assert back % reverse("gifts:detail", args=[listing.pk]) in content
+    content = user_client.get(reverse("gifts:create")).content.decode()
+    assert back % reverse("gifts:search") in content
