@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand
 
-from suggestions.engine import match_everything
+from matches.matching import match_everything
 
 
 class Command(BaseCommand):

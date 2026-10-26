@@ -1,6 +1,7 @@
 from datetime import datetime as _dt
 
 from django.contrib import messages as flash
+from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.core import signing
 from django.db.models import Count, Q
@@ -11,11 +12,13 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _, pgettext_lazy
 
+from django.views.decorators.http import require_POST
+
 from dashboard_lists import Choice, paginate, query_url
 
-from .emails import notify_match_message, notify_match_response, read_action_token
+from .emails import notify_match_message, notify_match_response, read_action_token, read_suggestions_unsubscribe_token
 from .forms import MatchMessageForm
-from .models import STAY_APP_LABELS, Match, MatchMessage
+from .models import STAY_APP_LABELS, Match, MatchMessage, Suggestion
 
 # The kinds of match, by the list view's "type" query param. Kept as gifts/skills/
 # communities/projects app labels rather than importing their models — matches never needs to
@@ -283,3 +286,46 @@ def email_action(request, token):
         "title": match.target.get_match_display_name() if match.target else "",
         "detail_url": match.get_absolute_url(),
     })
+
+
+# ── Suggestions ────────────────────────────────────────────────────────────────
+
+@login_required
+def suggestion_list(request):
+    """What fits their wishes, offers and skills, newest first. Opening the page marks
+    the new ones as seen."""
+    suggestions = (
+        request.user.suggestions.filter(dismissed_at=None)
+        .select_related("own_type", "other_type", "other_user")
+        .prefetch_related("own", "other")
+    )
+    page = paginate(request, suggestions)
+    # Things deleted since are left out (their suggestions go with them, this is a safety net)
+    items = [s for s in page.object_list if s.other is not None and s.own is not None]
+    new_ids = {s.pk for s in items if s.seen_at is None}
+    request.user.suggestions.filter(seen_at=None).update(seen_at=timezone.now())
+    return render(request, "matches/suggestions.html", {
+        "page": page, "suggestions": items, "new_ids": new_ids,
+    })
+
+
+@login_required
+@require_POST
+def dismiss_suggestion(request, pk):
+    suggestion = get_object_or_404(Suggestion, pk=pk, user=request.user)
+    suggestion.dismissed_at = timezone.now()
+    suggestion.save(update_fields=["dismissed_at"])
+    return redirect("matches:suggestions")
+
+
+def suggestions_unsubscribe(request, token):
+    """One click from the weekly email turns it off, no login needed."""
+    try:
+        pk = read_suggestions_unsubscribe_token(token)
+    except signing.BadSignature:
+        return HttpResponseBadRequest("Invalid link.")
+    get_user_model().objects.filter(pk=pk).update(match_emails=False)
+    flash.success(request, _(
+        "You won't get emails about matches any more. You can turn them on again in your profile."
+    ))
+    return redirect("homepage:homepage")

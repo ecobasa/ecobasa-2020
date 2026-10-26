@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ecobasa\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-26 19:38+0100\n"
+"POT-Creation-Date: 2026-10-26 20:10+0100\n"
 "PO-Revision-Date: 2026-10-23 12:00+0200\n"
 "Last-Translator: ecobasa\n"
 "Language-Team: de\n"
@@ -96,7 +96,7 @@ msgstr "Name"
 msgid "Slug"
 msgstr "Slug"
 
-#: communities/models.py:24 gifts/filters.py:18 matches/views.py:29
+#: communities/models.py:24 gifts/filters.py:18 matches/views.py:32
 #: references/forms.py:14
 #: references/templates/references/email/reference_created.html:35
 #: references/templates/references/email/reference_created.txt:9
@@ -866,7 +866,7 @@ msgstr ""
 "löschen?\n"
 "        "
 
-#: gifts/templates/gifts/listing_detail.html:28 matches/views.py:25
+#: gifts/templates/gifts/listing_detail.html:28 matches/views.py:28
 #: references/models.py:95
 #: references/templates/references/email/reference_created.html:36
 #: references/templates/references/email/reference_created.txt:10
@@ -936,7 +936,7 @@ msgstr "Offen"
 #: gifts/templates/gifts/listing_detail.html:199 matches/models.py:36
 #: matches/templates/matches/_match_row.html:45
 #: matches/templates/matches/match_detail.html:134
-#: matches/templates/matches/match_detail.html:228 matches/views.py:41
+#: matches/templates/matches/match_detail.html:228 matches/views.py:44
 msgid "Accepted"
 msgstr "Angenommen"
 
@@ -944,7 +944,7 @@ msgstr "Angenommen"
 #: matches/templates/matches/_match_row.html:49
 #: matches/templates/matches/match_detail.html:36
 #: matches/templates/matches/match_detail.html:136
-#: matches/templates/matches/match_detail.html:229 matches/views.py:42
+#: matches/templates/matches/match_detail.html:229 matches/views.py:45
 #: references/models.py:142
 msgid "Declined"
 msgstr "Abgelehnt"
@@ -1159,9 +1159,15 @@ msgstr "Flattr uns"
 #: matches/templates/matches/match_detail.html:15
 #: matches/templates/matches/matches_overview.html:6 templates/_navbar.html:151
 #: templates/_navbar.html:266 templates/dashboard/base.html:21
-#: users/templates/users/update.html:44
 msgid "Matches"
 msgstr "Matches"
+
+#: matches/emails.py:202
+#, python-format
+msgid "%(count)s new match near you"
+msgid_plural "%(count)s new matches near you"
+msgstr[0] "%(count)s neuer Treffer in deiner Nähe"
+msgstr[1] "%(count)s neue Treffer in deiner Nähe"
 
 #: matches/forms.py:20
 msgid "Write a short message about why you're interested…"
@@ -1225,6 +1231,77 @@ msgstr "Match-Nachrichten"
 msgid "Volunteer Details"
 msgstr "Details zum Aufenthalt"
 
+#: matches/models.py:239
+msgid "Same skill"
+msgstr "Gleiche Fähigkeit"
+
+#: matches/models.py:240
+msgid "Similar title"
+msgstr "Ähnlicher Titel"
+
+#: matches/models.py:270
+msgid "Suggestion"
+msgstr "Vorschlag"
+
+#: matches/models.py:271
+msgid "Suggestions"
+msgstr "Vorschläge"
+
+#: matches/models.py:298
+#, python-format
+msgid "%(name)s gives away: %(title)s"
+msgstr "%(name)s verschenkt: %(title)s"
+
+#: matches/models.py:298
+#, python-format
+msgid "%(name)s is looking for: %(title)s"
+msgstr "%(name)s sucht: %(title)s"
+
+#: matches/models.py:302
+#, python-format
+msgid "%(project)s at %(community)s needs: %(title)s"
+msgstr "%(project)s bei %(community)s braucht: %(title)s"
+
+#: matches/models.py:306
+#, python-format
+msgid "%(name)s offers the skill: %(skill)s"
+msgstr "%(name)s bietet die Fähigkeit: %(skill)s"
+
+#: matches/models.py:308
+#, python-format
+msgid "You can learn %(skill)s at %(community)s"
+msgstr "Bei %(community)s kannst du %(skill)s lernen"
+
+#: matches/models.py:313
+#, python-format
+msgid "%(community)s is looking for: %(skill)s"
+msgstr "%(community)s sucht: %(skill)s"
+
+#: matches/models.py:316
+#, python-format
+msgid "%(name)s wants to learn: %(skill)s"
+msgstr "%(name)s möchte lernen: %(skill)s"
+
+#: matches/models.py:326
+#, python-format
+msgid "your offer: %(title)s"
+msgstr "deinem Angebot: %(title)s"
+
+#: matches/models.py:326 matches/models.py:333
+#, python-format
+msgid "your wish: %(title)s"
+msgstr "deinem Wunsch: %(title)s"
+
+#: matches/models.py:329
+#, python-format
+msgid "your project %(project)s: %(title)s"
+msgstr "deinem Projekt %(project)s: %(title)s"
+
+#: matches/models.py:331
+#, python-format
+msgid "your skill: %(skill)s"
+msgstr "deiner Fähigkeit: %(skill)s"
+
 #: matches/templates/matches/email/match_message.html:19
 msgid "New message"
 msgstr "Neue Nachricht"
@@ -1235,6 +1312,8 @@ msgstr "Neue Nachricht"
 #: matches/templates/matches/email/match_request.txt:1
 #: matches/templates/matches/email/match_response.html:27
 #: matches/templates/matches/email/match_response.txt:1
+#: matches/templates/matches/email/suggestions.html:22
+#: matches/templates/matches/email/suggestions.txt:1
 #: projects/templates/projects/email/stale_reminder.html:22
 #: projects/templates/projects/email/stale_reminder.txt:1
 #: references/templates/references/email/reference_created.html:27
@@ -1243,8 +1322,6 @@ msgstr "Neue Nachricht"
 #: references/templates/references/email/reference_received.txt:1
 #: references/templates/references/email/reference_request.html:28
 #: references/templates/references/email/reference_request.txt:3
-#: suggestions/templates/suggestions/email/digest.html:22
-#: suggestions/templates/suggestions/email/digest.txt:1
 #, python-format
 msgid "Hello %(name)s,"
 msgstr "Hallo %(name)s,"
@@ -1346,6 +1423,50 @@ msgstr "Neuigkeiten zu deinem Match"
 #: matches/templates/matches/match_detail.html:257
 msgid "Suggested stay"
 msgstr "Vorgeschlagener Zeitraum"
+
+#: matches/templates/matches/email/suggestions.html:17
+#: matches/templates/matches/suggestions.html:4
+#: matches/templates/matches/suggestions.html:7 templates/_navbar.html:143
+#: templates/_navbar.html:264 templates/dashboard/base.html:13
+#: users/templates/users/update.html:44
+msgid "Matches for you"
+msgstr "Treffer für dich"
+
+#: matches/templates/matches/email/suggestions.html:29
+#: matches/templates/matches/email/suggestions.txt:6
+#: matches/templates/matches/suggestions.html:22
+#, python-format
+msgid "fits %(own)s"
+msgstr "passt zu %(own)s"
+
+#: matches/templates/matches/email/suggestions.html:29
+#: matches/templates/matches/email/suggestions.txt:5
+#: matches/templates/matches/suggestions.html:23
+#, python-format
+msgid "%(km)s km away"
+msgstr "%(km)s km entfernt"
+
+#: matches/templates/matches/email/suggestions.html:35
+#: matches/templates/matches/email/suggestions.txt:9
+msgid "All your matches"
+msgstr "Alle deine Treffer"
+
+#: matches/templates/matches/email/suggestions.html:41
+#: matches/templates/matches/email/suggestions.txt:12
+msgid "You get this because you share wishes, offers or skills on ecobasa.org."
+msgstr ""
+"Du bekommst diese E-Mail, weil du auf ecobasa.org Wünsche, Angebote oder "
+"Fähigkeiten teilst."
+
+#: matches/templates/matches/email/suggestions.html:42
+#: matches/templates/matches/email/suggestions.txt:13
+msgid "Change distance or turn off"
+msgstr "Entfernung ändern oder abschalten"
+
+#: matches/templates/matches/email/suggestions.html:42
+#: matches/templates/matches/email/suggestions.txt:14
+msgid "Unsubscribe"
+msgstr "Abmelden"
 
 #: matches/templates/matches/email_action_done.html:8
 msgid "Done — you said yes."
@@ -1468,59 +1589,113 @@ msgstr "Nichts offen."
 msgid "See the full list"
 msgstr "Zur ganzen Liste"
 
-#: matches/views.py:26
+#: matches/templates/matches/suggestions.html:8
+#, python-format
+msgid ""
+"What people, communities and projects within %(km)s km offer or need that "
+"fits your wishes, offers and skills. New matches appear as soon as someone "
+"adds something."
+msgstr ""
+"Was Menschen, Gemeinschaften und Projekte im Umkreis von %(km)s km anbieten "
+"oder brauchen und zu deinen Wünschen, Angeboten und Fähigkeiten passt. Neue "
+"Treffer erscheinen, sobald jemand etwas einträgt."
+
+#: matches/templates/matches/suggestions.html:11
+msgid "Change distance"
+msgstr "Umkreis ändern"
+
+#: matches/templates/matches/suggestions.html:20
+#: templates/dashboard/base.html:14
+msgid "New"
+msgstr "Neu"
+
+#: matches/templates/matches/suggestions.html:26
+#: projects/templates/projects/project_detail.html:83
+msgid "Help with this"
+msgstr "Hiermit helfen"
+
+#: matches/templates/matches/suggestions.html:26
+msgid "Have a look"
+msgstr "Ansehen"
+
+#: matches/templates/matches/suggestions.html:29
+msgid "Doesn't fit, hide it"
+msgstr "Passt nicht, ausblenden"
+
+#: matches/templates/matches/suggestions.html:29
+msgid "Hide"
+msgstr "Ausblenden"
+
+#: matches/templates/matches/suggestions.html:38
+msgid ""
+"No matches yet. Add what you wish for, what you can give and your skills, "
+"and set your place in your profile: we'll let you know when something fits."
+msgstr ""
+"Noch keine Treffer. Trag ein, was du dir wünschst, was du geben kannst und "
+"deine Fähigkeiten, und setz deinen Ort im Profil: Wir sagen dir Bescheid, "
+"sobald etwas passt."
+
+#: matches/views.py:29
 msgid "No gift offers yet."
 msgstr "Noch keine Geschenkangebote."
 
-#: matches/views.py:30
+#: matches/views.py:33
 msgid "No skill offers yet."
 msgstr "Noch keine Fähigkeitsangebote."
 
-#: matches/views.py:33 templates/_navbar.html:147 templates/_navbar.html:267
+#: matches/views.py:36 templates/_navbar.html:147 templates/_navbar.html:267
 #: templates/dashboard/base.html:56
 msgid "Volunteer Visits"
 msgstr "Besuche von Freiwilligen"
 
-#: matches/views.py:34
+#: matches/views.py:37
 msgid "No volunteer visits yet."
 msgstr "Noch keine Besuche von Freiwilligen."
 
-#: matches/views.py:40
+#: matches/views.py:43
 msgctxt "match status"
 msgid "Open"
 msgstr "Offen"
 
-#: matches/views.py:43 projects/templates/projects/project_list.html:20
+#: matches/views.py:46 projects/templates/projects/project_list.html:20
 msgid "All"
 msgstr "Alle"
 
-#: matches/views.py:87 postman_wrappers.py:219 references/views.py:128
+#: matches/views.py:90 postman_wrappers.py:219 references/views.py:128
 msgid "Received"
 msgstr "Erhalten"
 
-#: matches/views.py:87 postman_wrappers.py:221
+#: matches/views.py:90 postman_wrappers.py:221
 msgid "Sent"
 msgstr "Gesendet"
 
-#: matches/views.py:199
+#: matches/views.py:202
 msgid "Response sent."
 msgstr "Antwort gesendet."
 
-#: matches/views.py:213
+#: matches/views.py:216
 msgid "Please suggest when the stay could start or end."
 msgstr "Schlag bitte vor, wann der Aufenthalt beginnen oder enden könnte."
 
-#: matches/views.py:216 projects/forms.py:152
+#: matches/views.py:219 projects/forms.py:152
 msgid "The stay can't end before it starts."
 msgstr "Der Aufenthalt kann nicht enden, bevor er beginnt."
 
-#: matches/views.py:239
+#: matches/views.py:242
 msgid "Counter-proposal sent."
 msgstr "Gegenvorschlag gesendet."
 
-#: matches/views.py:271
+#: matches/views.py:274
 msgid "This interest has already been responded to."
 msgstr "Auf dieses Interesse wurde bereits geantwortet."
+
+#: matches/views.py:329
+msgid ""
+"You won't get emails about matches any more. You can turn them on again in "
+"your profile."
+msgstr ""
+"Du bekommst keine E-Mails über Treffer mehr. Du kannst sie in deinem Profil "
+"wieder einschalten."
 
 #: notifications/models.py:8
 msgid ""
@@ -2046,11 +2221,6 @@ msgstr "zugesagt von"
 #: projects/templates/projects/project_detail.html:77
 msgid "someone offered this, waiting for an answer"
 msgstr "jemand hat es angeboten, wartet auf Antwort"
-
-#: projects/templates/projects/project_detail.html:83
-#: suggestions/templates/suggestions/suggestion_list.html:26
-msgid "Help with this"
-msgstr "Hiermit helfen"
 
 #: projects/templates/projects/project_detail.html:88
 msgid "Needed again"
@@ -3270,177 +3440,6 @@ msgstr "Dein Angebot wurde gesendet."
 #: skills/views.py:342 skills/views.py:364
 msgid "Skill wish updated."
 msgstr "Fähigkeitswunsch aktualisiert."
-
-#: suggestions/apps.py:8 suggestions/models.py:55
-msgid "Suggestions"
-msgstr "Vorschläge"
-
-#: suggestions/emails.py:49
-#, python-format
-msgid "%(count)s new match near you"
-msgid_plural "%(count)s new matches near you"
-msgstr[0] "%(count)s neuer Treffer in deiner Nähe"
-msgstr[1] "%(count)s neue Treffer in deiner Nähe"
-
-#: suggestions/models.py:23
-msgid "Same skill"
-msgstr "Gleiche Fähigkeit"
-
-#: suggestions/models.py:24
-msgid "Similar title"
-msgstr "Ähnlicher Titel"
-
-#: suggestions/models.py:54
-msgid "Suggestion"
-msgstr "Vorschlag"
-
-#: suggestions/models.py:82
-#, python-format
-msgid "%(name)s gives away: %(title)s"
-msgstr "%(name)s verschenkt: %(title)s"
-
-#: suggestions/models.py:82
-#, python-format
-msgid "%(name)s is looking for: %(title)s"
-msgstr "%(name)s sucht: %(title)s"
-
-#: suggestions/models.py:86
-#, python-format
-msgid "%(project)s at %(community)s needs: %(title)s"
-msgstr "%(project)s bei %(community)s braucht: %(title)s"
-
-#: suggestions/models.py:90
-#, python-format
-msgid "%(name)s offers the skill: %(skill)s"
-msgstr "%(name)s bietet die Fähigkeit: %(skill)s"
-
-#: suggestions/models.py:92
-#, python-format
-msgid "You can learn %(skill)s at %(community)s"
-msgstr "Bei %(community)s kannst du %(skill)s lernen"
-
-#: suggestions/models.py:97
-#, python-format
-msgid "%(community)s is looking for: %(skill)s"
-msgstr "%(community)s sucht: %(skill)s"
-
-#: suggestions/models.py:100
-#, python-format
-msgid "%(name)s wants to learn: %(skill)s"
-msgstr "%(name)s möchte lernen: %(skill)s"
-
-#: suggestions/models.py:110
-#, python-format
-msgid "your offer: %(title)s"
-msgstr "deinem Angebot: %(title)s"
-
-#: suggestions/models.py:110 suggestions/models.py:117
-#, python-format
-msgid "your wish: %(title)s"
-msgstr "deinem Wunsch: %(title)s"
-
-#: suggestions/models.py:113
-#, python-format
-msgid "your project %(project)s: %(title)s"
-msgstr "deinem Projekt %(project)s: %(title)s"
-
-#: suggestions/models.py:115
-#, python-format
-msgid "your skill: %(skill)s"
-msgstr "deiner Fähigkeit: %(skill)s"
-
-#: suggestions/templates/suggestions/email/digest.html:17
-#: suggestions/templates/suggestions/suggestion_list.html:4
-#: suggestions/templates/suggestions/suggestion_list.html:7
-#: templates/_navbar.html:143 templates/_navbar.html:264
-#: templates/dashboard/base.html:13
-msgid "Matches for you"
-msgstr "Treffer für dich"
-
-#: suggestions/templates/suggestions/email/digest.html:29
-#: suggestions/templates/suggestions/email/digest.txt:6
-#: suggestions/templates/suggestions/suggestion_list.html:22
-#, python-format
-msgid "fits %(own)s"
-msgstr "passt zu %(own)s"
-
-#: suggestions/templates/suggestions/email/digest.html:29
-#: suggestions/templates/suggestions/email/digest.txt:5
-#: suggestions/templates/suggestions/suggestion_list.html:23
-#, python-format
-msgid "%(km)s km away"
-msgstr "%(km)s km entfernt"
-
-#: suggestions/templates/suggestions/email/digest.html:35
-#: suggestions/templates/suggestions/email/digest.txt:9
-msgid "All your matches"
-msgstr "Alle deine Treffer"
-
-#: suggestions/templates/suggestions/email/digest.html:41
-#: suggestions/templates/suggestions/email/digest.txt:12
-msgid "You get this because you share wishes, offers or skills on ecobasa.org."
-msgstr ""
-"Du bekommst diese E-Mail, weil du auf ecobasa.org Wünsche, Angebote oder "
-"Fähigkeiten teilst."
-
-#: suggestions/templates/suggestions/email/digest.html:42
-#: suggestions/templates/suggestions/email/digest.txt:13
-msgid "Change distance or turn off"
-msgstr "Entfernung ändern oder abschalten"
-
-#: suggestions/templates/suggestions/email/digest.html:42
-#: suggestions/templates/suggestions/email/digest.txt:14
-msgid "Unsubscribe"
-msgstr "Abmelden"
-
-#: suggestions/templates/suggestions/suggestion_list.html:8
-#, python-format
-msgid ""
-"What people, communities and projects within %(km)s km offer or need that "
-"fits your wishes, offers and skills. New matches appear as soon as someone "
-"adds something."
-msgstr ""
-"Was Menschen, Gemeinschaften und Projekte im Umkreis von %(km)s km anbieten "
-"oder brauchen und zu deinen Wünschen, Angeboten und Fähigkeiten passt. Neue "
-"Treffer erscheinen, sobald jemand etwas einträgt."
-
-#: suggestions/templates/suggestions/suggestion_list.html:11
-msgid "Change distance"
-msgstr "Umkreis ändern"
-
-#: suggestions/templates/suggestions/suggestion_list.html:20
-#: templates/dashboard/base.html:14
-msgid "New"
-msgstr "Neu"
-
-#: suggestions/templates/suggestions/suggestion_list.html:26
-msgid "Have a look"
-msgstr "Ansehen"
-
-#: suggestions/templates/suggestions/suggestion_list.html:29
-msgid "Doesn't fit, hide it"
-msgstr "Passt nicht, ausblenden"
-
-#: suggestions/templates/suggestions/suggestion_list.html:29
-msgid "Hide"
-msgstr "Ausblenden"
-
-#: suggestions/templates/suggestions/suggestion_list.html:38
-msgid ""
-"No matches yet. Add what you wish for, what you can give and your skills, "
-"and set your place in your profile: we'll let you know when something fits."
-msgstr ""
-"Noch keine Treffer. Trag ein, was du dir wünschst, was du geben kannst und "
-"deine Fähigkeiten, und setz deinen Ort im Profil: Wir sagen dir Bescheid, "
-"sobald etwas passt."
-
-#: suggestions/views.py:53
-msgid ""
-"You won't get emails about matches any more. You can turn them on again in "
-"your profile."
-msgstr ""
-"Du bekommst keine E-Mails über Treffer mehr. Du kannst sie in deinem Profil "
-"wieder einschalten."
 
 #: templates/_footer.html:4
 msgid "Newsletter"

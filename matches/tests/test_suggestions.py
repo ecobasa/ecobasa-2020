@@ -15,8 +15,8 @@ from projects.models import Need, Project
 from skills.models import CommunitySkill, Skill, SkillWish, UserSkill
 from users.models import User
 
-from ..emails import make_unsubscribe_token, send_suggestion_emails
-from ..engine import match, match_everything
+from ..emails import make_suggestions_unsubscribe_token, send_suggestion_emails
+from ..matching import match, match_everything
 from ..models import Suggestion
 
 GOERLITZ = Point(14.9857, 51.1642, srid=4326)
@@ -166,7 +166,7 @@ def test_saving_matches_and_notifies_right_away(anna, ben, django_capture_on_com
         _listing(ben, "Clay from the pond", "offer")
     assert anna.suggestions.count() == 1 and ben.suggestions.count() == 1
     notification = Notification.objects.get(recipient=anna)
-    assert notification.tag == Notification.TAG_SUGGESTION and notification.link == reverse("suggestions:list")
+    assert notification.tag == Notification.TAG_SUGGESTION and notification.link == reverse("matches:suggestions")
     with translation.override("en"):
         assert notification.text.startswith("1 new match near you")
 
@@ -176,6 +176,48 @@ def test_saving_matches_and_notifies_right_away(anna, ben, django_capture_on_com
     assert Notification.objects.filter(recipient=anna).count() == 1
     with translation.override("en"):
         assert Notification.objects.get(recipient=anna).text.startswith("2 new matches near you")
+
+
+@pytest.mark.django_db
+def test_moving_closer_matches_again(anna, ben, django_capture_on_commit_callbacks):
+    far = _user("far@example.com", "Far", PARIS)
+    masonry = _skill("Masonry")
+    with django_capture_on_commit_callbacks(execute=True):
+        SkillWish.objects.create(user=anna, skill=masonry)
+        UserSkill.objects.create(user=far, skill=masonry)
+        _listing(far, "Clay", "offer")
+        _listing(anna, "Clay", "wish")
+    assert not Suggestion.objects.exists()
+
+    with django_capture_on_commit_callbacks(execute=True):
+        far.location = BAUTZEN
+        far.save()
+    assert {s.other_type.model for s in anna.suggestions.all()} == {"userskill", "listing"}
+    assert Notification.objects.filter(recipient=anna, tag=Notification.TAG_SUGGESTION).exists()
+
+
+@pytest.mark.django_db
+def test_a_community_moving_closer_matches_its_skills_wishes_and_needs(anna, django_capture_on_commit_callbacks):
+    masonry = _skill("Masonry")
+    owner = _user("owner@example.com", "Owner", PARIS)
+    community = Community.objects.create(name="Hof", owner=owner, location=PARIS)
+    project = Project.objects.create(community=community, title="Oven")
+    with django_capture_on_commit_callbacks(execute=True):
+        UserSkill.objects.create(user=anna, skill=masonry)
+        Need.objects.create(project=project, kind=Need.KIND_SKILL, title="Masonry", skill=masonry)
+    assert not anna.suggestions.exists()
+    with django_capture_on_commit_callbacks(execute=True):
+        community.location = BAUTZEN
+        community.save()
+    assert [s.other_type.model for s in anna.suggestions.all()] == ["need"]
+
+
+@pytest.mark.django_db
+def test_saving_without_moving_does_not_match_again(anna, django_capture_on_commit_callbacks):
+    with django_capture_on_commit_callbacks(execute=True) as callbacks:
+        anna.name = "Anna B."
+        anna.save()
+    assert callbacks == []
 
 
 @pytest.mark.django_db
@@ -213,16 +255,16 @@ def test_page_lists_marks_seen_and_hides(anna, ben):
     match(_listing(ben, "Clay from the pond", "offer"), notify=False)
     client = Client()
     client.force_login(anna)
-    response = client.get(reverse("suggestions:list"))
+    response = client.get(reverse("matches:suggestions"))
     assert "Clay from the pond" in response.content.decode() and len(response.context["new_ids"]) == 1
     suggestion = anna.suggestions.get()
     assert suggestion.seen_at is not None
 
     other = Client()
     other.force_login(ben)
-    assert other.post(reverse("suggestions:dismiss", args=[suggestion.pk])).status_code == 404
-    client.post(reverse("suggestions:dismiss", args=[suggestion.pk]))
-    assert "Clay from the pond" not in client.get(reverse("suggestions:list")).content.decode()
+    assert other.post(reverse("matches:dismiss_suggestion", args=[suggestion.pk])).status_code == 404
+    client.post(reverse("matches:dismiss_suggestion", args=[suggestion.pk]))
+    assert "Clay from the pond" not in client.get(reverse("matches:suggestions")).content.decode()
 
 
 # ── The weekly email ──────────────────────────────────────────────────
@@ -248,14 +290,14 @@ def test_people_with_only_wishes_get_the_email_too(anna, ben):
 
 @pytest.mark.django_db
 def test_one_click_unsubscribe(anna, ben):
-    response = Client().get(reverse("suggestions:unsubscribe", args=[make_unsubscribe_token(anna)]))
+    response = Client().get(reverse("matches:suggestions_unsubscribe", args=[make_suggestions_unsubscribe_token(anna)]))
     assert response.status_code == 302
     anna.refresh_from_db()
     assert anna.match_emails is False
     _listing(anna, "Clay", "wish")
     match(_listing(ben, "Clay from the pond", "offer"), notify=False)
     assert send_suggestion_emails() == 1 and mail.outbox[0].to == ["ben@example.com"]
-    assert Client().get(reverse("suggestions:unsubscribe", args=["forged"])).status_code == 400
+    assert Client().get(reverse("matches:suggestions_unsubscribe", args=["forged"])).status_code == 400
 
 
 @pytest.mark.django_db

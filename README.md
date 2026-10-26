@@ -104,14 +104,15 @@ needs of current projects show on the gifts map and list ("Project needs").
 ## Matches
 
 As soon as a gift offer or wish, a skill, a skill wish or a project need is saved, the
-matching (`suggestions/engine.py`) looks for what fits it nearby and suggests the pair to
+matching (`matches/matching.py`) looks for what fits it nearby and suggests the pair to
 both sides: gift wishes and offers with similar titles, skill wishes and project needs
 with the people and communities offering that skill, and material/tool needs with gift
 offers (also by gift category). Each side only hears about things within their own
 distance (`User.match_radius`, 150 km by default). New matches show right away in the
-notifications and at `/suggestions/`; once a week, people get an email with what's new
-(also those who only have wishes). The profile has the distance and the email switch, and
-every email a one-click unsubscribe link.
+notifications and at `/matches/suggestions/`; once a week, people get an email with what's new
+(also those who only have wishes). When a person or community moves, everything that takes its
+place from them is matched again. The distance and the email switch are in the profile
+("Settings" in the user menu), and every email has a one-click unsubscribe link.
 
 After deploying the matching once, match what already exists:
 ```

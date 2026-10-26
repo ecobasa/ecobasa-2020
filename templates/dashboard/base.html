@@ -9,7 +9,7 @@
       <nav class="space-y-1">
         {% with ns=request.resolver_match.namespace u=request.resolver_match.url_name %}
         <a href="{% url 'notifications:list' %}" class="block px-3 py-2 rounded {% if ns == 'notifications' %}bg-secondary text-primary font-semibold{% else %}text-secondary hover:bg-secondary hover:text-primary{% endif %}"><i class="fa fa-bell mr-2"></i>{% trans "Notifications" %}</a>
-        <a href="{% url 'suggestions:list' %}" class="flex items-center px-3 py-2 rounded {% if ns == 'suggestions' %}bg-secondary text-primary font-semibold{% else %}text-secondary hover:bg-secondary hover:text-primary{% endif %}">
+        <a href="{% url 'matches:suggestions' %}" class="flex items-center px-3 py-2 rounded {% if ns == 'matches' and request.resolver_match.url_name == 'suggestions' %}bg-secondary text-primary font-semibold{% else %}text-secondary hover:bg-secondary hover:text-primary{% endif %}">
           <i class="fa-solid fa-handshake-angle mr-2"></i>{% trans "Matches for you" %}
           {% if new_suggestions_count %}<span class="ml-auto pill bg-purple text-secondary text-xs" title="{% trans 'New' %}">{{ new_suggestions_count }}</span>{% endif %}
         </a>

@@ -182,7 +182,7 @@ def match(obj, notify=True):
             if suggestion:
                 created.append(suggestion)
     if notify:
-        from .notifications import notify_new_suggestions
+        from .emails import notify_new_suggestions
         notify_new_suggestions({s.user for s in created})
     return created
 

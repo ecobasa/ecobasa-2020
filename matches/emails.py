@@ -1,7 +1,14 @@
+from datetime import timedelta
+
+from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.core import signing
 from django.core.mail import EmailMultiAlternatives
+from django.db.models import Max
 from django.template.loader import render_to_string
 from django.urls import reverse
+from django.utils import timezone, translation
+from django.utils.translation import ngettext
 
 from .models import Match
 
@@ -136,3 +143,89 @@ def _send_email(notification, template_base, http_request, extra_context):
     )
     msg.attach_alternative(html_body, "text/html")
     msg.send(fail_silently=True)
+
+
+# ── Suggestions: what fits, found by the matching (matching.py) ───────────────
+
+def notify_new_suggestions(users):
+    """Tell each user about their new suggestions in the notifications: one notification
+    that counts what's new, moved back to the top rather than piling up while unread."""
+    from notifications.models import Notification
+
+    for user in users:
+        bumped = Notification.objects.filter(
+            recipient=user, tag=Notification.TAG_SUGGESTION, is_read=False,
+        ).update(created_at=timezone.now())
+        if not bumped:
+            notification = Notification(recipient=user, tag=Notification.TAG_SUGGESTION, link=reverse("matches:suggestions"))
+            notification.verb = notification.text[:255]
+            notification.save()
+
+
+# The weekly email with the new suggestions, for everyone who wants it: who has wishes hears
+# about offers and skills nearby, who offers or has skills hears about wishes and projects.
+# Sent by `send_suggestion_emails` (weekly cron); at most one a week per person.
+
+SUGGESTIONS_UNSUBSCRIBE_SALT = "suggestions-unsubscribe"
+SUGGESTIONS_MIN_INTERVAL = timedelta(days=6)
+
+
+def make_suggestions_unsubscribe_token(user):
+    return signing.dumps(user.pk, salt=SUGGESTIONS_UNSUBSCRIBE_SALT)
+
+
+def read_suggestions_unsubscribe_token(token):
+    return signing.loads(token, salt=SUGGESTIONS_UNSUBSCRIBE_SALT)
+
+
+def _site_url(path):
+    """Absolute link outside a request (the weekly email is sent by a command)."""
+    return settings.SITE_URL.rstrip("/") + path
+
+
+def send_suggestion_email(user, now=None):
+    """Email `user` the suggestions not emailed yet (and not dismissed), unless they had
+    one less than a week ago. Returns whether an email was sent."""
+    now = now or timezone.now()
+    last = user.suggestions.aggregate(last=Max("emailed_at"))["last"]
+    if last and now - last < SUGGESTIONS_MIN_INTERVAL:
+        return False
+    pending = list(
+        user.suggestions.filter(emailed_at=None, dismissed_at=None)
+        .select_related("own_type", "other_type").prefetch_related("own", "other")
+    )
+    found = [s for s in pending if s.other is not None and s.own is not None]
+    if not found:
+        return False
+    with translation.override(user.language or settings.LANGUAGE_CODE):
+        subject = ngettext(
+            "%(count)s new match near you", "%(count)s new matches near you", len(found),
+        ) % {"count": len(found)}
+        context = {
+            "recipient": user,
+            "headline": subject,
+            "suggestions": found,
+            "site_url": settings.SITE_URL.rstrip("/"),
+            "list_url": _site_url(reverse("matches:suggestions")),
+            "settings_url": _site_url(reverse("users:update") + "#matches"),
+            "unsubscribe_url": _site_url(reverse("matches:suggestions_unsubscribe", args=[make_suggestions_unsubscribe_token(user)])),
+        }
+        text_body = render_to_string("matches/email/suggestions.txt", context)
+        html_body = render_to_string("matches/email/suggestions.html", context)
+    message = EmailMultiAlternatives(
+        subject=subject, body=text_body, from_email=settings.DEFAULT_FROM_EMAIL, to=[user.email],
+        headers={"List-Unsubscribe": f"<{context['unsubscribe_url']}>"},
+    )
+    message.attach_alternative(html_body, "text/html")
+    message.send(fail_silently=True)
+    user.suggestions.filter(pk__in=[s.pk for s in pending]).update(emailed_at=now)
+    return True
+
+
+def send_suggestion_emails(now=None):
+    """The weekly email to everyone who wants it and has something new. Returns how many
+    were sent."""
+    users = get_user_model().objects.filter(
+        match_emails=True, is_active=True, suggestions__emailed_at=None, suggestions__dismissed_at=None,
+    ).exclude(email="").distinct()
+    return sum(1 for user in users if send_suggestion_email(user, now=now))

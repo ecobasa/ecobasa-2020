@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand
 
-from suggestions.emails import send_suggestion_emails
+from matches.emails import send_suggestion_emails
 
 
 class Command(BaseCommand):
