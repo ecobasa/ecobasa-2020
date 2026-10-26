@@ -165,13 +165,13 @@
     {% endif %}
     {% endwith %}
 
-    {% with needs=match.needs.all %}
+    {% with needs=match.need_offers.all %}
       {% if needs %}
         <div class="text-sm mb-2">
           <strong>{% trans "Offers to help with" %}:</strong>
           <span class="inline-flex flex-wrap gap-1 align-middle">
-            {% for need in needs %}
-              <span class="pill bg-yellow text-xs"><i class="fa-solid {{ need.icon }} mr-1"></i>{{ need.display_title }}{% if need.amount %} ({{ need.amount }}){% endif %}</span>
+            {% for offer in needs %}
+              <span class="pill bg-yellow text-xs"><i class="fa-solid {{ offer.need.icon }} mr-1"></i>{{ offer.need.display_title }}{% if offer.amount %}<span class="ml-1">({{ offer.amount }})</span>{% endif %}</span>
             {% endfor %}
           </span>
         </div>

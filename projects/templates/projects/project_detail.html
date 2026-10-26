@@ -71,6 +71,7 @@
                 <span class="text-xs opacity-70 block">{{ need.get_kind_display }}
                   {% if need.status == 'covered' %}· {% trans "covered" %}
                   {% elif need.status == 'promised' %}· {% trans "promised by" %} {% for person in need.promised_by %}{{ person.name|default:person.email }}{% if not forloop.last %}, {% endif %}{% endfor %}
+                  {% elif need.progress %}· {{ need.progress }}
                   {% elif need.status == 'offered' %}· {% trans "someone offered this, waiting for an answer" %}{% endif %}
                 </span>
               </div>
@@ -101,9 +102,9 @@
                   {% endif %}{% endwith %}
                   <span class="ml-auto pill text-xs {% if match.status == 'accepted' %}bg-green{% elif match.status == 'counter' %}bg-primary{% else %}bg-yellow{% endif %}">{{ match.get_status_display }}</span>
                 </div>
-                {% with needs=match.needs.all %}{% if needs %}
+                {% with need_offers=match.need_offers.all %}{% if need_offers %}
                   <div class="flex flex-wrap gap-1 mt-2">
-                    {% for need in needs %}<span class="pill bg-yellow text-xs"><i class="fa-solid {{ need.icon }} mr-1"></i>{{ need.display_title }}</span>{% endfor %}
+                    {% for offer in need_offers %}<span class="pill bg-yellow text-xs"><i class="fa-solid {{ offer.need.icon }} mr-1"></i>{{ offer.need.display_title }}{% if offer.amount %}<span class="ml-1 opacity-80">({{ offer.amount }})</span>{% endif %}</span>{% endfor %}
                   </div>
                 {% endif %}{% endwith %}
               </a>

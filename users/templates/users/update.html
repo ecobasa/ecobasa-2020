@@ -39,6 +39,20 @@
     <!-- Location section (manually rendered to wrap in Alpine + OL map) -->
     {% include "maps/_location_picker.html" with map_id="user-location-map" set_point_fn="setUserPoint" locate_fn="locateUserProfile" map_height="h-[280px]" %}
 
+    <!-- Project suggestions by email -->
+    <div class="mt-8 p-4 bg-secondary bg-opacity-75 rounded-md shadow space-y-3">
+      <h2 class="mt-0">{% trans "Projects that need you" %}</h2>
+      <label class="flex items-start gap-2 cursor-pointer">
+        {{ form.project_digest }}
+        <span>{{ form.project_digest.label }}</span>
+      </label>
+      <label class="flex flex-wrap items-center gap-2 text-sm">
+        {{ form.project_digest_radius.label }} {{ form.project_digest_radius }}
+      </label>
+      {% for error in form.project_digest_radius.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+      <p class="text-xs">{% trans "We match open project needs with your skills and the gifts you offer, around the location above. Only new matches, at most once a week." %}</p>
+    </div>
+
     <div class="flex items-center justify-end gap-4 mt-12">
       <a class="btn btn-lg btn-purple" href="{{ user_obj.get_absolute_url }}"><i class="fa fa-times mr-2"></i>{% trans "Cancel" %}</a>
       <button class="btn btn-lg" type="submit"><i class="fa fa-check mr-2"></i>{% trans "Save changes" %}</button>

@@ -86,7 +86,7 @@ def detail(request, slug):
     from projects.models import Need
     projects = (
         community.projects.select_related("community")
-        .prefetch_related(Prefetch("needs", queryset=Need.objects.select_related("skill").prefetch_related("offers")))
+        .prefetch_related(Prefetch("needs", queryset=Need.objects.select_related("skill").prefetch_related("need_offers__match")))
     )
     is_ambassador = request.user.is_authenticated and (request.user.is_staff or request.user == community.owner)
 

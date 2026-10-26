@@ -5,7 +5,7 @@ import urllib.parse
 from datetime import datetime as _dt
 
 from django.shortcuts import render, get_object_or_404, redirect, reverse
-from django.db.models import Q
+from django.db.models import Prefetch, Q
 from django.core.paginator import Paginator
 from django.contrib import messages
 from django.http import JsonResponse
@@ -17,9 +17,10 @@ from django.views.decorators.http import require_GET
 from django.core.cache import cache
 
 from .forms import ListingForm
-from .filters import ListingFilter
+from .filters import NON_LISTING_TYPES, ListingFilter
 from .models import Listing
 from communities.models import Community
+from projects.models import Need, Project
 from users.models import User
 from skills.models import UserSkill, CommunitySkill, Skill, skill_name_q
 from matches.forms import MatchForm
@@ -126,19 +127,19 @@ def _apply_bbox(qs, bbox_param, location_field="location"):
         return qs
 
 
-def _order_by_distance(qs, request):
+def _order_by_distance(qs, request, location_field="location"):
     """Sort nearest-first when a 'lat,lon' location param is given (same format as ListingFilter)."""
     try:
         lat, lon = map(float, request.GET.get("location", "").split(","))
     except ValueError:
         return qs
     loc = Point(lon, lat, srid=4326)
-    return qs.annotate(distance=Distance("location", loc)).order_by("distance")
+    return qs.annotate(distance=Distance(location_field, loc)).order_by("distance")
 
 
 def _filtered_listings(request, require_location=True):
     types = request.GET.getlist("type")
-    listing_types = [t for t in types if t != "skill"]
+    listing_types = [t for t in types if t not in NON_LISTING_TYPES]
 
     if types and not listing_types:
         return Listing.objects.none()
@@ -147,7 +148,7 @@ def _filtered_listings(request, require_location=True):
     if require_location:
         base_qs = base_qs.filter(location__isnull=False)
 
-    if "skill" in types:
+    if len(listing_types) != len(types):
         data = request.GET.copy()
         data.setlist("type", listing_types)
         f = ListingFilter(data, queryset=base_qs, request=request)
@@ -201,6 +202,53 @@ def _skill_users(request, require_location=True):
         ).distinct()
 
     return _order_by_distance(qs, request)
+
+
+def _project_needs(request, require_location=True, bbox_param=""):
+    """Current projects with open needs, nearest first: (project, open needs) pairs. With
+    gift categories chosen, only needs in those categories count; with a search term, the
+    needs matching it (or all of a project that matches it itself)."""
+    types = request.GET.getlist("type")
+    if types and "need" not in types:
+        return []
+
+    qs = Project.objects.current().select_related("community").prefetch_related(
+        "community__photos",
+        Prefetch("needs", queryset=Need.objects.select_related("skill", "category").prefetch_related("need_offers__match")),
+    )
+    if require_location:
+        qs = qs.filter(community__location__isnull=False)
+    qs = _apply_bbox(qs, bbox_param, "community__location")
+
+    q = request.GET.get("search", "").strip()
+    project_matches = set()
+    if q:
+        project_matches = set(qs.filter(
+            Q(title__icontains=q) | Q(description__icontains=q) | Q(community__name__icontains=q)
+        ).values_list("pk", flat=True))
+        needs_q = Q(needs__title__icontains=q) | Q(needs__details__icontains=q) | skill_name_q(q, "needs__skill__")
+        qs = qs.filter(Q(pk__in=project_matches) | needs_q).distinct()
+    categories = {int(c) for c in request.GET.getlist("categories") if c.isdigit()}
+
+    def matches(need):
+        if categories and need.category_id not in categories:
+            return False
+        if q and not (
+            q.lower() in need.title.lower() or q.lower() in need.details.lower()
+            or q.lower() in need.display_title.lower()
+        ):
+            return False
+        return True
+
+    result = []
+    for project in _order_by_distance(qs, request, "community__location"):
+        needs = [need for need in project.needs.all() if not need.is_done]
+        shown = [need for need in needs if matches(need)]
+        if not shown and project.pk in project_matches and not categories:
+            shown = needs
+        if shown:
+            result.append((project, shown))
+    return result
 
 
 # ── Endpoints ────────────────────────────────────────────────────────
@@ -314,6 +362,30 @@ def gifts_markers(request):
                 },
             })
 
+    # ── Project needs: one marker per project, listing its open needs ─
+    for project, needs in _project_needs(request, bbox_param=bbox_param)[:200]:
+        community = project.community
+        photo = community.photos.first()
+        features.append({
+            "type": "Feature",
+            "geometry": {
+                "type":        "Point",
+                "coordinates": [community.location.x, community.location.y],
+            },
+            "properties": {
+                "source":         "need",
+                "title":          project.title,
+                "description":    project.description,
+                "image":          photo.image.url if photo and photo.image else None,
+                "type_display":   str(_("Project needs")),
+                "url":            project.get_absolute_url(),
+                "community_name": community.name,
+                "needs":          [
+                    {"title": need.display_title, "amount": need.amount, "icon": need.icon} for need in needs
+                ],
+            },
+        })
+
     return JsonResponse({"type": "FeatureCollection", "features": features})
 
 
@@ -328,6 +400,7 @@ def gifts_list_partial(request):
     paginator = Paginator(listings_queryset, 20)
     page = paginator.get_page(page_num)
 
+    project_needs = _project_needs(request, require_location=False)
     sc_qs = _skill_communities(request, require_location=False)
     su_qs = _skill_users(request, require_location=False)
 
@@ -342,9 +415,10 @@ def gifts_list_partial(request):
         "listings":          page,
         "skill_communities": skill_communities,
         "skill_users":       skill_users,
+        "project_needs":     project_needs[:10] if page_num == 1 else [],
         "has_next":          page.has_next(),
         "next_page":         page.next_page_number() if page.has_next() else None,
-        "total":             paginator.count + sc_qs.count() + su_qs.count(),
+        "total":             paginator.count + sc_qs.count() + su_qs.count() + len(project_needs),
         "q":                 request.GET.get("search", ""),
     })
 

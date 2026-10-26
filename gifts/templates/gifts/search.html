@@ -406,6 +406,9 @@
     if (source === 'skill' || source === 'user_skill') {
       iconCode = '';
       color = '#80143b';
+    } else if (source === 'need') {
+      iconCode = String.fromCharCode(0xf85e);  // fa-person-digging
+      color = '#5A5527';
     } else if (source === 'listing') {
       if (props.listing_type === 'offer') { iconCode = ''; }
       else if (props.listing_type === 'wish') { iconCode = ''; color = '#de7a08'; }
@@ -471,6 +474,12 @@
 
   const MARKERS_URL = '{% url "gifts:api-markers" %}';
 
+  function esc(text) {
+    const div = document.createElement('div');
+    div.textContent = text == null ? '' : String(text);
+    return div.innerHTML;
+  }
+
   function truncate(text, limit) {
     if (!text || text.length <= limit) return text || '';
     return text.slice(0, limit).replace(/\s+\S*$/, '') + '…';
@@ -481,6 +490,7 @@
     let badge = '';
     if (props.source === 'skill')      badge = `<span class="pill bg-purple"><i class="fa fa-graduation-cap mr-1"></i>${td || 'Skill'}</span>`;
     else if (props.source === 'user_skill') badge = `<span class="pill bg-purple"><i class="fa fa-graduation-cap mr-1"></i>{% trans "skill / teaching" %}</span>`;
+    else if (props.source === 'need')  badge = `<span class="pill bg-green"><i class="fa-solid fa-person-digging mr-1"></i>${td}</span>`;
     else if (props.listing_type === 'offer') badge = `<span class="pill bg-primary"><i class="fa fa-gift mr-1"></i>${td}</span>`;
     else if (props.listing_type === 'wish')  badge = `<span class="pill bg-yellow"><i class="fa fa-heart mr-1"></i>${td}</span>`;
     else                               badge = `<span class="pill bg-primary">${td}</span>`;
@@ -489,7 +499,12 @@
     if (props.image) html += `<div class="mb-2">${props.url ? `<a href="${props.url}">` : ''}<img src="${props.image}" alt="" class="w-full max-w-xs rounded shadow">${props.url ? '</a>' : ''}</div>`;
     const desc = truncate(props.description, 150);
     if (desc) html += `<div class="text-sm text-brown mt-2">${desc}</div>`;
-    if (props.source === 'skill' && props.community_name) html += `<div class="text-xs text-brown mt-1"><i class="fa fa-home mr-1"></i>${props.community_name}</div>`;
+    if (props.source === 'need' && props.needs && props.needs.length) {
+      html += `<div class="flex flex-wrap gap-1 mt-2">` + props.needs.map(n =>
+        `<span class="pill bg-yellow text-xs"><i class="fa-solid ${esc(n.icon)} mr-1"></i>${esc(n.title)}${n.amount ? `<span class="opacity-70 ml-1">(${esc(n.amount)})</span>` : ''}</span>`
+      ).join('') + `</div>`;
+    }
+    if ((props.source === 'skill' || props.source === 'need') && props.community_name) html += `<div class="text-xs text-brown mt-1"><i class="fa fa-home mr-1"></i>${props.community_name}</div>`;
     if ((props.source === 'user_skill' || props.source === 'listing') && props.user_name) html += `<div class="text-xs mt-1"><i class="fa fa-user mr-1"></i>${props.user_name}</div>`;
     if (props.url) html += `<a class="text-primary underline" href="${props.url}">{% trans "Open" %}</a>`;
     return html;

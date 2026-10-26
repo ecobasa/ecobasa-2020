@@ -93,7 +93,7 @@ def stays_of(community):
             | Q(content_type=ContentType.objects.get_for_model(Project), object_id__in=[str(pk) for pk in project_ids])
         )
         .select_related("from_user", "content_type", "volunteer_details")
-        .prefetch_related("needs__skill")
+        .prefetch_related("need_offers__need__skill")
     )
     projects = {str(project.pk): project for project in community.projects.all()}
     dated, undated = [], []
@@ -126,7 +126,7 @@ def calendar(request, community_slug):
         .filter(Q(archived_at=None) | Q(ends_on__lt=today))
         .filter(Q(starts_on=None) | Q(starts_on__lte=grid_end))
         .filter(Q(ends_on=None) | Q(ends_on__gte=grid_start))
-        .prefetch_related("needs__skill", "needs__offers")
+        .prefetch_related("needs__skill", "needs__need_offers__match")
         .order_by("starts_on", "pk")
     )
     stays, undated = stays_of(community)

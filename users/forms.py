@@ -158,7 +158,7 @@ class ProfileUpdateForm(forms.ModelForm):
     class Meta:
         model = User
         fields = ["name", "image", "about", "world", "ecobasa_what", "skills", "skill_wishes",
-                  "location_name", "location", "country"]
+                  "location_name", "location", "country", "project_digest", "project_digest_radius"]
         widgets = {
             "location": forms.HiddenInput(),
         }
@@ -194,6 +194,9 @@ class ProfileUpdateForm(forms.ModelForm):
             if fname in self.fields:
                 self.fields[fname].widget.attrs.update({'class': textarea_class})
         self.fields['image'].label = _("Upload new photo") if has_image else _("Photo")
+        self.fields['project_digest'].widget.attrs.update({'class': 'form-checkbox'})
+        self.fields['project_digest_radius'].widget.attrs.update({'class': 'form-input w-28', 'min': '5', 'max': '2000'})
+        self.fields['project_digest_radius'].required = False
         self.helper = FormHelper()
         self.helper.form_tag = False
         self.helper.layout = Layout(
@@ -205,6 +208,9 @@ class ProfileUpdateForm(forms.ModelForm):
             Field("skills"),
             Field("skill_wishes"),
         )
+
+    def clean_project_digest_radius(self):
+        return self.cleaned_data.get("project_digest_radius") or self.instance.project_digest_radius or 150
 
     def save(self, commit=True):
         user = super().save(commit=False)

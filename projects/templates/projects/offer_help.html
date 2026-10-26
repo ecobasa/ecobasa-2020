@@ -18,18 +18,31 @@
 
   <form method="post" class="border rounded-xl bg-secondary p-6 space-y-4">
     {% csrf_token %}
-    {% if form.needs.field.queryset.exists %}
+    {% with rows=form.need_rows %}{% if rows %}
       <fieldset class="form-group">
-        <legend class="form-label">{{ form.needs.label }}</legend>
-        <p class="text-xs mb-2">{% trans "Pick what you can do or bring. You can also just offer helping hands." %}</p>
-        {% for checkbox in form.needs %}
-          <label class="flex items-center gap-2 py-1 cursor-pointer">
-            {{ checkbox.tag }}
-            <span>{{ checkbox.choice_label }}</span>
-          </label>
+        <legend class="form-label">{% trans "What can you help with?" %}</legend>
+        <p class="text-xs mb-2">{% trans "Pick what you can do or bring, and how much. You can also just offer helping hands." %}</p>
+        {% for need, checkbox, amount in rows %}
+          <div class="flex flex-wrap items-center gap-2 py-1">
+            <label class="flex items-center gap-2 cursor-pointer flex-1 min-w-0">
+              {{ checkbox }}
+              <i class="fa-solid {{ need.icon }} text-primary"></i>
+              <span>{{ need.display_title }}
+                {% if need.amount %}<span class="text-xs opacity-70">· {% trans "needed" %}: {{ need.amount }}{% if need.promised_quantity %}, {% blocktrans with promised=need.promised_quantity %}{{ promised }} promised{% endblocktrans %}{% endif %}</span>{% endif %}
+              </span>
+            </label>
+            {% if amount %}
+              {% if need.unit == "people" %}
+                <label class="flex items-center gap-1 text-sm">{% trans "People coming" %} {{ amount }}</label>
+              {% else %}
+                <label class="flex items-center gap-1 text-sm">{% trans "I bring" %} {{ amount }} {{ need.get_unit_display }}</label>
+              {% endif %}
+              {% for error in amount.errors %}<p class="field-error w-full">{{ error }}</p>{% endfor %}
+            {% endif %}
+          </div>
         {% endfor %}
       </fieldset>
-    {% endif %}
+    {% endif %}{% endwith %}
 
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
       <div class="form-group">

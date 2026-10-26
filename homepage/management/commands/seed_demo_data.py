@@ -663,7 +663,7 @@ class Command(BaseCommand):
         """A dated project with needs and stays (confirmed, requested, overlapping so the
         calendar warns), an ongoing one, and a stale one whose ambassador gets asked."""
         from projects.forms import skill_for_title
-        from projects.models import Need, Project
+        from projects.models import Need, NeedOffer, Project
 
         self.stdout.write("Seeding projects…")
         luna, bjorn, mireille = users["luna@ecobasa.demo"], users["bjorn@ecobasa.demo"], users["mireille@ecobasa.demo"]
@@ -676,23 +676,34 @@ class Command(BaseCommand):
             obj, created = Project.objects.get_or_create(
                 community=community, title=title, defaults={"created_by": community.owner, **fields},
             )
-            if created:
-                for order, (kind, need_title, amount) in enumerate(needs):
-                    Need.objects.create(
-                        project=obj, kind=kind, title=need_title, amount=amount, order=order,
-                        skill=skill_for_title(need_title) if kind in (Need.KIND_SKILL, Need.KIND_KNOWLEDGE) else None,
-                    )
+            # Needs are added by title, so re-running adds new demo needs to older demo data
+            for order, (kind, need_title, quantity, unit, details) in enumerate(needs):
+                is_skill = kind in (Need.KIND_SKILL, Need.KIND_KNOWLEDGE)
+                need, _created = Need.objects.get_or_create(project=obj, title=need_title, defaults=dict(
+                    kind=kind, order=order, quantity=quantity, unit=unit, details=details,
+                    skill=(skill_for_title(need_title) or Skill.objects.filter(name__iexact=need_title).first())
+                    if is_skill else None,
+                    category=ListingCategory.objects.filter(name=(
+                        "Tools & Equipment" if kind == Need.KIND_TOOL else "Building Materials"
+                    )).first() if kind in Need.THING_KINDS else None,
+                ))
+                if kind in Need.THING_KINDS and need.category is None:
+                    # Demo needs from before needs had gift categories
+                    need.category = ListingCategory.objects.filter(
+                        name="Tools & Equipment" if kind == Need.KIND_TOOL else "Building Materials"
+                    ).first()
+                    need.save(update_fields=["category"])
             return obj, created
 
         stove, created = project(
             sonnenkraut, "Rocket stove for the community kitchen",
             [
-                (Need.KIND_SKILL, "Natural Building", "2 people"),
-                (Need.KIND_SKILL, "Masonry", "1 person"),
-                (Need.KIND_MATERIAL, "Field stones", "about 300"),
-                (Need.KIND_MATERIAL, "Clay", "200 kg"),
-                (Need.KIND_MATERIAL, "Chimney pipe", "3 m, 15 cm"),
-                (Need.KIND_TOOL, "Cement mixer", ""),
+                (Need.KIND_SKILL, "Natural Building", 2, "people", ""),
+                (Need.KIND_SKILL, "Masonry", 1, "people", ""),
+                (Need.KIND_MATERIAL, "Field stones", 300, "pieces", "fist to head size"),
+                (Need.KIND_MATERIAL, "Clay", 200, "kg", ""),
+                (Need.KIND_MATERIAL, "Chimney pipe", 3, "m", "15 cm diameter"),
+                (Need.KIND_TOOL, "Cement mixer", None, "", ""),
             ],
             description="Our old kitchen stove eats a forest a winter. We want to build a rocket stove "
                         "with a cob bench next to it, and learn how to build more of them.",
@@ -702,27 +713,40 @@ class Command(BaseCommand):
         )
         project(
             sonnenkraut, "Food forest care",
-            [(Need.KIND_SKILL, "Permaculture Design", ""), (Need.KIND_TOOL, "Scythe", "")],
+            [
+                (Need.KIND_SKILL, "Permaculture Design", None, "", ""),
+                (Need.KIND_TOOL, "Scythe", 2, "pieces", ""),
+                (Need.KIND_SKILL, "Woodworking", 1, "people", "a bench under the old apple tree"),
+            ],
             description="Mulching, pruning and planting in our young food forest, whenever you are around.",
             food_provided=True,
         )
         stale, _stale_created = project(
             kombucha, "Straw-bale guest house",
-            [(Need.KIND_MATERIAL, "Straw bales", "120"), (Need.KIND_KNOWLEDGE, "Natural Building", "")],
+            [(Need.KIND_MATERIAL, "Straw bales", 120, "pieces", ""), (Need.KIND_KNOWLEDGE, "Natural Building", None, "", "")],
             description="Planning a small guest house for the fermentation workshops.",
             food_provided=True,
         )
         Project.objects.filter(pk=stale.pk).update(updated_at=timezone.now() - timedelta(days=75))
 
+        # Björn (Bautzen, 50 km away) is a woodworker and gives away scythes: the weekly
+        # email (send_project_digest) suggests the food forest to him
+        scythes, _created = Listing.objects.get_or_create(
+            owner=bjorn, title="Two old scythes", type="offer",
+            defaults={"description": "Sharp enough, with a whetstone.", "location_name": bjorn.location_name,
+                      "location": bjorn.location},
+        )
+        scythes.categories.add(*ListingCategory.objects.filter(name="Tools & Equipment"))
+
         if not created:
             return
         needs = {need.title: need for need in stove.needs.all()}
         stays = [
-            # (who, from, to, status, needs)
-            (bjorn, 7, 21, Match.STATUS_ACCEPTED, ["Natural Building", "Field stones"]),
-            (mireille, 10, 17, Match.STATUS_ACCEPTED, ["Clay"]),
-            (diego, 12, 26, Match.STATUS_PENDING, ["Masonry", "Cement mixer"]),
-            (sam, 14, 20, Match.STATUS_PENDING, ["Natural Building"]),
+            # (who, from, to, status, {need: how much})
+            (bjorn, 7, 21, Match.STATUS_ACCEPTED, {"Natural Building": 1, "Field stones": 120}),
+            (mireille, 10, 17, Match.STATUS_ACCEPTED, {"Clay": 80}),
+            (diego, 12, 26, Match.STATUS_PENDING, {"Masonry": 1, "Cement mixer": None}),
+            (sam, 14, 20, Match.STATUS_PENDING, {"Natural Building": 1}),
         ]
         for who, start, end, status, need_titles in stays:
             match = Match(from_user=who, recipient=luna, message="I'd love to help with the rocket stove!", status=status)
@@ -732,7 +756,8 @@ class Command(BaseCommand):
                 match=match, volunteer_mode="wish",
                 stay_from=timezone.now() + timedelta(days=start), stay_to=timezone.now() + timedelta(days=end),
             )
-            match.needs.set([needs[title] for title in need_titles])
+            for title, quantity in need_titles.items():
+                NeedOffer.objects.create(need=needs[title], match=match, quantity=quantity)
             if status == Match.STATUS_ACCEPTED:
                 MatchMessage.objects.create(match=match, sender=luna, body="Welcome!", status_to=status)
                 Match.objects.filter(pk=match.pk).update(responded_at=timezone.now())

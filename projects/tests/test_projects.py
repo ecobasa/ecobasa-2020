@@ -7,6 +7,7 @@ from django.urls import reverse
 from django.utils import timezone, translation
 
 from communities.models import Community
+from gifts.models import ListingCategory
 from matches.models import Match, MatchMessage, VolunteerDetails
 from notifications.models import Notification
 from references.models import match_reference_subject
@@ -17,7 +18,7 @@ from users.models import User
 
 from ..calendar import stays_of
 from ..freshness import archive_stale_projects, make_confirm_token
-from ..models import Need, Project
+from ..models import Need, NeedOffer, Project
 
 
 @pytest.fixture(autouse=True)
@@ -50,7 +51,7 @@ def project(community):
         starts_on=today + timedelta(days=5), ends_on=today + timedelta(days=40), food_provided=True,
     )
     Need.objects.create(project=project, kind=Need.KIND_SKILL, title="Masonry", order=0)
-    Need.objects.create(project=project, kind=Need.KIND_MATERIAL, title="Clay", amount="200 kg", order=1)
+    Need.objects.create(project=project, kind=Need.KIND_MATERIAL, title="Clay", quantity=200, unit="kg", order=1)
     return project
 
 
@@ -90,12 +91,13 @@ def _formset(needs, prefix="needs"):
 @pytest.mark.django_db
 def test_ambassador_creates_project_with_needs_and_known_skills_are_linked(community, ambassador):
     SkillTaxonomy.objects.create(names={"en": "Carpentry", "de": "Zimmerei"})
+    category = ListingCategory.objects.create(name="Building Materials")
     response = _client(ambassador).post(reverse("projects:create", args=[community.slug]), {
         "title": "Guest house", "starts_on": "2030-03-01", "ends_on": "2030-04-30", "food_provided": "on",
         **_formset([
-            {"kind": "skill", "title": "Zimmerei", "amount": "2 people"},
+            {"kind": "skill", "title": "Zimmerei", "quantity": "2"},
             {"kind": "skill", "title": "Helping hands"},
-            {"kind": "material", "title": "Straw bales", "amount": "120"},
+            {"kind": "material", "title": "Straw bales", "quantity": "120", "unit": "pieces", "category": str(category.pk)},
             {"kind": "skill", "title": ""},  # an empty row added and left alone
         ]),
     })
@@ -107,6 +109,11 @@ def test_ambassador_creates_project_with_needs_and_known_skills_are_linked(commu
     assert needs[0].skill.slug == "carpentry"
     assert needs[1].skill is None  # not in the taxonomy: plain text, no new skill
     assert needs[2].skill is None
+    # People are the unit of a skill need; only things get a gift category
+    assert (needs[0].quantity, needs[0].unit, needs[0].category) == (2, "people", None)
+    assert (needs[2].quantity, needs[2].unit, needs[2].category) == (120, "pieces", category)
+    with translation.override("en"):
+        assert needs[2].amount == "120 pieces"
 
 
 @pytest.mark.django_db
@@ -134,7 +141,7 @@ def test_editing_removes_needs_and_marks_the_project_fresh(project, ambassador):
         "title": "Rocket stove", "starts_on": project.starts_on.isoformat(), "ends_on": project.ends_on.isoformat(),
         "needs-TOTAL_FORMS": "2", "needs-INITIAL_FORMS": "2", "needs-MIN_NUM_FORMS": "0", "needs-MAX_NUM_FORMS": "1000",
         "needs-0-id": masonry.pk, "needs-0-kind": "skill", "needs-0-title": "Masonry", "needs-0-DELETE": "on",
-        "needs-1-id": clay.pk, "needs-1-kind": "material", "needs-1-title": "Clay", "needs-1-amount": "300 kg",
+        "needs-1-id": clay.pk, "needs-1-kind": "material", "needs-1-title": "Clay", "needs-1-quantity": "300", "needs-1-unit": "kg",
     }
     assert _client(ambassador).post(reverse("projects:edit", args=[project.pk]), data).status_code == 302
     project.refresh_from_db()
@@ -182,7 +189,7 @@ def test_community_page_shows_its_projects(community, project, ambassador):
 def test_offering_help_creates_a_stay_match_with_the_needs(project, helper, ambassador):
     masonry, clay = project.needs.all()
     response = _client(helper).post(reverse("projects:offer_help", args=[project.pk]), {
-        "needs": [masonry.pk, clay.pk],
+        f"need_{masonry.pk}": "on", f"need_{clay.pk}": "on", f"quantity_{clay.pk}": "50",
         "stay_from": project.starts_on.isoformat(), "stay_to": (project.starts_on + timedelta(days=6)).isoformat(),
         "message": "I can build and bring clay.",
     })
@@ -191,12 +198,13 @@ def test_offering_help_creates_a_stay_match_with_the_needs(project, helper, amba
     assert match.target == project and match.recipient == ambassador and match.from_user == helper
     assert match.is_community_stay
     assert set(match.needs.all()) == {masonry, clay}
+    assert {(o.need, o.quantity) for o in match.need_offers.all()} == {(masonry, None), (clay, 50)}
     assert match.stay_period() == (_aware(project.starts_on), _aware(project.starts_on + timedelta(days=6)))
     notification = Notification.objects.get(recipient=ambassador)
     assert notification.icon == "fa-person-digging"
     with translation.override("en"):
         assert notification.text == "Hugo offered to help with your project: Rocket stove"
-    assert len(mail.outbox) == 1 and "Clay (200 kg)" in mail.outbox[0].body
+    assert len(mail.outbox) == 1 and "Clay (50 kg)" in mail.outbox[0].body
     masonry.refresh_from_db()
     assert masonry.status == Need.STATUS_OFFERED
 
@@ -386,3 +394,188 @@ def test_staff_read_matches_but_cannot_act(project, helper):
     assert response.status_code == 200 and not response.context["is_party"]
     assert _client(staff).post(url, {"action": "accept"}).status_code == 403
     assert Match.objects.get(pk=match.pk).status == Match.STATUS_PENDING
+
+
+@pytest.mark.django_db
+def test_offers_cover_a_quantity_in_parts(project, helper, ambassador):
+    clay = project.needs.get(title="Clay")  # 200 kg
+    first = _offer(project, helper, Match.STATUS_ACCEPTED)
+    NeedOffer.objects.create(need=clay, match=first, quantity=120)
+    clay = Need.objects.get(pk=clay.pk)
+    assert clay.status == Need.STATUS_OFFERED and clay.remaining == 80
+    with translation.override("en"):
+        assert clay.progress == "120 of 200 kg promised"
+
+    other = User.objects.create_user(email="other@example.com", password="x", name="Olu")
+    second = _offer(project, other, Match.STATUS_PENDING)
+    NeedOffer.objects.create(need=clay, match=second, quantity=80)
+    assert Need.objects.get(pk=clay.pk).offered_quantity == 80
+    Match.objects.filter(pk=second.pk).update(status=Match.STATUS_ACCEPTED)
+    clay = Need.objects.get(pk=clay.pk)
+    assert clay.status == Need.STATUS_PROMISED and clay.remaining == 0 and clay.progress == ""
+
+
+@pytest.mark.django_db
+def test_offer_form_only_lists_needs_still_missing(project, helper):
+    masonry = project.needs.get(title="Masonry")
+    match = _offer(project, helper, Match.STATUS_ACCEPTED)
+    NeedOffer.objects.create(need=masonry, match=match)
+    other = User.objects.create_user(email="other@example.com", password="x")
+    response = _client(other).get(reverse("projects:offer_help", args=[project.pk]))
+    assert [need.title for need, _box, _amount in response.context["form"].need_rows()] == ["Clay"]
+
+
+# ── On the gifts map and list ─────────────────────────────────────────
+
+
+@pytest.fixture
+def mapped(community, project):
+    from django.contrib.gis.geos import Point
+    community.location = Point(14.98, 51.16, srid=4326)
+    community.save()
+    return project
+
+
+@pytest.mark.django_db
+def test_open_needs_show_on_the_gifts_map(mapped):
+    project = mapped
+    project.needs.filter(title="Masonry").update(covered_at=timezone.now())
+    features = Client().get(reverse("gifts:api-markers")).json()["features"]
+    [feature] = [f for f in features if f["properties"]["source"] == "need"]
+    assert feature["properties"]["title"] == "Rocket stove"
+    assert feature["properties"]["url"] == project.get_absolute_url()
+    assert [n["title"] for n in feature["properties"]["needs"]] == ["Clay"]  # covered ones drop off
+    assert feature["properties"]["needs"][0]["amount"] == "200 kg"
+
+    # Only with the "need" type or no type filter; outside the viewport not at all
+    assert not [f for f in Client().get(reverse("gifts:api-markers"), {"type": "offer"}).json()["features"]
+                if f["properties"]["source"] == "need"]
+    far = Client().get(reverse("gifts:api-markers"), {"bbox": "0,0,1,1"}).json()["features"]
+    assert not [f for f in far if f["properties"]["source"] == "need"]
+
+
+@pytest.mark.django_db
+def test_gifts_filters_apply_to_needs(mapped):
+    project = mapped
+    building = ListingCategory.objects.create(name="Building Materials")
+    tools = ListingCategory.objects.create(name="Tools")
+    project.needs.filter(title="Clay").update(category=building)
+
+    def needs_of(params):
+        features = Client().get(reverse("gifts:api-markers"), params).json()["features"]
+        return [n["title"] for f in features if f["properties"]["source"] == "need" for n in f["properties"]["needs"]]
+
+    assert needs_of({"categories": building.pk}) == ["Clay"]
+    assert needs_of({"categories": tools.pk}) == []
+    assert needs_of({"search": "clay"}) == ["Clay"]
+    assert needs_of({"search": "rocket"}) == ["Masonry", "Clay"]  # the project itself matches
+    assert needs_of({"type": "need", "search": "nothing like it"}) == []
+
+
+@pytest.mark.django_db
+def test_project_needs_in_the_gifts_list(mapped):
+    content = Client().get(reverse("gifts:api-list"), {"type": "need"}).content.decode()
+    assert "Rocket stove" in content and "Clay" in content
+    # Listing types alone leave them out
+    assert "Rocket stove" not in Client().get(reverse("gifts:api-list"), {"type": "offer"}).content.decode()
+
+
+# ── Weekly email ──────────────────────────────────────────────────────
+
+
+@pytest.fixture
+def carpenter(db):
+    from django.contrib.gis.geos import Point
+    from skills.models import Skill, UserSkill
+    user = User.objects.create_user(
+        email="carp@example.com", password="x", name="Carla", location=Point(14.5, 51.2, srid=4326),  # ~35 km away
+    )
+    masonry = Skill.objects.get_or_create(name="Masonry")[0]
+    UserSkill.objects.create(user=user, skill=masonry)
+    return user
+
+
+@pytest.fixture
+def skilled_project(mapped):
+    from skills.models import Skill
+    mapped.needs.filter(title="Masonry").update(skill=Skill.objects.get_or_create(name="Masonry")[0])
+    return mapped
+
+
+@pytest.mark.django_db
+def test_digest_suggests_needs_for_your_skills_and_gifts(skilled_project, carpenter):
+    from ..digest import send_project_digests, suggestions_for
+    building = ListingCategory.objects.create(name="Building Materials")
+    skilled_project.needs.filter(title="Clay").update(category=building)
+    from gifts.models import Listing
+    Listing.objects.create(owner=carpenter, title="Clay from our pond", type="offer")
+
+    [item] = suggestions_for(carpenter)
+    assert item.project == skilled_project and 25 < item.distance_km < 50
+    assert [(s.need.title, s.skill_name, s.listing and s.listing.title) for s in item.suggestions] == [
+        ("Masonry", "Masonry", None), ("Clay", "", "Clay from our pond"),
+    ]
+    assert item.offer_url.endswith("?need=%d&need=%d" % tuple(s.need.pk for s in item.suggestions))
+
+    assert send_project_digests() == 1
+    email = mail.outbox[0]
+    assert email.to == ["carp@example.com"]
+    assert email.subject == "1 project near you could use your help"
+    assert "Rocket stove" in email.body and "your gift: Clay from our pond" in email.body
+    assert "List-Unsubscribe" in email.extra_headers
+
+    # Each need once, and at most one email a week
+    assert send_project_digests() == 0
+    more = Need.objects.create(project=skilled_project, kind=Need.KIND_SKILL, title="More masonry",
+                               skill=skilled_project.needs.get(title="Masonry").skill)
+    assert send_project_digests() == 0
+    assert send_project_digests(now=timezone.now() + timedelta(days=7)) == 1
+    assert f"?need={more.pk}\n" in mail.outbox[1].body and "Clay" not in mail.outbox[1].body
+
+
+@pytest.mark.django_db
+def test_digest_subject_names_a_single_skill(skilled_project, carpenter):
+    from ..digest import send_digest
+    with translation.override("en"):
+        assert send_digest(carpenter)
+    assert mail.outbox[0].subject == "1 community near you needs Masonry"
+
+
+@pytest.mark.django_db
+def test_digest_leaves_out_far_own_offered_and_done(skilled_project, carpenter, ambassador):
+    from ..digest import suggestions_for
+    carpenter.project_digest_radius = 10
+    assert suggestions_for(carpenter) == []
+    carpenter.project_digest_radius = 150
+    assert suggestions_for(carpenter)
+
+    match = _offer(skilled_project, carpenter)
+    assert suggestions_for(carpenter) == []  # already offered help there
+    match.delete()
+    skilled_project.needs.filter(title="Masonry").update(covered_at=timezone.now())
+    assert suggestions_for(carpenter) == []  # nothing open that fits
+    ambassador.location = carpenter.location
+    from skills.models import UserSkill
+    UserSkill.objects.create(user=ambassador, skill=skilled_project.needs.get(title="Masonry").skill)
+    skilled_project.needs.update(covered_at=None)
+    assert suggestions_for(ambassador) == []  # their own community
+
+
+@pytest.mark.django_db
+def test_one_click_unsubscribe(carpenter):
+    from ..digest import make_unsubscribe_token, send_project_digests
+    response = Client().get(reverse("projects:digest_unsubscribe", args=[make_unsubscribe_token(carpenter)]))
+    assert response.status_code == 302
+    carpenter.refresh_from_db()
+    assert carpenter.project_digest is False
+    assert send_project_digests() == 0
+    assert Client().get(reverse("projects:digest_unsubscribe", args=["forged"])).status_code == 400
+
+
+def test_gift_titles_match_needs_word_by_word():
+    from types import SimpleNamespace
+    from ..digest import _listing_for
+    listing = SimpleNamespace(title="Two old scythes", categories=SimpleNamespace(all=lambda: []))
+    assert _listing_for(SimpleNamespace(title="Scythe", category_id=None), [listing]) is listing
+    assert _listing_for(SimpleNamespace(title="Old car", category_id=None), [listing]) is None  # not by "old"
+    assert _listing_for(SimpleNamespace(title="Clay", category_id=None), [listing]) is None

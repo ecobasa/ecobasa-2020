@@ -104,6 +104,13 @@ class User(AbstractUser):
     # When they last used the site while logged in (LastSeenMiddleware, at most every few
     # minutes), shown as "last active" so visitors can tell who is likely to answer.
     last_seen = models.DateTimeField(_("Last active"), null=True, blank=True)
+    # Weekly email with projects nearby that need their skills or gifts (send_project_digest)
+    project_digest = models.BooleanField(
+        _("Email me weekly about projects nearby that need my skills or gifts"), default=True,
+    )
+    project_digest_radius = models.PositiveSmallIntegerField(
+        _("How far away (km)?"), default=150,
+    )
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = ["name"]

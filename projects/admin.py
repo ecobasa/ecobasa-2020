@@ -6,7 +6,7 @@ from .models import Need, Project
 class NeedInline(admin.TabularInline):
     model = Need
     extra = 0
-    fields = ("kind", "title", "skill", "amount", "covered_at", "order")
+    fields = ("kind", "title", "skill", "quantity", "unit", "details", "category", "covered_at", "order")
     raw_id_fields = ("skill",)
 
 

@@ -16,7 +16,11 @@ _LISTING_TYPE_FILTER_CHOICES = [
     ("offer", _("Offers")),
     ("wish", _("Wishes")),
     ("skill", _("Skills")),
+    ("need", _("Project needs")),
 ]
+
+# Types that aren't listings: skills and project needs come from other apps
+NON_LISTING_TYPES = ("skill", "need")
 
 
 class ListingFilter(django_filters.FilterSet):

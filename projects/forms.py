@@ -53,7 +53,7 @@ def skill_for_title(title):
 class NeedForm(forms.ModelForm):
     class Meta:
         model = Need
-        fields = ["kind", "title", "amount"]
+        fields = ["kind", "title", "quantity", "unit", "details", "category"]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -62,12 +62,25 @@ class NeedForm(forms.ModelForm):
             "class": "form-input w-full", "autocomplete": "off", "list": "need-skill-suggestions",
             "data-need-title": "", "placeholder": _("e.g. Carpentry, clay, a cement mixer"),
         })
-        self.fields["amount"].widget.attrs.update({
-            "class": "form-input w-full", "placeholder": _("e.g. 2 people, 200 kg"),
+        self.fields["quantity"].widget.attrs.update({"class": "form-input w-full", "min": "1", "placeholder": _("How many?")})
+        self.fields["unit"].widget.attrs["class"] = "form-select w-full"
+        self.fields["unit"].choices = [("", _("Unit"))] + Need.UNIT_CHOICES
+        self.fields["details"].widget.attrs.update({
+            "class": "form-input w-full", "placeholder": _("Details, e.g. 15 cm diameter"),
         })
+        self.fields["category"].widget.attrs["class"] = "form-select w-full"
+        self.fields["category"].empty_label = _("Gift category (optional)")
         if self.instance.pk and self.instance.skill_id:
             # Show the skill in the editor's language
             self.initial["title"] = self.instance.display_title
+
+    def clean(self):
+        cleaned = super().clean()
+        if cleaned.get("quantity") and not cleaned.get("unit") and cleaned.get("kind") == Need.KIND_SKILL:
+            cleaned["unit"] = Need.UNIT_PEOPLE
+        if cleaned.get("kind") not in Need.THING_KINDS:
+            cleaned["category"] = None
+        return cleaned
 
     def save(self, commit=True):
         need = super().save(commit=False)
@@ -82,20 +95,11 @@ NeedFormSet = forms.inlineformset_factory(
 )
 
 
-class NeedChoiceField(forms.ModelMultipleChoiceField):
-    def label_from_instance(self, need):
-        label = need.display_title
-        return f"{label} ({need.amount})" if need.amount else label
-
-
 class HelpOfferForm(forms.Form):
     """Someone offers to help with a project: with some of its needs, on site and/or by
-    bringing things."""
+    bringing things, saying how much they bring where a need has a quantity. Each open
+    need gets a checkbox (need_<id>) and, if it has a quantity, an amount (quantity_<id>)."""
 
-    needs = NeedChoiceField(
-        queryset=Need.objects.none(), required=False, widget=forms.CheckboxSelectMultiple(attrs={"class": "form-checkbox"}),
-        label=_("What can you help with?"),
-    )
     stay_from = forms.DateField(label=_("Arrival"), required=False, widget=forms.DateInput(attrs={"type": "date"}))
     stay_to = forms.DateField(label=_("Departure"), required=False, widget=forms.DateInput(attrs={"type": "date"}))
     message = forms.CharField(
@@ -103,10 +107,22 @@ class HelpOfferForm(forms.Form):
         help_text=_("Who you are, what you can do or bring, and how you would get there."),
     )
 
-    def __init__(self, project, *args, **kwargs):
+    def __init__(self, project, *args, preselected=(), **kwargs):
         super().__init__(*args, **kwargs)
         self.project = project
-        self.fields["needs"].queryset = project.needs.filter(covered_at=None).select_related("skill")
+        self.needs = [need for need in project.needs.all() if not need.is_done]
+        preselected = {str(pk) for pk in preselected}
+        for need in self.needs:
+            self.fields[f"need_{need.pk}"] = forms.BooleanField(
+                required=False, initial=str(need.pk) in preselected,
+                widget=forms.CheckboxInput(attrs={"class": "form-checkbox"}),
+            )
+            if need.quantity:
+                remaining = need.remaining or need.quantity
+                self.fields[f"quantity_{need.pk}"] = forms.IntegerField(
+                    required=False, min_value=1, initial=1 if need.unit == Need.UNIT_PEOPLE else remaining,
+                    widget=forms.NumberInput(attrs={"class": "form-input w-24", "min": "1"}),
+                )
         self.fields["message"].widget.attrs["class"] = "form-textarea w-full"
         for name in ("stay_from", "stay_to"):
             self.fields[name].widget.attrs["class"] = "form-input w-full"
@@ -115,10 +131,23 @@ class HelpOfferForm(forms.Form):
             if project.ends_on:
                 self.fields[name].widget.attrs["max"] = project.ends_on.isoformat()
 
+    def need_rows(self):
+        """(need, checkbox, amount field or None) for the template."""
+        return [
+            (need, self[f"need_{need.pk}"], self[f"quantity_{need.pk}"] if f"quantity_{need.pk}" in self.fields else None)
+            for need in self.needs
+        ]
+
+    def chosen_needs(self):
+        """[(need, quantity or None)] that were ticked."""
+        return [
+            (need, self.cleaned_data.get(f"quantity_{need.pk}"))
+            for need in self.needs if self.cleaned_data.get(f"need_{need.pk}")
+        ]
+
     def clean(self):
         cleaned = super().clean()
         stay_from, stay_to = cleaned.get("stay_from"), cleaned.get("stay_to")
         if stay_from and stay_to and stay_to < stay_from:
             self.add_error("stay_to", _("The stay can't end before it starts."))
         return cleaned
-

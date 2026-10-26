@@ -97,7 +97,17 @@ updated or confirmed for `PROJECT_STALE_DAYS` (60) gets an "Is this still curren
 with a one-click confirm link, and is archived if nobody confirms it within
 `PROJECT_ARCHIVE_GRACE_DAYS` (14). Projects without an end date are ongoing.
 
-One more cron job:
+Needs have an amount ("200 kg", "2 people"); helpers say how much they bring, so offers
+can cover a need in parts. Material and tool needs can have a gift category, and the open
+needs of current projects show on the gifts map and list ("Project needs").
+
+Once a week, people get an email about projects within their chosen distance
+(`User.project_digest_radius`, 150 km by default) with open needs that match their
+skills or the gifts they offer. Each need is suggested to each person once; the email has a
+one-click unsubscribe link, and the profile has the setting.
+
+Two more cron jobs:
 ```
 30 8 * * *   python manage.py archive_stale_projects
+0 17 * * 0   python manage.py send_project_digest
 ```

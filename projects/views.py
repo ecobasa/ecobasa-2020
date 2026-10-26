@@ -20,9 +20,11 @@ from skills.models import skill_name_q
 
 from .forms import HelpOfferForm, NeedFormSet, ProjectForm
 from .freshness import read_confirm_token
-from .models import Need, Project
+from .models import Need, NeedOffer, Project
 
-_NEEDS = Prefetch("needs", queryset=Need.objects.select_related("skill").prefetch_related("offers__from_user"))
+_NEEDS = Prefetch(
+    "needs", queryset=Need.objects.select_related("skill", "category").prefetch_related("need_offers__match__from_user"),
+)
 
 
 def _projects():
@@ -64,7 +66,7 @@ def detail(request, pk):
     offers = []
     if can_edit:
         offers = list(
-            project.matches.select_related("from_user").prefetch_related("needs")
+            project.matches.select_related("from_user").prefetch_related("need_offers__need__skill")
             .exclude(status=Match.STATUS_DECLINED)
         )
     return render(request, "projects/project_detail.html", {
@@ -191,10 +193,8 @@ def offer_help(request, pk):
     if request.user == community.owner:
         return redirect(project.get_absolute_url())
 
-    initial = {"needs": request.GET.getlist("need")}
-    form = HelpOfferForm(project, request.POST or None, initial=initial)
+    form = HelpOfferForm(project, request.POST or None, preselected=request.GET.getlist("need"))
     if request.method == "POST" and form.is_valid():
-        needs = list(form.cleaned_data["needs"])
         with transaction.atomic():
             match = Match(from_user=request.user, recipient=project.get_match_owner(), message=form.cleaned_data["message"])
             match.target = project
@@ -205,7 +205,8 @@ def offer_help(request, pk):
                 stay_from=_day_start(form.cleaned_data["stay_from"]),
                 stay_to=_day_start(form.cleaned_data["stay_to"]),
             )
-            match.needs.set(needs)
+            for need, quantity in form.chosen_needs():
+                NeedOffer.objects.create(need=need, match=match, quantity=quantity)
         notify_match_created(match, http_request=request)
         messages.success(request, _("Your offer has been sent to %(community)s!") % {"community": community.name})
         return redirect(match.get_absolute_url())
@@ -217,3 +218,20 @@ def offer_help(request, pk):
 
 def _day_start(day):
     return timezone.make_aware(datetime.combine(day, time.min)) if day else None
+
+
+def digest_unsubscribe(request, token):
+    """One click from the weekly project email turns it off, no login needed."""
+    from django.contrib.auth import get_user_model
+
+    from .digest import read_unsubscribe_token
+
+    try:
+        pk = read_unsubscribe_token(token)
+    except signing.BadSignature:
+        return HttpResponseBadRequest("Invalid link.")
+    get_user_model().objects.filter(pk=pk).update(project_digest=False)
+    messages.success(request, _(
+        "You won't get emails about projects nearby any more. You can turn them on again in your profile."
+    ))
+    return redirect("projects:list")

@@ -9,6 +9,36 @@
   {% endif %}
 </span>
 
+{# ── Project needs (first page only) ───────────────────────────── #}
+{% for project, needs in project_needs %}
+  {% with community=project.community %}{% with photo=community.photos.first %}
+  <a href="{{ project.get_absolute_url }}" class="relative w-full max-w-4xl group flex items-stretch justify-between my-5 sm:my-10 bg-secondary bg-opacity-50 p-5 rounded-md hover:text-primary hover:shadow-lg">
+    <div class="text-xs absolute bottom-0 right-0 rounded-full p-2 text-secondary bg-green">
+      <i class="fa-solid fa-person-digging mr-1"></i>{% trans "Project needs" %}
+    </div>
+    <div class="flex w-full">
+      {% if photo %}
+        <img class="flex-shrink-0 h-20 w-20 sm:h-32 sm:w-48 object-cover rounded" src="{{ photo.image.url }}" alt="{{ community.name }}" loading="lazy">
+      {% else %}
+        <div class="flex-shrink-0 h-20 w-20 sm:h-32 sm:w-48 bg-green bg-opacity-60 rounded flex items-center justify-center"><i class="fa-solid fa-person-digging text-3xl text-secondary"></i></div>
+      {% endif %}
+      <div class="pl-2 sm:pl-6 w-full pb-6">
+        {% if community.location_name %}
+          <i class="fa fa-map-marker text-primary mb-1"></i>
+          <div class="text-xs inline">{{ community.location_name }}</div>
+        {% endif %}
+        <div class="font-serif sm:text-lg group-hover:text-primary">{{ project.title }}</div>
+        <div class="text-xs mb-1"><i class="fa-regular fa-calendar mr-1"></i>{% include "projects/_project_dates.html" %}</div>
+        <div class="flex flex-wrap gap-1">
+          {% for need in needs %}{% include "projects/_need_pill.html" %}{% endfor %}
+        </div>
+        <span class="absolute bottom-5 text-sm"><i class="fa fa-home mr-2"></i>{{ community.name }}</span>
+      </div>
+    </div>
+  </a>
+  {% endwith %}{% endwith %}
+{% endfor %}
+
 {# ── Community skill cards (first page only) ───────────────────── #}
 {% for community in skill_communities %}
   {% with community.photos.first as photo %}
@@ -75,7 +105,7 @@
 {% for listing in listings %}
   {% include "gifts/_listing.html" %}
 {% empty %}
-  {% if not skill_communities and not skill_users %}
+  {% if not skill_communities and not skill_users and not project_needs %}
     <p class="text-primary py-8 text-center">{% trans "No results found." %}</p>
   {% endif %}
 {% endfor %}
