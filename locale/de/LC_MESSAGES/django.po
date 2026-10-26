@@ -3086,3 +3086,24 @@ msgstr "Konto erstellt und angemeldet."
 #~ msgstr ""
 #~ "<strong>%(actor)s</strong> hat auf dein Interesse an <strong>%(title)s</"
 #~ "strong> reagiert: <strong>%(status_label)s</strong>."
+
+#: communities/templates/communities/_volunteer_skill_proposal.html:20
+msgid ""
+"Your application mentioned a skill that isn't on your profile yet — do you "
+"want to add it now, so others can find you by it too?"
+msgstr ""
+"Deine Bewerbung nennt eine Fähigkeit, die noch nicht in deinem Profil steht "
+"– möchtest du sie jetzt hinzufügen, damit andere dich auch darüber finden?"
+
+#: skills/templates/skills/userskill_add_several.html:4
+#: skills/templates/skills/userskill_add_several.html:10
+msgid "Add skills to your profile"
+msgstr "Fähigkeiten zu deinem Profil hinzufügen"
+
+#: skills/templates/skills/userskill_add_several.html:13
+msgid "Untick what you don't want to add. For each skill, pick a level and, if you like, say a few words about it, so others can find you by it."
+msgstr "Entferne das Häkchen bei allem, was du nicht hinzufügen möchtest. Wähle für jede Fähigkeit ein Niveau und schreib gern ein paar Worte dazu, damit andere dich darüber finden."
+
+#: skills/views.py:190
+msgid "Skills added to your profile."
+msgstr "Fähigkeiten zu deinem Profil hinzugefügt."

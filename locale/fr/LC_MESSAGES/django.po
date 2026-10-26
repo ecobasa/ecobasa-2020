@@ -3084,3 +3084,25 @@ msgstr "Compte créé et connecté."
 #~ msgstr ""
 #~ "<strong>%(actor)s</strong> a répondu à ton intérêt pour "
 #~ "<strong>%(title)s</strong> : <strong>%(status_label)s</strong>."
+
+#: communities/templates/communities/_volunteer_skill_proposal.html:20
+msgid ""
+"Your application mentioned a skill that isn't on your profile yet — do you "
+"want to add it now, so others can find you by it too?"
+msgstr ""
+"Ta candidature mentionne une compétence qui ne figure pas encore sur ton "
+"profil — veux-tu l'ajouter maintenant, pour que d'autres te trouvent aussi "
+"grâce à elle ?"
+
+#: skills/templates/skills/userskill_add_several.html:4
+#: skills/templates/skills/userskill_add_several.html:10
+msgid "Add skills to your profile"
+msgstr "Ajoute des compétences à ton profil"
+
+#: skills/templates/skills/userskill_add_several.html:13
+msgid "Untick what you don't want to add. For each skill, pick a level and, if you like, say a few words about it, so others can find you by it."
+msgstr "Décoche ce que tu ne veux pas ajouter. Pour chaque compétence, choisis un niveau et, si tu veux, écris quelques mots, pour que d'autres puissent te trouver grâce à elle."
+
+#: skills/views.py:190
+msgid "Skills added to your profile."
+msgstr "Compétences ajoutées à ton profil."

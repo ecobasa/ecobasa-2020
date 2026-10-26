@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block head_title %}{% trans "Add skills to your profile" %} — ecobasa{% endblock %}
+
+{% block content %}
+<div class="container-form">
+
+  <h1 class="text-2xl text-primary mb-2">
+    <i class="fa fa-plus mr-2"></i>{% trans "Add skills to your profile" %}
+  </h1>
+  <p class="text-brown mb-6">
+    {% trans "Untick what you don't want to add. For each skill, pick a level and, if you like, say a few words about it, so others can find you by it." %}
+  </p>
+
+  <div class="border rounded-xl bg-secondary p-6">
+    <form method="post">
+      {% csrf_token %}
+
+      {% if offer_rows %}
+        <p class="form-label mb-2"><i class="fa fa-graduation-cap mr-1"></i>{% trans "I can offer / teach this skill" %}</p>
+        <div class="mb-6">
+          {% for row in offer_rows %}
+            {% include "skills/_userskill_add_several_row.html" with empty_label="—" level_label=_("Level") description_hint=_("How did you learn this? What can you offer?") %}
+          {% endfor %}
+        </div>
+      {% endif %}
+
+      {% if wish_rows %}
+        <p class="form-label mb-2"><i class="fa fa-book mr-1"></i>{% trans "I want to learn this or need help with it" %}</p>
+        <div class="mb-6">
+          {% trans "Any level" as any_level %}
+          {% for row in wish_rows %}
+            {% include "skills/_userskill_add_several_row.html" with empty_label=any_level level_label=_("My current level") description_hint=_("Why do you want to learn this or need help with it? What would you like to be able to do?") %}
+          {% endfor %}
+        </div>
+      {% endif %}
+
+      <div class="flex gap-3">
+        <button type="submit" class="btn">
+          <i class="fa fa-check mr-2"></i>{% trans "Add to my profile" %}
+        </button>
+        <a href="{{ request.user.get_absolute_url }}" class="btn btn-purple">
+          <i class="fa fa-times mr-2"></i>{% trans "Cancel" %}
+        </a>
+      </div>
+    </form>
+  </div>
+
+</div>
+{% endblock %}

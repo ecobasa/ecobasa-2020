@@ -10,7 +10,7 @@ from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_GET
 
 from .forms import CommunitySkillForm, CommunitySkillOrWishForm, SkillWishEditForm, UserSkillForm, UserSkillOrWishForm
-from .models import CommunitySkill, Skill, SkillWish, SkillTaxonomy, UserSkill
+from .models import CommunitySkill, Skill, SkillWish, SkillTaxonomy, UserSkill, get_or_create_skill
 from communities.models import Community
 from users.models import User
 from matches.forms import MatchForm
@@ -142,6 +142,61 @@ def userskill_add(request):
     else:
         form = UserSkillOrWishForm(initial={"mode": initial_mode})
     return render(request, "skills/userskill_form.html", {"form": form, "action": "add"})
+
+
+@login_required
+def userskill_add_several(request):
+    """Add several skills at once, e.g. the ones from a volunteer request, with a level each.
+
+    GET ?offer=slug,slug&wish=slug lists the skills not yet on the profile; the
+    POST adds the ticked ones as skill offers or learning goals, with level and description.
+    """
+    data = request.POST if request.method == "POST" else request.GET
+    if request.method == "POST":
+        slugs = {"offer": data.getlist("offer"), "wish": data.getlist("wish")}
+    else:
+        slugs = {kind: [s for s in data.get(kind, "").split(",") if s] for kind in ("offer", "wish")}
+    existing = {
+        "offer": set(request.user.user_skills.values_list("skill__slug", flat=True)),
+        "wish":  set(request.user.skill_wishes.values_list("skill__slug", flat=True)),
+    }
+    # Skills from the taxonomy that nobody has used yet have no Skill row; it is created on save.
+    skills = {
+        t.slug: Skill(name=t.get_name("en"), slug=t.slug)
+        for t in SkillTaxonomy.objects.filter(slug__in=slugs["offer"] + slugs["wish"])
+    }
+    skills.update(Skill.objects.in_bulk(slugs["offer"] + slugs["wish"], field_name="slug"))
+    levels = dict(UserSkill.LEVEL_CHOICES)
+    rows = [
+        {"kind": kind, "skill": skills[slug],
+         "level_field": f"level_{kind}_{slug}", "description_field": f"description_{kind}_{slug}"}
+        for kind in ("offer", "wish")
+        for slug in dict.fromkeys(slugs[kind])
+        if slug in skills and slug not in existing[kind]
+    ]
+
+    if request.method == "POST":
+        for row in rows:
+            level = data.get(row["level_field"], "")
+            level = level if level in levels else ""
+            if row["skill"].pk is None:
+                row["skill"], _created = get_or_create_skill(slug=row["skill"].slug)
+            defaults = {"level": level, "description": data.get(row["description_field"], "").strip()}
+            if row["kind"] == "offer":
+                UserSkill.objects.get_or_create(user=request.user, skill=row["skill"], defaults=defaults)
+            else:
+                SkillWish.objects.get_or_create(user=request.user, skill=row["skill"], defaults=defaults)
+        if rows:
+            messages.success(request, _("Skills added to your profile."))
+        return redirect(request.user.get_absolute_url())
+
+    if not rows:
+        return redirect(request.user.get_absolute_url())
+    return render(request, "skills/userskill_add_several.html", {
+        "offer_rows":    [r for r in rows if r["kind"] == "offer"],
+        "wish_rows":     [r for r in rows if r["kind"] == "wish"],
+        "level_choices": UserSkill.LEVEL_CHOICES,
+    })
 
 
 @login_required

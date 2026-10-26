@@ -16,7 +16,11 @@
     <div class="flex items-start gap-3">
       <i class="fa fa-graduation-cap text-primary mt-0.5 flex-shrink-0"></i>
       <p class="text-primary flex-1">
-        {% trans "Your application mentioned skills that you dont have on your profile yet — Do you want to add them now, so others can find you by them too?" %}
+        {% if single_skill %}
+          {% trans "Your application mentioned a skill that isn't on your profile yet — do you want to add it now, so others can find you by it too?" %}
+        {% else %}
+          {% trans "Your application mentioned skills that you dont have on your profile yet — Do you want to add them now, so others can find you by them too?" %}
+        {% endif %}
       </p>
       <button @click="open = false" class="flex-shrink-0 opacity-60 hover:opacity-100 focus:outline-none" aria-label="{% trans 'Dismiss' %}">
         <i class="fa fa-times"></i>
