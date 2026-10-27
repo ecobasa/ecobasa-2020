@@ -737,6 +737,12 @@ class Command(BaseCommand):
                       "location": bjorn.location},
         )
         scythes.categories.add(*ListingCategory.objects.filter(name="Tools & Equipment"))
+        # What kind of thing the demo gifts are (also set on older demo data)
+        for kind, prefixes in ((Listing.KIND_TOOL, ("Two old scythes", "Desperately seeking a wheelbarrow",
+                                                     "Need: a printer", "Looking for scaffolding")),
+                               (Listing.KIND_MATERIAL, ("Firewood",))):
+            for prefix in prefixes:
+                Listing.objects.filter(title__startswith=prefix).update(kind=kind)
 
         if not created:
             return

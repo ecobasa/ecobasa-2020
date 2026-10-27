@@ -45,6 +45,7 @@ class Side:
     want: bool
     skill_id: int | None = None
     title: str = ""
+    kind: str = ""  # material or tool, if known: then only the same kind fits
 
     @property
     def is_skill(self):
@@ -59,7 +60,8 @@ def side_of(obj):
         owner = obj.owner
         if owner is not None:
             side = Side(obj, owner, obj.location or owner.location, str(owner.country or ""),
-                        want=obj.type == "wish", title=obj.title)
+                        want=obj.type == "wish", title=obj.title,
+                        kind="" if obj.kind == Listing.KIND_OTHER else obj.kind)
     elif isinstance(obj, Need):
         project = obj.project
         if not project.is_current or obj.is_done:
@@ -67,7 +69,7 @@ def side_of(obj):
         community = project.community
         place = (community.location, str(community.country or ""))
         if obj.kind in Need.THING_KINDS:
-            side = Side(obj, community.owner, *place, want=True, title=obj.title)
+            side = Side(obj, community.owner, *place, want=True, title=obj.title, kind=obj.kind)
         elif obj.skill_id:
             side = Side(obj, community.owner, *place, want=True, skill_id=obj.skill_id)
     elif isinstance(obj, UserSkill):
@@ -169,6 +171,8 @@ def fit(a, b):
         return None
     if a.is_skill:
         return Suggestion.REASON_SKILL if a.skill_id == b.skill_id else None
+    if a.kind and b.kind and a.kind != b.kind:
+        return None
     if any(_same_word(x, y) for x in _words(a.title) for y in _words(b.title)):
         return Suggestion.REASON_WORDS
     return None

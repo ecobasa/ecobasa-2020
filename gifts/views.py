@@ -160,7 +160,8 @@ def _filtered_listings(request, require_location=True):
 
 def _skill_communities(request, require_location=True):
     types = request.GET.getlist("type")
-    if types and "skill" not in types:
+    # Skills aren't things, so a chosen kind of thing leaves them out
+    if (types and "skill" not in types) or request.GET.getlist("kind"):
         return Community.objects.none()
 
     filters = {"community_skills__isnull": False}
@@ -183,7 +184,8 @@ def _skill_communities(request, require_location=True):
 
 def _skill_users(request, require_location=True):
     types = request.GET.getlist("type")
-    if types and "skill" not in types:
+    # Skills aren't things, so a chosen kind of thing leaves them out
+    if (types and "skill" not in types) or request.GET.getlist("kind"):
         return User.objects.none()
 
     filters = {"user_skills__isnull": False}
@@ -229,9 +231,12 @@ def _project_needs(request, require_location=True, bbox_param=""):
         needs_q = Q(needs__title__icontains=q) | Q(needs__details__icontains=q) | skill_name_q(q, "needs__skill__")
         qs = qs.filter(Q(pk__in=project_matches) | needs_q).distinct()
     categories = {int(c) for c in request.GET.getlist("categories") if c.isdigit()}
+    kinds = set(request.GET.getlist("kind"))
 
     def matches(need):
         if categories and need.category_id not in categories:
+            return False
+        if kinds and need.kind not in kinds:
             return False
         if q and not (
             q.lower() in need.title.lower() or q.lower() in need.details.lower()
@@ -244,7 +249,7 @@ def _project_needs(request, require_location=True, bbox_param=""):
     for project in _order_by_distance(qs, request, "community__location"):
         needs = [need for need in project.needs.all() if not need.is_done]
         shown = [need for need in needs if matches(need)]
-        if not shown and project.pk in project_matches and not categories:
+        if not shown and project.pk in project_matches and not categories and not kinds:
             shown = needs
         if shown:
             result.append((project, shown))

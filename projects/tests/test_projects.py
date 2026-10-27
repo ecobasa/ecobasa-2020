@@ -7,12 +7,12 @@ from django.urls import reverse
 from django.utils import timezone, translation
 
 from communities.models import Community
-from gifts.models import ListingCategory
+from gifts.models import Listing, ListingCategory
 from matches.models import Match, MatchMessage, VolunteerDetails
 from notifications.models import Notification
 from references.models import match_reference_subject
 from references.reference_requests import exchange_text
-from skills.models import SkillTaxonomy
+from skills.models import Skill, SkillTaxonomy
 from templatetags.site_tags import ago
 from users.models import User
 
@@ -470,6 +470,28 @@ def test_gifts_filters_apply_to_needs(mapped):
     assert needs_of({"search": "clay"}) == ["Clay"]
     assert needs_of({"search": "rocket"}) == ["Masonry", "Clay"]  # the project itself matches
     assert needs_of({"type": "need", "search": "nothing like it"}) == []
+    # Clay is a material, Masonry a skill
+    assert needs_of({"kind": "material"}) == ["Clay"]
+    assert needs_of({"kind": "tool"}) == []
+
+
+@pytest.mark.django_db
+def test_gifts_kind_filter(mapped, ambassador):
+    from django.contrib.gis.geos import Point
+    from skills.models import UserSkill
+    place = Point(14.98, 51.16, srid=4326)
+    Listing.objects.create(title="Spade", type="offer", kind=Listing.KIND_TOOL, owner=ambassador, location=place)
+    Listing.objects.create(title="Bricks", type="offer", kind=Listing.KIND_MATERIAL, owner=ambassador, location=place)
+    ambassador.location = place
+    ambassador.save()
+    UserSkill.objects.create(user=ambassador, skill=Skill.objects.get_or_create(name="Masonry")[0])
+
+    def sources(params):
+        features = Client().get(reverse("gifts:api-markers"), params).json()["features"]
+        return sorted(f["properties"].get("title") or f["properties"]["source"] for f in features)
+
+    assert sources({"kind": "tool"}) == ["Spade"]  # no skills, no material
+    assert sources({"kind": "material"}) == ["Bricks", "Rocket stove"]
 
 
 @pytest.mark.django_db

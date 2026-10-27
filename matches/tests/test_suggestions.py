@@ -95,6 +95,15 @@ def test_things_match_by_title_not_by_gift_category(anna, ben):
 
 
 @pytest.mark.django_db
+def test_a_material_does_not_fit_a_tool(anna, ben):
+    wish = _listing(anna, "Wood saw", "wish", kind=Listing.KIND_TOOL)
+    _listing(ben, "Sawdust from the wood workshop", "offer", kind=Listing.KIND_MATERIAL)
+    other = _listing(ben, "Old wood saw", "offer")  # kind not given: may still fit
+    match(wish, notify=False)
+    assert [s.other for s in anna.suggestions.all()] == [other]
+
+
+@pytest.mark.django_db
 def test_skill_wishes_and_needs_meet_the_skills_of_people_and_communities(anna, ben):
     masonry = _skill("Masonry")
     wish = SkillWish.objects.create(user=anna, skill=masonry)

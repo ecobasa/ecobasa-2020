@@ -32,6 +32,19 @@
       </div>
     </div>
 
+    {# Kind of thing, as pills like the project list's #}
+    <div>
+      <div class="text-xs font-bold uppercase tracking-wider opacity-70 mb-2">{% trans "Kind of thing" %}</div>
+      <div class="flex flex-wrap gap-1">
+        {% for t in f.form.kind %}
+        <button type="button"
+          :class="$store.fm.kinds.includes('{{ t.data.value|escapejs }}') ? 'bg-secondary !text-primary' : 'border border-secondary'"
+          class="pill"
+          @click="$store.fm.toggle('kinds', '{{ t.data.value|escapejs }}')">{{ t.choice_label }}</button>
+        {% endfor %}
+      </div>
+    </div>
+
     {% if f.form.categories.field.queryset.exists %}
     <div>
       <div class="text-xs font-bold uppercase tracking-wider opacity-70 mb-2">{% trans "Category" %}</div>

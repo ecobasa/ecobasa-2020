@@ -27,6 +27,12 @@ class Listing(RandomIdMixin, models.Model):
     """A Listing for either an offer or a wish"""
 
     TYPE_CHOICES = [("offer", _("Offer")), ("wish", _("Wish"))]
+    # What kind of thing, like a project need's kind; "other" for everything else
+    KIND_MATERIAL = "material"
+    KIND_TOOL = "tool"
+    KIND_OTHER = "other"
+    KIND_CHOICES = [(KIND_MATERIAL, _("Material")), (KIND_TOOL, _("Tool")), (KIND_OTHER, _("Other"))]
+    KIND_ICONS = {KIND_MATERIAL: "fa-cubes", KIND_TOOL: "fa-screwdriver-wrench", KIND_OTHER: "fa-gift"}
 
     random_id = models.CharField(
         _("Random Id"), max_length=8, primary_key=True, editable=False
@@ -35,6 +41,7 @@ class Listing(RandomIdMixin, models.Model):
     type = models.CharField(
         _("Type"), choices=TYPE_CHOICES, max_length=5, default="offer"
     )
+    kind = models.CharField(_("Kind of thing"), max_length=10, choices=KIND_CHOICES, default=KIND_OTHER)
     description = models.TextField(_("Description"), blank=True)
     image = models.ImageField(_('image'), upload_to='gifts-images', null=True, blank=True)
     quantity = models.PositiveIntegerField(_("How many / how much?"), null=True, blank=True)
@@ -64,6 +71,10 @@ class Listing(RandomIdMixin, models.Model):
 
     def get_absolute_url(self) -> str:
         return reverse("gifts:detail", kwargs={"pk": self.pk})
+
+    @property
+    def kind_icon(self):
+        return self.KIND_ICONS.get(self.kind, "fa-gift")
 
     @property
     def amount(self):

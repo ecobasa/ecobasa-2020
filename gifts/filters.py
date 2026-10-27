@@ -28,6 +28,9 @@ class ListingFilter(django_filters.FilterSet):
     type = django_filters.MultipleChoiceFilter(
         choices=_LISTING_TYPE_FILTER_CHOICES, widget=forms.CheckboxSelectMultiple
     )
+    kind = django_filters.MultipleChoiceFilter(
+        label=_("Kind of thing"), choices=Listing.KIND_CHOICES, widget=forms.CheckboxSelectMultiple
+    )
     categories = django_filters.ModelMultipleChoiceFilter(
         queryset=ListingCategory.objects.all(), widget=forms.CheckboxSelectMultiple
     )
@@ -38,7 +41,7 @@ class ListingFilter(django_filters.FilterSet):
 
     class Meta:
         model = Listing
-        fields = ["search", "type", "categories"]
+        fields = ["search", "type", "kind", "categories"]
 
     def do_search(self, queryset, name, value):
         return queryset.filter(

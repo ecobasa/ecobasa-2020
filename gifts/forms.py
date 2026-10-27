@@ -22,10 +22,11 @@ class ListingForm(forms.ModelForm):
         self.fields["quantity"].help_text = _("Optional: how many or how much you offer or wish for.")
         self.fields["quantity"].widget.attrs["min"] = "1"
         self.fields["unit"].choices = [("", _("no unit"))] + list(self.fields["unit"].choices)[1:]
+        self.fields["kind"].required = False
         self.helper = FormHelper()
         self.helper.form_tag = False
         self.helper.layout = Layout(
-            Fieldset("", InlineRadios("type"), InlineCheckboxes("categories")),
+            Fieldset("", InlineRadios("type"), InlineRadios("kind"), InlineCheckboxes("categories")),
             Fieldset(
                 _("Content"),
                 Field("title"),
@@ -40,10 +41,14 @@ class ListingForm(forms.ModelForm):
             ),
         )
 
+    def clean_kind(self):
+        return self.cleaned_data.get("kind") or Listing.KIND_OTHER
+
     class Meta:
         model = Listing
         fields = (
             "type",
+            "kind",
             "title",
             "quantity",
             "unit",
@@ -55,6 +60,7 @@ class ListingForm(forms.ModelForm):
         )
         widgets = {
             "type": forms.RadioSelect,
+            "kind": forms.RadioSelect,
             "categories": forms.CheckboxSelectMultiple,
             "location_name": forms.HiddenInput,
             "location": forms.HiddenInput,

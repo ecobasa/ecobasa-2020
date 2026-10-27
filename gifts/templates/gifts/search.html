@@ -6,6 +6,7 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v7.2.2/ol.css">
   <script>
     const giftTypeLabels     = { {% for t in f.form.type %}'{{ t.data.value|escapejs }}': '{{ t.choice_label|escapejs }}',{% endfor %} };
+    const giftKindLabels     = { {% for t in f.form.kind %}'{{ t.data.value|escapejs }}': '{{ t.choice_label|escapejs }}',{% endfor %} };
     const giftCategoryLabels = { {% for t in f.form.categories %}'{{ t.data.value|escapejs }}': '{{ t.choice_label|escapejs }}',{% endfor %} };
 
     document.addEventListener('alpine:init', function () {
@@ -17,10 +18,11 @@
         locationName: '{{ f.form.location_name.data|default:""|escapejs }}',
         location:     '{{ f.form.location.data|default:""|escapejs }}',
         types:        [{% for v in f.form.type.value %}"{{ v|escapejs }}"{% if not forloop.last %}, {% endif %}{% endfor %}],
+        kinds:        [{% for v in f.form.kind.value %}"{{ v|escapejs }}"{% if not forloop.last %}, {% endif %}{% endfor %}],
         categories:   [{% for v in f.form.categories.value %}"{{ v|escapejs }}"{% if not forloop.last %}, {% endif %}{% endfor %}],
         markerCount:  0,
 
-        get filterCount() { return this.types.length + this.categories.length; },
+        get filterCount() { return this.types.length + this.kinds.length + this.categories.length; },
         get activeCount() { return this.filterCount + (this.q ? 1 : 0) + (this.location ? 1 : 0); },
 
         showMap()  { this.view = 'map'; },
@@ -42,12 +44,14 @@
 
         clearFilters() {
           this.types = [];
+          this.kinds = [];
           this.categories = [];
           this.reload();
         },
 
         clearAll() {
           this.types = [];
+          this.kinds = [];
           this.categories = [];
           this.q = '';
           this.location = '';
@@ -378,6 +382,9 @@
     <template x-for="t in $store.fm.types" :key="t">
       <input type="hidden" name="type" :value="t">
     </template>
+    <template x-for="k in $store.fm.kinds" :key="k">
+      <input type="hidden" name="kind" :value="k">
+    </template>
     <template x-for="c in $store.fm.categories" :key="c">
       <input type="hidden" name="categories" :value="c">
     </template>
@@ -527,6 +534,7 @@
     if (store.q)        params.set('search', store.q);
     if (store.location) params.set('location', store.location);
     (store.types      || []).forEach(t => params.append('type', t));
+    (store.kinds      || []).forEach(k => params.append('kind', k));
     (store.categories || []).forEach(c => params.append('categories', c));
     return MARKERS_URL + '?' + params.toString();
   }
