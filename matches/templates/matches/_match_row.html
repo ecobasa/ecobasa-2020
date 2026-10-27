@@ -37,7 +37,7 @@
         </div>
       {% endif %}
     {% endwith %}
-    {% if match.is_community_stay %}{% include "matches/_stay_tags.html" %}{% endif %}
+    {% include "matches/_stay_tags.html" %}
   </div>
   <div class="flex-none">
     {% if match.status == "pending" %}

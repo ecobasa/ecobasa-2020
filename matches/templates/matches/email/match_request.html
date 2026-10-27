@@ -51,8 +51,8 @@
                     <p style="margin:0 0 4px;font-size:11px;text-transform:uppercase;letter-spacing:0.06em;opacity:0.6;">{% trans "Offers to help with" %}</p>
                     <p style="margin:0 0 16px;font-size:15px;">{% for offer in needs %}{{ offer.need.display_title }}{% if offer.amount %} ({{ offer.amount }}){% endif %}{% if not forloop.last %}, {% endif %}{% endfor %}</p>
                     {% endif %}{% endwith %}
-                    {% with listings=match.volunteer_details.bring_listings.all %}{% if listings %}
-                    <p style="margin:0 0 4px;font-size:11px;text-transform:uppercase;letter-spacing:0.06em;opacity:0.6;">{% trans "Brings along" %}</p>
+                    {% with listings=match.listings.all %}{% if listings %}
+                    <p style="margin:0 0 4px;font-size:11px;text-transform:uppercase;letter-spacing:0.06em;opacity:0.6;">{% trans "Also part of this exchange" %}</p>
                     <p style="margin:0 0 16px;font-size:15px;">{% for listing in listings %}{{ listing.title }}{% if not forloop.last %}, {% endif %}{% endfor %}</p>
                     {% endif %}{% endwith %}
                     {% if match.message %}

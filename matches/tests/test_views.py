@@ -304,3 +304,60 @@ def test_the_match_shows_what_the_other_side_brings(owner, requester, stay):
     # The skills named in the request link to the person's skill page if they have it
     assert [pill[2] for pill in stay.volunteer_details.sender_skill_pills] == [masonry.get_absolute_url(), ""]
     assert str(stay.kind[0]) == "Volunteer stay"
+
+
+@pytest.mark.django_db
+def test_asking_for_more_gifts_makes_them_part_of_the_exchange(owner, requester, stay):
+    from notifications.models import Notification
+    from references.models import match_gift_names
+    from references.templatetags.references_tags import reference_url_for_match
+
+    mortar = Listing.objects.create(title="Lime mortar", type="offer", owner=requester)
+    Listing.objects.create(title="A tent", type="wish", owner=requester)  # not offered: can't be asked for
+    mine = Listing.objects.create(title="My own spade", type="offer", owner=owner)
+    client = _client_for(owner)
+
+    client.post(stay.get_absolute_url(), {"action": "listings", "listing": [mortar.pk, mine.pk]})
+    assert list(stay.listings.all()) == [mortar]
+    message = stay.thread.get()
+    assert message.sender == owner and "Lime mortar" in message.body
+    assert Notification.objects.filter(recipient=requester, tag=Notification.TAG_MESSAGE).exists()
+
+    # Shown with the match, and ticked on its page
+    assert "Lime mortar" in client.get("/matches/?type=volunteer").content.decode()
+    assert client.get(stay.get_absolute_url()).context["asked_listing_ids"] == {mortar.pk}
+
+    # Who received it names it in their reference; the giver doesn't
+    assert match_gift_names(stay, owner) == ["Lime mortar"]
+    assert match_gift_names(stay, requester) == []
+    stay.status = Match.STATUS_ACCEPTED
+    stay.save()
+
+    class Request:
+        user = owner
+    assert "reference_gift=Lime+mortar" in reference_url_for_match({"request": Request}, stay)
+
+    # Unticking takes it out again, without a message
+    client.post(stay.get_absolute_url(), {"action": "listings"})
+    assert not stay.listings.exists() and stay.thread.count() == 1
+
+
+@pytest.mark.django_db
+def test_accepting_a_stay_updates_the_project_needs(owner, requester):
+    """A need ticked in the community's volunteer form is promised once the stay is
+    accepted on the match page; a volunteer counts as one person."""
+    from communities.models import Community
+    from projects.models import Need, Project
+
+    community = Community.objects.create(name="Hof", owner=owner)
+    project = Project.objects.create(community=community, title="Oven")
+    hands = Need.objects.create(project=project, kind=Need.KIND_SKILL, title="Helping hands", quantity=2, unit=Need.UNIT_PEOPLE)
+    clay = Need.objects.create(project=project, kind=Need.KIND_MATERIAL, title="Clay")
+    _client_for(requester).post(f"/communities/volunteer-request/{community.slug}/", {"body": "Hi", "need": [hands.pk, clay.pk]})
+    stay = Match.objects.get()
+    assert (hands.status, clay.status) == ("offered", "offered")
+
+    _client_for(owner).post(stay.get_absolute_url(), {"action": "accept"})
+    hands, clay = Need.objects.get(pk=hands.pk), Need.objects.get(pk=clay.pk)
+    assert clay.status == "promised"
+    assert hands.status == "offered" and hands.promised_quantity == 1  # one of two people

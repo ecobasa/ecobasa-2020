@@ -19,7 +19,7 @@ from PIL import Image, ImageOps, UnidentifiedImageError
 
 from matches.models import Match
 
-from .models import Reference, ReferenceSkill, ReferenceRequest, match_reference_subject, subject_owner
+from .models import Reference, ReferenceSkill, ReferenceRequest, match_gift_names, match_reference_subject, subject_owner
 from .notifications import notify_reference_created
 
 # How long the link in a story email keeps working
@@ -163,8 +163,9 @@ def save_requested_reference(reference_request, *, text, impression=Reference.IM
         reference.share_publicly = share_publicly
     if photo is not None:
         reference.photo.save(photo.name, photo, save=False)
-    if gift and gift not in reference.gift_names:
-        reference.gift_names = [*reference.gift_names, gift]
+    for name in [gift, *match_gift_names(match, user)]:
+        if name and name not in reference.gift_names:
+            reference.gift_names = [*reference.gift_names, name]
     reference.save()
 
     if skill and hasattr(subject, "add_skill"):

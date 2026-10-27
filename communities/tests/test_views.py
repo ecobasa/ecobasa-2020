@@ -116,7 +116,7 @@ def test_volunteers_can_bring_what_the_community_needs(user, community):
     })
     match = Match.objects.get()
     assert [offer.need for offer in match.need_offers.all()] == [clay]
-    assert list(match.volunteer_details.bring_listings.all()) == [wish]
+    assert list(match.listings.all()) == [wish]
     assert match.community == community
 
     # Shown with the stay on the volunteer visits page

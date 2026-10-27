@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ecobasa\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-27 13:48+0100\n"
+"POT-Creation-Date: 2026-10-27 14:01+0100\n"
 "PO-Revision-Date: 2026-10-23 12:00+0200\n"
 "Last-Translator: ecobasa\n"
 "Language-Team: de\n"
@@ -96,7 +96,7 @@ msgstr "Name"
 msgid "Slug"
 msgstr "Slug"
 
-#: communities/models.py:24 gifts/filters.py:18 matches/models.py:295
+#: communities/models.py:24 gifts/filters.py:18 matches/models.py:300
 #: matches/templates/matches/_person.html:18 matches/views.py:31
 #: matches/views.py:95 references/forms.py:14
 #: references/templates/references/email/reference_created.html:35
@@ -482,7 +482,7 @@ msgstr "Bis"
 
 #: communities/templates/communities/community_detail.html:368
 #: gifts/templates/gifts/listing_detail.html:136 matches/forms.py:35
-#: matches/models.py:60 matches/models.py:162
+#: matches/models.py:60 matches/models.py:169
 #: matches/templates/matches/email/match_message.html:34
 #: matches/templates/matches/email/match_request.html:59
 #: matches/templates/matches/email/match_request.txt:21
@@ -714,26 +714,26 @@ msgstr "Profil öffnen"
 msgid "This community has no contact person."
 msgstr "Diese Gemeinschaft hat keine Ansprechperson."
 
-#: communities/views.py:183
+#: communities/views.py:187
 #, python-format
 msgid "Your request has been sent to %(community)s!"
 msgstr "Deine Anfrage wurde an %(community)s gesendet!"
 
-#: communities/views.py:268 communities/views.py:315
+#: communities/views.py:272 communities/views.py:319
 #, python-format
 msgid "Uploaded %(count)s image(s)."
 msgstr "%(count)s Bild(er) hochgeladen."
 
-#: communities/views.py:273 communities/views.py:321
+#: communities/views.py:277 communities/views.py:325
 #, python-format
 msgid "Form invalid: %(errors)s"
 msgstr "Formular ungültig: %(errors)s"
 
-#: communities/views.py:291
+#: communities/views.py:295
 msgid "Community deleted."
 msgstr "Gemeinschaft gelöscht."
 
-#: communities/views.py:316
+#: communities/views.py:320
 msgid "Community updated."
 msgstr "Gemeinschaft aktualisiert."
 
@@ -742,7 +742,7 @@ msgid "Wishes"
 msgstr "Wünsche"
 
 #: gifts/filters.py:19 gifts/templates/gifts/_gifts_list_partial.html:17
-#: gifts/views.py:404
+#: gifts/views.py:407
 msgid "Project needs"
 msgstr "Projektbedarfe"
 
@@ -864,7 +864,7 @@ msgid "No results"
 msgstr "Keine Ergebnisse"
 
 #: gifts/templates/gifts/_gifts_list_partial.html:48
-#: gifts/templates/gifts/_gifts_list_partial.html:79 matches/models.py:110
+#: gifts/templates/gifts/_gifts_list_partial.html:79 matches/models.py:117
 #: matches/templates/matches/_stay_legend.html:3 skills/forms.py:27
 #: skills/forms.py:84 skills/forms.py:157 skills/forms.py:192
 #: skills/models.py:132 skills/templates/skills/communityskill_form.html:53
@@ -907,7 +907,7 @@ msgstr ""
 "          Möchtest du %(listing_type)s <b>%(listing_title)s</b> wirklich löschen?\n"
 "        "
 
-#: gifts/templates/gifts/listing_detail.html:28 matches/models.py:295
+#: gifts/templates/gifts/listing_detail.html:28 matches/models.py:300
 #: matches/views.py:30 matches/views.py:95 references/models.py:95
 #: references/templates/references/email/reference_created.html:36
 #: references/templates/references/email/reference_created.txt:10
@@ -1108,33 +1108,33 @@ msgstr[1] "%(count)s Tage"
 msgid "Your request has been sent."
 msgstr "Deine Anfrage wurde gesendet."
 
-#: gifts/views.py:75
+#: gifts/views.py:78
 msgid "Your offers"
 msgstr "Deine Angebote"
 
-#: gifts/views.py:75
+#: gifts/views.py:78
 msgid "Your wishes"
 msgstr "Deine Wünsche"
 
-#: gifts/views.py:93
+#: gifts/views.py:96
 #, python-format
 msgid "%(listing_type)s created"
 msgstr "%(listing_type)s erstellt"
 
-#: gifts/views.py:111
+#: gifts/views.py:114
 msgid "changes saved"
 msgstr "Änderungen gespeichert"
 
-#: gifts/views.py:124
+#: gifts/views.py:127
 #, python-format
 msgid "%(listing_type)s deleted"
 msgstr "%(listing_type)s gelöscht"
 
-#: gifts/views.py:361
+#: gifts/views.py:364
 msgid "Skill / Teaching"
 msgstr "Fähigkeit / Lehren"
 
-#: gifts/views.py:383 skills/models.py:182
+#: gifts/views.py:386 skills/models.py:182
 msgid "User Skill"
 msgstr "Fähigkeit (Person)"
 
@@ -1194,7 +1194,7 @@ msgstr "Mit Krypto spenden"
 msgid "Flattr us"
 msgstr "Flattr uns"
 
-#: matches/apps.py:8 matches/models.py:77
+#: matches/apps.py:8 matches/models.py:84
 #: matches/templates/matches/match_detail.html:15
 #: matches/templates/matches/matches_list.html:7 templates/_navbar.html:146
 #: templates/_navbar.html:261 templates/dashboard/base.html:20
@@ -1249,116 +1249,114 @@ msgstr "Eigener Ort"
 msgid "Proposed date"
 msgstr "Vorgeschlagenes Datum"
 
-#: matches/models.py:76 matches/models.py:115
+#: matches/models.py:78 matches/templates/matches/email/match_request.html:55
+#: matches/templates/matches/email/match_request.txt:17
+#: matches/templates/matches/match_detail.html:190
+msgid "Also part of this exchange"
+msgstr "Auch Teil dieses Austauschs"
+
+#: matches/models.py:83 matches/models.py:122
 #: matches/templates/matches/match_detail.html:4
 #: matches/templates/matches/match_detail.html:19
 msgid "Match"
 msgstr "Match"
 
-#: matches/models.py:108
+#: matches/models.py:115
 msgid "Gift"
 msgstr "Geschenk"
 
-#: matches/models.py:112 matches/templates/matches/calendar.html:88
+#: matches/models.py:119 matches/templates/matches/calendar.html:88
 #: projects/models.py:66
 msgid "Project"
 msgstr "Projekt"
 
-#: matches/models.py:114 matches/templates/matches/calendar.html:107
+#: matches/models.py:121 matches/templates/matches/calendar.html:107
 msgid "Volunteer stay"
 msgstr "Freiwilligenaufenthalt"
 
-#: matches/models.py:164
+#: matches/models.py:171
 msgid "Decision"
 msgstr "Entscheidung"
 
-#: matches/models.py:178
+#: matches/models.py:185
 msgid "Match Message"
 msgstr "Match-Nachricht"
 
-#: matches/models.py:179
+#: matches/models.py:186
 msgid "Match Messages"
 msgstr "Match-Nachrichten"
 
-#: matches/models.py:223 matches/templates/matches/_stay_legend.html:7
-#: matches/templates/matches/_stay_tags.html:7
-#: matches/templates/matches/email/match_request.html:55
-#: matches/templates/matches/email/match_request.txt:17
-#: matches/templates/matches/match_detail.html:190
-msgid "Brings along"
-msgstr "Bringt mit"
-
-#: matches/models.py:226 matches/models.py:227
+#: matches/models.py:231 matches/models.py:232
 msgid "Volunteer Details"
 msgstr "Details zum Aufenthalt"
 
-#: matches/models.py:276
+#: matches/models.py:281
 msgid "Same skill"
 msgstr "Gleiche Fähigkeit"
 
-#: matches/models.py:277
+#: matches/models.py:282
 msgid "Similar title"
 msgstr "Ähnlicher Titel"
 
-#: matches/models.py:313
+#: matches/models.py:318
 msgid "Suggestion"
 msgstr "Vorschlag"
 
-#: matches/models.py:314 matches/views.py:91
+#: matches/models.py:319 matches/views.py:91
 msgid "Suggestions"
 msgstr "Vorschläge"
 
-#: matches/models.py:341
+#: matches/models.py:346
 #, python-format
 msgid "%(name)s gives away: %(title)s"
 msgstr "%(name)s verschenkt: %(title)s"
 
-#: matches/models.py:341
+#: matches/models.py:346
 #, python-format
 msgid "%(name)s is looking for: %(title)s"
 msgstr "%(name)s sucht: %(title)s"
 
-#: matches/models.py:345 matches/models.py:374
+#: matches/models.py:350 matches/models.py:379
 #, python-format
 msgid "%(project)s at %(community)s needs: %(title)s"
 msgstr "%(project)s bei %(community)s braucht: %(title)s"
 
-#: matches/models.py:349
+#: matches/models.py:354
 #, python-format
 msgid "%(name)s offers the skill: %(skill)s"
 msgstr "%(name)s bietet die Fähigkeit: %(skill)s"
 
-#: matches/models.py:351
+#: matches/models.py:356
 #, python-format
 msgid "You can learn %(skill)s at %(community)s"
 msgstr "Bei %(community)s kannst du %(skill)s lernen"
 
-#: matches/models.py:356
+#: matches/models.py:361
 #, python-format
 msgid "%(community)s is looking for: %(skill)s"
 msgstr "%(community)s sucht: %(skill)s"
 
-#: matches/models.py:359
+#: matches/models.py:364
 #, python-format
 msgid "%(name)s wants to learn: %(skill)s"
 msgstr "%(name)s möchte lernen: %(skill)s"
 
-#: matches/models.py:389
+#: matches/models.py:394
 #, python-format
 msgid "your offer: %(title)s"
 msgstr "deinem Angebot: %(title)s"
 
-#: matches/models.py:389 matches/models.py:396
+#: matches/models.py:394 matches/models.py:401
 #, python-format
 msgid "your wish: %(title)s"
 msgstr "deinem Wunsch: %(title)s"
 
-#: matches/models.py:392
+#: matches/models.py:397
 #, python-format
 msgid "your project %(project)s: %(title)s"
 msgstr "deinem Projekt %(project)s: %(title)s"
 
-#: matches/models.py:394
+#: matches/models.py:399
 #, python-format
 msgid "your skill: %(skill)s"
 msgstr "deiner Fähigkeit: %(skill)s"
@@ -1393,7 +1391,23 @@ msgstr "Noch keine Fähigkeiten im Profil."
 msgid "Gifts they could bring along"
 msgstr "Geschenke, die mitgebracht werden könnten"
 
-#: matches/templates/matches/_person.html:43
+#: matches/templates/matches/_person.html:45 projects/models.py:174
+msgid "Details"
+msgstr "Details"
+
+#: matches/templates/matches/_person.html:48
+msgid ""
+"Tick what you would like too: it becomes part of this exchange, shows with "
+"the match and can be named in your references."
+msgstr ""
+"Hak an, was du auch gern hättest: Es wird Teil dieses Austauschs, erscheint "
+"beim Match und kann in deinen Referenzen genannt werden."
+
+#: matches/templates/matches/_person.html:49
+msgid "Ask for these too"
+msgstr "Auch anfragen"
+
+#: matches/templates/matches/_person.html:59
 msgid "No gifts offered yet."
 msgstr "Noch keine Geschenke angeboten."
 
@@ -1406,6 +1420,11 @@ msgstr "Niveau"
 #: matches/templates/matches/_stay_legend.html:4 projects/models.py:138
 msgid "Knowledge"
 msgstr "Wissen"
+
+#: matches/templates/matches/_stay_legend.html:7
+#: matches/templates/matches/_stay_tags.html:7
+msgid "Brings along"
+msgstr "Bringt mit"
 
 #: matches/templates/matches/_stay_legend.html:8
 msgid "Wants to learn"
@@ -1891,27 +1910,36 @@ msgstr "Deine Anfragen"
 msgid "No requests yet."
 msgstr "Noch keine Anfragen."
 
-#: matches/views.py:225
+#: matches/views.py:226
+#, python-format
+msgid "Also asked for: %(gifts)s"
+msgstr "Auch angefragt: %(gifts)s"
+
+#: matches/views.py:229
+msgid "Saved what is part of this exchange."
+msgstr "Gespeichert, was zu diesem Austausch gehört."
+
+#: matches/views.py:240
 msgid "Response sent."
 msgstr "Antwort gesendet."
 
-#: matches/views.py:239
+#: matches/views.py:254
 msgid "Please suggest when the stay could start or end."
 msgstr "Schlag bitte vor, wann der Aufenthalt beginnen oder enden könnte."
 
-#: matches/views.py:242 projects/forms.py:152
+#: matches/views.py:257 projects/forms.py:152
 msgid "The stay can't end before it starts."
 msgstr "Der Aufenthalt kann nicht enden, bevor er beginnt."
 
-#: matches/views.py:265
+#: matches/views.py:280
 msgid "Counter-proposal sent."
 msgstr "Gegenvorschlag gesendet."
 
-#: matches/views.py:321
+#: matches/views.py:337
 msgid "This interest has already been responded to."
 msgstr "Auf dieses Interesse wurde bereits geantwortet."
 
-#: matches/views.py:380
+#: matches/views.py:396
 msgid ""
 "You won't get emails about suggestions any more. You can turn them on again "
 "in your profile."
@@ -2146,10 +2174,6 @@ msgstr "Was wird gebraucht?"
 #: projects/models.py:170
 msgid "Gift category"
 msgstr "Geschenk-Kategorie"
-
-#: projects/models.py:174
-msgid "Details"
-msgstr "Details"
 
 #: projects/models.py:183
 msgid "Need"
@@ -2545,11 +2569,11 @@ msgstr "Fähigkeit in Referenz"
 msgid "Reference Skills"
 msgstr "Fähigkeiten in Referenzen"
 
-#: references/models.py:222
+#: references/models.py:234
 msgid "Reference Request"
 msgstr "Referenz-Anfrage"
 
-#: references/models.py:223
+#: references/models.py:235
 msgid "Reference Requests"
 msgstr "Referenz-Anfragen"
 
@@ -2603,12 +2627,12 @@ msgstr "%(title)s lernen mit %(name)s"
 msgid "Sharing %(title)s with %(name)s"
 msgstr "%(title)s weitergeben an %(name)s"
 
-#: references/reference_requests.py:253
+#: references/reference_requests.py:254
 #, python-format
 msgid "%(exchange)s: how was it?"
 msgstr "%(exchange)s: Wie war es?"
 
-#: references/reference_requests.py:264
+#: references/reference_requests.py:265
 #: references/templates/references/email/reference_received.html:19
 msgid "Thank you for your story"
 msgstr "Danke für deine Geschichte"

@@ -71,6 +71,13 @@ class Match(models.Model):
     responded_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
+    # Further gifts that are part of this exchange, beyond the target: a community's
+    # wishes a volunteer brings along, or another of the other side's offers asked for
+    # while talking it over. Named in the references and shown with the match.
+    listings = models.ManyToManyField(
+        "gifts.Listing", blank=True, related_name="extra_matches", verbose_name=_("Also part of this exchange"),
+    )
+
     class Meta:
         ordering = ["-created_at"]
         verbose_name = _("Match")
@@ -219,8 +226,6 @@ class VolunteerDetails(models.Model):
     practice_skills = models.CharField(max_length=500, blank=True)
     practice_skill_level = models.CharField(max_length=20, blank=True)
     sender_skills = models.CharField(max_length=500, blank=True)
-    # Things the community (its ambassador) wished for that the volunteer brings along
-    bring_listings = models.ManyToManyField("gifts.Listing", blank=True, related_name="+", verbose_name=_("Brings along"))
 
     class Meta:
         verbose_name = _("Volunteer Details")

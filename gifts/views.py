@@ -68,7 +68,10 @@ def detail(request, pk):
 def mine(request):
     """Your own offers and wishes in the dashboard, with how many asked about each."""
     box = "wish" if request.GET.get("box") == "wish" else "offer"
-    listings = request.user.listings.annotate(match_count=Count("matches")).order_by("-updated_at")
+    # Requests for it, and exchanges it became part of
+    listings = request.user.listings.annotate(
+        match_count=Count("matches", distinct=True) + Count("extra_matches", distinct=True),
+    ).order_by("-updated_at")
     counts = {key: listings.filter(type=key).count() for key in ("offer", "wish")}
     tabs = [
         Choice(label, query_url(request, box=key, page=None), key == box, counts[key])

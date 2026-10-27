@@ -157,7 +157,7 @@ def volunteer_request(request, community_slug):
     )
     vr.target = community
     vr.save()
-    details = VolunteerDetails.objects.create(
+    VolunteerDetails.objects.create(
         match                 = vr,
         volunteer_mode        = volunteer_mode,
         practice_skills       = practice_skills,
@@ -173,8 +173,12 @@ def volunteer_request(request, community_slug):
         pk__in=[pk for pk in request.POST.getlist("need") if pk.isdigit()],
         project__community=community, project__in=community.projects.current(),
     )
-    NeedOffer.objects.bulk_create([NeedOffer(need=need, match=vr) for need in needs if not need.is_done])
-    details.bring_listings.set(
+    NeedOffer.objects.bulk_create([
+        # A volunteer counts as one person towards a need for people
+        NeedOffer(need=need, match=vr, quantity=1 if need.quantity and need.unit == Need.UNIT_PEOPLE else None)
+        for need in needs if not need.is_done
+    ])
+    vr.listings.set(
         [listing for listing in _community_wishes(community) if listing.pk in request.POST.getlist("listing")]
     )
 

@@ -198,6 +198,18 @@ def match_reference_subject(match, user):
     return other, target.get_match_display_name() if model == "listing" else "", ""
 
 
+def match_gift_names(match, user):
+    """The names of the further gifts of `match` (Match.listings) that `user` received, to
+    name in their reference: an offer from the other side, or their own wish that the
+    other side fulfilled."""
+    names = []
+    for listing in match.listings.all():
+        giver_is_owner = listing.type == "offer"
+        if (listing.owner_id == user.pk) != giver_is_owner:
+            names.append(listing.title)
+    return names
+
+
 def _request_key():
     # Lowercase hex: it travels in an email address (stories+<key>@…), which some mail
     # servers lowercase.

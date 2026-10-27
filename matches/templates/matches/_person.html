@@ -1,6 +1,6 @@
 {% load i18n %}{# What the other side brings: skills with level and references, gifts, communities #}
 {% with who=person.user %}
-<div class="border rounded-xl bg-secondary p-6 mb-6">
+<div id="person" class="border rounded-xl bg-secondary p-6 mb-6">
   <h2 class="text-lg mt-0 mb-4">{% blocktrans with name=who.name|default:who.email %}What {{ name }} brings{% endblocktrans %}</h2>
 
   {% if person.communities %}
@@ -34,11 +34,27 @@
   <div>
     <div class="text-xs font-bold uppercase tracking-wider opacity-70 mb-2">{% trans "Gifts they could bring along" %}</div>
     {% if person.offers %}
-      <div class="flex flex-wrap gap-2">
-        {% for listing in person.offers %}
-          <a href="{{ listing.get_absolute_url }}" class="pill pill-lg bg-primary"><i class="fa-solid {{ listing.kind_icon }} mr-1"></i>{{ listing.title|truncatechars:50 }}{% if listing.amount %}<span class="ml-1 text-xs opacity-80">· {{ listing.amount }}</span>{% endif %}</a>
-        {% endfor %}
-      </div>
+      {% if is_party %}
+        {# Tick to ask for them too: they become part of this exchange #}
+        <form method="post" class="space-y-1">{% csrf_token %}
+          <input type="hidden" name="action" value="listings">
+          {% for listing in person.offers %}
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" name="listing" value="{{ listing.pk }}" class="form-checkbox"{% if listing.pk in asked_listing_ids %} checked{% endif %}>
+              <span class="pill bg-primary"><i class="fa-solid {{ listing.kind_icon }} mr-1"></i>{{ listing.title|truncatechars:50 }}{% if listing.amount %}<span class="ml-1 text-xs opacity-80">· {{ listing.amount }}</span>{% endif %}</span>
+              <a href="{{ listing.get_absolute_url }}" class="text-xs underline" target="_blank">{% trans "Details" %}</a>
+            </label>
+          {% endfor %}
+          <p class="text-xs opacity-80 mt-2">{% trans "Tick what you would like too: it becomes part of this exchange, shows with the match and can be named in your references." %}</p>
+          <button type="submit" class="btn text-sm py-1 px-3 mt-1"><i class="fa-solid fa-gift mr-1"></i>{% trans "Ask for these too" %}</button>
+        </form>
+      {% else %}
+        <div class="flex flex-wrap gap-2">
+          {% for listing in person.offers %}
+            <a href="{{ listing.get_absolute_url }}" class="pill pill-lg bg-primary"><i class="fa-solid {{ listing.kind_icon }} mr-1"></i>{{ listing.title|truncatechars:50 }}{% if listing.amount %}<span class="ml-1 text-xs opacity-80">· {{ listing.amount }}</span>{% endif %}</a>
+          {% endfor %}
+        </div>
+      {% endif %}
     {% else %}
       <p class="text-sm italic m-0">{% trans "No gifts offered yet." %}</p>
     {% endif %}

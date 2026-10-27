@@ -1,6 +1,6 @@
 {% load i18n %}{# What a volunteer brings to a stay, as pills: needs by kind, wished-for things, skills #}
 {% with vd=match.volunteer_details needs=match.need_offers.all %}
-  {% with listings=vd.bring_listings.all %}
+  {% with listings=match.listings.all %}
   {% if needs or listings or vd.practice_skills or vd.sender_skills %}
     <div class="flex flex-wrap gap-1 mt-2">
       {% for offer in needs %}<span class="pill {{ offer.need.colour }} text-xs" title="{{ offer.need.get_kind_display }}"><i class="fa-solid {{ offer.need.icon }} mr-1"></i>{{ offer.need.display_title }}{% if offer.amount %}<span class="ml-1 opacity-80">({{ offer.amount }})</span>{% endif %}</span>{% endfor %}

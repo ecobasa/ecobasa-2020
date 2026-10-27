@@ -214,6 +214,21 @@ def match_detail(request, pk):
                 notify_match_message(match, sender=request.user, message=body, http_request=request)
             return redirect(match.get_absolute_url())
 
+        if action == "listings" and is_party:
+            # Ask for more of the other side's gifts as part of this exchange
+            other = match.recipient if is_requester else match.from_user
+            offers = {listing.pk: listing for listing in other.listings.filter(type="offer")} if other else {}
+            asked = [offers[pk] for pk in request.POST.getlist("listing") if pk in offers]
+            new = [listing for listing in asked if not match.listings.filter(pk=listing.pk).exists()]
+            match.listings.remove(*[l for l in match.listings.filter(pk__in=offers) if l not in asked])
+            match.listings.add(*asked)
+            if new:
+                body = _("Also asked for: %(gifts)s") % {"gifts": ", ".join(listing.title for listing in new)}
+                MatchMessage.objects.create(match=match, sender=request.user, body=body)
+                notify_match_message(match, sender=request.user, message=body, http_request=request)
+            flash.success(request, _("Saved what is part of this exchange."))
+            return redirect(f"{match.get_absolute_url()}#person")
+
         if action in ("accept", "decline") and (owner_can_decide or requester_can_decide):
             new_status = {"accept": Match.STATUS_ACCEPTED, "decline": Match.STATUS_DECLINED}[action]
             body = request.POST.get("body", "").strip()
@@ -279,6 +294,7 @@ def match_detail(request, pk):
         "message_form":         MatchMessageForm(),
         "loc_choices":          Match.LOC_CHOICES,
         "person":               _person(match.recipient if is_requester else match.from_user),
+        "asked_listing_ids":    {listing.pk for listing in match.listings.all()},
     })
 
 

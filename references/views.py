@@ -14,7 +14,7 @@ from django.views.decorators.http import require_POST
 from dashboard_lists import Choice, paginate, query_url
 
 from .forms import ReferenceForm, form_context
-from .models import Reference, ReferenceSkill, is_referenceable, references_about, match_reference_subject, subject_owner
+from .models import Reference, ReferenceSkill, is_referenceable, references_about, match_gift_names, match_reference_subject, subject_owner
 from .notifications import notify_reference_created
 from .reference_requests import exchange_context, existing_reference, find_reference_request, subject_name
 
@@ -176,7 +176,7 @@ def reference_request(request, key):
             names = [n.strip() for n in (field.initial or "").split(",") if n.strip()]
             field.initial = ", ".join(names if skill in names else [*names, skill])
     return render(request, "references/request_form.html", {
-        **form_context(subject, form, reference, [gift]),
+        **form_context(subject, form, reference, [gift, *match_gift_names(match, user)]),
         "subject": subject,
         "subject_name": subject_name(subject),
         **exchange_context(match, user),
