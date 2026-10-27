@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ecobasa\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-27 14:15+0100\n"
+"POT-Creation-Date: 2026-10-27 14:27+0100\n"
 "PO-Revision-Date: 2026-10-23 12:00+0200\n"
 "Last-Translator: ecobasa\n"
 "Language-Team: fr\n"
@@ -750,7 +750,7 @@ msgstr "Souhaits"
 msgid "Project needs"
 msgstr "Besoins de projets"
 
-#: gifts/filters.py:27 projects/templates/projects/project_list.html:18
+#: gifts/filters.py:27 projects/templates/projects/project_list.html:19
 msgid "Search"
 msgstr "Rechercher"
 
@@ -2468,25 +2468,28 @@ msgstr "Ajouter un besoin"
 
 #: projects/templates/projects/project_list.html:9
 msgid ""
-"Communities realise projects together with people from the gift network: "
-"without money, with helping hands, materials, tools and knowledge. Projects "
-"that ended or were not updated for a while are archived automatically, and "
-"stay here to look back on."
+"Communities realise projects together with people from the gift network: with"
+" helping hands, materials, tools and knowledge that are shared. Each gift "
+"makes a project need a little less money, and along the way it grows a social"
+" net, trust and friendships. Projects that ended or were not updated for a "
+"while are archived automatically, and stay here to look back on."
 msgstr ""
 "Les communautés réalisent des projets avec des personnes du réseau du don : "
-"sans argent, avec des mains, des matériaux, des outils et des savoirs. Les "
-"projets terminés ou non mis à jour depuis un moment sont archivés "
-"automatiquement et restent ici pour y repenser."
+"avec des mains, des matériaux, des outils et des savoirs partagés. Chaque don"
+" permet à un projet d'avoir besoin d'un peu moins d'argent et, en chemin, "
+"fait grandir un filet social, de la confiance et des amitiés. Les projets "
+"terminés ou non mis à jour depuis un moment sont archivés automatiquement et "
+"restent ici pour y repenser."
 
-#: projects/templates/projects/project_list.html:17
+#: projects/templates/projects/project_list.html:18
 msgid "Search projects, skills, materials, places…"
 msgstr "Rechercher projets, compétences, matériaux, lieux…"
 
-#: projects/templates/projects/project_list.html:31
+#: projects/templates/projects/project_list.html:32
 msgid "No archived projects found."
 msgstr "Aucun projet archivé trouvé."
 
-#: projects/templates/projects/project_list.html:31
+#: projects/templates/projects/project_list.html:32
 msgid "No current projects found."
 msgstr "Aucun projet en cours trouvé."
 
