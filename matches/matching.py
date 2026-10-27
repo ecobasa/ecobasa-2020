@@ -191,7 +191,10 @@ def _suggest(recipient_side, other_side, reason, km):
         user=recipient,
         own_type=ContentType.objects.get_for_model(recipient_side.obj), own_id=str(recipient_side.obj.pk),
         other_type=ContentType.objects.get_for_model(other_side.obj), other_id=str(other_side.obj.pk),
-        defaults={"other_user": other_side.owner, "reason": reason, "distance_km": None if km is None else round(km)},
+        defaults={
+            "other_user": other_side.owner, "reason": reason, "distance_km": None if km is None else round(km),
+            "kind": Suggestion.KIND_SKILLS if recipient_side.is_skill else Suggestion.KIND_GIFT,
+        },
     )
     return suggestion if created else None
 

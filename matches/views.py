@@ -4,7 +4,7 @@ from django.contrib import messages as flash
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.core import signing
-from django.db.models import Count, Q
+from django.db.models import Count
 from django.core.exceptions import PermissionDenied
 from django.http import Http404, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404, redirect, render
@@ -19,24 +19,19 @@ from dashboard_lists import Choice, paginate, query_url
 
 from .emails import notify_match_message, notify_match_response, read_action_token, read_suggestions_unsubscribe_token
 from .forms import MatchMessageForm
-from .models import STAY_APP_LABELS, Match, MatchMessage, Suggestion, suggestions_of_kind
+from .models import STAY_APP_LABELS, Match, MatchMessage, Suggestion
 
-# The kinds of match, by the list view's "type" query param. Kept as gifts/skills/
-# communities/projects app labels rather than importing their models — matches never needs to
-# import a domain app to work with a Match generically.
-_KINDS = {
-    "gift": {
-        "app_labels": ("gifts",), "title": _("Gifts"), "icon": "fa fa-gift",
-        "empty": _("No gift offers yet."),
-    },
-    "skills": {
-        "app_labels": ("skills",), "title": _("Skills"), "icon": "fa fa-graduation-cap",
-        "empty": _("No skill offers yet."),
-    },
-    "volunteer": {
-        "app_labels": STAY_APP_LABELS, "title": _("Volunteer Visits"), "icon": "fa-solid fa-campground",
-        "empty": _("No volunteer visits yet."),
-    },
+# What the matches page can show, by its "type" query param: gifts and skills together on
+# one page (with suggestions first), volunteer visits on their own. Kept as app labels
+# rather than importing models: matches never needs to import a domain app to work with a
+# Match generically.
+_TYPES = {
+    "gift": {"app_labels": ("gifts",), "title": _("Gifts"), "icon": "fa fa-gift"},
+    "skills": {"app_labels": ("skills",), "title": _("Skills"), "icon": "fa fa-graduation-cap"},
+}
+_VOLUNTEER = {
+    "app_labels": STAY_APP_LABELS, "title": _("Volunteer Visits"), "icon": "fa-solid fa-campground",
+    "empty": _("No volunteer visits yet."),
 }
 
 _OPEN = (Match.STATUS_PENDING, Match.STATUS_COUNTER)
@@ -47,68 +42,73 @@ _STATUS_FILTERS = {
     "all":      (_("All"), None),
 }
 
-# How many open matches of each kind the overview shows before linking to the full list
-_OVERVIEW_ROWS = 5
 
-
-def _matches_of(kind):
+def _matches_with(app_labels):
     return (
         Match.objects
-        .filter(content_type__app_label__in=_KINDS[kind]["app_labels"])
+        .filter(content_type__app_label__in=app_labels)
         .select_related("content_type", "from_user", "recipient")
         .prefetch_related("target")
     )
 
 
-# ── Matches lists ──────────────────────────────────────────────────────────────
+# ── Matches page ───────────────────────────────────────────────────────────────
 
 @login_required
 def matches_list(request):
-    """One kind of match (?type=gift|skills|volunteer): received and sent as tabs,
-    filtered by status and paged, and the suggestions of that kind (what fits their
-    wishes, offers and skills; a match once someone asks). Without a type, an overview
-    of what's open."""
+    """Gifts and skills on one page: first the suggestions (what fits their wishes, offers
+    and skills; a match once someone asks), then the requests received and sent, all
+    filtered by ?type=gift|skills. ?type=volunteer: the volunteer visits, on their own."""
     kind = request.GET.get("type", "")
-    if kind not in _KINDS:
-        return _overview(request)
-
+    if kind == "volunteer":
+        return _volunteer_visits(request)
+    if kind not in _TYPES:
+        kind = ""
     user = request.user
+    app_labels = _TYPES[kind]["app_labels"] if kind else tuple(t for info in _TYPES.values() for t in info["app_labels"])
+
+    suggestions = _suggestions_of(user)
+    if kind:
+        suggestions = suggestions.filter(kind=kind)
     boxes = {
-        "received": _matches_of(kind).filter(recipient=user),
-        "sent":     _matches_of(kind).filter(from_user=user),
+        "received": _matches_with(app_labels).filter(recipient=user),
+        "sent":     _matches_with(app_labels).filter(from_user=user),
     }
-    # The owner answers a request; the requester answers the owner's counter-proposal.
+    counts = {"suggestions": suggestions.count(), **{key: matches.count() for key, matches in boxes.items()}}
+    # New suggestions; requests to answer (the owner answers a request, the requester a
+    # counter-proposal)
     waiting = {
-        "received": boxes["received"].filter(status=Match.STATUS_PENDING).count(),
-        "sent":     boxes["sent"].filter(status=Match.STATUS_COUNTER).count(),
+        "suggestions": suggestions.filter(seen_at=None).count(),
+        "received":    boxes["received"].filter(status=Match.STATUS_PENDING).count(),
+        "sent":        boxes["sent"].filter(status=Match.STATUS_COUNTER).count(),
     }
-    counts = {key: matches.count() for key, matches in boxes.items()}
-    suggestions = suggestions_of_kind(_suggestions_of(user), kind)
-    counts["suggestions"] = suggestions.count()
-    waiting["suggestions"] = suggestions.filter(seen_at=None).count()
     box = request.GET.get("box")
     if box not in counts:
-        # Open on the tab that needs you, otherwise on the one that has anything
-        box = next((key for key in counts if waiting[key]), None) \
-            or next((key for key in counts if counts[key]), "received")
+        box = "suggestions"
     tabs = [
         Choice(label, query_url(request, box=key, status=None), key == box, counts[key], waiting[key])
-        for key, label in (("received", _("Received")), ("sent", _("Sent")), ("suggestions", _("Suggestions")))
+        for key, label in (("suggestions", _("Suggestions")), ("received", _("Received")), ("sent", _("Sent")))
     ]
+    types = [
+        Choice(label, query_url(request, type=key or None, status=None), key == kind)
+        for key, label in (("", _("All")), ("gift", _("Gifts")), ("skills", _("Skills")))
+    ]
+    context = {"request_type": kind, "types": types, "tabs": tabs, "box": box}
 
     if box == "suggestions":
         page = paginate(request, suggestions)
         shown = _shown(page.object_list)
         return render(request, "matches/matches_list.html", {
-            "request_type": kind,
-            "kind":         _KINDS[kind],
-            "tabs":         tabs,
-            "page":         page,
-            "suggestions":  shown,
-            "new_ids":      _mark_seen(user, shown),
+            **context, "page": page, "suggestions": shown, "new_ids": _mark_seen(user, shown),
         })
+    return render(request, "matches/matches_list.html", {
+        **context, **_requests(request, boxes[box]), "show_from": box == "received",
+        "empty": _("No requests yet."),
+    })
 
-    matches = boxes[box]
+
+def _requests(request, matches):
+    """A page of matches filtered by status, with the status filters."""
     by_status = dict(matches.order_by().values_list("status").annotate(n=Count("pk")))
     status = request.GET.get("status")
     if status not in _STATUS_FILTERS:
@@ -123,32 +123,34 @@ def matches_list(request):
     statuses = _STATUS_FILTERS[status][1]
     if statuses is not None:
         matches = matches.filter(status__in=statuses)
-
-    return render(request, "matches/matches_list.html", {
-        "request_type": kind,
-        "kind":         _KINDS[kind],
-        "show_from":    box == "received",
-        "tabs":         tabs,
-        "filters":      filters if counts[box] else [],
-        "page":         paginate(request, matches),
-    })
+    return {"filters": filters if by_status else [], "page": paginate(request, matches)}
 
 
-def _overview(request):
-    """What's open across all kinds of match, a few rows each."""
+def _volunteer_visits(request):
+    """Volunteer stays and help with projects, received and sent."""
     user = request.user
-    sections = []
-    for kind, info in _KINDS.items():
-        open_matches = _matches_of(kind).filter(Q(recipient=user) | Q(from_user=user), status__in=_OPEN)
-        sections.append({
-            **info,
-            "url":             f"{reverse('matches:list')}?type={kind}",
-            "matches":         list(open_matches[:_OVERVIEW_ROWS]),
-            "open_count":      open_matches.count(),
-            "suggestions_url": f"{reverse('matches:list')}?type={kind}&box=suggestions",
-            "new_suggestions": suggestions_of_kind(_suggestions_of(user), kind).filter(seen_at=None).count(),
-        })
-    return render(request, "matches/matches_overview.html", {"request_type": "", "sections": sections})
+    boxes = {
+        "received": _matches_with(_VOLUNTEER["app_labels"]).filter(recipient=user),
+        "sent":     _matches_with(_VOLUNTEER["app_labels"]).filter(from_user=user),
+    }
+    waiting = {
+        "received": boxes["received"].filter(status=Match.STATUS_PENDING).count(),
+        "sent":     boxes["sent"].filter(status=Match.STATUS_COUNTER).count(),
+    }
+    counts = {key: matches.count() for key, matches in boxes.items()}
+    box = request.GET.get("box")
+    if box not in boxes:
+        # Open on the tab that needs you, otherwise on the one that has anything
+        box = next((key for key in boxes if waiting[key]), None) \
+            or next((key for key in boxes if counts[key]), "received")
+    tabs = [
+        Choice(label, query_url(request, box=key, status=None), key == box, counts[key], waiting[key])
+        for key, label in (("received", _("Received")), ("sent", _("Sent")))
+    ]
+    return render(request, "matches/matches_list.html", {
+        "request_type": "volunteer", "kind": _VOLUNTEER, "tabs": tabs, "box": box,
+        **_requests(request, boxes[box]), "show_from": box == "received", "empty": _VOLUNTEER["empty"],
+    })
 
 
 # ── Match detail ────────────────────────────────────────────────────────────────

@@ -135,19 +135,20 @@ class TestVolunteerVisits:
         context = _client_for(owner).get("/matches/?type=volunteer").context
         assert list(context["page"]) == [stay]
         assert [(str(t.label), t.count, t.waiting, t.active) for t in context["tabs"]] == [
-            ("Received", 1, 1, True), ("Sent", 0, 0, False), ("Suggestions", 0, 0, False),
+            ("Received", 1, 1, True), ("Sent", 0, 0, False),
         ]
 
     def test_volunteer_sees_it_as_sent(self, requester, stay):
         response = _client_for(requester).get("/matches/?type=volunteer")
         assert list(response.context["page"]) == [stay]
-        assert [t.active for t in response.context["tabs"]] == [False, True, False]
+        assert [t.active for t in response.context["tabs"]] == [False, True]
         assert "Volunteer Visits" in response.content.decode()
 
 
 @pytest.mark.django_db
 class TestMatchLists:
-    """Every list: received and sent as tabs, filtered by status, paged."""
+    """One page for gifts and skills: suggestions first, then received and sent as tabs,
+    filtered by type and status, paged."""
 
     def test_open_ones_first_then_the_rest_by_status(self, owner, match, listing, requester):
         done = Match(from_user=requester, message="Earlier", recipient=owner, status=Match.STATUS_DECLINED)
@@ -155,12 +156,15 @@ class TestMatchLists:
         done.save()
         client = _client_for(owner)
 
-        context = client.get("/matches/?type=gift").context
+        context = client.get("/matches/?type=gift&box=received").context
         assert list(context["page"]) == [match]
         assert [(f.count, f.active) for f in context["filters"]] == [(1, True), (0, False), (1, False), (2, False)]
 
-        assert list(client.get("/matches/?type=gift&status=declined").context["page"]) == [done]
-        assert len(client.get("/matches/?type=gift&status=all").context["page"].object_list) == 2
+        assert list(client.get("/matches/?type=gift&box=received&status=declined").context["page"]) == [done]
+        assert len(client.get("/matches/?type=gift&box=received&status=all").context["page"].object_list) == 2
+        # Gift requests aren't under skills, but under all
+        assert not client.get("/matches/?type=skills&box=received&status=all").context["page"].object_list
+        assert len(client.get("/matches/?box=received&status=all").context["page"].object_list) == 2
 
     def test_long_lists_are_paged(self, owner, requester, listing):
         from dashboard_lists import PER_PAGE
@@ -168,19 +172,19 @@ class TestMatchLists:
             m = Match(from_user=requester, message=f"#{i}", recipient=owner)
             m.target = listing
             m.save()
-        page = _client_for(owner).get("/matches/?type=gift").context["page"]
+        page = _client_for(owner).get("/matches/?type=gift&box=received").context["page"]
         assert len(page.object_list) == PER_PAGE
         assert page.paginator.count == PER_PAGE + 3
         assert "page=2" in page.older_url and "type=gift" in page.older_url
 
-    def test_overview_shows_only_open_matches(self, owner, requester, match, listing):
-        done = Match(from_user=requester, message="Earlier", recipient=owner, status=Match.STATUS_ACCEPTED)
-        done.target = listing
-        done.save()
-        sections = _client_for(owner).get("/matches/").context["sections"]
-        gifts = next(s for s in sections if str(s["title"]) == "Gifts")
-        assert gifts["matches"] == [match]
-        assert gifts["open_count"] == 1
+    def test_the_page_opens_on_the_suggestions(self, owner, match):
+        context = _client_for(owner).get("/matches/").context
+        assert [(str(t.label), t.active) for t in context["tabs"]] == [
+            ("Suggestions", True), ("Received", False), ("Sent", False),
+        ]
+        assert [(str(t.label), t.active) for t in context["types"]] == [("All", True), ("Gifts", False), ("Skills", False)]
+        # The request waiting for an answer is counted on its tab
+        assert next(t for t in context["tabs"] if str(t.label) == "Received").waiting == 1
 
 
 @pytest.fixture

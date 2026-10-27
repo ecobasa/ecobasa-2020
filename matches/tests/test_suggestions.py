@@ -320,48 +320,42 @@ def test_saving_the_profile_again_does_not_announce_the_same_wishes_again(anna, 
 
 
 @pytest.mark.django_db
-def test_suggestions_tab_of_their_kind_marks_seen_and_hides(anna, ben):
+def test_matches_page_shows_suggestions_first_by_type_marks_seen_and_hides(anna, ben):
     _listing(anna, "Clay", "wish")
     match(_listing(ben, "Clay from the pond", "offer"), notify=False)
     client = Client()
     client.force_login(anna)
 
-    # The overview says how many are new, per kind
-    overview = client.get(reverse("matches:list"))
-    gifts = next(s for s in overview.context["sections"] if s["app_labels"] == ("gifts",))
-    assert gifts["new_suggestions"] == 1
-    assert all(s["new_suggestions"] == 0 for s in overview.context["sections"] if s is not gifts)
-
-    # The gift list opens on its suggestions tab, since that's what is new
-    response = client.get(reverse("matches:list"), {"type": "gift"})
-    tabs = {tab.label: tab for tab in response.context["tabs"]}
+    response = client.get(reverse("matches:list"))
+    tabs = {str(tab.label): tab for tab in response.context["tabs"]}
     assert tabs["Suggestions"].active and (tabs["Suggestions"].count, tabs["Suggestions"].waiting) == (1, 1)
     assert "Clay from the pond" in response.content.decode() and len(response.context["new_ids"]) == 1
     suggestion = anna.suggestions.get()
-    assert suggestion.seen_at is not None
-    # Not under the other kinds
-    assert not client.get(reverse("matches:list"), {"type": "skills", "box": "suggestions"}).context["suggestions"]
+    assert suggestion.seen_at is not None and suggestion.kind == Suggestion.KIND_GIFT
+    # Filtered by type
+    assert client.get(reverse("matches:list"), {"type": "gift"}).context["suggestions"] == [suggestion]
+    assert client.get(reverse("matches:list"), {"type": "skills"}).context["suggestions"] == []
 
     other = Client()
     other.force_login(ben)
     assert other.post(reverse("matches:dismiss_suggestion", args=[suggestion.pk])).status_code == 404
-    url = reverse("matches:list") + "?type=gift&box=suggestions"
+    url = reverse("matches:list") + "?type=gift"
     assert client.post(reverse("matches:dismiss_suggestion", args=[suggestion.pk]), {"next": url}).url == url
     assert "Clay from the pond" not in client.get(url).content.decode()
 
 
 @pytest.mark.django_db
-def test_project_needs_and_skills_go_to_their_own_lists(anna, ben):
-    from ..models import suggestions_of_kind
+def test_project_needs_are_gifts_or_skills_by_what_they_need(anna, ben):
     masonry = _skill("Masonry")
     community = Community.objects.create(name="Hof", owner=anna, location=GOERLITZ)
     project = Project.objects.create(community=community, title="Oven")
     Need.objects.create(project=project, kind=Need.KIND_SKILL, title="Masonry", skill=masonry)
+    Need.objects.create(project=project, kind=Need.KIND_MATERIAL, title="Clay")
     SkillWish.objects.create(user=anna, skill=masonry)
     match(UserSkill.objects.create(user=ben, skill=masonry), notify=False)
-    kinds = {kind: [s.other_type.model for s in suggestions_of_kind(ben.suggestions.all(), kind)]
-             for kind in ("gift", "skills", "volunteer")}
-    assert kinds == {"gift": [], "skills": ["skillwish"], "volunteer": ["need"]}
+    match(_listing(ben, "Clay from the pond", "offer"), notify=False)
+    kinds = sorted((s.other_type.model, s.kind) for s in ben.suggestions.all())
+    assert kinds == [("need", "gift"), ("need", "skills"), ("skillwish", "skills")]
 
 
 # ── The weekly email ──────────────────────────────────────────────────

@@ -222,19 +222,6 @@ class VolunteerDetails(models.Model):
         return [(name, level_map.get(skill_slug_for_name(name))) for name in names]
 
 
-def suggestions_of_kind(suggestions, kind):
-    """The suggestions that belong in one kind's list (matches.views._KINDS): anything
-    about a project need is a project/volunteer one, anything about a gift listing a gift
-    one, the rest (skills and skill wishes) a skills one."""
-    need = models.Q(own_type__model="need") | models.Q(other_type__model="need")
-    listing = models.Q(own_type__model="listing") | models.Q(other_type__model="listing")
-    if kind == "volunteer":
-        return suggestions.filter(need)
-    if kind == "gift":
-        return suggestions.filter(listing).exclude(need)
-    return suggestions.exclude(need).exclude(listing)
-
-
 def _name(user):
     return (user.name or user.email) if user else ""
 
@@ -265,6 +252,12 @@ class Suggestion(models.Model):
     other_user = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True, blank=True, related_name="+",
     )
+    KIND_GIFT = "gift"
+    KIND_SKILLS = "skills"
+    # Things (gifts, and materials and tools for projects) or skills (and knowledge)
+    KIND_CHOICES = [(KIND_GIFT, _("Gifts")), (KIND_SKILLS, _("Skills"))]
+
+    kind = models.CharField(max_length=10, choices=KIND_CHOICES, default=KIND_GIFT)
     reason = models.CharField(max_length=20, choices=REASON_CHOICES)
     distance_km = models.PositiveIntegerField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
