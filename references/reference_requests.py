@@ -19,7 +19,7 @@ from PIL import Image, ImageOps, UnidentifiedImageError
 
 from matches.models import Match
 
-from .models import Reference, ReferenceSkill, ReferenceRequest, match_gift_names, match_reference_subject, subject_owner
+from .models import Reference, ReferenceSkill, ReferenceRequest, match_gift_names, match_reference_subject, match_skill_names, subject_owner
 from .notifications import notify_reference_created
 
 # How long the link in a story email keeps working
@@ -168,13 +168,15 @@ def save_requested_reference(reference_request, *, text, impression=Reference.IM
             reference.gift_names = [*reference.gift_names, name]
     reference.save()
 
-    if skill and hasattr(subject, "add_skill"):
+    skills = [name for name in [skill, *match_skill_names(match, user)] if name]
+    if skills and hasattr(subject, "add_skill"):
         from skills.models import get_or_create_skill
 
-        skill_obj = get_or_create_skill(name=skill)[0]
-        if not reference.skill_tags.filter(skill=skill_obj).exists():
-            status = ReferenceSkill.STATUS_CONFIRMED if subject.has_skill(skill_obj) else ReferenceSkill.STATUS_PENDING
-            ReferenceSkill.objects.create(reference=reference, skill=skill_obj, status=status)
+        for name in skills:
+            skill_obj = get_or_create_skill(name=name)[0]
+            if not reference.skill_tags.filter(skill=skill_obj).exists():
+                status = ReferenceSkill.STATUS_CONFIRMED if subject.has_skill(skill_obj) else ReferenceSkill.STATUS_PENDING
+                ReferenceSkill.objects.create(reference=reference, skill=skill_obj, status=status)
 
     reference_request.reference = reference
     reference_request.save(update_fields=["reference"])

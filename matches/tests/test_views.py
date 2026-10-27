@@ -317,7 +317,7 @@ def test_asking_for_more_gifts_makes_them_part_of_the_exchange(owner, requester,
     mine = Listing.objects.create(title="My own spade", type="offer", owner=owner)
     client = _client_for(owner)
 
-    client.post(stay.get_absolute_url(), {"action": "listings", "listing": [mortar.pk, mine.pk]})
+    client.post(stay.get_absolute_url(), {"action": "extras", "listing": [mortar.pk, mine.pk]})
     assert list(stay.listings.all()) == [mortar]
     message = stay.thread.get()
     assert message.sender == owner and "Lime mortar" in message.body
@@ -338,7 +338,7 @@ def test_asking_for_more_gifts_makes_them_part_of_the_exchange(owner, requester,
     assert "reference_gift=Lime+mortar" in reference_url_for_match({"request": Request}, stay)
 
     # Unticking takes it out again, without a message
-    client.post(stay.get_absolute_url(), {"action": "listings"})
+    client.post(stay.get_absolute_url(), {"action": "extras"})
     assert not stay.listings.exists() and stay.thread.count() == 1
 
 
@@ -361,3 +361,29 @@ def test_accepting_a_stay_updates_the_project_needs(owner, requester):
     hands, clay = Need.objects.get(pk=hands.pk), Need.objects.get(pk=clay.pk)
     assert clay.status == "promised"
     assert hands.status == "offered" and hands.promised_quantity == 1  # one of two people
+
+
+@pytest.mark.django_db
+def test_asking_for_more_skills(owner, requester, stay):
+    from references.models import match_skill_names
+    from references.templatetags.references_tags import reference_url_for_match
+    from skills.models import Skill, UserSkill
+
+    masonry = UserSkill.objects.create(user=requester, skill=Skill.objects.create(name="Masonry"))
+    client = _client_for(owner)
+    client.post(stay.get_absolute_url(), {"action": "extras", "user_skill": [masonry.pk]})
+    assert list(stay.user_skills.all()) == [masonry]
+    assert "Masonry" in stay.thread.get().body
+    content = client.get(stay.get_absolute_url()).content.decode()
+    assert "requester@example.com has to offer" in content
+    assert client.get(stay.get_absolute_url()).context["asked_skill_ids"] == {masonry.pk}
+    assert "Masonry" in client.get("/matches/?type=volunteer").content.decode()
+
+    # Who was helped tags it on the helper in their reference
+    assert match_skill_names(stay, owner) == ["Masonry"] and match_skill_names(stay, requester) == []
+    stay.status = Match.STATUS_ACCEPTED
+    stay.save()
+
+    class Request:
+        user = owner
+    assert "reference_skill=Masonry" in reference_url_for_match({"request": Request}, stay)

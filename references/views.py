@@ -14,7 +14,7 @@ from django.views.decorators.http import require_POST
 from dashboard_lists import Choice, paginate, query_url
 
 from .forms import ReferenceForm, form_context
-from .models import Reference, ReferenceSkill, is_referenceable, references_about, match_gift_names, match_reference_subject, subject_owner
+from .models import Reference, ReferenceSkill, is_referenceable, references_about, match_gift_names, match_reference_subject, match_skill_names, subject_owner
 from .notifications import notify_reference_created
 from .reference_requests import exchange_context, existing_reference, find_reference_request, subject_name
 
@@ -170,11 +170,12 @@ def reference_request(request, key):
             # From the email after a reply: "allow sharing" comes pre-ticked
             **({"share_publicly": True} if request.GET.get("share") else {}),
         })
-        if form.can_tag and skill:
+        skills = [name for name in [skill, *match_skill_names(match, user)] if name]
+        if form.can_tag and skills:
             # What the match was about is filled in; they can change it
             field = form.fields["skill_names"]
             names = [n.strip() for n in (field.initial or "").split(",") if n.strip()]
-            field.initial = ", ".join(names if skill in names else [*names, skill])
+            field.initial = ", ".join([*names, *(name for name in skills if name not in names)])
     return render(request, "references/request_form.html", {
         **form_context(subject, form, reference, [gift, *match_gift_names(match, user)]),
         "subject": subject,

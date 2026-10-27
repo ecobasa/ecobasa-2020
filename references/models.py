@@ -210,6 +210,12 @@ def match_gift_names(match, user):
     return names
 
 
+def match_skill_names(match, user):
+    """The further skills of `match` (Match.user_skills) that `user` was helped with, to
+    tag on the other side in their reference."""
+    return [us.skill.get_name() for us in match.user_skills.select_related("skill") if us.user_id != user.pk]
+
+
 def _request_key():
     # Lowercase hex: it travels in an email address (stories+<key>@…), which some mail
     # servers lowercase.

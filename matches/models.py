@@ -77,6 +77,10 @@ class Match(models.Model):
     listings = models.ManyToManyField(
         "gifts.Listing", blank=True, related_name="extra_matches", verbose_name=_("Also part of this exchange"),
     )
+    # The same for skills: the other side's skills asked for too
+    user_skills = models.ManyToManyField(
+        "skills.UserSkill", blank=True, related_name="extra_matches", verbose_name=_("Skills also asked for"),
+    )
 
     class Meta:
         ordering = ["-created_at"]

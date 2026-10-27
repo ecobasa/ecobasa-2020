@@ -214,16 +214,24 @@ def match_detail(request, pk):
                 notify_match_message(match, sender=request.user, message=body, http_request=request)
             return redirect(match.get_absolute_url())
 
-        if action == "listings" and is_party:
-            # Ask for more of the other side's gifts as part of this exchange
+        if action == "extras" and is_party:
+            # Ask for more of the other side's gifts and skills as part of this exchange
             other = match.recipient if is_requester else match.from_user
-            offers = {listing.pk: listing for listing in other.listings.filter(type="offer")} if other else {}
-            asked = [offers[pk] for pk in request.POST.getlist("listing") if pk in offers]
-            new = [listing for listing in asked if not match.listings.filter(pk=listing.pk).exists()]
-            match.listings.remove(*[l for l in match.listings.filter(pk__in=offers) if l not in asked])
-            match.listings.add(*asked)
+            new = []
+            for relation, options, field in (
+                (match.listings, other.listings.filter(type="offer") if other else [], "listing"),
+                (match.user_skills, other.user_skills.select_related("skill") if other else [], "user_skill"),
+            ):
+                options = {str(option.pk): option for option in options}
+                asked = [options[pk] for pk in request.POST.getlist(field) if pk in options]
+                had = set(relation.values_list("pk", flat=True))
+                new += [option for option in asked if option.pk not in had]
+                relation.remove(*[pk for pk in had if str(pk) in options and options[str(pk)] not in asked])
+                relation.add(*asked)
             if new:
-                body = _("Also asked for: %(gifts)s") % {"gifts": ", ".join(listing.title for listing in new)}
+                body = _("Also asked for: %(things)s") % {"things": ", ".join(
+                    option.title if hasattr(option, "title") else option.skill.get_name() for option in new
+                )}
                 MatchMessage.objects.create(match=match, sender=request.user, body=body)
                 notify_match_message(match, sender=request.user, message=body, http_request=request)
             flash.success(request, _("Saved what is part of this exchange."))
@@ -295,6 +303,7 @@ def match_detail(request, pk):
         "loc_choices":          Match.LOC_CHOICES,
         "person":               _person(match.recipient if is_requester else match.from_user),
         "asked_listing_ids":    {listing.pk for listing in match.listings.all()},
+        "asked_skill_ids":      set(match.user_skills.values_list("pk", flat=True)),
     })
 
 

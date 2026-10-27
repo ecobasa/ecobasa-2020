@@ -184,11 +184,12 @@
       {% endif %}
     {% endwith %}
 
-    {% with listings=match.listings.all %}
-      {% if listings %}
+    {% with listings=match.listings.all extra_skills=match.user_skills.all %}
+      {% if listings or extra_skills %}
         <div class="text-sm mb-2">
           <strong>{% trans "Also part of this exchange" %}:</strong>
           <span class="inline-flex flex-wrap gap-1 align-middle">
+            {% for us in extra_skills %}<a href="{{ us.get_absolute_url }}" class="pill bg-purple text-xs"><i class="fa fa-graduation-cap mr-1"></i>{{ us.skill.get_name }}</a>{% endfor %}
             {% for listing in listings %}<a href="{{ listing.get_absolute_url }}" class="pill bg-primary text-xs"><i class="fa-solid {{ listing.kind_icon }} mr-1"></i>{{ listing.title|truncatechars:40 }}</a>{% endfor %}
           </span>
         </div>

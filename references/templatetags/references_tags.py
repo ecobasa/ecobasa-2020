@@ -5,7 +5,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.db.models import Prefetch
 
 from ..forms import ReferenceForm, form_context
-from ..models import Reference, ReferenceSkill, references_about, match_gift_names, match_reference_subject, subject_owner
+from ..models import Reference, ReferenceSkill, references_about, match_gift_names, match_reference_subject, match_skill_names, subject_owner
 
 register = template.Library()
 
@@ -47,7 +47,7 @@ def references_for(context, subject):
         if form.can_tag:
             # Coming from an accepted match: the gift's name or the skill is filled in
             prefill_gifts = [name.strip()[:200] for name in request.GET.getlist("reference_gift") if name.strip()][:20]
-            prefill_skill = request.GET.get("reference_skill", "").strip()
+            prefill_skill = ", ".join(name.strip() for name in request.GET.getlist("reference_skill")[:20] if name.strip())
             if prefill_skill:
                 field = form.fields["skill_names"]
                 field.initial = ", ".join(n for n in (field.initial, prefill_skill) if n)
@@ -82,7 +82,8 @@ def reference_url_for_match(context, match):
     gifts = [name for name in [gift, *match_gift_names(match, context["request"].user)] if name]
     if gifts:
         params["reference_gift"] = gifts
-    if skill:
-        params["reference_skill"] = skill
+    skills = [name for name in [skill, *match_skill_names(match, context["request"].user)] if name]
+    if skills:
+        params["reference_skill"] = skills
     query = f"?{urlencode(params, doseq=True)}" if params else ""
     return f"{page.get_absolute_url()}{query}#references"
