@@ -1,0 +1,8 @@
+{% load i18n %}
+{# One impression count on a references section, as a filter pill; the others fade while it is chosen #}
+<button type="button" class="pill {{ colour }}"
+        :class="shown && shown !== '{{ impression }}' && 'opacity-50'"
+        :aria-pressed="(shown === '{{ impression }}').toString()"
+        @click="shown = shown === '{{ impression }}' ? '' : '{{ impression }}'">
+  <i class="fa-regular {{ icon }} mr-1"></i>{% if impression == "positive" %}{% blocktrans count counter=count %}{{ counter }} positive{% plural %}{{ counter }} positive{% endblocktrans %}{% elif impression == "neutral" %}{% blocktrans count counter=count %}{{ counter }} neutral{% plural %}{{ counter }} neutral{% endblocktrans %}{% else %}{% blocktrans count counter=count %}{{ counter }} negative{% plural %}{{ counter }} negative{% endblocktrans %}{% endif %}
+</button>

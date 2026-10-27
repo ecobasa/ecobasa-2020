@@ -107,17 +107,13 @@ def _references(project):
     it, or a stay at its community that brought one of its needs. In both directions:
     helpers about the community, the ambassador about the helpers."""
     from django.contrib.contenttypes.models import ContentType
-    from references.models import Reference, ReferenceSkill
+    from references.models import Reference, ReferenceSkill, with_card_data
 
     matches = Match.objects.filter(
         Q(content_type=ContentType.objects.get_for_model(Project), object_id=str(project.pk))
         | Q(need_offers__need__project=project)
     )
-    references = list(
-        Reference.objects.filter(match__in=matches).distinct()
-        .select_related("author", "content_type")
-        .prefetch_related("subject", Prefetch("skill_tags", queryset=ReferenceSkill.objects.select_related("skill")))
-    )
+    references = list(with_card_data(Reference.objects.filter(match__in=matches).distinct()))
     for reference in references:
         reference.about_other = True  # say who or what each one is about
         reference.visible_skill_tags = [t for t in reference.skill_tags.all() if t.status == ReferenceSkill.STATUS_CONFIRMED]

@@ -3,6 +3,7 @@ import pytest
 from django.contrib.contenttypes.models import ContentType
 from django.test import Client
 from django.urls import reverse
+from django.utils import timezone
 
 from communities.models import Community
 from gifts.models import Listing
@@ -149,6 +150,51 @@ class TestReferencesSection:
         content = Client().get(community.get_absolute_url()).content.decode()
         assert "Learned a lot." in content
         assert community_skill.get_absolute_url() in content
+
+    def test_impression_counts_filter_the_list(self, author, owner):
+        Reference(author=author, recipient=owner, subject=owner, text="Lovely host.").save()
+        other = User.objects.create_user(email="other@example.com", password="secret", name="Bo")
+        Reference(author=other, recipient=owner, subject=owner, impression="negative", text="Never answered.").save()
+        content = Client().get(owner.get_absolute_url()).content.decode()
+        assert "@click=\"shown = shown === 'positive' ? '' : 'positive'\"" in content
+        assert "@click=\"shown = shown === 'negative' ? '' : 'negative'\"" in content
+        assert "shown === 'neutral'" not in content  # no neutral ones, so no filter for them
+        assert "x-show=\"!shown || shown === 'negative'\"" in content
+
+
+@pytest.mark.django_db
+class TestKindPill:
+    """What a reference is about shows as a pill, like on match rows."""
+
+    def test_from_its_match(self, author, owner, listing):
+        listing.kind = Listing.KIND_TOOL
+        listing.save()
+        match = Match(from_user=author, recipient=owner, message="Hi", status=Match.STATUS_ACCEPTED)
+        match.target = listing
+        match.save()
+        reference = Reference(author=author, recipient=owner, subject=owner, text="Thanks!", match=match)
+        assert reference.kind == match.kind
+        reference.save()
+        assert "fa-screwdriver-wrench" in Client().get(owner.get_absolute_url()).content.decode()
+
+    def test_from_its_subject(self, author, owner, listing, community):
+        skill = UserSkill.objects.create(user=owner, skill=Skill.objects.create(name="Cob", slug="cob"))
+        wish = Listing.objects.create(title="Scythe", type="wish", owner=owner)
+
+        def kind(subject):
+            return Reference(author=author, recipient=owner, subject=subject).kind[1:]
+
+        assert kind(listing) == ("fa-gift", "bg-primary")
+        assert kind(wish) == ("fa-hand-holding-heart", "bg-primary")
+        assert kind(skill) == ("fa-graduation-cap", "bg-purple")
+        assert kind(community) == (community.get_type_icon(), "bg-green")
+        assert kind(owner) == ("fa-user", "bg-brown")
+
+    def test_on_the_dashboard_and_homepage(self, author, owner):
+        Reference(author=author, recipient=owner, subject=owner, text="Lovely host.",
+                  share_publicly=True, featured_at=timezone.now()).save()
+        assert 'fa-user mr-1"></i>Person' in _client_for(owner).get(reverse("references:list")).content.decode()
+        assert 'fa-user mr-1"></i>Person' in Client().get("/").content.decode()
 
 
 @pytest.mark.django_db

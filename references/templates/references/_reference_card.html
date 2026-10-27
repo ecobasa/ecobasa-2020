@@ -1,5 +1,5 @@
 {% load i18n %}
-{# One reference: author, impression, what it is about, text, skill tags and gift names #}
+{# One reference: author, what kind of exchange it was about (pill), impression, its subject, text, skill tags and gift names #}
 <article id="reference-{{ ref.pk }}" class="scroll-mt-24 target:ring-2 target:ring-primary border rounded-lg p-4
   {% if ref.impression == 'positive' %}border-green bg-green bg-opacity-5
   {% elif ref.impression == 'negative' %}border-red bg-red bg-opacity-5
@@ -15,7 +15,10 @@
       {% endif %}
     </a>
     <div class="flex-1 min-w-0">
-      <a href="{{ ref.author.get_absolute_url }}" class="text-sm font-semibold text-primary">{{ ref.author.name|default:ref.author.username }}</a>
+      <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
+        <a href="{{ ref.author.get_absolute_url }}" class="text-sm font-semibold text-primary">{{ ref.author.name|default:ref.author.username }}</a>
+        {% include "_kind_pill.html" with kind=ref.kind %}
+      </div>
       <div class="text-xs text-brown">{{ ref.get_impression_display }} · {{ ref.created_at|date:"SHORT_DATE_FORMAT" }}</div>
       {% if ref.about_other and ref.subject %}
         <div class="text-xs text-brown">

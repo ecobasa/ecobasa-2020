@@ -131,7 +131,7 @@
         <p class="text-xs">{{ target.get_match_verb }} <a href="{{ target.get_absolute_url }}" class="hover:underline">{{ target.get_match_display_name }}</a>{% with community=match.community %}{% if community and community != target %} · <a href="{{ community.get_absolute_url }}" class="hover:underline"><i class="fa-solid {{ community.get_type_icon }} mr-1"></i>{{ community.name }}</a>{% endif %}{% endwith %} on {{ match.created_at|date:"d M Y H:i" }}</p>
       </div>
       <div class="ml-auto flex flex-wrap items-center justify-end gap-1">
-        {% include "matches/_kind_pill.html" %}
+        {% include "_kind_pill.html" with kind=match.kind %}
         {% if match.status == 'pending' %}
           <span class="pill bg-yellow">{% trans "Pending" %}</span>
         {% elif match.status == 'accepted' %}

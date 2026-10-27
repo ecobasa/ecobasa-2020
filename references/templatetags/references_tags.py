@@ -2,10 +2,9 @@ from urllib.parse import urlencode
 
 from django import template
 from django.contrib.contenttypes.models import ContentType
-from django.db.models import Prefetch
 
 from ..forms import ReferenceForm, form_context
-from ..models import Reference, ReferenceSkill, references_about, match_gift_names, match_reference_subject, match_skill_names, subject_owner
+from ..models import Reference, ReferenceSkill, references_about, with_card_data, match_gift_names, match_reference_subject, match_skill_names, subject_owner
 
 register = template.Library()
 
@@ -17,14 +16,7 @@ def references_for(context, subject):
     user = request.user
     content_type = ContentType.objects.get_for_model(subject)
     is_owner = user.is_authenticated and subject_owner(subject) == user
-    references = list(
-        references_about(subject)
-        .select_related("author", "content_type")
-        .prefetch_related(
-            "subject",
-            Prefetch("skill_tags", queryset=ReferenceSkill.objects.select_related("skill")),
-        )
-    )
+    references = list(with_card_data(references_about(subject)))
     for reference in references:
         # On a profile, references about the person's listings and skills are listed too
         reference.about_other = (reference.content_type_id, reference.object_id) != (content_type.pk, str(subject.pk))

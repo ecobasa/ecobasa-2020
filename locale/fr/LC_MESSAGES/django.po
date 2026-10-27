@@ -797,6 +797,14 @@ msgstr "Offre"
 msgid "Wish"
 msgstr "Souhait"
 
+#: references/models.py
+msgid "Person"
+msgstr "Personne"
+
+#: references/templates/references/_references.html
+msgid "Show all"
+msgstr "Tout afficher"
+
 #: gifts/models.py:34 matches/templates/matches/_stay_legend.html:5
 #: projects/models.py:136
 msgid "Material"

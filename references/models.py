@@ -6,7 +6,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
-from django.db.models import Q
+from django.db.models import Prefetch, Q
 from django.utils.translation import gettext_lazy as _
 
 # What a reference can be about, as "app_label.model". Kept as strings so this app never
@@ -127,6 +127,34 @@ class Reference(models.Model):
     def confirmed_skill_tags(self):
         """Skills tagged on it that the person or community confirmed (uses a prefetch)."""
         return [tag for tag in self.skill_tags.all() if tag.status == ReferenceSkill.STATUS_CONFIRMED]
+
+    @property
+    def kind(self):
+        """What the reference is about, as a pill like a match's: (label, icon, colour).
+        The match it was written after, else its subject."""
+        if self.match is not None:
+            return self.match.kind
+        model = self.content_type.model
+        subject = self.subject
+        if model == "listing" and subject is not None:
+            if subject.kind != subject.KIND_OTHER:
+                return subject.get_kind_display(), subject.kind_icon, "bg-primary"
+            if subject.type == "wish":
+                return _("Wish"), "fa-hand-holding-heart", "bg-primary"
+            return _("Gift"), "fa-gift", "bg-primary"
+        if model in ("userskill", "communityskill"):
+            return _("Skill"), "fa-graduation-cap", "bg-purple"
+        if model == "community":
+            return _("Community"), subject.get_type_icon() if subject else "fa-house", "bg-green"
+        return _("Person"), "fa-user", "bg-brown"
+
+
+def with_card_data(references):
+    """Everything a reference card shows, fetched up front: author, subject, skill tags,
+    and the match it was written after (for its kind pill)."""
+    return references.select_related("author", "content_type", "match__content_type").prefetch_related(
+        "subject", "match__target", Prefetch("skill_tags", queryset=ReferenceSkill.objects.select_related("skill")),
+    )
 
 
 class ReferenceSkill(models.Model):

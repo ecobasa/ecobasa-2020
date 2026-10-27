@@ -10,7 +10,7 @@
   </div>
   <div class="flex-1 min-w-0">
     <div class="flex items-center gap-2 min-w-0">
-      {% include "matches/_kind_pill.html" %}
+      {% include "_kind_pill.html" with kind=match.kind %}
       <span class="font-semibold font-serif truncate">{{ match.target.get_match_display_name }}</span>
     </div>
     {% if show_from %}
