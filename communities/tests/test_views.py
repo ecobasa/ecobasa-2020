@@ -86,3 +86,41 @@ class TestVolunteerRequestSkillProposal:
         UserSkill.objects.create(user=User.objects.get(username="vol"), skill=skill)
         response = self._send(volunteer_client, community, sender_skills="Carpentry")
         assert "review_url" not in response.context
+
+
+@pytest.mark.django_db
+def test_volunteers_can_bring_what_the_community_needs(user, community):
+    """The volunteer form offers the open needs of current projects and the ambassador's
+    gift wishes; what is ticked comes with the request, anything else is ignored."""
+    from gifts.models import Listing
+    from matches.models import Match
+    from projects.models import Need, Project
+
+    project = Project.objects.create(community=community, title="Rocket stove")
+    clay = Need.objects.create(project=project, kind=Need.KIND_MATERIAL, title="Clay")
+    other_project = Project.objects.create(community=Community.objects.create(name="Elsewhere", owner=user), title="X")
+    foreign = Need.objects.create(project=other_project, kind=Need.KIND_TOOL, title="Spade")
+    wish = Listing.objects.create(title="Wheelbarrow", type="wish", owner=user)
+    Listing.objects.create(title="Old bike", type="offer", owner=user)
+
+    User.objects.create_user(email="vol@example.com", password="secret", username="vol")
+    client = Client()
+    client.login(username="vol@example.com", password="secret")
+
+    context = client.get(community.get_absolute_url()).context
+    assert context["bring_projects"] == [(project, [clay])]
+    assert context["bring_wishes"] == [wish]
+
+    client.post(reverse("communities:volunteer_request", args=[community.slug]), {
+        "body": "Hi", "need": [clay.pk, foreign.pk], "listing": [wish.pk, "nope"],
+    })
+    match = Match.objects.get()
+    assert [offer.need for offer in match.need_offers.all()] == [clay]
+    assert list(match.volunteer_details.bring_listings.all()) == [wish]
+    assert match.community == community
+
+    # Shown with the stay on the volunteer visits page
+    owner = Client()
+    owner.login(username=user.email, password="secret")
+    content = owner.get("/matches/?type=volunteer").content.decode()
+    assert "Clay" in content and "Wheelbarrow" in content

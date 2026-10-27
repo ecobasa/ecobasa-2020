@@ -104,7 +104,7 @@ class HelpOfferForm(forms.Form):
     stay_to = forms.DateField(label=_("Departure"), required=False, widget=forms.DateInput(attrs={"type": "date"}))
     message = forms.CharField(
         label=_("Message"), widget=forms.Textarea(attrs={"rows": 4}),
-        help_text=_("Who you are, what you can do or bring, and how you would get there."),
+        help_text=_("Who you are, what you can do or bring, and how you would get there. Also tell them what you need: food (diet, allergies), where you would sleep (tent, bed …) and anything else that matters to you."),
     )
 
     def __init__(self, project, *args, preselected=(), **kwargs):

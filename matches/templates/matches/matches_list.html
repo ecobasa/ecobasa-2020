@@ -31,6 +31,7 @@
     {% endif %}
   {% else %}
     {% include "dashboard/_filters.html" %}
+    {% if request_type == "volunteer" and page.object_list %}{% include "matches/_stay_legend.html" %}{% endif %}
     {% if page.object_list %}
       <div class="space-y-2">
         {% for match in page %}{% include "matches/_match_row.html" with match=match show_from=show_from %}{% endfor %}

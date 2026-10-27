@@ -89,6 +89,14 @@ class Match(models.Model):
         return self.content_type.app_label in STAY_APP_LABELS
 
     @property
+    def community(self):
+        """The community a stay is at: the target, or the project's community."""
+        if not self.is_community_stay:
+            return None
+        target = self.target
+        return getattr(target, "community", target)
+
+    @property
     def kind(self):
         """What the match is about, as a pill: (label, icon, colour). Skills purple, things
         in the primary colour (by their kind), stays green."""
@@ -211,6 +219,8 @@ class VolunteerDetails(models.Model):
     practice_skills = models.CharField(max_length=500, blank=True)
     practice_skill_level = models.CharField(max_length=20, blank=True)
     sender_skills = models.CharField(max_length=500, blank=True)
+    # Things the community (its ambassador) wished for that the volunteer brings along
+    bring_listings = models.ManyToManyField("gifts.Listing", blank=True, related_name="+", verbose_name=_("Brings along"))
 
     class Meta:
         verbose_name = _("Volunteer Details")

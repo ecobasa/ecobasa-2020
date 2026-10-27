@@ -105,7 +105,17 @@ def detail(request, slug):
         "skill_wishes":     skill_wishes,
         "user_levels_json": user_levels_json,
         "help_wish":        help_wish,
+        # What the volunteer form offers to bring along: open needs of current projects
+        # and the ambassador's gift wishes
+        "bring_projects":   [(p, needs) for p in projects.current() if (needs := [n for n in p.needs.all() if not n.is_done])],
+        "bring_wishes":     _community_wishes(community),
     })
+
+
+def _community_wishes(community):
+    if not community.owner_id:
+        return []
+    return list(community.owner.listings.filter(type="wish").order_by("-updated_at"))
 
 
 @login_required
@@ -147,7 +157,7 @@ def volunteer_request(request, community_slug):
     )
     vr.target = community
     vr.save()
-    VolunteerDetails.objects.create(
+    details = VolunteerDetails.objects.create(
         match                 = vr,
         volunteer_mode        = volunteer_mode,
         practice_skills       = practice_skills,
@@ -155,6 +165,17 @@ def volunteer_request(request, community_slug):
         sender_skills         = sender_skills,
         stay_from             = stay_from,
         stay_to               = stay_to,
+    )
+
+    # Needs of the community's projects and its ambassador's wishes they bring along
+    from projects.models import Need, NeedOffer
+    needs = Need.objects.filter(
+        pk__in=[pk for pk in request.POST.getlist("need") if pk.isdigit()],
+        project__community=community, project__in=community.projects.current(),
+    )
+    NeedOffer.objects.bulk_create([NeedOffer(need=need, match=vr) for need in needs if not need.is_done])
+    details.bring_listings.set(
+        [listing for listing in _community_wishes(community) if listing.pk in request.POST.getlist("listing")]
     )
 
     notify_match_created(vr, http_request=request)

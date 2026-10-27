@@ -327,6 +327,38 @@
 						<input type="text" name="sender_skills" id="volunteer-sender-skills" class="form-input mt-1"
 									value="{% if request.user.is_authenticated %}{% for us in request.user.user_skills.all %}{{ us.skill }}{% if not forloop.last %}, {% endif %}{% endfor %}{% endif %}">
 					</label>
+					{% if bring_projects or bring_wishes %}
+						{# What the community needs: tick what you can bring or help with #}
+						<fieldset class="text-sm border rounded p-3">
+							<legend class="px-1 font-semibold">{% trans "Can you bring or help with any of this?" %}</legend>
+							{% for project, needs in bring_projects %}
+								<div class="mb-2">
+									<div class="flex flex-wrap items-center gap-x-2 text-xs">
+										<a href="{{ project.get_absolute_url }}" class="font-semibold hover:underline" target="_blank"><i class="fa-solid fa-person-digging mr-1"></i>{{ project.title }}</a>
+										<span class="opacity-70">{% include "projects/_project_dates.html" %}</span>
+										<a href="{% url 'projects:offer_help' project.pk %}" class="underline">{% trans "Join this project" %}</a>
+									</div>
+									{% for need in needs %}
+										<label class="flex items-center gap-2 cursor-pointer py-0.5">
+											<input type="checkbox" name="need" value="{{ need.pk }}" class="form-checkbox">
+											<i class="fa-solid {{ need.icon }} {% if need.colour == 'bg-purple' %}text-purple{% else %}text-primary{% endif %} w-4 text-center"></i>
+											<span>{{ need.display_title }}{% if need.amount %} <span class="text-xs opacity-70">· {{ need.amount }}</span>{% endif %}</span>
+										</label>
+									{% endfor %}
+								</div>
+							{% endfor %}
+							{% if bring_wishes %}
+								<div class="text-xs font-semibold mt-1">{% trans "Also wished for" %}</div>
+								{% for listing in bring_wishes %}
+									<label class="flex items-center gap-2 cursor-pointer py-0.5">
+										<input type="checkbox" name="listing" value="{{ listing.pk }}" class="form-checkbox">
+										<i class="fa-solid {{ listing.kind_icon }} text-primary w-4 text-center"></i>
+										<span>{{ listing.title }}{% if listing.amount %} <span class="text-xs opacity-70">· {{ listing.amount }}</span>{% endif %}</span>
+									</label>
+								{% endfor %}
+							{% endif %}
+						</fieldset>
+					{% endif %}
 					<label class="text-sm">{% trans "From" %}
 						<input type="datetime-local" name="stay_from" class="form-input w-full mt-1">
 					</label>
@@ -335,6 +367,7 @@
 					</label>
 					<label class="text-sm">{% trans "Message" %}
 						<textarea name="body" rows="5" class="form-textarea w-full mt-1" placeholder="{% trans "Write a short message explaining your motivation and skills" %}"></textarea>
+						<span class="block text-xs mt-1 opacity-80">{% trans "Also tell them what you need: food (diet, allergies), where you would sleep (tent, bed …) and anything else that matters to you." %}</span>
 					</label>
 				</div>
 				<div class="mt-4 flex justify-end gap-3">

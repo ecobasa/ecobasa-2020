@@ -92,15 +92,7 @@
 
 {# Who comes when, with what (also the calendar on phones) #}
 <h2>{% trans "Stays this month" %}</h2>
-{# What the pills on the stays mean #}
-<p class="flex flex-wrap gap-x-4 gap-y-1 text-xs mb-3">
-  <span><i class="fa fa-graduation-cap text-purple mr-1"></i>{% trans "Skill" %}</span>
-  <span><i class="fa-solid fa-lightbulb text-purple mr-1"></i>{% trans "Knowledge" %}</span>
-  <span><i class="fa-solid fa-cubes text-primary mr-1"></i>{% trans "Material" %}</span>
-  <span><i class="fa-solid fa-screwdriver-wrench text-primary mr-1"></i>{% trans "Tool" %}</span>
-  <span><i class="fa-solid fa-seedling text-purple mr-1"></i>{% trans "Wants to learn" %}</span>
-  <span><i class="fa-solid fa-hand-holding-heart text-purple mr-1"></i>{% trans "Other skills offered" %}</span>
-</p>
+{% include "matches/_stay_legend.html" %}
 {% if month_stays %}
   <ul class="list-none p-0 space-y-2 mb-6">
     {% for stay in month_stays %}
@@ -114,21 +106,7 @@
           <div class="text-xs mt-1 opacity-80">
             {% if stay.project %}<i class="fa-solid fa-person-digging mr-1"></i>{{ stay.project.title }}{% else %}<i class="fa-solid fa-campground mr-1"></i>{% trans "Volunteer stay" %}{% endif %}
           </div>
-          {% with vd=stay.match.volunteer_details needs=stay.match.need_offers.all %}
-            {% if needs or vd.practice_skills or vd.sender_skills %}
-              <div class="flex flex-wrap gap-1 mt-2">
-                {% for offer in needs %}<span class="pill {{ offer.need.colour }} text-xs"><i class="fa-solid {{ offer.need.icon }} mr-1"></i>{{ offer.need.display_title }}{% if offer.amount %}<span class="ml-1 opacity-80">({{ offer.amount }})</span>{% endif %}</span>{% endfor %}
-                {% if not needs %}
-                  {% if vd.volunteer_mode == "wish" %}
-                    {% for skill in vd.practice_skills_list %}<span class="pill bg-purple text-xs" title="{% trans 'Skills to offer' %}"><i class="fa fa-graduation-cap mr-1"></i>{{ skill }}</span>{% endfor %}
-                  {% else %}
-                    {% for skill in vd.practice_skills_list %}<span class="pill bg-secondary border border-purple !text-purple hover:!text-secondary text-xs" title="{% trans 'Skills to learn and practice' %}"><i class="fa-solid fa-seedling mr-1"></i>{{ skill }}</span>{% endfor %}
-                  {% endif %}
-                {% endif %}
-                {% for skill in vd.sender_skills_list %}<span class="pill bg-secondary border border-dashed border-purple !text-purple hover:!text-secondary text-xs" title="{% trans 'Other skills offered' %}"><i class="fa-solid fa-hand-holding-heart mr-1"></i>{{ skill }}</span>{% endfor %}
-              </div>
-            {% endif %}
-          {% endwith %}
+          {% include "matches/_stay_tags.html" with match=stay.match %}
         </a>
       </li>
     {% endfor %}
