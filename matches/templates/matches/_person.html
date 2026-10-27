@@ -5,10 +5,10 @@
 
   {% if person.communities %}
     <div class="mb-4">
-      <div class="text-xs font-bold uppercase tracking-wider opacity-70 mb-2">{% trans "Looks after these communities" %}</div>
+      <div class="text-xs font-bold uppercase tracking-wider opacity-70 mb-2">{% trans "Member of these communities" %}</div>
       <div class="flex flex-wrap gap-2">
         {% for community in person.communities %}
-          <a href="{{ community.get_absolute_url }}" class="pill pill-lg bg-green"><i class="fa-solid {{ community.get_type_icon }} mr-1"></i>{{ community.name }}</a>
+          <a href="{{ community.get_absolute_url }}" class="pill pill-lg bg-green"><i class="fa-solid {{ community.get_type_icon }} mr-1"></i>{{ community.name }}<span class="ml-2 inline-flex items-center rounded-full bg-secondary text-green text-[10px] font-semibold px-2 py-0.5"><i class="fa-solid fa-award mr-1"></i>{% trans "Ambassador" %}</span></a>
         {% endfor %}
       </div>
     </div>

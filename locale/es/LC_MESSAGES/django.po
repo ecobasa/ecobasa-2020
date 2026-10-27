@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ecobasa\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-27 13:33+0100\n"
+"POT-Creation-Date: 2026-10-27 13:37+0100\n"
 "PO-Revision-Date: 2026-10-23 12:00+0200\n"
 "Last-Translator: ecobasa\n"
 "Language-Team: es\n"
@@ -770,11 +770,13 @@ msgstr "Oferta"
 msgid "Wish"
 msgstr "Deseo"
 
-#: gifts/models.py:34 projects/models.py:136
+#: gifts/models.py:34 matches/templates/matches/calendar.html:99
+#: projects/models.py:136
 msgid "Material"
 msgstr "Material"
 
-#: gifts/models.py:34 projects/models.py:137
+#: gifts/models.py:34 matches/templates/matches/calendar.html:100
+#: projects/models.py:137
 msgid "Tool"
 msgstr "Herramienta"
 
@@ -842,9 +844,9 @@ msgstr "Sin resultados"
 
 #: gifts/templates/gifts/_gifts_list_partial.html:48
 #: gifts/templates/gifts/_gifts_list_partial.html:79 matches/models.py:102
-#: skills/forms.py:27 skills/forms.py:84 skills/forms.py:157
-#: skills/forms.py:192 skills/models.py:132
-#: skills/templates/skills/communityskill_form.html:53
+#: matches/templates/matches/calendar.html:97 skills/forms.py:27
+#: skills/forms.py:84 skills/forms.py:157 skills/forms.py:192
+#: skills/models.py:132 skills/templates/skills/communityskill_form.html:53
 #: skills/templates/skills/userskill_form.html:53
 msgid "Skill"
 msgstr "Habilidad"
@@ -1239,7 +1241,7 @@ msgstr "Regalo"
 msgid "Project"
 msgstr "Proyecto"
 
-#: matches/models.py:106 matches/templates/matches/calendar.html:106
+#: matches/models.py:106 matches/templates/matches/calendar.html:115
 msgid "Volunteer stay"
 msgstr "Estancia de voluntariado"
 
@@ -1336,8 +1338,12 @@ msgid "What %(name)s brings"
 msgstr "Lo que aporta %(name)s"
 
 #: matches/templates/matches/_person.html:8
-msgid "Looks after these communities"
-msgstr "Cuida de estas comunidades"
+msgid "Member of these communities"
+msgstr "Miembro de estas comunidades"
+
+#: matches/templates/matches/_person.html:11
+msgid "Ambassador"
+msgstr "Embajador·a"
 
 #: matches/templates/matches/_person.html:25 references/apps.py:8
 #: references/models.py:110 references/templates/references/_references.html:3
@@ -1520,29 +1526,57 @@ msgstr "Estancia solicitada"
 msgid "Stays this month"
 msgstr "Estancias este mes"
 
-#: matches/templates/matches/calendar.html:103 references/models.py:141
+#: matches/templates/matches/calendar.html:98 projects/models.py:138
+msgid "Knowledge"
+msgstr "Conocimiento"
+
+#: matches/templates/matches/calendar.html:101
+msgid "Wants to learn"
+msgstr "Quiere aprender"
+
+#: matches/templates/matches/calendar.html:102
+#: matches/templates/matches/calendar.html:128
+#: matches/templates/matches/match_detail.html:167
+msgid "Other skills offered"
+msgstr "Otras habilidades ofrecidas"
+
+#: matches/templates/matches/calendar.html:112 references/models.py:141
 msgid "Confirmed"
 msgstr "Confirmada"
 
-#: matches/templates/matches/calendar.html:103
+#: matches/templates/matches/calendar.html:112
 msgid "Requested"
 msgstr "Solicitada"
 
-#: matches/templates/matches/calendar.html:124
+#: matches/templates/matches/calendar.html:123
+#: matches/templates/matches/email/match_request.html:43
+#: matches/templates/matches/email/match_request.txt:8
+#: matches/templates/matches/match_detail.html:160
+msgid "Skills to offer"
+msgstr "Habilidades que ofrezco"
+
+#: matches/templates/matches/calendar.html:125
+#: matches/templates/matches/email/match_request.html:43
+#: matches/templates/matches/email/match_request.txt:8
+#: matches/templates/matches/match_detail.html:160
+msgid "Skills to learn and practice"
+msgstr "Habilidades para aprender y practicar"
+
+#: matches/templates/matches/calendar.html:137
 msgid "No stays requested for this month yet."
 msgstr "Todavía no hay estancias solicitadas para este mes."
 
-#: matches/templates/matches/calendar.html:128
+#: matches/templates/matches/calendar.html:141
 #: projects/templates/projects/_need_pill.html:3
 msgid "Still needed"
 msgstr "Todavía se necesita"
 
-#: matches/templates/matches/calendar.html:142
+#: matches/templates/matches/calendar.html:155
 msgid "Everything your current projects need is covered or promised."
 msgstr ""
 "Todo lo que necesitan vuestros proyectos actuales está cubierto o prometido."
 
-#: matches/templates/matches/calendar.html:144
+#: matches/templates/matches/calendar.html:157
 msgid "No current projects in this month."
 msgstr "No hay proyectos actuales este mes."
 
@@ -1594,18 +1628,6 @@ msgstr "Nuevo match"
 #: matches/templates/matches/match_detail.html:154
 msgid "Proposed stay"
 msgstr "Estancia propuesta"
-
-#: matches/templates/matches/email/match_request.html:43
-#: matches/templates/matches/email/match_request.txt:8
-#: matches/templates/matches/match_detail.html:160
-msgid "Skills to offer"
-msgstr "Habilidades que ofrezco"
-
-#: matches/templates/matches/email/match_request.html:43
-#: matches/templates/matches/email/match_request.txt:8
-#: matches/templates/matches/match_detail.html:160
-msgid "Skills to learn and practice"
-msgstr "Habilidades para aprender y practicar"
 
 #: matches/templates/matches/email/match_request.html:44
 #: matches/templates/matches/email/match_request.txt:9
@@ -1730,10 +1752,6 @@ msgstr ""
 #: references/templates/references/_references.html:28
 msgid "Write a reference"
 msgstr "Escribir una referencia"
-
-#: matches/templates/matches/match_detail.html:167
-msgid "Other skills offered"
-msgstr "Otras habilidades ofrecidas"
 
 #: matches/templates/matches/match_detail.html:253
 #: matches/templates/matches/match_detail.html:326
@@ -2074,10 +2092,6 @@ msgstr "%(actor)s ofreció ayuda con vuestro proyecto: %(title)s"
 #: projects/models.py:135
 msgid "Helping hands / skill"
 msgstr "Manos que ayudan / habilidad"
-
-#: projects/models.py:138
-msgid "Knowledge"
-msgstr "Conocimiento"
 
 #: projects/models.py:161
 msgid "Kind"
