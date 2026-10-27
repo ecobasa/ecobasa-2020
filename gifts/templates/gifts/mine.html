@@ -1,0 +1,41 @@
+{% extends 'dashboard/base.html' %}
+{% load i18n %}
+
+{% block head_title %}{% trans "Your gifts" %} — ecobasa{% endblock %}
+
+{% block dashboard_content %}
+<section class="mb-8">
+  <div class="flex flex-wrap items-center gap-3 mb-4">
+    <h1 class="text-4xl font-semibold flex items-center gap-2 m-0"><i class="fa fa-gift text-primary"></i>{% trans "Your gifts" %}</h1>
+    <a href="{% url 'gifts:create' %}" class="btn ml-auto"><i class="fa fa-plus mr-1"></i>{% trans "Add your Wish or Offer" %}</a>
+  </div>
+
+  {% include "dashboard/_tabs.html" %}
+
+  {% if page.object_list %}
+    <ul class="list-none p-0 space-y-2">
+      {% for listing in page %}
+        <li class="flex items-center gap-3 p-4 rounded bg-secondary bg-opacity-50">
+          <i class="fa-solid {{ listing.kind_icon }} text-2xl text-primary opacity-70 w-8 text-center"></i>
+          <div class="flex-1 min-w-0">
+            <a href="{{ listing.get_absolute_url }}" class="font-semibold font-serif hover:underline">{{ listing.title }}</a>
+            {% if listing.amount %}<span class="text-sm opacity-80">· {{ listing.amount }}</span>{% endif %}
+            <div class="text-xs opacity-70 mt-0.5 flex flex-wrap gap-x-2">
+              {% if listing.kind != "other" %}<span>{{ listing.get_kind_display }}</span>{% endif %}
+              {% for cat in listing.categories.all %}<span>{{ cat.name }}</span>{% endfor %}
+              <span>{% include "projects/_freshness.html" with when=listing.updated_at label_updated=True %}</span>
+            </div>
+          </div>
+          {% if listing.match_count %}
+            <span class="pill bg-purple text-xs" title="{% trans 'Requests' %}"><i class="fa-solid fa-handshake mr-1"></i>{{ listing.match_count }}</span>
+          {% endif %}
+          <a href="{% url 'gifts:edit' listing.pk %}" class="btn text-sm py-1 px-3" title="{% trans 'Edit' %}"><i class="fa fa-edit"></i></a>
+        </li>
+      {% endfor %}
+    </ul>
+    {% include "dashboard/_pager.html" %}
+  {% else %}
+    <p class="italic">{% if box == "wish" %}{% trans "You haven't added any wishes yet." %}{% else %}{% trans "You haven't offered anything yet." %}{% endif %}</p>
+  {% endif %}
+</section>
+{% endblock %}

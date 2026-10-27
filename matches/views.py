@@ -1,3 +1,4 @@
+from collections import Counter
 from datetime import datetime as _dt
 
 from django.contrib import messages as flash
@@ -277,7 +278,31 @@ def match_detail(request, pk):
         "requester_can_decide": requester_can_decide,
         "message_form":         MatchMessageForm(),
         "loc_choices":          Match.LOC_CHOICES,
+        "person":               _person(match.recipient if is_requester else match.from_user),
     })
+
+
+def _person(user):
+    """What the other side brings: their skills (with level and how many references), the
+    gifts they offer (they might bring them along) and the communities they look after."""
+    if user is None:
+        return None
+    from django.contrib.contenttypes.models import ContentType
+    from references.models import Reference
+
+    skills = list(user.user_skills.select_related("skill").order_by("skill__name"))
+    references = Counter(Reference.objects.filter(
+        content_type=ContentType.objects.get_for_model(user.user_skills.model),
+        object_id__in=[str(skill.pk) for skill in skills],
+    ).values_list("object_id", flat=True))
+    for skill in skills:
+        skill.reference_count = references[str(skill.pk)]
+    return {
+        "user": user,
+        "skills": skills,
+        "offers": list(user.listings.filter(type="offer").order_by("-updated_at")),
+        "communities": list(user.communities.order_by("name")),
+    }
 
 
 # ── Email token action (no login required) ────────────────────────────────────

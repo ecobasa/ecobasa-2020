@@ -275,3 +275,32 @@ class TestCommunityStayCounter:
         })
         stay.refresh_from_db()
         assert stay.status == Match.STATUS_PENDING
+
+
+@pytest.mark.django_db
+def test_the_match_shows_what_the_other_side_brings(owner, requester, stay):
+    from communities.models import Community
+    from skills.models import Skill, UserSkill
+    from references.models import Reference
+    from django.contrib.contenttypes.models import ContentType
+
+    masonry = UserSkill.objects.create(user=requester, skill=Skill.objects.create(name="Masonry"), level="advanced")
+    Reference.objects.create(author=owner, recipient=requester, text="Great walls",
+                             content_type=ContentType.objects.get_for_model(UserSkill), object_id=str(masonry.pk))
+    Listing.objects.create(title="Lime mortar", type="offer", kind=Listing.KIND_MATERIAL, owner=requester)
+    Listing.objects.create(title="A tent", type="wish", owner=requester)
+    Community.objects.create(name="Other Hof", owner=requester)
+    stay.volunteer_details.sender_skills = "Masonry, Juggling"
+    stay.volunteer_details.save()
+
+    response = _client_for(owner).get(stay.get_absolute_url())
+    person = response.context["person"]
+    assert person["user"] == requester
+    assert [(s.skill.name, s.reference_count) for s in person["skills"]] == [("Masonry", 1)]
+    assert [listing.title for listing in person["offers"]] == ["Lime mortar"]
+    assert [c.name for c in person["communities"]] == ["Other Hof"]
+    content = response.content.decode()
+    assert masonry.get_absolute_url() in content and "Other Hof" in content
+    # The skills named in the request link to the person's skill page if they have it
+    assert [pill[2] for pill in stay.volunteer_details.sender_skill_pills] == [masonry.get_absolute_url(), ""]
+    assert str(stay.kind[0]) == "Volunteer stay"

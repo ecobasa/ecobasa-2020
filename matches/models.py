@@ -3,6 +3,7 @@ from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.urls import reverse
+from django.utils.html import escape, format_html
 from django.utils.translation import gettext_lazy as _
 
 
@@ -86,6 +87,24 @@ class Match(models.Model):
         """A volunteer stay happens at the community itself (also when helping with one
         of its projects), so only its dates are open to a counter-proposal, never the place."""
         return self.content_type.app_label in STAY_APP_LABELS
+
+    @property
+    def kind(self):
+        """What the match is about, as a pill: (label, icon, colour). Skills purple, things
+        in the primary colour (by their kind), stays green."""
+        model = self.content_type.model
+        if model == "listing":
+            listing = self.target
+            if listing is not None and listing.kind != listing.KIND_OTHER:
+                return listing.get_kind_display(), listing.kind_icon, "bg-primary"
+            return _("Gift"), "fa-gift", "bg-primary"
+        if model in ("userskill", "communityskill", "skillwish"):
+            return _("Skill"), "fa-graduation-cap", "bg-purple"
+        if model == "project":
+            return _("Project"), "fa-person-digging", "bg-green"
+        if model == "community":
+            return _("Volunteer stay"), "fa-campground", "bg-green"
+        return _("Match"), "fa-handshake", "bg-primary"
 
     def stay_period(self):
         """(from, to) of a stay as currently proposed: the latest counter-proposed period,
@@ -208,18 +227,26 @@ class VolunteerDetails(models.Model):
     def sender_skills_list(self):
         return [s.strip() for s in self.sender_skills.split(",") if s.strip()] if self.sender_skills else []
 
-    @property
-    def sender_skills_with_levels(self):
+    def _skill_pills(self, names):
+        """(name, level, url of the volunteer's skill page) for skill names: the level and
+        page if they have that skill on their profile."""
         from skills.models import UserSkill, skill_slug_for_name
-        names = self.sender_skills_list
         if not names:
             return []
-        level_map = {
-            us.skill.slug: us.get_level_display()
-            for us in UserSkill.objects.filter(user=self.match.from_user).select_related("skill")
-            if us.level
-        }
-        return [(name, level_map.get(skill_slug_for_name(name))) for name in names]
+        own = {us.skill.slug: us for us in UserSkill.objects.filter(user=self.match.from_user).select_related("skill")}
+        pills = []
+        for name in names:
+            us = own.get(skill_slug_for_name(name))
+            pills.append((name, us.get_level_display() if us and us.level else "", us.get_absolute_url() if us else ""))
+        return pills
+
+    @property
+    def practice_skill_pills(self):
+        return self._skill_pills(self.practice_skills_list)
+
+    @property
+    def sender_skill_pills(self):
+        return self._skill_pills(self.sender_skills_list)
 
 
 def _name(user):
@@ -321,6 +348,26 @@ class Suggestion(models.Model):
                 }
             return _("%(name)s wants to learn: %(skill)s") % {"name": _name(other.user), "skill": other.skill.get_name()}
         return str(other)
+
+    @property
+    def title_html(self):
+        """The text with links: a project need's project to its page and its community to
+        its profile, a community's wish to the community, anything else to the thing."""
+        other, model = self.other, self.other_model
+        if other is None:
+            return ""
+        link = '<a href="{}" class="font-semibold hover:underline">{}</a>'
+        if model == "need":
+            project = other.project
+            title = f"{other.display_title} ({other.amount})" if other.amount else other.display_title
+            return format_html(
+                escape(_("%(project)s at %(community)s needs: %(title)s")).replace("%(project)s", "{project}")
+                .replace("%(community)s", "{community}").replace("%(title)s", "{title}"),
+                project=format_html(link, project.get_absolute_url(), project.title),
+                community=format_html(link, project.community.get_absolute_url(), project.community.name),
+                title=title,
+            )
+        return format_html(link, self.url, self.text)
 
     @property
     def own_text(self):

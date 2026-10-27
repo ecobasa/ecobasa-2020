@@ -127,7 +127,8 @@
         </a>
         <p class="text-xs">{{ target.get_match_verb }} <a href="{{ target.get_absolute_url }}" class="hover:underline">{{ target.get_match_display_name }}</a> on {{ match.created_at|date:"d M Y H:i" }}</p>
       </div>
-      <div class="ml-auto">
+      <div class="ml-auto flex flex-wrap items-center justify-end gap-1">
+        {% include "matches/_kind_pill.html" %}
         {% if match.status == 'pending' %}
           <span class="pill bg-yellow">{% trans "Pending" %}</span>
         {% elif match.status == 'accepted' %}
@@ -154,12 +155,14 @@
       {% if vd.practice_skills %}
         <div class="text-sm mb-2">
           <strong>{% if vd.volunteer_mode == "wish" %}{% trans "Skills to offer" %}{% else %}{% trans "Skills to learn and practice" %}{% endif %}:</strong>
-          {{ vd.practice_skills }}{% if vd.practice_skill_level %} ({% trans "level" %}: {{ vd.practice_skill_level }}){% endif %}
+          <span class="inline-flex flex-wrap gap-1 align-middle">{% for pill in vd.practice_skill_pills %}{% include "matches/_skill_pill.html" %}{% endfor %}</span>
+          {% if vd.practice_skill_level %}<span class="text-xs opacity-70">({% trans "level" %}: {{ vd.practice_skill_level }})</span>{% endif %}
         </div>
       {% endif %}
       {% if vd.sender_skills %}
         <div class="text-sm mb-2">
-          <strong>{% trans "Other skills offered" %}:</strong> {{ vd.sender_skills }}
+          <strong>{% trans "Other skills offered" %}:</strong>
+          <span class="inline-flex flex-wrap gap-1 align-middle">{% for pill in vd.sender_skill_pills %}{% include "matches/_skill_pill.html" %}{% endfor %}</span>
         </div>
       {% endif %}
     {% endif %}
@@ -171,7 +174,7 @@
           <strong>{% trans "Offers to help with" %}:</strong>
           <span class="inline-flex flex-wrap gap-1 align-middle">
             {% for offer in needs %}
-              <span class="pill bg-yellow text-xs"><i class="fa-solid {{ offer.need.icon }} mr-1"></i>{{ offer.need.display_title }}{% if offer.amount %}<span class="ml-1">({{ offer.amount }})</span>{% endif %}</span>
+              <span class="pill {{ offer.need.colour }} text-xs"><i class="fa-solid {{ offer.need.icon }} mr-1"></i>{{ offer.need.display_title }}{% if offer.amount %}<span class="ml-1">({{ offer.amount }})</span>{% endif %}</span>
             {% endfor %}
           </span>
         </div>
@@ -197,6 +200,8 @@
       {% endif %}
     {% endwith %}
   </div>
+
+  {% if person %}{% include "matches/_person.html" %}{% endif %}
 
   {# ── Thread / history ─────────────────────────────────────────────── #}
   {% if thread %}

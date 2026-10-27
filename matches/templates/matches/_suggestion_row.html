@@ -2,7 +2,7 @@
 <li class="flex items-start gap-3 p-4 rounded border-2 bg-secondary bg-opacity-50 {% if suggestion.pk in new_ids %}border-purple{% else %}border-transparent{% endif %}">
   <i class="fa-solid {{ suggestion.icon }} text-2xl text-primary opacity-70 mt-1 w-8 text-center"></i>
   <div class="flex-1 min-w-0">
-    <a href="{{ suggestion.url }}" class="font-semibold hover:underline">{{ suggestion.text }}</a>
+    <span>{{ suggestion.title_html }}</span>
     {% if suggestion.pk in new_ids %}<span class="pill bg-purple text-xs ml-1">{% trans "New" %}</span>{% endif %}
     <div class="text-xs mt-1 opacity-80">
       {% blocktrans with own=suggestion.own_text %}fits {{ own }}{% endblocktrans %}

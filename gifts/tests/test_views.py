@@ -240,3 +240,14 @@ def test_back_on_the_form_is_a_link(user_client, listing):
     assert back % reverse("gifts:detail", args=[listing.pk]) in content
     content = user_client.get(reverse("gifts:create")).content.decode()
     assert back % reverse("gifts:search") in content
+
+
+@pytest.mark.django_db
+def test_your_gifts_in_the_dashboard(user_client, user, listings):
+    response = user_client.get(reverse("gifts:mine"))
+    assert [listing.title for listing in response.context["page"]] == ["Test"]
+    assert [(str(t.label), t.count, t.active) for t in response.context["tabs"]] == [
+        ("Your offers", 1, True), ("Your wishes", 1, False),
+    ]
+    assert [listing.title for listing in user_client.get(reverse("gifts:mine"), {"box": "wish"}).context["page"]] == ["Foobar"]
+    assert reverse("gifts:create") in response.content.decode()

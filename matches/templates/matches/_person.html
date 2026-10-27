@@ -1,0 +1,47 @@
+{% load i18n %}{# What the other side brings: skills with level and references, gifts, communities #}
+{% with who=person.user %}
+<div class="border rounded-xl bg-secondary p-6 mb-6">
+  <h2 class="text-lg mt-0 mb-4">{% blocktrans with name=who.name|default:who.email %}What {{ name }} brings{% endblocktrans %}</h2>
+
+  {% if person.communities %}
+    <div class="mb-4">
+      <div class="text-xs font-bold uppercase tracking-wider opacity-70 mb-2">{% trans "Looks after these communities" %}</div>
+      <div class="flex flex-wrap gap-2">
+        {% for community in person.communities %}
+          <a href="{{ community.get_absolute_url }}" class="pill pill-lg bg-green"><i class="fa-solid {{ community.get_type_icon }} mr-1"></i>{{ community.name }}</a>
+        {% endfor %}
+      </div>
+    </div>
+  {% endif %}
+
+  <div class="mb-4">
+    <div class="text-xs font-bold uppercase tracking-wider opacity-70 mb-2">{% trans "Skills" %}</div>
+    {% if person.skills %}
+      <div class="flex flex-wrap gap-2">
+        {% for us in person.skills %}
+          <a href="{{ us.get_absolute_url }}" class="pill pill-lg bg-purple{% if not us.available %} bg-opacity-60{% endif %}">
+            <i class="fa fa-graduation-cap mr-1"></i>{{ us.skill.get_name }}
+            {% if us.level %}<span class="ml-1 text-xs opacity-80">· {{ us.get_level_display }}</span>{% endif %}
+            {% if us.reference_count %}<span class="ml-1 text-xs opacity-80" title="{% trans 'References' %}"><i class="fa-solid fa-comments mr-0.5"></i>{{ us.reference_count }}</span>{% endif %}
+          </a>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="text-sm italic m-0">{% trans "No skills on the profile yet." %}</p>
+    {% endif %}
+  </div>
+
+  <div>
+    <div class="text-xs font-bold uppercase tracking-wider opacity-70 mb-2">{% trans "Gifts they could bring along" %}</div>
+    {% if person.offers %}
+      <div class="flex flex-wrap gap-2">
+        {% for listing in person.offers %}
+          <a href="{{ listing.get_absolute_url }}" class="pill pill-lg bg-primary"><i class="fa-solid {{ listing.kind_icon }} mr-1"></i>{{ listing.title|truncatechars:50 }}{% if listing.amount %}<span class="ml-1 text-xs opacity-80">· {{ listing.amount }}</span>{% endif %}</a>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="text-sm italic m-0">{% trans "No gifts offered yet." %}</p>
+    {% endif %}
+  </div>
+</div>
+{% endwith %}

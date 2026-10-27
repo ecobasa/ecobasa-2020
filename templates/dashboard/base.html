@@ -20,6 +20,10 @@
           <i class="fa-solid fa-handshake mr-2"></i>{% trans "Matches" %}
           {% if new_suggestions_count %}<span class="ml-auto pill bg-purple text-secondary text-xs" title="{% trans 'New suggestions' %}">{{ new_suggestions_count }}</span>{% endif %}
         </a>
+        <a href="{% url 'gifts:mine' %}"
+           class="flex items-center px-3 py-2 rounded {% if ns == 'gifts' %}bg-secondary text-primary font-semibold{% else %}text-secondary hover:bg-secondary hover:text-primary{% endif %}">
+          <i class="fa fa-gift mr-2"></i>{% trans "Your gifts" %}
+        </a>
         {% endwith %}
 
         <div class="pt-4 pb-1 px-3 text-xs text-secondary opacity-60 uppercase tracking-wide">{% trans "References" %}</div>

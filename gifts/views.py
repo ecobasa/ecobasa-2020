@@ -5,7 +5,7 @@ import urllib.parse
 from datetime import datetime as _dt
 
 from django.shortcuts import render, get_object_or_404, redirect, reverse
-from django.db.models import Prefetch, Q
+from django.db.models import Count, Prefetch, Q
 from django.core.paginator import Paginator
 from django.contrib import messages
 from django.http import JsonResponse
@@ -25,6 +25,7 @@ from users.models import User
 from skills.models import UserSkill, CommunitySkill, Skill, skill_name_q
 from matches.forms import MatchForm
 from matches.emails import notify_match_created
+from dashboard_lists import Choice, paginate, query_url
 
 
 def search(request):
@@ -61,6 +62,21 @@ def detail(request, pk):
         context["incoming_requests"] = list(listing.matches.select_related("from_user").order_by("-created_at")[:20])
 
     return render(request, "gifts/listing_detail.html", context)
+
+
+@login_required
+def mine(request):
+    """Your own offers and wishes in the dashboard, with how many asked about each."""
+    box = "wish" if request.GET.get("box") == "wish" else "offer"
+    listings = request.user.listings.annotate(match_count=Count("matches")).order_by("-updated_at")
+    counts = {key: listings.filter(type=key).count() for key in ("offer", "wish")}
+    tabs = [
+        Choice(label, query_url(request, box=key, page=None), key == box, counts[key])
+        for key, label in (("offer", _("Your offers")), ("wish", _("Your wishes")))
+    ]
+    return render(request, "gifts/mine.html", {
+        "tabs": tabs, "box": box, "page": paginate(request, listings.filter(type=box).prefetch_related("categories")),
+    })
 
 
 @login_required

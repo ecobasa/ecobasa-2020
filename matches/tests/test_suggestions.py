@@ -129,7 +129,10 @@ def test_skill_wishes_and_needs_meet_the_skills_of_people_and_communities(anna, 
     with translation.override("en"):
         assert about_need.text == "Oven at Hof needs: Masonry"
         assert about_teaching.text == "You can learn Masonry at Hof"
-    # The title leads to the project, the button to the offer form
+    # The title links the project to its page and the community to its profile,
+    # the button leads to the offer form
+    html = str(about_need.title_html)
+    assert f'href="{project.get_absolute_url()}"' in html and f'href="{community.get_absolute_url()}"' in html
     assert about_need.url == f"{project.get_absolute_url()}#need-{need.pk}"
     assert about_need.action_url.endswith(f"/help/?need={need.pk}") and about_need.helps
     # A community's wish opens the volunteer form on its page
