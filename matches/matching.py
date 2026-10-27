@@ -10,7 +10,8 @@ What fits:
   with the other.
 
 Both sides need a place, and each side only gets suggestions within their own distance
-(User.match_radius). Nothing is suggested between things of the same person."""
+(User.match_radius), or from anywhere if they search worldwide (User.match_global).
+Nothing is suggested between things of the same person."""
 
 import math
 from dataclasses import dataclass
@@ -79,11 +80,14 @@ def side_of(obj):
     return side
 
 
-def _near(point, *fields):
-    """Q for any of the location fields within MAX_RADIUS_KM of point."""
+def _near(point, *fields, worldwide=()):
+    """Q for any of the location fields within MAX_RADIUS_KM of point, or an owner who
+    searches worldwide (the paths to their match_global in `worldwide`)."""
     query = Q()
     for name in fields:
         query |= Q(**{f"{name}__dwithin": (point, D(km=MAX_RADIUS_KM))})
+    for path in worldwide:
+        query |= Q(**{path: True})
     return query
 
 
@@ -97,26 +101,34 @@ def _current_needs():
 
 
 def candidates(side):
-    """The things on the other side that could fit `side`, nearby (roughly)."""
-    point = side.point
+    """The things on the other side that could fit `side`: nearby (roughly), or anywhere
+    if the other side's owner or this side's owner searches worldwide."""
+    def near(*fields, worldwide=()):
+        return Q() if side.owner.match_global else _near(side.point, *fields, worldwide=worldwide)
+
     if side.is_skill:
         if side.want:
             yield from UserSkill.objects.filter(skill_id=side.skill_id, available=True).filter(
-                _near(point, "user__location")).select_related("user")
+                near("user__location", worldwide=["user__match_global"])).select_related("user")
             yield from CommunitySkill.objects.filter(skill_id=side.skill_id).filter(
-                _near(point, "community__location")).select_related("community__owner")
+                near("community__location", worldwide=["community__owner__match_global"])).select_related("community__owner")
         else:
             yield from SkillWish.objects.filter(skill_id=side.skill_id).filter(
-                _near(point, "user__location", "community__location")).select_related("user", "community__owner")
+                near("user__location", "community__location",
+                      worldwide=["user__match_global", "community__owner__match_global"])).select_related("user", "community__owner")
             yield from _current_needs().filter(skill_id=side.skill_id, kind__in=(Need.KIND_SKILL, Need.KIND_KNOWLEDGE)).filter(
-                _near(point, "project__community__location"))
+                near("project__community__location", worldwide=["project__community__owner__match_global"]))
         return
-    listing_near = _near(point, "location") | (Q(location=None) & _near(point, "owner__location"))
+    listing_near = (
+        near("location", worldwide=["owner__match_global"])
+        | (Q(location=None) & near("owner__location"))
+    )
     if side.want:
         yield from Listing.objects.filter(type="offer").filter(listing_near).select_related("owner")
     else:
         yield from Listing.objects.filter(type="wish").filter(listing_near).select_related("owner")
-        yield from _current_needs().filter(kind__in=Need.THING_KINDS).filter(_near(point, "project__community__location"))
+        yield from _current_needs().filter(kind__in=Need.THING_KINDS).filter(
+            near("project__community__location", worldwide=["project__community__owner__match_global"]))
 
 
 def _words(text):
@@ -151,7 +163,7 @@ def _suggest(recipient_side, other_side, reason, km):
     """Create the suggestion for recipient_side's owner, if new and within their distance.
     Returns it if it was created."""
     recipient = recipient_side.owner
-    if km > (recipient.match_radius or 0):
+    if not recipient.match_global and km > (recipient.match_radius or 0):
         return None
     suggestion, created = Suggestion.objects.get_or_create(
         user=recipient,

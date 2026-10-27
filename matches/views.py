@@ -19,7 +19,7 @@ from dashboard_lists import Choice, paginate, query_url
 
 from .emails import notify_match_message, notify_match_response, read_action_token, read_suggestions_unsubscribe_token
 from .forms import MatchMessageForm
-from .models import STAY_APP_LABELS, Match, MatchMessage, Suggestion
+from .models import STAY_APP_LABELS, Match, MatchMessage, Suggestion, suggestions_of_kind
 
 # The kinds of match, by the list view's "type" query param. Kept as gifts/skills/
 # communities/projects app labels rather than importing their models — matches never needs to
@@ -65,11 +65,10 @@ def _matches_of(kind):
 @login_required
 def matches_list(request):
     """One kind of match (?type=gift|skills|volunteer): received and sent as tabs,
-    filtered by status and paged. ?type=suggestions: what fits their wishes, offers and
-    skills. Without a type, an overview of what's open and the newest suggestions."""
+    filtered by status and paged, and the suggestions of that kind (what fits their
+    wishes, offers and skills; a match once someone asks). Without a type, an overview
+    of what's open."""
     kind = request.GET.get("type", "")
-    if kind == "suggestions":
-        return _suggestions(request)
     if kind not in _KINDS:
         return _overview(request)
 
@@ -84,15 +83,30 @@ def matches_list(request):
         "sent":     boxes["sent"].filter(status=Match.STATUS_COUNTER).count(),
     }
     counts = {key: matches.count() for key, matches in boxes.items()}
+    suggestions = suggestions_of_kind(_suggestions_of(user), kind)
+    counts["suggestions"] = suggestions.count()
+    waiting["suggestions"] = suggestions.filter(seen_at=None).count()
     box = request.GET.get("box")
-    if box not in boxes:
+    if box not in counts:
         # Open on the tab that needs you, otherwise on the one that has anything
-        box = next((key for key in boxes if waiting[key]), None) \
-            or next((key for key in boxes if counts[key]), "received")
+        box = next((key for key in counts if waiting[key]), None) \
+            or next((key for key in counts if counts[key]), "received")
     tabs = [
         Choice(label, query_url(request, box=key, status=None), key == box, counts[key], waiting[key])
-        for key, label in (("received", _("Received")), ("sent", _("Sent")))
+        for key, label in (("received", _("Received")), ("sent", _("Sent")), ("suggestions", _("Suggestions")))
     ]
+
+    if box == "suggestions":
+        page = paginate(request, suggestions)
+        shown = _shown(page.object_list)
+        return render(request, "matches/matches_list.html", {
+            "request_type": kind,
+            "kind":         _KINDS[kind],
+            "tabs":         tabs,
+            "page":         page,
+            "suggestions":  shown,
+            "new_ids":      _mark_seen(user, shown),
+        })
 
     matches = boxes[box]
     by_status = dict(matches.order_by().values_list("status").annotate(n=Count("pk")))
@@ -128,20 +142,13 @@ def _overview(request):
         open_matches = _matches_of(kind).filter(Q(recipient=user) | Q(from_user=user), status__in=_OPEN)
         sections.append({
             **info,
-            "url":        f"{reverse('matches:list')}?type={kind}",
-            "matches":    list(open_matches[:_OVERVIEW_ROWS]),
-            "open_count": open_matches.count(),
+            "url":             f"{reverse('matches:list')}?type={kind}",
+            "matches":         list(open_matches[:_OVERVIEW_ROWS]),
+            "open_count":      open_matches.count(),
+            "suggestions_url": f"{reverse('matches:list')}?type={kind}&box=suggestions",
+            "new_suggestions": suggestions_of_kind(_suggestions_of(user), kind).filter(seen_at=None).count(),
         })
-    suggestions = _suggestions_of(request.user)
-    shown = _shown(suggestions[:_OVERVIEW_ROWS])
-    return render(request, "matches/matches_overview.html", {
-        "request_type":      "",
-        "sections":          sections,
-        "suggestions":       shown,
-        "suggestions_count": suggestions.count(),
-        "suggestions_url":   f"{reverse('matches:list')}?type=suggestions",
-        "new_ids":           _mark_seen(request.user, shown),
-    })
+    return render(request, "matches/matches_overview.html", {"request_type": "", "sections": sections})
 
 
 # ── Match detail ────────────────────────────────────────────────────────────────
@@ -323,24 +330,6 @@ def _mark_seen(user, shown):
     return new_ids
 
 
-def _suggestions(request):
-    """All suggestions, newest first, paged."""
-    page = paginate(request, _suggestions_of(request.user))
-    shown = _shown(page.object_list)
-    return render(request, "matches/suggestions_list.html", {
-        "request_type": "suggestions",
-        "page":         page,
-        "suggestions":  shown,
-        "new_ids":      _mark_seen(request.user, shown),
-    })
-
-
-def suggestions_moved(request):
-    """The suggestions used to have their own page; links in emails and notifications
-    may still point there."""
-    return redirect(f"{reverse('matches:list')}?type=suggestions")
-
-
 @login_required
 @require_POST
 def dismiss_suggestion(request, pk):
@@ -350,7 +339,7 @@ def dismiss_suggestion(request, pk):
     next_url = request.POST.get("next", "")
     if url_has_allowed_host_and_scheme(next_url, allowed_hosts={request.get_host()}) and next_url.startswith(reverse("matches:list")):
         return redirect(next_url)
-    return redirect(f"{reverse('matches:list')}?type=suggestions")
+    return redirect("matches:list")
 
 
 def suggestions_unsubscribe(request, token):
@@ -361,6 +350,6 @@ def suggestions_unsubscribe(request, token):
         return HttpResponseBadRequest("Invalid link.")
     get_user_model().objects.filter(pk=pk).update(match_emails=False)
     flash.success(request, _(
-        "You won't get emails about matches any more. You can turn them on again in your profile."
+        "You won't get emails about suggestions any more. You can turn them on again in your profile."
     ))
     return redirect("homepage:homepage")

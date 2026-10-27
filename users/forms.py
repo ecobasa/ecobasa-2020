@@ -158,7 +158,7 @@ class ProfileUpdateForm(forms.ModelForm):
     class Meta:
         model = User
         fields = ["name", "image", "about", "world", "ecobasa_what", "skills", "skill_wishes",
-                  "location_name", "location", "country", "match_emails", "match_radius"]
+                  "location_name", "location", "country", "match_emails", "match_radius", "match_global"]
         widgets = {
             "location": forms.HiddenInput(),
         }
@@ -197,6 +197,7 @@ class ProfileUpdateForm(forms.ModelForm):
         self.fields['match_emails'].widget.attrs.update({'class': 'form-checkbox'})
         self.fields['match_radius'].widget.attrs.update({'class': 'form-input w-28', 'min': '5', 'max': '2000'})
         self.fields['match_radius'].required = False
+        self.fields['match_global'].widget.attrs.update({'class': 'form-checkbox', 'x-model': 'worldwide'})
         self.helper = FormHelper()
         self.helper.form_tag = False
         self.helper.layout = Layout(

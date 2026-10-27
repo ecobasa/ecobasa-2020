@@ -15,7 +15,7 @@ class Migration(migrations.Migration):
             model_name="user",
             name="match_emails",
             field=models.BooleanField(
-                default=True, verbose_name="Email me weekly about new matches for my wishes, offers and skills",
+                default=True, verbose_name="Email me weekly about new suggestions for my wishes, offers and skills",
             ),
         ),
     ]

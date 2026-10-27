@@ -199,14 +199,14 @@ def send_suggestion_email(user, now=None):
         return False
     with translation.override(user.language or settings.LANGUAGE_CODE):
         subject = ngettext(
-            "%(count)s new match near you", "%(count)s new matches near you", len(found),
+            "%(count)s new suggestion near you", "%(count)s new suggestions near you", len(found),
         ) % {"count": len(found)}
         context = {
             "recipient": user,
             "headline": subject,
             "suggestions": found,
             "site_url": settings.SITE_URL.rstrip("/"),
-            "list_url": _site_url(reverse("matches:list") + "?type=suggestions"),
+            "list_url": _site_url(reverse("matches:list")),
             "settings_url": _site_url(reverse("users:update") + "#matches"),
             "unsubscribe_url": _site_url(reverse("matches:suggestions_unsubscribe", args=[make_suggestions_unsubscribe_token(user)])),
         }
@@ -223,7 +223,7 @@ def send_suggestion_email(user, now=None):
 
 
 def send_suggestion_emails(now=None):
-    """The weekly email to everyone who wants it and has something new. Returns how many
+    """The weekly email to everyone who wants it and has new suggestions. Returns how many
     were sent."""
     users = get_user_model().objects.filter(
         match_emails=True, is_active=True, suggestions__emailed_at=None, suggestions__dismissed_at=None,

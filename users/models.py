@@ -106,9 +106,10 @@ class User(AbstractUser):
     last_seen = models.DateTimeField(_("Last active"), null=True, blank=True)
     # Matches (suggestions app): within this distance, and a weekly email about new ones
     match_emails = models.BooleanField(
-        _("Email me weekly about new matches for my wishes, offers and skills"), default=True,
+        _("Email me weekly about new suggestions for my wishes, offers and skills"), default=True,
     )
     match_radius = models.PositiveSmallIntegerField(_("How far away (km)?"), default=150)
+    match_global = models.BooleanField(_("Search worldwide"), default=False)
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = ["name"]

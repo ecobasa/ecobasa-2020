@@ -105,10 +105,10 @@ class Notification(models.Model):
         """Counts what is new for them, so the one notification stays true."""
         new = self.recipient.suggestions.filter(seen_at=None, dismissed_at=None).count()
         if not new:
-            return str(_("Matches near you: what fits your wishes, offers and skills."))
+            return str(_("Suggestions near you: what fits your wishes, offers and skills."))
         return ngettext(
-            "%(count)s new match near you: something fits your wishes, offers or skills.",
-            "%(count)s new matches near you: things fit your wishes, offers or skills.",
+            "%(count)s new suggestion near you: something fits your wishes, offers or skills.",
+            "%(count)s new suggestions near you: things fit your wishes, offers or skills.",
             new,
         ) % {"count": new}
 

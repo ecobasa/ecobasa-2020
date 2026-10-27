@@ -139,7 +139,7 @@
                 </a>
                 <a href="{% url 'matches:list' %}" class="dropdown-link">
                   <span class="flex items-center"><i class="fa-solid fa-handshake mr-2"></i>{% trans "Matches" %}
-                  {% if new_suggestions_count %}<span class="ml-auto pill bg-purple text-secondary text-xs" title="{% trans 'New matches for you' %}">{{ new_suggestions_count }}</span>{% endif %}</span>
+                  {% if new_suggestions_count %}<span class="ml-auto pill bg-purple text-secondary text-xs" title="{% trans 'New suggestions' %}">{{ new_suggestions_count }}</span>{% endif %}</span>
                 </a>
                 <a href="{% url 'postman:inbox' %}" class="dropdown-link">
                   <i class="fa fa-envelope mr-2"></i>

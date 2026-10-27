@@ -222,6 +222,19 @@ class VolunteerDetails(models.Model):
         return [(name, level_map.get(skill_slug_for_name(name))) for name in names]
 
 
+def suggestions_of_kind(suggestions, kind):
+    """The suggestions that belong in one kind's list (matches.views._KINDS): anything
+    about a project need is a project/volunteer one, anything about a gift listing a gift
+    one, the rest (skills and skill wishes) a skills one."""
+    need = models.Q(own_type__model="need") | models.Q(other_type__model="need")
+    listing = models.Q(own_type__model="listing") | models.Q(other_type__model="listing")
+    if kind == "volunteer":
+        return suggestions.filter(need)
+    if kind == "gift":
+        return suggestions.filter(listing).exclude(need)
+    return suggestions.exclude(need).exclude(listing)
+
+
 def _name(user):
     return (user.name or user.email) if user else ""
 

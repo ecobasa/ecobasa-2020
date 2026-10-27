@@ -7,32 +7,17 @@
 </h1>
 <p class="mb-6">{% trans "What's open right now. Everything else, accepted or declined, is on each list." %}</p>
 
-{# What fits their wishes, offers and skills: newest first, a few of them #}
-<section class="mb-8">
-  <h2 class="text-2xl font-semibold flex items-center gap-2 mb-3">
-    <i class="fa-solid fa-handshake-angle text-primary"></i>
-    <a href="{{ suggestions_url }}" class="hover:underline">{% trans "Matches for you" %}</a>
-    {% if suggestions_count %}<span class="text-sm opacity-60">{{ suggestions_count }}</span>{% endif %}
-  </h2>
-  {% include "matches/_suggestions_intro.html" %}
-  {% if suggestions %}
-    <ul class="list-none p-0 space-y-2">
-      {% for suggestion in suggestions %}{% include "matches/_suggestion_row.html" %}{% endfor %}
-    </ul>
-    {% if suggestions_count > suggestions|length %}
-      <a href="{{ suggestions_url }}" class="inline-block mt-2 text-sm text-primary hover:underline">{% trans "See all" %}<i class="fa fa-chevron-right ml-1"></i></a>
-    {% endif %}
-  {% else %}
-    <p class="text-sm italic">{% trans "No matches yet. Add what you wish for, what you can give and your skills, and set your place in your profile: we'll let you know when something fits." %}</p>
-  {% endif %}
-</section>
-
 {% for section in sections %}
 <section class="mb-8">
   <h2 class="text-2xl font-semibold flex items-center gap-2 mb-3">
     <i class="{{ section.icon }} text-primary"></i>
     <a href="{{ section.url }}" class="hover:underline">{{ section.title }}</a>
     {% if section.open_count %}<span class="text-sm opacity-60">{{ section.open_count }}</span>{% endif %}
+    {% if section.new_suggestions %}
+      <a href="{{ section.suggestions_url }}" class="pill bg-purple text-secondary text-xs ml-auto">
+        <i class="fa-solid fa-handshake-angle mr-1"></i>{% blocktrans count count=section.new_suggestions %}{{ count }} new suggestion{% plural %}{{ count }} new suggestions{% endblocktrans %}
+      </a>
+    {% endif %}
   </h2>
   {% if section.matches %}
     <div class="space-y-2">

@@ -135,6 +135,39 @@ def test_each_side_has_its_own_distance(anna, ben):
 
 
 @pytest.mark.django_db
+def test_searching_worldwide(anna, ben):
+    far = _user("far@example.com", "Far", PARIS)  # ~900 km
+    _listing(anna, "Clay", "wish")
+    offer = _listing(far, "Clay from the Seine", "offer")
+    assert match(offer, notify=False) == []
+
+    anna.match_global = True
+    anna.save()
+    match(offer, notify=False)
+    assert [s.other for s in anna.suggestions.all()] == [offer]
+    assert not far.suggestions.exists()  # Far only looks 150 km around
+
+    # Found from the far side too, when the worldwide one adds something
+    far.match_global = True
+    far.save()
+    Suggestion.objects.all().delete()
+    match(_listing(far, "Clay bricks", "offer"), notify=False)
+    assert anna.suggestions.count() == 1 and far.suggestions.count() == 1
+
+
+@pytest.mark.django_db
+def test_profile_worldwide_switch(anna):
+    client = Client()
+    client.force_login(anna)
+    data = {"name": "Anna", "match_emails": "on", "match_global": "on", "location": GOERLITZ.ewkt}
+    assert client.post(reverse("users:update"), data).status_code == 302  # no distance sent: the field is disabled
+    anna.refresh_from_db()
+    assert anna.match_global and anna.match_radius == 150
+    page = client.get(reverse("users:update")).content.decode()
+    assert ':disabled="worldwide"' in page and "worldwide: true" in page
+
+
+@pytest.mark.django_db
 def test_nothing_without_a_place_between_own_things_unavailable_skills_or_covered_needs(anna, ben):
     far = _user("far@example.com", "Far", PARIS)
     nowhere = User.objects.create_user(email="nowhere@example.com", password="x")
@@ -168,14 +201,14 @@ def test_saving_matches_and_notifies_right_away(anna, ben, django_capture_on_com
     notification = Notification.objects.get(recipient=anna)
     assert notification.tag == Notification.TAG_SUGGESTION and notification.link == reverse("matches:list")
     with translation.override("en"):
-        assert notification.text.startswith("1 new match near you")
+        assert notification.text.startswith("1 new suggestion near you")
 
     # More matches bump the unread notification instead of adding one
     with django_capture_on_commit_callbacks(execute=True):
         _listing(ben, "Clay bricks", "offer")
     assert Notification.objects.filter(recipient=anna).count() == 1
     with translation.override("en"):
-        assert Notification.objects.get(recipient=anna).text.startswith("2 new matches near you")
+        assert Notification.objects.get(recipient=anna).text.startswith("2 new suggestions near you")
 
 
 @pytest.mark.django_db
@@ -250,36 +283,48 @@ def test_saving_the_profile_again_does_not_announce_the_same_wishes_again(anna, 
 
 
 @pytest.mark.django_db
-def test_page_lists_marks_seen_and_hides(anna, ben):
+def test_suggestions_tab_of_their_kind_marks_seen_and_hides(anna, ben):
     _listing(anna, "Clay", "wish")
     match(_listing(ben, "Clay from the pond", "offer"), notify=False)
     client = Client()
     client.force_login(anna)
-    response = client.get(reverse("matches:list"), {"type": "suggestions"})
+
+    # The overview says how many are new, per kind
+    overview = client.get(reverse("matches:list"))
+    gifts = next(s for s in overview.context["sections"] if s["app_labels"] == ("gifts",))
+    assert gifts["new_suggestions"] == 1
+    assert all(s["new_suggestions"] == 0 for s in overview.context["sections"] if s is not gifts)
+
+    # The gift list opens on its suggestions tab, since that's what is new
+    response = client.get(reverse("matches:list"), {"type": "gift"})
+    tabs = {tab.label: tab for tab in response.context["tabs"]}
+    assert tabs["Suggestions"].active and (tabs["Suggestions"].count, tabs["Suggestions"].waiting) == (1, 1)
     assert "Clay from the pond" in response.content.decode() and len(response.context["new_ids"]) == 1
     suggestion = anna.suggestions.get()
     assert suggestion.seen_at is not None
+    # Not under the other kinds
+    assert not client.get(reverse("matches:list"), {"type": "skills", "box": "suggestions"}).context["suggestions"]
 
     other = Client()
     other.force_login(ben)
     assert other.post(reverse("matches:dismiss_suggestion", args=[suggestion.pk])).status_code == 404
-    client.post(reverse("matches:dismiss_suggestion", args=[suggestion.pk]))
-    assert "Clay from the pond" not in client.get(reverse("matches:list"), {"type": "suggestions"}).content.decode()
-    assert "Clay from the pond" not in client.get(reverse("matches:list")).content.decode()
+    url = reverse("matches:list") + "?type=gift&box=suggestions"
+    assert client.post(reverse("matches:dismiss_suggestion", args=[suggestion.pk]), {"next": url}).url == url
+    assert "Clay from the pond" not in client.get(url).content.decode()
 
 
 @pytest.mark.django_db
-def test_the_matches_overview_shows_the_newest_suggestions(anna, ben):
-    _listing(anna, "Clay", "wish")
-    match(_listing(ben, "Clay from the pond", "offer"), notify=False)
-    client = Client()
-    client.force_login(anna)
-    response = client.get(reverse("matches:list"))
-    assert [s.other.title for s in response.context["suggestions"]] == ["Clay from the pond"]
-    assert response.context["suggestions_count"] == 1 and len(response.context["new_ids"]) == 1
-    assert anna.suggestions.get().seen_at is not None
-    # The old page sends people to the list
-    assert client.get("/matches/suggestions/").url == reverse("matches:list") + "?type=suggestions"
+def test_project_needs_and_skills_go_to_their_own_lists(anna, ben):
+    from ..models import suggestions_of_kind
+    masonry = _skill("Masonry")
+    community = Community.objects.create(name="Hof", owner=anna, location=GOERLITZ)
+    project = Project.objects.create(community=community, title="Oven")
+    Need.objects.create(project=project, kind=Need.KIND_SKILL, title="Masonry", skill=masonry)
+    SkillWish.objects.create(user=anna, skill=masonry)
+    match(UserSkill.objects.create(user=ben, skill=masonry), notify=False)
+    kinds = {kind: [s.other_type.model for s in suggestions_of_kind(ben.suggestions.all(), kind)]
+             for kind in ("gift", "skills", "volunteer")}
+    assert kinds == {"gift": [], "skills": ["skillwish"], "volunteer": ["need"]}
 
 
 # ── The weekly email ──────────────────────────────────────────────────
@@ -291,7 +336,7 @@ def test_people_with_only_wishes_get_the_email_too(anna, ben):
     match(_listing(ben, "Clay from the pond", "offer"), notify=False)
     assert send_suggestion_emails() == 2
     to_anna = next(m for m in mail.outbox if m.to == ["anna@example.com"])
-    assert to_anna.subject == "1 new match near you"
+    assert to_anna.subject == "1 new suggestion near you"
     assert "Ben gives away: Clay from the pond" in to_anna.body and "List-Unsubscribe" in to_anna.extra_headers
 
     # Once a week, and only what's new

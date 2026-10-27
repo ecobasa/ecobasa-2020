@@ -41,16 +41,23 @@
 
     <!-- Project suggestions by email -->
     <div id="matches" class="mt-8 p-4 bg-secondary bg-opacity-75 rounded-md shadow space-y-3 scroll-mt-24">
-      <h2 class="mt-0">{% trans "Matches for you" %}</h2>
+      <h2 class="mt-0">{% trans "Suggestions for you" %}</h2>
       <label class="flex items-start gap-2 cursor-pointer">
         {{ form.match_emails }}
         <span>{{ form.match_emails.label }}</span>
       </label>
-      <label class="flex flex-wrap items-center gap-2 text-sm">
-        {{ form.match_radius.label }} {{ form.match_radius }}
-      </label>
+      <div class="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm" x-data="{ worldwide: {{ form.match_global.value|yesno:'true,false' }} }">
+        <label class="flex items-center gap-2" :class="worldwide && 'opacity-50'">
+          {{ form.match_radius.label }}
+          <input type="number" name="{{ form.match_radius.html_name }}" id="{{ form.match_radius.id_for_label }}" value="{{ form.match_radius.value|default_if_none:'' }}"
+                 min="5" max="2000" class="form-input w-28" :disabled="worldwide">
+        </label>
+        <label class="flex items-center gap-2 cursor-pointer">
+          {{ form.match_global }} {{ form.match_global.label }}
+        </label>
+      </div>
       {% for error in form.match_radius.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
-      <p class="text-xs">{% trans "We match your wishes, offers and skills with those of people, communities and projects within this distance of your place, as soon as something is added. New matches show in your notifications; the email collects them once a week." %}</p>
+      <p class="text-xs">{% trans "We compare your wishes, offers and skills with those of people, communities and projects within this distance of your place, as soon as something is added. New suggestions show in your notifications; the email collects them once a week." %}</p>
     </div>
 
     <div class="flex items-center justify-end gap-4 mt-12">

@@ -20,18 +20,15 @@
           <i class="fa-solid fa-handshake mr-2"></i>{% trans "Overview" %}
         </a>
         {% endwith %}
-        <a href="{% url 'matches:list' %}?type=suggestions"
-           class="flex items-center px-3 py-2 rounded {% if request_type == 'suggestions' %}bg-secondary text-primary font-semibold{% else %}text-secondary hover:bg-secondary hover:text-primary{% endif %}">
-          <i class="fa-solid fa-handshake-angle mr-2"></i>{% trans "Matches for you" %}
-          {% if new_suggestions_count %}<span class="ml-auto pill bg-purple text-secondary text-xs" title="{% trans 'New' %}">{{ new_suggestions_count }}</span>{% endif %}
-        </a>
         <a href="{% url 'matches:list' %}?type=gift"
-           class="block px-3 py-2 rounded {% if request_type == 'gift' %}bg-secondary text-primary font-semibold{% else %}text-secondary hover:bg-secondary hover:text-primary{% endif %}">
+           class="flex items-center px-3 py-2 rounded {% if request_type == 'gift' %}bg-secondary text-primary font-semibold{% else %}text-secondary hover:bg-secondary hover:text-primary{% endif %}">
           <i class="fa fa-gift mr-2"></i>{% trans "Gifts" %}
+          {% if new_suggestions_by_kind.gift %}<span class="ml-auto pill bg-purple text-secondary text-xs" title="{% trans 'New suggestions' %}">{{ new_suggestions_by_kind.gift }}</span>{% endif %}
         </a>
         <a href="{% url 'matches:list' %}?type=skills"
-           class="block px-3 py-2 rounded {% if request_type == 'skills' %}bg-secondary text-primary font-semibold{% else %}text-secondary hover:bg-secondary hover:text-primary{% endif %}">
+           class="flex items-center px-3 py-2 rounded {% if request_type == 'skills' %}bg-secondary text-primary font-semibold{% else %}text-secondary hover:bg-secondary hover:text-primary{% endif %}">
           <i class="fa fa-graduation-cap mr-2"></i>{% trans "Skills" %}
+          {% if new_suggestions_by_kind.skills %}<span class="ml-auto pill bg-purple text-secondary text-xs" title="{% trans 'New suggestions' %}">{{ new_suggestions_by_kind.skills }}</span>{% endif %}
         </a>
 
         <div class="pt-4 pb-1 px-3 text-xs text-secondary opacity-60 uppercase tracking-wide">{% trans "References" %}</div>
@@ -53,8 +50,9 @@
         <div class="pt-4 pb-1 px-3 text-xs text-secondary opacity-60 uppercase tracking-wide">{% trans "Communities" %}</div>
 
         <a href="{% url 'matches:list' %}?type=volunteer"
-          class="block px-3 py-2 rounded {% if request_type == 'volunteer' %}bg-secondary text-primary font-semibold{% else %}text-secondary hover:bg-secondary hover:text-primary{% endif %}">
+          class="flex items-center px-3 py-2 rounded {% if request_type == 'volunteer' %}bg-secondary text-primary font-semibold{% else %}text-secondary hover:bg-secondary hover:text-primary{% endif %}">
           <i class="fa-solid fa-campground mr-2"></i>{% trans "Volunteer Visits" %}
+          {% if new_suggestions_by_kind.volunteer %}<span class="ml-auto pill bg-purple text-secondary text-xs" title="{% trans 'New suggestions' %}">{{ new_suggestions_by_kind.volunteer }}</span>{% endif %}
         </a>
         {% for item in reference_communities %}
           <a href="{% url 'projects:calendar' item.community.slug %}"

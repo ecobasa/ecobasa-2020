@@ -6,7 +6,7 @@
   {% blocktrans with own=s.own_text %}fits {{ own }}{% endblocktrans %}
   {{ site_url }}{{ s.url }}
 {% endfor %}
-{% trans "All your matches" %}: {{ list_url }}
+{% trans "All your suggestions" %}: {{ list_url }}
 
 --
 {% trans "You get this because you share wishes, offers or skills on ecobasa.org." %}

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ecobasa\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-27 12:25+0100\n"
+"POT-Creation-Date: 2026-10-27 12:35+0100\n"
 "PO-Revision-Date: 2026-10-23 12:00+0200\n"
 "Last-Translator: ecobasa\n"
 "Language-Team: fr\n"
@@ -109,7 +109,7 @@ msgstr "Slug"
 #: skills/templates/skills/skill_list.html:10
 #: skills/templates/skills/skillwish_user_detail.html:15
 #: skills/templates/skills/userskill_detail.html:15
-#: templates/dashboard/base.html:34 users/templates/users/detail.html:132
+#: templates/dashboard/base.html:30 users/templates/users/detail.html:132
 msgid "Skills"
 msgstr "Compétences"
 
@@ -264,7 +264,7 @@ msgid "Community"
 msgstr "Communauté"
 
 #: communities/models.py:158 templates/_navbar.html:28
-#: templates/_navbar.html:238 templates/dashboard/base.html:53
+#: templates/_navbar.html:238 templates/dashboard/base.html:50
 #: users/templates/users/detail.html:67
 msgid "Communities"
 msgstr "Communautés"
@@ -504,7 +504,7 @@ msgstr "Écris un court message sur ta motivation et tes compétences"
 #: skills/templates/skills/userskill_confirm_delete.html:17
 #: skills/templates/skills/userskill_form.html:115
 #: templates/postman/write.html:87 users/templates/users/register.html:37
-#: users/templates/users/update.html:57
+#: users/templates/users/update.html:64
 msgid "Cancel"
 msgstr "Annuler"
 
@@ -873,7 +873,7 @@ msgstr ""
 #: references/templates/references/email/reference_created.html:36
 #: references/templates/references/email/reference_created.txt:10
 #: templates/_navbar.html:36 templates/_navbar.html:237
-#: templates/dashboard/base.html:30
+#: templates/dashboard/base.html:25
 msgid "Gifts"
 msgstr "Dons"
 
@@ -1139,10 +1139,10 @@ msgstr "Matchs"
 
 #: matches/emails.py:202
 #, python-format
-msgid "%(count)s new match near you"
-msgid_plural "%(count)s new matches near you"
-msgstr[0] "%(count)s nouvelle correspondance près de chez toi"
-msgstr[1] "%(count)s nouvelles correspondances près de chez toi"
+msgid "%(count)s new suggestion near you"
+msgid_plural "%(count)s new suggestions near you"
+msgstr[0] "%(count)s nouvelle suggestion près de chez toi"
+msgstr[1] "%(count)s nouvelles suggestions près de chez toi"
 
 #: matches/forms.py:20
 msgid "Write a short message about why you're interested…"
@@ -1206,79 +1206,78 @@ msgstr "Messages de match"
 msgid "Volunteer Details"
 msgstr "Détails du séjour"
 
-#: matches/models.py:239
+#: matches/models.py:252
 msgid "Same skill"
 msgstr "Même compétence"
 
-#: matches/models.py:240
+#: matches/models.py:253
 msgid "Similar title"
 msgstr "Titre semblable"
 
-#: matches/models.py:270
+#: matches/models.py:283
 msgid "Suggestion"
 msgstr "Suggestion"
 
-#: matches/models.py:271
+#: matches/models.py:284 matches/views.py:96
 msgid "Suggestions"
 msgstr "Suggestions"
 
-#: matches/models.py:298
+#: matches/models.py:311
 #, python-format
 msgid "%(name)s gives away: %(title)s"
 msgstr "%(name)s donne : %(title)s"
 
-#: matches/models.py:298
+#: matches/models.py:311
 #, python-format
 msgid "%(name)s is looking for: %(title)s"
 msgstr "%(name)s cherche : %(title)s"
 
-#: matches/models.py:302
+#: matches/models.py:315
 #, python-format
 msgid "%(project)s at %(community)s needs: %(title)s"
 msgstr "%(project)s chez %(community)s a besoin de : %(title)s"
 
-#: matches/models.py:306
+#: matches/models.py:319
 #, python-format
 msgid "%(name)s offers the skill: %(skill)s"
 msgstr "%(name)s propose la compétence : %(skill)s"
 
-#: matches/models.py:308
+#: matches/models.py:321
 #, python-format
 msgid "You can learn %(skill)s at %(community)s"
 msgstr "Tu peux apprendre %(skill)s chez %(community)s"
 
-#: matches/models.py:313
+#: matches/models.py:326
 #, python-format
 msgid "%(community)s is looking for: %(skill)s"
 msgstr "%(community)s cherche : %(skill)s"
 
-#: matches/models.py:316
+#: matches/models.py:329
 #, python-format
 msgid "%(name)s wants to learn: %(skill)s"
 msgstr "%(name)s veut apprendre : %(skill)s"
 
-#: matches/models.py:326
+#: matches/models.py:339
 #, python-format
 msgid "your offer: %(title)s"
 msgstr "ton don : %(title)s"
 
-#: matches/models.py:326 matches/models.py:333
+#: matches/models.py:339 matches/models.py:346
 #, python-format
 msgid "your wish: %(title)s"
 msgstr "ton souhait : %(title)s"
 
-#: matches/models.py:329
+#: matches/models.py:342
 #, python-format
 msgid "your project %(project)s: %(title)s"
 msgstr "ton projet %(project)s : %(title)s"
 
-#: matches/models.py:331
+#: matches/models.py:344
 #, python-format
 msgid "your skill: %(skill)s"
 msgstr "ta compétence : %(skill)s"
 
 #: matches/templates/matches/_suggestion_row.html:6
-#: templates/dashboard/base.html:26
 msgid "New"
 msgstr "Nouveau"
 
@@ -1314,18 +1313,27 @@ msgid "Hide"
 msgstr "Masquer"
 
 #: matches/templates/matches/_suggestions_intro.html:2
-#, python-format
 msgid ""
-"What people, communities and projects within %(km)s km offer or need that "
-"fits your wishes, offers and skills. New matches appear as soon as someone "
-"adds something."
+"Suggestions: what people, communities and projects anywhere offer or need "
+"that fits your wishes, offers and skills. It becomes a match once one of you "
+"asks."
 msgstr ""
-"Ce que des personnes, communautés et projets à moins de %(km)s km offrent ou "
-"cherchent et qui va avec tes souhaits, tes dons et tes compétences. Les "
-"nouvelles correspondances apparaissent dès que quelqu'un ajoute quelque "
-"chose."
+"Suggestions : ce que des personnes, communautés et projets du monde entier "
+"offrent ou cherchent et qui va avec tes souhaits, tes dons et tes "
+"compétences. Cela devient un match dès que l'un·e de vous fait une demande."
 
 #: matches/templates/matches/_suggestions_intro.html:5
+#, python-format
+msgid ""
+"Suggestions: what people, communities and projects within %(km)s km offer or "
+"need that fits your wishes, offers and skills. It becomes a match once one of"
+" you asks."
+msgstr ""
+"Suggestions : ce que des personnes, communautés et projets à moins de %(km)s "
+"km offrent ou cherchent et qui va avec tes souhaits, tes dons et tes "
+"compétences. Cela devient un match dès que l'un·e de vous fait une demande."
+
+#: matches/templates/matches/_suggestions_intro.html:8
 msgid "Change distance"
 msgstr "Changer la distance"
 
@@ -1452,17 +1460,14 @@ msgid "Suggested stay"
 msgstr "Dates proposées"
 
 #: matches/templates/matches/email/suggestions.html:17
-#: matches/templates/matches/matches_overview.html:14
-#: matches/templates/matches/suggestions_list.html:4
-#: matches/templates/matches/suggestions_list.html:9
-#: templates/dashboard/base.html:25 users/templates/users/update.html:44
-msgid "Matches for you"
-msgstr "Correspondances pour toi"
+#: users/templates/users/update.html:44
+msgid "Suggestions for you"
+msgstr "Suggestions pour toi"
 
 #: matches/templates/matches/email/suggestions.html:35
 #: matches/templates/matches/email/suggestions.txt:9
-msgid "All your matches"
-msgstr "Toutes tes correspondances"
+msgid "All your suggestions"
+msgstr "Toutes tes suggestions"
 
 #: matches/templates/matches/email/suggestions.html:41
 #: matches/templates/matches/email/suggestions.txt:12
@@ -1578,7 +1583,16 @@ msgstr "Proposer un autre lieu"
 msgid "Send counter-proposal"
 msgstr "Envoyer la contre-proposition"
 
-#: matches/templates/matches/matches_list.html:19
+#: matches/templates/matches/matches_list.html:20
+msgid ""
+"No suggestions yet. Add what you wish for, what you can give and your skills,"
+" and set your place in your profile: we'll let you know when something fits."
+msgstr ""
+"Pas encore de suggestions. Ajoute ce que tu souhaites, ce que tu peux donner "
+"et tes compétences, et indique ton lieu dans ton profil : nous te "
+"préviendrons dès que quelque chose correspond."
+
+#: matches/templates/matches/matches_list.html:31
 msgid "Nothing here with this status."
 msgstr "Rien avec ce statut."
 
@@ -1590,26 +1604,22 @@ msgstr ""
 "Ce qui est ouvert en ce moment. Le reste, accepté ou refusé, se trouve dans "
 "chaque liste."
 
-#: matches/templates/matches/matches_overview.html:23
-#: matches/templates/matches/matches_overview.html:48 templates/_navbar.html:83
+#: matches/templates/matches/matches_overview.html:18
+#, python-format
+msgid "%(count)s new suggestion"
+msgid_plural "%(count)s new suggestions"
+msgstr[0] "%(count)s nouvelle suggestion"
+msgstr[1] "%(count)s nouvelles suggestions"
+
+#: matches/templates/matches/matches_overview.html:33 templates/_navbar.html:83
 msgid "See all"
 msgstr "Tout voir"
 
-#: matches/templates/matches/matches_overview.html:26
-#: matches/templates/matches/suggestions_list.html:19
-msgid ""
-"No matches yet. Add what you wish for, what you can give and your skills, and"
-" set your place in your profile: we'll let you know when something fits."
-msgstr ""
-"Pas encore de correspondances. Ajoute ce que tu souhaites, ce que tu peux "
-"donner et tes compétences, et indique ton lieu dans ton profil : nous te "
-"préviendrons dès que quelque chose correspond."
-
-#: matches/templates/matches/matches_overview.html:51
+#: matches/templates/matches/matches_overview.html:36
 msgid "Nothing open."
 msgstr "Rien d'ouvert."
 
-#: matches/templates/matches/matches_overview.html:51
+#: matches/templates/matches/matches_overview.html:36
 msgid "See the full list"
 msgstr "Voir la liste complète"
 
@@ -1622,7 +1632,7 @@ msgid "No skill offers yet."
 msgstr "Aucune offre de compétence pour l'instant."
 
 #: matches/views.py:37 templates/_navbar.html:143 templates/_navbar.html:262
-#: templates/dashboard/base.html:57
+#: templates/dashboard/base.html:54
 msgid "Volunteer Visits"
 msgstr "Visites de bénévoles"
 
@@ -1639,41 +1649,41 @@ msgstr "Ouvert"
 msgid "All"
 msgstr "Tous"
 
-#: matches/views.py:94 postman_wrappers.py:219 references/views.py:128
+#: matches/views.py:96 postman_wrappers.py:219 references/views.py:128
 msgid "Received"
 msgstr "Reçus"
 
-#: matches/views.py:94 postman_wrappers.py:221
+#: matches/views.py:96 postman_wrappers.py:221
 msgid "Sent"
 msgstr "Envoyés"
 
-#: matches/views.py:215
+#: matches/views.py:222
 msgid "Response sent."
 msgstr "Réponse envoyée."
 
-#: matches/views.py:229
+#: matches/views.py:236
 msgid "Please suggest when the stay could start or end."
 msgstr "Propose quand le séjour pourrait commencer ou se terminer."
 
-#: matches/views.py:232 projects/forms.py:152
+#: matches/views.py:239 projects/forms.py:152
 msgid "The stay can't end before it starts."
 msgstr "Le séjour ne peut pas se terminer avant de commencer."
 
-#: matches/views.py:255
+#: matches/views.py:262
 msgid "Counter-proposal sent."
 msgstr "Contre-proposition envoyée."
 
-#: matches/views.py:287
+#: matches/views.py:294
 msgid "This interest has already been responded to."
 msgstr "Il a déjà été répondu à cet intérêt."
 
-#: matches/views.py:364
+#: matches/views.py:353
 msgid ""
-"You won't get emails about matches any more. You can turn them on again in "
-"your profile."
+"You won't get emails about suggestions any more. You can turn them on again "
+"in your profile."
 msgstr ""
-"Tu ne recevras plus d'e-mails sur les correspondances. Tu peux les réactiver "
-"dans ton profil."
+"Tu ne recevras plus d'e-mails sur les suggestions. Tu peux les réactiver dans"
+" ton profil."
 
 #: notifications/models.py:8
 msgid ""
@@ -1738,23 +1748,24 @@ msgid "Someone"
 msgstr "Quelqu’un"
 
 #: notifications/models.py:108
-msgid "Matches near you: what fits your wishes, offers and skills."
+msgid "Suggestions near you: what fits your wishes, offers and skills."
 msgstr ""
-"Correspondances près de chez toi : ce qui va avec tes souhaits, tes dons et "
-"tes compétences."
+"Suggestions près de chez toi : ce qui va avec tes souhaits, tes dons et tes "
+"compétences."
 
 #: notifications/models.py:110
 #, python-format
 msgid ""
-"%(count)s new match near you: something fits your wishes, offers or skills."
+"%(count)s new suggestion near you: something fits your wishes, offers or "
+"skills."
 msgid_plural ""
-"%(count)s new matches near you: things fit your wishes, offers or skills."
+"%(count)s new suggestions near you: things fit your wishes, offers or skills."
 msgstr[0] ""
-"%(count)s nouvelle correspondance près de chez toi : quelque chose va avec "
-"tes souhaits, dons ou compétences."
+"%(count)s nouvelle suggestion près de chez toi : quelque chose va avec tes "
+"souhaits, dons ou compétences."
 msgstr[1] ""
-"%(count)s nouvelles correspondances près de chez toi : plusieurs choses vont "
-"avec tes souhaits, dons ou compétences."
+"%(count)s nouvelles suggestions près de chez toi : plusieurs choses vont avec"
+" tes souhaits, dons ou compétences."
 
 #: notifications/models.py:121
 #, python-format
@@ -2332,7 +2343,7 @@ msgstr "Ta proposition a été envoyée à %(community)s !"
 #: references/templates/references/references_list.html:7
 #: templates/_navbar.html:154 templates/_navbar.html:169
 #: templates/_navbar.html:263 templates/_navbar.html:270
-#: templates/dashboard/base.html:37
+#: templates/dashboard/base.html:34
 msgid "References"
 msgstr "Références"
 
@@ -2838,7 +2849,7 @@ msgstr ""
 
 #: references/templates/references/references_list.html:34
 #: templates/_navbar.html:155 templates/_navbar.html:170
-#: templates/dashboard/base.html:42 templates/dashboard/base.html:48
+#: templates/dashboard/base.html:39 templates/dashboard/base.html:45
 msgid "Waiting for your confirmation"
 msgstr "En attente de ta confirmation"
 
@@ -3470,9 +3481,10 @@ msgstr "Menu utilisateur"
 msgid "Your Profile"
 msgstr "Ton profil"
 
-#: templates/_navbar.html:147
-msgid "New matches for you"
-msgstr "Nouvelles correspondances pour toi"
+#: templates/_navbar.html:147 templates/dashboard/base.html:26
+#: templates/dashboard/base.html:31 templates/dashboard/base.html:55
+msgid "New suggestions"
+msgstr "Nouvelles suggestions"
 
 #: templates/_navbar.html:151 templates/_navbar.html:260
 #: templates/dashboard/base.html:14 templates/postman/inbox.html:7
@@ -3546,28 +3558,28 @@ msgstr "Écrire"
 msgid "Overview"
 msgstr "Vue d'ensemble"
 
-#: templates/dashboard/base.html:41
+#: templates/dashboard/base.html:38
 msgid "Your references"
 msgstr "Tes références"
 
-#: templates/dashboard/base.html:62
+#: templates/dashboard/base.html:60
 #, python-format
 msgid "Calendar · %(name)s"
 msgstr "Calendrier · %(name)s"
 
-#: templates/dashboard/base.html:67
+#: templates/dashboard/base.html:65
 msgid "Member Applications"
 msgstr "Demandes d'adhésion"
 
-#: templates/dashboard/base.html:67 templates/dashboard/base.html:73
+#: templates/dashboard/base.html:65 templates/dashboard/base.html:71
 msgid "coming soon"
 msgstr "bientôt disponible"
 
-#: templates/dashboard/base.html:70
+#: templates/dashboard/base.html:68
 msgid "Tours"
 msgstr "Tours"
 
-#: templates/dashboard/base.html:73
+#: templates/dashboard/base.html:71
 msgid "Community-Tour Applications"
 msgstr "Demandes de Community-Tour"
 
@@ -3804,14 +3816,18 @@ msgid "Last active"
 msgstr "Dernière activité"
 
 #: users/models.py:109
-msgid "Email me weekly about new matches for my wishes, offers and skills"
+msgid "Email me weekly about new suggestions for my wishes, offers and skills"
 msgstr ""
-"M'envoyer chaque semaine les nouvelles correspondances pour mes souhaits, "
-"dons et compétences"
+"M'envoyer chaque semaine les nouvelles suggestions pour mes souhaits, dons et"
+" compétences"
 
 #: users/models.py:111
 msgid "How far away (km)?"
 msgstr "À quelle distance (km) ?"
+
+#: users/models.py:112
+msgid "Search worldwide"
+msgstr "Chercher dans le monde entier"
 
 #: users/templates/users/_skill_tagify_js.html:55
 msgid "Skills communities always need"
@@ -4004,18 +4020,19 @@ msgstr "Photo actuelle"
 msgid "Remove photo"
 msgstr "Retirer la photo"
 
-#: users/templates/users/update.html:53
+#: users/templates/users/update.html:60
 msgid ""
-"We match your wishes, offers and skills with those of people, communities and"
-" projects within this distance of your place, as soon as something is added. "
-"New matches show in your notifications; the email collects them once a week."
+"We compare your wishes, offers and skills with those of people, communities "
+"and projects within this distance of your place, as soon as something is "
+"added. New suggestions show in your notifications; the email collects them "
+"once a week."
 msgstr ""
 "Nous comparons tes souhaits, tes dons et tes compétences avec ceux de "
 "personnes, communautés et projets dans ce rayon autour de ton lieu, dès que "
-"quelque chose est ajouté. Les nouvelles correspondances apparaissent dans tes"
-" notifications ; l'e-mail les rassemble une fois par semaine."
+"quelque chose est ajouté. Les nouvelles suggestions apparaissent dans tes "
+"notifications ; l'e-mail les rassemble une fois par semaine."
 
-#: users/templates/users/update.html:58
+#: users/templates/users/update.html:65
 msgid "Save changes"
 msgstr "Enregistrer les modifications"
 

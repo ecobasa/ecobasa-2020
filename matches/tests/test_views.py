@@ -135,13 +135,13 @@ class TestVolunteerVisits:
         context = _client_for(owner).get("/matches/?type=volunteer").context
         assert list(context["page"]) == [stay]
         assert [(str(t.label), t.count, t.waiting, t.active) for t in context["tabs"]] == [
-            ("Received", 1, 1, True), ("Sent", 0, 0, False),
+            ("Received", 1, 1, True), ("Sent", 0, 0, False), ("Suggestions", 0, 0, False),
         ]
 
     def test_volunteer_sees_it_as_sent(self, requester, stay):
         response = _client_for(requester).get("/matches/?type=volunteer")
         assert list(response.context["page"]) == [stay]
-        assert [t.active for t in response.context["tabs"]] == [False, True]
+        assert [t.active for t in response.context["tabs"]] == [False, True, False]
         assert "Volunteer Visits" in response.content.decode()
 
 

@@ -1,5 +1,8 @@
 {% load i18n %}
-<p class="text-sm mb-4">{% blocktrans trimmed with km=request.user.match_radius %}
-  What people, communities and projects within {{ km }} km offer or need that fits your wishes,
-  offers and skills. New matches appear as soon as someone adds something.
-{% endblocktrans %} <a href="{% url 'users:update' %}#matches" class="underline">{% trans "Change distance" %}</a></p>
+<p class="text-sm mb-4">{% if request.user.match_global %}{% blocktrans trimmed %}
+  Suggestions: what people, communities and projects anywhere offer or need that fits your
+  wishes, offers and skills. It becomes a match once one of you asks.
+{% endblocktrans %}{% else %}{% blocktrans trimmed with km=request.user.match_radius %}
+  Suggestions: what people, communities and projects within {{ km }} km offer or need that fits
+  your wishes, offers and skills. It becomes a match once one of you asks.
+{% endblocktrans %}{% endif %} <a href="{% url 'users:update' %}#matches" class="underline">{% trans "Change distance" %}</a></p>

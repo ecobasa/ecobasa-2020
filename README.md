@@ -101,15 +101,18 @@ Needs have an amount ("200 kg", "2 people"); helpers say how much they bring, so
 can cover a need in parts. Material and tool needs can have a gift category, and the open
 needs of current projects show on the gifts map and list ("Project needs").
 
-## Matches
+## Suggestions
 
 As soon as a gift offer or wish, a skill, a skill wish or a project need is saved, the
 matching (`matches/matching.py`) looks for what fits it nearby and suggests the pair to
 both sides: gift wishes and offers with similar titles, skill wishes and project needs
 with the people and communities offering that skill, and material/tool needs with gift
-offers (also by gift category). Each side only hears about things within their own
-distance (`User.match_radius`, 150 km by default). New matches show right away in the
-notifications and at the top of `/matches/` (all of them at `/matches/?type=suggestions`); once a week, people get an email with what's new
+offers with similar titles. Each side only hears about things within their own
+distance (`User.match_radius`, 150 km by default), or from anywhere if they search worldwide
+(`User.match_global`). New suggestions show right away in the
+notifications and in the "Suggestions" tab of each list on `/matches/` (gifts, skills,
+volunteer visits and projects), next to "Received" and "Sent": a suggestion becomes a match
+once someone asks. Once a week, people get an email with what's new
 (also those who only have wishes). When a person or community moves, everything that takes its
 place from them is matched again. The distance and the email switch are in the profile
 ("Settings" in the user menu), and every email has a one-click unsubscribe link.

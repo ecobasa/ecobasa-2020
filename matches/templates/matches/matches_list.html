@@ -8,6 +8,18 @@
   </h1>
 
   {% include "dashboard/_tabs.html" %}
+
+  {% if suggestions is not None %}
+    {% include "matches/_suggestions_intro.html" %}
+    {% if suggestions %}
+      <ul class="list-none p-0 space-y-2">
+        {% for suggestion in suggestions %}{% include "matches/_suggestion_row.html" %}{% endfor %}
+      </ul>
+      {% include "dashboard/_pager.html" %}
+    {% else %}
+      <p class="italic">{% trans "No suggestions yet. Add what you wish for, what you can give and your skills, and set your place in your profile: we'll let you know when something fits." %}</p>
+    {% endif %}
+  {% else %}
   {% include "dashboard/_filters.html" %}
 
   {% if page.object_list %}
@@ -19,6 +31,7 @@
     <p>{% trans "Nothing here with this status." %}</p>
   {% else %}
     <p>{{ kind.empty }}</p>
+  {% endif %}
   {% endif %}
 </section>
 {% endblock %}
