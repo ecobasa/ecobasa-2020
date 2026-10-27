@@ -134,16 +134,22 @@
                   <i class="fa fa-user mr-2"></i>
                   {% trans "Your Profile" %}
                 </a>
-                <a href="{% url 'matches:list' %}?type=volunteer" class="dropdown-link">
-                  <i class="fa-solid fa-campground mr-2"></i>{% trans "Volunteer Visits" %}
+                <a href="{% url 'postman:inbox' %}" class="dropdown-link">
+                  <i class="fa fa-envelope mr-2"></i>
+                  {% trans "Messages" %}
                 </a>
                 <a href="{% url 'matches:list' %}" class="dropdown-link">
                   <span class="flex items-center"><i class="fa-solid fa-handshake mr-2"></i>{% trans "Matches" %}
                   {% if new_suggestions_count %}<span class="ml-auto pill bg-purple text-secondary text-xs" title="{% trans 'New suggestions' %}">{{ new_suggestions_count }}</span>{% endif %}</span>
                 </a>
-                <a href="{% url 'postman:inbox' %}" class="dropdown-link">
-                  <i class="fa fa-envelope mr-2"></i>
-                  {% trans "Messages" %}
+                <a href="{% url 'matches:list' %}?type=volunteer" class="dropdown-link">
+                  <i class="fa-solid fa-campground mr-2"></i>{% trans "Volunteer Visits" %}
+                </a>
+                <a href="{% url 'gifts:mine' %}" class="dropdown-link">
+                  <span class="flex items-center"><i class="fa-solid fa-gift mr-2"></i>{% trans "Gifts" %}</span>
+                </a>
+                <a href="{% url 'skills:mine' %}" class="dropdown-link">
+                  <span class="flex items-center"><i class="fa-solid fa-graduation-cap mr-2"></i>{% trans "Skills" %}</span>
                 </a>
                 <a href="{% url 'references:list' %}" class="dropdown-link">
                   <span class="flex items-center"><i class="fa fa-comments mr-2"></i>{% trans "References" %}
