@@ -9,6 +9,7 @@ from django.core.exceptions import PermissionDenied
 from django.http import Http404, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _, pgettext_lazy
 
@@ -64,8 +65,11 @@ def _matches_of(kind):
 @login_required
 def matches_list(request):
     """One kind of match (?type=gift|skills|volunteer): received and sent as tabs,
-    filtered by status and paged. Without a type, an overview of what's open."""
+    filtered by status and paged. ?type=suggestions: what fits their wishes, offers and
+    skills. Without a type, an overview of what's open and the newest suggestions."""
     kind = request.GET.get("type", "")
+    if kind == "suggestions":
+        return _suggestions(request)
     if kind not in _KINDS:
         return _overview(request)
 
@@ -128,7 +132,16 @@ def _overview(request):
             "matches":    list(open_matches[:_OVERVIEW_ROWS]),
             "open_count": open_matches.count(),
         })
-    return render(request, "matches/matches_overview.html", {"request_type": "", "sections": sections})
+    suggestions = _suggestions_of(request.user)
+    shown = _shown(suggestions[:_OVERVIEW_ROWS])
+    return render(request, "matches/matches_overview.html", {
+        "request_type":      "",
+        "sections":          sections,
+        "suggestions":       shown,
+        "suggestions_count": suggestions.count(),
+        "suggestions_url":   f"{reverse('matches:list')}?type=suggestions",
+        "new_ids":           _mark_seen(request.user, shown),
+    })
 
 
 # ── Match detail ────────────────────────────────────────────────────────────────
@@ -290,23 +303,42 @@ def email_action(request, token):
 
 # ── Suggestions ────────────────────────────────────────────────────────────────
 
-@login_required
-def suggestion_list(request):
-    """What fits their wishes, offers and skills, newest first. Opening the page marks
-    the new ones as seen."""
-    suggestions = (
-        request.user.suggestions.filter(dismissed_at=None)
+def _suggestions_of(user):
+    return (
+        user.suggestions.filter(dismissed_at=None)
         .select_related("own_type", "other_type", "other_user")
         .prefetch_related("own", "other")
     )
-    page = paginate(request, suggestions)
+
+
+def _shown(suggestions):
     # Things deleted since are left out (their suggestions go with them, this is a safety net)
-    items = [s for s in page.object_list if s.other is not None and s.own is not None]
-    new_ids = {s.pk for s in items if s.seen_at is None}
-    request.user.suggestions.filter(seen_at=None).update(seen_at=timezone.now())
-    return render(request, "matches/suggestions.html", {
-        "page": page, "suggestions": items, "new_ids": new_ids,
+    return [s for s in suggestions if s.other is not None and s.own is not None]
+
+
+def _mark_seen(user, shown):
+    """Mark the shown suggestions as seen; returns the ids of those that were new."""
+    new_ids = {s.pk for s in shown if s.seen_at is None}
+    user.suggestions.filter(pk__in=new_ids).update(seen_at=timezone.now())
+    return new_ids
+
+
+def _suggestions(request):
+    """All suggestions, newest first, paged."""
+    page = paginate(request, _suggestions_of(request.user))
+    shown = _shown(page.object_list)
+    return render(request, "matches/suggestions_list.html", {
+        "request_type": "suggestions",
+        "page":         page,
+        "suggestions":  shown,
+        "new_ids":      _mark_seen(request.user, shown),
     })
+
+
+def suggestions_moved(request):
+    """The suggestions used to have their own page; links in emails and notifications
+    may still point there."""
+    return redirect(f"{reverse('matches:list')}?type=suggestions")
 
 
 @login_required
@@ -315,7 +347,10 @@ def dismiss_suggestion(request, pk):
     suggestion = get_object_or_404(Suggestion, pk=pk, user=request.user)
     suggestion.dismissed_at = timezone.now()
     suggestion.save(update_fields=["dismissed_at"])
-    return redirect("matches:suggestions")
+    next_url = request.POST.get("next", "")
+    if url_has_allowed_host_and_scheme(next_url, allowed_hosts={request.get_host()}) and next_url.startswith(reverse("matches:list")):
+        return redirect(next_url)
+    return redirect(f"{reverse('matches:list')}?type=suggestions")
 
 
 def suggestions_unsubscribe(request, token):

@@ -157,7 +157,7 @@ def notify_new_suggestions(users):
             recipient=user, tag=Notification.TAG_SUGGESTION, is_read=False,
         ).update(created_at=timezone.now())
         if not bumped:
-            notification = Notification(recipient=user, tag=Notification.TAG_SUGGESTION, link=reverse("matches:suggestions"))
+            notification = Notification(recipient=user, tag=Notification.TAG_SUGGESTION, link=reverse("matches:list"))
             notification.verb = notification.text[:255]
             notification.save()
 
@@ -206,7 +206,7 @@ def send_suggestion_email(user, now=None):
             "headline": subject,
             "suggestions": found,
             "site_url": settings.SITE_URL.rstrip("/"),
-            "list_url": _site_url(reverse("matches:suggestions")),
+            "list_url": _site_url(reverse("matches:list") + "?type=suggestions"),
             "settings_url": _site_url(reverse("users:update") + "#matches"),
             "unsubscribe_url": _site_url(reverse("matches:suggestions_unsubscribe", args=[make_suggestions_unsubscribe_token(user)])),
         }

@@ -1,0 +1,22 @@
+{% extends 'matches/base.html' %}
+{% load i18n %}
+
+{% block head_title %}{% trans "Matches for you" %} — ecobasa{% endblock %}
+
+{% block giving_content %}
+<section class="mb-8">
+  <h1 class="text-4xl font-semibold flex items-center gap-2">
+    <i class="fa-solid fa-handshake-angle text-primary"></i>{% trans "Matches for you" %}
+  </h1>
+  {% include "matches/_suggestions_intro.html" %}
+
+  {% if suggestions %}
+    <ul class="list-none p-0 space-y-2">
+      {% for suggestion in suggestions %}{% include "matches/_suggestion_row.html" %}{% endfor %}
+    </ul>
+    {% include "dashboard/_pager.html" %}
+  {% else %}
+    <p class="italic">{% trans "No matches yet. Add what you wish for, what you can give and your skills, and set your place in your profile: we'll let you know when something fits." %}</p>
+  {% endif %}
+</section>
+{% endblock %}

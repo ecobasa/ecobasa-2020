@@ -166,7 +166,7 @@ def test_saving_matches_and_notifies_right_away(anna, ben, django_capture_on_com
         _listing(ben, "Clay from the pond", "offer")
     assert anna.suggestions.count() == 1 and ben.suggestions.count() == 1
     notification = Notification.objects.get(recipient=anna)
-    assert notification.tag == Notification.TAG_SUGGESTION and notification.link == reverse("matches:suggestions")
+    assert notification.tag == Notification.TAG_SUGGESTION and notification.link == reverse("matches:list")
     with translation.override("en"):
         assert notification.text.startswith("1 new match near you")
 
@@ -255,7 +255,7 @@ def test_page_lists_marks_seen_and_hides(anna, ben):
     match(_listing(ben, "Clay from the pond", "offer"), notify=False)
     client = Client()
     client.force_login(anna)
-    response = client.get(reverse("matches:suggestions"))
+    response = client.get(reverse("matches:list"), {"type": "suggestions"})
     assert "Clay from the pond" in response.content.decode() and len(response.context["new_ids"]) == 1
     suggestion = anna.suggestions.get()
     assert suggestion.seen_at is not None
@@ -264,7 +264,22 @@ def test_page_lists_marks_seen_and_hides(anna, ben):
     other.force_login(ben)
     assert other.post(reverse("matches:dismiss_suggestion", args=[suggestion.pk])).status_code == 404
     client.post(reverse("matches:dismiss_suggestion", args=[suggestion.pk]))
-    assert "Clay from the pond" not in client.get(reverse("matches:suggestions")).content.decode()
+    assert "Clay from the pond" not in client.get(reverse("matches:list"), {"type": "suggestions"}).content.decode()
+    assert "Clay from the pond" not in client.get(reverse("matches:list")).content.decode()
+
+
+@pytest.mark.django_db
+def test_the_matches_overview_shows_the_newest_suggestions(anna, ben):
+    _listing(anna, "Clay", "wish")
+    match(_listing(ben, "Clay from the pond", "offer"), notify=False)
+    client = Client()
+    client.force_login(anna)
+    response = client.get(reverse("matches:list"))
+    assert [s.other.title for s in response.context["suggestions"]] == ["Clay from the pond"]
+    assert response.context["suggestions_count"] == 1 and len(response.context["new_ids"]) == 1
+    assert anna.suggestions.get().seen_at is not None
+    # The old page sends people to the list
+    assert client.get("/matches/suggestions/").url == reverse("matches:list") + "?type=suggestions"
 
 
 # ── The weekly email ──────────────────────────────────────────────────
