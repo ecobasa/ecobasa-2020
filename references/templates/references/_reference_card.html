@@ -2,7 +2,7 @@
 {# One reference: author, what kind of exchange it was about (pill), impression, its subject, text, skill tags and gift names #}
 <article id="reference-{{ ref.pk }}" class="scroll-mt-24 target:ring-2 target:ring-primary border rounded-lg p-4
   {% if ref.impression == 'positive' %}border-green bg-green bg-opacity-5
-  {% elif ref.impression == 'negative' %}border-red bg-red bg-opacity-5
+  {% elif ref.impression == 'negative' %}border-red bg-red bg-opacity-30
   {% else %}border-brown bg-secondary bg-opacity-5{% endif %}">
   <header class="flex items-center gap-3 mb-2">
     <a href="{{ ref.author.get_absolute_url }}" class="flex-shrink-0">
