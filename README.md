@@ -109,7 +109,8 @@ both sides: gift wishes and offers with similar titles, skill wishes and project
 with the people and communities offering that skill, and material/tool needs with gift
 offers with similar titles. Each side only hears about things within their own
 distance (`User.match_radius`, 150 km by default), or from anywhere if they search worldwide
-(`User.match_global`). New suggestions show right away in the
+(`User.match_global`). Without a place they look in their country, and without a country
+everywhere (with a one-time notification that they can narrow it down). New suggestions show right away in the
 notifications and in the "Suggestions" tab of each list on `/matches/` (gifts, skills,
 volunteer visits and projects), next to "Received" and "Sent": a suggestion becomes a match
 once someone asks. Once a week, people get an email with what's new

@@ -1,6 +1,6 @@
 """Match right after something matchable is saved, once the request's transaction is
 committed, and forget its suggestions when it is deleted. When a person or community
-moves, everything that takes its place from them is matched again."""
+moves (place or country), everything that takes its place from them is matched again."""
 
 import logging
 
@@ -53,24 +53,31 @@ for _model in MATCHED_MODELS:
 # ── Moving ────────────────────────────────────────────────────────────
 
 def _remember_location(sender, instance, raw=False, **kwargs):
-    instance._location_before = (
+    instance._place_before = (
         None if raw or instance.pk is None
-        else sender.objects.filter(pk=instance.pk).values_list("location", flat=True).first()
+        else sender.objects.filter(pk=instance.pk).values_list("location", "country").first()
     )
 
 
 def _moved(instance):
-    before, now = getattr(instance, "_location_before", None), instance.location
-    if before is None or now is None:
-        return (before is None) != (now is None)
-    return not before.equals_exact(now, 1e-6)
+    """Whether their place or country changed in this save."""
+    before = getattr(instance, "_place_before", None)
+    if before is None:
+        return False
+    location, country = before
+    if str(country or "") != str(instance.country or ""):
+        return True
+    now = instance.location
+    if location is None or now is None:
+        return (location is None) != (now is None)
+    return not location.equals_exact(now, 1e-6)
 
 
 def _user_saved(sender, instance, raw=False, created=False, **kwargs):
     if raw or created or not _moved(instance):
         return
-    # Their gifts without a place of their own, their skills and their skill wishes
-    for obj in (*instance.listings.filter(location=None), *instance.user_skills.all(), *instance.skill_wishes.all()):
+    # Their gifts (all: a listing's country is its owner's), their skills and their skill wishes
+    for obj in (*instance.listings.all(), *instance.user_skills.all(), *instance.skill_wishes.all()):
         schedule_match(obj)
 
 

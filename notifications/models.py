@@ -10,6 +10,11 @@ SKILL_NUDGE_TEXT = _(
     "people can find you."
 )
 
+MATCH_AREA_TEXT = _(
+    "You get suggestions from everywhere, because your profile has no place yet. "
+    "Add your place or country in the settings to see what's near you."
+)
+
 # Icon per kind of match, keyed by the target's app label (same approach as
 # matches.views._TAB_APP_LABELS, so this app never imports gifts/skills/communities).
 _MATCH_TYPE_ICONS = {
@@ -29,6 +34,7 @@ class Notification(models.Model):
     TAG_SKILL_NUDGE = "skill_nudge"
     TAG_REFERENCE   = "reference"
     TAG_SUGGESTION  = "suggestion"
+    TAG_MATCH_AREA  = "match_area"
 
     recipient   = models.ForeignKey(User, on_delete=models.CASCADE, related_name="notifications")
     actor       = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name="notifications_sent")
@@ -74,6 +80,8 @@ class Notification(models.Model):
             return self._reference_text()
         if self.tag == self.TAG_SUGGESTION:
             return self._suggestion_text()
+        if self.tag == self.TAG_MATCH_AREA:
+            return str(MATCH_AREA_TEXT)
         target = self._target()
         if target is None:
             return self.verb
@@ -144,4 +152,5 @@ class Notification(models.Model):
             self.TAG_SKILL_NUDGE: "fa-graduation-cap",
             self.TAG_REFERENCE:   "fa-comments",
             self.TAG_SUGGESTION:  "fa-handshake-angle",
+            self.TAG_MATCH_AREA:  "fa-location-dot",
         }.get(self.tag, "fa-bell")

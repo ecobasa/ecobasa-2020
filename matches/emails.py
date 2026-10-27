@@ -160,6 +160,22 @@ def notify_new_suggestions(users):
             notification = Notification(recipient=user, tag=Notification.TAG_SUGGESTION, link=reverse("matches:list"))
             notification.verb = notification.text[:255]
             notification.save()
+        notify_match_area(user)
+
+
+def notify_match_area(user):
+    """Once: someone without place or country gets suggestions from everywhere; tell them
+    they can narrow it down in the settings."""
+    from notifications.models import MATCH_AREA_TEXT, Notification
+
+    if user.location is not None or user.country or user.match_global:
+        return
+    if Notification.objects.filter(recipient=user, tag=Notification.TAG_MATCH_AREA).exists():
+        return
+    Notification.objects.create(
+        recipient=user, tag=Notification.TAG_MATCH_AREA, verb=str(MATCH_AREA_TEXT)[:255],
+        link=reverse("users:update") + "#matches",
+    )
 
 
 # The weekly email with the new suggestions, for everyone who wants it: who has wishes hears

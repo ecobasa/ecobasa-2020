@@ -168,13 +168,11 @@ def test_profile_worldwide_switch(anna):
 
 
 @pytest.mark.django_db
-def test_nothing_without_a_place_between_own_things_unavailable_skills_or_covered_needs(anna, ben):
+def test_nothing_between_own_things_too_far_unavailable_skills_or_covered_needs(anna, ben):
     far = _user("far@example.com", "Far", PARIS)
-    nowhere = User.objects.create_user(email="nowhere@example.com", password="x")
     _listing(anna, "Clay", "wish")
     assert match(_listing(anna, "Clay too", "offer"), notify=False) == []  # her own
     assert match(_listing(far, "Clay", "offer"), notify=False) == []  # 900 km
-    assert match(_listing(nowhere, "Clay", "offer"), notify=False) == []  # no place
 
     masonry = _skill("Masonry")
     SkillWish.objects.create(user=anna, skill=masonry)
@@ -184,6 +182,45 @@ def test_nothing_without_a_place_between_own_things_unavailable_skills_or_covere
     project = Project.objects.create(community=community, title="Oven")
     covered = Need.objects.create(project=project, kind=Need.KIND_MATERIAL, title="Clay", covered_at=timezone.now())
     assert match(covered, notify=False) == []
+
+
+@pytest.mark.django_db
+def test_without_a_place_or_country_it_is_anywhere_and_they_hear_how_to_narrow_it(anna):
+    nowhere = User.objects.create_user(email="nowhere@example.com", password="x", name="Nowhere")
+    far = _user("far@example.com", "Far", PARIS)
+    _listing(nowhere, "Clay", "wish")
+    match(_listing(far, "Clay from the Seine", "offer"), notify=True)
+    # Nowhere hears about the offer in Paris; Far, who looks 150 km around, doesn't hear
+    # about a wish without a place
+    assert [s.other_user for s in nowhere.suggestions.all()] == [far]
+    assert nowhere.suggestions.get().distance_km is None
+    assert not far.suggestions.exists()
+    area = Notification.objects.get(recipient=nowhere, tag=Notification.TAG_MATCH_AREA)
+    assert area.link == reverse("users:update") + "#matches"
+    # Only once
+    match(_listing(anna, "Clay bricks", "offer"), notify=True)
+    assert Notification.objects.filter(recipient=nowhere, tag=Notification.TAG_MATCH_AREA).count() == 1
+    client = Client()
+    client.force_login(nowhere)
+    assert "because your profile has no place yet" in client.get(reverse("matches:list"), {"type": "gift", "box": "suggestions"}).content.decode()
+
+
+@pytest.mark.django_db
+def test_with_only_a_country_it_is_that_country(anna):
+    german = User.objects.create_user(email="de@example.com", password="x", name="De", country="DE")
+    french = User.objects.create_user(email="fr@example.com", password="x", name="Fr", country="FR")
+    _listing(german, "Clay", "wish")
+    _listing(french, "Clay", "wish")
+    anna.country = "DE"
+    anna.save()
+    match(_listing(anna, "Clay from the pond", "offer"), notify=False)
+    assert [s.other_user for s in german.suggestions.all()] == [anna]
+    assert not french.suggestions.exists()
+    # Unless they search worldwide
+    french.match_global = True
+    french.save()
+    match(_listing(anna, "Clay bricks", "offer"), notify=False)
+    assert french.suggestions.count() == 1
 
 
 # ── Right after saving, with a notification ───────────────────────────

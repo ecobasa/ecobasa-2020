@@ -9,8 +9,10 @@ What fits:
   alone: firewood and a chimney pipe are both building materials, but neither helps
   with the other.
 
-Both sides need a place, and each side only gets suggestions within their own distance
-(User.match_radius), or from anywhere if they search worldwide (User.match_global).
+Where each side looks, by their owner's settings (reaches()):
+- with a place: within their distance (User.match_radius);
+- with only a country: in that country;
+- with neither: anywhere, as with "search worldwide" (User.match_global).
 Nothing is suggested between things of the same person."""
 
 import math
@@ -27,8 +29,8 @@ from skills.models import CommunitySkill, SkillWish, UserSkill
 
 from .models import Suggestion
 
-# Upper bound for anyone's distance; candidates are looked up within it, then each side's
-# own distance decides
+# Upper bound for anyone's distance; candidates with a place are looked up within it, then
+# each side's own settings decide
 MAX_RADIUS_KM = 2000
 
 
@@ -38,7 +40,8 @@ class Side:
 
     obj: object
     owner: object
-    point: object
+    point: object  # None if there is no place, only maybe a country
+    country: str
     want: bool
     skill_id: int | None = None
     title: str = ""
@@ -50,34 +53,52 @@ class Side:
 
 def side_of(obj):
     """The Side for a listing, need, user/community skill or skill wish, or None if it
-    can't be matched (no owner, no place, a covered need, a need without a skill …)."""
+    can't be matched (no owner, a covered need, a need without a skill …)."""
     side = None
     if isinstance(obj, Listing):
         owner = obj.owner
-        point = obj.location or (owner.location if owner else None)
-        side = Side(obj, owner, point, want=obj.type == "wish", title=obj.title)
+        if owner is not None:
+            side = Side(obj, owner, obj.location or owner.location, str(owner.country or ""),
+                        want=obj.type == "wish", title=obj.title)
     elif isinstance(obj, Need):
         project = obj.project
         if not project.is_current or obj.is_done:
             return None
         community = project.community
+        place = (community.location, str(community.country or ""))
         if obj.kind in Need.THING_KINDS:
-            side = Side(obj, community.owner, community.location, want=True, title=obj.title)
+            side = Side(obj, community.owner, *place, want=True, title=obj.title)
         elif obj.skill_id:
-            side = Side(obj, community.owner, community.location, want=True, skill_id=obj.skill_id)
+            side = Side(obj, community.owner, *place, want=True, skill_id=obj.skill_id)
     elif isinstance(obj, UserSkill):
         if obj.available:
-            side = Side(obj, obj.user, obj.user.location, want=False, skill_id=obj.skill_id)
+            side = Side(obj, obj.user, obj.user.location, str(obj.user.country or ""), want=False, skill_id=obj.skill_id)
     elif isinstance(obj, CommunitySkill):
-        side = Side(obj, obj.community.owner, obj.community.location, want=False, skill_id=obj.skill_id)
+        community = obj.community
+        side = Side(obj, community.owner, community.location, str(community.country or ""), want=False, skill_id=obj.skill_id)
     elif isinstance(obj, SkillWish):
         if obj.community_id:
-            side = Side(obj, obj.community.owner, obj.community.location, want=True, skill_id=obj.skill_id)
+            community = obj.community
+            side = Side(obj, community.owner, community.location, str(community.country or ""), want=True, skill_id=obj.skill_id)
         elif obj.user_id:
-            side = Side(obj, obj.user, obj.user.location, want=True, skill_id=obj.skill_id)
-    if side is None or side.owner is None or side.point is None:
+            side = Side(obj, obj.user, obj.user.location, str(obj.user.country or ""), want=True, skill_id=obj.skill_id)
+    if side is None or side.owner is None:
         return None
     return side
+
+
+def reaches(recipient, other, km):
+    """Whether `recipient` side's owner hears about `other`: anywhere if they search
+    worldwide or have neither place nor country, in their country if they have only that,
+    else within their distance (unknown if `other` has no place)."""
+    owner = recipient.owner
+    if owner.match_global:
+        return True
+    if recipient.point is not None:
+        return km is not None and km <= (owner.match_radius or 0)
+    if recipient.country:
+        return other.country == recipient.country
+    return True
 
 
 def _near(point, *fields, worldwide=()):
@@ -101,10 +122,14 @@ def _current_needs():
 
 
 def candidates(side):
-    """The things on the other side that could fit `side`: nearby (roughly), or anywhere
-    if the other side's owner or this side's owner searches worldwide."""
+    """The things on the other side that could fit `side`: nearby (roughly), without a
+    place (they may look anywhere or in a country), or anywhere if one of the owners
+    searches worldwide. reaches() then decides for each side."""
     def near(*fields, worldwide=()):
-        return Q() if side.owner.match_global else _near(side.point, *fields, worldwide=worldwide)
+        if side.point is None or side.owner.match_global:
+            return Q()
+        placeless = Q(**{f"{name}": None for name in fields})
+        return _near(side.point, *fields, worldwide=worldwide) | placeless
 
     if side.is_skill:
         if side.want:
@@ -119,10 +144,7 @@ def candidates(side):
             yield from _current_needs().filter(skill_id=side.skill_id, kind__in=(Need.KIND_SKILL, Need.KIND_KNOWLEDGE)).filter(
                 near("project__community__location", worldwide=["project__community__owner__match_global"]))
         return
-    listing_near = (
-        near("location", worldwide=["owner__match_global"])
-        | (Q(location=None) & near("owner__location"))
-    )
+    listing_near = near("location", "owner__location", worldwide=["owner__match_global"])
     if side.want:
         yield from Listing.objects.filter(type="offer").filter(listing_near).select_related("owner")
     else:
@@ -160,16 +182,16 @@ def distance_km(p, q):
 
 
 def _suggest(recipient_side, other_side, reason, km):
-    """Create the suggestion for recipient_side's owner, if new and within their distance.
+    """Create the suggestion for recipient_side's owner, if new and where they look.
     Returns it if it was created."""
     recipient = recipient_side.owner
-    if not recipient.match_global and km > (recipient.match_radius or 0):
+    if not reaches(recipient_side, other_side, km):
         return None
     suggestion, created = Suggestion.objects.get_or_create(
         user=recipient,
         own_type=ContentType.objects.get_for_model(recipient_side.obj), own_id=str(recipient_side.obj.pk),
         other_type=ContentType.objects.get_for_model(other_side.obj), other_id=str(other_side.obj.pk),
-        defaults={"other_user": other_side.owner, "reason": reason, "distance_km": round(km)},
+        defaults={"other_user": other_side.owner, "reason": reason, "distance_km": None if km is None else round(km)},
     )
     return suggestion if created else None
 
@@ -188,7 +210,7 @@ def match(obj, notify=True):
         reason = fit(side, other_side)
         if reason is None:
             continue
-        km = distance_km(side.point, other_side.point)
+        km = distance_km(side.point, other_side.point) if side.point and other_side.point else None
         for recipient_side, shown in ((side, other_side), (other_side, side)):
             suggestion = _suggest(recipient_side, shown, reason, km)
             if suggestion:

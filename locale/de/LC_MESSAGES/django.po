@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ecobasa\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-27 12:35+0100\n"
+"POT-Creation-Date: 2026-10-27 12:38+0100\n"
 "PO-Revision-Date: 2026-10-23 12:00+0200\n"
 "Last-Translator: ecobasa\n"
 "Language-Team: de\n"
@@ -474,7 +474,7 @@ msgstr "Bis"
 #: matches/templates/matches/email/match_request.txt:18
 #: matches/templates/matches/email/match_response.html:40
 #: matches/templates/matches/email/match_response.txt:7
-#: notifications/models.py:46 projects/forms.py:106
+#: notifications/models.py:52 projects/forms.py:106
 #: templates/postman/write.html:77 users/templates/users/detail.html:61
 msgid "Message"
 msgstr "Nachricht"
@@ -1134,7 +1134,7 @@ msgstr "Flattr uns"
 msgid "Matches"
 msgstr "Matches"
 
-#: matches/emails.py:202
+#: matches/emails.py:218
 #, python-format
 msgid "%(count)s new suggestion near you"
 msgid_plural "%(count)s new suggestions near you"
@@ -1309,7 +1309,8 @@ msgstr "Passt nicht, ausblenden"
 msgid "Hide"
 msgstr "Ausblenden"
 
-#: matches/templates/matches/_suggestions_intro.html:2
+#: matches/templates/matches/_suggestions_intro.html:4
+#: matches/templates/matches/_suggestions_intro.html:13
 msgid ""
 "Suggestions: what people, communities and projects anywhere offer or need "
 "that fits your wishes, offers and skills. It becomes a match once one of you "
@@ -1319,7 +1320,7 @@ msgstr ""
 "anbieten oder brauchen und zu deinen Wünschen, Angeboten und Fähigkeiten "
 "passt. Ein Match wird daraus, sobald eine*r von euch anfragt."
 
-#: matches/templates/matches/_suggestions_intro.html:5
+#: matches/templates/matches/_suggestions_intro.html:7
 #, python-format
 msgid ""
 "Suggestions: what people, communities and projects within %(km)s km offer or "
@@ -1330,9 +1331,35 @@ msgstr ""
 "km anbieten oder brauchen und zu deinen Wünschen, Angeboten und Fähigkeiten "
 "passt. Ein Match wird daraus, sobald eine*r von euch anfragt."
 
-#: matches/templates/matches/_suggestions_intro.html:8
-msgid "Change distance"
-msgstr "Umkreis ändern"
+#: matches/templates/matches/_suggestions_intro.html:10
+#, python-format
+msgid ""
+"Suggestions: what people, communities and projects in %(country)s offer or "
+"need that fits your wishes, offers and skills. It becomes a match once one of"
+" you asks."
+msgstr ""
+"Vorschläge: was Menschen, Gemeinschaften und Projekte in %(country)s anbieten"
+" oder brauchen und zu deinen Wünschen, Angeboten und Fähigkeiten passt. Ein "
+"Match wird daraus, sobald eine*r von euch anfragt."
+
+#: matches/templates/matches/_suggestions_intro.html:17
+msgid "Change"
+msgstr "Ändern"
+
+#: matches/templates/matches/_suggestions_intro.html:22
+#: notifications/models.py:14
+msgid ""
+"You get suggestions from everywhere, because your profile has no place yet. "
+"Add your place or country in the settings to see what's near you."
+msgstr ""
+"Du bekommst Vorschläge von überall, weil in deinem Profil noch kein Ort "
+"steht. Trag in den Einstellungen deinen Ort oder dein Land ein, um zu sehen, "
+"was in deiner Nähe ist."
+
+#: matches/templates/matches/_suggestions_intro.html:23
+#: templates/_navbar.html:186 templates/_navbar.html:280
+msgid "Settings"
+msgstr "Einstellungen"
 
 #: matches/templates/matches/email/match_message.html:19
 msgid "New message"
@@ -1691,70 +1718,70 @@ msgstr ""
 " was du lernen möchtest oder wobei du Hilfe brauchst, damit Gemeinschaften "
 "und Menschen dich finden."
 
-#: notifications/models.py:47
+#: notifications/models.py:53
 msgid "Link"
 msgstr "Link"
 
-#: notifications/models.py:54
+#: notifications/models.py:60
 msgid "Notification"
 msgstr "Benachrichtigung"
 
-#: notifications/models.py:55 notifications/templates/notifications/list.html:4
+#: notifications/models.py:61 notifications/templates/notifications/list.html:4
 #: notifications/templates/notifications/list.html:9 templates/_navbar.html:63
 #: templates/_navbar.html:82 templates/dashboard/base.html:11
 msgid "Notifications"
 msgstr "Benachrichtigungen"
 
-#: notifications/models.py:85
+#: notifications/models.py:93
 #, python-format
 msgid "%(actor)s accepted your counter-proposal for: %(title)s"
 msgstr "%(actor)s hat deinen Gegenvorschlag angenommen: %(title)s"
 
-#: notifications/models.py:87
+#: notifications/models.py:95
 #, python-format
 msgid "%(actor)s accepted your request: %(title)s"
 msgstr "%(actor)s hat deine Anfrage angenommen: %(title)s"
 
-#: notifications/models.py:89
+#: notifications/models.py:97
 #, python-format
 msgid "%(actor)s declined your counter-proposal for: %(title)s"
 msgstr "%(actor)s hat deinen Gegenvorschlag abgelehnt: %(title)s"
 
-#: notifications/models.py:91
+#: notifications/models.py:99
 #, python-format
 msgid "%(actor)s declined your request: %(title)s"
 msgstr "%(actor)s hat deine Anfrage abgelehnt: %(title)s"
 
-#: notifications/models.py:93
+#: notifications/models.py:101
 #, python-format
 msgid "%(actor)s suggested other dates for your stay at: %(title)s"
 msgstr ""
 "%(actor)s hat einen anderen Zeitraum für deinen Aufenthalt vorgeschlagen: "
 "%(title)s"
 
-#: notifications/models.py:95
+#: notifications/models.py:103
 #, python-format
 msgid "%(actor)s suggested another time or place for: %(title)s"
 msgstr ""
 "%(actor)s hat eine andere Zeit oder einen anderen Ort vorgeschlagen für: "
 "%(title)s"
 
-#: notifications/models.py:97
+#: notifications/models.py:105
 #, python-format
 msgid "%(actor)s sent you a message about: %(title)s"
 msgstr "%(actor)s hat dir eine Nachricht geschickt zu: %(title)s"
 
-#: notifications/models.py:101 notifications/models.py:119
+#: notifications/models.py:109 notifications/models.py:127
 msgid "Someone"
 msgstr "Jemand"
 
-#: notifications/models.py:108
+#: notifications/models.py:116
 msgid "Suggestions near you: what fits your wishes, offers and skills."
 msgstr ""
 "Vorschläge in deiner Nähe: was zu deinen Wünschen, Angeboten und Fähigkeiten "
 "passt."
 
-#: notifications/models.py:110
+#: notifications/models.py:118
 #, python-format
 msgid ""
 "%(count)s new suggestion near you: something fits your wishes, offers or "
@@ -1768,17 +1795,17 @@ msgstr[1] ""
 "%(count)s neue Vorschläge in deiner Nähe: einiges passt zu deinen Wünschen, "
 "Angeboten oder Fähigkeiten."
 
-#: notifications/models.py:121
+#: notifications/models.py:129
 #, python-format
 msgid "%(actor)s wrote a reference about you."
 msgstr "%(actor)s hat eine Referenz über dich geschrieben."
 
-#: notifications/models.py:124
+#: notifications/models.py:132
 #, python-format
 msgid "%(actor)s wrote a reference about %(title)s."
 msgstr "%(actor)s hat eine Referenz über %(title)s geschrieben."
 
-#: notifications/models.py:126
+#: notifications/models.py:134
 msgid "It mentions skills that wait for your confirmation."
 msgstr "Darin stehen Fähigkeiten, die auf deine Bestätigung warten."
 
@@ -3492,10 +3519,6 @@ msgstr "Meine Gemeinschaften"
 #: templates/_navbar.html:177 templates/_navbar.html:276
 msgid "Admin"
 msgstr "Admin"
-
-#: templates/_navbar.html:186 templates/_navbar.html:280
-msgid "Settings"
-msgstr "Einstellungen"
 
 #: templates/_navbar.html:192 templates/_navbar.html:281
 msgid "Log out"
