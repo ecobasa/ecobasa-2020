@@ -417,8 +417,9 @@
       iconCode = String.fromCharCode(0xf85e);  // fa-person-digging
       color = '#5A5527';
     } else if (source === 'listing') {
-      if (props.listing_type === 'offer') { iconCode = ''; }
-      else if (props.listing_type === 'wish') { iconCode = ''; color = '#de7a08'; }
+      // The kind of thing (material, tool), else a gift for offers and a heart for wishes
+      iconCode = String.fromCharCode(props.glyph || (props.listing_type === 'wish' ? 0xf004 : 0xf06b));
+      if (props.listing_type === 'wish') color = '#de7a08';
     }
     return new ol.style.Style({
       image: new ol.style.Icon({
@@ -501,8 +502,8 @@
     if (props.source === 'skill')      badge = `<span class="pill bg-purple"><i class="fa fa-graduation-cap mr-1"></i>${td || 'Skill'}</span>`;
     else if (props.source === 'user_skill') badge = `<span class="pill bg-purple"><i class="fa fa-graduation-cap mr-1"></i>{% trans "skill / teaching" %}</span>`;
     else if (props.source === 'need')  badge = `<span class="pill bg-green"><i class="fa-solid fa-person-digging mr-1"></i>${td}</span>`;
-    else if (props.listing_type === 'offer') badge = `<span class="pill bg-primary"><i class="fa fa-gift mr-1"></i>${td}</span>`;
-    else if (props.listing_type === 'wish')  badge = `<span class="pill bg-yellow"><i class="fa fa-heart mr-1"></i>${td}</span>`;
+    else if (props.listing_type === 'offer') badge = `<span class="pill bg-primary"><i class="fa-solid ${esc(props.kind_icon || 'fa-gift')} mr-1"></i>${td}</span>`;
+    else if (props.listing_type === 'wish')  badge = `<span class="pill bg-yellow"><i class="fa-solid ${esc(props.kind_icon || 'fa-heart')} mr-1"></i>${td}</span>`;
     else                               badge = `<span class="pill bg-primary">${td}</span>`;
     let html = `<button type="button" class="map-popup-close" aria-label="{% trans "Close" %}"><i class="fa fa-times"></i></button>` + badge;
     if (props.title) html += url ? `<h3><a href="${url}" class="hover:underline">${esc(props.title)}</a></h3>` : `<h3>${esc(props.title)}</h3>`;

@@ -33,6 +33,8 @@ class Listing(RandomIdMixin, models.Model):
     KIND_OTHER = "other"
     KIND_CHOICES = [(KIND_MATERIAL, _("Material")), (KIND_TOOL, _("Tool")), (KIND_OTHER, _("Other"))]
     KIND_ICONS = {KIND_MATERIAL: "fa-cubes", KIND_TOOL: "fa-screwdriver-wrench", KIND_OTHER: "fa-gift"}
+    # Font Awesome code points for map markers: the kind, else a gift (offer) or heart (wish)
+    KIND_GLYPHS = {KIND_MATERIAL: 0xF1B3, KIND_TOOL: 0xF7D9}
 
     random_id = models.CharField(
         _("Random Id"), max_length=8, primary_key=True, editable=False
@@ -75,6 +77,10 @@ class Listing(RandomIdMixin, models.Model):
     @property
     def kind_icon(self):
         return self.KIND_ICONS.get(self.kind, "fa-gift")
+
+    @property
+    def marker_glyph(self):
+        return self.KIND_GLYPHS.get(self.kind) or (0xF004 if self.type == "wish" else 0xF06B)
 
     @property
     def amount(self):

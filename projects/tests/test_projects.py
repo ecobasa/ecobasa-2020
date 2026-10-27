@@ -492,6 +492,11 @@ def test_gifts_kind_filter(mapped, ambassador):
 
     assert sources({"kind": "tool"}) == ["Spade"]  # no skills, no material
     assert sources({"kind": "material"}) == ["Bricks", "Rocket stove"]
+    # Markers show the kind of thing, else a gift or a heart
+    glyphs = {f["properties"]["title"]: f["properties"].get("glyph") for f in
+              Client().get(reverse("gifts:api-markers")).json()["features"] if f["properties"]["source"] == "listing"}
+    assert glyphs == {"Spade": 0xF7D9, "Bricks": 0xF1B3}
+    assert Listing(type="wish").marker_glyph == 0xF004 and Listing(type="offer").marker_glyph == 0xF06B
 
 
 @pytest.mark.django_db

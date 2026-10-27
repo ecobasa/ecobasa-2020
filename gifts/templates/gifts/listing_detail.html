@@ -250,11 +250,8 @@
       const center = ol.proj.fromLonLat([LON, LAT]);
 
       const marker = new ol.Feature({ geometry: new ol.geom.Point(center) });
-      {% if listing.type == 'wish' %}
-      marker.setStyle(EcoMap.makeIconStyle(0xF004, '#de7a08')); //  fa-heart
-      {% else %}
-      marker.setStyle(EcoMap.makeIconStyle(0xF06B, '#da6137')); //  fa-gift
-      {% endif %}
+      // The kind of thing (material, tool), else a gift or a heart
+      marker.setStyle(EcoMap.makeIconStyle({{ listing.marker_glyph }}, '{% if listing.type == 'wish' %}#de7a08{% else %}#da6137{% endif %}'));
 
       const map = new ol.Map({
         target: mapEl,

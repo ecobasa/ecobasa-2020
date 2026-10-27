@@ -82,9 +82,12 @@
         {% endif %}
         {% reference_url_for_match match as reference_url %}
         {% if reference_url %}
-          <a href="{{ reference_url }}" class="btn mt-3">
-            <i class="fa fa-pencil mr-2"></i>{% trans "Write a reference" %}
-          </a>
+          <div class="mt-4 pt-4 border-t border-green border-opacity-40 flex flex-wrap items-center gap-3">
+            <p class="m-0 flex-1 min-w-[12rem] text-sm">{% trans "How did it go? A reference helps others find good matches." %}</p>
+            <a href="{{ reference_url }}" class="btn btn-lg inline-flex items-center whitespace-nowrap">
+              <i class="fa fa-pencil mr-2"></i>{% trans "Write a reference" %}
+            </a>
+          </div>
         {% endif %}
 
       {% elif match.status == 'counter' and latest_status_msg %}
