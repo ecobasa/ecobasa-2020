@@ -120,6 +120,14 @@
           <p class="italic">{% trans "No offers yet." %}</p>
         {% endif %}
       {% endif %}
+
+      {% if references %}
+        {# What helpers and the community wrote after taking part #}
+        <h2 id="references">{% trans "References from this project" %}</h2>
+        <div class="space-y-3">
+          {% for ref in references %}{% include "references/_reference_card.html" %}{% endfor %}
+        </div>
+      {% endif %}
     </div>
 
     <aside class="sm:col-span-4">

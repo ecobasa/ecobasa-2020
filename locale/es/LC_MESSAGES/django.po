@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ecobasa\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-27 14:35+0100\n"
+"POT-Creation-Date: 2026-10-27 14:45+0100\n"
 "PO-Revision-Date: 2026-10-23 12:00+0200\n"
 "Last-Translator: ecobasa\n"
 "Language-Team: es\n"
@@ -120,7 +120,7 @@ msgstr ""
 "comunidad"
 
 #: communities/models.py:27 gifts/models.py:47 projects/models.py:36
-#: skills/forms.py:128 skills/forms.py:196 skills/forms.py:267
+#: skills/forms.py:136 skills/forms.py:204 skills/forms.py:275
 #: skills/models.py:128
 #: skills/templates/skills/_userskill_add_several_row.html:20
 #: skills/templates/skills/communityskill_form.html:76
@@ -257,7 +257,7 @@ msgid "%(actor)s requested a volunteer stay at %(title)s"
 msgstr "%(actor)s ha solicitado una estancia en comunidad en %(title)s"
 
 #: communities/models.py:157 projects/models.py:33
-#: projects/templates/projects/project_detail.html:135
+#: projects/templates/projects/project_detail.html:143
 msgid "Community"
 msgstr "Comunidad"
 
@@ -439,7 +439,7 @@ msgid "Contact Information"
 msgstr "Contacto"
 
 #: communities/templates/communities/community_detail.html:269
-#: projects/templates/projects/project_detail.html:140
+#: projects/templates/projects/project_detail.html:148
 msgid "Gift-economy Ambassador"
 msgstr "Embajador/a de la economía del regalo"
 
@@ -867,7 +867,7 @@ msgstr "Sin resultados"
 #: gifts/templates/gifts/_gifts_list_partial.html:48
 #: gifts/templates/gifts/_gifts_list_partial.html:79 matches/models.py:121
 #: matches/templates/matches/_stay_legend.html:3 skills/forms.py:41
-#: skills/forms.py:102 skills/forms.py:182 skills/forms.py:217
+#: skills/forms.py:110 skills/forms.py:190 skills/forms.py:225
 #: skills/models.py:132 skills/templates/skills/communityskill_form.html:53
 #: skills/templates/skills/userskill_form.html:53
 msgid "Skill"
@@ -1416,7 +1416,7 @@ msgstr ""
 msgid "Ask for these too"
 msgstr "Pedir también"
 
-#: matches/templates/matches/_skill_pill.html:2 skills/forms.py:110
+#: matches/templates/matches/_skill_pill.html:2 skills/forms.py:118
 #: skills/models.py:169 skills/templates/skills/userskill_add_several.html:24
 #: skills/templates/skills/userskill_form.html:64
 msgid "Level"
@@ -2274,12 +2274,12 @@ msgid "Offer help"
 msgstr "Ofrecer ayuda"
 
 #: projects/templates/projects/offer_help.html:15
-#: projects/templates/projects/project_detail.html:128
+#: projects/templates/projects/project_detail.html:136
 msgid "Food"
 msgstr "Comida"
 
 #: projects/templates/projects/offer_help.html:16
-#: projects/templates/projects/project_detail.html:129
+#: projects/templates/projects/project_detail.html:137
 msgid "A bed"
 msgstr "Una cama"
 
@@ -2389,29 +2389,33 @@ msgid "No offers yet."
 msgstr "Todavía no hay ofertas."
 
 #: projects/templates/projects/project_detail.html:126
+msgid "References from this project"
+msgstr "Referencias de este proyecto"
+
+#: projects/templates/projects/project_detail.html:134
 msgid "What the community provides"
 msgstr "Qué ofrece la comunidad"
 
-#: projects/templates/projects/project_detail.html:131
+#: projects/templates/projects/project_detail.html:139
 #, python-format
 msgid "Room for %(count)s volunteer at a time"
 msgid_plural "Room for %(count)s volunteers at a time"
 msgstr[0] "Sitio para %(count)s voluntario a la vez"
 msgstr[1] "Sitio para %(count)s voluntarios a la vez"
 
-#: projects/templates/projects/project_detail.html:132
+#: projects/templates/projects/project_detail.html:140
 msgid "Ask the community."
 msgstr "Pregunta a la comunidad."
 
-#: projects/templates/projects/project_detail.html:157
+#: projects/templates/projects/project_detail.html:165
 msgid "Support this project"
 msgstr "Apoyar"
 
-#: projects/templates/projects/project_detail.html:161
+#: projects/templates/projects/project_detail.html:169
 msgid "You already offered help."
 msgstr "Ya has ofrecido ayuda."
 
-#: projects/templates/projects/project_detail.html:161
+#: projects/templates/projects/project_detail.html:169
 msgid "See your offer"
 msgstr "Ver tu oferta"
 
@@ -2487,27 +2491,27 @@ msgstr "No se encontraron proyectos actuales."
 msgid "Current"
 msgstr "Actuales"
 
-#: projects/views.py:125
+#: projects/views.py:148
 msgid "The project has been saved."
 msgstr "El proyecto se ha guardado."
 
-#: projects/views.py:156
+#: projects/views.py:179
 msgid "The project has been archived. You can bring it back at any time."
 msgstr "El proyecto se ha archivado. Puedes recuperarlo en cualquier momento."
 
-#: projects/views.py:169 projects/views.py:184
+#: projects/views.py:192 projects/views.py:207
 msgid "This project has ended. Change its dates to bring it back."
 msgstr "Este proyecto ha terminado. Cambia sus fechas para recuperarlo."
 
-#: projects/views.py:172 projects/views.py:187
+#: projects/views.py:195 projects/views.py:210
 msgid "Thanks! The project shows as up to date again."
 msgstr "¡Gracias! El proyecto vuelve a aparecer como actualizado."
 
-#: projects/views.py:210
+#: projects/views.py:233
 msgid "This project doesn't take offers at the moment."
 msgstr "Este proyecto no acepta ofertas por ahora."
 
-#: projects/views.py:230
+#: projects/views.py:253
 #, python-format
 msgid "Your offer has been sent to %(community)s!"
 msgstr "¡Tu oferta se ha enviado a %(community)s!"
@@ -3121,74 +3125,74 @@ msgstr "Francés"
 msgid "Please upload a photo."
 msgstr "Sube una foto, por favor."
 
-#: skills/forms.py:43 skills/forms.py:104
+#: skills/forms.py:43 skills/forms.py:112
 msgid "e.g. Carpentry, Solar Energy…"
 msgstr "p. ej. Carpintería, Energía solar…"
 
-#: skills/forms.py:66 skills/forms.py:239
+#: skills/forms.py:71 skills/forms.py:247
 msgid "Save skill"
 msgstr "Guardar habilidad"
 
-#: skills/forms.py:74 skills/forms.py:140 skills/forms.py:247
+#: skills/forms.py:82 skills/forms.py:148 skills/forms.py:255
 msgid "Please select a skill from the suggestions."
 msgstr "Elige una habilidad de las sugerencias."
 
-#: skills/forms.py:91 skills/templates/skills/userskill_add_several.html:21
+#: skills/forms.py:99 skills/templates/skills/userskill_add_several.html:21
 #: skills/templates/skills/userskill_form.html:32
 msgid "I can offer / teach this skill"
 msgstr "Puedo ofrecer / enseñar esta habilidad"
 
-#: skills/forms.py:92 skills/templates/skills/userskill_add_several.html:30
+#: skills/forms.py:100 skills/templates/skills/userskill_add_several.html:30
 #: skills/templates/skills/userskill_form.html:44
 msgid "I want to learn this or need help with it"
 msgstr "Quiero aprenderlo o necesito ayuda con ello"
 
-#: skills/forms.py:99 skills/templates/skills/userskill_form.html:24
+#: skills/forms.py:107 skills/templates/skills/userskill_form.html:24
 msgid "How do you relate to this skill?"
 msgstr "¿Cuál es tu relación con esta habilidad?"
 
-#: skills/forms.py:114 skills/forms.py:259
+#: skills/forms.py:122 skills/forms.py:267
 #: skills/templates/skills/userskill_add_several.html:32
 msgid "Any level"
 msgstr "Cualquier nivel"
 
-#: skills/forms.py:116 skills/forms.py:261
+#: skills/forms.py:124 skills/forms.py:269
 #: skills/templates/skills/userskill_add_several.html:34
 #: skills/templates/skills/userskill_form.html:75
 msgid "My current level"
 msgstr "Mi nivel actual"
 
-#: skills/forms.py:122 skills/models.py:174
+#: skills/forms.py:130 skills/models.py:174
 #: skills/templates/skills/userskill_form.html:110
 msgid "Available to teach / share"
 msgstr "Disponible para enseñar / compartir"
 
-#: skills/forms.py:130 skills/models.py:177
+#: skills/forms.py:138 skills/models.py:177
 #: skills/templates/skills/userskill_form.html:100
 msgid "A photo of your work"
 msgstr "Una foto de tu trabajo"
 
-#: skills/forms.py:171 skills/templates/skills/communityskill_form.html:32
+#: skills/forms.py:179 skills/templates/skills/communityskill_form.html:32
 msgid "We can offer / teach this skill"
 msgstr "Podemos ofrecer / enseñar esta habilidad"
 
-#: skills/forms.py:172 skills/templates/skills/communityskill_form.html:44
+#: skills/forms.py:180 skills/templates/skills/communityskill_form.html:44
 msgid "We're looking for people with this skill"
 msgstr "Buscamos personas con esta habilidad"
 
-#: skills/forms.py:179
+#: skills/forms.py:187
 msgid "How does your community relate to this skill?"
 msgstr "¿Cuál es la relación de vuestra comunidad con esta habilidad?"
 
-#: skills/forms.py:184 skills/forms.py:219
+#: skills/forms.py:192 skills/forms.py:227
 msgid "e.g. Permaculture, Natural Building…"
 msgstr "p. ej. Permacultura, Bioconstrucción…"
 
-#: skills/forms.py:188 skills/views.py:392
+#: skills/forms.py:196 skills/views.py:392
 msgid "Any level — beginners welcome"
 msgstr "Cualquier nivel: principiantes bienvenidos"
 
-#: skills/forms.py:190 skills/templates/skills/communityskill_form.html:64
+#: skills/forms.py:198 skills/templates/skills/communityskill_form.html:64
 #: skills/views.py:386
 msgid "Minimum level sought"
 msgstr "Nivel mínimo buscado"

@@ -527,3 +527,28 @@ def test_project_page_links_the_people_who_promised(project, helper):
         content = Client(HTTP_ACCEPT_LANGUAGE="en").get(project.get_absolute_url()).content.decode()
     assert "120 of 200 kg promised" in content
     assert f'<a href="{helper.get_absolute_url()}" class="underline hover:text-primary">Hugo</a> (120 kg)' in content
+
+
+@pytest.mark.django_db
+def test_project_page_shows_references_from_anything_part_of_it(community, project, ambassador, helper):
+    """References after help offered on the project, or after a stay at its community that
+    brought one of its needs; not other references about the community."""
+    from references.models import Reference
+
+    offer = _offer(project, helper, Match.STATUS_ACCEPTED)
+    Reference.objects.create(author=helper, recipient=ambassador, subject=community, match=offer, text="Great build days")
+    Reference.objects.create(author=ambassador, recipient=helper, subject=helper, match=offer, text="Strong hands")
+
+    visitor = User.objects.create_user(email="v@example.com", password="x", name="Vera")
+    stay = Match(from_user=visitor, recipient=ambassador, status=Match.STATUS_ACCEPTED)
+    stay.target = community
+    stay.save()
+    NeedOffer.objects.create(need=project.needs.get(title="Clay"), match=stay)
+    Reference.objects.create(author=visitor, recipient=ambassador, subject=community, match=stay, text="Brought the clay")
+    other = User.objects.create_user(email="o@example.com", password="x")
+    Reference.objects.create(author=other, recipient=ambassador, subject=community, text="Unrelated visit")
+
+    response = Client().get(project.get_absolute_url())
+    assert sorted(r.text for r in response.context["references"]) == ["Brought the clay", "Great build days", "Strong hands"]
+    content = response.content.decode()
+    assert "References from this project" in content and "Unrelated visit" not in content
