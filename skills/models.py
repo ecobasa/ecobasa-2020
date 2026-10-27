@@ -284,10 +284,8 @@ class SkillWish(models.Model):
                 "skill_slug": self.skill.slug,
             })
         if self.community:
-            return reverse("skills:communityskill_detail", kwargs={
-                "skill_slug":     self.skill.slug,
-                "community_slug": self.community.slug,
-            })
+            # The community page, which opens the volunteer form for this skill
+            return f"{self.community.get_absolute_url()}?help={self.skill.slug}"
         return reverse("skills:skill_detail", kwargs={"slug": self.skill.slug})
 
     user        = models.ForeignKey(

@@ -108,7 +108,7 @@
           {% with vd=stay.match.volunteer_details needs=stay.match.need_offers.all %}
             {% if needs or vd.practice_skills or vd.sender_skills %}
               <div class="flex flex-wrap gap-1 mt-2">
-                {% for offer in needs %}<span class="pill bg-yellow text-xs"><i class="fa-solid {{ offer.need.icon }} mr-1"></i>{{ offer.need.display_title }}{% if offer.amount %}<span class="ml-1 opacity-80">({{ offer.amount }})</span>{% endif %}</span>{% endfor %}
+                {% for offer in needs %}<span class="pill {{ offer.need.colour }} text-xs"><i class="fa-solid {{ offer.need.icon }} mr-1"></i>{{ offer.need.display_title }}{% if offer.amount %}<span class="ml-1 opacity-80">({{ offer.amount }})</span>{% endif %}</span>{% endfor %}
                 {% if not needs %}
                   {% for skill in vd.practice_skills_list %}<span class="pill bg-purple text-xs"><i class="fa fa-graduation-cap mr-1"></i>{{ skill }}</span>{% endfor %}
                 {% endif %}

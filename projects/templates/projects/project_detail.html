@@ -63,7 +63,7 @@
       {% if needs %}
         <ul class="list-none p-0 space-y-2">
           {% for need in needs %}
-            <li class="flex flex-wrap items-center gap-3 p-3 rounded border bg-secondary bg-opacity-50 {% if need.is_done %}opacity-70{% endif %}">
+            <li id="need-{{ need.pk }}" class="flex flex-wrap items-center gap-3 p-3 rounded border bg-secondary bg-opacity-50 {% if need.is_done %}opacity-70{% endif %}">
               <i class="fa-solid {{ need.icon }} text-primary w-5 text-center"></i>
               <div class="flex-1 min-w-0">
                 <span class="font-semibold {% if need.is_done %}line-through{% endif %}">{{ need.display_title }}</span>
@@ -110,7 +110,7 @@
                 </div>
                 {% with need_offers=match.need_offers.all %}{% if need_offers %}
                   <div class="flex flex-wrap gap-1 mt-2">
-                    {% for offer in need_offers %}<span class="pill bg-yellow text-xs"><i class="fa-solid {{ offer.need.icon }} mr-1"></i>{{ offer.need.display_title }}{% if offer.amount %}<span class="ml-1 opacity-80">({{ offer.amount }})</span>{% endif %}</span>{% endfor %}
+                    {% for offer in need_offers %}<span class="pill {{ offer.need.colour }} text-xs"><i class="fa-solid {{ offer.need.icon }} mr-1"></i>{{ offer.need.display_title }}{% if offer.amount %}<span class="ml-1 opacity-80">({{ offer.amount }})</span>{% endif %}</span>{% endfor %}
                   </div>
                 {% endif %}{% endwith %}
               </a>

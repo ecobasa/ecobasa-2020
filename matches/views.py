@@ -87,7 +87,7 @@ def matches_list(request):
         box = "suggestions"
     tabs = [
         Choice(label, query_url(request, box=key, status=None), key == box, counts[key], waiting[key])
-        for key, label in (("suggestions", _("Suggestions")), ("received", _("Received")), ("sent", _("Sent")))
+        for key, label in (("suggestions", _("Suggestions")), ("received", _("Requests to you")), ("sent", _("Your requests")))
     ]
     types = [
         Choice(label, query_url(request, type=key or None, status=None), key == kind)
@@ -145,7 +145,7 @@ def _volunteer_visits(request):
             or next((key for key in boxes if counts[key]), "received")
     tabs = [
         Choice(label, query_url(request, box=key, status=None), key == box, counts[key], waiting[key])
-        for key, label in (("received", _("Received")), ("sent", _("Sent")))
+        for key, label in (("received", _("Requests to you")), ("sent", _("Your requests")))
     ]
     return render(request, "matches/matches_list.html", {
         "request_type": "volunteer", "kind": _VOLUNTEER, "tabs": tabs, "box": box,

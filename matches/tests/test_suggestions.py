@@ -120,7 +120,16 @@ def test_skill_wishes_and_needs_meet_the_skills_of_people_and_communities(anna, 
     with translation.override("en"):
         assert about_need.text == "Oven at Hof needs: Masonry"
         assert about_teaching.text == "You can learn Masonry at Hof"
-    assert about_need.url.endswith(f"/help/?need={need.pk}")
+    # The title leads to the project, the button to the offer form
+    assert about_need.url == f"{project.get_absolute_url()}#need-{need.pk}"
+    assert about_need.action_url.endswith(f"/help/?need={need.pk}") and about_need.helps
+    # A community's wish opens the volunteer form on its page
+    about_community_wish = next(s for s in ben.suggestions.all() if s.other == community_wish)
+    assert about_community_wish.url == f"{community.get_absolute_url()}?help={masonry.slug}" and about_community_wish.helps
+    client = Client()
+    client.force_login(ben)
+    assert client.get(about_community_wish.url).context["help_wish"] == community_wish
+    assert not about_teaching.helps
 
 
 @pytest.mark.django_db

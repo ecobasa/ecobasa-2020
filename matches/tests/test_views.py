@@ -135,7 +135,7 @@ class TestVolunteerVisits:
         context = _client_for(owner).get("/matches/?type=volunteer").context
         assert list(context["page"]) == [stay]
         assert [(str(t.label), t.count, t.waiting, t.active) for t in context["tabs"]] == [
-            ("Received", 1, 1, True), ("Sent", 0, 0, False),
+            ("Requests to you", 1, 1, True), ("Your requests", 0, 0, False),
         ]
 
     def test_volunteer_sees_it_as_sent(self, requester, stay):
@@ -180,11 +180,11 @@ class TestMatchLists:
     def test_the_page_opens_on_the_suggestions(self, owner, match):
         context = _client_for(owner).get("/matches/").context
         assert [(str(t.label), t.active) for t in context["tabs"]] == [
-            ("Suggestions", True), ("Received", False), ("Sent", False),
+            ("Suggestions", True), ("Requests to you", False), ("Your requests", False),
         ]
         assert [(str(t.label), t.active) for t in context["types"]] == [("All", True), ("Gifts", False), ("Skills", False)]
         # The request waiting for an answer is counted on its tab
-        assert next(t for t in context["tabs"] if str(t.label) == "Received").waiting == 1
+        assert next(t for t in context["tabs"] if str(t.label) == "Requests to you").waiting == 1
 
 
 @pytest.fixture

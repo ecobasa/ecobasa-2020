@@ -76,7 +76,10 @@ def detail(request, slug):
 
     # Build a {skill_id: level_display} map for the visiting user so the modal can show their level
     user_levels_json = "{}"
+    help_wish = None
     if request.user.is_authenticated and request.user != community.owner:
+        # ?help=<skill slug> (from a suggestion) opens the volunteer form for that wish
+        help_wish = next((sw for sw in skill_wishes if sw.skill.slug == request.GET.get("help")), None)
         skill_ids = [cs.skill_id for cs in community_skills] + [sw.skill_id for sw in skill_wishes]
         user_levels_json = json.dumps({
             str(us.skill_id): us.get_level_display()
@@ -101,6 +104,7 @@ def detail(request, slug):
         "community_skills": community_skills,
         "skill_wishes":     skill_wishes,
         "user_levels_json": user_levels_json,
+        "help_wish":        help_wish,
     })
 
 

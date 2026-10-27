@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ecobasa\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-27 12:52+0100\n"
+"POT-Creation-Date: 2026-10-27 13:02+0100\n"
 "PO-Revision-Date: 2026-10-23 12:00+0200\n"
 "Last-Translator: ecobasa\n"
 "Language-Team: es\n"
@@ -523,8 +523,8 @@ msgstr "Tu nivel actual en esta habilidad"
 msgid "Your level with this skill"
 msgstr "Tu nivel en esta habilidad"
 
-#: communities/templates/communities/community_detail.html:415
-#: communities/templates/communities/community_detail.html:425
+#: communities/templates/communities/community_detail.html:416
+#: communities/templates/communities/community_detail.html:426
 msgid "Suggested community skills"
 msgstr "Habilidades sugeridas de la comunidad"
 
@@ -687,30 +687,30 @@ msgstr "Quitar todos los filtros"
 msgid "Open profile"
 msgstr "Abrir perfil"
 
-#: communities/views.py:113
+#: communities/views.py:117
 msgid "This community has no contact person."
 msgstr "Esta comunidad no tiene persona de contacto."
 
-#: communities/views.py:158
+#: communities/views.py:162
 #, python-format
 msgid "Your request has been sent to %(community)s!"
 msgstr "¡Tu solicitud se ha enviado a %(community)s!"
 
-#: communities/views.py:243 communities/views.py:290
+#: communities/views.py:247 communities/views.py:294
 #, python-format
 msgid "Uploaded %(count)s image(s)."
 msgstr "Se han subido %(count)s imagen(es)."
 
-#: communities/views.py:248 communities/views.py:296
+#: communities/views.py:252 communities/views.py:300
 #, python-format
 msgid "Form invalid: %(errors)s"
 msgstr "Formulario no válido: %(errors)s"
 
-#: communities/views.py:266
+#: communities/views.py:270
 msgid "Community deleted."
 msgstr "Comunidad eliminada."
 
-#: communities/views.py:291
+#: communities/views.py:295
 msgid "Community updated."
 msgstr "Comunidad actualizada."
 
@@ -775,11 +775,11 @@ msgstr "Título"
 msgid "image"
 msgstr "imagen"
 
-#: gifts/models.py:40 projects/models.py:170
+#: gifts/models.py:40 projects/models.py:172
 msgid "How many / how much?"
 msgstr "¿Cuánto / cuántos?"
 
-#: gifts/models.py:41 projects/forms.py:67 projects/models.py:171
+#: gifts/models.py:41 projects/forms.py:67 projects/models.py:173
 msgid "Unit"
 msgstr "Unidad"
 
@@ -1635,14 +1635,13 @@ msgstr "Abierto"
 msgid "All"
 msgstr "Todos"
 
-#: matches/views.py:90 matches/views.py:148 postman_wrappers.py:219
-#: references/views.py:128
-msgid "Received"
-msgstr "Recibidos"
+#: matches/views.py:90 matches/views.py:148
+msgid "Requests to you"
+msgstr "Solicitudes para ti"
 
-#: matches/views.py:90 matches/views.py:148 postman_wrappers.py:221
-msgid "Sent"
-msgstr "Enviados"
+#: matches/views.py:90 matches/views.py:148
+msgid "Your requests"
+msgstr "Tus solicitudes"
 
 #: matches/views.py:106
 msgid "No requests yet."
@@ -1779,6 +1778,14 @@ msgstr "Marcar todo como leído"
 msgid "No notifications yet."
 msgstr "Todavía no hay notificaciones."
 
+#: postman_wrappers.py:219 references/views.py:128
+msgid "Received"
+msgstr "Recibidos"
+
+#: postman_wrappers.py:221
+msgid "Sent"
+msgstr "Enviados"
+
 #: projects/forms.py:24
 msgid "e.g. Building a rocket stove"
 msgstr "p. ej. Construir una estufa cohete"
@@ -1890,31 +1897,31 @@ msgstr "Herramienta"
 msgid "Knowledge"
 msgstr "Conocimiento"
 
-#: projects/models.py:159
+#: projects/models.py:161
 msgid "Kind"
 msgstr "Tipo"
 
-#: projects/models.py:160
+#: projects/models.py:162
 msgid "What is needed?"
 msgstr "¿Qué se necesita?"
 
-#: projects/models.py:168
+#: projects/models.py:170
 msgid "Gift category"
 msgstr "Categoría de regalo"
 
-#: projects/models.py:172
+#: projects/models.py:174
 msgid "Details"
 msgstr "Detalles"
 
-#: projects/models.py:181
+#: projects/models.py:183
 msgid "Need"
 msgstr "Necesidad"
 
-#: projects/models.py:182
+#: projects/models.py:184
 msgid "Needs"
 msgstr "Necesidades"
 
-#: projects/models.py:263
+#: projects/models.py:269
 #, python-format
 msgid "%(promised)s of %(amount)s promised"
 msgstr "%(promised)s de %(amount)s prometidos"
@@ -3066,23 +3073,23 @@ msgstr "Habilidades (comunidades)"
 msgid "%(actor)s is interested in your community's skill: %(title)s"
 msgstr "A %(actor)s le interesa una habilidad de tu comunidad: %(title)s"
 
-#: skills/models.py:306
+#: skills/models.py:304
 msgid "What do you want to learn, or what do you need?"
 msgstr "¿Qué quieres aprender o qué necesitas?"
 
-#: skills/models.py:313
+#: skills/models.py:311
 msgid "Skill Wish"
 msgstr "Deseo de habilidad"
 
-#: skills/models.py:314
+#: skills/models.py:312
 msgid "Skill Wishes"
 msgstr "Deseos de habilidades"
 
-#: skills/models.py:339
+#: skills/models.py:337
 msgid "offered to teach you"
 msgstr "se ha ofrecido a enseñarte"
 
-#: skills/models.py:342
+#: skills/models.py:340
 #, python-format
 msgid "%(actor)s offered to teach you: %(title)s"
 msgstr "%(actor)s se ha ofrecido a enseñarte: %(title)s"

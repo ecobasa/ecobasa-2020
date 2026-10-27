@@ -341,11 +341,24 @@ class Suggestion(models.Model):
 
     @property
     def url(self):
-        """Where to act on it: the offer form for a project need, else the thing's page
-        (where a gift or a skill can be asked for)."""
+        """The thing's page: a project need on its project's page."""
         other = self.other
         if other is None:
             return ""
         if self.other_model == "need":
-            return f"{reverse('projects:offer_help', args=[other.project_id])}?need={other.pk}"
+            return f"{other.project.get_absolute_url()}#need-{other.pk}"
         return other.get_absolute_url()
+
+    @property
+    def helps(self):
+        """Whether the other side needs something, so the reader can help with it."""
+        other = self.other
+        return self.other_model in ("need", "skillwish") or getattr(other, "type", "") == "wish"
+
+    @property
+    def action_url(self):
+        """Where to act on it: the offer form for a project need, else the thing's page
+        (where a gift or a skill can be asked for or offered)."""
+        if self.other_model == "need" and self.other is not None:
+            return f"{reverse('projects:offer_help', args=[self.other.project_id])}?need={self.other.pk}"
+        return self.url

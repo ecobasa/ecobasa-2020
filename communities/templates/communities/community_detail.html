@@ -376,6 +376,7 @@ document.addEventListener('alpine:init', () => {
 		init() {
 			this.$watch('vOpen', v => document.body.classList.toggle('overflow-hidden', v));
 			document.addEventListener('volunteer-modal-close', () => { this.vOpen = false; });
+			{% if help_wish %}window.addEventListener('load', () => this.openVolunteer('{{ help_wish.skill|escapejs }}', 'wish', {{ help_wish.skill_id }}));{% endif %}
 		},
 	}));
 });

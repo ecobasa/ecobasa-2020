@@ -138,7 +138,7 @@ class Need(models.Model):
         (KIND_KNOWLEDGE, _("Knowledge")),
     ]
     KIND_ICONS = {
-        KIND_SKILL: "fa-hands-helping",
+        KIND_SKILL: "fa-graduation-cap",
         KIND_MATERIAL: "fa-cubes",
         KIND_TOOL: "fa-screwdriver-wrench",
         KIND_KNOWLEDGE: "fa-lightbulb",
@@ -146,6 +146,8 @@ class Need(models.Model):
     # Things that can be given, like gifts: they can have a gift category, so they show
     # up with gifts of that category on the map and next to matching gift offers.
     THING_KINDS = (KIND_MATERIAL, KIND_TOOL)
+    # Pill colour by kind, like skills (purple) and gifts (primary) elsewhere
+    KIND_COLOURS = {KIND_SKILL: "bg-purple", KIND_KNOWLEDGE: "bg-purple", KIND_MATERIAL: "bg-primary", KIND_TOOL: "bg-primary"}
 
     UNIT_PEOPLE = units.PEOPLE
     UNIT_CHOICES = units.UNIT_CHOICES
@@ -187,6 +189,10 @@ class Need(models.Model):
     @property
     def icon(self):
         return self.KIND_ICONS.get(self.kind, "fa-circle")
+
+    @property
+    def colour(self):
+        return self.KIND_COLOURS.get(self.kind, "bg-primary")
 
     @property
     def display_title(self):
