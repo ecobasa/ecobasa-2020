@@ -141,6 +141,9 @@ def test_skill_wishes_and_needs_meet_the_skills_of_people_and_communities(anna, 
     client = Client()
     client.force_login(ben)
     assert client.get(about_community_wish.url).context["help_wish"] == community_wish
+    # Its title links the community's profile, only the button opens the form
+    assert f'href="{community.get_absolute_url()}"' in str(about_community_wish.title_html)
+    assert about_community_wish.action_url == about_community_wish.url
     assert not about_teaching.helps
 
 

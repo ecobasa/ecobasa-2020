@@ -382,6 +382,15 @@ class Suggestion(models.Model):
                 community=format_html(link, project.community.get_absolute_url(), project.community.name),
                 title=title,
             )
+        if model == "skillwish" and other.community_id:
+            # The community links to its profile; the button opens its volunteer form
+            community = other.community
+            return format_html(
+                escape(_("%(community)s is looking for: %(skill)s")).replace("%(community)s", "{community}")
+                .replace("%(skill)s", "{skill}"),
+                community=format_html(link, community.get_absolute_url(), community.name),
+                skill=other.skill.get_name(),
+            )
         return format_html(link, self.url, self.text)
 
     @property
