@@ -23,9 +23,10 @@
             <div class="text-xs opacity-70 mt-0.5 flex flex-wrap gap-x-2">
               {% if listing.kind != "other" %}<span>{{ listing.get_kind_display }}</span>{% endif %}
               {% for cat in listing.categories.all %}<span>{{ cat.name }}</span>{% endfor %}
-              <span>{% include "projects/_freshness.html" with when=listing.updated_at label_updated=True %}</span>
+              <span class="sm:hidden">{% include "projects/_freshness.html" with when=listing.updated_at label_updated=True %}</span>
             </div>
           </div>
+          <span class="hidden sm:inline-flex text-xs opacity-70 whitespace-nowrap">{% include "projects/_freshness.html" with when=listing.updated_at label_updated=True %}</span>
           {% if listing.match_count %}
             <span class="pill bg-purple text-xs" title="{% trans 'Requests' %}"><i class="fa-solid fa-handshake mr-1"></i>{{ listing.match_count }}</span>
           {% endif %}
