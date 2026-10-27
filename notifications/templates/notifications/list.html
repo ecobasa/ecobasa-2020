@@ -21,10 +21,9 @@
   {% if notifications %}
     <div class="space-y-2">
       {% for n in notifications %}
+        {# Marked as read in the background; the link itself opens (htmx on a link would cancel it) #}
         <a href="{{ n.link|default:'#' }}"
-           hx-post="{% url 'notifications:mark_read' n.pk %}"
-           hx-trigger="click"
-           hx-swap="none"
+           onclick="fetch('{% url 'notifications:mark_read' n.pk %}', {method: 'POST', keepalive: true, headers: {'X-CSRFToken': '{{ csrf_token }}'}})"
            class="flex items-start gap-3 border rounded-lg p-3 border-2 focus:border-2
              {% if not n.is_read %}bg-secondary{% else %}bg-secondary bg-opacity-60 hover:bg-opacity-100{% endif %}
              {% if n.tag == 'accepted' %}{% if n.is_read %}border-green/70 hover:border-green{% else %}border-green{% endif %}
