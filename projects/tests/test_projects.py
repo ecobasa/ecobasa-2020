@@ -16,7 +16,7 @@ from skills.models import SkillTaxonomy
 from templatetags.site_tags import ago
 from users.models import User
 
-from ..calendar import stays_of
+from matches.calendar import stays_of
 from ..freshness import archive_stale_projects, make_confirm_token
 from ..models import Need, NeedOffer, Project
 
@@ -267,7 +267,7 @@ def test_helper_writes_a_reference_about_the_community(project, helper, ambassad
 
 @pytest.mark.django_db
 def test_calendar_is_for_the_ambassador_only(community, helper):
-    assert _client(helper).get(reverse("projects:calendar", args=[community.slug])).status_code == 403
+    assert _client(helper).get(reverse("matches:calendar", args=[community.slug])).status_code == 403
 
 
 @pytest.mark.django_db
@@ -287,7 +287,7 @@ def test_calendar_shows_stays_and_warns_about_overbooking(community, project, am
     assert len(dated) == 3 and len(undated) == 1
 
     response = _client(ambassador).get(
-        reverse("projects:calendar", args=[community.slug]), {"month": (day + timedelta(days=1)).strftime("%Y-%m")},
+        reverse("matches:calendar", args=[community.slug]), {"month": (day + timedelta(days=1)).strftime("%Y-%m")},
     )
     assert response.status_code == 200
     overbooked = [d.date for d in response.context["overbooked_days"]]
@@ -300,7 +300,7 @@ def test_calendar_shows_stays_and_warns_about_overbooking(community, project, am
 def test_calendar_lists_open_needs(community, project, ambassador):
     project.needs.filter(title="Clay").update(covered_at=timezone.now())
     response = _client(ambassador).get(
-        reverse("projects:calendar", args=[community.slug]), {"month": project.starts_on.strftime("%Y-%m")},
+        reverse("matches:calendar", args=[community.slug]), {"month": project.starts_on.strftime("%Y-%m")},
     )
     [(listed, needs)] = response.context["open_needs"]
     assert listed == project and [n.title for n in needs] == ["Masonry"]
@@ -308,7 +308,7 @@ def test_calendar_lists_open_needs(community, project, ambassador):
 
 @pytest.mark.django_db
 def test_calendar_survives_a_bad_month(community, ambassador):
-    response = _client(ambassador).get(reverse("projects:calendar", args=[community.slug]), {"month": "nope"})
+    response = _client(ambassador).get(reverse("matches:calendar", args=[community.slug]), {"month": "nope"})
     assert response.status_code == 200
 
 

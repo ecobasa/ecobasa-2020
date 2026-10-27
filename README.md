@@ -89,7 +89,7 @@ Communities post concrete projects ("Build a rocket stove, March–April, food a
 provided") with what they need: people with a skill, materials, tools or knowledge.
 People offer help on the project page; the offer is a match like a volunteer stay (date-only
 counter-proposals, references afterwards). Ambassadors see projects, requested and
-confirmed stays and what is still missing in their calendar (`/projects/calendar/<community>/`),
+confirmed stays and what is still missing in their calendar (`/matches/calendar/<community>/`),
 with a warning when more guests are confirmed than the community's maximum.
 
 Projects stay current: dated ones are archived the day after they end; any project nobody

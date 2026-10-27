@@ -53,7 +53,7 @@
               <button type="submit" class="btn btn-purple"><i class="fa-solid fa-box-archive mr-1"></i>{% trans "Archive" %}</button>
             </form>
           {% endif %}
-          <a href="{% url 'projects:calendar' community.slug %}" class="btn btn-purple"><i class="fa-regular fa-calendar mr-1"></i>{% trans "Calendar" %}</a>
+          <a href="{% url 'matches:calendar' community.slug %}" class="btn btn-purple"><i class="fa-regular fa-calendar mr-1"></i>{% trans "Calendar" %}</a>
         </div>
       {% endif %}
 

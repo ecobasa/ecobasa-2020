@@ -15,9 +15,9 @@ from django.shortcuts import get_object_or_404, render
 from django.utils import timezone
 
 from communities.models import Community
-from matches.models import Match
+from projects.models import Project
 
-from .models import Project
+from .models import Match
 
 _ACTIVE = (Match.STATUS_PENDING, Match.STATUS_COUNTER, Match.STATUS_ACCEPTED)
 
@@ -155,7 +155,7 @@ def calendar(request, community_slug):
     ]
     previous_month = (first - timedelta(days=1)).replace(day=1)
     next_month = last + timedelta(days=1)
-    return render(request, "projects/calendar.html", {
+    return render(request, "matches/calendar.html", {
         "community": community,
         "calendar_community": community,
         "month": first,
