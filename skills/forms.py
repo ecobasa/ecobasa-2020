@@ -22,17 +22,32 @@ class SkillAutocompleteWidget(forms.TextInput):
         self.attrs.setdefault("data-skill-autocomplete", "true")
 
 
+def _shrunk(image):
+    """A newly uploaded photo as a JPEG of a sensible size, turned upright; anything
+    else (nothing, the photo already saved) as it is."""
+    from django.core.files.uploadedfile import UploadedFile
+    from references.reference_requests import shrink_photo
+
+    if not isinstance(image, UploadedFile):
+        return image
+    try:
+        return shrink_photo(image)
+    except ValueError:
+        raise forms.ValidationError(_("Please upload a photo."))
+
+
 class UserSkillForm(forms.ModelForm):
     skill_name = forms.CharField(
         label=_("Skill"),
         max_length=100,
         widget=SkillAutocompleteWidget(attrs={"placeholder": _("e.g. Carpentry, Solar Energy…")}),
     )
-    skill_taxonomy_data = forms.CharField(widget=forms.HiddenInput(), required=True)
+    # Empty when editing without picking the skill again: the skill stays as it is
+    skill_taxonomy_data = forms.CharField(widget=forms.HiddenInput(), required=False)
 
     class Meta:
         model  = UserSkill
-        fields = ["level", "description", "available"]
+        fields = ["level", "description", "image", "available"]
         widgets = {
             "description": forms.Textarea(attrs={"rows": 4}),
         }
@@ -41,17 +56,25 @@ class UserSkillForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         if self.instance and self.instance.pk:
             self.fields["skill_name"].initial = self.instance.skill.get_name()
+            # The current skill counts as picked, so the form can be saved without picking it again
+            import json as _json
+            self.fields["skill_taxonomy_data"].initial = _json.dumps({"slug": self.instance.skill.slug})
         self.helper = FormHelper()
+        self.helper.form_tag = False  # the template has the form, with enctype for the photo
         self.helper.layout = Layout(
             Field("skill_name"),
             Field("skill_taxonomy_data"),
             Field("level"),
             Field("description"),
+            Field("image"),
             Field("available"),
             Submit("submit", _("Save skill"), css_class="btn mt-2"),
         )
 
     def clean_skill_taxonomy_data(self):
+        data = self.cleaned_data.get("skill_taxonomy_data")
+        if self.instance.pk and (not data or data == self.fields["skill_taxonomy_data"].initial):
+            return ""  # the skill stays as it is
         try:
             import json as _json
             _json.loads(self.cleaned_data.get("skill_taxonomy_data", ""))
@@ -59,9 +82,12 @@ class UserSkillForm(forms.ModelForm):
             raise forms.ValidationError(_("Please select a skill from the suggestions."))
         return self.cleaned_data["skill_taxonomy_data"]
 
+    def clean_image(self):
+        return _shrunk(self.cleaned_data.get("image"))
+
     def save(self, commit=True):
-        skill, _ = _skill_from_taxonomy_data(self.cleaned_data["skill_taxonomy_data"])
-        self.instance.skill = skill
+        if self.cleaned_data["skill_taxonomy_data"]:
+            self.instance.skill, _ = _skill_from_taxonomy_data(self.cleaned_data["skill_taxonomy_data"])
         return super().save(commit=commit)
 
 
@@ -109,6 +135,10 @@ class UserSkillOrWishForm(forms.Form):
         widget=forms.Textarea(attrs={"rows": 4, "class": "form-input"}),
         label=_("Description"),
     )
+    image = forms.ImageField(required=False, label=_("A photo of your work"))
+
+    def clean_image(self):
+        return _shrunk(self.cleaned_data.get("image"))
 
     def clean_skill_taxonomy_data(self):
         try:
@@ -135,6 +165,9 @@ class UserSkillOrWishForm(forms.Form):
                     "available":   self.cleaned_data.get("available") or True,
                 },
             )
+            if self.cleaned_data.get("image"):
+                us.image = self.cleaned_data["image"]
+                us.save(update_fields=["image"])
             return us, None
 
 

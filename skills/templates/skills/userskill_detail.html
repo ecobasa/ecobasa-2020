@@ -34,7 +34,7 @@
         </a>
         <div class="flex items-center gap-2 mt-1">
           <span class="pill bg-purple">
-            <i class="fa fa-graduation-cap mr-1"></i>{{ skill }}
+            {% include "skills/_skill_icon.html" with us=user_skill %}{{ skill }}
           </span>
           {% if user_skill.level %}
             <span class="pill bg-primary text-xs">{{ user_skill.get_level_display }}</span>
@@ -54,6 +54,11 @@
       {% endif %}
     </div>
 
+    {% if user_skill.image %}
+      <a href="{{ user_skill.image.url }}" target="_blank" class="block mb-4">
+        <img src="{{ user_skill.image.url }}" alt="{% blocktrans with skill=skill %}Work: {{ skill }}{% endblocktrans %}" class="rounded-lg max-h-96 w-auto object-cover">
+      </a>
+    {% endif %}
     {% if user_skill.description %}
       <div class="prose text-sm text-brown">{{ user_skill.description|linebreaksbr }}</div>
     {% else %}

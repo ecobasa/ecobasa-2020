@@ -124,13 +124,44 @@ def communityskill_detail(request, skill_slug, community_slug):
 # ── User skill management ────────────────────────────────────────────
 
 @login_required
+def mine(request):
+    """Your skills in the dashboard, with their photo, description, references and
+    requests; and the skills you would like to learn."""
+    from collections import Counter
+    from django.contrib.contenttypes.models import ContentType
+    from django.db.models import Count
+    from dashboard_lists import Choice, query_url
+    from references.models import Reference
+
+    box = "wish" if request.GET.get("box") == "wish" else "offer"
+    from matches.models import Match
+
+    skills = list(request.user.user_skills.select_related("skill").annotate(
+        extra_count=Count("extra_matches", distinct=True),
+    ).order_by("skill__name"))
+    # Generic relations are keyed by text, so these are counted per id
+    about = {"content_type": ContentType.objects.get_for_model(UserSkill), "object_id__in": [str(us.pk) for us in skills]}
+    references = Counter(Reference.objects.filter(**about).values_list("object_id", flat=True))
+    requests = Counter(Match.objects.filter(**about).values_list("object_id", flat=True))
+    for us in skills:
+        us.reference_count = references[str(us.pk)]
+        us.request_count = requests[str(us.pk)] + us.extra_count
+    wishes = list(request.user.skill_wishes.select_related("skill").order_by("skill__name"))
+    tabs = [
+        Choice(label, query_url(request, box=key), key == box, count)
+        for key, label, count in (("offer", _("Your skills"), len(skills)), ("wish", _("Skills you would like to learn"), len(wishes)))
+    ]
+    return render(request, "skills/mine.html", {"tabs": tabs, "box": box, "skills": skills, "wishes": wishes})
+
+
+@login_required
 def userskill_add(request):
     initial_mode = request.GET.get("mode", UserSkillOrWishForm.MODE_OFFER)
     if initial_mode not in (UserSkillOrWishForm.MODE_OFFER, UserSkillOrWishForm.MODE_WISH):
         initial_mode = UserSkillOrWishForm.MODE_OFFER
 
     if request.method == "POST":
-        form = UserSkillOrWishForm(request.POST)
+        form = UserSkillOrWishForm(request.POST, request.FILES)
         if form.is_valid():
             us, wish = form.save(user=request.user)
             if wish is not None:
@@ -206,7 +237,7 @@ def userskill_edit(request, skill_slug, user_slug):
         return redirect("users:login")
     skill      = get_object_or_404(Skill, slug=skill_slug)
     user_skill = get_object_or_404(UserSkill, skill=skill, user=request.user)
-    form = UserSkillForm(request.POST or None, instance=user_skill)
+    form = UserSkillForm(request.POST or None, request.FILES or None, instance=user_skill)
     if form.is_valid():
         form.save()
         messages.success(request, _("Skill updated."))

@@ -24,7 +24,7 @@
           <span class="inline-flex items-center gap-2">
             {% if is_party %}<input type="checkbox" name="user_skill" value="{{ us.pk }}" class="form-checkbox" aria-label="{% trans 'Ask for this too' %}"{% if us.pk in asked_skill_ids %} checked{% endif %}>{% endif %}
             <a href="{{ us.get_absolute_url }}" class="pill pill-lg bg-purple{% if not us.available %} bg-opacity-60{% endif %}">
-              <i class="fa fa-graduation-cap mr-1"></i>{{ us.skill.get_name }}
+              {% include "skills/_skill_icon.html" %}{{ us.skill.get_name }}
               {% if us.level %}<span class="ml-1 text-xs opacity-80">· {{ us.get_level_display }}</span>{% endif %}
               {% if us.reference_count %}<span class="ml-1 text-xs opacity-80" title="{% trans 'References' %}"><i class="fa-solid fa-comments mr-0.5"></i>{{ us.reference_count }}</span>{% endif %}
             </a>

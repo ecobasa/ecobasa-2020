@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ecobasa\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-27 14:27+0100\n"
+"POT-Creation-Date: 2026-10-27 14:35+0100\n"
 "PO-Revision-Date: 2026-10-23 12:00+0200\n"
 "Last-Translator: ecobasa\n"
 "Language-Team: fr\n"
@@ -53,7 +53,7 @@ msgstr "Ajouter des compétences, séparées par des virgules"
 #: matches/templates/matches/match_detail.html:202
 #: skills/templates/skills/communityskill_detail.html:184
 #: skills/templates/skills/skillwish_user_detail.html:152
-#: skills/templates/skills/userskill_detail.html:202 users/models.py:98
+#: skills/templates/skills/userskill_detail.html:207 users/models.py:98
 #: users/templates/users/detail.html:94
 msgid "Location"
 msgstr "Lieu"
@@ -122,7 +122,7 @@ msgstr ""
 "votre communauté"
 
 #: communities/models.py:27 gifts/models.py:47 projects/models.py:36
-#: skills/forms.py:110 skills/forms.py:171 skills/forms.py:242
+#: skills/forms.py:128 skills/forms.py:196 skills/forms.py:267
 #: skills/models.py:128
 #: skills/templates/skills/_userskill_add_several_row.html:20
 #: skills/templates/skills/communityskill_form.html:76
@@ -265,7 +265,7 @@ msgid "Community"
 msgstr "Communauté"
 
 #: communities/models.py:158 templates/_navbar.html:28
-#: templates/_navbar.html:238 templates/dashboard/base.html:45
+#: templates/_navbar.html:238 templates/dashboard/base.html:49
 #: users/templates/users/detail.html:67
 msgid "Communities"
 msgstr "Communautés"
@@ -359,6 +359,7 @@ msgstr "Fermer"
 #: gifts/templates/gifts/mine.html:33
 #: projects/templates/projects/project_detail.html:47
 #: references/templates/references/_reference_card.html:34
+#: skills/templates/skills/mine.html:37 skills/templates/skills/mine.html:55
 msgid "Edit"
 msgstr "Modifier"
 
@@ -368,6 +369,7 @@ msgid "Skills you can learn here"
 msgstr "Compétences à apprendre ici"
 
 #: communities/templates/communities/community_detail.html:135
+#: skills/templates/skills/mine.html:10
 #: skills/templates/skills/skill_list.html:13
 msgid "Add a skill"
 msgstr "Ajouter une compétence"
@@ -524,7 +526,7 @@ msgstr ""
 #: skills/templates/skills/skillwish_form.html:39
 #: skills/templates/skills/userskill_add_several.html:44
 #: skills/templates/skills/userskill_confirm_delete.html:17
-#: skills/templates/skills/userskill_form.html:115
+#: skills/templates/skills/userskill_form.html:123
 #: templates/postman/write.html:87 users/templates/users/register.html:37
 #: users/templates/users/update.html:64
 msgid "Cancel"
@@ -869,8 +871,8 @@ msgstr "Aucun résultat"
 
 #: gifts/templates/gifts/_gifts_list_partial.html:48
 #: gifts/templates/gifts/_gifts_list_partial.html:79 matches/models.py:121
-#: matches/templates/matches/_stay_legend.html:3 skills/forms.py:27
-#: skills/forms.py:84 skills/forms.py:157 skills/forms.py:192
+#: matches/templates/matches/_stay_legend.html:3 skills/forms.py:41
+#: skills/forms.py:102 skills/forms.py:182 skills/forms.py:217
 #: skills/models.py:132 skills/templates/skills/communityskill_form.html:53
 #: skills/templates/skills/userskill_form.html:53
 msgid "Skill"
@@ -935,8 +937,8 @@ msgstr "Souhait de"
 #: gifts/templates/gifts/listing_detail.html:158
 #: skills/templates/skills/communityskill_detail.html:112
 #: skills/templates/skills/communityskill_detail.html:217
-#: skills/templates/skills/userskill_detail.html:128
-#: skills/templates/skills/userskill_detail.html:237
+#: skills/templates/skills/userskill_detail.html:133
+#: skills/templates/skills/userskill_detail.html:242
 msgid "Express Interest"
 msgstr "Montrer ton intérêt"
 
@@ -959,7 +961,7 @@ msgstr "Envoyer l'offre"
 
 #: gifts/templates/gifts/listing_detail.html:167
 #: skills/templates/skills/communityskill_detail.html:224
-#: skills/templates/skills/userskill_detail.html:244
+#: skills/templates/skills/userskill_detail.html:249
 msgid "Log in to express interest"
 msgstr "Connecte-toi pour montrer ton intérêt"
 
@@ -1138,7 +1140,7 @@ msgstr "%(listing_type)s supprimé(e)"
 msgid "Skill / Teaching"
 msgstr "Compétence / transmission"
 
-#: gifts/views.py:386 skills/models.py:182
+#: gifts/views.py:386 skills/models.py:184
 msgid "User Skill"
 msgstr "Compétence (personne)"
 
@@ -1392,7 +1394,7 @@ msgstr "Demander aussi"
 #: references/templates/references/references_list.html:7
 #: templates/_navbar.html:154 templates/_navbar.html:169
 #: templates/_navbar.html:263 templates/_navbar.html:270
-#: templates/dashboard/base.html:29
+#: templates/dashboard/base.html:33
 msgid "References"
 msgstr "Références"
 
@@ -1420,7 +1422,7 @@ msgstr ""
 msgid "Ask for these too"
 msgstr "Demander aussi"
 
-#: matches/templates/matches/_skill_pill.html:2 skills/forms.py:92
+#: matches/templates/matches/_skill_pill.html:2 skills/forms.py:110
 #: skills/models.py:169 skills/templates/skills/userskill_add_several.html:24
 #: skills/templates/skills/userskill_form.html:64
 msgid "Level"
@@ -1735,7 +1737,7 @@ msgstr ""
 #: matches/templates/matches/email/match_response.html:50
 #: matches/templates/matches/email/match_response.txt:10
 #: skills/templates/skills/communityskill_detail.html:90
-#: skills/templates/skills/userskill_detail.html:106
+#: skills/templates/skills/userskill_detail.html:111
 msgid "View"
 msgstr "Voir"
 
@@ -1842,7 +1844,7 @@ msgstr "Type de lieu proposé"
 #: matches/templates/matches/match_detail.html:342
 #: skills/templates/skills/communityskill_detail.html:187
 #: skills/templates/skills/skillwish_user_detail.html:155
-#: skills/templates/skills/userskill_detail.html:205
+#: skills/templates/skills/userskill_detail.html:210
 msgid "Search for a location…"
 msgstr "Rechercher un lieu…"
 
@@ -1889,7 +1891,7 @@ msgid "Nothing here with this status."
 msgstr "Rien avec ce statut."
 
 #: matches/views.py:34 templates/_navbar.html:143 templates/_navbar.html:262
-#: templates/dashboard/base.html:49
+#: templates/dashboard/base.html:53
 msgid "Volunteer Visits"
 msgstr "Visites de bénévoles"
 
@@ -3024,7 +3026,7 @@ msgstr ""
 
 #: references/templates/references/references_list.html:34
 #: templates/_navbar.html:155 templates/_navbar.html:170
-#: templates/dashboard/base.html:34 templates/dashboard/base.html:40
+#: templates/dashboard/base.html:38 templates/dashboard/base.html:44
 msgid "Waiting for your confirmation"
 msgstr "En attente de ta confirmation"
 
@@ -3136,70 +3138,79 @@ msgstr "Espagnol"
 msgid "French"
 msgstr "Français"
 
-#: skills/forms.py:29 skills/forms.py:86
+#: skills/forms.py:36
+msgid "Please upload a photo."
+msgstr "Merci d'envoyer une photo."
+
+#: skills/forms.py:43 skills/forms.py:104
 msgid "e.g. Carpentry, Solar Energy…"
 msgstr "p. ex. Charpenterie, Énergie solaire…"
 
-#: skills/forms.py:51 skills/forms.py:214
+#: skills/forms.py:66 skills/forms.py:239
 msgid "Save skill"
 msgstr "Enregistrer la compétence"
 
-#: skills/forms.py:59 skills/forms.py:118 skills/forms.py:222
+#: skills/forms.py:74 skills/forms.py:140 skills/forms.py:247
 msgid "Please select a skill from the suggestions."
 msgstr "Choisis une compétence parmi les suggestions."
 
-#: skills/forms.py:73 skills/templates/skills/userskill_add_several.html:21
+#: skills/forms.py:91 skills/templates/skills/userskill_add_several.html:21
 #: skills/templates/skills/userskill_form.html:32
 msgid "I can offer / teach this skill"
 msgstr "Je peux proposer / transmettre cette compétence"
 
-#: skills/forms.py:74 skills/templates/skills/userskill_add_several.html:30
+#: skills/forms.py:92 skills/templates/skills/userskill_add_several.html:30
 #: skills/templates/skills/userskill_form.html:44
 msgid "I want to learn this or need help with it"
 msgstr "Je veux l'apprendre ou j'ai besoin d'aide"
 
-#: skills/forms.py:81 skills/templates/skills/userskill_form.html:24
+#: skills/forms.py:99 skills/templates/skills/userskill_form.html:24
 msgid "How do you relate to this skill?"
 msgstr "Quel est ton rapport à cette compétence ?"
 
-#: skills/forms.py:96 skills/forms.py:234
+#: skills/forms.py:114 skills/forms.py:259
 #: skills/templates/skills/userskill_add_several.html:32
 msgid "Any level"
 msgstr "Tout niveau"
 
-#: skills/forms.py:98 skills/forms.py:236
+#: skills/forms.py:116 skills/forms.py:261
 #: skills/templates/skills/userskill_add_several.html:34
 #: skills/templates/skills/userskill_form.html:75
 msgid "My current level"
 msgstr "Mon niveau actuel"
 
-#: skills/forms.py:104 skills/models.py:174
-#: skills/templates/skills/userskill_form.html:102
+#: skills/forms.py:122 skills/models.py:174
+#: skills/templates/skills/userskill_form.html:110
 msgid "Available to teach / share"
 msgstr "Disponible pour transmettre / partager"
 
-#: skills/forms.py:146 skills/templates/skills/communityskill_form.html:32
+#: skills/forms.py:130 skills/models.py:177
+#: skills/templates/skills/userskill_form.html:100
+msgid "A photo of your work"
+msgstr "Une photo de ton travail"
+
+#: skills/forms.py:171 skills/templates/skills/communityskill_form.html:32
 msgid "We can offer / teach this skill"
 msgstr "Nous pouvons proposer / transmettre cette compétence"
 
-#: skills/forms.py:147 skills/templates/skills/communityskill_form.html:44
+#: skills/forms.py:172 skills/templates/skills/communityskill_form.html:44
 msgid "We're looking for people with this skill"
 msgstr "Nous cherchons des personnes ayant cette compétence"
 
-#: skills/forms.py:154
+#: skills/forms.py:179
 msgid "How does your community relate to this skill?"
 msgstr "Quel est le rapport de votre communauté à cette compétence ?"
 
-#: skills/forms.py:159 skills/forms.py:194
+#: skills/forms.py:184 skills/forms.py:219
 msgid "e.g. Permaculture, Natural Building…"
 msgstr "p. ex. Permaculture, Éco-construction…"
 
-#: skills/forms.py:163 skills/views.py:361
+#: skills/forms.py:188 skills/views.py:392
 msgid "Any level — beginners welcome"
 msgstr "Tout niveau – débutants bienvenus"
 
-#: skills/forms.py:165 skills/templates/skills/communityskill_form.html:64
-#: skills/views.py:355
+#: skills/forms.py:190 skills/templates/skills/communityskill_form.html:64
+#: skills/views.py:386
 msgid "Minimum level sought"
 msgstr "Niveau minimum recherché"
 
@@ -3228,53 +3239,53 @@ msgstr "Expert·e"
 msgid "How did you learn this? What can you offer?"
 msgstr "Comment l'as-tu appris ? Que peux-tu proposer ?"
 
-#: skills/models.py:183
+#: skills/models.py:185
 msgid "User Skills"
 msgstr "Compétences (personnes)"
 
-#: skills/models.py:225 skills/models.py:271
+#: skills/models.py:227 skills/models.py:273
 msgid "expressed interest"
 msgstr "a montré son intérêt"
 
-#: skills/models.py:228
+#: skills/models.py:230
 #, python-format
 msgid "%(actor)s is interested in your skill: %(title)s"
 msgstr "%(actor)s s’intéresse à ta compétence : %(title)s"
 
-#: skills/models.py:234
+#: skills/models.py:236
 msgid "What can visitors learn here?"
 msgstr "Que peuvent apprendre les visiteurs ici ?"
 
-#: skills/models.py:241
+#: skills/models.py:243
 msgid "Community Skill"
 msgstr "Compétence (communauté)"
 
-#: skills/models.py:242
+#: skills/models.py:244
 msgid "Community Skills"
 msgstr "Compétences (communautés)"
 
-#: skills/models.py:274
+#: skills/models.py:276
 #, python-format
 msgid "%(actor)s is interested in your community's skill: %(title)s"
 msgstr "%(actor)s s’intéresse à une compétence de ta communauté : %(title)s"
 
-#: skills/models.py:304
+#: skills/models.py:306
 msgid "What do you want to learn, or what do you need?"
 msgstr "Que veux-tu apprendre ou de quoi as-tu besoin ?"
 
-#: skills/models.py:311
+#: skills/models.py:313
 msgid "Skill Wish"
 msgstr "Souhait de compétence"
 
-#: skills/models.py:312
+#: skills/models.py:314
 msgid "Skill Wishes"
 msgstr "Souhaits de compétences"
 
-#: skills/models.py:337
+#: skills/models.py:339
 msgid "offered to teach you"
 msgstr "propose de te la transmettre"
 
-#: skills/models.py:340
+#: skills/models.py:342
 #, python-format
 msgid "%(actor)s offered to teach you: %(title)s"
 msgstr "%(actor)s propose de te transmettre : %(title)s"
@@ -3314,17 +3325,17 @@ msgstr ""
 
 #: skills/templates/skills/communityskill_detail.html:50
 #: skills/templates/skills/skillwish_user_detail.html:58
-#: skills/templates/skills/userskill_detail.html:60
+#: skills/templates/skills/userskill_detail.html:65
 msgid "No description provided."
 msgstr "Aucune description."
 
 #: skills/templates/skills/communityskill_detail.html:58
-#: skills/templates/skills/userskill_detail.html:74
+#: skills/templates/skills/userskill_detail.html:79
 msgid "Incoming interests"
 msgstr "Intérêts reçus"
 
 #: skills/templates/skills/communityskill_detail.html:88
-#: skills/templates/skills/userskill_detail.html:104
+#: skills/templates/skills/userskill_detail.html:109
 msgid "Respond"
 msgstr "Répondre"
 
@@ -3334,20 +3345,20 @@ msgstr "La communauté n'a pas indiqué de lieu."
 
 #: skills/templates/skills/communityskill_detail.html:152
 #: skills/templates/skills/skillwish_user_detail.html:120
-#: skills/templates/skills/userskill_detail.html:170
+#: skills/templates/skills/userskill_detail.html:175
 #: users/templates/users/register.html:30
 msgid "Your location"
 msgstr "Ton lieu"
 
 #: skills/templates/skills/communityskill_detail.html:156
 #: skills/templates/skills/skillwish_user_detail.html:124
-#: skills/templates/skills/userskill_detail.html:174
+#: skills/templates/skills/userskill_detail.html:179
 msgid "City, address…"
 msgstr "Ville, adresse…"
 
 #: skills/templates/skills/communityskill_detail.html:161
 #: skills/templates/skills/skillwish_user_detail.html:129
-#: skills/templates/skills/userskill_detail.html:179
+#: skills/templates/skills/userskill_detail.html:184
 #: templates/maps/_location_picker.html:18
 msgid "Use my current location"
 msgstr "Utiliser ma position actuelle"
@@ -3360,7 +3371,7 @@ msgstr "Ajouter une compétence"
 #: skills/templates/skills/communityskill_form.html:5
 #: skills/templates/skills/communityskill_form.html:106
 #: skills/templates/skills/userskill_form.html:5
-#: skills/templates/skills/userskill_form.html:126
+#: skills/templates/skills/userskill_form.html:134
 msgid "Edit skill"
 msgstr "Modifier la compétence"
 
@@ -3409,13 +3420,60 @@ msgstr ""
 "exactement ?"
 
 #: skills/templates/skills/communityskill_form.html:89
-#: skills/templates/skills/userskill_form.html:109
+#: skills/templates/skills/userskill_form.html:117
 msgid "Add skill offer"
 msgstr "Proposer une compétence"
 
 #: skills/templates/skills/communityskill_form.html:92
 msgid "Add skill wish"
 msgstr "Ajouter un souhait de compétence"
+
+#: skills/templates/skills/mine.html:4 skills/templates/skills/mine.html:9
+#: skills/views.py:152 templates/dashboard/base.html:29
+msgid "Your skills"
+msgstr "Tes compétences"
+
+#: skills/templates/skills/mine.html:10
+msgid "Add a skill you want to learn"
+msgstr "Ajouter une compétence que tu veux apprendre"
+
+#: skills/templates/skills/mine.html:30
+msgid "not available right now"
+msgstr "pas disponible pour le moment"
+
+#: skills/templates/skills/mine.html:31
+msgid ""
+"No description yet: tell others how you learned it and what you can offer."
+msgstr ""
+"Pas encore de description : raconte comment tu l'as appris et ce que tu peux "
+"offrir."
+
+#: skills/templates/skills/mine.html:33
+#, python-format
+msgid "%(counter)s reference"
+msgid_plural "%(counter)s references"
+msgstr[0] "%(counter)s référence"
+msgstr[1] "%(counter)s références"
+
+#: skills/templates/skills/mine.html:34
+#, python-format
+msgid "%(counter)s request"
+msgid_plural "%(counter)s requests"
+msgstr[0] "%(counter)s demande"
+msgstr[1] "%(counter)s demandes"
+
+#: skills/templates/skills/mine.html:42
+msgid "You haven't added any skills yet."
+msgstr "Tu n'as pas encore ajouté de compétences."
+
+#: skills/templates/skills/mine.html:52
+#: skills/templates/skills/skillwish_user_detail.html:41
+msgid "current level:"
+msgstr "niveau actuel :"
+
+#: skills/templates/skills/mine.html:60
+msgid "You haven't added any skills you would like to learn yet."
+msgstr "Tu n'as pas encore ajouté de compétences que tu aimerais apprendre."
 
 #: skills/templates/skills/skill_detail.html:24
 #: skills/templates/skills/skill_detail.html:87
@@ -3464,10 +3522,6 @@ msgstr "Modifier le souhait de compétence"
 #: skills/templates/skills/skillwish_user_detail.html:38
 msgid "wants to learn or needs help with"
 msgstr "veut apprendre ou a besoin d'aide pour"
-
-#: skills/templates/skills/skillwish_user_detail.html:41
-msgid "current level:"
-msgstr "niveau actuel :"
 
 #: skills/templates/skills/skillwish_user_detail.html:67
 #: skills/templates/skills/skillwish_user_detail.html:194
@@ -3529,11 +3583,16 @@ msgstr ""
 "      Retirer <strong>%(skill)s</strong> de ton profil ?\n"
 "    "
 
-#: skills/templates/skills/userskill_detail.html:65
+#: skills/templates/skills/userskill_detail.html:59
+#, python-format
+msgid "Work: %(skill)s"
+msgstr "Travail : %(skill)s"
+
+#: skills/templates/skills/userskill_detail.html:70
 msgid "Currently not available to teach / share."
 msgstr "Pas disponible pour transmettre / partager en ce moment."
 
-#: skills/templates/skills/userskill_detail.html:162
+#: skills/templates/skills/userskill_detail.html:167
 msgid "Owner has not set a location."
 msgstr "Aucun lieu indiqué."
 
@@ -3566,7 +3625,11 @@ msgstr ""
 "Choisis ton niveau actuel – la plupart des gens commencent débutants, et "
 "c'est très bien."
 
-#: skills/templates/skills/userskill_form.html:112
+#: skills/templates/skills/userskill_form.html:101
+msgid "Optional: show what you have made or done with this skill."
+msgstr "Facultatif : montre ce que tu as fait avec cette compétence."
+
+#: skills/templates/skills/userskill_form.html:120
 msgid "Add skill need"
 msgstr "Ajouter un souhait de compétence"
 
@@ -3574,31 +3637,35 @@ msgstr "Ajouter un souhait de compétence"
 msgid "Your interest has been sent."
 msgstr "Ton intérêt a été envoyé."
 
-#: skills/views.py:137 skills/views.py:246
+#: skills/views.py:152
+msgid "Skills you would like to learn"
+msgstr "Compétences que tu aimerais apprendre"
+
+#: skills/views.py:168 skills/views.py:277
 msgid "Skill wish added."
 msgstr "Souhait de compétence ajouté."
 
-#: skills/views.py:140 skills/views.py:249
+#: skills/views.py:171 skills/views.py:280
 msgid "Skill added."
 msgstr "Compétence ajoutée."
 
-#: skills/views.py:190
+#: skills/views.py:221
 msgid "Skills added to your profile."
 msgstr "Compétences ajoutées à ton profil."
 
-#: skills/views.py:212 skills/views.py:268
+#: skills/views.py:243 skills/views.py:299
 msgid "Skill updated."
 msgstr "Compétence mise à jour."
 
-#: skills/views.py:226 skills/views.py:284
+#: skills/views.py:257 skills/views.py:315
 msgid "Skill removed."
 msgstr "Compétence retirée."
 
-#: skills/views.py:315
+#: skills/views.py:346
 msgid "Your offer has been sent."
 msgstr "Ton offre a été envoyée."
 
-#: skills/views.py:342 skills/views.py:364
+#: skills/views.py:373 skills/views.py:395
 msgid "Skill wish updated."
 msgstr "Souhait de compétence mis à jour."
 
@@ -3722,28 +3789,28 @@ msgstr "Messagerie"
 msgid "Compose"
 msgstr "Écrire"
 
-#: templates/dashboard/base.html:33
+#: templates/dashboard/base.html:37
 msgid "Your references"
 msgstr "Tes références"
 
-#: templates/dashboard/base.html:54
+#: templates/dashboard/base.html:58
 #, python-format
 msgid "Calendar · %(name)s"
 msgstr "Calendrier · %(name)s"
 
-#: templates/dashboard/base.html:59
+#: templates/dashboard/base.html:63
 msgid "Member Applications"
 msgstr "Demandes d'adhésion"
 
-#: templates/dashboard/base.html:59 templates/dashboard/base.html:65
+#: templates/dashboard/base.html:63 templates/dashboard/base.html:69
 msgid "coming soon"
 msgstr "bientôt disponible"
 
-#: templates/dashboard/base.html:62
+#: templates/dashboard/base.html:66
 msgid "Tours"
 msgstr "Tours"
 
-#: templates/dashboard/base.html:65
+#: templates/dashboard/base.html:69
 msgid "Community-Tour Applications"
 msgstr "Demandes de Community-Tour"
 

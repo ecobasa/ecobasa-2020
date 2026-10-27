@@ -134,7 +134,7 @@
 					{% for us in user_skills %}
 						<a href="{% if request.user.pk == user.pk %}{{ us.get_edit_url }}{% else %}{{ us.get_absolute_url }}{% endif %}"
 						   class="pill pill-lg inline-flex gap-1 bg-purple hover:opacity-80 transition-opacity">
-							<i class="fa fa-graduation-cap"></i>
+							{% include "skills/_skill_icon.html" %}
 							{{ us.skill }}
 							{% if us.level %}<span class="opacity-70 text-xs">({{ us.get_level_display }})</span>{% endif %}
 						</a>

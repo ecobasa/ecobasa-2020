@@ -173,6 +173,8 @@ class UserSkill(models.Model):
     available   = models.BooleanField(
         _("Available to teach / share"), default=True
     )
+    # A photo of their work; shown on the skill page and, small and round, on its pills
+    image       = models.ImageField(_("A photo of your work"), upload_to="skill-images", null=True, blank=True)
     created_at  = models.DateTimeField(auto_now_add=True)
     matches     = GenericRelation("matches.Match")
 

@@ -16,7 +16,7 @@
 
   <div class="border rounded-xl bg-secondary p-6"
        x-data="{ mode: '{{ form.mode.value|default:'offer' }}' }">
-    <form method="post">
+    <form method="post" enctype="multipart/form-data">
       {% csrf_token %}
 
       {# ── Mode radio ── #}
@@ -95,6 +95,14 @@
         {% for e in form.description.errors %}<p class="field-error">{{ e }}</p>{% endfor %}
       </div>
 
+      {# ── Photo of their work — offer only ── #}
+      <div class="form-group mb-4" x-show="mode === 'offer'" x-cloak>
+        <label class="form-label" for="id_image">{% trans "A photo of your work" %}</label>
+        <p class="text-xs text-brown mb-1">{% trans "Optional: show what you have made or done with this skill." %}</p>
+        {{ form.image }}
+        {% for e in form.image.errors %}<p class="field-error">{{ e }}</p>{% endfor %}
+      </div>
+
       {# ── Available checkbox — offer only ── #}
       <div class="form-group mb-6" x-show="mode === 'offer'" x-cloak>
         <label class="flex items-center gap-2 text-sm cursor-pointer">
@@ -127,7 +135,7 @@
   </h1>
 
   <div class="border rounded-xl bg-secondary p-6">
-    <form method="post">
+    <form method="post" enctype="multipart/form-data">
       {% csrf_token %}
       {% crispy form %}
     </form>
