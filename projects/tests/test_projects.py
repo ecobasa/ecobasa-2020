@@ -162,6 +162,15 @@ def test_list_shows_current_projects_only(community, project):
     assert "Rocket stove" in content and "Ongoing garden" in content
     assert "Old roof" not in content and "Shelved" not in content
 
+    # The archived (and ended) ones have their own filter
+    response = Client().get(reverse("projects:list"), {"show": "archived"})
+    content = response.content.decode()
+    assert "Old roof" in content and "Shelved" in content and "Rocket stove" not in content
+    assert [(str(c.label), c.count, c.active) for c in response.context["shows"]] == [
+        ("Current", 2, False), ("Archived", 2, True),
+    ]
+    assert 'name="show" value="archived"' in content  # the search stays in the archive
+
 
 @pytest.mark.django_db
 def test_list_filters_by_kind_of_open_need(community, project):
@@ -171,6 +180,8 @@ def test_list_filters_by_kind_of_open_need(community, project):
     project.needs.filter(kind=Need.KIND_MATERIAL).update(covered_at=timezone.now())
     content = Client().get(reverse("projects:list"), {"kind": "material"}).content.decode()
     assert "Rocket stove" not in content
+    kinds = Client().get(reverse("projects:list"), {"kind": "skill"}).context["kinds"]
+    assert [(str(c.label), c.count, c.active) for c in kinds][:2] == [("All", 2, False), ("Helping hands / skill", 1, True)]
 
 
 @pytest.mark.django_db

@@ -22,6 +22,7 @@ class Choice:
     active: bool = False
     count: int | None = None
     waiting: int = 0
+    icon: str = ""
 
 
 def query_url(request, **params):

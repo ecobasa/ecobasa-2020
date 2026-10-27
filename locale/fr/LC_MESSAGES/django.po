@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ecobasa\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-27 14:07+0100\n"
+"POT-Creation-Date: 2026-10-27 14:15+0100\n"
 "PO-Revision-Date: 2026-10-23 12:00+0200\n"
 "Last-Translator: ecobasa\n"
 "Language-Team: fr\n"
@@ -750,7 +750,7 @@ msgstr "Souhaits"
 msgid "Project needs"
 msgstr "Besoins de projets"
 
-#: gifts/filters.py:27 projects/templates/projects/project_list.html:17
+#: gifts/filters.py:27 projects/templates/projects/project_list.html:18
 msgid "Search"
 msgstr "Rechercher"
 
@@ -1902,8 +1902,7 @@ msgctxt "match status"
 msgid "Open"
 msgstr "Ouvert"
 
-#: matches/views.py:43 matches/views.py:95
-#: projects/templates/projects/project_list.html:20
+#: matches/views.py:43 matches/views.py:95 projects/views.py:63
 msgid "All"
 msgstr "Tous"
 
@@ -2056,7 +2055,7 @@ msgstr "Elle mentionne des compétences qui attendent ta confirmation."
 msgid "Mark all as read"
 msgstr "Tout marquer comme lu"
 
-#: notifications/templates/notifications/list.html:73 templates/_navbar.html:86
+#: notifications/templates/notifications/list.html:72 templates/_navbar.html:86
 msgid "No notifications yet."
 msgstr "Aucune notification pour l'instant."
 
@@ -2156,6 +2155,7 @@ msgid "Updated"
 msgstr "Mis à jour"
 
 #: projects/models.py:59 projects/templates/projects/_project_card.html:25
+#: projects/views.py:60
 msgid "Archived"
 msgstr "Archivé"
 
@@ -2330,7 +2330,7 @@ msgstr ""
 msgid "This project has ended."
 msgstr "Ce projet est terminé."
 
-#: projects/templates/projects/project_detail.html:17 projects/views.py:65
+#: projects/templates/projects/project_detail.html:17 projects/views.py:84
 msgid "This project has been archived."
 msgstr "Ce projet a été archivé."
 
@@ -2469,42 +2469,52 @@ msgstr "Ajouter un besoin"
 #: projects/templates/projects/project_list.html:9
 msgid ""
 "Communities realise projects together with people from the gift network: "
-"without money, with helping hands, materials, tools and knowledge. Every "
-"project is current: old ones are archived automatically."
+"without money, with helping hands, materials, tools and knowledge. Projects "
+"that ended or were not updated for a while are archived automatically, and "
+"stay here to look back on."
 msgstr ""
 "Les communautés réalisent des projets avec des personnes du réseau du don : "
-"sans argent, avec des coups de main, du matériel, des outils et du savoir. "
-"Chaque projet est à jour : les anciens sont archivés automatiquement."
+"sans argent, avec des mains, des matériaux, des outils et des savoirs. Les "
+"projets terminés ou non mis à jour depuis un moment sont archivés "
+"automatiquement et restent ici pour y repenser."
 
-#: projects/templates/projects/project_list.html:16
+#: projects/templates/projects/project_list.html:17
 msgid "Search projects, skills, materials, places…"
 msgstr "Rechercher projets, compétences, matériaux, lieux…"
 
-#: projects/templates/projects/project_list.html:34
+#: projects/templates/projects/project_list.html:31
+msgid "No archived projects found."
+msgstr "Aucun projet archivé trouvé."
+
+#: projects/templates/projects/project_list.html:31
 msgid "No current projects found."
 msgstr "Aucun projet en cours trouvé."
 
-#: projects/views.py:106
+#: projects/views.py:59
+msgid "Current"
+msgstr "En cours"
+
+#: projects/views.py:125
 msgid "The project has been saved."
 msgstr "Le projet a été enregistré."
 
-#: projects/views.py:137
+#: projects/views.py:156
 msgid "The project has been archived. You can bring it back at any time."
 msgstr "Le projet a été archivé. Tu peux le réactiver à tout moment."
 
-#: projects/views.py:150 projects/views.py:165
+#: projects/views.py:169 projects/views.py:184
 msgid "This project has ended. Change its dates to bring it back."
 msgstr "Ce projet est terminé. Change ses dates pour le réactiver."
 
-#: projects/views.py:153 projects/views.py:168
+#: projects/views.py:172 projects/views.py:187
 msgid "Thanks! The project shows as up to date again."
 msgstr "Merci ! Le projet apparaît de nouveau comme à jour."
 
-#: projects/views.py:191
+#: projects/views.py:210
 msgid "This project doesn't take offers at the moment."
 msgstr "Ce projet n'accepte pas de propositions pour le moment."
 
-#: projects/views.py:211
+#: projects/views.py:230
 #, python-format
 msgid "Your offer has been sent to %(community)s!"
 msgstr "Ta proposition a été envoyée à %(community)s !"

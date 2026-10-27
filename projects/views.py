@@ -13,7 +13,7 @@ from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_POST
 
 from communities.models import Community
-from dashboard_lists import paginate
+from dashboard_lists import Choice, paginate, query_url
 from matches.emails import notify_match_created
 from matches.models import Match, VolunteerDetails
 from skills.models import skill_name_q
@@ -32,8 +32,12 @@ def _projects():
 
 
 def project_list(request):
-    """Current projects of all communities, freshest first."""
-    projects = _projects().current()
+    """Projects of all communities, freshest first: the current ones, or the archived
+    (and ended) ones. Filtered by a search and by the kind of need."""
+    archived = request.GET.get("show") == "archived"
+    projects = _projects()
+    current = projects.current()
+    projects = projects.exclude(pk__in=current) if archived else current
     q = (request.GET.get("q") or "").strip()
     if q:
         projects = projects.filter(
@@ -44,17 +48,32 @@ def project_list(request):
             | Q(needs__title__icontains=q)
             | skill_name_q(q, "needs__skill__")
         ).distinct()
+    # Current projects by the kind of their open needs, archived ones by any of their needs
+    def of_kind(kind):
+        return projects.filter(needs__kind=kind, **({} if archived else {"needs__covered_at": None})).distinct()
+
     kind = request.GET.get("kind", "")
+    shows = [
+        Choice(label, query_url(request, show=key, page=None), archived == (key == "archived"), count, icon=icon)
+        for key, label, icon, count in (
+            (None, _("Current"), "fa-person-digging", current.count()),
+            ("archived", _("Archived"), "fa-box-archive", _projects().exclude(pk__in=current).count()),
+        )
+    ]
+    kinds = [Choice(_("All"), query_url(request, kind=None, page=None), not kind, projects.count())] + [
+        Choice(label, query_url(request, kind=value, page=None), kind == value, of_kind(value).count(), icon=Need.KIND_ICONS[value])
+        for value, label in Need.KIND_CHOICES
+    ]
     if kind in dict(Need.KIND_CHOICES):
-        projects = projects.filter(needs__kind=kind, needs__covered_at=None).distinct()
+        projects = of_kind(kind)
     page = paginate(request, projects)
     return render(request, "projects/project_list.html", {
         "page": page,
         "projects": page.object_list,
         "q": q,
-        "kind": kind,
-        "kinds": Need.KIND_CHOICES,
-        "kind_icons": Need.KIND_ICONS,
+        "archived": archived,
+        "shows": shows,
+        "kinds": kinds,
     })
 
 
