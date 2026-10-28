@@ -25,12 +25,12 @@ from django.core.management.base import BaseCommand
 from django.utils import timezone
 
 from communities.models import Community, CommunityPhoto
-from gifts.models import Listing, ListingCategory
-from matches.models import Contribution, Match, MatchMessage, VolunteerDetails
+from gift_economy.gifts.models import Listing, ListingCategory
+from gift_economy.matches.models import Contribution, Match, MatchMessage, VolunteerDetails
 from notifications.models import Notification, SKILL_NUDGE_TEXT
-from references.models import Reference, ReferenceSkill
-from references.notifications import notify_reference_created
-from gifts.skills.models import Skill, get_or_create_skill
+from gift_economy.references.models import Reference, ReferenceSkill
+from gift_economy.references.notifications import notify_reference_created
+from gift_economy.gifts.skills.models import Skill, get_or_create_skill
 from users.models import User
 
 DEMO_PASSWORD = "ecobasa123"

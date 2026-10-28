@@ -8,7 +8,7 @@ from django.urls import reverse_lazy
 from django.contrib import messages
 from django.contrib.auth import logout as auth_logout, login as auth_login, authenticate
 from django.views.generic.detail import DetailView
-from gifts.models import Listing
+from gift_economy.gifts.models import Listing
 from .models import User
 
 from .forms import RegisterForm, LoginForm, ProfileUpdateForm

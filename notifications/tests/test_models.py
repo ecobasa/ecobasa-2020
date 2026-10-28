@@ -3,9 +3,9 @@ import pytest
 from django.utils import translation
 
 from communities.models import Community
-from gifts.models import Listing
-from matches.emails import notify_match_created, notify_match_response
-from matches.models import Match
+from gift_economy.gifts.models import Listing
+from gift_economy.matches.emails import notify_match_created, notify_match_response
+from gift_economy.matches.models import Match
 from users.models import User
 
 from ..models import Notification

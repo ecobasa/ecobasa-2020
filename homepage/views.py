@@ -1,6 +1,6 @@
 from django.shortcuts import render
 
-from references.models import Reference, with_card_data
+from gift_economy.references.models import Reference, with_card_data
 
 HOMEPAGE_REFERENCES = 6
 

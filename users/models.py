@@ -137,11 +137,11 @@ class User(AbstractUser):
         return [self, *self.listings.filter(community=None)]
 
     def has_skill(self, skill):
-        from gifts.models import skill_offers
+        from gift_economy.gifts.models import skill_offers
         return skill_offers(self).filter(skill=skill).exists()
 
     def add_skill(self, skill):
-        from gifts.models import add_skill_offer
+        from gift_economy.gifts.models import add_skill_offer
         return add_skill_offer(self, skill)
 
     def email_user(self, subject, message, from_email=None, **kwargs):

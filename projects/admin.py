@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from gifts.models import Listing
+from gift_economy.gifts.models import Listing
 from .models import Project
 
 

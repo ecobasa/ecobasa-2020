@@ -7,21 +7,21 @@ from django.urls import reverse
 from django.utils import timezone, translation
 
 from communities.models import Community
-from gifts.models import Listing, ListingCategory
-from matches.models import Match, MatchMessage, VolunteerDetails
+from gift_economy.gifts.models import Listing, ListingCategory
+from gift_economy.matches.models import Match, MatchMessage, VolunteerDetails
 from notifications.models import Notification
-from references.models import match_reference_subject
-from references.reference_requests import exchange_text
-from gifts.skills.models import Skill, SkillTaxonomy
+from gift_economy.references.models import match_reference_subject
+from gift_economy.references.reference_requests import exchange_text
+from gift_economy.gifts.skills.models import Skill, SkillTaxonomy
 from templatetags.site_tags import ago
 from users.models import User
 
-from matches.calendar import stays_of
+from gift_economy.matches.calendar import stays_of
 from ..freshness import archive_stale_projects, make_confirm_token
 from ..models import Project
-from gifts.models import skill_offers
-from gifts.testing import need, skill_offer, skill_wish
-from matches.models import Contribution
+from gift_economy.gifts.models import skill_offers
+from gift_economy.gifts.testing import need, skill_offer, skill_wish
+from gift_economy.matches.models import Contribution
 
 
 @pytest.fixture(autouse=True)
@@ -609,7 +609,7 @@ def test_project_page_links_the_people_who_promised(project, helper):
 def test_project_page_shows_references_from_anything_part_of_it(community, project, ambassador, helper):
     """References after help offered on the project, or after a stay at its community that
     brought one of its needs; not other references about the community."""
-    from references.models import Reference
+    from gift_economy.references.models import Reference
 
     offer = _offer(project, helper, Match.STATUS_ACCEPTED)
     Reference.objects.create(author=helper, recipient=ambassador, subject=community, match=offer, text="Great build days")
