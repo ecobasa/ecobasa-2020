@@ -13,6 +13,8 @@ SKILLS = [
     ("permaculture-design",     "Permaculture Design",      "Permakultur-Design",           "Diseño de Permacultura",        "Design en Permaculture"),
     ("organic-farming",         "Organic Farming",          "Ökologischer Landbau",         "Agricultura Ecológica",         "Agriculture Biologique"),
     ("market-gardening",        "Market Gardening",         "Marktgärtnerei",               "Horticultura de Mercado",       "Maraîchage"),
+    ("urban-gardening",         "Urban Gardening",          "Urbanes Gärtnern",             "Huerto urbano",                 "Jardinage Urbain"),
+    ("community-supported-agriculture","Community Supported Agriculture (CSA)","Solidarische Landwirtschaft","agricultura comunitaria","Association pour le Maintien d'une Agriculture Paysanne (AMAP)"),
     ("beekeeping",              "Beekeeping",               "Imkerei",                      "Apicultura",                    "Apiculture"),
     ("composting",              "Composting",               "Kompostierung",                "Compostaje",                    "Compostage"),
     ("seed-saving",             "Seed Saving",              "Saatgutgewinnung",             "Conservación de Semillas",      "Conservation des Semences"),
@@ -201,6 +203,7 @@ SKILLS = [
     ("disability-support",      "Disability Support",       "Behindertenbetreuung",         "Apoyo a la Discapacidad",       "Accompagnement du Handicap"),
     ("crisis-intervention",     "Crisis Intervention",      "Krisenintervention",           "Intervención en Crisis",        "Intervention de Crise"),
     ("childcare",               "Childcare",                "Kinderbetreuung",              "Cuidado Infantil",              "Garde d'Enfants"),
+    ("parenting",               "Parenting",                "Kindererziehung",              "Parentalidad",                  "Parentalité"),
     ("burnout-prevention",      "Burnout Prevention",       "Burnout-Prävention",           "Prevención del Desgaste (Burnout)","Prévention de l'Épuisement"),
     ("space-holding",           "Emotional Space Holding",  "Emotionales Halten von Räumen","Sostén de Espacios Emocionales","Soutien des Espaces Émotionnels"),
     ("pedagogy",                "Pedagogy",                 "Pädagogik",                    "Pedagogía",                     "Pédagogie"),
@@ -356,6 +359,7 @@ SKILLS = [
     ("skillsharing",            "Skill Sharing",            "Fähigkeitentausch",            "Intercambio de Habilidades",    "Partage de Compétences"),
     ("meeting-note-taking",     "Meeting Note-Taking",      "Protokollieren",               "Toma de Notas",                 "Prise de Notes"),
     ("brainstorm-facilitation", "Light Brainstorming",      "Ideen-Moderation",             "Facilitación de Ideas",         "Facilitation d’Idées"),
+    ("ecovillage-design", "Ecovillage Design",              "Ecovillage Design",            "Diseño de Ecoaldea",            "Design d'Écovillage"),
 
     # ── Arts & Media ─────────────────────────────────────────────────────────
     ("music",                   "Music",                    "Musik",                        "Música",                        "Musique"),
