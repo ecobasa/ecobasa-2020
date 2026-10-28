@@ -223,12 +223,22 @@ def volunteer_request(request, community_slug):
     messages.success(request, str(_("Your request has been sent to %(community)s!") % {"community": community.name}))
 
     offer_list = [s.strip() for s in sender_skills.split(",") if s.strip()]
-    wish_list  = [s.strip() for s in practice_skills.split(",") if s.strip()]
+    practice_list = [s.strip() for s in practice_skills.split(",") if s.strip()]
+    # Answering a community's wish, the practice skills are ones the volunteer helps with
+    if volunteer_mode == "wish":
+        offer_list, wish_list = offer_list + practice_list, []
+    else:
+        wish_list = practice_list
 
     if offer_list or wish_list:
-        mine = Listing.objects.of(request.user).filter(kind=Listing.KIND_SKILL)
-        existing_offers = set(mine.filter(type=Listing.TYPE_OFFER).values_list("skill__slug", flat=True))
-        existing_wishes = set(mine.filter(type=Listing.TYPE_WISH).values_list("skill__slug", flat=True))
+        mine = Listing.objects.of(request.user).filter(kind=Listing.KIND_SKILL).select_related("skill")
+
+        def slugs(listings):
+            # A skill's stored slug can differ from the one its name resolves to
+            return {slug for l in listings if l.skill for slug in (l.skill.slug, skill_slug_for_name(l.skill.name))}
+
+        existing_offers = slugs(mine.filter(type=Listing.TYPE_OFFER))
+        existing_wishes = slugs(mine.filter(type=Listing.TYPE_WISH))
         offer_list = [s for s in offer_list if skill_slug_for_name(s) not in existing_offers]
         wish_list  = [s for s in wish_list  if skill_slug_for_name(s) not in existing_wishes]
 
