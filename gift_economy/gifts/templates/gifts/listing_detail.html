@@ -74,17 +74,17 @@
       {% if listing.amount %}<div class="text-lg mb-1"><i class="fa-solid fa-scale-balanced mr-2 text-primary"></i>{{ listing.amount }}{% if listing.progress %} <span class="text-sm opacity-80">· {{ listing.progress }}</span>{% endif %}</div>{% endif %}
       <div class="my-1 flex flex-wrap items-center gap-1">
         {% if can_edit %}
-          <span class="border mx-px py-px px-1 rounded text-xs text-secondary bg-purple">{% if listing.community %}{% trans "from your community" %}{% else %}{% trans "from me" %}{% endif %}</span>
+          <span class="pill bg-purple">{% if listing.community %}{% trans "from your community" %}{% else %}{% trans "from me" %}{% endif %}</span>
         {% endif %}
-        {% if listing.kind != "other" %}<span class="border mx-px py-px px-1 rounded text-xs text-secondary {{ listing.colour }}"><i class="fa-solid {{ listing.kind_icon }} mr-1"></i>{{ listing.kind_label }}</span>{% endif %}
-        {% if listing.level %}<span class="border mx-px py-px px-1 rounded text-xs text-secondary bg-purple">{% if listing.community and listing.is_wish %}{% trans "Level" %}: {{ listing.get_level_display }}+{% else %}{{ listing.get_level_display }}{% endif %}</span>{% endif %}
+        {% if listing.kind != "other" %}<span class="pill {{ listing.colour }}"><i class="fa-solid {{ listing.kind_icon }} mr-1"></i>{{ listing.kind_label }}</span>{% endif %}
         {% for cat in listing.categories.all %}
-          <span class="border mx-px py-px px-1 rounded text-xs text-secondary bg-primary"><i class="fa-solid {{ cat.icon }} mr-1"></i>{{ cat }}</span>
+          <span class="pill bg-primary"><i class="fa-solid {{ cat.icon }} mr-1"></i>{{ cat }}</span>
         {% endfor %}
-        {% if listing.status == "covered" or listing.status == "promised" %}<span class="border mx-px py-px px-1 rounded text-xs text-secondary bg-green">{% if listing.is_wish %}{% trans "Covered" %}{% else %}{% trans "Given away" %}{% endif %}</span>{% endif %}
+        {% if listing.status == "covered" or listing.status == "promised" %}<span class="pill bg-green">{% if listing.is_wish %}{% trans "Covered" %}{% else %}{% trans "Given away" %}{% endif %}</span>{% endif %}
         <span class="text-sm mx-2">{{ listing.place.0|default:"" }}</span>
         <span class="text-xs">{% include "projects/_freshness.html" with when=listing.updated_at label_updated=True %}</span>
       </div>
+      {% if listing.level %}<p class="mb-2"><strong>{% trans "Level" %}:</strong> {{ listing.get_level_display }}</p>{% endif %}
     </div>
 
     {% if can_edit %}
@@ -100,9 +100,8 @@
   </div>
 
   {# ── Description; for a skill, how good they are at it and how to learn it ── #}
-  <div class="mt-10">
+  <div class="mt-5">
     {% if listing.is_offer and listing.skill_id %}
-      {% if listing.level %}<p class="mb-2"><strong>{% trans "Level" %}:</strong> {{ listing.get_level_display }}</p>{% endif %}
       <h2 class="text-lg font-semibold mb-2">{% if listing.community %}{% trans "How you can learn it here" %}{% else %}{% trans "How they learned it and what they offer" %}{% endif %}</h2>
       {% if listing.description %}<p>{{ listing.description|linebreaksbr }}</p>{% else %}<p class="italic text-sm">{% trans "No description provided." %}</p>{% endif %}
     {% elif listing.description %}<p>{{ listing.description|linebreaksbr }}</p>{% endif %}
