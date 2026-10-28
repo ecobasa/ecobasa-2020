@@ -1,8 +1,8 @@
 """
 Seeds the local dev database with a small, tongue-in-cheek but structurally
-complete demo dataset: users, communities (every type/status), listing
-categories, listings (offers & wishes, some with photos), skills (every
-level), skill wishes (user + community), matches (every status, every
+complete demo dataset: users, communities (every type/status), listings
+(offers & wishes, some with photos, in the categories the migrations load),
+skills (every level), skill wishes (user + community), matches (every status, every
 target type), match messages, volunteer details, notifications
 (every tag), and references (every impression and subject type, with
 confirmed/pending/declined skill tags and gift names).
@@ -218,73 +218,63 @@ class Command(BaseCommand):
     # ── Listing categories & listings ───────────────────────────────────
 
     def _seed_listing_categories(self):
-        self.stdout.write("Seeding listing categories…")
-        names = [
-            "Garden & Farm", "Tools & Equipment", "Food & Preserves",
-            "Household & Furniture", "Building Materials", "Books & Learning",
-        ]
-        categories = {}
-        for order, name in enumerate(names):
-            cat, _created = ListingCategory.objects.get_or_create(
-                name=name, defaults={"order": order},
-            )
-            categories[name] = cat
-        return categories
+        # The curated categories come with the migrations (load_listing_categories)
+        return {category.slug: category for category in ListingCategory.objects.all()}
 
     def _seed_listings(self, users, categories):
         self.stdout.write("Seeding listings…")
         specs = [
             dict(
                 title="17kg of surplus zucchini (please, we beg you)", type="offer",
-                owner="luna@ecobasa.demo", category="Food & Preserves",
+                owner="luna@ecobasa.demo", category="food-preserves",
                 description="They will not stop. We have tried everything. Take them, we have more.",
                 image="zucchini.jpg", quantity=17, unit="kg", kind=Listing.KIND_MATERIAL,
             ),
             dict(
                 title="Slightly judgmental goat, free to a good home", type="offer",
-                owner="bjorn@ecobasa.demo", category="Garden & Farm",
+                owner="bjorn@ecobasa.demo", category="animals",
                 description="Comes with opinions about your fence height. Excellent weeder, terrible listener.",
                 image="goat.jpg",
             ),
             dict(
                 title="Kombucha SCOBY, comes with 45-minute lecture on gut health", type="offer",
-                owner="mireille@ecobasa.demo", category="Food & Preserves",
+                owner="mireille@ecobasa.demo", category="food-preserves",
                 description="The lecture is technically optional. The SCOBY is not.",
                 image="kombucha.jpg",
             ),
             dict(
                 title="Desperately seeking a wheelbarrow with actual working wheels", type="wish",
-                owner="diego@ecobasa.demo", category="Tools & Equipment",
+                owner="diego@ecobasa.demo", category="garden-farm", kind=Listing.KIND_TOOL,
                 description="Ours now travels exclusively in gentle, tragic circles.",
             ),
             dict(
                 title="Need: a printer that isn't possessed by a bureaucratic demon", type="wish",
-                owner="sam@ecobasa.demo", category="Household & Furniture",
+                owner="sam@ecobasa.demo", category="electronics-computers", kind=Listing.KIND_TOOL,
                 description="It only prints when it senses fear. We are all very afraid.",
             ),
             dict(
                 title="Hand-me-down yoga mats (only slightly haunted)", type="offer",
-                owner="ana@ecobasa.demo", category="Household & Furniture",
+                owner="ana@ecobasa.demo", category="health-body",
                 description="Previous owner achieved great inner peace, then moved to Bali. Mats remain.",
             ),
             dict(
                 title="Looking for scaffolding to fix our leaning composting toilet", type="wish",
-                owner="luna@ecobasa.demo", category="Building Materials",
+                owner="luna@ecobasa.demo", category="building-renovation", kind=Listing.KIND_TOOL,
                 description="It has a nice view for now. That will not last much longer.",
             ),
             dict(
                 title="Firewood, chopped with more enthusiasm than technique", type="offer",
-                owner="bjorn@ecobasa.demo", category="Building Materials",
+                owner="bjorn@ecobasa.demo", category="energy-heating", kind=Listing.KIND_MATERIAL,
                 description="Sizes range from 'kindling' to 'geological event'. Burns fine either way.",
             ),
             dict(
                 title="Wish: someone who understands sourdough starters better than my ex", type="wish",
-                owner="mireille@ecobasa.demo", category="Food & Preserves",
+                owner="mireille@ecobasa.demo", category="food-preserves",
                 description="Low bar. My ex thought 'discard' meant throwing away the whole jar.",
             ),
             dict(
                 title="Box of permaculture books, mild goat-chew damage", type="offer",
-                owner="diego@ecobasa.demo", category="Books & Learning",
+                owner="diego@ecobasa.demo", category="books-learning",
                 description="Chapter on fencing is unfortunately the most eaten. Ironic, the goats thought so too.",
             ),
         ]
@@ -301,8 +291,8 @@ class Command(BaseCommand):
                     **{key: spec[key] for key in ("quantity", "unit", "kind") if key in spec},
                 },
             )
-            if created:
-                listing.categories.add(categories[spec["category"]])
+            # Also on older demo data
+            listing.categories.set([categories[spec["category"]]])
             if spec.get("image") and not listing.image:
                 _seed_image(listing.image, spec["image"])
                 listing.save(update_fields=["image"])
@@ -693,6 +683,12 @@ class Command(BaseCommand):
         kombucha = communities["Kombucha Commune"]
         today = timezone.localdate()
 
+        # The category of each thing a demo project needs
+        need_categories = {
+            "Field stones": "building-renovation", "Clay": "building-renovation", "Chimney pipe": "energy-heating",
+            "Cement mixer": "building-renovation", "Scythe": "garden-farm", "Straw bales": "building-renovation",
+        }
+
         def project(community, title, needs, learn=(), **fields):
             obj, created = Project.objects.get_or_create(
                 community=community, title=title, defaults={"created_by": community.owner, **fields},
@@ -709,15 +705,13 @@ class Command(BaseCommand):
                 skill = None
                 if kind in (Listing.KIND_HANDS, Listing.KIND_KNOWLEDGE):
                     skill = skill_for_title(need_title) or Skill.objects.filter(name__iexact=need_title).first()
-                need, need_created = Listing.objects.get_or_create(
+                need, _need_created = Listing.objects.get_or_create(
                     project=obj, type=Listing.TYPE_WISH, title=need_title, defaults=dict(
                         kind=kind, order=order, quantity=quantity, unit=unit, description=details, skill=skill,
                     ),
                 )
-                if need_created and kind in (Listing.KIND_MATERIAL, Listing.KIND_TOOL):
-                    need.categories.add(*ListingCategory.objects.filter(
-                        name="Tools & Equipment" if kind == Listing.KIND_TOOL else "Building Materials"
-                    ))
+                if need_title in need_categories:
+                    need.categories.set(ListingCategory.objects.filter(slug=need_categories[need_title]))
             return obj, created
 
         stove, created = project(
@@ -760,10 +754,10 @@ class Command(BaseCommand):
         # suggests the food forest's needs to him, and him to Luna
         scythes, _created = Listing.objects.get_or_create(
             owner=bjorn, title="Two old scythes", type="offer",
-            defaults={"description": "Sharp enough, with a whetstone.", "location_name": bjorn.location_name,
-                      "location": bjorn.location},
+            defaults={"kind": Listing.KIND_TOOL, "description": "Sharp enough, with a whetstone.",
+                      "location_name": bjorn.location_name, "location": bjorn.location},
         )
-        scythes.categories.add(*ListingCategory.objects.filter(name="Tools & Equipment"))
+        scythes.categories.set(ListingCategory.objects.filter(slug="garden-farm"))
         # Wishes for knowledge and helping hands work outside projects too
         Listing.objects.get_or_create(
             owner=sam, type=Listing.TYPE_WISH, kind=Listing.KIND_KNOWLEDGE, title="How to size a battery bank",

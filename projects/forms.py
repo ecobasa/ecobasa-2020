@@ -2,7 +2,7 @@ from django import forms
 from django.utils.translation import gettext_lazy as _
 
 from gifts import units
-from gifts.models import Listing, ListingCategory
+from gifts.models import Listing, ListingCategory, themed_choices
 from gifts.skills.models import _taxonomy, get_or_create_skill
 
 from .models import Project
@@ -108,6 +108,9 @@ class NeedForm(forms.ModelForm):
         })
         self.fields["category"].widget.attrs["class"] = "form-select w-full"
         self.fields["category"].empty_label = _("Gift category (optional)")
+        self.fields["category"].choices = [
+            ("", self.fields["category"].empty_label), *themed_choices(ListingCategory.objects.all()),
+        ]
         if self.instance.pk:
             # Show the skill in the editor's language
             self.initial["title"] = self.instance.display_title

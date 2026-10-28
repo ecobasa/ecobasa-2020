@@ -14,7 +14,8 @@ class ListingAdmin(admin.OSMGeoAdmin):
 
 @admin.register(ListingCategory)
 class ListingCategoryAdmin(admin.ModelAdmin):
-    list_display = ("name", "order")
+    list_display = ("name", "theme", "slug", "order")
+    list_filter = ("theme",)
     ordering = (
         "order",
         "name",

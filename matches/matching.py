@@ -7,7 +7,7 @@ What fits, an offer and a wish:
 - without one, things (or knowledge or helping hands named in words) with a similar
   title ("Clay" ~ "Clay from our pond", "Scythe" ~ "Two old scythes"). A material doesn't
   fit a tool; "other" fits any thing. Not by gift category alone: firewood and a chimney
-  pipe are both building materials, but neither helps with the other.
+  pipe can both be for building, but neither helps with the other.
 
 Where each side looks, by their owner's settings (reaches()):
 - with a place: within their distance (User.match_radius);

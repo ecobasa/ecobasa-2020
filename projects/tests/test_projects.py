@@ -95,7 +95,7 @@ def _formset(needs, prefix="needs"):
 @pytest.mark.django_db
 def test_ambassador_creates_project_with_needs_and_known_skills_are_linked(community, ambassador):
     SkillTaxonomy.objects.create(names={"en": "Carpentry", "de": "Zimmerei"})
-    category = ListingCategory.objects.create(name="Building Materials")
+    category = ListingCategory.objects.get(slug="building-renovation")
     response = _client(ambassador).post(reverse("projects:create", args=[community.slug]), {
         "title": "Guest house", "starts_on": "2030-03-01", "ends_on": "2030-04-30", "food_provided": "on",
         **_formset([
@@ -542,8 +542,8 @@ def test_open_needs_show_on_the_gifts_map(mapped):
 @pytest.mark.django_db
 def test_gifts_filters_apply_to_needs(mapped):
     project = mapped
-    building = ListingCategory.objects.create(name="Building Materials")
-    tools = ListingCategory.objects.create(name="Tools")
+    building = ListingCategory.objects.get(slug="building-renovation")
+    garden = ListingCategory.objects.get(slug="garden-farm")
     project.listings.get(title="Clay").categories.add(building)
 
     def needs_of(params):
@@ -551,7 +551,7 @@ def test_gifts_filters_apply_to_needs(mapped):
         return sorted(f["properties"]["title"] for f in features if f["properties"]["project"])
 
     assert needs_of({"categories": building.pk}) == ["Clay"]
-    assert needs_of({"categories": tools.pk}) == []
+    assert needs_of({"categories": garden.pk}) == []
     assert needs_of({"search": "clay"}) == ["Clay"]
     assert needs_of({"search": "rocket"}) == ["Clay", "Masonry"]  # the project itself matches
     assert needs_of({"type": "need", "search": "nothing like it"}) == []

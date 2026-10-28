@@ -1,0 +1,39 @@
+{% load i18n %}{# A listing's categories, collapsed into their themes: a theme opens into its categories as pills (the categories are ordered so a theme's ones are together). Themes with chosen categories start open and count them #}
+{% regroup field by data.value.instance.theme as themes %}
+<fieldset class="form-group"
+          x-data="{ open: [], changes: 0,
+                    chosen(theme) { this.changes; return this.$root.querySelectorAll(`[data-theme='${theme}'] :checked`).length },
+                    toggle(theme) { this.open = this.open.includes(theme) ? this.open.filter(t => t !== theme) : [...this.open, theme] } }"
+          x-init="open = [...$root.querySelectorAll('[data-theme]')].filter(t => t.querySelector(':checked')).map(t => t.dataset.theme)"
+          @change="changes++">
+  <legend class="form-label">{{ field.label }} <small class="text-secondary optionalField">({% trans "optional" %})</small></legend>
+  <div class="flex flex-wrap gap-2">
+    {% for theme in themes %}{% with category=theme.list.0.data.value.instance %}
+    <button type="button" @click="toggle('{{ theme.grouper }}')" :aria-expanded="open.includes('{{ theme.grouper }}')"
+            class="inline-flex items-center gap-2 border rounded-full px-3 py-1 text-sm transition-colors"
+            :class="chosen('{{ theme.grouper }}') ? 'bg-primary text-secondary border-transparent' : (open.includes('{{ theme.grouper }}') ? 'border-primary text-primary' : 'border-brown border-opacity-30')">
+      <i class="fa-solid {{ category.theme_icon }}"></i>
+      <span>{{ category.get_theme_display }}</span>
+      <span x-show="chosen('{{ theme.grouper }}')" x-text="chosen('{{ theme.grouper }}')" x-cloak
+            class="text-xs font-bold bg-secondary text-primary rounded-full px-1.5 leading-4"></span>
+      <i class="fa-solid fa-chevron-down text-xs transition-transform" :class="open.includes('{{ theme.grouper }}') && 'rotate-180'"></i>
+    </button>
+    {% endwith %}{% endfor %}
+  </div>
+  {% for theme in themes %}
+  <div data-theme="{{ theme.grouper }}" x-show="open.includes('{{ theme.grouper }}')" x-cloak
+       class="mt-3 pl-3 border-l-2 border-primary border-opacity-30">
+    <div class="text-xs font-bold uppercase tracking-wider opacity-70 mb-1">{{ theme.list.0.data.value.instance.get_theme_display }}</div>
+    <div class="flex flex-wrap gap-2">
+      {% for checkbox in theme.list %}
+      <label class="inline-flex items-center gap-2 cursor-pointer border rounded-full px-3 py-1 text-sm transition-colors border-brown border-opacity-30 has-[:checked]:bg-primary has-[:checked]:text-secondary has-[:checked]:border-transparent has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-primary">
+        <input type="checkbox" name="{{ checkbox.data.name }}" value="{{ checkbox.data.value }}" class="sr-only"{% if checkbox.data.selected %} checked{% endif %}>
+        <i class="fa-solid {{ checkbox.data.value.instance.icon }}"></i>
+        {{ checkbox.choice_label }}
+      </label>
+      {% endfor %}
+    </div>
+  </div>
+  {% endfor %}
+  {% for error in field.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+</fieldset>

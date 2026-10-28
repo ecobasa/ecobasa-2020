@@ -93,7 +93,7 @@ def test_a_gift_wish_and_offer_with_similar_titles_are_suggested_to_both(anna, b
 
 @pytest.mark.django_db
 def test_things_match_by_title_not_by_gift_category(anna, ben):
-    building = ListingCategory.objects.create(name="Building Materials")
+    building = ListingCategory.objects.get(slug="building-renovation")
     wish = _listing(anna, "Wooden planks", "wish")
     wish.categories.add(building)
     offer = _listing(ben, "Firewood", "offer")

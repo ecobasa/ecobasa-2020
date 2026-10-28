@@ -14,18 +14,61 @@ from .skills.models import Skill, SkillTaxonomy  # noqa: F401
 
 
 class ListingCategory(models.Model):
-    """Category for Listings"""
+    """The area of life a thing belongs to, in a theme. Whether it is a material or a tool
+    is its kind (Listing.kind), so a category holds both: a scythe and seeds are both
+    Garden & Farm. The curated list is in the load_listing_categories command."""
 
+    THEME_LAND = "land"
+    THEME_BUILDING = "building"
+    THEME_HOME = "home"
+    THEME_MOVE = "move"
+    THEME_CULTURE = "culture"
+    THEME_CHOICES = [
+        (THEME_LAND, _("Land & Food")),
+        (THEME_BUILDING, _("Building & Energy")),
+        (THEME_HOME, _("Home & Living")),
+        (THEME_MOVE, _("On the Move")),
+        (THEME_CULTURE, _("Culture & Learning")),
+    ]
+    THEME_ICONS = {
+        THEME_LAND: "fa-wheat-awn", THEME_BUILDING: "fa-house-chimney", THEME_HOME: "fa-mug-hot",
+        THEME_MOVE: "fa-route", THEME_CULTURE: "fa-masks-theater",
+    }
+
+    slug = models.SlugField(_("Slug"), max_length=50, unique=True)
     name = models.CharField(_("Name"), max_length=50)
+    # The name in other languages, e.g. {"de": "Garten & Hof"}; English is the name
+    names = models.JSONField(_("Names"), default=dict, blank=True)
+    theme = models.CharField(_("Theme"), max_length=20, choices=THEME_CHOICES, default=THEME_HOME)
+    # A Font Awesome icon, e.g. "fa-seedling"
+    icon = models.CharField(_("Icon"), max_length=40, default="fa-gift")
+    # Across all themes, so a theme's categories stay together
     order = models.IntegerField(_("Order"), default="0")
 
     def __str__(self):
-        return self.name
+        return self.get_name()
+
+    def get_name(self, lang=None):
+        from django.utils.translation import get_language
+        lang = (lang or get_language() or "en").split("-")[0]
+        return self.names.get(lang) or self.name
+
+    @property
+    def theme_icon(self):
+        return self.THEME_ICONS.get(self.theme, "fa-gift")
 
     class Meta:
         verbose_name = _("Listing Category")
         verbose_name_plural = _("Listing Categories")
         ordering = ["order", "name"]
+
+
+def themed_choices(categories):
+    """Categories as choices grouped by their themes, e.g. for a select's optgroups."""
+    groups = {}
+    for category in categories:
+        groups.setdefault(category.get_theme_display(), []).append((category.pk, str(category)))
+    return list(groups.items())
 
 
 class ListingQuerySet(models.QuerySet):

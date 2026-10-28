@@ -71,7 +71,7 @@
       <div class="w-full sm:w-1/3">{{ form.level|as_crispy_field }}</div>
       <div x-show="type === 'offer'">{{ form.available|as_crispy_field }}</div>
     </div>
-    <div x-show="isThing">{{ form.categories|as_crispy_field }}</div>
+    <div x-show="isThing">{% include "gifts/_category_checkboxes.html" with field=form.categories %}</div>
     {{ form.description|as_crispy_field }}
     {{ form.image|as_crispy_field }}
     {{ form.location_name }}{{ form.location }}

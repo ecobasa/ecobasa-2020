@@ -34,7 +34,7 @@
             {% if listing.is_offer and listing.skill_id and not listing.available %}<span class="text-xs opacity-70">· {% trans "not available right now" %}</span>{% endif %}
             <div class="text-xs opacity-70 mt-0.5 flex flex-wrap gap-x-2">
               {% if listing.kind != "other" %}<span>{{ listing.kind_label }}</span>{% endif %}
-              {% for cat in listing.categories.all %}<span>{{ cat.name }}</span>{% endfor %}
+              {% for cat in listing.categories.all %}<span><i class="fa-solid {{ cat.icon }} mr-1"></i>{{ cat }}</span>{% endfor %}
               <span>{% include "projects/_freshness.html" with when=listing.updated_at label_updated=True %}</span>
             </div>
             {% if listing.description %}<p class="text-sm m-0 mt-1 opacity-90">{{ listing.description|truncatewords:30 }}</p>{% endif %}
