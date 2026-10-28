@@ -793,6 +793,22 @@ msgstr "Angebot"
 msgid "Wish"
 msgstr "Wunsch"
 
+#: projects
+msgid "Comma-separated. People looking for these skills find your project and your community."
+msgstr "Durch Kommas getrennt. Wer diese Fähigkeiten sucht, findet euer Projekt und eure Gemeinschaft."
+
+#: projects
+msgid "e.g. Clay building, Welding"
+msgstr "z. B. Lehmbau, Schweißen"
+
+#: projects
+msgid "What you can learn here"
+msgstr "Was du hier lernen kannst"
+
+#: projects
+msgid "You can learn this here"
+msgstr "Das kannst du hier lernen"
+
 #: references/models.py
 msgid "Person"
 msgstr "Person"

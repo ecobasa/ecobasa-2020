@@ -28,7 +28,7 @@ _NEEDS = Prefetch(
 
 
 def _projects():
-    return Project.objects.select_related("community", "community__owner").prefetch_related(_NEEDS)
+    return Project.objects.select_related("community", "community__owner").prefetch_related(_NEEDS, "skills_to_learn")
 
 
 def project_list(request):
@@ -47,6 +47,7 @@ def project_list(request):
             | Q(community__location_name__icontains=q)
             | Q(needs__title__icontains=q)
             | skill_name_q(q, "needs__skill__")
+            | skill_name_q(q, "skills_to_learn__")
         ).distinct()
     # Current projects by the kind of their open needs, archived ones by any of their needs
     def of_kind(kind):
@@ -130,6 +131,8 @@ def _save_project(request, project, template_context):
                 project.created_by = request.user
             project.touch(save=False)
             project.save()
+            form.save_skills_to_learn(project)
+            project.share_skills_with_community()
             formset.instance = project
             formset.save(commit=False)
             for need in formset.deleted_objects:

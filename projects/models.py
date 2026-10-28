@@ -48,6 +48,11 @@ class Project(models.Model):
     volunteers_wanted = models.PositiveSmallIntegerField(
         _("How many volunteers at the same time?"), null=True, blank=True,
     )
+    # What helpers can learn by joining. Also listed on the community (see
+    # share_skills_with_community), so the community is found by people looking for them.
+    skills_to_learn = models.ManyToManyField(
+        "skills.Skill", related_name="learn_projects", blank=True, verbose_name=_("Skills you can learn here"),
+    )
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="+",
     )
@@ -98,6 +103,13 @@ class Project(models.Model):
 
     def can_edit(self, user):
         return user.is_authenticated and (user.is_staff or user == self.community.owner)
+
+    def share_skills_with_community(self):
+        """List the skills you can learn here among the community's skills, so it is found
+        (and suggested) for them. Removing one from the project leaves it on the community:
+        the ambassador decides whether it is still learnable there."""
+        for skill in self.skills_to_learn.all():
+            self.community.add_skill(skill)
 
     def open_needs(self):
         return [need for need in self.needs.all() if need.status == Need.STATUS_OPEN]

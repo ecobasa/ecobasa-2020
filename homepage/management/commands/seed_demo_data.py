@@ -30,7 +30,7 @@ from matches.models import Match, MatchMessage, VolunteerDetails
 from notifications.models import Notification, SKILL_NUDGE_TEXT
 from references.models import Reference, ReferenceSkill
 from references.notifications import notify_reference_created
-from skills.models import CommunitySkill, Skill, SkillWish, UserSkill
+from skills.models import CommunitySkill, Skill, SkillWish, UserSkill, get_or_create_skill
 from users.models import User
 
 DEMO_PASSWORD = "ecobasa123"
@@ -672,10 +672,13 @@ class Command(BaseCommand):
         kombucha = communities["Kombucha Commune"]
         today = timezone.localdate()
 
-        def project(community, title, needs, **fields):
+        def project(community, title, needs, learn=(), **fields):
             obj, created = Project.objects.get_or_create(
                 community=community, title=title, defaults={"created_by": community.owner, **fields},
             )
+            # What helpers can learn, also listed on the community, like saving the form does
+            obj.skills_to_learn.add(*(get_or_create_skill(name)[0] for name in learn))
+            obj.share_skills_with_community()
             # Needs are added by title, so re-running adds new demo needs to older demo data
             for order, (kind, need_title, quantity, unit, details) in enumerate(needs):
                 is_skill = kind in (Need.KIND_SKILL, Need.KIND_KNOWLEDGE)
@@ -705,6 +708,7 @@ class Command(BaseCommand):
                 (Need.KIND_MATERIAL, "Chimney pipe", 3, "m", "15 cm diameter"),
                 (Need.KIND_TOOL, "Cement mixer", None, "", ""),
             ],
+            learn=["Natural Building", "Masonry", "Rocket Stove Building"],
             description="Our old kitchen stove eats a forest a winter. We want to build a rocket stove "
                         "with a cob bench next to it, and learn how to build more of them.",
             starts_on=today + timedelta(days=7), ends_on=today + timedelta(days=50),
@@ -718,6 +722,7 @@ class Command(BaseCommand):
                 (Need.KIND_TOOL, "Scythe", 2, "pieces", ""),
                 (Need.KIND_SKILL, "Woodworking", 1, "people", "a bench under the old apple tree"),
             ],
+            learn=["Permaculture Design"],
             description="Mulching, pruning and planting in our young food forest, whenever you are around.",
             food_provided=True,
         )

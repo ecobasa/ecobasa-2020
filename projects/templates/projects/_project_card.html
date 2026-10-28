@@ -13,6 +13,13 @@
       </div>
     </div>
   </div>
+  {% with skills=project.skills_to_learn.all %}
+    {% if skills %}
+      <div class="flex flex-wrap gap-1">
+        {% for skill in skills %}{% include "projects/_learn_pill.html" with community=project.community %}{% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
   {% with needs=project.needs.all %}
     {% if needs %}
       <div class="flex flex-wrap gap-1">

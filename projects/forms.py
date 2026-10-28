@@ -7,6 +7,12 @@ from .models import Need, Project
 
 
 class ProjectForm(forms.ModelForm):
+    skills_to_learn = forms.CharField(
+        label=_("Skills you can learn here"), required=False,
+        help_text=_("Comma-separated. People looking for these skills find your project and your community."),
+    )
+    field_order = ["title", "description", "skills_to_learn"]
+
     class Meta:
         model = Project
         fields = [
@@ -25,6 +31,9 @@ class ProjectForm(forms.ModelForm):
         self.fields["description"].widget.attrs["placeholder"] = _(
             "What do you want to build or do, and what will helpers learn?"
         )
+        self.fields["skills_to_learn"].widget.attrs["placeholder"] = _("e.g. Clay building, Welding")
+        if self.instance.pk:
+            self.initial["skills_to_learn"] = ", ".join(s.get_name() for s in self.instance.skills_to_learn.all())
         for name, field in self.fields.items():
             if isinstance(field.widget, forms.CheckboxInput):
                 field.widget.attrs["class"] = "form-checkbox"
@@ -39,6 +48,11 @@ class ProjectForm(forms.ModelForm):
         if starts_on and ends_on and ends_on < starts_on:
             self.add_error("ends_on", _("The project can't end before it starts."))
         return cleaned
+
+    def save_skills_to_learn(self, project):
+        """Set the skills named (in any language), after the project is saved."""
+        names = [n.strip() for n in self.cleaned_data.get("skills_to_learn", "").split(",") if n.strip()]
+        project.skills_to_learn.set([get_or_create_skill(name)[0] for name in names])
 
 
 def skill_for_title(title):

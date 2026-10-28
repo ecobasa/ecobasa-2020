@@ -3,7 +3,7 @@ import re
 from urllib.parse import urlencode
 
 from django.contrib.auth.decorators import login_required
-from django.db.models import Q, Prefetch
+from django.db.models import F, Q, Prefetch
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
 from django.contrib import messages
@@ -41,12 +41,7 @@ def index(request):
     communities = base_qs
     q = (request.GET.get("q") or "").strip()
     if q:
-        communities = communities.filter(
-            Q(name__icontains=q)
-            | Q(description__icontains=q)
-            | Q(location_name__icontains=q)
-            | skill_name_q(q, "community_skills__skill__")
-        ).distinct()
+        communities = communities.filter(_search_q(q)).distinct()
     country = (request.GET.get('country') or '').strip()
     if country:
         communities = communities.filter(country=country)
@@ -89,7 +84,7 @@ def detail(request, slug):
     from projects.models import Need
     projects = (
         community.projects.select_related("community")
-        .prefetch_related(Prefetch("needs", queryset=Need.objects.select_related("skill").prefetch_related("need_offers__match")))
+        .prefetch_related(Prefetch("needs", queryset=Need.objects.select_related("skill").prefetch_related("need_offers__match")), "skills_to_learn")
     )
     is_ambassador = request.user.is_authenticated and (request.user.is_staff or request.user == community.owner)
 
@@ -337,17 +332,38 @@ def update(request, slug):
 
 # ── Helpers ──────────────────────────────────────────────────────────
 
+def _search_q(q):
+    """Communities whose name, description, place or skills match the search, or one of
+    whose current projects does ("rocket stove" finds the community building one)."""
+    from projects.models import Project
+    projects = Project.objects.current().filter(
+        Q(title__icontains=q) | Q(description__icontains=q) | skill_name_q(q, "skills_to_learn__")
+    )
+    return (
+        Q(name__icontains=q)
+        | Q(description__icontains=q)
+        | Q(location_name__icontains=q)
+        | skill_name_q(q, "community_skills__skill__")
+        | Q(pk__in=projects.values("community_id"))
+    )
+
+
+def _current_projects():
+    """A community's current projects for its list card: dated ones by start, ongoing last."""
+    from projects.models import Project
+    return Prefetch(
+        "projects",
+        queryset=Project.objects.current().order_by(F("starts_on").asc(nulls_last=True), "title"),
+        to_attr="current_projects",
+    )
+
+
 def _base_qs(request, require_location=True):
     """Return a Community queryset filtered by ?q= search term."""
     qs = Community.objects.filter(location__isnull=False) if require_location else Community.objects.all()
     q = request.GET.get("q", "").strip()
     if q:
-        qs = qs.filter(
-            Q(name__icontains=q) |
-            Q(description__icontains=q) |
-            Q(location_name__icontains=q) |
-            skill_name_q(q, "community_skills__skill__")
-        )
+        qs = qs.filter(_search_q(q))
     country = request.GET.get("country", "").strip()
     if country:
         qs = qs.filter(country=country)
@@ -436,7 +452,7 @@ def community_list_partial(request):
     HTML partial for the list modal — HTMX swaps into #community-modal-list.
 
     Supports:
-        q         full-text search (name, description, location, skills)
+        q         full-text search (name, description, location, skills, current projects)
         country   ISO country code filter (exact, from CountryField)
         type      community type filter (repeatable)
         status    community status filter (repeatable)
@@ -445,7 +461,7 @@ def community_list_partial(request):
                   nearest-first so the user naturally sees close ones first.
         page      page number for infinite scroll (default 1)
     """
-    qs = _base_qs(request, require_location=False).prefetch_related("community_skills__skill", "photos")
+    qs = _base_qs(request, require_location=False).prefetch_related("community_skills__skill", "photos", _current_projects())
 
     # ── Proximity sorting ─────────────────────────────────────────────
     # When the user clicks "near me", the browser sends location=lat,lon.
@@ -488,7 +504,7 @@ def community_suggest(request):
         q   partial search term (min 2 chars)
 
     Returns JSON list: [{value, type}]
-    where type is one of 'name' | 'location' | 'skill' | 'description' | 'vision'.
+    where type is one of 'name' | 'location' | 'skill' | 'project' | 'text'.
     """
     q = request.GET.get("q", "").strip()
     if len(q) < 2:
@@ -525,6 +541,11 @@ def community_suggest(request):
                 add(part.strip(), "location")
         if len(suggestions) >= 8:
             break
+
+    # Current projects ("Rocket stove")
+    from projects.models import Project
+    for title in Project.objects.current().filter(title__icontains=q).values_list("title", flat=True)[:5]:
+        add(title, "project")
 
     # Skills attached to a Community
     for skill in Skill.objects.filter(skill_name_q(q, ""), community_skills__isnull=False).distinct()[:5]:

@@ -59,6 +59,15 @@
 
       {% if project.description %}<p>{{ project.description|linebreaksbr }}</p>{% endif %}
 
+      {% with skills=project.skills_to_learn.all %}
+        {% if skills %}
+          <h2>{% trans "What you can learn here" %}</h2>
+          <div class="flex flex-wrap gap-2">
+            {% for skill in skills %}{% include "projects/_learn_pill.html" %}{% endfor %}
+          </div>
+        {% endif %}
+      {% endwith %}
+
       <h2>{% trans "What is needed" %}</h2>
       {% if needs %}
         <ul class="list-none p-0 space-y-2">

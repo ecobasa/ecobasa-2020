@@ -117,6 +117,64 @@ def test_ambassador_creates_project_with_needs_and_known_skills_are_linked(commu
 
 
 @pytest.mark.django_db
+def test_skills_to_learn_are_listed_on_the_community(community, ambassador):
+    SkillTaxonomy.objects.create(names={"en": "Clay building", "de": "Lehmbau"})
+    response = _client(ambassador).post(reverse("projects:create", args=[community.slug]), {
+        "title": "Cob oven", "skills_to_learn": "Lehmbau, Welding", **_formset([]),
+    })
+    assert response.status_code == 302
+    project = Project.objects.get(title="Cob oven")
+    assert sorted(s.slug for s in project.skills_to_learn.all()) == ["clay-building", "welding"]
+    # The community can be found (and suggested) for them now
+    assert sorted(community.community_skills.values_list("skill__slug", flat=True)) == ["clay-building", "welding"]
+    page = Client().get(project.get_absolute_url()).content.decode()
+    assert "What you can learn here" in page and "Welding" in page
+
+    # Editing shows them in the editor's language, and taking one off the project leaves
+    # it on the community
+    form_page = _client(ambassador).get(reverse("projects:edit", args=[project.pk])).content.decode()
+    assert 'value="Lehmbau, ' in form_page
+    _client(ambassador).post(reverse("projects:edit", args=[project.pk]), {
+        "title": "Cob oven", "skills_to_learn": "Clay building", **_formset([]),
+    })
+    assert [s.slug for s in project.skills_to_learn.all()] == ["clay-building"]
+    assert community.community_skills.count() == 2
+
+
+@pytest.mark.django_db
+def test_project_list_finds_projects_by_skill_to_learn(project):
+    project.skills_to_learn.add(Skill.objects.create(name="Welding", slug="welding"))
+    content = Client().get(reverse("projects:list") + "?q=weld").content.decode()
+    assert "Rocket stove" in content
+
+
+@pytest.mark.django_db
+def test_communities_are_found_by_their_current_projects(community, project):
+    other = Community.objects.create(name="Elsewhere", owner=User.objects.create_user(email="o@example.com", password="x"))
+    list_url = reverse("communities:api-list")
+    content = Client().get(list_url + "?q=rocket").content.decode()
+    assert "Sonnenhof" in content and "Elsewhere" not in content
+    suggestions = Client().get(reverse("communities:api-suggest") + "?q=rocket").json()
+    assert {"value": "Rocket stove", "type": "project"} in suggestions
+    # Not by an archived one
+    project.archived_at = timezone.now()
+    project.save()
+    assert "Sonnenhof" not in Client().get(list_url + "?q=rocket").content.decode()
+
+
+@pytest.mark.django_db
+def test_community_cards_list_current_projects_with_dates(community, project):
+    ongoing = Project.objects.create(community=community, title="Food forest care")
+    Project.objects.create(community=community, title="Old barn", archived_at=timezone.now())
+    content = Client().get(reverse("communities:api-list")).content.decode()
+    assert project.get_absolute_url() in content and ongoing.get_absolute_url() in content
+    assert "Old barn" not in content
+    # Dated projects first, by start; ongoing ones after them
+    assert content.index("Rocket stove") < content.index("Food forest care")
+    assert project.starts_on.strftime("%-d %b") in content
+
+
+@pytest.mark.django_db
 def test_only_the_ambassador_creates_and_edits(community, project, helper):
     client = _client(helper)
     assert client.get(reverse("projects:create", args=[community.slug])).status_code == 403
