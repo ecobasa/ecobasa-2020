@@ -5,7 +5,7 @@ from django.shortcuts import reverse
 from pytest_django.asserts import assertRedirects
 
 from users.models import User
-from gifts.testing import need, skill_offer, skill_wish
+from gift_economy.gifts.testing import need, skill_offer, skill_wish
 from ..models import Community
 
 
@@ -55,20 +55,20 @@ class TestVolunteerRequestSkillProposal:
         )
 
     def test_one_skill_links_to_prefilled_skill_form(self, volunteer_client, community):
-        from gifts.skills.models import Skill
+        from gift_economy.gifts.skills.models import Skill
         Skill.objects.create(name="Carpentry", slug="carpentry")
         response = self._send(volunteer_client, community, sender_skills="Carpentry")
         assert response.context["single_skill"] is True
         assert response.context["review_url"] == reverse("gifts:create") + "?skill=Carpentry&type=offer&kind=skill"
 
     def test_one_learning_goal_opens_form_in_wish_mode(self, volunteer_client, community):
-        from gifts.skills.models import Skill
+        from gift_economy.gifts.skills.models import Skill
         Skill.objects.create(name="Permaculture", slug="permaculture")
         response = self._send(volunteer_client, community, practice_skills="Permaculture")
         assert response.context["review_url"].endswith("?skill=Permaculture&type=wish&kind=skill")
 
     def test_several_skills_link_to_add_several_page(self, volunteer_client, community):
-        from gifts.skills.models import Skill
+        from gift_economy.gifts.skills.models import Skill
         Skill.objects.create(name="Carpentry", slug="carpentry")
         Skill.objects.create(name="Cooking", slug="cooking")
         Skill.objects.create(name="Permaculture", slug="permaculture")
@@ -82,7 +82,7 @@ class TestVolunteerRequestSkillProposal:
         )
 
     def test_no_prompt_when_skills_already_on_profile(self, volunteer_client, community):
-        from gifts.skills.models import Skill
+        from gift_economy.gifts.skills.models import Skill
         skill = Skill.objects.create(name="Carpentry", slug="carpentry")
         skill_offer(User.objects.get(username="vol"), skill)
         response = self._send(volunteer_client, community, sender_skills="Carpentry")
@@ -93,8 +93,8 @@ class TestVolunteerRequestSkillProposal:
 def test_volunteers_can_bring_what_the_community_needs(user, community):
     """The volunteer form offers the open needs of current projects and the community's
     wishes for things; what is ticked comes with the request, anything else is ignored."""
-    from gifts.models import Listing
-    from matches.models import Match
+    from gift_economy.gifts.models import Listing
+    from gift_economy.matches.models import Match
     from projects.models import Project
 
     project = Project.objects.create(community=community, title="Rocket stove")

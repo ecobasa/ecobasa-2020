@@ -26,7 +26,7 @@ def create_skill_nudge_notification(sender, request, user, **kwargs):
     """Remind people without skills to add some. There is at most one reminder per
     person: once read, it shows up again (unread, on top) after a week at the earliest,
     instead of a new one being added on every login."""
-    from gifts.models import Listing
+    from gift_economy.gifts.models import Listing
     has_skills = Listing.objects.of(user).filter(kind=Listing.KIND_SKILL).exists()
     if has_skills:
         return

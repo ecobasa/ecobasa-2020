@@ -14,10 +14,10 @@ from django.views.decorators.http import require_POST
 
 from communities.models import Community
 from dashboard_lists import Choice, paginate, query_url
-from matches.emails import notify_match_created
-from gifts.models import Listing
-from matches.models import Contribution, Match, VolunteerDetails
-from gifts.skills.models import skill_name_q
+from gift_economy.matches.emails import notify_match_created
+from gift_economy.gifts.models import Listing
+from gift_economy.matches.models import Contribution, Match, VolunteerDetails
+from gift_economy.gifts.skills.models import skill_name_q
 
 from .forms import HelpOfferForm, NeedForm, NeedFormSet, ProjectForm
 from .freshness import read_confirm_token
@@ -112,7 +112,7 @@ def _references(project):
     it, or a stay at its community that brought one of its needs. In both directions:
     helpers about the community, the ambassador about the helpers."""
     from django.contrib.contenttypes.models import ContentType
-    from references.models import Reference, ReferenceSkill, with_card_data
+    from gift_economy.references.models import Reference, ReferenceSkill, with_card_data
 
     matches = Match.objects.filter(
         Q(content_type=ContentType.objects.get_for_model(Project), object_id=str(project.pk))
