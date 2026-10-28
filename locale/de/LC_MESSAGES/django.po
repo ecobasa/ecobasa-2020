@@ -1963,9 +1963,47 @@ msgid "Everything your current projects need is covered or promised."
 msgstr ""
 "Alles, was eure laufenden Projekte brauchen, ist abgedeckt oder zugesagt."
 
-#: matches/templates/matches/calendar.html:135
-msgid "No current projects in this month."
-msgstr "Keine aktuellen Projekte in diesem Monat."
+#: matches/templates/matches/calendar.html
+msgid "No current or upcoming projects."
+msgstr "Keine laufenden oder kommenden Projekte."
+
+#: matches/templates/matches/calendar.html
+#, python-format
+msgid "%(counter)s need covered"
+msgid_plural "%(counter)s needs covered"
+msgstr[0] "%(counter)s Bedarf gedeckt"
+msgstr[1] "%(counter)s Bedarfe gedeckt"
+
+#: matches/templates/matches/calendar_covered.html
+msgid "Covered needs"
+msgstr "Geschafft!"
+
+#: matches/templates/matches/calendar_covered.html
+#, python-format
+msgid "%(counter)s need covered!"
+msgid_plural "%(counter)s needs covered!"
+msgstr[0] "%(counter)s Bedarf gedeckt!"
+msgstr[1] "%(counter)s Bedarfe gedeckt!"
+
+#: matches/templates/matches/calendar_covered.html
+#, python-format
+msgid "Thanks to %(counter)s person who helps out."
+msgid_plural "Thanks to %(counter)s people who help out."
+msgstr[0] "Dank %(counter)s Mensch, der mit anpackt."
+msgstr[1] "Dank %(counter)s Menschen, die mit anpacken."
+
+#: matches/templates/matches/calendar_covered.html
+msgid "Say thank you with a reference: it helps them find their next match."
+msgstr ""
+"Sagt Danke mit einer Referenz: Das hilft ihnen, ihr nächstes Match zu finden."
+
+#: matches/templates/matches/calendar_covered.html
+msgid "thanks to"
+msgstr "dank"
+
+#: matches/templates/matches/calendar_covered.html
+msgid "No needs are covered yet. Every first helper counts!"
+msgstr "Noch ist kein Bedarf gedeckt. Jede erste Hilfe zählt!"
 
 #: matches/templates/matches/email/match_message.html:19
 msgid "New message"

@@ -387,6 +387,47 @@ def test_calendar_lists_open_needs(community, project, ambassador):
 
 
 @pytest.mark.django_db
+def test_calendar_lists_needs_of_all_coming_projects_whatever_the_month(community, project, ambassador):
+    today = timezone.localdate()
+    later = Project.objects.create(community=community, title="Greenhouse", starts_on=today + timedelta(days=200))
+    need(later, kind=Listing.KIND_MATERIAL, title="Glass")
+    over = Project.objects.create(community=community, title="Old roof", ends_on=today - timedelta(days=1))
+    need(over, kind=Listing.KIND_MATERIAL, title="Tiles")
+    response = _client(ambassador).get(reverse("matches:calendar", args=[community.slug]), {"month": "2000-01"})
+    assert [p.title for p, _ in response.context["open_needs"]] == ["Rocket stove", "Greenhouse"]
+
+
+@pytest.mark.django_db
+def test_covered_needs_are_celebrated_with_their_helpers(community, project, ambassador, helper):
+    masonry, clay = project.needs()
+    offer = _offer(project, helper, Match.STATUS_ACCEPTED, needs=[masonry])
+    clay.covered_at = timezone.now()
+    clay.save()
+    response = _client(ambassador).get(reverse("matches:calendar", args=[community.slug]))
+    assert response.context["covered_count"] == 2
+
+    url = reverse("matches:calendar_covered", args=[community.slug])
+    response = _client(ambassador).get(url)
+    [(listed, needs)] = response.context["covered_needs"]
+    assert listed == project
+    assert [(n.title, [h.person for h in people]) for n, people in needs] == [("Masonry", [helper]), ("Clay", [])]
+    assert response.context["helper_count"] == 1
+    content = response.content.decode()
+    assert "Hugo" in content and offer.get_absolute_url() in content
+    # The ambassador is asked for a reference until they have written one
+    assert f"{helper.get_absolute_url()}#references" in content
+
+    from gift_economy.references.models import Reference
+    Reference.objects.create(author=ambassador, recipient=helper, subject=helper, match=offer, text="Strong hands")
+    assert f"{helper.get_absolute_url()}#references" not in _client(ambassador).get(url).content.decode()
+
+
+@pytest.mark.django_db
+def test_covered_needs_are_for_the_ambassador_only(community, helper):
+    assert _client(helper).get(reverse("matches:calendar_covered", args=[community.slug])).status_code == 403
+
+
+@pytest.mark.django_db
 def test_calendar_survives_a_bad_month(community, ambassador):
     response = _client(ambassador).get(reverse("matches:calendar", args=[community.slug]), {"month": "nope"})
     assert response.status_code == 200

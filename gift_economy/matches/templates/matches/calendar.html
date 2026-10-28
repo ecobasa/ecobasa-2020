@@ -115,8 +115,15 @@
   <p class="italic mb-6">{% trans "No stays requested for this month yet." %}</p>
 {% endif %}
 
-{# Completeness: what is still missing #}
-<h2>{% trans "Still needed" %}</h2>
+{# Completeness: what is still missing in all running and coming projects #}
+<div class="flex flex-wrap items-baseline justify-between gap-2">
+  <h2>{% trans "Still needed" %}</h2>
+  {% if covered_count %}
+    <a href="{% url 'matches:calendar_covered' community.slug %}" class="pill text-xs bg-green text-secondary hover:underline mb-2">
+      <i class="fa-solid fa-hands-clapping mr-1"></i>{% blocktrans count counter=covered_count %}{{ counter }} need covered{% plural %}{{ counter }} needs covered{% endblocktrans %}
+    </a>
+  {% endif %}
+</div>
 {% if open_needs %}
   <div class="space-y-4 mb-6">
     {% for project, needs in open_needs %}
@@ -132,6 +139,6 @@
 {% elif complete_projects %}
   <p class="mb-6"><i class="fa fa-check-circle text-green mr-1"></i>{% trans "Everything your current projects need is covered or promised." %}</p>
 {% else %}
-  <p class="italic mb-6">{% trans "No current projects in this month." %}</p>
+  <p class="italic mb-6">{% trans "No current or upcoming projects." %}</p>
 {% endif %}
 {% endblock %}

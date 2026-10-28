@@ -1,0 +1,56 @@
+{% extends 'dashboard/base.html' %}
+{% load i18n references_tags %}
+
+{% block head_title %}{% trans "Covered needs" %} — {{ community.name }} — ecobasa{% endblock %}
+
+{% block dashboard_content %}
+<div class="flex flex-wrap items-baseline justify-between gap-2 mb-4">
+  <h1 class="mb-0">{% trans "Covered needs" %} <span class="text-lg font-normal">· <a href="{{ community.get_absolute_url }}" class="hover:underline">{{ community.name }}</a></span></h1>
+  <a href="{% url 'matches:calendar' community.slug %}" class="btn btn-purple"><i class="fa-regular fa-calendar mr-1"></i>{% trans "Calendar" %}</a>
+</div>
+
+{% if covered_needs %}
+  {# The big picture first: how much has come together #}
+  <div class="rounded p-6 mb-6 bg-green text-secondary text-center">
+    <i class="fa-solid fa-hands-clapping text-4xl mb-2"></i>
+    <p class="font-serif text-2xl mb-1">
+      {% blocktrans count counter=need_count %}{{ counter }} need covered!{% plural %}{{ counter }} needs covered!{% endblocktrans %}
+    </p>
+    {% if helper_count %}
+      <p class="mb-1">{% blocktrans count counter=helper_count %}Thanks to {{ counter }} person who helps out.{% plural %}Thanks to {{ counter }} people who help out.{% endblocktrans %}</p>
+      {% if request.user == community.owner %}<p class="text-sm opacity-80 mb-0">{% trans "Say thank you with a reference: it helps them find their next match." %}</p>{% endif %}
+    {% endif %}
+  </div>
+
+  <div class="space-y-4 mb-6">
+    {% for project, needs in covered_needs %}
+      <div class="p-3 rounded border-2 border-green bg-secondary bg-opacity-50">
+        <a href="{{ project.get_absolute_url }}" class="font-semibold hover:underline"><i class="fa-solid fa-person-digging mr-1"></i>{{ project.title }}</a>
+        <span class="text-xs opacity-70">· {% include "projects/_project_dates.html" %}</span>
+        <ul class="list-none p-0 mt-2 space-y-1">
+          {% for need, helpers in needs %}
+            <li class="flex flex-wrap items-center gap-2 text-sm">
+              <span class="pill text-xs {{ need.colour }}" title="{{ need.kind_label }}"><i class="fa-solid {{ need.kind_icon }} mr-1"></i>{{ need.display_title }}{% if need.amount %}<span class="opacity-70 ml-1">({{ need.amount }})</span>{% endif %}</span>
+              <i class="fa-solid fa-check text-green"></i>
+              {% if helpers %}
+                <span>{% trans "thanks to" %}</span>
+                {% for helper in helpers %}
+                  <span class="inline-flex items-center gap-1">
+                    <a href="{{ helper.match.get_absolute_url }}" class="font-semibold hover:underline">{{ helper.person.name|default:helper.person.email }}</a>
+                    {% if request.user == community.owner and not helper.thanked %}
+                      {% reference_url_for_match helper.match as reference_url %}
+                      {% if reference_url %}<a href="{{ reference_url }}" class="btn text-xs py-1 px-2 whitespace-nowrap"><i class="fa fa-pencil mr-1"></i>{% trans "Write a reference" %}</a>{% endif %}
+                    {% endif %}
+                  </span>
+                {% endfor %}
+              {% endif %}
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+    {% endfor %}
+  </div>
+{% else %}
+  <p class="italic mb-6">{% trans "No needs are covered yet. Every first helper counts!" %}</p>
+{% endif %}
+{% endblock %}

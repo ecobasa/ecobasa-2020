@@ -1,7 +1,8 @@
 """The ambassador's calendar: a community's projects and the volunteer stays requested and
 confirmed for it and its projects, per month, with who brings which skills and things.
 Shows how many people are there each day against the community's room for guests, so
-overbooking stands out, and which needs are still open."""
+overbooking stands out, and which needs of its current and coming projects are still
+open. A second view celebrates the needs that are covered, and who covered them."""
 
 import calendar as pycalendar
 from dataclasses import dataclass, field
@@ -10,7 +11,7 @@ from datetime import date, timedelta
 from django.contrib.auth.decorators import login_required
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import PermissionDenied
-from django.db.models import Q
+from django.db.models import F, Q
 from django.shortcuts import get_object_or_404, render
 from django.utils import timezone
 
@@ -108,11 +109,20 @@ def stays_of(community):
     return dated, undated
 
 
-@login_required
-def calendar(request, community_slug):
+def _ambassadors_community(request, community_slug):
     community = get_object_or_404(Community, slug=community_slug)
     if not (request.user.is_staff or request.user == community.owner):
         raise PermissionDenied
+    return community
+
+
+def _with_needs(projects):
+    return projects.prefetch_related("listings__skill", "listings__contributions__match__from_user")
+
+
+@login_required
+def calendar(request, community_slug):
+    community = _ambassadors_community(request, community_slug)
 
     first = _month(request.GET.get("month"))
     last = first.replace(day=pycalendar.monthrange(first.year, first.month)[1])
@@ -149,9 +159,10 @@ def calendar(request, community_slug):
         weeks.append(week)
 
     month_stays = [stay for stay in stays if stay.start <= last and stay.end >= first]
+    # What is still missing doesn't depend on the month shown: every running and coming project
     open_needs = [
         (project, [need for need in project.needs() if not need.is_done])
-        for project in projects if project.is_current
+        for project in _with_needs(community.projects.current()).order_by(F("starts_on").asc(nulls_first=True), "pk")
     ]
     previous_month = (first - timedelta(days=1)).replace(day=1)
     next_month = last + timedelta(days=1)
@@ -169,6 +180,54 @@ def calendar(request, community_slug):
         "undated_stays": undated,
         "open_needs": [(project, needs) for project, needs in open_needs if needs],
         "complete_projects": [project for project, needs in open_needs if not needs],
+        "covered_count": sum(len(project.needs()) - len(needs) for project, needs in open_needs),
         "overbooked_days": [d for week in weeks for d in week if d.in_month and d.overbooked],
         "tight_days": [d for week in weeks for d in week if d.in_month and d.tight and not d.overbooked],
     })
+
+
+@login_required
+def covered(request, community_slug):
+    """What all the help has made possible: the covered and promised needs of the
+    community's projects, newest projects first, each with who brings it."""
+    community = _ambassadors_community(request, community_slug)
+    projects = (
+        _with_needs(community.projects.all())
+        .prefetch_related("listings__contributions__match__references")
+        .order_by(F("starts_on").desc(nulls_first=True), "-pk")
+    )
+    covered_needs = []
+    for project in projects:
+        needs = [(need, _helpers(need, community)) for need in project.needs() if need.is_done]
+        if needs:
+            covered_needs.append((project, needs))
+    helpers = {helper.person for _, needs in covered_needs for _, people in needs for helper in people}
+    return render(request, "matches/calendar_covered.html", {
+        "community": community,
+        "calendar_community": community,
+        "covered_needs": covered_needs,
+        "need_count": sum(len(needs) for _, needs in covered_needs),
+        "helper_count": len(helpers),
+    })
+
+
+@dataclass
+class Helper:
+    person: object
+    match: Match
+    # Whether the ambassador has written them a reference for it yet
+    thanked: bool
+
+
+def _helpers(need, community):
+    """Who brings the need, by accepted exchanges, in the order they offered: each person
+    once, with the first of their exchanges."""
+    helpers = []
+    for contribution in sorted(need.contributions.all(), key=lambda c: c.match.created_at):
+        match = contribution.match
+        person = match.from_user
+        if match.status != Match.STATUS_ACCEPTED or person == community.owner or person in [h.person for h in helpers]:
+            continue
+        thanked = any(reference.author_id == community.owner_id for reference in match.references.all())
+        helpers.append(Helper(person, match, thanked))
+    return helpers
