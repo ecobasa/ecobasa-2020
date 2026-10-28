@@ -12,7 +12,7 @@ from communities.models import Community
 from gifts.models import Listing, ListingCategory
 from notifications.models import Notification
 from projects.models import Project
-from skills.models import Skill
+from gifts.skills.models import Skill
 from gifts.testing import need, skill_offer, skill_wish
 from matches.models import Contribution
 from users.models import User

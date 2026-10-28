@@ -8,7 +8,7 @@ from django.utils import timezone
 from communities.models import Community
 from gifts.models import Listing
 from matches.models import Match
-from skills.models import Skill
+from gifts.skills.models import Skill
 from gifts.testing import skill_offer, skill_wish
 from users.models import User
 

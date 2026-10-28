@@ -12,9 +12,8 @@ from django.views.decorators.http import require_GET
 from gifts.models import Listing
 from .models import Skill, SkillTaxonomy, get_or_create_skill
 
-# Who offers or wishes for a skill are gift listings (gifts.Listing.skill): their pages,
-# forms and lists are the gifts app's. This app keeps the skills themselves, in every
-# language, and the pages about one skill.
+# The pages about the skills themselves, in every language. Who offers or wishes for a
+# skill are gift listings (gifts.Listing.skill), with the gifts' pages and forms.
 
 
 def skill_list(request):

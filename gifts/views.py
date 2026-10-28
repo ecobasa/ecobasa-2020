@@ -24,7 +24,7 @@ from .models import Listing
 from communities.models import Community
 from references.models import Reference
 from users.models import User
-from skills.models import Skill, skill_name_q
+from gifts.skills.models import Skill, skill_name_q
 from matches.forms import MatchForm
 from matches.models import Contribution, Match
 from matches.emails import notify_match_created

@@ -11,7 +11,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ("contenttypes", "0002_remove_content_type_name"),
-        ("skills", "0002_load_curated_skills"),
+        ("gifts", "0016_load_curated_skills"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
@@ -133,7 +133,7 @@ class Migration(migrations.Migration):
                     models.ForeignKey(
                         on_delete=django.db.models.deletion.CASCADE,
                         related_name="+",
-                        to="skills.skill",
+                        to="gifts.skill",
                     ),
                 ),
             ],
@@ -150,7 +150,7 @@ class Migration(migrations.Migration):
                 blank=True,
                 related_name="+",
                 through="references.ReferenceSkill",
-                to="skills.skill",
+                to="gifts.skill",
             ),
         ),
         migrations.AddConstraint(

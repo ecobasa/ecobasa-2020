@@ -107,7 +107,7 @@ Everything someone offers or wishes for is one model, `gifts.Listing`: things (m
 tools, anything else), skills, knowledge and helping hands, of a person or a community
 (managed by its ambassador), maybe in one of the community's projects. Skills, and
 knowledge or helping hands for a known skill, point to the skill vocabulary
-(`skills.Skill`, names in every language). With an amount ("200 kg", "2 people") a wish is
+(`gifts.Skill`, names in every language, in `gifts/skills/`). With an amount ("200 kg", "2 people") a wish is
 covered in parts, and an offer given away in parts: each exchange says how much it brings
 or takes (`matches.Contribution`). Covered wishes and given-away offers drop off the lists;
 a skill can be shared again and again.

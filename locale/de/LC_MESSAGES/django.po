@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ecobasa\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-28 09:06+0100\n"
+"POT-Creation-Date: 2026-10-28 09:13+0100\n"
 "PO-Revision-Date: 2026-10-23 12:00+0200\n"
 "Last-Translator: ecobasa\n"
 "Language-Team: de\n"
@@ -28,8 +28,7 @@ msgstr "Fähigkeiten, die wir suchen"
 
 #: communities/forms.py:41
 msgid ""
-"Comma-separated list of skills you're looking for in visitors or new "
-"members."
+"Comma-separated list of skills you're looking for in visitors or new members."
 msgstr ""
 "Kommagetrennte Liste von Fähigkeiten, die ihr bei Besucher*innen oder neuen "
 "Mitgliedern sucht."
@@ -48,7 +47,7 @@ msgstr "Fähigkeiten hinzufügen, durch Komma getrennt"
 
 #: communities/forms.py:109 communities/models.py:102
 #: communities/templates/communities/community_detail.html:239
-#: gifts/filters.py:43 gifts/filters.py:45 gifts/models.py:171
+#: gifts/filters.py:43 gifts/filters.py:45 gifts/models.py:173
 #: gifts/templates/gifts/listing_detail.html:251
 #: gifts/templates/gifts/listing_form.html:84
 #: matches/templates/matches/match_detail.html:199 users/models.py:98
@@ -86,7 +85,7 @@ msgstr "Bietet ihr Seminare an, an denen Besucher*innen teilnehmen können?"
 msgid "Requirements for visitors"
 msgstr "Voraussetzungen für Besucher*innen"
 
-#: communities/models.py:22 gifts/models.py:17 skills/models.py:110
+#: communities/models.py:22 gifts/models.py:19 gifts/skills/models.py:110
 msgid "Name"
 msgstr "Name"
 
@@ -94,16 +93,16 @@ msgstr "Name"
 msgid "Slug"
 msgstr "Slug"
 
-#: communities/models.py:24 gifts/filters.py:19 gifts/views.py:110
+#: communities/models.py:24 gifts/filters.py:19 gifts/skills/models.py:117
+#: gifts/templates/skills/skill_detail.html:4
+#: gifts/templates/skills/skill_detail.html:10
+#: gifts/templates/skills/skill_list.html:4
+#: gifts/templates/skills/skill_list.html:10 gifts/views.py:110
 #: matches/models.py:343 matches/templates/matches/_person.html:20
 #: matches/views.py:31 matches/views.py:101 references/forms.py:15
 #: references/templates/references/email/reference_created.html:35
 #: references/templates/references/email/reference_created.txt:9
-#: skills/models.py:117 skills/templates/skills/skill_detail.html:4
-#: skills/templates/skills/skill_detail.html:10
-#: skills/templates/skills/skill_list.html:4
-#: skills/templates/skills/skill_list.html:10 templates/_navbar.html:157
-#: users/templates/users/detail.html:132
+#: templates/_navbar.html:157 users/templates/users/detail.html:132
 msgid "Skills"
 msgstr "Fähigkeiten"
 
@@ -114,9 +113,9 @@ msgstr ""
 "Fähigkeiten, die Menschen bei einem Aufenthalt oder beim Mithelfen in eurer "
 "Gemeinschaft lernen können"
 
-#: communities/models.py:27 gifts/models.py:140 projects/models.py:35
-#: skills/models.py:112
-#: skills/templates/skills/_userskill_add_several_row.html:20
+#: communities/models.py:27 gifts/models.py:142 gifts/skills/models.py:112
+#: gifts/templates/skills/_userskill_add_several_row.html:20
+#: projects/models.py:35
 msgid "Description"
 msgstr "Beschreibung"
 
@@ -132,8 +131,8 @@ msgstr "Unterkunft für Gäste"
 #: communities/models.py:29
 msgid ""
 "Where can your visitors sleep? Do you have space for a bus, tents? How is "
-"the indoor sleeping situation? Do you have mattresses, a couch? Donations or"
-" pricing model? Required daily work or experience?"
+"the indoor sleeping situation? Do you have mattresses, a couch? Donations or "
+"pricing model? Required daily work or experience?"
 msgstr ""
 "Wo können eure Gäste schlafen? Habt ihr Platz für einen Bus oder Zelte? Wie "
 "sieht es drinnen aus – gibt es Matratzen, ein Sofa? Spenden oder "
@@ -156,7 +155,7 @@ msgstr "Video"
 msgid "Link to a video showing your community"
 msgstr "Link zu einem Video, das eure Gemeinschaft zeigt"
 
-#: communities/models.py:48 gifts/models.py:155
+#: communities/models.py:48 gifts/models.py:157
 msgid "Owner"
 msgstr "Verantwortlich"
 
@@ -166,8 +165,8 @@ msgstr "Wie viele Kinder leben bei euch?"
 
 #: communities/models.py:60
 msgid ""
-"Describe your workshop spaces and what people can "
-"build/construct/manufacture."
+"Describe your workshop spaces and what people can build/construct/"
+"manufacture."
 msgstr ""
 "Beschreibt eure Werkstätten und was man dort bauen und herstellen kann."
 
@@ -234,7 +233,7 @@ msgstr "Art der Gemeinschaft"
 msgid "Country"
 msgstr "Land"
 
-#: communities/models.py:105 gifts/models.py:175 users/models.py:99
+#: communities/models.py:105 gifts/models.py:177 users/models.py:99
 msgid "Geo Location"
 msgstr "Geoposition"
 
@@ -247,9 +246,8 @@ msgstr "hat einen Gemeinschaftsaufenthalt angefragt bei"
 msgid "%(actor)s requested a volunteer stay at %(title)s"
 msgstr "%(actor)s hat einen Gemeinschaftsaufenthalt bei %(title)s angefragt"
 
-#: communities/models.py:160 gifts/models.py:160 projects/models.py:32
-#: projects/templates/projects/project_detail.html:152
-#: references/models.py:144
+#: communities/models.py:160 gifts/models.py:162 projects/models.py:32
+#: projects/templates/projects/project_detail.html:152 references/models.py:144
 msgid "Community"
 msgstr "Gemeinschaft"
 
@@ -356,7 +354,7 @@ msgid "Skills you can learn here"
 msgstr "Fähigkeiten, die du hier lernen kannst"
 
 #: communities/templates/communities/community_detail.html:135
-#: skills/templates/skills/skill_list.html:13
+#: gifts/templates/skills/skill_list.html:13
 msgid "Add a skill"
 msgstr "Eine Fähigkeit hinzufügen"
 
@@ -503,11 +501,11 @@ msgstr ""
 #: communities/templates/communities/community_form.html:180
 #: gifts/templates/gifts/listing_delete_confirm.html:29
 #: gifts/templates/gifts/listing_form.html:91
+#: gifts/templates/skills/userskill_add_several.html:44
 #: matches/templates/matches/match_detail.html:432
 #: projects/templates/projects/offer_help.html:69
 #: projects/templates/projects/project_form.html:52
 #: references/templates/references/_references.html:39
-#: skills/templates/skills/userskill_add_several.html:44
 #: templates/postman/write.html:87 users/templates/users/register.html:37
 #: users/templates/users/update.html:64
 msgid "Cancel"
@@ -616,7 +614,7 @@ msgstr "Filter"
 
 #: communities/templates/communities/community_list.html:217
 #: communities/templates/communities/community_list.html:461
-#: gifts/models.py:130 gifts/templates/gifts/_filter_popover.html:21
+#: gifts/models.py:132 gifts/templates/gifts/_filter_popover.html:21
 #: matches/templates/matches/matches_list.html:12
 msgid "Type"
 msgstr "Art"
@@ -735,7 +733,7 @@ msgstr "Projektbedarfe"
 msgid "Search"
 msgstr "Suche"
 
-#: gifts/filters.py:38 gifts/models.py:132 projects/forms.py:87
+#: gifts/filters.py:38 gifts/models.py:134 projects/forms.py:87
 msgid "Kind"
 msgstr "Art"
 
@@ -743,9 +741,9 @@ msgstr "Art"
 msgid "Please upload a photo."
 msgstr "Bitte lade ein Foto hoch."
 
-#: gifts/forms.py:37 gifts/models.py:87 gifts/models.py:137
-#: gifts/models.py:250 gifts/templates/gifts/listing_form.html:54
-#: matches/templates/matches/_stay_legend.html:3 skills/models.py:116
+#: gifts/forms.py:37 gifts/models.py:89 gifts/models.py:139 gifts/models.py:252
+#: gifts/skills/models.py:116 gifts/templates/gifts/listing_form.html:54
+#: matches/templates/matches/_stay_legend.html:3
 msgid "Skill"
 msgstr "Fähigkeit"
 
@@ -755,8 +753,7 @@ msgstr "z. B. Zimmerei, Solarenergie, Kochen"
 
 #: gifts/forms.py:64
 msgid "For knowledge or helping hands: what for, if no skill says it."
-msgstr ""
-"Bei Wissen oder helfenden Händen: wofür, wenn keine Fähigkeit es sagt."
+msgstr "Bei Wissen oder helfenden Händen: wofür, wenn keine Fähigkeit es sagt."
 
 #: gifts/forms.py:65
 msgid "Optional: how many or how much you offer or wish for."
@@ -783,161 +780,169 @@ msgstr "Nenne eine Fähigkeit oder sag, wofür."
 msgid "What is it?"
 msgstr "Was ist es?"
 
-#: gifts/models.py:18
+#: gifts/models.py:20
 msgid "Order"
 msgstr "Reihenfolge"
 
-#: gifts/models.py:24
+#: gifts/models.py:26
 msgid "Listing Category"
 msgstr "Kategorie"
 
-#: gifts/models.py:25
+#: gifts/models.py:27
 msgid "Listing Categories"
 msgstr "Kategorien"
 
-#: gifts/models.py:74
+#: gifts/models.py:76
 msgid "Offer"
 msgstr "Angebot"
 
-#: gifts/models.py:74 references/models.py:141
+#: gifts/models.py:76 references/models.py:141
 msgid "Wish"
 msgstr "Wunsch"
 
-#: gifts/models.py:84 matches/templates/matches/_stay_legend.html:5
+#: gifts/models.py:86 matches/templates/matches/_stay_legend.html:5
 #: projects/forms.py:83
 msgid "Material"
 msgstr "Material"
 
-#: gifts/models.py:85 matches/templates/matches/_stay_legend.html:6
+#: gifts/models.py:87 matches/templates/matches/_stay_legend.html:6
 #: projects/forms.py:84
 msgid "Tool"
 msgstr "Werkzeug"
 
-#: gifts/models.py:86
+#: gifts/models.py:88
 msgid "Other"
 msgstr "Sonstiges"
 
-#: gifts/models.py:88 matches/templates/matches/_stay_legend.html:4
+#: gifts/models.py:90 matches/templates/matches/_stay_legend.html:4
 #: projects/forms.py:82
 msgid "Knowledge"
 msgstr "Wissen"
 
-#: gifts/models.py:89 projects/forms.py:81
+#: gifts/models.py:91 projects/forms.py:81
 msgid "Helping hands"
 msgstr "Helfende Hände"
 
-#: gifts/models.py:115
+#: gifts/models.py:117
 msgid "Beginner"
 msgstr "Anfänger*in"
 
-#: gifts/models.py:116
+#: gifts/models.py:118
 msgid "Intermediate"
 msgstr "Fortgeschritten"
 
-#: gifts/models.py:117
+#: gifts/models.py:119
 msgid "Advanced"
 msgstr "Erfahren"
 
-#: gifts/models.py:118
+#: gifts/models.py:120
 msgid "Expert"
 msgstr "Expert*in"
 
-#: gifts/models.py:127
+#: gifts/models.py:129
 msgid "Random Id"
 msgstr "Zufalls-ID"
 
-#: gifts/models.py:139 projects/models.py:34
+#: gifts/models.py:141 projects/models.py:34
 msgid "Title"
 msgstr "Titel"
 
-#: gifts/models.py:141 users/models.py:93
+#: gifts/models.py:143 users/models.py:93
 msgid "image"
 msgstr "Bild"
 
-#: gifts/models.py:142
+#: gifts/models.py:144
 msgid "How many / how much?"
 msgstr "Wie viel / wie viele?"
 
-#: gifts/models.py:143 projects/forms.py:104
+#: gifts/models.py:145 projects/forms.py:104
 msgid "Unit"
 msgstr "Einheit"
 
-#: gifts/models.py:146 gifts/templates/gifts/listing_detail.html:71
+#: gifts/models.py:148 gifts/templates/gifts/listing_detail.html:71
+#: gifts/templates/skills/userskill_add_several.html:24
 #: matches/templates/matches/_skill_pill.html:2
-#: skills/templates/skills/userskill_add_several.html:24
 msgid "Level"
 msgstr "Niveau"
 
-#: gifts/models.py:147
+#: gifts/models.py:149
 msgid "Available to teach / share"
 msgstr "Bereit zum Weitergeben / Teilen"
 
-#: gifts/models.py:165 matches/models.py:121
+#: gifts/models.py:167 matches/models.py:121
 #: matches/templates/matches/calendar.html:88 projects/models.py:65
 msgid "Project"
 msgstr "Projekt"
 
-#: gifts/models.py:168
+#: gifts/models.py:170
 msgid "Categories"
 msgstr "Kategorien"
 
-#: gifts/models.py:178 gifts/templates/gifts/listing_detail.html:75
+#: gifts/models.py:180 gifts/templates/gifts/listing_detail.html:75
 #: projects/templates/projects/_need_pill.html:3
 msgid "Covered"
 msgstr "Abgedeckt"
 
-#: gifts/models.py:186
+#: gifts/models.py:188
 msgid "Listing"
 msgstr "Eintrag"
 
-#: gifts/models.py:187
+#: gifts/models.py:189
 msgid "Listings"
 msgstr "Einträge"
 
-#: gifts/models.py:250 gifts/templates/gifts/listing_form.html:54
+#: gifts/models.py:252 gifts/templates/gifts/listing_form.html:54
 msgid "Learn a skill"
 msgstr "Eine Fähigkeit lernen"
 
-#: gifts/models.py:382
+#: gifts/models.py:384
 #, python-format
 msgid "%(promised)s of %(amount)s promised"
 msgstr "%(promised)s von %(amount)s zugesagt"
 
-#: gifts/models.py:415
+#: gifts/models.py:417
 msgid "offered to help with your wish"
 msgstr "hat Hilfe bei deinem Wunsch angeboten"
 
-#: gifts/models.py:415
+#: gifts/models.py:417
 msgid "wants to fulfill your wish"
 msgstr "möchte deinen Wunsch erfüllen"
 
-#: gifts/models.py:416
+#: gifts/models.py:418
 msgid "is interested in your skill"
 msgstr "interessiert sich für deine Fähigkeit"
 
-#: gifts/models.py:416
+#: gifts/models.py:418
 msgid "is interested in your offer"
 msgstr "interessiert sich für dein Angebot"
 
-#: gifts/models.py:421
+#: gifts/models.py:423
 #, python-format
 msgid "%(actor)s offered to help with: %(title)s"
 msgstr "%(actor)s hat Hilfe angeboten bei: %(title)s"
 
-#: gifts/models.py:422
+#: gifts/models.py:424
 #, python-format
 msgid "%(actor)s wants to fulfill your wish: %(title)s"
 msgstr "%(actor)s möchte deinen Wunsch erfüllen: %(title)s"
 
-#: gifts/models.py:424
+#: gifts/models.py:426
 #, python-format
 msgid "%(actor)s is interested in your skill: %(title)s"
 msgstr "%(actor)s interessiert sich für deine Fähigkeit: %(title)s"
 
-#: gifts/models.py:425
+#: gifts/models.py:427
 #, python-format
 msgid "%(actor)s is interested in your offer: %(title)s"
 msgstr "%(actor)s interessiert sich für dein Angebot: %(title)s"
+
+#: gifts/skills/models.py:18 gifts/skills/models.py:19
+msgid "Skill taxonomy"
+msgstr "Fähigkeiten-Taxonomie"
+
+#: gifts/skills/views.py:101
+msgid "Skills added to your profile."
+msgstr "Fähigkeiten zu deinem Profil hinzugefügt."
 
 #: gifts/templates/gifts/_filter_popover.html:37
 msgid "Kind of thing"
@@ -984,11 +989,13 @@ msgstr ""
 #, python-format
 msgid ""
 "\n"
-"          Are you sure you want to delete the %(listing_type)s <b>%(listing_title)s</b>?\n"
+"          Are you sure you want to delete the %(listing_type)s "
+"<b>%(listing_title)s</b>?\n"
 "        "
 msgstr ""
 "\n"
-"          Möchtest du %(listing_type)s <b>%(listing_title)s</b> wirklich löschen?\n"
+"          Möchtest du %(listing_type)s <b>%(listing_title)s</b> wirklich "
+"löschen?\n"
 "        "
 
 #: gifts/templates/gifts/listing_detail.html:28 matches/models.py:343
@@ -1216,6 +1223,91 @@ msgstr "Fähigkeit eintragen"
 msgid "Search by offer, wish, skill or place"
 msgstr "Nach Angebot, Wunsch, Fähigkeit oder Ort suchen"
 
+#: gifts/templates/skills/skill_detail.html:24
+#: gifts/templates/skills/skill_detail.html:107
+#: gifts/templates/skills/userskill_add_several.html:41
+msgid "Add to my profile"
+msgstr "Zu meinem Profil hinzufügen"
+
+#: gifts/templates/skills/skill_detail.html:31
+msgid "People with this skill"
+msgstr "Menschen mit dieser Fähigkeit"
+
+#: gifts/templates/skills/skill_detail.html:62
+msgid "Communities offering this skill"
+msgstr "Gemeinschaften, die diese Fähigkeit anbieten"
+
+#: gifts/templates/skills/skill_detail.html:80
+msgid "Looking for this skill"
+msgstr "Suchen diese Fähigkeit"
+
+#: gifts/templates/skills/skill_detail.html:96
+msgid "Nobody has listed this skill yet."
+msgstr "Noch niemand hat diese Fähigkeit eingetragen."
+
+#: gifts/templates/skills/skill_detail.html:103
+#, python-format
+msgid "%(n)s person wants to learn or needs help with this skill."
+msgid_plural "%(n)s people want to learn or need help with this skill."
+msgstr[0] ""
+"%(n)s Person möchte diese Fähigkeit lernen oder braucht Hilfe dabei."
+msgstr[1] ""
+"%(n)s Personen möchten diese Fähigkeit lernen oder brauchen Hilfe dabei."
+
+#: gifts/templates/skills/skill_detail.html:105
+msgid ""
+"Can you teach or share it? Add it to your profile and they'll be able to "
+"find you."
+msgstr ""
+"Kannst du sie weitergeben oder teilen? Füge sie deinem Profil hinzu, dann "
+"können sie dich finden."
+
+#: gifts/templates/skills/skill_list.html:39
+msgid "No skills listed yet."
+msgstr "Noch keine Fähigkeiten eingetragen."
+
+#: gifts/templates/skills/userskill_add_several.html:4
+#: gifts/templates/skills/userskill_add_several.html:10
+msgid "Add skills to your profile"
+msgstr "Fähigkeiten zu deinem Profil hinzufügen"
+
+#: gifts/templates/skills/userskill_add_several.html:13
+msgid ""
+"Untick what you don't want to add. For each skill, pick a level and, if you "
+"like, say a few words about it, so others can find you by it."
+msgstr ""
+"Entferne das Häkchen bei allem, was du nicht hinzufügen möchtest. Wähle für "
+"jede Fähigkeit ein Niveau und schreib gern ein paar Worte dazu, damit andere "
+"dich darüber finden."
+
+#: gifts/templates/skills/userskill_add_several.html:21
+msgid "I can offer / teach this skill"
+msgstr "Ich kann diese Fähigkeit anbieten / weitergeben"
+
+#: gifts/templates/skills/userskill_add_several.html:24
+msgid "How did you learn this? What can you offer?"
+msgstr "Wie hast du das gelernt? Was kannst du anbieten?"
+
+#: gifts/templates/skills/userskill_add_several.html:30
+msgid "I want to learn this or need help with it"
+msgstr "Ich möchte das lernen oder brauche Hilfe dabei"
+
+#: gifts/templates/skills/userskill_add_several.html:32
+msgid "Any level"
+msgstr "Jedes Niveau"
+
+#: gifts/templates/skills/userskill_add_several.html:34
+msgid "My current level"
+msgstr "Mein aktuelles Niveau"
+
+#: gifts/templates/skills/userskill_add_several.html:34
+msgid ""
+"Why do you want to learn this or need help with it? What would you like to "
+"be able to do?"
+msgstr ""
+"Warum möchtest du das lernen oder brauchst Hilfe dabei? Was möchtest du "
+"danach können?"
+
 #: gifts/units.py:9
 msgid "people"
 msgstr "Personen"
@@ -1313,15 +1405,27 @@ msgstr "Geschichten für die Startseite auswählen"
 msgid ""
 "\n"
 "        <h1>We need your help!</h1>\n"
-"        <a href=\"/contact\" target=\"_blank\">Get in contact with us</a>, if you want to help with written communication and social media, design, programming or legal counceling, organising of events or your own creative ideas.\n"
-"        <p>The gift-economy network and this online platform are all run by <a href=\"/team/\">volunteers</a>. \n"
-"          You can help developing this open-source project on <a href=\"http://github.com/ecobasa/ecobasa-2020/\" target=\"_blank\">github</a> and translate the platform on <a href=\"http://translate.ecobasa.org\" target=\"_blank\">crowdin</a>. Thanks for your support!</p>\n"
+"        <a href=\"/contact\" target=\"_blank\">Get in contact with us</a>, "
+"if you want to help with written communication and social media, design, "
+"programming or legal counceling, organising of events or your own creative "
+"ideas.\n"
+"        <p>The gift-economy network and this online platform are all run by "
+"<a href=\"/team/\">volunteers</a>. \n"
+"          You can help developing this open-source project on <a "
+"href=\"http://github.com/ecobasa/ecobasa-2020/\" target=\"_blank\">github</"
+"a> and translate the platform on <a href=\"http://translate.ecobasa.org\" "
+"target=\"_blank\">crowdin</a>. Thanks for your support!</p>\n"
 "        <h2>Your gifts keep us giving</h2>\n"
-"        <p><strong>We try to cover running costs through donations:</strong></p>\n"
+"        <p><strong>We try to cover running costs through donations:</"
+"strong></p>\n"
 "        <ul>\n"
-"          <li>First we will try to cover external costs for the webserver and domain: 120€ (Green-hosting by ecobytes.net) <a href=\"/contact\" target=\"_blank\">Alternatively you can help us with free hosting!</a></li>\n"
-"          <li>Additional donations we will put to our most urgent needs, like legal counseling.</li>\n"
-"          <li>Monthly donations make it possible for us to plan ahead and to spend more time away from day jobs to follow our passion.</li>\n"
+"          <li>First we will try to cover external costs for the webserver "
+"and domain: 120€ (Green-hosting by ecobytes.net) <a href=\"/contact\" "
+"target=\"_blank\">Alternatively you can help us with free hosting!</a></li>\n"
+"          <li>Additional donations we will put to our most urgent needs, "
+"like legal counseling.</li>\n"
+"          <li>Monthly donations make it possible for us to plan ahead and to "
+"spend more time away from day jobs to follow our passion.</li>\n"
 "        </ul>\n"
 "\n"
 "        <p><i>Happy giving!</i></p>\n"
@@ -1329,15 +1433,29 @@ msgid ""
 msgstr ""
 "\n"
 "        <h1>Wir brauchen deine Hilfe!</h1>\n"
-"        <a href=\"/contact\" target=\"_blank\">Melde dich bei uns</a>, wenn du bei Texten und Social Media, Design, Programmierung oder Rechtsberatung, bei der Organisation von Veranstaltungen oder mit deinen eigenen kreativen Ideen helfen möchtest.\n"
-"        <p>Das Schenkökonomie-Netzwerk und diese Online-Plattform werden komplett von <a href=\"/team/\">Freiwilligen</a> getragen.\n"
-"          Du kannst dieses Open-Source-Projekt auf <a href=\"http://github.com/ecobasa/ecobasa-2020/\" target=\"_blank\">GitHub</a> mitentwickeln und die Plattform auf <a href=\"http://translate.ecobasa.org\" target=\"_blank\">Crowdin</a> übersetzen. Danke für deine Unterstützung!</p>\n"
+"        <a href=\"/contact\" target=\"_blank\">Melde dich bei uns</a>, wenn "
+"du bei Texten und Social Media, Design, Programmierung oder Rechtsberatung, "
+"bei der Organisation von Veranstaltungen oder mit deinen eigenen kreativen "
+"Ideen helfen möchtest.\n"
+"        <p>Das Schenkökonomie-Netzwerk und diese Online-Plattform werden "
+"komplett von <a href=\"/team/\">Freiwilligen</a> getragen.\n"
+"          Du kannst dieses Open-Source-Projekt auf <a href=\"http://github."
+"com/ecobasa/ecobasa-2020/\" target=\"_blank\">GitHub</a> mitentwickeln und "
+"die Plattform auf <a href=\"http://translate.ecobasa.org\" "
+"target=\"_blank\">Crowdin</a> übersetzen. Danke für deine Unterstützung!</"
+"p>\n"
 "        <h2>Deine Geschenke halten uns am Geben</h2>\n"
-"        <p><strong>Wir versuchen, die laufenden Kosten durch Spenden zu decken:</strong></p>\n"
+"        <p><strong>Wir versuchen, die laufenden Kosten durch Spenden zu "
+"decken:</strong></p>\n"
 "        <ul>\n"
-"          <li>Zuerst möchten wir die externen Kosten für Webserver und Domain decken: 120 € (Green Hosting bei ecobytes.net). <a href=\"/contact\" target=\"_blank\">Alternativ kannst du uns mit kostenlosem Hosting helfen!</a></li>\n"
-"          <li>Weitere Spenden setzen wir für das Dringendste ein, zum Beispiel Rechtsberatung.</li>\n"
-"          <li>Monatliche Spenden ermöglichen es uns, vorauszuplanen und mehr Zeit abseits unserer Brotjobs unserer Leidenschaft zu widmen.</li>\n"
+"          <li>Zuerst möchten wir die externen Kosten für Webserver und "
+"Domain decken: 120 € (Green Hosting bei ecobytes.net). <a href=\"/contact\" "
+"target=\"_blank\">Alternativ kannst du uns mit kostenlosem Hosting helfen!</"
+"a></li>\n"
+"          <li>Weitere Spenden setzen wir für das Dringendste ein, zum "
+"Beispiel Rechtsberatung.</li>\n"
+"          <li>Monatliche Spenden ermöglichen es uns, vorauszuplanen und mehr "
+"Zeit abseits unserer Brotjobs unserer Leidenschaft zu widmen.</li>\n"
 "        </ul>\n"
 "\n"
 "        <p><i>Frohes Schenken!</i></p>\n"
@@ -1641,8 +1759,8 @@ msgstr "Ausblenden"
 #: matches/templates/matches/_suggestions_intro.html:13
 msgid ""
 "Suggestions: what people, communities and projects anywhere offer or need "
-"that fits your wishes, offers and skills. It becomes a match once one of you"
-" asks."
+"that fits your wishes, offers and skills. It becomes a match once one of you "
+"asks."
 msgstr ""
 "Vorschläge: was Menschen, Gemeinschaften und Projekte irgendwo auf der Welt "
 "anbieten oder brauchen und zu deinen Wünschen, Angeboten und Fähigkeiten "
@@ -1651,8 +1769,8 @@ msgstr ""
 #: matches/templates/matches/_suggestions_intro.html:7
 #, python-format
 msgid ""
-"Suggestions: what people, communities and projects within %(km)s km offer or"
-" need that fits your wishes, offers and skills. It becomes a match once one "
+"Suggestions: what people, communities and projects within %(km)s km offer or "
+"need that fits your wishes, offers and skills. It becomes a match once one "
 "of you asks."
 msgstr ""
 "Vorschläge: was Menschen, Gemeinschaften und Projekte im Umkreis von %(km)s "
@@ -1681,8 +1799,8 @@ msgid ""
 "Add your place or country in the settings to see what's near you."
 msgstr ""
 "Du bekommst Vorschläge von überall, weil in deinem Profil noch kein Ort "
-"steht. Trag in den Einstellungen deinen Ort oder dein Land ein, um zu sehen,"
-" was in deiner Nähe ist."
+"steht. Trag in den Einstellungen deinen Ort oder dein Land ein, um zu sehen, "
+"was in deiner Nähe ist."
 
 #: matches/templates/matches/_suggestions_intro.html:23
 #: templates/_navbar.html:192 templates/_navbar.html:286
@@ -1875,8 +1993,8 @@ msgstr "Ablehnen"
 #: matches/templates/matches/email/match_request.html:87
 #, python-format
 msgid ""
-"Or <a href=\"%(detail_url)s\" style=\"color:#da6137;\">view the full "
-"match</a> to reply or make a counter-proposal."
+"Or <a href=\"%(detail_url)s\" style=\"color:#da6137;\">view the full match</"
+"a> to reply or make a counter-proposal."
 msgstr ""
 "Oder <a href=\"%(detail_url)s\" style=\"color:#da6137;\">sieh dir das ganze "
 "Match an</a>, um zu antworten oder einen Gegenvorschlag zu machen."
@@ -1909,8 +2027,7 @@ msgstr "Alle deine Vorschläge"
 
 #: matches/templates/matches/email/suggestions.html:41
 #: matches/templates/matches/email/suggestions.txt:12
-msgid ""
-"You get this because you share wishes, offers or skills on ecobasa.org."
+msgid "You get this because you share wishes, offers or skills on ecobasa.org."
 msgstr ""
 "Du bekommst diese E-Mail, weil du auf ecobasa.org Wünsche, Angebote oder "
 "Fähigkeiten teilst."
@@ -2099,8 +2216,8 @@ msgstr ""
 
 #: notifications/models.py:8
 msgid ""
-"Your profile has no skills yet — add what you can offer and what you want to"
-" learn or need help with so communities and people can find you."
+"Your profile has no skills yet — add what you can offer and what you want to "
+"learn or need help with so communities and people can find you."
 msgstr ""
 "Dein Profil hat noch keine Fähigkeiten – trag ein, was du anbieten kannst "
 "und was du lernen möchtest oder wobei du Hilfe brauchst, damit "
@@ -2114,8 +2231,7 @@ msgstr "Link"
 msgid "Notification"
 msgstr "Benachrichtigung"
 
-#: notifications/models.py:61
-#: notifications/templates/notifications/list.html:4
+#: notifications/models.py:61 notifications/templates/notifications/list.html:4
 #: notifications/templates/notifications/list.html:9 templates/_navbar.html:63
 #: templates/_navbar.html:82 templates/dashboard/base.html:11
 msgid "Notifications"
@@ -2167,8 +2283,8 @@ msgstr "Jemand"
 #: notifications/models.py:116
 msgid "Suggestions near you: what fits your wishes, offers and skills."
 msgstr ""
-"Vorschläge in deiner Nähe: was zu deinen Wünschen, Angeboten und Fähigkeiten"
-" passt."
+"Vorschläge in deiner Nähe: was zu deinen Wünschen, Angeboten und Fähigkeiten "
+"passt."
 
 #: notifications/models.py:118
 #, python-format
@@ -2176,8 +2292,7 @@ msgid ""
 "%(count)s new suggestion near you: something fits your wishes, offers or "
 "skills."
 msgid_plural ""
-"%(count)s new suggestions near you: things fit your wishes, offers or "
-"skills."
+"%(count)s new suggestions near you: things fit your wishes, offers or skills."
 msgstr[0] ""
 "%(count)s neuer Vorschlag in deiner Nähe: etwas passt zu deinen Wünschen, "
 "Angeboten oder Fähigkeiten."
@@ -2203,8 +2318,7 @@ msgstr "Darin stehen Fähigkeiten, die auf deine Bestätigung warten."
 msgid "Mark all as read"
 msgstr "Alle als gelesen markieren"
 
-#: notifications/templates/notifications/list.html:72
-#: templates/_navbar.html:86
+#: notifications/templates/notifications/list.html:72 templates/_navbar.html:86
 msgid "No notifications yet."
 msgstr "Noch keine Benachrichtigungen."
 
@@ -2432,8 +2546,8 @@ msgstr "Wobei kannst du helfen?"
 
 #: projects/templates/projects/offer_help.html:24
 msgid ""
-"Pick what you can do or bring, and how much. You can also just offer helping"
-" hands."
+"Pick what you can do or bring, and how much. You can also just offer helping "
+"hands."
 msgstr ""
 "Wähl aus, was du tun oder mitbringen kannst, und wie viel. Du kannst auch "
 "einfach helfende Hände anbieten."
@@ -2582,8 +2696,8 @@ msgid ""
 "network, and list what you need for it. Keep it short and current: projects "
 "nobody updates are archived after a while."
 msgstr ""
-"Beschreib etwas Konkretes, das ihr mit Hilfe aus dem Schenknetzwerk umsetzen"
-" wollt, und was ihr dafür braucht. Halte es kurz und aktuell: Projekte, die "
+"Beschreib etwas Konkretes, das ihr mit Hilfe aus dem Schenknetzwerk umsetzen "
+"wollt, und was ihr dafür braucht. Halte es kurz und aktuell: Projekte, die "
 "niemand aktualisiert, werden nach einer Weile archiviert."
 
 #: projects/templates/projects/project_form.html:23
@@ -2618,10 +2732,9 @@ msgstr ""
 "Gemeinschaften verwirklichen Projekte gemeinsam mit Menschen aus dem Schenk-"
 "Netzwerk: mit helfenden Händen, Materialien, Werkzeugen und Wissen, die "
 "geteilt werden. Jedes Geschenk ermöglicht es einem Projekt, ein bisschen "
-"weniger Geld zu benötigen, und nebenbei wachsen ein soziales Netz, Vertrauen"
-" und Freundschaften. Projekte, die vorbei sind oder länger nicht "
-"aktualisiert wurden, werden automatisch archiviert und bleiben hier zum "
-"Zurückschauen."
+"weniger Geld zu benötigen, und nebenbei wachsen ein soziales Netz, Vertrauen "
+"und Freundschaften. Projekte, die vorbei sind oder länger nicht aktualisiert "
+"wurden, werden automatisch archiviert und bleiben hier zum Zurückschauen."
 
 #: projects/templates/projects/project_list.html:18
 msgid "Search projects, skills, materials, places…"
@@ -2850,8 +2963,8 @@ msgstr "Sprich von dir."
 #: references/templates/references/_guidelines.html:13
 msgid "Write “I felt …” or “I was glad that …” rather than “they are …”."
 msgstr ""
-"Schreib „Ich habe mich … gefühlt“ oder „Ich habe mich gefreut, dass …“ statt"
-" „die Person ist …“."
+"Schreib „Ich habe mich … gefühlt“ oder „Ich habe mich gefreut, dass …“ statt "
+"„die Person ist …“."
 
 #: references/templates/references/_guidelines.html:14
 msgid "Name your feelings and needs."
@@ -2886,8 +2999,8 @@ msgid ""
 "What others do can touch your feelings; the feelings come from your own "
 "needs. Say what you would have wished for."
 msgstr ""
-"Was andere tun, kann Gefühle in dir auslösen; ihre Wurzel sind deine eigenen"
-" Bedürfnisse. Sag, was du dir gewünscht hättest."
+"Was andere tun, kann Gefühle in dir auslösen; ihre Wurzel sind deine eigenen "
+"Bedürfnisse. Sag, was du dir gewünscht hättest."
 
 #: references/templates/references/_guidelines.html:17
 msgid "Write as if they were reading along."
@@ -2903,21 +3016,21 @@ msgstr "Du schreibst über eine Gemeinschaft"
 
 #: references/templates/references/_guidelines.html:22
 msgid ""
-"You are writing about a place and a whole group of people. Describe what the"
-" place and living or staying together were like for you."
+"You are writing about a place and a whole group of people. Describe what the "
+"place and living or staying together were like for you."
 msgstr ""
 "Du schreibst über einen Ort und eine ganze Gruppe von Menschen. Beschreibe, "
 "wie du den Ort und das Zusammenleben oder deinen Aufenthalt erlebt hast."
 
 #: references/templates/references/_guidelines.html:23
 msgid ""
-"Was your experience mainly with one person? Say so explicitly, and don't let"
-" it colour your impression of the whole community: a difficult encounter "
-"with one person is no reason for a negative community reference."
+"Was your experience mainly with one person? Say so explicitly, and don't let "
+"it colour your impression of the whole community: a difficult encounter with "
+"one person is no reason for a negative community reference."
 msgstr ""
-"Hattest du deine Erfahrung vor allem mit einer Person? Sag das ausdrücklich,"
-" und lass sie nicht deinen Eindruck von der ganzen Gemeinschaft färben: Eine"
-" schwierige Begegnung mit einem Menschen ist kein Grund für eine negative "
+"Hattest du deine Erfahrung vor allem mit einer Person? Sag das ausdrücklich, "
+"und lass sie nicht deinen Eindruck von der ganzen Gemeinschaft färben: Eine "
+"schwierige Begegnung mit einem Menschen ist kein Grund für eine negative "
 "Referenz über die Gemeinschaft."
 
 #: references/templates/references/_guidelines.html:24
@@ -2930,12 +3043,12 @@ msgstr ""
 #: references/templates/references/_guidelines.html:28
 msgid ""
 "If something went wrong: have you talked about it with them? A reference is "
-"not the place to settle a conflict, but it can help others to know about it."
-" If you felt unsafe, say so clearly."
+"not the place to settle a conflict, but it can help others to know about it. "
+"If you felt unsafe, say so clearly."
 msgstr ""
 "Wenn etwas schiefgelaufen ist: Habt ihr darüber gesprochen? Eine Referenz "
-"ist nicht der Ort, einen Konflikt auszutragen, aber sie kann anderen helfen,"
-" davon zu wissen. Wenn du dich nicht sicher gefühlt hast, sag es klar."
+"ist nicht der Ort, einen Konflikt auszutragen, aber sie kann anderen helfen, "
+"davon zu wissen. Wenn du dich nicht sicher gefühlt hast, sag es klar."
 
 #: references/templates/references/_guidelines.html:30
 msgid ""
@@ -3056,8 +3169,8 @@ msgstr ""
 #: references/templates/references/email/reference_received.txt:9
 #, python-format
 msgid ""
-"We saved it as “%(impression)s”. May we show it on the ecobasa homepage? You"
-" can allow this, change the impression or add a photo here:"
+"We saved it as “%(impression)s”. May we show it on the ecobasa homepage? You "
+"can allow this, change the impression or add a photo here:"
 msgstr ""
 "Wir haben sie als „%(impression)s“ gespeichert. Dürfen wir sie auf der "
 "ecobasa-Startseite zeigen? Hier kannst du das erlauben, den Eindruck ändern "
@@ -3162,8 +3275,8 @@ msgid ""
 "learn here with your community."
 msgstr ""
 "Du siehst diese Referenzen als Botschafter*in von %(name)s: Du vertrittst "
-"%(name)s im Netzwerk der Schenkökonomie und das Netzwerk in %(name)s. Teile,"
-" was du hier erfährst, mit deiner Gemeinschaft."
+"%(name)s im Netzwerk der Schenkökonomie und das Netzwerk in %(name)s. Teile, "
+"was du hier erfährst, mit deiner Gemeinschaft."
 
 #: references/templates/references/references_list.html:34
 #: templates/_navbar.html:161 templates/_navbar.html:176
@@ -3228,8 +3341,7 @@ msgstr "Danke für deine Geschichte!"
 
 #: references/templates/references/request_thanks.html:9
 msgid ""
-"We may show it on the homepage, so others can see what giving makes "
-"possible."
+"We may show it on the homepage, so others can see what giving makes possible."
 msgstr ""
 "Wir zeigen sie vielleicht auf der Startseite, damit andere sehen, was "
 "Schenken möglich macht."
@@ -3279,99 +3391,6 @@ msgstr "Spanisch"
 #: settings/base.py:37
 msgid "French"
 msgstr "Französisch"
-
-#: skills/models.py:18 skills/models.py:19
-msgid "Skill taxonomy"
-msgstr "Fähigkeiten-Taxonomie"
-
-#: skills/templates/skills/skill_detail.html:24
-#: skills/templates/skills/skill_detail.html:107
-#: skills/templates/skills/userskill_add_several.html:41
-msgid "Add to my profile"
-msgstr "Zu meinem Profil hinzufügen"
-
-#: skills/templates/skills/skill_detail.html:31
-msgid "People with this skill"
-msgstr "Menschen mit dieser Fähigkeit"
-
-#: skills/templates/skills/skill_detail.html:62
-msgid "Communities offering this skill"
-msgstr "Gemeinschaften, die diese Fähigkeit anbieten"
-
-#: skills/templates/skills/skill_detail.html:80
-msgid "Looking for this skill"
-msgstr "Suchen diese Fähigkeit"
-
-#: skills/templates/skills/skill_detail.html:96
-msgid "Nobody has listed this skill yet."
-msgstr "Noch niemand hat diese Fähigkeit eingetragen."
-
-#: skills/templates/skills/skill_detail.html:103
-#, python-format
-msgid "%(n)s person wants to learn or needs help with this skill."
-msgid_plural "%(n)s people want to learn or need help with this skill."
-msgstr[0] ""
-"%(n)s Person möchte diese Fähigkeit lernen oder braucht Hilfe dabei."
-msgstr[1] ""
-"%(n)s Personen möchten diese Fähigkeit lernen oder brauchen Hilfe dabei."
-
-#: skills/templates/skills/skill_detail.html:105
-msgid ""
-"Can you teach or share it? Add it to your profile and they'll be able to "
-"find you."
-msgstr ""
-"Kannst du sie weitergeben oder teilen? Füge sie deinem Profil hinzu, dann "
-"können sie dich finden."
-
-#: skills/templates/skills/skill_list.html:39
-msgid "No skills listed yet."
-msgstr "Noch keine Fähigkeiten eingetragen."
-
-#: skills/templates/skills/userskill_add_several.html:4
-#: skills/templates/skills/userskill_add_several.html:10
-msgid "Add skills to your profile"
-msgstr "Fähigkeiten zu deinem Profil hinzufügen"
-
-#: skills/templates/skills/userskill_add_several.html:13
-msgid ""
-"Untick what you don't want to add. For each skill, pick a level and, if you "
-"like, say a few words about it, so others can find you by it."
-msgstr ""
-"Entferne das Häkchen bei allem, was du nicht hinzufügen möchtest. Wähle für "
-"jede Fähigkeit ein Niveau und schreib gern ein paar Worte dazu, damit andere"
-" dich darüber finden."
-
-#: skills/templates/skills/userskill_add_several.html:21
-msgid "I can offer / teach this skill"
-msgstr "Ich kann diese Fähigkeit anbieten / weitergeben"
-
-#: skills/templates/skills/userskill_add_several.html:24
-msgid "How did you learn this? What can you offer?"
-msgstr "Wie hast du das gelernt? Was kannst du anbieten?"
-
-#: skills/templates/skills/userskill_add_several.html:30
-msgid "I want to learn this or need help with it"
-msgstr "Ich möchte das lernen oder brauche Hilfe dabei"
-
-#: skills/templates/skills/userskill_add_several.html:32
-msgid "Any level"
-msgstr "Jedes Niveau"
-
-#: skills/templates/skills/userskill_add_several.html:34
-msgid "My current level"
-msgstr "Mein aktuelles Niveau"
-
-#: skills/templates/skills/userskill_add_several.html:34
-msgid ""
-"Why do you want to learn this or need help with it? What would you like to "
-"be able to do?"
-msgstr ""
-"Warum möchtest du das lernen oder brauchst Hilfe dabei? Was möchtest du "
-"danach können?"
-
-#: skills/views.py:102
-msgid "Skills added to your profile."
-msgstr "Fähigkeiten zu deinem Profil hinzugefügt."
 
 #: templates/_footer.html:4
 msgid "Newsletter"
@@ -3702,8 +3721,8 @@ msgid ""
 "Trust is the only currency in our gift-economy network — real names help to "
 "build trust."
 msgstr ""
-"Vertrauen ist die einzige Währung in unserem Schenkökonomie-Netzwerk – echte"
-" Namen helfen, Vertrauen aufzubauen."
+"Vertrauen ist die einzige Währung in unserem Schenkökonomie-Netzwerk – echte "
+"Namen helfen, Vertrauen aufzubauen."
 
 #: users/forms.py:88
 msgid "Account"
@@ -3722,8 +3741,8 @@ msgid ""
 "Tell communities you want to visit or join who you are and what you have to "
 "offer."
 msgstr ""
-"Erzähl den Gemeinschaften, die du besuchen oder denen du beitreten möchtest,"
-" wer du bist und was du mitbringst."
+"Erzähl den Gemeinschaften, die du besuchen oder denen du beitreten möchtest, "
+"wer du bist und was du mitbringst."
 
 #: users/forms.py:164
 msgid "Remove current photo"
@@ -3895,8 +3914,8 @@ msgid ""
 "You're receiving this email because you requested a password reset for your "
 "user account at %(site_name)s."
 msgstr ""
-"Du erhältst diese E-Mail, weil du für dein Konto bei %(site_name)s ein neues"
-" Passwort angefordert hast."
+"Du erhältst diese E-Mail, weil du für dein Konto bei %(site_name)s ein neues "
+"Passwort angefordert hast."
 
 #: users/templates/users/password_reset/email.html:4
 msgid "Please go to the following page and choose a new password:"
@@ -4142,11 +4161,11 @@ msgstr "Konto erstellt und angemeldet."
 #~ msgstr "Bietet ihr diese Fähigkeit an oder braucht ihr sie?"
 
 #~ msgid ""
-#~ "Visitors and volunteers can learn this skill by staying or working with your"
-#~ " community."
+#~ "Visitors and volunteers can learn this skill by staying or working with "
+#~ "your community."
 #~ msgstr ""
-#~ "Besucher*innen und Helfer*innen können diese Fähigkeit bei einem Aufenthalt "
-#~ "oder beim Mitarbeiten in eurer Gemeinschaft lernen."
+#~ "Besucher*innen und Helfer*innen können diese Fähigkeit bei einem "
+#~ "Aufenthalt oder beim Mitarbeiten in eurer Gemeinschaft lernen."
 
 #~ msgid ""
 #~ "You need this expertise in your community — for a project, permanent "
@@ -4166,7 +4185,8 @@ msgstr "Konto erstellt und angemeldet."
 #~ msgstr "Was lernen Besucher*innen? Wie wird es hier vermittelt oder geübt?"
 
 #~ msgid ""
-#~ "Why does your community need this skill and what do you need it for exactly?"
+#~ "Why does your community need this skill and what do you need it for "
+#~ "exactly?"
 #~ msgstr "Warum braucht eure Gemeinschaft diese Fähigkeit und wofür genau?"
 
 #~ msgid "Add skill offer"
@@ -4181,8 +4201,8 @@ msgstr "Konto erstellt und angemeldet."
 #~ msgid ""
 #~ "No description yet: tell others how you learned it and what you can offer."
 #~ msgstr ""
-#~ "Noch keine Beschreibung: Erzähl anderen, wie du es gelernt hast und was du "
-#~ "anbieten kannst."
+#~ "Noch keine Beschreibung: Erzähl anderen, wie du es gelernt hast und was "
+#~ "du anbieten kannst."
 
 #~ msgid "You haven't added any skills yet."
 #~ msgstr "Du hast noch keine Fähigkeiten eingetragen."
@@ -4236,16 +4256,16 @@ msgstr "Konto erstellt und angemeldet."
 #~ msgstr "Eine Fähigkeit zu deinem Profil hinzufügen"
 
 #~ msgid ""
-#~ "You have experience with this skill and are willing to share it with others "
-#~ "— visitors, community members, or through skill exchanges."
+#~ "You have experience with this skill and are willing to share it with "
+#~ "others — visitors, community members, or through skill exchanges."
 #~ msgstr ""
 #~ "Du hast Erfahrung mit dieser Fähigkeit und teilst sie gerne mit anderen – "
 #~ "mit Besucher*innen, Gemeinschaftsmitgliedern oder im Austausch von "
 #~ "Fähigkeiten."
 
 #~ msgid ""
-#~ "You're interested in learning this skill and would love to find someone who "
-#~ "can teach or share it with you."
+#~ "You're interested in learning this skill and would love to find someone "
+#~ "who can teach or share it with you."
 #~ msgstr ""
 #~ "Du möchtest diese Fähigkeit lernen und würdest gerne jemanden finden, der "
 #~ "sie mit dir teilt."
@@ -4254,11 +4274,12 @@ msgstr "Konto erstellt und angemeldet."
 #~ "Select your existing level — most people start as beginners, which is "
 #~ "perfectly fine."
 #~ msgstr ""
-#~ "Wähle dein aktuelles Niveau – die meisten fangen als Anfänger*innen an, und "
-#~ "das ist völlig in Ordnung."
+#~ "Wähle dein aktuelles Niveau – die meisten fangen als Anfänger*innen an, "
+#~ "und das ist völlig in Ordnung."
 
 #~ msgid "Optional: show what you have made or done with this skill."
-#~ msgstr "Optional: Zeig, was du mit dieser Fähigkeit gemacht oder gebaut hast."
+#~ msgstr ""
+#~ "Optional: Zeig, was du mit dieser Fähigkeit gemacht oder gebaut hast."
 
 #~ msgid "Add skill need"
 #~ msgstr "Fähigkeitswunsch hinzufügen"

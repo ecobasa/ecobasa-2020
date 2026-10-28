@@ -14,7 +14,7 @@ urlpatterns = [
     path("users/", include("users.urls")),
     path("gifts/", include("gifts.urls")),
     path("communities/", include("communities.urls")),
-    path("skills/", include("skills.urls")),
+    path("skills/", include("gifts.skills.urls")),
     path("notifications/", include("notifications.urls")),
     path("messages/", include(("postman_urls", "postman"), namespace="postman")),
     path("matches/", include("matches.urls", namespace="matches")),

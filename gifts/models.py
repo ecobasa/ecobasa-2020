@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib.contenttypes.fields import GenericRelation
 from django.contrib.gis.db import models
 from django.db.models import Exists, OuterRef, Q, Subquery, Sum
@@ -6,9 +7,10 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
-from users.models import User
 from . import units
 from .mixins import RandomIdMixin
+# The skill vocabulary is part of this app (its models live in gifts/skills/)
+from .skills.models import Skill, SkillTaxonomy  # noqa: F401
 
 
 class ListingCategory(models.Model):
@@ -133,7 +135,7 @@ class Listing(RandomIdMixin, models.Model):
     # Set for a skill, and for knowledge or helping hands with a known skill (in any
     # language, see skills.models.get_or_create_skill): matched by it, not by the title
     skill = models.ForeignKey(
-        "skills.Skill", on_delete=models.CASCADE, null=True, blank=True, related_name="listings",
+        "gifts.Skill", on_delete=models.CASCADE, null=True, blank=True, related_name="listings",
         verbose_name=_("Skill"),
     )
     title = models.CharField(_("Title"), max_length=255, blank=True)
@@ -149,7 +151,7 @@ class Listing(RandomIdMixin, models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     # A person's listing. A community's has no owner: its ambassador manages it.
     owner = models.ForeignKey(
-        User,
+        settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name="listings",
         verbose_name=_("Owner"),
@@ -460,7 +462,7 @@ def sync_skill_listings(holder, type, names):
     the ones named, in any language, keeping the ones that stay. Removing and re-adding
     them all on every save would make them look new each time (and be matched and
     announced again)."""
-    from skills.models import get_or_create_skill
+    from gifts.skills.models import get_or_create_skill
     kind = Listing.KIND_SKILL if type == Listing.TYPE_OFFER else wish_kind_for(holder)
     fields = {"type": type, "kind": kind, "project": None, **_holder_fields(holder)}
     wanted = {get_or_create_skill(name)[0].pk for name in names}

@@ -3,7 +3,7 @@ from django.utils.translation import gettext_lazy as _
 
 from gifts import units
 from gifts.models import Listing, ListingCategory
-from skills.models import _taxonomy, get_or_create_skill
+from gifts.skills.models import _taxonomy, get_or_create_skill
 
 from .models import Project
 

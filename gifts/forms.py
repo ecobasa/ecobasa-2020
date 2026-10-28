@@ -4,7 +4,7 @@ from django.utils.translation import gettext_lazy as _
 from crispy_forms.layout import Fieldset as CrispyFieldset
 from django.contrib.gis import forms
 
-from skills.models import get_or_create_skill
+from gifts.skills.models import get_or_create_skill
 from .models import Listing
 
 

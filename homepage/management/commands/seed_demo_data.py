@@ -30,7 +30,7 @@ from matches.models import Contribution, Match, MatchMessage, VolunteerDetails
 from notifications.models import Notification, SKILL_NUDGE_TEXT
 from references.models import Reference, ReferenceSkill
 from references.notifications import notify_reference_created
-from skills.models import Skill, get_or_create_skill
+from gifts.skills.models import Skill, get_or_create_skill
 from users.models import User
 
 DEMO_PASSWORD = "ecobasa123"

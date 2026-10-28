@@ -12,7 +12,7 @@ from croppie.fields import CroppieField
 from gifts.forms import Fieldset
 from .models import User
 from gifts.models import Listing, add_skill_offer, sync_skill_listings
-from skills.models import get_or_create_skill
+from gifts.skills.models import get_or_create_skill
 
 
 class SafeCroppieField(CroppieField):

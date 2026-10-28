@@ -13,7 +13,7 @@ from PIL import Image
 from communities.models import Community
 from gifts.models import Listing
 from matches.models import Match, MatchMessage, VolunteerDetails
-from skills.models import Skill
+from gifts.skills.models import Skill
 from gifts.testing import skill_offer, skill_wish
 from notifications.models import Notification
 from users.models import User

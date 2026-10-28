@@ -5,7 +5,7 @@ Safe to re-run — uses update_or_create on slug.
     docker compose exec django python manage.py load_curated_skills
 """
 from django.core.management.base import BaseCommand
-from skills.models import SkillTaxonomy
+from gifts.skills.models import SkillTaxonomy
 
 SKILLS = [
     # ── Agriculture & Food ───────────────────────────────────────────────────

@@ -262,7 +262,7 @@ class VolunteerDetails(models.Model):
         """(name, level, url of the volunteer's skill page) for skill names: the level and
         page if they have that skill on their profile."""
         from gifts.models import Listing
-        from skills.models import skill_slug_for_name
+        from gifts.skills.models import skill_slug_for_name
         if not names:
             return []
         own = {

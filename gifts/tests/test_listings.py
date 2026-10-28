@@ -11,7 +11,7 @@ from communities.models import Community
 from matches.matching import match
 from matches.models import Contribution, Match
 from projects.models import Project
-from skills.models import Skill, SkillTaxonomy
+from gifts.skills.models import Skill, SkillTaxonomy
 from users.models import User
 
 from ..models import Listing, skill_offers

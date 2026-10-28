@@ -6,7 +6,7 @@ from django.test import Client
 from django.utils import timezone
 
 from notifications.models import Notification
-from skills.models import Skill
+from gifts.skills.models import Skill
 from gifts.models import Listing
 from gifts.testing import skill_offer, skill_wish
 

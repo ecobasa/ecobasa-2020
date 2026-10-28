@@ -5,7 +5,7 @@ from django.urls import reverse
 from users.models import User
 from gifts.models import Listing
 from gifts.testing import skill_offer
-from ..models import Skill
+from ..skills.models import Skill
 
 
 @pytest.fixture
@@ -78,7 +78,7 @@ class TestUserskillAddSeveral:
         assert Listing.objects.get(type="offer", kind="skill", owner=user, skill=skills["cooking"]).level == "beginner"
 
     def test_taxonomy_skill_without_skill_row_is_created(self, user, user_client):
-        from ..models import SkillTaxonomy
+        from ..skills.models import SkillTaxonomy
         SkillTaxonomy.objects.get_or_create(slug="fermentation-techniques",
                                             defaults={"names": {"en": "Fermentation techniques"}})
         Skill.objects.filter(slug="fermentation-techniques").delete()

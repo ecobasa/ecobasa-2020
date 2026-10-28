@@ -8,7 +8,7 @@ from PIL import Image
 
 from gifts.models import Listing
 from gifts.testing import skill_offer, skill_wish
-from skills.models import Skill
+from gifts.skills.models import Skill
 from users.models import User
 
 
@@ -37,7 +37,7 @@ def client_(user):
 
 @pytest.mark.django_db
 def test_a_skill_can_show_a_photo_of_the_work(user, client_):
-    from skills.models import SkillTaxonomy, get_or_create_skill
+    from gifts.skills.models import SkillTaxonomy, get_or_create_skill
     SkillTaxonomy.objects.create(slug="test-carpentry", names={"en": "Test Carpentry"})
     us = skill_offer(user, get_or_create_skill(slug="test-carpentry")[0], level="advanced")
     response = client_.post(us.get_edit_url(), {

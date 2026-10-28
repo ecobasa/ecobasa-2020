@@ -170,7 +170,7 @@ def save_requested_reference(reference_request, *, text, impression=Reference.IM
 
     skills = [name for name in [skill, *match_skill_names(match, user)] if name]
     if skills and hasattr(subject, "add_skill"):
-        from skills.models import get_or_create_skill
+        from gifts.skills.models import get_or_create_skill
 
         for name in skills:
             skill_obj = get_or_create_skill(name=name)[0]

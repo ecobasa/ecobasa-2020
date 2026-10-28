@@ -2,7 +2,7 @@ from django import forms
 from django.utils.translation import gettext_lazy as _
 
 from gifts.models import Listing
-from skills.models import get_or_create_skill
+from gifts.skills.models import get_or_create_skill
 
 from .models import Reference, ReferenceSkill, subject_owner
 

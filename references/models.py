@@ -88,7 +88,7 @@ class Reference(models.Model):
     # Skills and gifts the experience was about, only on references about a person or
     # community. Gifts are names only: no listing, image or description is kept.
     skills = models.ManyToManyField(
-        "skills.Skill", through="ReferenceSkill", related_name="+", blank=True
+        "gifts.Skill", through="ReferenceSkill", related_name="+", blank=True
     )
     gift_names = models.JSONField(_("Gifts"), default=list, blank=True)
     # Asked for after a match (ReferenceRequest), maybe with a photo. Only references the
@@ -167,7 +167,7 @@ class ReferenceSkill(models.Model):
     ]
 
     reference = models.ForeignKey(Reference, on_delete=models.CASCADE, related_name="skill_tags")
-    skill = models.ForeignKey("skills.Skill", on_delete=models.CASCADE, related_name="+")
+    skill = models.ForeignKey("gifts.Skill", on_delete=models.CASCADE, related_name="+")
     status = models.CharField(_("Status"), max_length=20, choices=STATUS_CHOICES, default=STATUS_PENDING)
 
     class Meta:

@@ -281,7 +281,7 @@ class TestCommunityStayCounter:
 @pytest.mark.django_db
 def test_the_match_shows_what_the_other_side_brings(owner, requester, stay):
     from communities.models import Community
-    from skills.models import Skill
+    from gifts.skills.models import Skill
     from references.models import Reference
     from django.contrib.contenttypes.models import ContentType
 
@@ -368,7 +368,7 @@ def test_accepting_a_stay_updates_the_project_needs(owner, requester):
 def test_asking_for_more_skills(owner, requester, stay):
     from references.models import match_skill_names
     from references.templatetags.references_tags import reference_url_for_match
-    from skills.models import Skill
+    from gifts.skills.models import Skill
 
     masonry = skill_offer(requester, Skill.objects.create(name="Masonry"))
     client = _client_for(owner)

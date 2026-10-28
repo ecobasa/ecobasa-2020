@@ -3,9 +3,9 @@ from django.urls import reverse
 from django.utils.text import slugify
 from django.utils.translation import get_language, gettext_lazy as _
 
-# The skill vocabulary: skills in every language, so "Zimmerei", "Menuiserie" and
-# "Carpentry" are one skill. Who offers or wishes for a skill (and knowledge or helping
-# hands with it) are gift listings (gifts.Listing.skill).
+# The skill vocabulary of the gifts app: skills in every language, so "Zimmerei",
+# "Menuiserie" and "Carpentry" are one skill. Who offers or wishes for a skill (and
+# knowledge or helping hands with it) are gift listings (gifts.Listing.skill).
 
 
 class SkillTaxonomy(models.Model):

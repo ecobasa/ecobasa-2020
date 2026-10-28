@@ -10,12 +10,32 @@ class Migration(migrations.Migration):
     dependencies = [
         ("communities", "0001_initial"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ("skills", "0003_listing_for_everything"),
         ("projects", "0001_initial"),
         ("gifts", "0014_alter_adcategory_id"),
     ]
 
     operations = [
+        # The skill vocabulary, part of this app
+        migrations.CreateModel(
+            name="Skill",
+            fields=[
+                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
+                ("name", models.CharField(max_length=100, unique=True, verbose_name="Name")),
+                ("slug", models.SlugField(blank=True, unique=True)),
+                ("description", models.TextField(blank=True, verbose_name="Description")),
+            ],
+            options={"verbose_name": "Skill", "verbose_name_plural": "Skills", "ordering": ["name"]},
+        ),
+        migrations.CreateModel(
+            name="SkillTaxonomy",
+            fields=[
+                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
+                ("names", models.JSONField(default=dict)),
+                ("slug", models.SlugField(blank=True, max_length=120, unique=True)),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+            ],
+            options={"verbose_name": "Skill taxonomy", "verbose_name_plural": "Skill taxonomy", "ordering": ["slug"]},
+        ),
         migrations.AddField(
             model_name="listing",
             name="available",
@@ -104,7 +124,7 @@ class Migration(migrations.Migration):
                 null=True,
                 on_delete=django.db.models.deletion.CASCADE,
                 related_name="listings",
-                to="skills.skill",
+                to="gifts.skill",
                 verbose_name="Skill",
             ),
         ),

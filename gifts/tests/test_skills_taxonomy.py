@@ -5,7 +5,7 @@ from django.utils import translation
 from users.models import User
 from users.forms import ProfileUpdateForm
 from gifts.models import Listing
-from ..models import Skill, SkillTaxonomy, get_or_create_skill, skill_name_q
+from ..skills.models import Skill, SkillTaxonomy, get_or_create_skill, skill_name_q
 
 
 @pytest.fixture

@@ -70,7 +70,7 @@ def _render_skill_pills(skills_list, sender_username):
     falling back to the general skill page, or plain text if the skill isn't in the database."""
     from django.urls import reverse
     from django.db.models import Q
-    from skills.models import Skill as SkillModel, skill_slug_for_name
+    from gifts.skills.models import Skill as SkillModel, skill_slug_for_name
 
     # Case-insensitive slug lookup for all skill names at once
     wanted = {name.lower(): skill_slug_for_name(name) for name in skills_list}
@@ -104,7 +104,7 @@ def _render_sender_skill_pills(skills_list, sender_username):
     """Return HTML for purple sender-skill pills with graduation cap icons."""
     from django.urls import reverse
     from django.db.models import Q
-    from skills.models import Skill as SkillModel, skill_slug_for_name
+    from gifts.skills.models import Skill as SkillModel, skill_slug_for_name
 
     wanted = {name.lower(): skill_slug_for_name(name) for name in skills_list}
     existing = set(SkillModel.objects.filter(slug__in=wanted.values()).values_list('slug', flat=True))

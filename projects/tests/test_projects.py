@@ -12,7 +12,7 @@ from matches.models import Match, MatchMessage, VolunteerDetails
 from notifications.models import Notification
 from references.models import match_reference_subject
 from references.reference_requests import exchange_text
-from skills.models import Skill, SkillTaxonomy
+from gifts.skills.models import Skill, SkillTaxonomy
 from templatetags.site_tags import ago
 from users.models import User
 

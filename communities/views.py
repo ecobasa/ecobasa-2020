@@ -14,7 +14,7 @@ from .models import Community
 from .models import CommunityPhoto
 from .forms import CommunityForm
 from gifts.models import Listing, skill_offers, sync_skill_listings
-from skills.models import Skill, skill_name_q, skill_slug_for_name
+from gifts.skills.models import Skill, skill_name_q, skill_slug_for_name
 
 from django.contrib.gis.geos import Polygon, Point
 from django.contrib.gis.db.models.functions import Distance

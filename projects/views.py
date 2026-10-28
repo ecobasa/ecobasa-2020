@@ -17,7 +17,7 @@ from dashboard_lists import Choice, paginate, query_url
 from matches.emails import notify_match_created
 from gifts.models import Listing
 from matches.models import Contribution, Match, VolunteerDetails
-from skills.models import skill_name_q
+from gifts.skills.models import skill_name_q
 
 from .forms import HelpOfferForm, NeedForm, NeedFormSet, ProjectForm
 from .freshness import read_confirm_token

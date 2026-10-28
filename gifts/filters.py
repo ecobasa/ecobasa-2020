@@ -56,7 +56,7 @@ class ListingFilter(django_filters.FilterSet):
         return queryset.filter(query) if value else queryset
 
     def do_search(self, queryset, name, value):
-        from skills.models import skill_name_q
+        from gifts.skills.models import skill_name_q
         return queryset.filter(
             Q(title__icontains=value) |
             Q(description__icontains=value) |
