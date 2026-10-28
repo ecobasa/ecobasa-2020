@@ -142,8 +142,21 @@ class TestVolunteerVisits:
     def test_volunteer_sees_it_as_sent(self, requester, stay):
         response = _client_for(requester).get("/matches/?type=volunteer")
         assert list(response.context["page"]) == [stay]
-        assert [t.active for t in response.context["tabs"]] == [False, True]
+        # Without a community of their own nobody can ask them, so no received tab
+        assert [(str(t.label), t.active) for t in response.context["tabs"]] == [("Your requests", True)]
         assert "Volunteer Visits" in response.content.decode()
+
+    def test_ambassador_without_requests_still_has_the_received_tab(self, owner):
+        from communities.models import Community
+        Community.objects.create(name="Gut Wiesengrund", owner=owner)
+        context = _client_for(owner).get("/matches/?type=volunteer").context
+        assert [str(t.label) for t in context["tabs"]] == ["Requests to you", "Your requests"]
+
+    def test_received_tab_stays_after_giving_up_the_community(self, owner, stay):
+        from communities.models import Community
+        Community.objects.filter(owner=owner).update(owner=None)
+        context = _client_for(owner).get("/matches/?type=volunteer").context
+        assert [str(t.label) for t in context["tabs"]] == ["Requests to you", "Your requests"]
 
 
 @pytest.mark.django_db

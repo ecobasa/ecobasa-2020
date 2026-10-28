@@ -12,7 +12,11 @@
 <div>
 
   <div class="mb-2 text-sm">
-    <a href="{% url 'matches:list' %}" class="hover:underline">{% trans "Matches" %}</a>
+    {% if request_type == "volunteer" %}
+      <a href="{% url 'matches:list' %}?type=volunteer" class="hover:underline">{% trans "Volunteer Visits" %}</a>
+    {% else %}
+      <a href="{% url 'matches:list' %}" class="hover:underline">{% trans "Matches" %}</a>
+    {% endif %}
     <span class="mx-1">/</span>
     <a href="{{ target.get_absolute_url }}" class="hover:underline">{{ target.get_match_display_name }}</a>
     <span class="mx-1">/</span>

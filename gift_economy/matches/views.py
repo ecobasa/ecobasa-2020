@@ -134,25 +134,28 @@ def _requests(request, matches):
 
 
 def _volunteer_visits(request):
-    """Volunteer stays and help with projects, received and sent."""
+    """Volunteer stays and help with projects, received and sent. Only ambassadors
+    receive them, so the others (who never did) see just their own requests."""
     user = request.user
     boxes = {
         "received": _stays().filter(recipient=user),
         "sent":     _stays().filter(from_user=user),
     }
-    waiting = {
-        "received": boxes["received"].filter(status=Match.STATUS_PENDING).count(),
-        "sent":     boxes["sent"].filter(status=Match.STATUS_COUNTER).count(),
-    }
+    if not user.communities.exists() and not boxes["received"].exists():
+        del boxes["received"]
+    # The owner answers a request, the requester a counter-proposal
+    answers = {"received": Match.STATUS_PENDING, "sent": Match.STATUS_COUNTER}
+    waiting = {key: matches.filter(status=answers[key]).count() for key, matches in boxes.items()}
     counts = {key: matches.count() for key, matches in boxes.items()}
     box = request.GET.get("box")
     if box not in boxes:
         # Open on the tab that needs you, otherwise on the one that has anything
         box = next((key for key in boxes if waiting[key]), None) \
-            or next((key for key in boxes if counts[key]), "received")
+            or next((key for key in boxes if counts[key]), next(iter(boxes)))
     tabs = [
         Choice(label, query_url(request, box=key, status=None), key == box, counts[key], waiting[key])
         for key, label in (("received", _("Requests to you")), ("sent", _("Your requests")))
+        if key in boxes
     ]
     return render(request, "matches/matches_list.html", {
         "request_type": "volunteer", "kind": _VOLUNTEER, "tabs": tabs, "box": box,
@@ -293,6 +296,8 @@ def match_detail(request, pk):
 
     return render(request, "matches/match_detail.html", {
         "match":                match,
+        # Volunteer visits have their own place in the sidebar and breadcrumb
+        "request_type":         "volunteer" if match.is_community_stay else "",
         "target":               target,
         "is_owner":             is_owner,
         "is_requester":         is_requester,
