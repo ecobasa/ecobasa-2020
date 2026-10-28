@@ -31,6 +31,23 @@ services:
     logging:
         driver: none
 
+  # Runs the jobs in ./crontab
+  scheduler:
+    build:
+      context: .
+      dockerfile: dockerfile.production
+    environment:
+      - TZ=Europe/Berlin
+    command: supercronic /opt/services/ecobasa/crontab
+    volumes:
+      - .:/opt/services/ecobasa
+      - ./media:/opt/services/ecobasa/media
+    depends_on:
+      - database
+    networks:
+      - backend
+    restart: unless-stopped
+
   nginx:
       image: nginx
       expose: ["80"]

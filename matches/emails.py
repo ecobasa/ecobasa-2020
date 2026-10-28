@@ -180,7 +180,7 @@ def notify_match_area(user):
 
 # The weekly email with the new suggestions, for everyone who wants it: who has wishes hears
 # about offers and skills nearby, who offers or has skills hears about wishes and projects.
-# Sent by `send_suggestion_emails` (weekly cron); at most one a week per person.
+# Sent by `send_suggestion_emails` (weekly, see crontab); at most one a week per person.
 
 SUGGESTIONS_UNSUBSCRIBE_SALT = "suggestions-unsubscribe"
 SUGGESTIONS_MIN_INTERVAL = timedelta(days=6)
