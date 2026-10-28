@@ -37,13 +37,11 @@ CATEGORIES = [
 
 def load_categories(ListingCategory):
     """Create or update the curated categories; returns how many were created."""
-    # Older migrations load them into a model without the fields added since
-    fields = {field.name for field in ListingCategory._meta.get_fields()}
     created = 0
     for order, (theme, slug, en, de, es, fr, icon) in enumerate(CATEGORIES):
-        defaults = {"theme": theme, "name": en, "names": {"de": de, "es": es, "fr": fr}, "icon": icon, "order": order}
         _obj, was_created = ListingCategory.objects.update_or_create(
-            slug=slug, defaults={key: value for key, value in defaults.items() if key in fields},
+            slug=slug,
+            defaults={"theme": theme, "name": en, "names": {"de": de, "es": es, "fr": fr}, "icon": icon, "order": order},
         )
         created += was_created
     return created
