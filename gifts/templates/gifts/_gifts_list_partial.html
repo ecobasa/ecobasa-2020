@@ -23,7 +23,7 @@
   hx-get="{% url 'gifts:api-list' %}?page={{ next_page }}"
   hx-target="#gift-list-results"
   hx-swap="beforeend"
-  hx-trigger="revealed"
+  hx-trigger="intersect once"
   hx-include="#gift-filters">
   <i class="fa fa-spinner fa-spin text-brown"></i>
 </div>

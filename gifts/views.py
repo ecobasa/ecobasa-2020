@@ -8,12 +8,13 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import PermissionDenied
 from django.shortcuts import render, get_object_or_404, redirect, reverse
 from django.db.models import Count, Q
-from django.db.models.functions import Coalesce
+from django.db.models.functions import Cast, Coalesce
 from django.core.paginator import Paginator
 from django.contrib import messages
 from django.http import JsonResponse
 from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.decorators import login_required
+from django.contrib.gis.db.models import GeometryField
 from django.contrib.gis.geos import Polygon
 from django.views.decorators.http import require_GET
 from django.core.cache import cache
@@ -212,7 +213,9 @@ def _apply_bbox(qs, bbox_param):
         return qs
     poly = Polygon.from_bbox((west, south, east, north))
     poly.srid = 4326
-    return qs.filter(spot__intersects=poly)
+    # As a flat lon/lat box: on geography the box's edges would be great circles, and a
+    # box wider than half the world (the map zoomed out) would turn inside out
+    return qs.annotate(flat_spot=Cast("spot", GeometryField(srid=4326))).filter(flat_spot__intersects=poly)
 
 
 def _filtered_listings(request, require_location=True):

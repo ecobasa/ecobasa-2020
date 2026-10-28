@@ -533,6 +533,8 @@ def test_open_needs_show_on_the_gifts_map(mapped):
     # With the "need" or "wish" type or no type filter; outside the viewport not at all
     assert needs({"type": "need"}) and needs({"type": "wish"}) and not needs({"type": "offer"})
     assert not needs({"bbox": "0,0,1,1"})
+    # The map zoomed out to the whole world
+    assert needs({"bbox": "-180,-68.3239,180,79.2752"}) and needs({"bbox": "-100,-60,100,80"})
     # Not once the project is over
     project.archived_at = timezone.now()
     project.save()
