@@ -4,7 +4,6 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import PermissionDenied
 from django.http import Http404
-from django.db.models import Prefetch
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.utils.http import url_has_allowed_host_and_scheme
@@ -14,7 +13,7 @@ from django.views.decorators.http import require_POST
 from dashboard_lists import Choice, paginate, query_url
 
 from .forms import ReferenceForm, form_context
-from .models import Reference, ReferenceSkill, is_referenceable, references_about, match_reference_subject, subject_owner
+from .models import Reference, ReferenceSkill, is_referenceable, with_card_data, references_about, match_gift_names, match_reference_subject, match_skill_names, subject_owner
 from .notifications import notify_reference_created
 from .reference_requests import exchange_context, existing_reference, find_reference_request, subject_name
 
@@ -88,11 +87,7 @@ def _load(references, user, tab, holder=None):
     """Fetch references for the dashboard and mark how each card is shown. Within a
     group, cards about the group's holder itself (you, or the community) skip the
     "about" line."""
-    references = list(
-        references.select_related("author", "content_type").prefetch_related(
-            "subject", Prefetch("skill_tags", queryset=ReferenceSkill.objects.select_related("skill"))
-        ).order_by("-created_at")
-    )
+    references = list(with_card_data(references).order_by("-created_at"))
     for reference in references:
         about_you = (reference.content_type.model, reference.object_id) == ("user", str(user.pk))
         about_holder = holder is not None and (reference.content_type_id, reference.object_id) == (
@@ -170,13 +165,14 @@ def reference_request(request, key):
             # From the email after a reply: "allow sharing" comes pre-ticked
             **({"share_publicly": True} if request.GET.get("share") else {}),
         })
-        if form.can_tag and skill:
+        skills = [name for name in [skill, *match_skill_names(match, user)] if name]
+        if form.can_tag and skills:
             # What the match was about is filled in; they can change it
             field = form.fields["skill_names"]
             names = [n.strip() for n in (field.initial or "").split(",") if n.strip()]
-            field.initial = ", ".join(names if skill in names else [*names, skill])
+            field.initial = ", ".join([*names, *(name for name in skills if name not in names)])
     return render(request, "references/request_form.html", {
-        **form_context(subject, form, reference, [gift]),
+        **form_context(subject, form, reference, [gift, *match_gift_names(match, user)]),
         "subject": subject,
         "subject_name": subject_name(subject),
         **exchange_context(match, user),
@@ -193,12 +189,7 @@ def featured(request):
         reference.featured_at = timezone.now() if request.POST.get("action") == "feature" else None
         reference.save(update_fields=["featured_at"])
         return redirect(f"{request.path}#reference-{reference.pk}")
-    shared = (
-        Reference.objects.filter(share_publicly=True)
-        .select_related("author", "content_type")
-        .prefetch_related("subject", Prefetch("skill_tags", queryset=ReferenceSkill.objects.select_related("skill")))
-        .order_by("featured_at", "-created_at")
-    )
+    shared = with_card_data(Reference.objects.filter(share_publicly=True)).order_by("featured_at", "-created_at")
     return render(request, "references/featured.html", {
         "featured": sorted((r for r in shared if r.featured_at), key=lambda r: r.featured_at, reverse=True),
         "candidates": [r for r in shared if not r.featured_at and r.impression == Reference.IMPRESSION_POSITIVE],

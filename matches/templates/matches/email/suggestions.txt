@@ -1,0 +1,14 @@
+{% load i18n %}{% autoescape off %}{% blocktrans with name=recipient.name|default:recipient.email %}Hello {{ name }},{% endblocktrans %}
+
+{{ headline }}:
+{% for s in suggestions %}
+- {{ s.text }}{% if s.distance_km is not None %} ({% blocktrans with km=s.distance_km %}{{ km }} km away{% endblocktrans %}){% endif %}
+  {% blocktrans with own=s.own_text %}fits {{ own }}{% endblocktrans %}
+  {{ site_url }}{{ s.url }}
+{% endfor %}
+{% trans "All your suggestions" %}: {{ list_url }}
+
+--
+{% trans "You get this because you share wishes, offers or skills on ecobasa.org." %}
+{% trans "Change distance or turn off" %}: {{ settings_url }}
+{% trans "Unsubscribe" %}: {{ unsubscribe_url }}{% endautoescape %}

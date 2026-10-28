@@ -1,0 +1,48 @@
+{% load i18n %}{% get_current_language as LANGUAGE_CODE %}
+<!DOCTYPE html>
+<html lang="{{ LANGUAGE_CODE|default:'en' }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ headline }}</title>
+</head>
+<body style="margin:0;padding:0;background-color:#f5ede0;font-family:Georgia,serif;color:#452912;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f5ede0;padding:32px 0;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background-color:#fcf3e5;border-radius:8px;overflow:hidden;border:1px solid #d4b896;">
+          <tr>
+            <td style="background-color:#da6137;padding:28px 32px;">
+              <p style="margin:0;font-size:24px;font-weight:bold;color:#fcf3e5;font-family:Georgia,serif;">ecobasa.org</p>
+              <p style="margin:8px 0 0;font-size:14px;color:#fcf3e5;opacity:0.85;">{% trans "Is your project still current?" %}</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:32px;">
+              <p style="margin:0 0 16px;font-size:16px;">{% blocktrans with name=recipient.name|default:recipient.email %}Hello {{ name }},{% endblocktrans %}</p>
+              <p style="margin:0 0 16px;font-size:15px;line-height:1.6;">{% blocktrans with title=project.title community=project.community.name %}nobody has updated the project “{{ title }}” of {{ community }} for a while. Is it still current?{% endblocktrans %}</p>
+              <p style="margin:0 0 24px;font-size:15px;line-height:1.6;">{% blocktrans with day=archive_on|date:"DATE_FORMAT" %}If it is, one click is enough. Otherwise it will be archived on {{ day }}, so the gift network only shows what is really happening. You can bring it back at any time.{% endblocktrans %}</p>
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
+                <tr>
+                  <td align="center" style="padding:0 8px 0 0;">
+                    <a href="{{ confirm_url }}" style="display:inline-block;background-color:#5A5527;color:#fcf3e5;text-decoration:none;font-size:15px;font-weight:bold;padding:12px 28px;border-radius:6px;font-family:Arial,sans-serif;">✓ {% trans "Yes, still current" %}</a>
+                  </td>
+                  <td align="center" style="padding:0 0 0 8px;">
+                    <a href="{{ edit_url }}" style="display:inline-block;background-color:#da6137;color:#fcf3e5;text-decoration:none;font-size:15px;font-weight:bold;padding:12px 28px;border-radius:6px;font-family:Arial,sans-serif;">{% trans "Update the project" %}</a>
+                  </td>
+                </tr>
+              </table>
+              <p style="margin:0;font-size:13px;opacity:0.7;text-align:center;"><a href="{{ detail_url }}" style="color:#da6137;">{{ project.title }}</a></p>
+            </td>
+          </tr>
+          <tr>
+            <td style="background-color:#f5ede0;border-top:1px solid #d4b896;padding:16px 32px;text-align:center;">
+              <p style="margin:0;font-size:12px;opacity:0.6;">ecobasa.org &mdash; {% trans "the sustainable gift-economy community" %}</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

@@ -11,7 +11,13 @@
 {% endif %}{% if vd.sender_skills %}{% trans "Other skills I can help with" %}:
 {{ vd.sender_skills }}
 
-{% endif %}{% endif %}{% endwith %}
+{% endif %}{% endif %}{% endwith %}{% with brings=match.brings %}{% if brings %}{% trans "Offers to help with" %}:
+{% for c in brings %}- {{ c.listing.display_title }}{% if c.amount %} ({{ c.amount }}){% endif %}
+{% endfor %}
+{% endif %}{% endwith %}{% with asks=match.asks_for %}{% if asks %}{% trans "Also part of this exchange" %}:
+{% for c in asks %}- {{ c.listing.display_title }}{% if c.amount %} ({{ c.amount }}){% endif %}
+{% endfor %}
+{% endif %}{% endwith %}
 {% if match.message %}{% trans "Message" %}:
 {{ match.message }}
 

@@ -1,5 +1,5 @@
 from django.db import models
-from django.utils.translation import gettext_lazy as _
+from django.utils.translation import gettext_lazy as _, ngettext
 
 from users.models import User
 
@@ -10,12 +10,18 @@ SKILL_NUDGE_TEXT = _(
     "people can find you."
 )
 
+MATCH_AREA_TEXT = _(
+    "You get suggestions from everywhere, because your profile has no place yet. "
+    "Add your place or country in the settings to see what's near you."
+)
+
 # Icon per kind of match, keyed by the target's app label (same approach as
 # matches.views._TAB_APP_LABELS, so this app never imports gifts/skills/communities).
 _MATCH_TYPE_ICONS = {
     "gifts":       "fa-gift",
     "skills":      "fa-graduation-cap",
     "communities": "fa-campground",
+    "projects":    "fa-person-digging",
 }
 
 
@@ -27,6 +33,8 @@ class Notification(models.Model):
     TAG_MESSAGE     = "message"
     TAG_SKILL_NUDGE = "skill_nudge"
     TAG_REFERENCE   = "reference"
+    TAG_SUGGESTION  = "suggestion"
+    TAG_MATCH_AREA  = "match_area"
 
     recipient   = models.ForeignKey(User, on_delete=models.CASCADE, related_name="notifications")
     actor       = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name="notifications_sent")
@@ -70,6 +78,10 @@ class Notification(models.Model):
             return str(SKILL_NUDGE_TEXT)
         if self.tag == self.TAG_REFERENCE:
             return self._reference_text()
+        if self.tag == self.TAG_SUGGESTION:
+            return self._suggestion_text()
+        if self.tag == self.TAG_MATCH_AREA:
+            return str(MATCH_AREA_TEXT)
         target = self._target()
         if target is None:
             return self.verb
@@ -96,6 +108,17 @@ class Notification(models.Model):
 
         actor = (self.actor.name or self.actor.email) if self.actor else _("Someone")
         return str(template) % {"actor": actor, "title": target.get_match_display_name()}
+
+    def _suggestion_text(self):
+        """Counts what is new for them, so the one notification stays true."""
+        new = self.recipient.suggestions.filter(seen_at=None, dismissed_at=None).count()
+        if not new:
+            return str(_("Suggestions near you: what fits your wishes, offers and skills."))
+        return ngettext(
+            "%(count)s new suggestion near you: something fits your wishes, offers or skills.",
+            "%(count)s new suggestions near you: things fit your wishes, offers or skills.",
+            new,
+        ) % {"count": new}
 
     def _reference_text(self):
         subject = self.reference.subject if self.reference_id else None
@@ -128,4 +151,6 @@ class Notification(models.Model):
             self.TAG_MESSAGE:     "fa-comment",
             self.TAG_SKILL_NUDGE: "fa-graduation-cap",
             self.TAG_REFERENCE:   "fa-comments",
+            self.TAG_SUGGESTION:  "fa-handshake-angle",
+            self.TAG_MATCH_AREA:  "fa-location-dot",
         }.get(self.tag, "fa-bell")

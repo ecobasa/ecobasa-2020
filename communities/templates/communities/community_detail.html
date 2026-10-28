@@ -119,28 +119,47 @@
 			
 			<!-- Skills -->
 
-			{% if community_skills %}
+			{# Each skill once: the community's, else a member's; each links to its page with the level and how to learn it #}
+			{% if skills %}
 				<h2>{% trans "Skills you can learn here" %}</h2>
 				<div class="flex flex-wrap gap-2 mb-2">
-					{% for cs in community_skills %}
-						<a {% if request.user == community.owner %}href="{% url 'skills:communityskill_edit' cs.skill.slug community.slug %}"{% elif request.user.is_authenticated %}href="#" @click.prevent="openVolunteer('{{ cs.skill|escapejs }}', 'offer', {{ cs.skill_id }})"{% else %}href="{% url 'users:login' %}?next={{ request.path }}"{% endif %}
-							class="pill pill-lg bg-purple transition-opacity">
-							<i class="mr-1 fa fa-graduation-cap"></i>{{ cs.skill }}
+					{% for listing, people in skills %}
+						<a href="{{ listing.get_absolute_url }}" class="pill pill-lg bg-purple transition-opacity"
+						   {% if people %}title="{% for person in people %}{{ person.name|default:person.username }}{% if not forloop.last %}, {% endif %}{% endfor %}"{% endif %}>
+							{% include "gifts/_listing_icon.html" %}{{ listing.display_title }}
+							{% if listing.level %}<span class="opacity-70 text-xs ml-1">({{ listing.get_level_display }})</span>{% endif %}
+							{% if not listing.community_id %}<span class="opacity-70 text-xs ml-1">· {{ listing.owner.name|default:listing.owner.username }}</span>{% endif %}
 						</a>
 					{% endfor %}
 				</div>
+				{% if request.user == community.owner %}
+					<a href="{% url 'gifts:create' %}?community={{ community.slug }}&type=offer&kind=skill" class="text-sm underline"><i class="fa fa-plus mr-1"></i>{% trans "Add a skill" %}</a>
+				{% endif %}
 			{% elif request.user == community.owner %}
 				<h2>{% trans "Skills you can learn here" %}</h2>
-				<a href="{% url 'skills:communityskill_add' community.slug %}" class="btn">
+				<a href="{% url 'gifts:create' %}?community={{ community.slug }}&type=offer&kind=skill" class="btn">
 					<i class="fa fa-plus mr-1"></i>{% trans "Add a skill" %}
 				</a>
+			{% endif %}
+
+			{% if gifts %}
+				<h2>{% trans "Gifts on offer" %}</h2>
+				<div class="flex flex-wrap gap-2 mb-2">
+					{% for listing in gifts %}
+						<a href="{{ listing.get_absolute_url }}" class="pill pill-lg {{ listing.colour }}">
+							{% include "gifts/_listing_icon.html" %}{{ listing.display_title|truncatechars:40 }}
+							{% if listing.amount %}<span class="opacity-70 text-xs ml-1">({{ listing.amount }})</span>{% endif %}
+							{% if not listing.community_id %}<span class="opacity-70 text-xs ml-1">· {{ listing.owner.name|default:listing.owner.username }}</span>{% endif %}
+						</a>
+					{% endfor %}
+				</div>
 			{% endif %}
 
 			{% if skill_wishes %}
 				<h2>{% trans "Looking for people with these skills" %}</h2>
 				<div class="flex flex-wrap gap-2 mb-2">
 					{% for sw in skill_wishes %}
-						<a {% if request.user == community.owner %}href="{% url 'skills:skillwish_community_edit' sw.pk community.slug %}"{% elif request.user.is_authenticated %}href="#" @click.prevent="openVolunteer('{{ sw.skill|escapejs }}', 'wish', {{ sw.skill_id }})"{% else %}href="{% url 'users:login' %}?next={{ request.path }}"{% endif %}
+						<a {% if request.user == community.owner %}href="{{ sw.get_edit_url }}"{% elif request.user.is_authenticated %}href="#" @click.prevent="openVolunteer('{{ sw.skill|escapejs }}', 'wish', {{ sw.skill_id }})"{% else %}href="{% url 'users:login' %}?next={{ request.path }}"{% endif %}
 							class="pill pill-lg bg-yellow hover:bg-purple transition-opacity">
 							<i class="mr-1 fa fa-search"></i>{{ sw.skill }}
 							{% if sw.level %}<span class="opacity-70 text-xs ml-1">({{ sw.get_level_display }}+)</span>{% endif %}
@@ -149,9 +168,33 @@
 				</div>
 			{% elif request.user == community.owner %}
 				<h2>{% trans "Looking for people with these skills" %}</h2>
-				<a href="{% url 'skills:communityskill_add' community.slug %}?mode=wish" class="btn">
+				<a href="{% url 'gifts:create' %}?community={{ community.slug }}&type=wish&kind=hands" class="btn">
 					<i class="fa fa-plus mr-1"></i>{% trans "Add skills you're looking for" %}
 				</a>
+			{% endif %}
+
+			<!-- Projects -->
+			{% if projects or is_ambassador %}
+				<h2 id="projects">{% trans "Projects" %}</h2>
+				{% if projects %}
+					<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+						{% for project in projects %}{% include "projects/_project_card.html" %}{% endfor %}
+					</div>
+				{% endif %}
+				{% if is_ambassador %}
+					<div class="flex flex-wrap gap-2">
+						<a href="{% url 'projects:create' community.slug %}" class="btn"><i class="fa fa-plus mr-1"></i>{% trans "Start a project" %}</a>
+						<a href="{% url 'matches:calendar' community.slug %}" class="btn btn-purple"><i class="fa-regular fa-calendar mr-1"></i>{% trans "Calendar" %}</a>
+					</div>
+					{% if past_projects %}
+						<details class="mt-4">
+							<summary class="cursor-pointer text-sm">{% trans "Ended and archived projects" %}</summary>
+							<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
+								{% for project in past_projects %}{% include "projects/_project_card.html" %}{% endfor %}
+							</div>
+						</details>
+					{% endif %}
+				{% endif %}
 			{% endif %}
 
 			{% references_for community %}
@@ -251,6 +294,7 @@
 						{% endif %}
 						<div class="font-serif font-bold text-xl">{{ community.owner.name }}</div>
 					</a>
+					<div class="text-sm -mt-2">{% include "projects/_freshness.html" with when=community.owner.last_active %}</div>
 				</div>
 			{% endif %}
 
@@ -300,8 +344,40 @@
 					</div>
 					<label class="text-sm">{% trans "Your skills (comma separated)" %}
 						<input type="text" name="sender_skills" id="volunteer-sender-skills" class="form-input mt-1"
-									value="{% if request.user.is_authenticated %}{% for us in request.user.user_skills.all %}{{ us.skill }}{% if not forloop.last %}, {% endif %}{% endfor %}{% endif %}">
+									value="{% if request.user.is_authenticated %}{{ own_skill_names }}{% endif %}">
 					</label>
+					{% if bring_projects or bring_wishes %}
+						{# What the community needs: tick what you can bring or help with #}
+						<fieldset class="text-sm border rounded p-3">
+							<legend class="px-1 font-semibold">{% trans "Can you bring or help with any of this?" %}</legend>
+							{% for project, needs in bring_projects %}
+								<div class="mb-2">
+									<div class="flex flex-wrap items-center gap-x-2 text-xs">
+										<a href="{{ project.get_absolute_url }}" class="font-semibold hover:underline" target="_blank"><i class="fa-solid fa-person-digging mr-1"></i>{{ project.title }}</a>
+										<span class="opacity-70">{% include "projects/_project_dates.html" %}</span>
+										<a href="{% url 'projects:offer_help' project.pk %}" class="underline">{% trans "Join this project" %}</a>
+									</div>
+									{% for need in needs %}
+										<label class="flex items-center gap-2 cursor-pointer py-0.5">
+											<input type="checkbox" name="need" value="{{ need.pk }}" class="form-checkbox">
+											<i class="fa-solid {{ need.kind_icon }} {% if need.colour == 'bg-purple' %}text-purple{% else %}text-primary{% endif %} w-4 text-center"></i>
+											<span>{{ need.display_title }}{% if need.amount %} <span class="text-xs opacity-70">· {{ need.amount }}</span>{% endif %}</span>
+										</label>
+									{% endfor %}
+								</div>
+							{% endfor %}
+							{% if bring_wishes %}
+								<div class="text-xs font-semibold mt-1">{% trans "Also wished for" %}</div>
+								{% for listing in bring_wishes %}
+									<label class="flex items-center gap-2 cursor-pointer py-0.5">
+										<input type="checkbox" name="listing" value="{{ listing.pk }}" class="form-checkbox">
+										<i class="fa-solid {{ listing.kind_icon }} text-primary w-4 text-center"></i>
+										<span>{{ listing.display_title }}{% if listing.amount %} <span class="text-xs opacity-70">· {{ listing.amount }}</span>{% endif %}</span>
+									</label>
+								{% endfor %}
+							{% endif %}
+						</fieldset>
+					{% endif %}
 					<label class="text-sm">{% trans "From" %}
 						<input type="datetime-local" name="stay_from" class="form-input w-full mt-1">
 					</label>
@@ -310,6 +386,7 @@
 					</label>
 					<label class="text-sm">{% trans "Message" %}
 						<textarea name="body" rows="5" class="form-textarea w-full mt-1" placeholder="{% trans "Write a short message explaining your motivation and skills" %}"></textarea>
+						<span class="block text-xs mt-1 opacity-80">{% trans "Also tell them what you need: food (diet, allergies), where you would sleep (tent, bed …) and anything else that matters to you." %}</span>
 					</label>
 				</div>
 				<div class="mt-4 flex justify-end gap-3">
@@ -351,6 +428,8 @@ document.addEventListener('alpine:init', () => {
 		init() {
 			this.$watch('vOpen', v => document.body.classList.toggle('overflow-hidden', v));
 			document.addEventListener('volunteer-modal-close', () => { this.vOpen = false; });
+			{% if help_wish %}window.addEventListener('load', () => this.openVolunteer('{{ help_wish.skill|escapejs }}', 'wish', {{ help_wish.skill_id }}));{% endif %}
+			{% if learn_skill %}window.addEventListener('load', () => this.openVolunteer('{{ learn_skill.skill|escapejs }}', 'offer', {{ learn_skill.skill_id }}));{% endif %}
 		},
 	}));
 });

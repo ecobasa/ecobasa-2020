@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block head_title %}{% trans "Offer help" %} — {{ project.title }} — ecobasa{% endblock %}
+
+{% block content %}
+<div class="container-form">
+  <div class="mb-2 text-sm">
+    <a href="{{ community.get_absolute_url }}" class="hover:underline">{{ community.name }}</a>
+    <span class="mx-1">/</span>
+    <a href="{{ project.get_absolute_url }}" class="hover:underline">{{ project.title }}</a>
+  </div>
+  <h1>{% trans "Offer help" %}</h1>
+  <p class="text-sm"><i class="fa-regular fa-calendar mr-1"></i>{% include "projects/_project_dates.html" %}
+    {% if project.food_provided %} · <i class="fa-solid fa-utensils"></i> {% trans "Food" %}{% endif %}
+    {% if project.bed_provided %} · <i class="fa-solid fa-bed"></i> {% trans "A bed" %}{% endif %}
+  </p>
+
+  <form method="post" class="border rounded-xl bg-secondary p-6 space-y-4">
+    {% csrf_token %}
+    {% with rows=form.need_rows %}{% if rows %}
+      <fieldset class="form-group">
+        <legend class="form-label">{% trans "What can you help with?" %}</legend>
+        <p class="text-xs mb-2">{% trans "Pick what you can do or bring, and how much. You can also just offer helping hands." %}</p>
+        {% for need, checkbox, amount in rows %}
+          <div class="flex flex-wrap items-center gap-2 py-1">
+            <label class="flex items-center gap-2 cursor-pointer flex-1 min-w-0">
+              {{ checkbox }}
+              <i class="fa-solid {{ need.kind_icon }} text-primary"></i>
+              <span>{{ need.display_title }}
+                {% if need.amount %}<span class="text-xs opacity-70">· {% trans "needed" %}: {{ need.amount }}{% if need.promised_quantity %}, {% blocktrans with promised=need.promised_quantity %}{{ promised }} promised{% endblocktrans %}{% endif %}</span>{% endif %}
+              </span>
+            </label>
+            {% if amount %}
+              {% if need.unit == "people" %}
+                <label class="flex items-center gap-1 text-sm">{% trans "People coming" %} {{ amount }}</label>
+              {% else %}
+                <label class="flex items-center gap-1 text-sm">{% trans "I bring" %} {{ amount }} {{ need.get_unit_display }}</label>
+              {% endif %}
+              {% for error in amount.errors %}<p class="field-error w-full">{{ error }}</p>{% endfor %}
+            {% endif %}
+          </div>
+        {% endfor %}
+      </fieldset>
+    {% endif %}{% endwith %}
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div class="form-group">
+        <label class="form-label" for="{{ form.stay_from.id_for_label }}">{{ form.stay_from.label }}</label>
+        {{ form.stay_from }}
+        {% for error in form.stay_from.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="{{ form.stay_to.id_for_label }}">{{ form.stay_to.label }}</label>
+        {{ form.stay_to }}
+        {% for error in form.stay_to.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+      </div>
+    </div>
+    <p class="text-xs -mt-2">{% trans "Leave the dates empty if you only bring or send something." %}</p>
+
+    <div class="form-group">
+      <label class="form-label" for="{{ form.message.id_for_label }}">{{ form.message.label }}</label>
+      <p class="text-xs mb-1">{{ form.message.help_text }}</p>
+      {{ form.message }}
+      {% for error in form.message.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+    </div>
+
+    <div class="flex justify-end gap-3">
+      <a href="{{ project.get_absolute_url }}" class="btn btn-lg btn-purple"><i class="fa-solid fa-times mr-2"></i>{% trans "Cancel" %}</a>
+      <button type="submit" class="btn btn-lg"><i class="fa-solid fa-paper-plane mr-2"></i>{% trans "Send offer" %}</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,137 @@
+{% extends 'dashboard/base.html' %}
+{% load i18n %}
+
+{% block head_title %}{% trans "Calendar" %} — {{ community.name }} — ecobasa{% endblock %}
+
+{% block dashboard_content %}
+<div class="flex flex-wrap items-baseline justify-between gap-2 mb-4">
+  <h1 class="mb-0">{% trans "Calendar" %} <span class="text-lg font-normal">· <a href="{{ community.get_absolute_url }}" class="hover:underline">{{ community.name }}</a></span></h1>
+  <a href="{% url 'projects:create' community.slug %}" class="btn"><i class="fa fa-plus mr-1"></i>{% trans "Start a project" %}</a>
+</div>
+
+<nav class="flex items-center gap-3 mb-4" aria-label="{% trans 'Month' %}">
+  <a href="?month={{ previous_month }}" class="btn btn-purple py-1 px-3" aria-label="{% trans 'Previous month' %}"><i class="fa fa-chevron-left"></i></a>
+  <span class="font-serif text-xl">{{ month|date:"F Y" }}</span>
+  <a href="?month={{ next_month }}" class="btn btn-purple py-1 px-3" aria-label="{% trans 'Next month' %}"><i class="fa fa-chevron-right"></i></a>
+  <a href="?month={{ this_month }}" class="text-sm text-primary underline ml-2">{% trans "Today" %}</a>
+</nav>
+
+{# What needs attention first #}
+{% if overbooked_days or tight_days or undated_stays %}
+  <div class="space-y-2 mb-4 text-sm">
+    {% if overbooked_days %}
+      <div class="rounded p-3 border border-red bg-red bg-opacity-10">
+        <i class="fa-solid fa-triangle-exclamation text-red mr-1"></i>
+        {% blocktrans with guests=community.max_guests %}More confirmed guests than your maximum of {{ guests }} on:{% endblocktrans %}
+        {% for day in overbooked_days %}<strong>{{ day.date|date:"D j" }}</strong> ({{ day.confirmed }}){% if not forloop.last %}, {% endif %}{% endfor %}
+      </div>
+    {% endif %}
+    {% if tight_days %}
+      <div class="rounded p-3 border border-yellow bg-yellow bg-opacity-10">
+        <i class="fa-solid fa-circle-exclamation text-yellow mr-1"></i>
+        {% trans "If you accept all open requests, it gets too full on:" %}
+        {% for day in tight_days %}<strong>{{ day.date|date:"D j" }}</strong> ({{ day.confirmed }}+{{ day.requested }}){% if not forloop.last %}, {% endif %}{% endfor %}
+      </div>
+    {% endif %}
+    {% if undated_stays %}
+      <div class="rounded p-3 border bg-secondary">
+        <i class="fa-regular fa-calendar-xmark mr-1"></i>{% trans "Requests without dates:" %}
+        {% for stay in undated_stays %}<a href="{{ stay.match.get_absolute_url }}" class="underline">{{ stay.person.name|default:stay.person.email }}</a>{% if not forloop.last %}, {% endif %}{% endfor %}
+      </div>
+    {% endif %}
+  </div>
+{% endif %}
+{% if not community.max_guests %}
+  {% url 'communities:update' community.slug as edit_url %}
+  <p class="text-xs mb-4"><i class="fa-solid fa-circle-info mr-1"></i>{% blocktrans %}Set the maximum number of guests in your <a href="{{ edit_url }}" class="underline">community profile</a> to get warnings about overbooking.{% endblocktrans %}</p>
+{% endif %}
+
+{% if ongoing_projects %}
+  <p class="text-sm mb-3"><i class="fa-solid fa-infinity mr-1"></i>{% trans "Ongoing:" %}
+    {% for project in ongoing_projects %}<a href="{{ project.get_absolute_url }}" class="underline">{{ project.title }}</a>{% if not forloop.last %}, {% endif %}{% endfor %}
+  </p>
+{% endif %}
+
+{# Month grid (wider screens) #}
+<div class="hidden md:block border rounded overflow-hidden bg-secondary mb-6">
+  <div class="grid grid-cols-7 text-xs font-semibold uppercase tracking-wide bg-primary bg-opacity-10">
+    {% for weekday in weekdays %}<div class="px-2 py-1">{{ weekday|date:"D" }}</div>{% endfor %}
+  </div>
+  {% for week in weeks %}
+    <div class="grid grid-cols-7 border-t">
+      {% for day in week %}
+        <div class="min-h-[6.5rem] p-1 border-l first:border-l-0 text-xs {% if not day.in_month %}opacity-40{% endif %} {% if day.overbooked %}bg-red bg-opacity-10{% elif day.tight %}bg-yellow bg-opacity-10{% endif %}">
+          <div class="flex items-center justify-between mb-1">
+            <span class="{% if day.is_today %}bg-primary text-secondary rounded-full px-1.5{% endif %} font-semibold">{{ day.date.day }}</span>
+            {% if day.stays %}
+              <span class="pill text-[10px] px-1.5 py-0 {% if day.overbooked %}bg-red{% elif day.tight %}bg-yellow{% else %}bg-green{% endif %}"
+                    title="{% blocktrans with confirmed=day.confirmed requested=day.requested %}{{ confirmed }} confirmed, {{ requested }} requested{% endblocktrans %}">
+                <i class="fa-solid fa-user mr-0.5"></i>{{ day.confirmed }}{% if day.requested %}+{{ day.requested }}{% endif %}{% if day.capacity %}/{{ day.capacity }}{% endif %}
+              </span>
+            {% endif %}
+          </div>
+          {% for project in day.projects %}
+            <a href="{{ project.get_absolute_url }}" class="block truncate rounded px-1 mb-0.5 bg-purple bg-opacity-15 text-purple hover:underline" title="{{ project.title }}"><i class="fa-solid fa-person-digging mr-0.5"></i>{{ project.title }}</a>
+          {% endfor %}
+          {% for stay in day.stays %}
+            <a href="{{ stay.match.get_absolute_url }}" class="block truncate rounded px-1 mb-0.5 hover:underline {% if stay.confirmed %}bg-green text-secondary{% else %}border border-dashed border-yellow{% endif %}"
+               title="{{ stay.person.name|default:stay.person.email }}{% if stay.project %} · {{ stay.project.title }}{% endif %} · {% if stay.confirmed %}{% trans 'confirmed' %}{% else %}{% trans 'requested' %}{% endif %}">
+              {{ stay.person.name|default:stay.person.email }}
+            </a>
+          {% endfor %}
+        </div>
+      {% endfor %}
+    </div>
+  {% endfor %}
+</div>
+<p class="hidden md:flex flex-wrap gap-4 text-xs -mt-4 mb-6">
+  <span><span class="inline-block w-3 h-3 rounded bg-purple bg-opacity-15 align-middle mr-1"></span>{% trans "Project" %}</span>
+  <span><span class="inline-block w-3 h-3 rounded bg-green align-middle mr-1"></span>{% trans "Confirmed stay" %}</span>
+  <span><span class="inline-block w-3 h-3 rounded border border-dashed border-yellow align-middle mr-1"></span>{% trans "Requested stay" %}</span>
+</p>
+
+{# Who comes when, with what (also the calendar on phones) #}
+<h2>{% trans "Stays this month" %}</h2>
+{% include "matches/_stay_legend.html" %}
+{% if month_stays %}
+  <ul class="list-none p-0 space-y-2 mb-6">
+    {% for stay in month_stays %}
+      <li>
+        <a href="{{ stay.match.get_absolute_url }}" class="block p-3 rounded border-2 bg-secondary bg-opacity-50 hover:bg-opacity-80 {% if stay.confirmed %}border-green{% else %}border-yellow border-dashed{% endif %}">
+          <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
+            <span class="font-semibold">{{ stay.person.name|default:stay.person.email }}</span>
+            <span class="text-sm"><i class="fa-regular fa-calendar mr-1"></i>{{ stay.start|date:"D j M" }}{% if stay.end != stay.start %} – {{ stay.end|date:"D j M" }}{% endif %}</span>
+            <span class="ml-auto pill text-xs {% if stay.confirmed %}bg-green{% else %}bg-yellow{% endif %}">{% if stay.confirmed %}{% trans "Confirmed" %}{% else %}{% trans "Requested" %}{% endif %}</span>
+          </div>
+          <div class="text-xs mt-1 opacity-80">
+            {% if stay.project %}<i class="fa-solid fa-person-digging mr-1"></i>{{ stay.project.title }}{% else %}<i class="fa-solid fa-campground mr-1"></i>{% trans "Volunteer stay" %}{% endif %}
+          </div>
+          {% include "matches/_stay_tags.html" with match=stay.match %}
+        </a>
+      </li>
+    {% endfor %}
+  </ul>
+{% else %}
+  <p class="italic mb-6">{% trans "No stays requested for this month yet." %}</p>
+{% endif %}
+
+{# Completeness: what is still missing #}
+<h2>{% trans "Still needed" %}</h2>
+{% if open_needs %}
+  <div class="space-y-4 mb-6">
+    {% for project, needs in open_needs %}
+      <div>
+        <a href="{{ project.get_absolute_url }}" class="font-semibold hover:underline"><i class="fa-solid fa-person-digging mr-1"></i>{{ project.title }}</a>
+        <span class="text-xs opacity-70">· {% include "projects/_project_dates.html" %}</span>
+        <div class="flex flex-wrap gap-1 mt-1">
+          {% for need in needs %}{% include "projects/_need_pill.html" %}{% endfor %}
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+{% elif complete_projects %}
+  <p class="mb-6"><i class="fa fa-check-circle text-green mr-1"></i>{% trans "Everything your current projects need is covered or promised." %}</p>
+{% else %}
+  <p class="italic mb-6">{% trans "No current projects in this month." %}</p>
+{% endif %}
+{% endblock %}

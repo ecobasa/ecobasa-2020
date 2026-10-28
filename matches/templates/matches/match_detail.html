@@ -82,9 +82,12 @@
         {% endif %}
         {% reference_url_for_match match as reference_url %}
         {% if reference_url %}
-          <a href="{{ reference_url }}" class="btn mt-3">
-            <i class="fa fa-pencil mr-2"></i>{% trans "Write a reference" %}
-          </a>
+          <div class="mt-4 pt-4 border-t border-green border-opacity-40 flex flex-wrap items-center gap-3">
+            <p class="m-0 flex-1 min-w-[12rem] text-sm">{% trans "How did it go? A reference helps others find good matches." %}</p>
+            <a href="{{ reference_url }}" class="btn btn-lg inline-flex items-center whitespace-nowrap">
+              <i class="fa fa-pencil mr-2"></i>{% trans "Write a reference" %}
+            </a>
+          </div>
         {% endif %}
 
       {% elif match.status == 'counter' and latest_status_msg %}
@@ -125,9 +128,10 @@
         <a href="{{ match.from_user.get_absolute_url }}" class="font-semibold text-primary hover:underline">
           {{ match.from_user.name|default:match.from_user.email }}
         </a>
-        <p class="text-xs">{{ target.get_match_verb }} <a href="{{ target.get_absolute_url }}" class="hover:underline">{{ target.get_match_display_name }}</a> on {{ match.created_at|date:"d M Y H:i" }}</p>
+        <p class="text-xs">{{ target.get_match_verb }} <a href="{{ target.get_absolute_url }}" class="hover:underline">{{ target.get_match_display_name }}</a>{% with community=match.community %}{% if community and community != target %} · <a href="{{ community.get_absolute_url }}" class="hover:underline"><i class="fa-solid {{ community.get_type_icon }} mr-1"></i>{{ community.name }}</a>{% endif %}{% endwith %} on {{ match.created_at|date:"d M Y H:i" }}</p>
       </div>
-      <div class="ml-auto">
+      <div class="ml-auto flex flex-wrap items-center justify-end gap-1">
+        {% include "_kind_pill.html" with kind=match.kind %}
         {% if match.status == 'pending' %}
           <span class="pill bg-yellow">{% trans "Pending" %}</span>
         {% elif match.status == 'accepted' %}
@@ -154,21 +158,46 @@
       {% if vd.practice_skills %}
         <div class="text-sm mb-2">
           <strong>{% if vd.volunteer_mode == "wish" %}{% trans "Skills to offer" %}{% else %}{% trans "Skills to learn and practice" %}{% endif %}:</strong>
-          {{ vd.practice_skills }}{% if vd.practice_skill_level %} ({% trans "level" %}: {{ vd.practice_skill_level }}){% endif %}
+          <span class="inline-flex flex-wrap gap-1 align-middle">{% for pill in vd.practice_skill_pills %}{% include "matches/_skill_pill.html" %}{% endfor %}</span>
+          {% if vd.practice_skill_level %}<span class="text-xs opacity-70">({% trans "level" %}: {{ vd.practice_skill_level }})</span>{% endif %}
         </div>
       {% endif %}
       {% if vd.sender_skills %}
         <div class="text-sm mb-2">
-          <strong>{% trans "Other skills offered" %}:</strong> {{ vd.sender_skills }}
+          <strong>{% trans "Other skills offered" %}:</strong>
+          <span class="inline-flex flex-wrap gap-1 align-middle">{% for pill in vd.sender_skill_pills %}{% include "matches/_skill_pill.html" %}{% endfor %}</span>
         </div>
       {% endif %}
     {% endif %}
     {% endwith %}
 
+    {% with brings=match.brings %}
+      {% if brings %}
+        <div class="text-sm mb-2">
+          <strong>{% trans "Offers to help with" %}:</strong>
+          <span class="inline-flex flex-wrap gap-1 align-middle">
+            {% for contribution in brings %}{% include "gifts/_listing_pill.html" with listing=contribution.listing amount=contribution.amount link=True %}{% endfor %}
+          </span>
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    {% with asks=match.asks_for %}
+      {% if asks %}
+        <div class="text-sm mb-2">
+          <strong>{% trans "Also part of this exchange" %}:</strong>
+          <span class="inline-flex flex-wrap gap-1 align-middle">
+            {% for contribution in asks %}{% include "gifts/_listing_pill.html" with listing=contribution.listing amount=contribution.amount link=True %}{% endfor %}
+          </span>
+        </div>
+      {% endif %}
+    {% endwith %}
+
     {% if match.location_type %}
       <div class="text-sm mb-2">
         <i class="fa fa-map-marker mr-1 text-primary"></i>
-        <strong>{% trans "Location" %}:</strong> {{ match.resolved_location }}
+        <strong>{% trans "Location" %}:</strong>
+        {% with community=match.community %}{% if community %}<a href="{{ community.get_absolute_url }}" class="underline hover:text-primary">{{ match.resolved_location }}</a>{% else %}{{ match.resolved_location }}{% endif %}{% endwith %}
       </div>
     {% endif %}
     {% if match.proposed_date %}
@@ -184,6 +213,8 @@
       {% endif %}
     {% endwith %}
   </div>
+
+  {% if person %}{% include "matches/_person.html" %}{% endif %}
 
   {# ── Thread / history ─────────────────────────────────────────────── #}
   {% if thread %}
@@ -257,6 +288,7 @@
     </div>
   {% endif %}
 
+  {% if is_party %}
   {# ── Bottom compose area ──────────────────────────────────────────── #}
   <div class="border rounded-xl bg-secondary p-6"
        x-data="{ isCounter: false, counterLocType: 'my_place' }">
@@ -314,7 +346,7 @@
                   <li class="m-0">
                     <a @click.prevent="onSelect(res)" href="#"
                       class="block px-2 py-2 hover:bg-primary hover:text-secondary"
-                      x-text="res.display_name"></a>
+                      x-text="res.label"></a>
                   </li>
                 </template>
               </ul>
@@ -413,6 +445,7 @@
       </div>
     </form>
   </div>
+  {% endif %}
 
 </div>
 {% endblock %}

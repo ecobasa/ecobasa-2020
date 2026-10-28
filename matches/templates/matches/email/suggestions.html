@@ -1,0 +1,50 @@
+{% load i18n %}{% get_current_language as LANGUAGE_CODE %}
+<!DOCTYPE html>
+<html lang="{{ LANGUAGE_CODE|default:'en' }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ headline }}</title>
+</head>
+<body style="margin:0;padding:0;background-color:#f5ede0;font-family:Georgia,serif;color:#452912;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f5ede0;padding:32px 0;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background-color:#fcf3e5;border-radius:8px;overflow:hidden;border:1px solid #d4b896;">
+          <tr>
+            <td style="background-color:#da6137;padding:28px 32px;">
+              <p style="margin:0;font-size:24px;font-weight:bold;color:#fcf3e5;font-family:Georgia,serif;">ecobasa.org</p>
+              <p style="margin:8px 0 0;font-size:14px;color:#fcf3e5;opacity:0.85;">{% trans "Suggestions for you" %}</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:32px;">
+              <p style="margin:0 0 16px;font-size:16px;">{% blocktrans with name=recipient.name|default:recipient.email %}Hello {{ name }},{% endblocktrans %}</p>
+              <p style="margin:0 0 24px;font-size:17px;font-weight:bold;">{{ headline }}</p>
+              {% for s in suggestions %}
+              <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f5ede0;border-radius:6px;border:1px solid #d4b896;margin-bottom:12px;">
+                <tr>
+                  <td style="padding:14px 18px;">
+                    <p style="margin:0;font-size:15px;font-weight:bold;"><a href="{{ site_url }}{{ s.url }}" style="color:#da6137;text-decoration:none;">{{ s.text }}</a></p>
+                    <p style="margin:4px 0 0;font-size:13px;opacity:0.75;">{% blocktrans with own=s.own_text %}fits {{ own }}{% endblocktrans %}{% if s.distance_km is not None %} · {% blocktrans with km=s.distance_km %}{{ km }} km away{% endblocktrans %}{% endif %}</p>
+                  </td>
+                </tr>
+              </table>
+              {% endfor %}
+              <p style="margin:20px 0 0;text-align:center;">
+                <a href="{{ list_url }}" style="display:inline-block;background-color:#5A5527;color:#fcf3e5;text-decoration:none;font-size:14px;font-weight:bold;padding:10px 22px;border-radius:6px;font-family:Arial,sans-serif;">{% trans "All your suggestions" %}</a>
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td style="background-color:#f5ede0;border-top:1px solid #d4b896;padding:16px 32px;text-align:center;">
+              <p style="margin:0 0 6px;font-size:12px;opacity:0.7;">{% trans "You get this because you share wishes, offers or skills on ecobasa.org." %}</p>
+              <p style="margin:0;font-size:12px;opacity:0.7;"><a href="{{ settings_url }}" style="color:#452912;">{% trans "Change distance or turn off" %}</a> · <a href="{{ unsubscribe_url }}" style="color:#452912;">{% trans "Unsubscribe" %}</a></p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

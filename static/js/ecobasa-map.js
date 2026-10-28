@@ -13,6 +13,11 @@
     return 'https://tiles.stadiamaps.com/tiles/' + tile + '/{z}/{x}/{y}.' + (ext || 'png') + suffix;
   }
 
+  // Where the house number goes before the street ("10 Downing Street"), and where the
+  // postcode follows the town ("London SW1A 2AA"); elsewhere "Hauptstraße 5, 14473 Potsdam"
+  var NUMBER_FIRST  = ['au', 'ca', 'fr', 'gb', 'ie', 'il', 'in', 'lu', 'nz', 'us', 'za'];
+  var POSTCODE_LAST = ['au', 'ca', 'gb', 'ie', 'in', 'nz', 'us'];
+
   window.EcoMap = {
 
     // ── Icon rendering ───────────────────────────────────────────────
@@ -122,20 +127,38 @@
       } catch (e) { return null; }
     },
 
+    // A Nominatim result as you'd write it on a letter: "Hauptstraße 5, 14473 Potsdam,
+    // Deutschland" instead of every admin level OSM knows.
+    formatAddress(geo) {
+      const a = (geo && geo.address) || {};
+      const cc = (a.country_code || '').toLowerCase();
+      const city = a.city || a.town || a.village || a.hamlet || a.municipality || '';
+      const region = a.state || a.region || a.county || '';
+      let parts;
+      if (a.road) {
+        const street = NUMBER_FIRST.includes(cc)
+          ? [a.house_number, a.road].filter(Boolean).join(' ')
+          : [a.road, a.house_number].filter(Boolean).join(' ');
+        const cityLine = POSTCODE_LAST.includes(cc)
+          ? [city, a.postcode].filter(Boolean).join(' ')
+          : [a.postcode, city].filter(Boolean).join(' ');
+        parts = [street, cityLine, a.country];
+      } else if (city) {
+        parts = [city, region, a.country];
+      } else {
+        parts = [region, a.country];
+      }
+      parts = parts.filter(Boolean);
+      return parts.length ? parts.join(', ') : ((geo && geo.display_name) || '');
+    },
+
     applyGeoToForm(geo, inputs) {
       inputs = inputs || {};
       if (!geo || !geo.address) return;
       if (geo.address.country_code && inputs.countryInput)
         inputs.countryInput.value = geo.address.country_code.toUpperCase();
-      const a = geo.address;
-      const city = a.city || a.town || a.village || a.hamlet || a.municipality || '';
-      const parts = [
-        [a.road, a.house_number].filter(Boolean).join(' '),
-        [a.postcode || '', city].filter(Boolean).join(' '),
-        a.state || a.region || a.county || '',
-        a.country || ''
-      ].filter(Boolean);
-      if (parts.length && inputs.nameInput) inputs.nameInput.value = parts.join(', ');
+      const label = this.formatAddress(geo);
+      if (label && inputs.nameInput) inputs.nameInput.value = label;
     },
 
     // ── Location picker widget ───────────────────────────────────────
@@ -240,7 +263,9 @@
           try {
             const r = await fetch('https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&q=' + encodeURIComponent(term));
             const data = await r.json();
-            this.results = data.slice(0, 5);
+            this.results = data.slice(0, 5).map(function (res) {
+              return Object.assign({}, res, { label: EcoMap.formatAddress(res) });
+            });
             this.open = this.results.length > 0;
           } catch (e) { this.results = []; this.open = false; }
           finally { this.loading = false; }
@@ -249,7 +274,7 @@
           const lon = parseFloat(res.lon), lat = parseFloat(res.lat);
           const country = (res.address && res.address.country_code) ? res.address.country_code.toUpperCase() : '';
           if (Number.isFinite(lon) && Number.isFinite(lat) && window[setPointFn]) {
-            window[setPointFn](lon, lat, res.display_name || '', country);
+            window[setPointFn](lon, lat, res.label || '', country);
           }
           this.results = []; this.open = false;
         }

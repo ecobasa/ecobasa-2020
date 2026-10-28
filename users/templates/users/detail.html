@@ -11,7 +11,10 @@
 {% block content %}
 <div class="container-page">
 	<div class="flex items-start justify-between">
-		<h1 class="text-5xl font-semibold">{{ user.name }}</h1>
+		<div>
+			<h1 class="text-5xl font-semibold">{{ user.name }}</h1>
+			{% if user.last_active %}<p class="text-sm -mt-2">{% include "projects/_freshness.html" with when=user.last_active %}</p>{% endif %}
+		</div>
 		{% if request.user.is_authenticated and request.user.pk == user.pk %}
 			<a href="{% url 'users:update' %}" class="btn btn-lg">
 				<i class="fa fa-pencil mr-2"></i>{% trans "Edit profile" %}
@@ -131,15 +134,15 @@
 					{% for us in user_skills %}
 						<a href="{% if request.user.pk == user.pk %}{{ us.get_edit_url }}{% else %}{{ us.get_absolute_url }}{% endif %}"
 						   class="pill pill-lg inline-flex gap-1 bg-purple hover:opacity-80 transition-opacity">
-							<i class="fa fa-graduation-cap"></i>
-							{{ us.skill }}
+							{% include "gifts/_listing_icon.html" with listing=us %}
+							{{ us.display_title }}
 							{% if us.level %}<span class="opacity-70 text-xs">({{ us.get_level_display }})</span>{% endif %}
 						</a>
 					{% endfor %}
 				</div>
 				{% endif %}
 				{% if request.user.is_authenticated and request.user.pk == user.pk %}
-					<a href="{% url 'skills:userskill_add' %}" class="btn mt-2">
+					<a href="{% url 'gifts:create' %}?type=offer&kind=skill" class="btn mt-2">
 						<i class="fa fa-plus mr-2"></i>{% trans "Add skills you have to offer" %}
 					</a>
 				{% endif %}
@@ -150,18 +153,18 @@
 				{% if skill_wishes %}
 				<div class="flex flex-wrap gap-2 mb-6">
 					{% for sw in skill_wishes %}
-						<a href="{% if request.user.pk == user.pk %}{% url 'skills:skillwish_user_edit' sw.pk %}{% else %}{{ sw.get_absolute_url }}{% endif %}"
+						<a href="{% if request.user.pk == user.pk %}{{ sw.get_edit_url }}{% else %}{{ sw.get_absolute_url }}{% endif %}"
 						   class="pill pill-lg inline-flex gap-1 bg-yellow hover:bg-purple transition-opacity"
 						   {% if request.user.is_authenticated and request.user.pk != user.pk %}title="{% trans "Offer to teach this skill" %}"{% endif %}>
 							<i class="{% if request.user.is_authenticated and request.user.pk != user.pk %}fa fa-paper-plane{% else %}fa fa-book{% endif %}"></i>
-							{{ sw.skill }}
+							{{ sw.display_title }}
 							{% if sw.level %}<span class="opacity-70 text-xs">({{ sw.get_level_display }})</span>{% endif %}
 						</a>
 					{% endfor %}
 				</div>
 				{% endif %}
 				{% if request.user.is_authenticated and request.user.pk == user.pk %}
-					<a href="{% url 'skills:userskill_add' %}?mode=wish" class="btn mt-2">
+					<a href="{% url 'gifts:create' %}?type=wish&kind=skill" class="btn mt-2">
 						<i class="fa fa-plus mr-2"></i>{% trans "Add skills I want to learn or need help with" %}
 					</a>
 				{% endif %}
@@ -177,9 +180,9 @@
 			<div class="border drop-shadow border-primary rounded-lg p-3 bg-secondary bg-opacity-60 shadow-sm">
 				<a href="{{ listing.get_absolute_url }}" class="block">
 					{% if listing.image %}
-						<img src="{{ listing.image.url }}" alt="{{ listing.title }}" class="w-full h-40 object-cover rounded mb-2">
+						<img src="{{ listing.image.url }}" alt="{{ listing.display_title }}" class="w-full h-40 object-cover rounded mb-2">
 					{% endif %}
-					<h3 class="text-lg font-medium">{{ listing.title }}</h3>
+					<h3 class="text-lg font-medium">{{ listing.display_title }}</h3>
 				</a>
 				<p class="text-sm mt-1">{{ listing.description|truncatechars:100 }}</p>
 				{% if listing.type == "offer" %}

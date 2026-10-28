@@ -1,0 +1,7 @@
+{% load i18n site_tags %}{# How current something is: a dot (green/yellow/grey) and "updated 3 days ago" / "active today" #}
+{% if when %}{% with level=when|freshness %}
+<span class="inline-flex items-center gap-1 {% if level == 'stale' %}opacity-60{% endif %}" title="{{ when|date:'DATETIME_FORMAT' }}">
+  <span class="inline-block w-2 h-2 rounded-full {% if level == 'fresh' %}bg-green{% elif level == 'recent' %}bg-yellow{% else %}bg-primary bg-opacity-30{% endif %}"></span>
+  {% if label_updated %}{% blocktrans with ago=when|ago %}updated {{ ago }}{% endblocktrans %}{% else %}{% blocktrans with ago=when|ago %}active {{ ago }}{% endblocktrans %}{% endif %}
+</span>
+{% endwith %}{% endif %}

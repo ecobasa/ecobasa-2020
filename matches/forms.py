@@ -11,6 +11,10 @@ class MatchForm(forms.ModelForm):
     these form fields optional — no need to redeclare them.
     """
 
+    # How much of an offer or wish with a quantity the request takes or brings
+    quantity = forms.IntegerField(label=_("How much?"), required=False, min_value=1,
+                                  widget=forms.NumberInput(attrs={"class": "form-input w-28", "min": "1"}))
+
     class Meta:
         model = Match
         fields = ("message", "location_type", "proposed_location", "proposed_lat", "proposed_lon", "proposed_date")

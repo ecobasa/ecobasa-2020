@@ -14,20 +14,17 @@
         <a href="{% url 'postman:inbox' %}" class="block px-3 py-2 rounded {% if ns == 'postman' and u != 'write' and u != 'reply' %}bg-secondary text-primary font-semibold{% else %}text-secondary hover:bg-secondary hover:text-primary{% endif %}"><i class="fa fa-envelope mr-2"></i>{% trans "Messages" %}</a>
         <a href="{% url 'postman:write' %}" class="block px-3 py-2 rounded {% if ns == 'postman' and u == 'write' or ns == 'postman' and u == 'reply' %}bg-secondary text-primary font-semibold{% else %}text-secondary hover:bg-secondary hover:text-primary{% endif %}"><i class="fa fa-pencil-alt mr-2"></i>{% trans "Compose" %}</a>
 
-        <div class="pt-3 pb-1 px-3 text-xs text-secondary opacity-60 uppercase tracking-wide">{% trans "Matches" %}</div>
+        <div class="pt-3"></div>
         <a href="{% url 'matches:list' %}"
-           class="block px-3 py-2 rounded {% if ns == 'matches' and u == 'list' and not request_type %}bg-secondary text-primary font-semibold{% else %}text-secondary hover:bg-secondary hover:text-primary{% endif %}">
-          <i class="fa-solid fa-handshake mr-2"></i>{% trans "Overview" %}
+           class="flex items-center px-3 py-2 rounded {% if ns == 'matches' and request_type != 'volunteer' and u != 'calendar' %}bg-secondary text-primary font-semibold{% else %}text-secondary hover:bg-secondary hover:text-primary{% endif %}">
+          <i class="fa-solid fa-handshake mr-2"></i>{% trans "Matches" %}
+          {% if new_suggestions_count %}<span class="ml-auto pill bg-purple text-secondary text-xs" title="{% trans 'New suggestions' %}">{{ new_suggestions_count }}</span>{% endif %}
+        </a>
+        <a href="{% url 'gifts:mine' %}"
+           class="flex items-center px-3 py-2 rounded {% if ns == 'gifts' %}bg-secondary text-primary font-semibold{% else %}text-secondary hover:bg-secondary hover:text-primary{% endif %}">
+          <i class="fa fa-gift mr-2"></i>{% trans "Your gifts and wishes" %}
         </a>
         {% endwith %}
-        <a href="{% url 'matches:list' %}?type=gift"
-           class="block px-3 py-2 rounded {% if request_type == 'gift' %}bg-secondary text-primary font-semibold{% else %}text-secondary hover:bg-secondary hover:text-primary{% endif %}">
-          <i class="fa fa-gift mr-2"></i>{% trans "Gifts" %}
-        </a>
-        <a href="{% url 'matches:list' %}?type=skills"
-           class="block px-3 py-2 rounded {% if request_type == 'skills' %}bg-secondary text-primary font-semibold{% else %}text-secondary hover:bg-secondary hover:text-primary{% endif %}">
-          <i class="fa fa-graduation-cap mr-2"></i>{% trans "Skills" %}
-        </a>
 
         <div class="pt-4 pb-1 px-3 text-xs text-secondary opacity-60 uppercase tracking-wide">{% trans "References" %}</div>
         {% with on_references=request.resolver_match.namespace %}
@@ -48,9 +45,15 @@
         <div class="pt-4 pb-1 px-3 text-xs text-secondary opacity-60 uppercase tracking-wide">{% trans "Communities" %}</div>
 
         <a href="{% url 'matches:list' %}?type=volunteer"
-          class="block px-3 py-2 rounded {% if request_type == 'volunteer' %}bg-secondary text-primary font-semibold{% else %}text-secondary hover:bg-secondary hover:text-primary{% endif %}">
+          class="flex items-center px-3 py-2 rounded {% if request_type == 'volunteer' %}bg-secondary text-primary font-semibold{% else %}text-secondary hover:bg-secondary hover:text-primary{% endif %}">
           <i class="fa-solid fa-campground mr-2"></i>{% trans "Volunteer Visits" %}
         </a>
+        {% for item in reference_communities %}
+          <a href="{% url 'matches:calendar' item.community.slug %}"
+             class="flex items-center px-3 py-2 rounded {% if request.resolver_match.url_name == 'calendar' and calendar_community == item.community %}bg-secondary text-primary font-semibold{% else %}text-secondary hover:bg-secondary hover:text-primary{% endif %}">
+            <i class="fa-regular fa-calendar mr-2 self-start mt-1"></i><span class="leading-snug">{% blocktrans with name=item.community.name %}Calendar · {{ name }}{% endblocktrans %}</span>
+          </a>
+        {% endfor %}
       {% if owned_communities %}
         <span class="block px-3 py-2 rounded text-secondary opacity-40 cursor-default text-sm">
           <i class="fa-solid fa-door-open mr-2"></i>{% trans "Member Applications" %} <span class="text-xs opacity-60">({% trans "coming soon" %})</span>

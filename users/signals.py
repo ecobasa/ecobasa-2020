@@ -26,7 +26,8 @@ def create_skill_nudge_notification(sender, request, user, **kwargs):
     """Remind people without skills to add some. There is at most one reminder per
     person: once read, it shows up again (unread, on top) after a week at the earliest,
     instead of a new one being added on every login."""
-    has_skills = user.user_skills.exists() or user.skill_wishes.exists()
+    from gifts.models import Listing
+    has_skills = Listing.objects.of(user).filter(kind=Listing.KIND_SKILL).exists()
     if has_skills:
         return
     from notifications.models import Notification, SKILL_NUDGE_TEXT
@@ -35,18 +36,18 @@ def create_skill_nudge_notification(sender, request, user, **kwargs):
         Notification.objects.create(
             recipient=user,
             verb=str(SKILL_NUDGE_TEXT),
-            link=reverse("skills:userskill_add"),
+            link=reverse("gifts:create") + "?type=offer&kind=skill",
             tag=Notification.TAG_SKILL_NUDGE,
         )
     elif nudge.is_read and nudge.created_at < timezone.now() - SKILL_NUDGE_INTERVAL:
         Notification.objects.filter(pk=nudge.pk).update(is_read=False, created_at=timezone.now())
 
 
-@receiver(post_save, sender="skills.UserSkill")
-@receiver(post_save, sender="skills.SkillWish")
+@receiver(post_save, sender="gifts.Listing")
 def remove_skill_nudge_on_skill_added(sender, instance, created, **kwargs):
-    """Once someone has a skill, the reminder is no longer true: remove it."""
-    if not created or not instance.user_id:
+    """Once someone has a skill (or wants to learn one), the reminder is no longer true:
+    remove it."""
+    if not created or not instance.owner_id or instance.kind != instance.KIND_SKILL:
         return
     from notifications.models import Notification
-    Notification.objects.filter(recipient_id=instance.user_id, tag=Notification.TAG_SKILL_NUDGE).delete()
+    Notification.objects.filter(recipient_id=instance.owner_id, tag=Notification.TAG_SKILL_NUDGE).delete()

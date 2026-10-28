@@ -1,0 +1,15 @@
+{% load i18n %}{# What a volunteer brings to a stay, as pills: needs and wishes by kind with how much, offers asked for, skills #}
+{% with vd=match.volunteer_details brings=match.brings asks=match.asks_for %}
+  {% if brings or asks or vd.practice_skills or vd.sender_skills %}
+    <div class="flex flex-wrap gap-1 mt-2">
+      {% for contribution in brings %}{% include "gifts/_listing_pill.html" with listing=contribution.listing amount=contribution.amount %}{% endfor %}
+      {% for contribution in asks %}{% include "gifts/_listing_pill.html" with listing=contribution.listing amount=contribution.amount %}{% endfor %}
+      {% if vd.volunteer_mode == "wish" %}
+        {% for skill in vd.practice_skills_list %}<span class="pill bg-purple text-xs" title="{% trans 'Skills to offer' %}"><i class="fa fa-graduation-cap mr-1"></i>{{ skill }}</span>{% endfor %}
+      {% else %}
+        {% for skill in vd.practice_skills_list %}<span class="pill bg-secondary border border-purple !text-purple hover:!text-secondary text-xs" title="{% trans 'Skills to learn and practice' %}"><i class="fa-solid fa-seedling mr-1"></i>{{ skill }}</span>{% endfor %}
+      {% endif %}
+      {% for skill in vd.sender_skills_list %}<span class="pill bg-secondary border border-dashed border-purple !text-purple hover:!text-secondary text-xs" title="{% trans 'Other skills offered' %}"><i class="fa-solid fa-hand-holding-heart mr-1"></i>{{ skill }}</span>{% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}

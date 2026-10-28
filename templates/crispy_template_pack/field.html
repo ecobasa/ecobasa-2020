@@ -34,22 +34,15 @@
                 </div>
                 {% include './layout/help_text_and_errors.html' %}
             {% elif field|is_select %}
-                {% if not field.field.widget.attrs.help_below %}
-                  {% include './layout/help_text.html' %}
-                {% endif %}
                 {% if field.errors %}
                     {% crispy_field field 'class' 'form-select block is-invalid' %}
                 {% else %}
                     {% crispy_field field 'class' 'form-select block' %}
                 {% endif %}
-                  {% if field.field.widget.attrs.help_below %}
-                    {% include './layout/help_text.html' %}
-                  {% endif %}
-                  {% include './layout/field_errors_block.html' %}
+                {# Help texts go under the input, so inputs side by side stay aligned #}
+                {% include './layout/help_text.html' %}
+                {% include './layout/field_errors_block.html' %}
             {% else %}
-                {% if not field.field.widget.attrs.help_below %}
-                  {% include './layout/help_text.html' %}
-                {% endif %}
                 <div class="{{ field_class }}">
                     {% if field|is_textarea %}
                         {% if field.errors %}
@@ -64,9 +57,8 @@
                             {% crispy_field field 'class' 'form-input' %}
                         {% endif %}
                     {% endif %}
-                    {% if field.field.widget.attrs.help_below %}
-                      {% include './layout/help_text.html' %}
-                    {% endif %}
+                    {# Help texts go under the input, so inputs side by side stay aligned #}
+                    {% include './layout/help_text.html' %}
                     {% include './layout/field_errors_block.html' %}
                 </div>
             {% endif %}

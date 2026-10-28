@@ -1,0 +1,2 @@
+{% load i18n %}{# A skill named in a request: (name, level, url), linked to the person's skill page with its references #}
+{% if pill.2 %}<a href="{{ pill.2 }}" class="pill bg-purple text-xs"{% if pill.1 %} title="{% trans 'Level' %}: {{ pill.1 }}"{% endif %}><i class="fa fa-graduation-cap mr-1"></i>{{ pill.0 }}{% if pill.1 %}<span class="ml-1 opacity-80">· {{ pill.1 }}</span>{% endif %}</a>{% else %}<span class="pill bg-purple bg-opacity-70 text-xs"><i class="fa fa-graduation-cap mr-1"></i>{{ pill.0 }}</span>{% endif %}

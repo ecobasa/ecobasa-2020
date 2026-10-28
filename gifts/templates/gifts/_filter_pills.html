@@ -11,6 +11,12 @@
       <button @click="$store.fm.toggle('types', t)" class="opacity-70 hover:opacity-100">&times;</button>
     </span>
   </template>
+  <template x-for="k in $store.fm.kinds" :key="k">
+    <span class="inline-flex items-center gap-1 text-xs bg-primary text-secondary rounded-full px-2 py-0.5">
+      <span x-text="giftKindLabels[k] || k"></span>
+      <button @click="$store.fm.toggle('kinds', k)" class="opacity-70 hover:opacity-100">&times;</button>
+    </span>
+  </template>
   <template x-for="c in $store.fm.categories" :key="c">
     <span class="inline-flex items-center gap-1 text-xs bg-primary text-secondary rounded-full px-2 py-0.5">
       <span x-text="giftCategoryLabels[c] || c"></span>

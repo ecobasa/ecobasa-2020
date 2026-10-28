@@ -6,7 +6,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
-from django.db.models import Q
+from django.db.models import Prefetch, Q
 from django.utils.translation import gettext_lazy as _
 
 # What a reference can be about, as "app_label.model". Kept as strings so this app never
@@ -16,8 +16,6 @@ REFERENCEABLE_MODELS = {
     "users.user",
     "communities.community",
     "gifts.listing",
-    "skills.userskill",
-    "skills.communityskill",
 }
 
 
@@ -48,8 +46,8 @@ def references_about(subject):
     for content_type, ids in ids_by_type.items():
         query |= Q(content_type=content_type, object_id__in=ids)
     # A skill page also lists references about its holder that are tagged with that skill
-    if hasattr(subject, "get_skill_holder"):
-        holder = subject.get_skill_holder()
+    holder = subject.get_skill_holder() if hasattr(subject, "get_skill_holder") else None
+    if holder is not None:
         query |= Q(
             content_type=ContentType.objects.get_for_model(holder), object_id=str(holder.pk),
             skill_tags__skill=subject.skill, skill_tags__status=ReferenceSkill.STATUS_CONFIRMED,
@@ -90,7 +88,7 @@ class Reference(models.Model):
     # Skills and gifts the experience was about, only on references about a person or
     # community. Gifts are names only: no listing, image or description is kept.
     skills = models.ManyToManyField(
-        "skills.Skill", through="ReferenceSkill", related_name="+", blank=True
+        "gifts.Skill", through="ReferenceSkill", related_name="+", blank=True
     )
     gift_names = models.JSONField(_("Gifts"), default=list, blank=True)
     # Asked for after a match (ReferenceRequest), maybe with a photo. Only references the
@@ -128,6 +126,32 @@ class Reference(models.Model):
         """Skills tagged on it that the person or community confirmed (uses a prefetch)."""
         return [tag for tag in self.skill_tags.all() if tag.status == ReferenceSkill.STATUS_CONFIRMED]
 
+    @property
+    def kind(self):
+        """What the reference is about, as a pill like a match's: (label, icon, colour).
+        The match it was written after, else its subject."""
+        if self.match is not None:
+            return self.match.kind
+        model = self.content_type.model
+        subject = self.subject
+        if model == "listing" and subject is not None:
+            if subject.kind != subject.KIND_OTHER:
+                return subject.kind_label, subject.kind_icon, subject.colour
+            if subject.is_wish:
+                return _("Wish"), "fa-hand-holding-heart", "bg-primary"
+            return _("Gift"), "fa-gift", "bg-primary"
+        if model == "community":
+            return _("Community"), subject.get_type_icon() if subject else "fa-house", "bg-green"
+        return _("Person"), "fa-user", "bg-brown"
+
+
+def with_card_data(references):
+    """Everything a reference card shows, fetched up front: author, subject, skill tags,
+    and the match it was written after (for its kind pill)."""
+    return references.select_related("author", "content_type", "match__content_type").prefetch_related(
+        "subject", "match__target", Prefetch("skill_tags", queryset=ReferenceSkill.objects.select_related("skill")),
+    )
+
 
 class ReferenceSkill(models.Model):
     """A skill tagged on a reference. If the person or community doesn't have the skill yet,
@@ -143,7 +167,7 @@ class ReferenceSkill(models.Model):
     ]
 
     reference = models.ForeignKey(Reference, on_delete=models.CASCADE, related_name="skill_tags")
-    skill = models.ForeignKey("skills.Skill", on_delete=models.CASCADE, related_name="+")
+    skill = models.ForeignKey("gifts.Skill", on_delete=models.CASCADE, related_name="+")
     status = models.CharField(_("Status"), max_length=20, choices=STATUS_CHOICES, default=STATUS_PENDING)
 
     class Meta:
@@ -180,19 +204,52 @@ def match_reference_subject(match, user):
     is_requester = user == match.from_user
     if model == "community" and is_requester:
         return target, "", ""
-    if hasattr(target, "get_skill_holder") and is_requester:
-        return target.get_skill_holder(), "", target.get_match_display_name()
-    if model == "skillwish":
-        # Someone helped with a wished-for skill: they write about the community that
-        # wished for it (or the person); who was helped tags the skill on the helper.
-        other = (target.community or match.recipient) if is_requester else match.from_user
-        if other is None:
-            return None
-        return other, "", "" if is_requester else target.get_match_display_name()
+    if model == "project" and is_requester:
+        # Who helped with a project writes about the community that runs it
+        return target.community, "", ""
+    if model == "listing" and target.is_skill:
+        if target.is_offer:
+            if is_requester and target.get_skill_holder() is not None:
+                # Who learned a skill writes about its holder, tagged with the skill
+                return target.get_skill_holder(), "", target.get_match_display_name()
+        else:
+            # Someone helped with a wished-for skill, knowledge or helping hands: they
+            # write about the community (or person) that wished for it; who was helped
+            # tags the skill on the helper.
+            other = target.holder if is_requester else match.from_user
+            if other is None:
+                return None
+            return other, "", "" if is_requester or not target.skill_id else target.get_match_display_name()
     other = match.recipient if is_requester else match.from_user
     if other is None:
         return None
-    return other, target.get_match_display_name() if model == "listing" else "", ""
+    return other, target.get_match_display_name() if model == "listing" and target.is_thing else "", ""
+
+
+def _received(match, user, things):
+    """The further offers and wishes of `match` (beyond what it is about) that `user`
+    received: an offer of the other side's, or their own wish the other side helped with.
+    Things, or skills (and knowledge and helping hands with a skill)."""
+    received = []
+    for contribution in match.brings() + match.asks_for():
+        listing = contribution.listing
+        if listing.is_thing != things or (not things and not listing.skill_id):
+            continue
+        if (listing.manager == user) != listing.is_offer:
+            received.append(listing)
+    return received
+
+
+def match_gift_names(match, user):
+    """The names of the further gifts of `match` that `user` received, to name in their
+    reference."""
+    return [listing.display_title for listing in _received(match, user, things=True)]
+
+
+def match_skill_names(match, user):
+    """The further skills of `match` that `user` was helped with, to tag on the other side
+    in their reference."""
+    return [listing.skill.get_name() for listing in _received(match, user, things=False)]
 
 
 def _request_key():

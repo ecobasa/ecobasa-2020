@@ -1,8 +1,8 @@
 {% load i18n %}
-{# One reference: author, impression, what it is about, text, skill tags and gift names #}
+{# One reference: author, what kind of exchange it was about (pill), impression, its subject, text, skill tags and gift names #}
 <article id="reference-{{ ref.pk }}" class="scroll-mt-24 target:ring-2 target:ring-primary border rounded-lg p-4
   {% if ref.impression == 'positive' %}border-green bg-green bg-opacity-5
-  {% elif ref.impression == 'negative' %}border-red bg-red bg-opacity-5
+  {% elif ref.impression == 'negative' %}border-red bg-red bg-opacity-30
   {% else %}border-brown bg-secondary bg-opacity-5{% endif %}">
   <header class="flex items-center gap-3 mb-2">
     <a href="{{ ref.author.get_absolute_url }}" class="flex-shrink-0">
@@ -15,15 +15,17 @@
       {% endif %}
     </a>
     <div class="flex-1 min-w-0">
-      <a href="{{ ref.author.get_absolute_url }}" class="text-sm font-semibold text-primary">{{ ref.author.name|default:ref.author.username }}</a>
+      <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
+        <a href="{{ ref.author.get_absolute_url }}" class="text-sm font-semibold text-primary">{{ ref.author.name|default:ref.author.username }}</a>
+        {% include "_kind_pill.html" with kind=ref.kind %}
+      </div>
       <div class="text-xs text-brown">{{ ref.get_impression_display }} · {{ ref.created_at|date:"SHORT_DATE_FORMAT" }}</div>
       {% if ref.about_other and ref.subject %}
         <div class="text-xs text-brown">
           {% translate "about" context "reference subject" %}
           {# Same icons as the profile: skills, offers, wishes #}
           <a href="{{ ref.subject.get_absolute_url }}" class="text-primary"><i class="mr-1
-            {% if ref.content_type.model == 'listing' %}{% if ref.subject.type == 'wish' %}fa-solid fa-hand-holding-heart{% else %}fa fa-gift{% endif %}
-            {% elif ref.content_type.model == 'userskill' or ref.content_type.model == 'communityskill' %}fa fa-graduation-cap
+            {% if ref.content_type.model == 'listing' %}{% if ref.subject.kind != 'other' %}fa-solid {{ ref.subject.kind_icon }}{% elif ref.subject.type == 'wish' %}fa-solid fa-hand-holding-heart{% else %}fa fa-gift{% endif %}
             {% elif ref.content_type.model == 'user' %}fa fa-user
             {% elif ref.content_type.model == 'community' %}fa-solid {{ ref.subject.get_type_icon }}
             {% else %}fa {{ ref.subject.get_match_icon }}{% endif %}"></i>{% if ref.content_type.model == 'user' %}{{ ref.subject.name|default:ref.subject.username }}{% else %}{{ ref.subject.get_match_display_name }}{% endif %}</a>

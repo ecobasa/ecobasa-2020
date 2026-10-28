@@ -1,0 +1,55 @@
+{% extends 'dashboard/base.html' %}
+{% load i18n %}
+
+{% block head_title %}{% trans "Your gifts and wishes" %} — ecobasa{% endblock %}
+
+{% block dashboard_content %}
+{# Your offers and wishes: things and skills, filtered by what they are #}
+<section class="mb-8">
+  <div class="flex flex-wrap items-center gap-3 mb-4">
+    <h1 class="text-4xl font-semibold flex items-center gap-2 m-0">
+      <i class="fa fa-gift text-primary"></i>{% trans "Your gifts and wishes" %}
+    </h1>
+    <a href="{% url 'gifts:create' %}?type={{ box }}{% if what == 'skills' %}&kind=skill{% endif %}" class="btn ml-auto"><i class="fa fa-plus mr-1"></i>{% trans "Add your Wish or Offer" %}</a>
+  </div>
+
+  {% include "dashboard/_tabs.html" %}
+  {% include "dashboard/_filters.html" with filters=whats %}
+
+  {% if page.object_list %}
+    <ul class="list-none p-0 space-y-2">
+      {% for listing in page %}
+        <li class="flex items-start gap-3 p-4 rounded bg-secondary bg-opacity-50">
+          <a href="{{ listing.get_absolute_url }}" class="flex-none">
+            {% if listing.image %}
+              <img src="{{ listing.image.url }}" alt="" class="w-14 h-14 rounded-lg object-cover">
+            {% else %}
+              <span class="w-14 h-14 rounded-lg {{ listing.colour }} bg-opacity-10 flex items-center justify-center"><i class="fa-solid {{ listing.kind_icon }} text-2xl {% if listing.is_skill %}text-purple{% else %}text-primary{% endif %}"></i></span>
+            {% endif %}
+          </a>
+          <div class="flex-1 min-w-0">
+            <a href="{{ listing.get_absolute_url }}" class="font-semibold font-serif hover:underline">{{ listing.display_title }}</a>
+            {% if listing.amount %}<span class="text-sm opacity-80">· {{ listing.amount }}</span>{% endif %}
+            {% if listing.level %}<span class="text-sm opacity-80">· {{ listing.get_level_display }}</span>{% endif %}
+            {% if listing.is_offer and listing.skill_id and not listing.available %}<span class="text-xs opacity-70">· {% trans "not available right now" %}</span>{% endif %}
+            <div class="text-xs opacity-70 mt-0.5 flex flex-wrap gap-x-2">
+              {% if listing.kind != "other" %}<span>{{ listing.kind_label }}</span>{% endif %}
+              {% for cat in listing.categories.all %}<span><i class="fa-solid {{ cat.icon }} mr-1"></i>{{ cat }}</span>{% endfor %}
+              <span>{% include "projects/_freshness.html" with when=listing.updated_at label_updated=True %}</span>
+            </div>
+            {% if listing.description %}<p class="text-sm m-0 mt-1 opacity-90">{{ listing.description|truncatewords:30 }}</p>{% endif %}
+            <div class="text-xs mt-1 flex flex-wrap gap-x-3">
+              {% if listing.reference_count %}<a href="{{ listing.get_absolute_url }}#references" class="underline"><i class="fa-solid fa-comments mr-1"></i>{% blocktrans count counter=listing.reference_count %}{{ counter }} reference{% plural %}{{ counter }} references{% endblocktrans %}</a>{% endif %}
+              {% if listing.match_count %}<span><i class="fa-solid fa-handshake mr-1"></i>{% blocktrans count counter=listing.match_count %}{{ counter }} request{% plural %}{{ counter }} requests{% endblocktrans %}</span>{% endif %}
+            </div>
+          </div>
+          <a href="{% url 'gifts:edit' listing.pk %}" class="btn text-sm py-1 px-3 flex-none" title="{% trans 'Edit' %}"><i class="fa fa-edit"></i></a>
+        </li>
+      {% endfor %}
+    </ul>
+    {% include "dashboard/_pager.html" %}
+  {% else %}
+    <p class="italic">{% if box == "wish" %}{% trans "You haven't added any wishes yet." %}{% else %}{% trans "You haven't offered anything yet." %}{% endif %}</p>
+  {% endif %}
+</section>
+{% endblock %}

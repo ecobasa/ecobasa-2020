@@ -47,6 +47,14 @@
                     <p style="margin:0 0 4px;font-size:11px;text-transform:uppercase;letter-spacing:0.06em;opacity:0.6;">{% trans "Other skills I can help with" %}</p>
                     <p style="margin:0 0 16px;font-size:15px;">{{ vd.sender_skills }}</p>
                     {% endif %}
+                    {% with brings=match.brings %}{% if brings %}
+                    <p style="margin:0 0 4px;font-size:11px;text-transform:uppercase;letter-spacing:0.06em;opacity:0.6;">{% trans "Offers to help with" %}</p>
+                    <p style="margin:0 0 16px;font-size:15px;">{% for c in brings %}{{ c.listing.display_title }}{% if c.amount %} ({{ c.amount }}){% endif %}{% if not forloop.last %}, {% endif %}{% endfor %}</p>
+                    {% endif %}{% endwith %}
+                    {% with asks=match.asks_for %}{% if asks %}
+                    <p style="margin:0 0 4px;font-size:11px;text-transform:uppercase;letter-spacing:0.06em;opacity:0.6;">{% trans "Also part of this exchange" %}</p>
+                    <p style="margin:0 0 16px;font-size:15px;">{% for c in asks %}{{ c.listing.display_title }}{% if c.amount %} ({{ c.amount }}){% endif %}{% if not forloop.last %}, {% endif %}{% endfor %}</p>
+                    {% endif %}{% endwith %}
                     {% if match.message %}
                     <p style="margin:0 0 4px;font-size:11px;text-transform:uppercase;letter-spacing:0.06em;opacity:0.6;">{% trans "Message" %}</p>
                     <p style="margin:0;font-size:15px;line-height:1.6;white-space:pre-wrap;">{{ match.message }}</p>

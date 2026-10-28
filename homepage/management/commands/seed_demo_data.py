@@ -1,8 +1,8 @@
 """
 Seeds the local dev database with a small, tongue-in-cheek but structurally
-complete demo dataset: users, communities (every type/status), listing
-categories, listings (offers & wishes, some with photos), skills (every
-level), skill wishes (user + community), matches (every status, every
+complete demo dataset: users, communities (every type/status), listings
+(offers & wishes, some with photos, in the categories the migrations load),
+skills (every level), skill wishes (user + community), matches (every status, every
 target type), match messages, volunteer details, notifications
 (every tag), and references (every impression and subject type, with
 confirmed/pending/declined skill tags and gift names).
@@ -26,11 +26,11 @@ from django.utils import timezone
 
 from communities.models import Community, CommunityPhoto
 from gifts.models import Listing, ListingCategory
-from matches.models import Match, MatchMessage, VolunteerDetails
+from matches.models import Contribution, Match, MatchMessage, VolunteerDetails
 from notifications.models import Notification, SKILL_NUDGE_TEXT
 from references.models import Reference, ReferenceSkill
 from references.notifications import notify_reference_created
-from skills.models import CommunitySkill, Skill, SkillWish, UserSkill
+from gifts.skills.models import Skill, get_or_create_skill
 from users.models import User
 
 DEMO_PASSWORD = "ecobasa123"
@@ -61,6 +61,7 @@ class Command(BaseCommand):
         self._seed_skill_wishes(users, communities, skills)
         self._seed_matches_and_notifications(users, communities)
         self._seed_references(users, communities)
+        self._seed_projects(users, communities)
 
         self.stdout.write(self.style.SUCCESS(
             "\nDone. Log in as any of these (password: %s):" % DEMO_PASSWORD
@@ -217,73 +218,63 @@ class Command(BaseCommand):
     # ── Listing categories & listings ───────────────────────────────────
 
     def _seed_listing_categories(self):
-        self.stdout.write("Seeding listing categories…")
-        names = [
-            "Garden & Farm", "Tools & Equipment", "Food & Preserves",
-            "Household & Furniture", "Building Materials", "Books & Learning",
-        ]
-        categories = {}
-        for order, name in enumerate(names):
-            cat, _created = ListingCategory.objects.get_or_create(
-                name=name, defaults={"order": order},
-            )
-            categories[name] = cat
-        return categories
+        # The curated categories come with the migrations (load_listing_categories)
+        return {category.slug: category for category in ListingCategory.objects.all()}
 
     def _seed_listings(self, users, categories):
         self.stdout.write("Seeding listings…")
         specs = [
             dict(
                 title="17kg of surplus zucchini (please, we beg you)", type="offer",
-                owner="luna@ecobasa.demo", category="Food & Preserves",
+                owner="luna@ecobasa.demo", category="food-preserves",
                 description="They will not stop. We have tried everything. Take them, we have more.",
-                image="zucchini.jpg",
+                image="zucchini.jpg", quantity=17, unit="kg", kind=Listing.KIND_MATERIAL,
             ),
             dict(
                 title="Slightly judgmental goat, free to a good home", type="offer",
-                owner="bjorn@ecobasa.demo", category="Garden & Farm",
+                owner="bjorn@ecobasa.demo", category="animals",
                 description="Comes with opinions about your fence height. Excellent weeder, terrible listener.",
                 image="goat.jpg",
             ),
             dict(
                 title="Kombucha SCOBY, comes with 45-minute lecture on gut health", type="offer",
-                owner="mireille@ecobasa.demo", category="Food & Preserves",
+                owner="mireille@ecobasa.demo", category="food-preserves",
                 description="The lecture is technically optional. The SCOBY is not.",
                 image="kombucha.jpg",
             ),
             dict(
                 title="Desperately seeking a wheelbarrow with actual working wheels", type="wish",
-                owner="diego@ecobasa.demo", category="Tools & Equipment",
+                owner="diego@ecobasa.demo", category="garden-farm", kind=Listing.KIND_TOOL,
                 description="Ours now travels exclusively in gentle, tragic circles.",
             ),
             dict(
                 title="Need: a printer that isn't possessed by a bureaucratic demon", type="wish",
-                owner="sam@ecobasa.demo", category="Household & Furniture",
+                owner="sam@ecobasa.demo", category="electronics-computers", kind=Listing.KIND_TOOL,
                 description="It only prints when it senses fear. We are all very afraid.",
             ),
             dict(
                 title="Hand-me-down yoga mats (only slightly haunted)", type="offer",
-                owner="ana@ecobasa.demo", category="Household & Furniture",
+                owner="ana@ecobasa.demo", category="health-body",
                 description="Previous owner achieved great inner peace, then moved to Bali. Mats remain.",
             ),
             dict(
                 title="Looking for scaffolding to fix our leaning composting toilet", type="wish",
-                owner="luna@ecobasa.demo", category="Building Materials",
+                owner="luna@ecobasa.demo", category="building-renovation", kind=Listing.KIND_TOOL,
                 description="It has a nice view for now. That will not last much longer.",
             ),
             dict(
                 title="Firewood, chopped with more enthusiasm than technique", type="offer",
-                owner="bjorn@ecobasa.demo", category="Building Materials",
+                owner="bjorn@ecobasa.demo", category="energy-heating", kind=Listing.KIND_MATERIAL,
                 description="Sizes range from 'kindling' to 'geological event'. Burns fine either way.",
             ),
             dict(
                 title="Wish: someone who understands sourdough starters better than my ex", type="wish",
-                owner="mireille@ecobasa.demo", category="Food & Preserves",
+                owner="mireille@ecobasa.demo", category="food-preserves",
                 description="Low bar. My ex thought 'discard' meant throwing away the whole jar.",
             ),
             dict(
                 title="Box of permaculture books, mild goat-chew damage", type="offer",
-                owner="diego@ecobasa.demo", category="Books & Learning",
+                owner="diego@ecobasa.demo", category="books-learning",
                 description="Chapter on fencing is unfortunately the most eaten. Ironic, the goats thought so too.",
             ),
         ]
@@ -297,10 +288,11 @@ class Command(BaseCommand):
                     "description": spec["description"],
                     "location_name": owner.location_name,
                     "location": owner.location,
+                    **{key: spec[key] for key in ("quantity", "unit", "kind") if key in spec},
                 },
             )
-            if created:
-                listing.categories.add(categories[spec["category"]])
+            # Also on older demo data
+            listing.categories.set([categories[spec["category"]]])
             if spec.get("image") and not listing.image:
                 _seed_image(listing.image, spec["image"])
                 listing.save(update_fields=["image"])
@@ -338,35 +330,35 @@ class Command(BaseCommand):
     def _seed_user_skills(self, users, skills):
         self.stdout.write("Seeding user skills…")
         specs = [
-            ("luna@ecobasa.demo", "Permaculture Design", UserSkill.LEVEL_EXPERT,
+            ("luna@ecobasa.demo", "Permaculture Design", Listing.LEVEL_EXPERT,
              "Can diagnose a struggling food forest from across the road."),
-            ("luna@ecobasa.demo", "Nonviolent Communication", UserSkill.LEVEL_ADVANCED,
+            ("luna@ecobasa.demo", "Nonviolent Communication", Listing.LEVEL_ADVANCED,
              "Mostly used on the chore wheel disputes."),
-            ("bjorn@ecobasa.demo", "Woodworking", UserSkill.LEVEL_INTERMEDIATE,
+            ("bjorn@ecobasa.demo", "Woodworking", Listing.LEVEL_INTERMEDIATE,
              "Furniture is sturdy. Aesthetics are 'rustic', we've decided."),
-            ("bjorn@ecobasa.demo", "Beekeeping", UserSkill.LEVEL_BEGINNER,
+            ("bjorn@ecobasa.demo", "Beekeeping", Listing.LEVEL_BEGINNER,
              "The bees mostly tolerate me. I consider this a professional relationship."),
-            ("mireille@ecobasa.demo", "Fermentation", UserSkill.LEVEL_EXPERT,
+            ("mireille@ecobasa.demo", "Fermentation", Listing.LEVEL_EXPERT,
              "SCOBY whisperer. Ask about the hotel. Please ask about the hotel."),
-            ("mireille@ecobasa.demo", "Bread Baking", UserSkill.LEVEL_ADVANCED,
+            ("mireille@ecobasa.demo", "Bread Baking", Listing.LEVEL_ADVANCED,
              "Starter has a name and, allegedly, a personality."),
-            ("diego@ecobasa.demo", "Natural Building", UserSkill.LEVEL_ADVANCED,
+            ("diego@ecobasa.demo", "Natural Building", Listing.LEVEL_ADVANCED,
              "Mud, straw, stubbornness. In that order of importance."),
-            ("diego@ecobasa.demo", "Yoga", UserSkill.LEVEL_BEGINNER,
+            ("diego@ecobasa.demo", "Yoga", Listing.LEVEL_BEGINNER,
              "The goats don't judge my downward dog. Everyone else does."),
-            ("sam@ecobasa.demo", "Solar Panel Installation", UserSkill.LEVEL_INTERMEDIATE,
+            ("sam@ecobasa.demo", "Solar Panel Installation", Listing.LEVEL_INTERMEDIATE,
              "Can wire a panel. Cannot, yet, defeat the printer."),
-            ("sam@ecobasa.demo", "Herbal Medicine", UserSkill.LEVEL_BEGINNER,
+            ("sam@ecobasa.demo", "Herbal Medicine", Listing.LEVEL_BEGINNER,
              "Mostly just tea so far. Ambitious about the future."),
-            ("ana@ecobasa.demo", "Yoga", UserSkill.LEVEL_ADVANCED,
+            ("ana@ecobasa.demo", "Yoga", Listing.LEVEL_ADVANCED,
              "Can hold a pose longer than the WhatsApp group can hold a decision."),
-            ("ana@ecobasa.demo", "Nonviolent Communication", UserSkill.LEVEL_INTERMEDIATE,
+            ("ana@ecobasa.demo", "Nonviolent Communication", Listing.LEVEL_INTERMEDIATE,
              "Still working on applying it to group-chat land debates."),
         ]
         for email, skill_name, level, desc in specs:
-            UserSkill.objects.get_or_create(
-                user=users[email], skill=skills[skill_name],
-                defaults={"level": level, "description": desc},
+            Listing.objects.get_or_create(
+                owner=users[email], community=None, type=Listing.TYPE_OFFER, kind=Listing.KIND_SKILL,
+                skill=skills[skill_name], defaults={"level": level, "description": desc},
             )
 
     def _seed_community_skills(self, communities, skills):
@@ -386,23 +378,23 @@ class Command(BaseCommand):
              "Learn to wire a panel. Printer exorcism not included."),
         ]
         for community_name, skill_name, desc in specs:
-            CommunitySkill.objects.get_or_create(
-                community=communities[community_name], skill=skills[skill_name],
-                defaults={"description": desc},
+            Listing.objects.get_or_create(
+                community=communities[community_name], project=None, type=Listing.TYPE_OFFER,
+                kind=Listing.KIND_SKILL, skill=skills[skill_name], defaults={"description": desc},
             )
 
     def _seed_skill_wishes(self, users, communities, skills):
         self.stdout.write("Seeding skill wishes…")
         user_specs = [
-            ("bjorn@ecobasa.demo", "Fermentation", UserSkill.LEVEL_BEGINNER,
+            ("bjorn@ecobasa.demo", "Fermentation", Listing.LEVEL_BEGINNER,
              "I want my sauerkraut to stop trying to kill me."),
-            ("sam@ecobasa.demo", "Natural Building", UserSkill.LEVEL_BEGINNER,
+            ("sam@ecobasa.demo", "Natural Building", Listing.LEVEL_BEGINNER,
              "So I can build a shed that isn't just spite and duct tape."),
         ]
         for email, skill_name, level, desc in user_specs:
-            SkillWish.objects.get_or_create(
-                user=users[email], skill=skills[skill_name],
-                defaults={"level": level, "description": desc},
+            Listing.objects.get_or_create(
+                owner=users[email], community=None, type=Listing.TYPE_WISH, kind=Listing.KIND_SKILL,
+                skill=skills[skill_name], defaults={"level": level, "description": desc},
             )
 
         community_specs = [
@@ -412,9 +404,10 @@ class Command(BaseCommand):
              "So we have literally any plan at all, beyond 'vibes'."),
         ]
         for community_name, skill_name, desc in community_specs:
-            SkillWish.objects.get_or_create(
-                community=communities[community_name], skill=skills[skill_name],
-                defaults={"description": desc},
+            # A community looks for people with the skill: helping hands with it
+            Listing.objects.get_or_create(
+                community=communities[community_name], project=None, type=Listing.TYPE_WISH,
+                kind=Listing.KIND_HANDS, skill=skills[skill_name], defaults={"description": desc},
             )
 
     # ── Matches, messages, volunteer details, notifications ─────────────
@@ -426,6 +419,9 @@ class Command(BaseCommand):
             content_type=ct, object_id=str(target.pk),
             defaults=defaults,
         )
+        if created and isinstance(target, Listing):
+            # What the exchange is about is part of it (and covers it, once accepted)
+            Contribution.objects.create(match=match, listing=target)
         return match, created
 
     def _notify(self, recipient, actor, tag, match=None, verb="", is_read=False, age_days=0):
@@ -451,24 +447,37 @@ class Command(BaseCommand):
 
         zucchini = Listing.objects.get(title__startswith="17kg of surplus zucchini", owner=luna)
         starter_wish = Listing.objects.get(title__startswith="Wish: someone who understands sourdough", owner=mireille)
-        luna_permaculture = UserSkill.objects.get(user=luna, skill__name="Permaculture Design")
-        kombucha_fermentation = CommunitySkill.objects.get(
-            community=communities["Kombucha Commune"], skill__name="Fermentation",
+        luna_permaculture = Listing.objects.get(owner=luna, type="offer", skill__name="Permaculture Design")
+        kombucha_fermentation = Listing.objects.get(
+            community=communities["Kombucha Commune"], type="offer", skill__name="Fermentation",
         )
-        bjorn_fermentation_wish = SkillWish.objects.get(user=bjorn, skill__name="Fermentation")
+        bjorn_fermentation_wish = Listing.objects.get(owner=bjorn, type="wish", skill__name="Fermentation")
         three_goats_farm = communities["Three Goats and a Dream Farm"]
 
-        # 1. Listing offer target — pending
+        # 1. Listing offer target — accepted: Björn takes 3 of the 17 kg (his reference
+        #    about it is written after this exchange)
         match1, created1 = self._get_or_create_match(
             from_user=bjorn, recipient=luna, target=zucchini,
             message="I'll trade you one (1) slightly judgmental goat for a fair share of that zucchini haul.",
             location_type=Match.LOC_YOUR_PLACE,
         )
         if created1:
-            Match.objects.filter(pk=match1.pk).update(created_at=timezone.now() - timedelta(days=2))
+            Contribution.objects.filter(match=match1, listing=zucchini).update(quantity=3)
+            MatchMessage.objects.create(
+                match=match1, sender=luna, body="Keep the goat. Take as much as you can carry.",
+                status_to=Match.STATUS_ACCEPTED,
+            )
+            Match.objects.filter(pk=match1.pk).update(
+                status=Match.STATUS_ACCEPTED, created_at=timezone.now() - timedelta(days=9),
+                responded_at=timezone.now() - timedelta(days=8),
+            )
         self._notify(
             recipient=luna, actor=bjorn, tag=Notification.TAG_REQUESTED,
-            match=match1, age_days=2,
+            match=match1, is_read=True, age_days=9,
+        )
+        self._notify(
+            recipient=bjorn, actor=luna, tag=Notification.TAG_ACCEPTED,
+            match=match1, is_read=True, age_days=8,
         )
 
         # 2. Listing wish target — accepted, with a small conversation
@@ -496,7 +505,7 @@ class Command(BaseCommand):
             match=match2, is_read=True, age_days=5,
         )
 
-        # 3. UserSkill target — declined
+        # 3. A person's skill — declined
         match3, created3 = self._get_or_create_match(
             from_user=sam, recipient=luna, target=luna_permaculture,
             message="Any chance of a permaculture design session for our house project's back garden?",
@@ -517,7 +526,7 @@ class Command(BaseCommand):
             match=match3, age_days=5,
         )
 
-        # 4. CommunitySkill target — counter-proposed
+        # 4. A community's skill — counter-proposed
         match4, created4 = self._get_or_create_match(
             from_user=diego, recipient=mireille, target=kombucha_fermentation,
             message="Could I swing by this weekend to learn the fermentation basics?",
@@ -539,7 +548,7 @@ class Command(BaseCommand):
             match=match4, age_days=1,
         )
 
-        # 5. SkillWish target — pending
+        # 5. A wish to learn a skill — pending
         match5, created5 = self._get_or_create_match(
             from_user=mireille, recipient=bjorn, target=bjorn_fermentation_wish,
             message="I can save your sauerkraut. No lecture required. Okay — maybe a small one.",
@@ -565,7 +574,7 @@ class Command(BaseCommand):
                     "stay_from": timezone.now() + timedelta(days=14),
                     "stay_to": timezone.now() + timedelta(days=28),
                     "practice_skills": "Natural Building, Yoga",
-                    "practice_skill_level": UserSkill.LEVEL_BEGINNER,
+                    "practice_skill_level": Listing.LEVEL_BEGINNER,
                     "sender_skills": "Solar Panel Installation",
                 },
             )
@@ -617,15 +626,17 @@ class Command(BaseCommand):
                  text="Lovely people. I now own more zucchini than I own furniture."),
             # About a listing
             dict(author=bjorn, subject=Listing.objects.get(title__startswith="17kg of surplus zucchini", owner=luna),
+                 match=Match.objects.filter(from_user=bjorn, content_type__model="listing", object_id__in=Listing.objects.filter(
+                     title__startswith="17kg of surplus zucchini").values("pk")).first(),
                  impression=N, age_days=6,
                  text="Took three kilos. Fourteen more followed me home. I did not ask questions."),
             # About a user skill
-            dict(author=luna, subject=UserSkill.objects.get(user=diego, skill__name="Natural Building"),
+            dict(author=luna, subject=Listing.objects.get(owner=diego, type="offer", skill__name="Natural Building"),
                  impression=P, age_days=15,
                  text="Taught me to read a wall by knocking on it. The wall now knocks back. Highly recommended."),
             # About a community skill — the one negative
-            dict(author=ana, subject=CommunitySkill.objects.get(
-                    community=communities["Kombucha Commune"], skill__name="Fermentation"),
+            dict(author=ana, subject=Listing.objects.get(
+                    community=communities["Kombucha Commune"], type="offer", skill__name="Fermentation"),
                  impression=X, age_days=2,
                  text="The lecture lasted three hours and had an intermission. The SCOBY was lovely though."),
         ]
@@ -641,6 +652,7 @@ class Command(BaseCommand):
                     "impression": spec["impression"],
                     "text": spec["text"],
                     "gift_names": spec.get("gift_names", []),
+                    "match": spec.get("match"),
                 },
             )
             if not created:
@@ -655,3 +667,133 @@ class Command(BaseCommand):
             Notification.objects.filter(reference=reference).update(
                 created_at=timezone.now() - timedelta(days=spec["age_days"])
             )
+
+    # ── Projects ─────────────────────────────────────────────────────────
+
+    def _seed_projects(self, users, communities):
+        """A dated project with needs and stays (confirmed, requested, overlapping so the
+        calendar warns), an ongoing one, and a stale one whose ambassador gets asked."""
+        from projects.forms import skill_for_title
+        from projects.models import Project
+
+        self.stdout.write("Seeding projects…")
+        luna, bjorn, mireille = users["luna@ecobasa.demo"], users["bjorn@ecobasa.demo"], users["mireille@ecobasa.demo"]
+        sam, diego = users["sam@ecobasa.demo"], users["diego@ecobasa.demo"]
+        sonnenkraut = communities["Sonnenkraut Ecovillage"]
+        kombucha = communities["Kombucha Commune"]
+        today = timezone.localdate()
+
+        # The category of each thing a demo project needs
+        need_categories = {
+            "Field stones": "building-renovation", "Clay": "building-renovation", "Chimney pipe": "energy-heating",
+            "Cement mixer": "building-renovation", "Scythe": "garden-farm", "Straw bales": "building-renovation",
+        }
+
+        def project(community, title, needs, learn=(), **fields):
+            obj, created = Project.objects.get_or_create(
+                community=community, title=title, defaults={"created_by": community.owner, **fields},
+            )
+            # What helpers can learn: the community's skills in the project, listed with it
+            # while the project runs
+            for name in learn:
+                Listing.objects.get_or_create(
+                    project=obj, type=Listing.TYPE_OFFER, kind=Listing.KIND_SKILL, skill=get_or_create_skill(name)[0],
+                )
+            # Needs (the community's wishes in it) are added by title, so re-running adds new
+            # demo needs to older demo data
+            for order, (kind, need_title, quantity, unit, details) in enumerate(needs):
+                skill = None
+                if kind in (Listing.KIND_HANDS, Listing.KIND_KNOWLEDGE):
+                    skill = skill_for_title(need_title) or Skill.objects.filter(name__iexact=need_title).first()
+                need, _need_created = Listing.objects.get_or_create(
+                    project=obj, type=Listing.TYPE_WISH, title=need_title, defaults=dict(
+                        kind=kind, order=order, quantity=quantity, unit=unit, description=details, skill=skill,
+                    ),
+                )
+                if need_title in need_categories:
+                    need.categories.set(ListingCategory.objects.filter(slug=need_categories[need_title]))
+            return obj, created
+
+        stove, created = project(
+            sonnenkraut, "Rocket stove for the community kitchen",
+            [
+                (Listing.KIND_HANDS, "Natural Building", 2, "people", ""),
+                (Listing.KIND_HANDS, "Masonry", 1, "people", ""),
+                (Listing.KIND_MATERIAL, "Field stones", 300, "pieces", "fist to head size"),
+                (Listing.KIND_MATERIAL, "Clay", 200, "kg", ""),
+                (Listing.KIND_MATERIAL, "Chimney pipe", 3, "m", "15 cm diameter"),
+                (Listing.KIND_TOOL, "Cement mixer", None, "", ""),
+            ],
+            learn=["Natural Building", "Masonry", "Rocket Stove Building"],
+            description="Our old kitchen stove eats a forest a winter. We want to build a rocket stove "
+                        "with a cob bench next to it, and learn how to build more of them.",
+            starts_on=today + timedelta(days=7), ends_on=today + timedelta(days=50),
+            food_provided=True, bed_provided=True, volunteers_wanted=4,
+            provided_note="Tent spots, the workshop, a ride from Görlitz station",
+        )
+        project(
+            sonnenkraut, "Food forest care",
+            [
+                (Listing.KIND_HANDS, "Permaculture Design", None, "", ""),
+                (Listing.KIND_TOOL, "Scythe", 2, "pieces", ""),
+                (Listing.KIND_HANDS, "Woodworking", 1, "people", "a bench under the old apple tree"),
+            ],
+            learn=["Permaculture Design"],
+            description="Mulching, pruning and planting in our young food forest, whenever you are around.",
+            food_provided=True,
+        )
+        stale, _stale_created = project(
+            kombucha, "Straw-bale guest house",
+            [(Listing.KIND_MATERIAL, "Straw bales", 120, "pieces", ""), (Listing.KIND_KNOWLEDGE, "Natural Building", None, "", "")],
+            description="Planning a small guest house for the fermentation workshops.",
+            food_provided=True,
+        )
+        Project.objects.filter(pk=stale.pk).update(updated_at=timezone.now() - timedelta(days=75))
+
+        # Björn (Bautzen, 40 km away) is a woodworker and gives away scythes: the matching
+        # suggests the food forest's needs to him, and him to Luna
+        scythes, _created = Listing.objects.get_or_create(
+            owner=bjorn, title="Two old scythes", type="offer",
+            defaults={"kind": Listing.KIND_TOOL, "description": "Sharp enough, with a whetstone.",
+                      "location_name": bjorn.location_name, "location": bjorn.location},
+        )
+        scythes.categories.set(ListingCategory.objects.filter(slug="garden-farm"))
+        # Wishes for knowledge and helping hands work outside projects too
+        Listing.objects.get_or_create(
+            owner=sam, type=Listing.TYPE_WISH, kind=Listing.KIND_KNOWLEDGE, title="How to size a battery bank",
+            defaults={"description": "Two panels, one fridge, a lot of optimism.", "skill": get_or_create_skill("Solar Panel Installation")[0]},
+        )
+        Listing.objects.get_or_create(
+            owner=diego, type=Listing.TYPE_WISH, kind=Listing.KIND_HANDS, title="Helping hands for the clay harvest",
+            defaults={"quantity": 3, "unit": "people", "description": "One weekend in spring, lunch included."},
+        )
+        # What kind of thing the demo gifts are (also set on older demo data)
+        for kind, prefixes in ((Listing.KIND_TOOL, ("Two old scythes", "Desperately seeking a wheelbarrow",
+                                                     "Need: a printer", "Looking for scaffolding")),
+                               (Listing.KIND_MATERIAL, ("Firewood",))):
+            for prefix in prefixes:
+                Listing.objects.filter(title__startswith=prefix).update(kind=kind)
+
+        if not created:
+            return
+        needs = {need.title: need for need in stove.needs()}
+        stays = [
+            # (who, from, to, status, {need: how much})
+            (bjorn, 7, 21, Match.STATUS_ACCEPTED, {"Natural Building": 1, "Field stones": 120}),
+            (mireille, 10, 17, Match.STATUS_ACCEPTED, {"Clay": 80}),
+            (diego, 12, 26, Match.STATUS_PENDING, {"Masonry": 1, "Cement mixer": None}),
+            (sam, 14, 20, Match.STATUS_PENDING, {"Natural Building": 1}),
+        ]
+        for who, start, end, status, need_titles in stays:
+            match = Match(from_user=who, recipient=luna, message="I'd love to help with the rocket stove!", status=status)
+            match.target = stove
+            match.save()
+            VolunteerDetails.objects.create(
+                match=match, volunteer_mode="wish",
+                stay_from=timezone.now() + timedelta(days=start), stay_to=timezone.now() + timedelta(days=end),
+            )
+            for title, quantity in need_titles.items():
+                Contribution.objects.create(listing=needs[title], match=match, quantity=quantity)
+            if status == Match.STATUS_ACCEPTED:
+                MatchMessage.objects.create(match=match, sender=luna, body="Welcome!", status_to=status)
+                Match.objects.filter(pk=match.pk).update(responded_at=timezone.now())

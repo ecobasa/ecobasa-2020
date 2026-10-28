@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block head_title %}{% trans "Projects" %} — ecobasa{% endblock %}
+
+{% block content %}
+<div class="container-page">
+  <h1>{% trans "Projects" %}</h1>
+  <p class="max-w-3xl">{% blocktrans trimmed %}
+    Communities realise projects together with people from the gift network: with helping
+    hands, materials, tools and knowledge that are shared. Each gift makes a project need a
+    little less money, and along the way it grows a social net, trust and friendships. Projects that ended or were not
+    updated for a while are archived automatically, and stay here to look back on.
+  {% endblocktrans %}</p>
+
+  <form method="get" class="flex flex-wrap items-center gap-2 my-6">
+    {% if archived %}<input type="hidden" name="show" value="archived">{% endif %}
+    <input type="search" name="q" value="{{ q }}" class="form-input flex-1 min-w-0" placeholder="{% trans 'Search projects, skills, materials, places…' %}">
+    <button type="submit" class="btn"><i class="fa fa-search mr-1"></i>{% trans "Search" %}</button>
+  </form>
+  {% include "dashboard/_filters.html" with filters=shows %}
+  {% include "dashboard/_filters.html" with filters=kinds %}
+
+  {% if projects %}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      {% for project in projects %}
+        {% include "projects/_project_card.html" with show_community=True %}
+      {% endfor %}
+    </div>
+    {% include "dashboard/_pager.html" %}
+  {% else %}
+    <p class="italic">{% if archived %}{% trans "No archived projects found." %}{% else %}{% trans "No current projects found." %}{% endif %}</p>
+  {% endif %}
+</div>
+{% endblock %}

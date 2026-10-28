@@ -4,21 +4,44 @@
 {% block giving_content %}
 <section class="mb-8">
   <h1 class="text-4xl font-semibold flex items-center gap-2">
-    <i class="{{ kind.icon }} text-primary"></i>{{ kind.title }}
+    {% if kind %}<i class="{{ kind.icon }} text-primary"></i>{{ kind.title }}{% else %}<i class="fa-solid fa-handshake text-primary"></i>{% trans "Matches" %}{% endif %}
   </h1>
 
-  {% include "dashboard/_tabs.html" %}
-  {% include "dashboard/_filters.html" %}
+  {% if types %}
+    {# Gifts, skills or both #}
+    <nav class="flex flex-wrap gap-2 mb-4" aria-label="{% trans 'Type' %}">
+      {% for type in types %}
+        <a href="{{ type.url }}" class="px-3 py-1 rounded-full border text-sm {% if type.active %}bg-primary text-secondary border-primary{% else %}border-primary text-primary hover:bg-primary hover:text-secondary{% endif %}"
+           {% if type.active %}aria-current="page"{% endif %}>{{ type.label }}</a>
+      {% endfor %}
+    </nav>
+  {% endif %}
 
-  {% if page.object_list %}
-    <div class="space-y-2">
-      {% for match in page %}{% include "matches/_match_row.html" with match=match show_from=show_from %}{% endfor %}
-    </div>
-    {% include "dashboard/_pager.html" %}
-  {% elif filters %}
-    <p>{% trans "Nothing here with this status." %}</p>
+  {% include "dashboard/_tabs.html" %}
+
+  {% if box == "suggestions" %}
+    {% include "matches/_suggestions_intro.html" %}
+    {% if suggestions %}
+      <ul class="list-none p-0 space-y-2">
+        {% for suggestion in suggestions %}{% include "matches/_suggestion_row.html" %}{% endfor %}
+      </ul>
+      {% include "dashboard/_pager.html" %}
+    {% else %}
+      <p class="italic">{% trans "No suggestions yet. Add what you wish for, what you can give and your skills, and set your place in your profile: we'll let you know when something fits." %}</p>
+    {% endif %}
   {% else %}
-    <p>{{ kind.empty }}</p>
+    {% include "dashboard/_filters.html" %}
+    {% if request_type == "volunteer" and page.object_list %}{% include "matches/_stay_legend.html" %}{% endif %}
+    {% if page.object_list %}
+      <div class="space-y-2">
+        {% for match in page %}{% include "matches/_match_row.html" with match=match show_from=show_from %}{% endfor %}
+      </div>
+      {% include "dashboard/_pager.html" %}
+    {% elif filters %}
+      <p>{% trans "Nothing here with this status." %}</p>
+    {% else %}
+      <p>{{ empty }}</p>
+    {% endif %}
   {% endif %}
 </section>
 {% endblock %}

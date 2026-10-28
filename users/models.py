@@ -101,6 +101,15 @@ class User(AbstractUser):
     world = models.TextField(_('What do you do to make the world a better place?'), blank=True, null=True)
     # Last language picked in the language switcher; emails to this user are sent in it.
     language = models.CharField(_("Language"), max_length=10, choices=settings.LANGUAGES, blank=True)
+    # When they last used the site while logged in (LastSeenMiddleware, at most every few
+    # minutes), shown as "last active" so visitors can tell who is likely to answer.
+    last_seen = models.DateTimeField(_("Last active"), null=True, blank=True)
+    # Matches (suggestions app): within this distance, and a weekly email about new ones
+    match_emails = models.BooleanField(
+        _("Email me weekly about new suggestions for my wishes, offers and skills"), default=True,
+    )
+    match_radius = models.PositiveSmallIntegerField(_("How far away (km)?"), default=150)
+    match_global = models.BooleanField(_("Search worldwide"), default=False)
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = ["name"]
@@ -112,15 +121,28 @@ class User(AbstractUser):
         slug = self.username or slugify(self.name) or str(self.pk)
         return reverse("users:detail", kwargs={"slug": slug})
 
+    @property
+    def last_active(self):
+        """Last time they were around: last_seen, or their last login before it existed."""
+        return self.last_seen or self.last_login
+
+    def member_communities(self):
+        """The communities they belong to. For now the ones they're the ambassador of
+        (as Community.members); real membership can extend this."""
+        return list(self.communities.all())
+
     def get_reference_subjects(self):
-        """What references on this profile can be about: the person, their listings and skills."""
-        return [self, *self.listings.all(), *self.user_skills.all()]
+        """What references on this profile can be about: the person and their offers and
+        wishes (things and skills)."""
+        return [self, *self.listings.filter(community=None)]
 
     def has_skill(self, skill):
-        return self.user_skills.filter(skill=skill).exists()
+        from gifts.models import skill_offers
+        return skill_offers(self).filter(skill=skill).exists()
 
     def add_skill(self, skill):
-        return self.user_skills.get_or_create(skill=skill)[0]
+        from gifts.models import add_skill_offer
+        return add_skill_offer(self, skill)
 
     def email_user(self, subject, message, from_email=None, **kwargs):
         '''

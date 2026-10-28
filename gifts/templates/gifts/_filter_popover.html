@@ -15,7 +15,7 @@
   <div x-show="filterOpen" x-cloak
     @click.away="filterOpen = false"
     @keydown.escape.window="filterOpen = false"
-    class="absolute left-0 top-full mt-2 w-64 bg-primary text-secondary rounded-lg shadow-xl border border-red p-4 z-30 space-y-4">
+    class="absolute left-0 top-full mt-2 w-64 bg-primary text-secondary rounded-lg shadow-xl border border-red p-4 z-30 space-y-4 max-h-[80vh] overflow-y-auto">
 
     <div>
       <div class="text-xs font-bold uppercase tracking-wider opacity-70 mb-2">{% trans "Type" %}</div>
@@ -32,18 +32,38 @@
       </div>
     </div>
 
+    {# Kind of thing, as pills like the project list's #}
+    <div>
+      <div class="text-xs font-bold uppercase tracking-wider opacity-70 mb-2">{% trans "Kind of thing" %}</div>
+      <div class="flex flex-wrap gap-1">
+        {% for t in f.form.kind %}
+        <button type="button"
+          :class="$store.fm.kinds.includes('{{ t.data.value|escapejs }}') ? 'bg-secondary !text-primary' : 'border border-secondary'"
+          class="pill"
+          @click="$store.fm.toggle('kinds', '{{ t.data.value|escapejs }}')">{{ t.choice_label }}</button>
+        {% endfor %}
+      </div>
+    </div>
+
     {% if f.form.categories.field.queryset.exists %}
     <div>
       <div class="text-xs font-bold uppercase tracking-wider opacity-70 mb-2">{% trans "Category" %}</div>
-      <div class="space-y-1">
-        {% for t in f.form.categories %}
-        <label class="flex items-center gap-2 cursor-pointer text-sm hover:bg-secondary hover:bg-opacity-10 rounded px-1 py-0.5">
-          <input type="checkbox" value="{{ t.data.value }}"
-            class="form-checkbox light h-4 w-4 flex-shrink-0"
-            :checked="$store.fm.categories.includes('{{ t.data.value|escapejs }}')"
-            @change="$store.fm.toggle('categories', '{{ t.data.value|escapejs }}')">
-          <span>{{ t.choice_label }}</span>
-        </label>
+      <div class="space-y-2">
+        {% regroup f.form.categories by data.value.instance.get_theme_display as themes %}
+        {% for theme in themes %}
+        <div class="space-y-1">
+          <div class="text-xs opacity-70 px-1"><i class="fa-solid {{ theme.list.0.data.value.instance.theme_icon }} mr-1"></i>{{ theme.grouper }}</div>
+          {% for t in theme.list %}
+          <label class="flex items-center gap-2 cursor-pointer text-sm hover:bg-secondary hover:bg-opacity-10 rounded px-1 py-0.5">
+            <input type="checkbox" value="{{ t.data.value }}"
+              class="form-checkbox light h-4 w-4 flex-shrink-0"
+              :checked="$store.fm.categories.includes('{{ t.data.value|escapejs }}')"
+              @change="$store.fm.toggle('categories', '{{ t.data.value|escapejs }}')">
+            <i class="fa-solid {{ t.data.value.instance.icon }} w-4 text-center opacity-80"></i>
+            <span>{{ t.choice_label }}</span>
+          </label>
+          {% endfor %}
+        </div>
         {% endfor %}
       </div>
     </div>

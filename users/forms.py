@@ -11,7 +11,8 @@ from croppie.fields import CroppieField
 
 from gifts.forms import Fieldset
 from .models import User
-from skills.models import Skill, UserSkill, SkillWish, get_or_create_skill
+from gifts.models import Listing, add_skill_offer, sync_skill_listings
+from gifts.skills.models import get_or_create_skill
 
 
 class SafeCroppieField(CroppieField):
@@ -125,13 +126,10 @@ class RegisterForm(forms.ModelForm):
             skills_val = self.cleaned_data.get("skills", "")
             if skills_val:
                 for name in [s.strip() for s in skills_val.split(",") if s.strip()]:
-                    skill, _ = get_or_create_skill(name)
-                    UserSkill.objects.get_or_create(user=user, skill=skill)
+                    add_skill_offer(user, get_or_create_skill(name)[0])
             wish_val = self.cleaned_data.get("skill_wishes", "")
             if wish_val:
-                for name in [s.strip() for s in wish_val.split(",") if s.strip()]:
-                    skill, _ = get_or_create_skill(name)
-                    SkillWish.objects.get_or_create(user=user, skill=skill)
+                sync_skill_listings(user, Listing.TYPE_WISH, [s.strip() for s in wish_val.split(",") if s.strip()])
         return user
 
 
@@ -158,7 +156,7 @@ class ProfileUpdateForm(forms.ModelForm):
     class Meta:
         model = User
         fields = ["name", "image", "about", "world", "ecobasa_what", "skills", "skill_wishes",
-                  "location_name", "location", "country"]
+                  "location_name", "location", "country", "match_emails", "match_radius", "match_global"]
         widgets = {
             "location": forms.HiddenInput(),
         }
@@ -171,15 +169,12 @@ class ProfileUpdateForm(forms.ModelForm):
         instance = kwargs.get('instance')
         has_image = bool(instance and instance.image)
         if instance is not None:
-            skills_initial = ', '.join(
-                us.skill.get_name() for us in instance.user_skills.select_related("skill")
-            )
+            skills = Listing.objects.of(instance).filter(kind=Listing.KIND_SKILL).select_related("skill")
+            skills_initial = ', '.join(us.display_title for us in skills if us.is_offer)
             self.fields['skills'].initial = skills_initial
             self.initial['skills'] = skills_initial
             self.fields['skills'].widget.attrs.update({'value': skills_initial})
-            wishes_initial = ', '.join(
-                sw.skill.get_name() for sw in instance.skill_wishes.select_related("skill")
-            )
+            wishes_initial = ', '.join(sw.display_title for sw in skills if sw.is_wish)
             self.fields['skill_wishes'].initial = wishes_initial
             self.initial['skill_wishes'] = wishes_initial
             self.fields['skill_wishes'].widget.attrs.update({'value': wishes_initial})
@@ -194,6 +189,10 @@ class ProfileUpdateForm(forms.ModelForm):
             if fname in self.fields:
                 self.fields[fname].widget.attrs.update({'class': textarea_class})
         self.fields['image'].label = _("Upload new photo") if has_image else _("Photo")
+        self.fields['match_emails'].widget.attrs.update({'class': 'form-checkbox'})
+        self.fields['match_radius'].widget.attrs.update({'class': 'form-input w-28', 'min': '5', 'max': '2000'})
+        self.fields['match_radius'].required = False
+        self.fields['match_global'].widget.attrs.update({'class': 'form-checkbox', 'x-model': 'worldwide'})
         self.helper = FormHelper()
         self.helper.form_tag = False
         self.helper.layout = Layout(
@@ -206,6 +205,9 @@ class ProfileUpdateForm(forms.ModelForm):
             Field("skill_wishes"),
         )
 
+    def clean_match_radius(self):
+        return self.cleaned_data.get("match_radius") or self.instance.match_radius or 150
+
     def save(self, commit=True):
         user = super().save(commit=False)
         new_image = self.cleaned_data.get('image')
@@ -214,13 +216,9 @@ class ProfileUpdateForm(forms.ModelForm):
         if commit:
             user.save()
             skills_val = self.cleaned_data.get('skills', '') or ''
+            # Skills are only added here: taking one off would lose its level, photo and references
             for name in [s.strip() for s in skills_val.split(',') if s.strip()]:
-                skill, _ = get_or_create_skill(name)
-                UserSkill.objects.get_or_create(user=user, skill=skill)
+                add_skill_offer(user, get_or_create_skill(name)[0])
             wish_val = self.cleaned_data.get('skill_wishes', '') or ''
-            new_wish_names = [s.strip() for s in wish_val.split(',') if s.strip()]
-            user.skill_wishes.all().delete()
-            for name in new_wish_names:
-                skill, _ = get_or_create_skill(name)
-                SkillWish.objects.create(user=user, skill=skill)
+            sync_skill_listings(user, Listing.TYPE_WISH, [s.strip() for s in wish_val.split(',') if s.strip()])
         return user

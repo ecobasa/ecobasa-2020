@@ -9,7 +9,10 @@
     <i class="fa-solid {{ match.target.get_match_icon }} text-2xl text-primary opacity-70"></i>
   </div>
   <div class="flex-1 min-w-0">
-    <div class="font-semibold font-serif truncate">{{ match.target.get_match_display_name }}</div>
+    <div class="flex items-center gap-2 min-w-0">
+      {% include "_kind_pill.html" with kind=match.kind %}
+      <span class="font-semibold font-serif truncate">{{ match.target.get_match_display_name }}</span>
+    </div>
     {% if show_from %}
       <div class="text-sm opacity-70">
         {{ match.from_user.name|default:match.from_user.email }}
@@ -34,6 +37,7 @@
         </div>
       {% endif %}
     {% endwith %}
+    {% include "matches/_stay_tags.html" %}
   </div>
   <div class="flex-none">
     {% if match.status == "pending" %}

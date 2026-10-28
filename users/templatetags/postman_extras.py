@@ -54,32 +54,37 @@ def conversation_messages(message):
     return qs
 
 
+def _sender_skill_urls(sender_username):
+    """{skill slug: the page of the sender's offer of it} for the skills on their profile."""
+    if not sender_username:
+        return {}
+    from gifts.models import Listing
+    offers = Listing.objects.filter(
+        owner__username=sender_username, community=None, type=Listing.TYPE_OFFER, kind=Listing.KIND_SKILL,
+    ).select_related("skill")
+    return {offer.skill.slug: offer.get_absolute_url() for offer in offers}
+
+
 def _render_skill_pills(skills_list, sender_username):
     """Return HTML for a row of skill pills, linked to the sender's userskill page when they have it,
     falling back to the general skill page, or plain text if the skill isn't in the database."""
     from django.urls import reverse
     from django.db.models import Q
-    from skills.models import Skill as SkillModel, UserSkill, skill_slug_for_name
+    from gifts.skills.models import Skill as SkillModel, skill_slug_for_name
 
     # Case-insensitive slug lookup for all skill names at once
     wanted = {name.lower(): skill_slug_for_name(name) for name in skills_list}
     existing = set(SkillModel.objects.filter(slug__in=wanted.values()).values_list('slug', flat=True))
     skill_slugs = {name: slug for name, slug in wanted.items() if slug in existing}
 
-    # Skills the sender actually has in their profile
-    sender_skill_slugs = set()
-    if sender_username:
-        sender_skill_slugs = set(
-            UserSkill.objects.filter(user__username=sender_username)
-            .values_list('skill__slug', flat=True)
-        )
+    sender_skill_urls = _sender_skill_urls(sender_username)
 
     html = ['<div class="mt-3 flex flex-wrap gap-2">']
     for name in skills_list:
         slug = skill_slugs.get(name.lower())
         label = template.defaultfilters.force_escape(name)
-        if slug and sender_username and slug in sender_skill_slugs:
-            url = reverse('skills:userskill_detail', args=[slug, sender_username])
+        if slug and slug in sender_skill_urls:
+            url = sender_skill_urls[slug]
         elif slug:
             url = reverse('skills:skill_detail', args=[slug])
         else:
@@ -99,18 +104,13 @@ def _render_sender_skill_pills(skills_list, sender_username):
     """Return HTML for purple sender-skill pills with graduation cap icons."""
     from django.urls import reverse
     from django.db.models import Q
-    from skills.models import Skill as SkillModel, UserSkill, skill_slug_for_name
+    from gifts.skills.models import Skill as SkillModel, skill_slug_for_name
 
     wanted = {name.lower(): skill_slug_for_name(name) for name in skills_list}
     existing = set(SkillModel.objects.filter(slug__in=wanted.values()).values_list('slug', flat=True))
     skill_slugs = {name: slug for name, slug in wanted.items() if slug in existing}
 
-    sender_skill_slugs = set()
-    if sender_username:
-        sender_skill_slugs = set(
-            UserSkill.objects.filter(user__username=sender_username)
-            .values_list('skill__slug', flat=True)
-        )
+    sender_skill_urls = _sender_skill_urls(sender_username)
 
     html = [
         '<div class="mt-3">',
@@ -120,8 +120,8 @@ def _render_sender_skill_pills(skills_list, sender_username):
     for name in skills_list:
         slug = skill_slugs.get(name.lower())
         label = template.defaultfilters.force_escape(name)
-        if slug and sender_username and slug in sender_skill_slugs:
-            url = reverse('skills:userskill_detail', args=[slug, sender_username])
+        if slug and slug in sender_skill_urls:
+            url = sender_skill_urls[slug]
         elif slug:
             url = reverse('skills:skill_detail', args=[slug])
         else:

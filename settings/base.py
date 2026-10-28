@@ -78,7 +78,7 @@ THIRD_PARTY_APPS = [
     "django_countries",
 ]
 
-LOCAL_APPS = ["users", "homepage", "gifts", "communities", "skills", "notifications", "matches", "references"]
+LOCAL_APPS = ["users", "homepage", "gifts", "communities", "notifications", "matches", "references", "projects"]
 
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -138,6 +138,7 @@ MIDDLEWARE = [
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "users.middleware.UserLanguageMiddleware",
+    "users.middleware.LastSeenMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
@@ -187,6 +188,7 @@ TEMPLATES = [
                 "django.contrib.messages.context_processors.messages",
                 "notifications.context_processors.unread_notifications",
                 "references.context_processors.pending_reference_skills",
+                "matches.context_processors.new_suggestions",
             ],
         },
     }
@@ -269,3 +271,12 @@ REFERENCE_IMAP_PASSWORD = env("REFERENCE_IMAP_PASSWORD", default="")
 REFERENCE_IMAP_FOLDER = env("REFERENCE_IMAP_FOLDER", default="INBOX")
 # Development: read replies from Mailpit's API instead of IMAP
 REFERENCE_MAILPIT_URL = env("REFERENCE_MAILPIT_URL", default="")
+
+# PROJECTS
+# ------------------------------------------------------------------------------
+# A project nobody updated or confirmed for this many days is stale: its ambassador is
+# asked whether it is still current (archive_stale_projects, daily cron) ...
+PROJECT_STALE_DAYS = env.int("PROJECT_STALE_DAYS", default=60)
+# ... and it is archived if nobody confirms it within this many days. Dated projects are
+# archived the day after they end.
+PROJECT_ARCHIVE_GRACE_DAYS = env.int("PROJECT_ARCHIVE_GRACE_DAYS", default=14)

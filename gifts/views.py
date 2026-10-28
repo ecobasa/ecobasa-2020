@@ -2,17 +2,20 @@ import json
 import re
 import urllib.request
 import urllib.parse
-from datetime import datetime as _dt
+from collections import Counter
 
+from django.contrib.contenttypes.models import ContentType
+from django.core.exceptions import PermissionDenied
 from django.shortcuts import render, get_object_or_404, redirect, reverse
-from django.db.models import Q
+from django.db.models import Count, Q
+from django.db.models.functions import Cast, Coalesce
 from django.core.paginator import Paginator
 from django.contrib import messages
 from django.http import JsonResponse
 from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.decorators import login_required
-from django.contrib.gis.geos import Point, Polygon
-from django.contrib.gis.db.models.functions import Distance
+from django.contrib.gis.db.models import GeometryField
+from django.contrib.gis.geos import Polygon
 from django.views.decorators.http import require_GET
 from django.core.cache import cache
 
@@ -20,10 +23,13 @@ from .forms import ListingForm
 from .filters import ListingFilter
 from .models import Listing
 from communities.models import Community
+from references.models import Reference
 from users.models import User
-from skills.models import UserSkill, CommunitySkill, Skill, skill_name_q
+from gifts.skills.models import Skill, skill_name_q
 from matches.forms import MatchForm
+from matches.models import Contribution, Match
 from matches.emails import notify_match_created
+from dashboard_lists import Choice, paginate, query_url
 
 
 def search(request):
@@ -34,173 +40,194 @@ def search(request):
 
 
 def detail(request, pk):
-    """Show details for a Listing"""
-    listing = get_object_or_404(Listing, pk=pk)
-    context = {"listing": listing}
+    """An offer or a wish of any kind, with the request form. A project's need is helped
+    with through the project's offer form; a community's wish for a skill through its
+    volunteer form."""
+    listing = get_object_or_404(
+        Listing.objects.select_related("owner", "community__owner", "project", "skill")
+        .prefetch_related("categories", "contributions__match__from_user"),
+        pk=pk,
+    )
+    can_edit = listing.can_edit(request.user)
+    context = {"listing": listing, "can_edit": can_edit, "is_owner": can_edit}
+    help_url = _help_url(listing)
+    context["help_url"] = help_url
 
-    if request.user.is_authenticated and request.user != listing.owner:
-        if request.method == "POST":
-            form = MatchForm(request.POST)
-            if form.is_valid():
-                match = form.save(commit=False)
-                match.from_user = request.user
-                match.recipient = listing.get_match_owner()
-                match.target = listing
-                match.save()
-                notify_match_created(match, http_request=request)
-                messages.success(request, _("Your request has been sent."))
-                return redirect(match.get_absolute_url())
-        else:
-            form = MatchForm()
+    manager = listing.manager
+    if request.user.is_authenticated and manager is not None and request.user != manager and not help_url:
+        form = MatchForm(request.POST or None)
+        if request.method == "POST" and form.is_valid():
+            match = form.save(commit=False)
+            match.from_user = request.user
+            match.recipient = manager
+            match.target = listing
+            match.save()
+            Contribution.objects.create(match=match, listing=listing, quantity=form.cleaned_data.get("quantity"))
+            notify_match_created(match, http_request=request)
+            messages.success(request, _("Your request has been sent."))
+            return redirect(match.get_absolute_url())
         context["form"] = form
 
-    is_owner = request.user.is_authenticated and request.user == listing.owner
-    context["is_owner"] = is_owner
-    if is_owner:
-        context["incoming_requests"] = list(listing.matches.select_related("from_user").order_by("-created_at")[:20])
-
+    if can_edit:
+        context["incoming_requests"] = list(
+            Match.objects.filter(contributions__listing=listing).select_related("from_user").distinct().order_by("-created_at")[:20]
+        )
     return render(request, "gifts/listing_detail.html", context)
+
+
+def _help_url(listing):
+    """Where to answer what isn't asked for by its own request: help with a project's need
+    on the project's offer form, with a community's wish for a skill or learning one of
+    its skills on its volunteer form."""
+    if listing.is_offer:
+        if listing.community_id and listing.skill_id:
+            return f"{listing.community.get_absolute_url()}?learn={listing.skill.slug}"
+        return ""
+    if listing.project_id:
+        return f"{reverse('projects:offer_help', args=[listing.project_id])}?need={listing.pk}"
+    if listing.community_id and listing.skill_id:
+        return f"{listing.community.get_absolute_url()}?help={listing.skill.slug}"
+    return ""
+
+
+@login_required
+def mine(request):
+    """Your own offers and wishes in the dashboard, things and skills, with how many asked
+    about each (and, for skills, how many references they have)."""
+    box = "wish" if request.GET.get("box") == "wish" else "offer"
+    what = request.GET.get("what", "")
+    # Requests and exchanges it is part of
+    listings = Listing.objects.of(request.user).select_related("skill").prefetch_related("categories").annotate(
+        match_count=Count("contributions", distinct=True),
+    ).order_by("-updated_at")
+    if what == "skills":
+        listings = listings.skills()
+    elif what == "things":
+        listings = listings.things()
+    counts = {key: listings.filter(type=key).count() for key in ("offer", "wish")}
+    tabs = [
+        Choice(label, query_url(request, box=key, page=None), key == box, counts[key])
+        for key, label in (("offer", _("Your offers")), ("wish", _("Your wishes")))
+    ]
+    whats = [
+        Choice(label, query_url(request, what=key or None, page=None), key == what, icon=icon)
+        for key, label, icon in (("", _("All"), ""), ("things", _("Things"), "fa-gift"), ("skills", _("Skills"), "fa-graduation-cap"))
+    ]
+    page = paginate(request, listings.filter(type=box))
+    references = Counter(Reference.objects.filter(
+        content_type=ContentType.objects.get_for_model(Listing),
+        object_id__in=[listing.pk for listing in page.object_list],
+    ).values_list("object_id", flat=True))
+    for listing in page.object_list:
+        listing.reference_count = references[listing.pk]
+    return render(request, "gifts/mine.html", {"tabs": tabs, "whats": whats, "what": what, "box": box, "page": page})
+
+
+def _holder_for(request):
+    """Who a new listing is for: a community its ambassador names (?community=<slug>),
+    else the person."""
+    slug = request.POST.get("community") or request.GET.get("community")
+    if not slug:
+        return None
+    community = get_object_or_404(Community, slug=slug)
+    if not (request.user.is_staff or request.user == community.owner):
+        raise PermissionDenied
+    return community
 
 
 @login_required
 def create(request):
-    """Create a new Listing"""
-    form = ListingForm()
-    if request.method == "POST":
-        form = ListingForm(request.POST, request.FILES)
-        if form.is_valid():
-            listing = form.save(commit=False)
+    """A new offer or wish: ?type=offer|wish, ?kind=…, ?skill=<name> and ?community=<slug>
+    preset it."""
+    community = _holder_for(request)
+    initial = {
+        "type": request.GET.get("type") if request.GET.get("type") in ("offer", "wish") else "offer",
+        "kind": request.GET.get("kind") if request.GET.get("kind") in dict(Listing.KIND_CHOICES) else Listing.KIND_OTHER,
+        "skill_name": request.GET.get("skill", ""),
+    }
+    posted = request.method == "POST"
+    form = ListingForm(request.POST if posted else None, request.FILES if posted else None, initial=initial)
+    if request.method == "POST" and form.is_valid():
+        listing = form.save(commit=False)
+        if community is not None:
+            listing.community = community
+        else:
             listing.owner = request.user
-            form.save()
-            messages.success(
-                request, _("%(listing_type)s created") % {"listing_type": listing.get_type_display()}
-            )
-            return redirect(form.instance.get_absolute_url())
-    return render(request, "gifts/listing_form.html", {"form": form})
+        listing.save()
+        form.save_m2m()
+        messages.success(
+            request, _("%(listing_type)s created") % {"listing_type": listing.get_type_display()}
+        )
+        return redirect(listing.get_absolute_url())
+    return render(request, "gifts/listing_form.html", {"form": form, "community": community})
 
 
+@login_required
 def edit(request, pk):
     """Edit an existing Listing"""
     listing = get_object_or_404(Listing, pk=pk)
-    if not listing.owner == request.user:
-        return redirect("/users/login?next=%s" % request.path)
+    if not listing.can_edit(request.user):
+        raise PermissionDenied
 
-    form = ListingForm(instance=listing)
-    if request.method == "POST":
-        form = ListingForm(request.POST, request.FILES, instance=listing)
-        if form.is_valid():
-            form.save()
-            listing = form.instance
-            messages.success(request, _("changes saved"))
-            return redirect(form.instance.get_absolute_url())
-    return render(request, "gifts/listing_form.html", {"form": form, "listing": listing})
+    posted = request.method == "POST"
+    form = ListingForm(request.POST if posted else None, request.FILES if posted else None, instance=listing)
+    if request.method == "POST" and form.is_valid():
+        form.save()
+        messages.success(request, _("changes saved"))
+        return redirect(listing.get_absolute_url())
+    return render(request, "gifts/listing_form.html", {"form": form, "listing": listing, "community": listing.community})
 
 
+@login_required
 def delete(request, pk):
     listing = get_object_or_404(Listing, pk=pk)
-    if not listing.owner == request.user:
-        return redirect("/users/login?next=%s" % request.path)
+    if not listing.can_edit(request.user):
+        raise PermissionDenied
 
     if request.method == "POST":
+        back = listing.project.get_absolute_url() if listing.project_id else (
+            listing.community.get_absolute_url() if listing.community_id else reverse("gifts:mine")
+        )
         listing.delete()
         messages.success(
             request, _("%(listing_type)s deleted") % {"listing_type": listing.get_type_display()}
         )
-        return redirect(reverse("gifts:search"))
-    else:
-        return render(request, "gifts/listing_delete_confirm.html", {"listing": listing})
+        return redirect(back)
+    return render(request, "gifts/listing_delete_confirm.html", {"listing": listing})
 
 
 # ── Shared helpers ───────────────────────────────────────────────────
 
-def _apply_bbox(qs, bbox_param, location_field="location"):
-    """Filter a queryset to features within the bbox string 'w,s,e,n'."""
+def _with_spot(qs):
+    """Each listing with where it is (`spot`): its own place, else its person's or community's."""
+    return qs.annotate(spot=Coalesce("location", "owner__location", "community__location"))
+
+
+def _apply_bbox(qs, bbox_param):
+    """Filter listings to those whose place is within the bbox string 'w,s,e,n'."""
     if not bbox_param:
         return qs
     try:
         west, south, east, north = map(float, bbox_param.split(","))
-        poly = Polygon.from_bbox((west, south, east, north))
-        poly.srid = 4326
-        return qs.filter(**{f"{location_field}__within": poly})
     except (ValueError, TypeError):
         return qs
-
-
-def _order_by_distance(qs, request):
-    """Sort nearest-first when a 'lat,lon' location param is given (same format as ListingFilter)."""
-    try:
-        lat, lon = map(float, request.GET.get("location", "").split(","))
-    except ValueError:
-        return qs
-    loc = Point(lon, lat, srid=4326)
-    return qs.annotate(distance=Distance("location", loc)).order_by("distance")
+    poly = Polygon.from_bbox((west, south, east, north))
+    poly.srid = 4326
+    # As a flat lon/lat box: on geography the box's edges would be great circles, and a
+    # box wider than half the world (the map zoomed out) would turn inside out
+    return qs.annotate(flat_spot=Cast("spot", GeometryField(srid=4326))).filter(flat_spot__intersects=poly)
 
 
 def _filtered_listings(request, require_location=True):
-    types = request.GET.getlist("type")
-    listing_types = [t for t in types if t != "skill"]
-
-    if types and not listing_types:
-        return Listing.objects.none()
-
-    base_qs = Listing.objects.select_related("owner")
+    """What the map and list show: current listings, filtered (ListingFilter), each with
+    its place. Offers and wishes of things, skills, knowledge and helping hands of people
+    and communities, and the needs of current projects."""
+    base_qs = _with_spot(Listing.objects.open()).select_related(
+        "owner", "community", "project", "skill",
+    ).exclude(owner=None, community=None).exclude(type=Listing.TYPE_OFFER, skill__isnull=False, available=False)
     if require_location:
-        base_qs = base_qs.filter(location__isnull=False)
-
-    if "skill" in types:
-        data = request.GET.copy()
-        data.setlist("type", listing_types)
-        f = ListingFilter(data, queryset=base_qs, request=request)
-    else:
-        f = ListingFilter(request.GET, queryset=base_qs, request=request)
-
-    return f.qs
-
-
-def _skill_communities(request, require_location=True):
-    types = request.GET.getlist("type")
-    if types and "skill" not in types:
-        return Community.objects.none()
-
-    filters = {"community_skills__isnull": False}
-    if require_location:
-        filters["location__isnull"] = False
-
-    qs = Community.objects.filter(**filters).prefetch_related("community_skills__skill", "photos").distinct()
-
-    q = request.GET.get("search", "").strip()
-    if q:
-        qs = qs.filter(
-            skill_name_q(q, "community_skills__skill__")
-            | Q(community_skills__skill__description__icontains=q)
-            | Q(community_skills__description__icontains=q)
-            | Q(description__icontains=q)
-        ).distinct()
-
-    return _order_by_distance(qs, request)
-
-
-def _skill_users(request, require_location=True):
-    types = request.GET.getlist("type")
-    if types and "skill" not in types:
-        return User.objects.none()
-
-    filters = {"user_skills__isnull": False}
-    if require_location:
-        filters["location__isnull"] = False
-
-    qs = User.objects.filter(**filters).prefetch_related("user_skills__skill").distinct()
-
-    q = request.GET.get("search", "").strip()
-    if q:
-        qs = qs.filter(
-            skill_name_q(q, "user_skills__skill__")
-            | Q(user_skills__skill__description__icontains=q)
-            | Q(user_skills__description__icontains=q)
-            | Q(about__icontains=q)
-        ).distinct()
-
-    return _order_by_distance(qs, request)
+        base_qs = base_qs.filter(spot__isnull=False)
+    return ListingFilter(request.GET, queryset=base_qs, request=request).qs
 
 
 # ── Endpoints ────────────────────────────────────────────────────────
@@ -212,140 +239,80 @@ def _public_name(user):
     return user.name or user.username or ""
 
 
+def _marker_colour(listing):
+    if listing.project_id and listing.is_wish:
+        return "#5A5527"  # green: a project's need
+    if listing.is_skill:
+        return "#80143b"  # purple
+    return "#de7a08" if listing.is_wish else "#da6137"
+
+
 @require_GET
 def gifts_markers(request):
     """
-    GeoJSON FeatureCollection — Listing markers + community skill markers
-    within the current map viewport bounding box.
-
-    Each feature carries a `source` property ('listing' | 'skill') so the
-    frontend can render different marker icons.
+    GeoJSON FeatureCollection — one marker per offer or wish (things, skills, knowledge,
+    helping hands, project needs) within the current map viewport bounding box, at its
+    own place or its person's or community's.
 
     Query params (all optional):
         bbox        west,south,east,north  (WGS84)
-        q           search term
-        type        listing type filter (repeatable)
+        search      search term
+        type        offer | wish | skill | need (repeatable)
+        kind        kind filter (repeatable)
         categories  category id filter (repeatable)
         location    lat,lon  → distance-ordered results via ListingFilter
-        from_me     truthy → only current user's listings
     """
-    bbox_param = request.GET.get("bbox", "")
-    features   = []
-
-    # ── Listing features ─────────────────────────────────────────────
-    listing_qs = _apply_bbox(_filtered_listings(request), bbox_param)
-
-    for listing in listing_qs[:500]:
+    features = []
+    listings = _apply_bbox(_filtered_listings(request), request.GET.get("bbox", "")).prefetch_related("owner__communities")
+    for listing in listings[:700]:
+        holder = listing.holder
+        photo = listing.image.url if listing.image else None
+        if photo is None and listing.community_id:
+            first = listing.community.photos.first()
+            photo = first.image.url if first and first.image else None
         features.append({
             "type": "Feature",
-            "geometry": {
-                "type":        "Point",
-                "coordinates": [listing.location.x, listing.location.y],
-            },
+            "geometry": {"type": "Point", "coordinates": [listing.spot.x, listing.spot.y]},
             "properties": {
-                "source":       "listing",
-                "title":        listing.title,
-                "description":  listing.description,
-                "image":        listing.image.url if listing.image else None,
-                "listing_type": listing.type,
-                "type_display": listing.get_type_display(),
-                "url":          listing.get_absolute_url(),
-                "user_name":    _public_name(listing.owner),
+                "source":         "listing",
+                "title":          listing.display_title,
+                "description":    listing.description,
+                "image":          photo,
+                "listing_type":   listing.type,
+                "glyph":          listing.marker_glyph,
+                "color":          _marker_colour(listing),
+                "kind_icon":      listing.kind_icon if listing.kind != Listing.KIND_OTHER else "",
+                "amount":         listing.amount,
+                "type_display":   f"{listing.get_type_display()} · {listing.kind_label}" if listing.kind != Listing.KIND_OTHER else listing.get_type_display(),
+                "url":            listing.get_absolute_url(),
+                "project":        listing.project.title if listing.project_id else "",
+                "community_name": listing.community.name if listing.community_id else "",
+                "user_name":      "" if listing.community_id else _public_name(holder),
+                "member_of":      "" if listing.community_id or not holder else ", ".join(c.name for c in holder.member_communities()),
             },
         })
-
-    q = request.GET.get("search", "").strip()
-
-    def _matching_skills(skills, owner_text):
-        """With a search term, keep only the skills that match it themselves,
-        unless the owner's own text (about / description) already matched."""
-        if not q or q.lower() in (owner_text or "").lower():
-            return skills.all()
-        return skills.select_related("skill").filter(
-            skill_name_q(q)
-            | Q(skill__description__icontains=q)
-            | Q(description__icontains=q)
-        )
-
-    # ── Community skill features ─────────────────────────────────────
-    skill_qs = _apply_bbox(_skill_communities(request), bbox_param)
-
-    # One marker per skill, so every marker links to exactly one detail page.
-    # Skills at the same spot are fanned out on the map.
-    for community in skill_qs[:200]:
-        first_photo = community.photos.first()
-        for cs in _matching_skills(community.community_skills, community.description):
-            features.append({
-                "type": "Feature",
-                "geometry": {
-                    "type":        "Point",
-                    "coordinates": [community.location.x, community.location.y],
-                },
-                "properties": {
-                    "source":         "skill",
-                    "title":          cs.skill.get_name(),
-                    "description":    cs.description or community.description,
-                    "image":          first_photo.image.url if first_photo and first_photo.image else None,
-                    "type_display":   str(_("Skill / Teaching")),
-                    "url":            cs.get_absolute_url(),
-                    "community_name": community.name,
-                },
-            })
-
-    # ── User skill features ──────────────────────────────────────────
-    user_skill_qs = _apply_bbox(_skill_users(request), bbox_param)
-
-    for user in user_skill_qs[:200]:
-        for us in _matching_skills(user.user_skills, user.about):
-            features.append({
-                "type": "Feature",
-                "geometry": {
-                    "type":        "Point",
-                    "coordinates": [user.location.x, user.location.y],
-                },
-                "properties": {
-                    "source":       "user_skill",
-                    "title":        us.skill.get_name(),
-                    "description":  us.description or user.about or "",
-                    "image":        user.image.url if user.image else None,
-                    "type_display": str(_("User Skill")),
-                    "url":          us.get_absolute_url(),
-                    "user_name":    _public_name(user),
-                },
-            })
-
     return JsonResponse({"type": "FeatureCollection", "features": features})
 
 
 @require_GET
 def gifts_list_partial(request):
-    page_num = int(request.GET.get("page", 1))
-
-    listings_queryset = _filtered_listings(request, require_location=False)
-    if not request.GET.get('location'):
+    listings_queryset = _filtered_listings(request, require_location=False).prefetch_related("categories", "community__photos", "owner__communities")
+    # Your own (and your communities') are nearest, so they would always come first; the
+    # map still shows them
+    if request.user.is_authenticated:
+        listings_queryset = listings_queryset.exclude(Q(owner=request.user) | Q(community__owner=request.user))
+    if not request.GET.get("location"):
         listings_queryset = listings_queryset.order_by("-created_at")
 
     paginator = Paginator(listings_queryset, 20)
-    page = paginator.get_page(page_num)
-
-    sc_qs = _skill_communities(request, require_location=False)
-    su_qs = _skill_users(request, require_location=False)
-
-    skill_communities = []
-    skill_users = []
-
-    if page_num == 1:
-        skill_communities = list(sc_qs[:10])
-        skill_users = list(su_qs[:10])
+    page = paginator.get_page(request.GET.get("page", 1))
 
     return render(request, "gifts/_gifts_list_partial.html", {
-        "listings":          page,
-        "skill_communities": skill_communities,
-        "skill_users":       skill_users,
-        "has_next":          page.has_next(),
-        "next_page":         page.next_page_number() if page.has_next() else None,
-        "total":             paginator.count + sc_qs.count() + su_qs.count(),
-        "q":                 request.GET.get("search", ""),
+        "listings":  page,
+        "has_next":  page.has_next(),
+        "next_page": page.next_page_number() if page.has_next() else None,
+        "total":     paginator.count,
+        "q":         request.GET.get("search", ""),
     })
 
 
@@ -385,13 +352,11 @@ def gifts_suggest(request):
             seen.add(value)
             suggestions.append({"value": value, "type": kind})
 
-    # Listing titles
-    for listing in (
-        Listing.objects
-        .filter(title__icontains=q)
-        .values('title', 'type')[:4]
-    ):
-        add(listing['title'], listing['type'])
+    current = Listing.objects.open()
+
+    # Listing titles (things, and knowledge or helping hands named in words)
+    for listing in current.filter(title__icontains=q, skill=None).values("title", "type")[:4]:
+        add(listing["title"], listing["type"])
 
     # Owner names — placed early so they aren't cut off by the 8-item limit
     for user in (
@@ -402,48 +367,15 @@ def gifts_suggest(request):
     ):
         add(user.name or user.email, "owner")
 
-    # Skill names held by communities or people, matched and shown in the active language
-    for skill in (
-        Skill.objects
-        .filter(skill_name_q(q, ""))
-        .filter(Q(community_skills__isnull=False) | Q(user_skills__isnull=False))
-        .distinct()[:6]
-    ):
+    # Skills someone offers or wishes for, matched and shown in the active language
+    for skill in Skill.objects.filter(skill_name_q(q, ""), listings__in=current).distinct()[:6]:
         add(skill.get_name(), "skill")
 
     # Description match — extract words that start with the query
-    def _desc_words(*texts):
-        q_lower = q.lower()
-        for text in texts:
-            for word in re.findall(r'\b\w[\w-]*\b', text or ""):
-                if word.lower().startswith(q_lower) and word.lower() != q_lower:
-                    yield word.lower()
-
-    for desc, in (
-        Listing.objects
-        .filter(Q(description__icontains=q))
-        .exclude(title__icontains=q)
-        .values_list("description")[:5]
-    ):
-        for word in _desc_words(desc):
-            add(word, "text")
-
-    for desc, skill_desc in (
-        CommunitySkill.objects
-        .filter(Q(description__icontains=q) | Q(skill__description__icontains=q))
-        .exclude(skill_name_q(q))
-        .values_list("description", "skill__description")[:5]
-    ):
-        for word in _desc_words(desc, skill_desc):
-            add(word, "text")
-
-    for desc, skill_desc in (
-        UserSkill.objects
-        .filter(Q(description__icontains=q) | Q(skill__description__icontains=q))
-        .exclude(skill_name_q(q))
-        .values_list("description", "skill__description")[:5]
-    ):
-        for word in _desc_words(desc, skill_desc):
-            add(word, "text")
+    q_lower = q.lower()
+    for desc, in current.filter(description__icontains=q).exclude(title__icontains=q).values_list("description")[:8]:
+        for word in re.findall(r'\b\w[\w-]*\b', desc or ""):
+            if word.lower().startswith(q_lower) and word.lower() != q_lower:
+                add(word.lower(), "text")
 
     return JsonResponse(suggestions[:8], safe=False)

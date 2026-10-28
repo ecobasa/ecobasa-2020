@@ -9,75 +9,11 @@
   {% endif %}
 </span>
 
-{# ── Community skill cards (first page only) ───────────────────── #}
-{% for community in skill_communities %}
-  {% with community.photos.first as photo %}
-  {% for cs in community.community_skills.all %}
-  <a href="{{ cs.get_absolute_url }}" class="relative w-full max-w-4xl group flex items-stretch justify-between my-5 sm:my-10 bg-secondary bg-opacity-50 p-5 rounded-md hover:text-primary hover:shadow-lg">
-    <div class="text-xs absolute bottom-0 right-0 rounded-full p-2 text-secondary bg-purple">
-      <i class="fa fa-graduation-cap mr-1"></i>{% trans "Skill" %}
-    </div>
-    <div class="flex w-full">
-      {% if photo %}
-        <img class="flex-shrink-0 h-20 w-20 sm:h-32 sm:w-48 object-cover rounded"
-          src="{{ photo.image.url }}" alt="{{ community.name }}" loading="lazy">
-      {% else %}
-        <div class="flex-shrink-0 h-20 w-20 sm:h-32 sm:w-48 bg-primary rounded"></div>
-      {% endif %}
-      <div class="pl-2 sm:pl-6 w-full">
-        {% if community.location_name %}
-          <i class="fa fa-map-marker text-primary mb-1"></i>
-          <div class="text-xs inline">{{ community.location_name }}</div>
-        {% endif %}
-        <div class="font-serif sm:text-lg group-hover:text-primary">{{ cs.skill }}</div>
-        <p class="text-sm text-brown mt-1">
-          {% if cs.description %}{{ cs.description|truncatewords:20 }}{% else %}{{ cs.skill.description|truncatewords:20 }}{% endif %}
-        </p>
-        <span class="absolute bottom-5"><i class="fa fa-home mr-2"></i>{{ community.name }}</span>
-      </div>
-    </div>
-  </a>
-  {% endfor %}
-  {% endwith %}
-{% endfor %}
-
-{# ── User skill cards (first page only) ────────────────────────── #}
-{% for user in skill_users %}
-  {% for us in user.user_skills.all %}
-  <a href="{{ us.get_absolute_url }}" class="relative w-full max-w-4xl group flex items-stretch justify-between my-5 sm:my-10 bg-secondary bg-opacity-50 p-5 rounded-md hover:text-primary hover:shadow-lg">
-    <div class="text-xs absolute bottom-0 right-0 rounded-full p-2 text-secondary bg-purple">
-      <i class="fa fa-graduation-cap mr-1"></i>{% trans "Skill" %}
-    </div>
-    <div class="flex w-full">
-      {% if user.image %}
-        <img class="flex-shrink-0 h-20 w-20 sm:h-32 sm:w-48 object-cover rounded"
-          src="{{ user.image.url }}" alt="{{ user.name }}" loading="lazy">
-      {% else %}
-        <div class="flex-shrink-0 h-20 w-20 sm:h-32 sm:w-48 bg-primary rounded"></div>
-      {% endif %}
-      <div class="pl-2 sm:pl-6 w-full">
-        {% if user.location_name %}
-          <i class="fa fa-map-marker text-primary mb-1"></i>
-          <div class="text-xs inline">{{ user.location_name }}</div>
-        {% endif %}
-        <div class="font-serif sm:text-lg group-hover:text-primary">{{ us.skill }}</div>
-        <p class="text-sm text-brown mt-1">
-          {% if us.description %}{{ us.description|truncatewords:20 }}{% else %}{{ us.skill.description|truncatewords:20 }}{% endif %}
-        </p>
-        <span class="absolute bottom-5"><i class="fa fa-user mr-2"></i>{{ user.name|default:user.email }}</span>
-      </div>
-    </div>
-  </a>
-  {% endfor %}
-{% endfor %}
-
-{# ── Listing cards — reuse existing _listing.html exactly as-is ─ #}
+{# ── Offers and wishes of every kind: things, skills, project needs ─ #}
 {% for listing in listings %}
   {% include "gifts/_listing.html" %}
 {% empty %}
-  {% if not skill_communities and not skill_users %}
-    <p class="text-primary py-8 text-center">{% trans "No results found." %}</p>
-  {% endif %}
+  <p class="text-primary py-8 text-center">{% trans "No results found." %}</p>
 {% endfor %}
 
 {# ── Infinite scroll sentinel ──────────────────────────────────── #}
@@ -87,7 +23,7 @@
   hx-get="{% url 'gifts:api-list' %}?page={{ next_page }}"
   hx-target="#gift-list-results"
   hx-swap="beforeend"
-  hx-trigger="revealed"
+  hx-trigger="intersect once"
   hx-include="#gift-filters">
   <i class="fa fa-spinner fa-spin text-brown"></i>
 </div>

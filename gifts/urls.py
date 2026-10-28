@@ -6,6 +6,7 @@ app_name = "gifts"
 urlpatterns = [
     path("", views.search, name="search"),
     path("create/", views.create, name="create"),
+    path("mine/", views.mine, name="mine"),
     path("<str:pk>/", views.detail, name="detail"),
     path("<str:pk>/delete/", views.delete, name="delete"),
     path("<str:pk>/edit/", views.edit, name="edit"),

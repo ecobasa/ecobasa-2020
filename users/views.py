@@ -8,6 +8,7 @@ from django.urls import reverse_lazy
 from django.contrib import messages
 from django.contrib.auth import logout as auth_logout, login as auth_login, authenticate
 from django.views.generic.detail import DetailView
+from gifts.models import Listing
 from .models import User
 
 from .forms import RegisterForm, LoginForm, ProfileUpdateForm
@@ -42,14 +43,13 @@ class DetailView(DetailView):
         ctx = super().get_context_data(**kwargs)
         try:
             user = self.get_object()
-            ctx["listings"] = user.listings.all()
+            # Their skills and skill wishes as pills, everything else as cards
+            listings = list(Listing.objects.of(user).current().select_related("skill"))
+            with_skill = sorted((l for l in listings if l.skill_id), key=lambda l: l.display_title)
+            ctx["listings"] = [l for l in listings if not l.skill_id]
             ctx["communities"] = user.communities.prefetch_related("photos").order_by("name")
-            ctx["user_skills"] = (
-                user.user_skills.select_related("skill").order_by("skill__name")
-            )
-            ctx["skill_wishes"] = (
-                user.skill_wishes.select_related("skill").order_by("skill__name")
-            )
+            ctx["user_skills"] = [l for l in with_skill if l.is_offer]
+            ctx["skill_wishes"] = [l for l in with_skill if l.is_wish]
         except Exception:
             ctx["listings"] = []
             ctx["communities"] = []

@@ -1,21 +1,25 @@
 {% load i18n %}
-<section id="references" class="mt-10">
+<section id="references" class="mt-10" x-data="{ shown: '' }">
   <h2>{% trans "References" %}</h2>
 
   {% if references %}
-    <div class="flex flex-wrap gap-2 mb-4 text-xs">
-      {% if counts.positive %}<span class="pill bg-green"><i class="fa-regular fa-face-smile mr-1"></i>{% blocktrans count counter=counts.positive %}{{ counter }} positive{% plural %}{{ counter }} positive{% endblocktrans %}</span>{% endif %}
-      {% if counts.neutral %}<span class="pill bg-yellow"><i class="fa-regular fa-face-meh mr-1"></i>{% blocktrans count counter=counts.neutral %}{{ counter }} neutral{% plural %}{{ counter }} neutral{% endblocktrans %}</span>{% endif %}
-      {% if counts.negative %}<span class="pill bg-red"><i class="fa-regular fa-face-frown mr-1"></i>{% blocktrans count counter=counts.negative %}{{ counter }} negative{% plural %}{{ counter }} negative{% endblocktrans %}</span>{% endif %}
+    {# The counts filter the list: one impression at a time, clicking it again shows all #}
+    <div class="flex flex-wrap items-center gap-2 mb-4 text-xs">
+      {% if counts.positive %}{% include "references/_impression_filter.html" with impression="positive" colour="bg-green" icon="fa-face-smile" count=counts.positive %}{% endif %}
+      {% if counts.neutral %}{% include "references/_impression_filter.html" with impression="neutral" colour="bg-yellow" icon="fa-face-meh" count=counts.neutral %}{% endif %}
+      {% if counts.negative %}{% include "references/_impression_filter.html" with impression="negative" colour="bg-red" icon="fa-face-frown" count=counts.negative %}{% endif %}
+      <button type="button" class="text-brown underline" x-show="shown" x-cloak @click="shown = ''">{% trans "Show all" %}</button>
     </div>
 
-    <div class="space-y-3 mb-6">
+    <div class="flex flex-col gap-3 mb-6">
       {% for ref in references %}
-        {% if ref.author_id == request.user.pk and not ref.about_other %}
-          {% include "references/_reference_card.html" with show_edit=True %}
-        {% else %}
-          {% include "references/_reference_card.html" %}
-        {% endif %}
+        <div x-show="!shown || shown === '{{ ref.impression }}'">
+          {% if ref.author_id == request.user.pk and not ref.about_other %}
+            {% include "references/_reference_card.html" with show_edit=True %}
+          {% else %}
+            {% include "references/_reference_card.html" %}
+          {% endif %}
+        </div>
       {% endfor %}
     </div>
   {% else %}

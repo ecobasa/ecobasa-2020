@@ -4,7 +4,6 @@ from django.utils.translation import gettext_lazy as _
 from taggit.forms import TagWidget
 
 from .models import Community
-from skills.models import Skill, SkillWish
 
 
 class MultiFileInput(ClearableFileInput):
@@ -45,8 +44,10 @@ class CommunityForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if self.instance and self.instance.pk:
+            from gifts.models import Listing
             wishes_initial = ', '.join(
-                sw.skill.get_name() for sw in self.instance.skill_wishes.select_related("skill")
+                sw.display_title for sw in Listing.objects.of(self.instance)
+                .filter(type=Listing.TYPE_WISH, project=None).exclude(skill=None).select_related("skill")
             )
             self.fields['skill_wishes'].initial = wishes_initial
             self.initial['skill_wishes'] = wishes_initial
