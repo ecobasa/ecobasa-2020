@@ -265,14 +265,14 @@ SITE_URL = env("DJANGO_SITE_URL", default="https://ecobasa.org")
 
 # REFERENCE REQUESTS
 # ------------------------------------------------------------------------------
-# After a match, both sides are asked for their story (send_reference_requests, daily cron).
+# After a match, both sides are asked for their story (send_reference_requests, daily, see crontab).
 # Days after the stay ended or the agreed date, or after acceptance if there was no date:
 REFERENCE_REQUEST_DELAY_DAYS = env.int("REFERENCE_REQUEST_DELAY_DAYS", default=1)
 REFERENCE_REQUEST_UNDATED_DELAY_DAYS = env.int("REFERENCE_REQUEST_UNDATED_DELAY_DAYS", default=7)
 # Matches that were due longer ago than this are never asked about (e.g. on first rollout)
 REFERENCE_REQUEST_MAX_AGE_DAYS = env.int("REFERENCE_REQUEST_MAX_AGE_DAYS", default=30)
 # Replies by email: answers to stories+<key>@… are read from this IMAP mailbox
-# (fetch_reference_replies, cron every few minutes). Without an address, emails only offer the link.
+# (fetch_reference_replies, every few minutes, see crontab). Without an address, emails only offer the link.
 REFERENCE_REPLY_ADDRESS = env("REFERENCE_REPLY_ADDRESS", default="")
 REFERENCE_IMAP_HOST = env("REFERENCE_IMAP_HOST", default="")
 REFERENCE_IMAP_USER = env("REFERENCE_IMAP_USER", default="")
@@ -284,7 +284,7 @@ REFERENCE_MAILPIT_URL = env("REFERENCE_MAILPIT_URL", default="")
 # PROJECTS
 # ------------------------------------------------------------------------------
 # A project nobody updated or confirmed for this many days is stale: its ambassador is
-# asked whether it is still current (archive_stale_projects, daily cron) ...
+# asked whether it is still current (archive_stale_projects, daily, see crontab) ...
 PROJECT_STALE_DAYS = env.int("PROJECT_STALE_DAYS", default=60)
 # ... and it is archived if nobody confirms it within this many days. Dated projects are
 # archived the day after they end.

@@ -1,0 +1,15 @@
+# Scheduled jobs, run by supercronic in the scheduler container (see README).
+# Times are Europe/Berlin (TZ in the compose files). A job that is still running is
+# skipped, not started twice.
+
+# Replies to reference requests by email, picked up from the mailbox
+*/5 * * * *  python manage.py fetch_reference_replies
+
+# Archive ended and unconfirmed projects, ask ambassadors about stale ones
+0 9 * * *    python manage.py archive_stale_projects
+
+# Ask both sides of a past match for their story
+0 10 * * *   python manage.py send_reference_requests
+
+# Weekly suggestions, on Thursday afternoon: in time to arrange something for the weekend
+0 17 * * 4   python manage.py send_suggestion_emails

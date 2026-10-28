@@ -63,11 +63,8 @@ They answer on a no-login form (photo upload works from the phone camera) or by 
 to the email with a photo attached. Staff choose which shared ones appear on the homepage
 at `/references/featured/`.
 
-Two cron jobs:
-```
-0 9 * * *    python manage.py send_reference_requests
-*/5 * * * *  python manage.py fetch_reference_replies
-```
+`send_reference_requests` (daily) and `fetch_reference_replies` (every five minutes) run in
+the scheduler (see [Scheduled jobs](#scheduled-jobs)).
 
 Settings (env):
 - `DJANGO_SITE_URL`: base for links in these emails, e.g. `https://ecobasa.org`
@@ -133,8 +130,29 @@ After deploying the matching once, match what already exists:
 python manage.py match_everything
 ```
 
-Two more cron jobs:
+`archive_stale_projects` (daily) and `send_suggestion_emails` (weekly) run in the scheduler
+(see [Scheduled jobs](#scheduled-jobs)).
+
+## Scheduled jobs
+
+The jobs that run on their own are in [`crontab`](crontab), run by
+[supercronic](https://github.com/aptible/supercronic) in the `scheduler` container (same image
+and settings as `django`, times in `TZ`, Europe/Berlin). It logs to the container output, and
+skips a job while its previous run is still going.
+
+| When | Command |
+| --- | --- |
+| every 5 minutes | `fetch_reference_replies` |
+| daily, 9:00 | `archive_stale_projects` |
+| daily, 10:00 | `send_reference_requests` |
+| Thursdays, 17:00 | `send_suggestion_emails` |
+
+To change a time or add a job, edit `crontab` and restart the container
+(`docker compose restart scheduler`). Any job can still be run by hand with
+`python manage.py <command>`.
+
+In development the scheduler is off, so emails only go out when you run a command. To try it
+(emails land in Mailpit):
 ```
-30 8 * * *   python manage.py archive_stale_projects
-0 17 * * 0   python manage.py send_suggestion_emails
+docker compose --profile scheduler up
 ```

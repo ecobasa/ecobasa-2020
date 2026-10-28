@@ -28,6 +28,26 @@ services:
       - "127.0.0.1:8000:8000"
       - "127.0.0.1:80:8000"
 
+  # Runs the jobs in ./crontab. Optional in development: docker compose --profile scheduler up
+  scheduler:
+    build:
+      context: .
+      dockerfile: dockerfile.devel
+    env_file:
+      - ./django.env
+    environment:
+      - TZ=Europe/Berlin
+    command: supercronic /opt/services/ecobasa/crontab
+    volumes:
+      - .:/opt/services/ecobasa
+    depends_on:
+      - database
+      - mailpit
+    networks:
+      - backend
+    profiles:
+      - scheduler
+
   mailpit:
     image: axllent/mailpit
     networks:
