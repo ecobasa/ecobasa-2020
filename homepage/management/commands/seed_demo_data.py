@@ -238,7 +238,7 @@ class Command(BaseCommand):
                 title="17kg of surplus zucchini (please, we beg you)", type="offer",
                 owner="luna@ecobasa.demo", category="Food & Preserves",
                 description="They will not stop. We have tried everything. Take them, we have more.",
-                image="zucchini.jpg",
+                image="zucchini.jpg", quantity=17, unit="kg", kind=Listing.KIND_MATERIAL,
             ),
             dict(
                 title="Slightly judgmental goat, free to a good home", type="offer",
@@ -298,6 +298,7 @@ class Command(BaseCommand):
                     "description": spec["description"],
                     "location_name": owner.location_name,
                     "location": owner.location,
+                    **{key: spec[key] for key in ("quantity", "unit", "kind") if key in spec},
                 },
             )
             if created:
@@ -463,17 +464,30 @@ class Command(BaseCommand):
         bjorn_fermentation_wish = Listing.objects.get(owner=bjorn, type="wish", skill__name="Fermentation")
         three_goats_farm = communities["Three Goats and a Dream Farm"]
 
-        # 1. Listing offer target — pending
+        # 1. Listing offer target — accepted: Björn takes 3 of the 17 kg (his reference
+        #    about it is written after this exchange)
         match1, created1 = self._get_or_create_match(
             from_user=bjorn, recipient=luna, target=zucchini,
             message="I'll trade you one (1) slightly judgmental goat for a fair share of that zucchini haul.",
             location_type=Match.LOC_YOUR_PLACE,
         )
         if created1:
-            Match.objects.filter(pk=match1.pk).update(created_at=timezone.now() - timedelta(days=2))
+            Contribution.objects.filter(match=match1, listing=zucchini).update(quantity=3)
+            MatchMessage.objects.create(
+                match=match1, sender=luna, body="Keep the goat. Take as much as you can carry.",
+                status_to=Match.STATUS_ACCEPTED,
+            )
+            Match.objects.filter(pk=match1.pk).update(
+                status=Match.STATUS_ACCEPTED, created_at=timezone.now() - timedelta(days=9),
+                responded_at=timezone.now() - timedelta(days=8),
+            )
         self._notify(
             recipient=luna, actor=bjorn, tag=Notification.TAG_REQUESTED,
-            match=match1, age_days=2,
+            match=match1, is_read=True, age_days=9,
+        )
+        self._notify(
+            recipient=bjorn, actor=luna, tag=Notification.TAG_ACCEPTED,
+            match=match1, is_read=True, age_days=8,
         )
 
         # 2. Listing wish target — accepted, with a small conversation
@@ -622,6 +636,8 @@ class Command(BaseCommand):
                  text="Lovely people. I now own more zucchini than I own furniture."),
             # About a listing
             dict(author=bjorn, subject=Listing.objects.get(title__startswith="17kg of surplus zucchini", owner=luna),
+                 match=Match.objects.filter(from_user=bjorn, content_type__model="listing", object_id__in=Listing.objects.filter(
+                     title__startswith="17kg of surplus zucchini").values("pk")).first(),
                  impression=N, age_days=6,
                  text="Took three kilos. Fourteen more followed me home. I did not ask questions."),
             # About a user skill
@@ -646,6 +662,7 @@ class Command(BaseCommand):
                     "impression": spec["impression"],
                     "text": spec["text"],
                     "gift_names": spec.get("gift_names", []),
+                    "match": spec.get("match"),
                 },
             )
             if not created:

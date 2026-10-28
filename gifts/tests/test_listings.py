@@ -168,3 +168,47 @@ def test_a_projects_listings_are_listed_while_it_runs(anna, ben):
     project.save()
     assert not Listing.objects.current().filter(pk__in=[clay.pk, learn.pk]).exists()
     assert not Listing.objects.get(pk=clay.pk).is_current
+
+
+@pytest.mark.django_db
+def test_the_community_page_lists_its_and_its_members_skills_and_gifts_once(anna, ben):
+    """A skill both the community and its member (the ambassador) offer shows once, as the
+    community's; members' other offers are the community's gifts on offer."""
+    community = Community.objects.create(name="Hof", slug="hof", owner=anna, location=GOERLITZ)
+    baking = Skill.objects.create(name="Bread Baking", slug="bread-baking")
+    ours = skill_offer(community, baking, level="advanced", description="Bake with us on Saturdays.")
+    skill_offer(anna, baking)
+    weaving = skill_offer(anna, Skill.objects.create(name="Weaving"))
+    jam = Listing.objects.create(owner=anna, type="offer", kind="other", title="Plum jam")
+    Listing.objects.create(owner=ben, type="offer", kind="other", title="Not a member's")
+
+    context = _client(ben).get(community.get_absolute_url()).context
+    assert [(listing, people) for listing, people in context["skills"]] == [(ours, [anna]), (weaving, [anna])]
+    assert context["gifts"] == [jam]
+    content = _client(ben).get(community.get_absolute_url()).content.decode()
+    assert ours.get_absolute_url() in content and weaving.get_absolute_url() in content
+
+    # Its page says the level and how to learn it, and leads to the volunteer form for it
+    page = _client(ben).get(ours.get_absolute_url()).content.decode()
+    assert "Bake with us on Saturdays." in page and "How you can learn it here" in page
+    assert f"{community.get_absolute_url()}?learn=bread-baking" in page
+    assert _client(ben).get(community.get_absolute_url(), {"learn": "bread-baking"}).context["learn_skill"] == ours
+
+
+@pytest.mark.django_db
+def test_a_projects_need_says_what_it_is_for(anna, ben):
+    community = Community.objects.create(name="Hof", owner=anna, location=GOERLITZ)
+    project = Project.objects.create(community=community, title="Rocket stove", starts_on=timezone.localdate())
+    clay = need(project, "Clay", kind=Listing.KIND_MATERIAL)
+    with translation.override("en"):
+        page = _client(ben).get(clay.get_absolute_url()).content.decode()
+    assert "needs this to realize their project" in page
+    assert project.get_absolute_url() in page and community.get_absolute_url() in page
+
+
+@pytest.mark.django_db
+def test_the_kind_choices_have_their_icons_and_colours(anna):
+    form = _client(anna).get(reverse("gifts:create")).context["form"]
+    kinds = {radio.data["value"]: (icon, colour) for radio, icon, colour, _text in form.kind_radios()}
+    assert kinds["skill"] == ("fa-graduation-cap", "bg-purple") and kinds["tool"] == ("fa-screwdriver-wrench", "bg-primary")
+    assert [(icon, colour) for _radio, icon, colour, _text in form.type_radios()] == [("fa-gift", "bg-primary"), ("fa-heart", "bg-yellow")]

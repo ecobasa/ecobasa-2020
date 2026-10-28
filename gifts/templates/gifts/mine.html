@@ -1,14 +1,14 @@
 {% extends 'dashboard/base.html' %}
 {% load i18n %}
 
-{% block head_title %}{% if what == "skills" %}{% trans "Your skills" %}{% else %}{% trans "Your gifts" %}{% endif %} — ecobasa{% endblock %}
+{% block head_title %}{% trans "Your gifts and wishes" %} — ecobasa{% endblock %}
 
 {% block dashboard_content %}
 {# Your offers and wishes: things and skills, filtered by what they are #}
 <section class="mb-8">
   <div class="flex flex-wrap items-center gap-3 mb-4">
     <h1 class="text-4xl font-semibold flex items-center gap-2 m-0">
-      {% if what == "skills" %}<i class="fa fa-graduation-cap text-primary"></i>{% trans "Your skills" %}{% else %}<i class="fa fa-gift text-primary"></i>{% trans "Your gifts" %}{% endif %}
+      <i class="fa fa-gift text-primary"></i>{% trans "Your gifts and wishes" %}
     </h1>
     <a href="{% url 'gifts:create' %}?type={{ box }}{% if what == 'skills' %}&kind=skill{% endif %}" class="btn ml-auto"><i class="fa fa-plus mr-1"></i>{% trans "Add your Wish or Offer" %}</a>
   </div>

@@ -72,8 +72,8 @@ def test_your_skills_in_the_dashboard(user, client_):
                              content_type=ContentType.objects.get_for_model(Listing), object_id=str(us.pk))
     skill_wish(user, Skill.objects.create(name="Welding"))
 
-    # "Your skills" are your offers and wishes that are skills
-    response = client_.get(reverse("skills:mine"), follow=True)
+    # Your gifts and wishes, filtered to skills
+    response = client_.get(reverse("gifts:mine"), {"what": "skills"})
     assert [(s.display_title, s.reference_count) for s in response.context["page"]] == [("Carpentry", 1)]
     content = response.content.decode()
     assert f"{us.get_absolute_url()}#references" in content and us.get_edit_url() in content

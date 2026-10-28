@@ -61,7 +61,6 @@ class ListingForm(forms.ModelForm):
         self.fields["type"].choices = Listing.TYPE_CHOICES
         self.fields["kind"].required = False
         self.fields["kind"].choices = Listing.KIND_CHOICES
-        self.fields["title"].help_text = _("For knowledge or helping hands: what for, if no skill says it.")
         self.fields["quantity"].help_text = _("Optional: how many or how much you offer or wish for.")
         self.fields["quantity"].widget.attrs["min"] = "1"
         self.fields["unit"].choices = [("", _("no unit"))] + list(self.fields["unit"].choices)[1:]
@@ -69,6 +68,23 @@ class ListingForm(forms.ModelForm):
         self.fields["image"].label = _("Photo")
         if self.instance.pk and self.instance.skill_id:
             self.initial["skill_name"] = self.instance.skill.get_name()
+
+    # The text colour going with a pill colour, for an icon on a light background
+    TEXT_COLOURS = {"bg-primary": "text-primary", "bg-purple": "text-purple", "bg-yellow": "text-yellow"}
+
+    def _radios(self, name, icons, colours):
+        """(radio, icon, pill colour, text colour) for each choice of a radio field."""
+        return [
+            (radio, icons.get(radio.data["value"], ""), colours.get(radio.data["value"], "bg-primary"),
+             self.TEXT_COLOURS.get(colours.get(radio.data["value"], "bg-primary"), "text-primary"))
+            for radio in self[name]
+        ]
+
+    def type_radios(self):
+        return self._radios("type", Listing.TYPE_ICONS, Listing.TYPE_COLOURS)
+
+    def kind_radios(self):
+        return self._radios("kind", Listing.KIND_ICONS, Listing.KIND_COLOURS)
 
     def clean_kind(self):
         return self.cleaned_data.get("kind") or Listing.KIND_OTHER

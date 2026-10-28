@@ -77,16 +77,37 @@ def detail(request, slug):
         )
     }.values())
     community_skills.sort(key=lambda listing: listing.display_title)
+    # Its members' skills join them, each skill once (the community's own listing wins);
+    # their other offers are listed as the community's gifts
+    members = community.members()
+    member_offers = list(
+        Listing.objects.open().filter(owner__in=members, community=None, type=Listing.TYPE_OFFER)
+        .exclude(type=Listing.TYPE_OFFER, skill__isnull=False, available=False).select_related("owner", "skill")
+    )
+    holders = {}
+    for offer in member_offers:
+        if offer.kind == Listing.KIND_SKILL:
+            holders.setdefault(offer.skill_id, []).append(offer)
+    skills = [(listing, [o.owner for o in holders.pop(listing.skill_id, [])]) for listing in community_skills]
+    skills += [(offers[0], [o.owner for o in offers]) for offers in holders.values()]
+    skills.sort(key=lambda pair: pair[0].display_title)
+    gifts = sorted(
+        [l for l in listings.filter(type=Listing.TYPE_OFFER, project=None).exclude(kind=Listing.KIND_SKILL)]
+        + [o for o in member_offers if o.kind != Listing.KIND_SKILL],
+        key=lambda listing: listing.display_title,
+    )
     skill_wishes = sorted(
         listings.filter(type=Listing.TYPE_WISH, project=None).exclude(skill=None), key=lambda listing: listing.display_title,
     )
 
     # Build a {skill_id: level_display} map for the visiting user so the modal can show their level
     user_levels_json = "{}"
-    help_wish = None
+    help_wish = learn_skill = None
     if request.user.is_authenticated and request.user != community.owner:
-        # ?help=<skill slug> (from a suggestion) opens the volunteer form for that wish
+        # ?help=<skill slug> (from a suggestion) opens the volunteer form for that wish,
+        # ?learn=<skill slug> (from a skill's page) for learning that skill here
         help_wish = next((sw for sw in skill_wishes if sw.skill.slug == request.GET.get("help")), None)
+        learn_skill = next((cs for cs in community_skills if cs.skill.slug == request.GET.get("learn")), None)
         skill_ids = [cs.skill_id for cs in community_skills] + [sw.skill_id for sw in skill_wishes]
         user_levels_json = json.dumps({
             str(us.skill_id): us.get_level_display()
@@ -110,6 +131,10 @@ def detail(request, slug):
         "photos":           photos,
         "hero_image":       hero_image,
         "community_skills": community_skills,
+        # Each skill once, with the members who have it too; and the gifts on offer
+        "skills":           skills,
+        "gifts":            gifts,
+        "learn_skill":      learn_skill,
         "skill_wishes":     skill_wishes,
         "user_levels_json": user_levels_json,
         "own_skill_names":  ", ".join(

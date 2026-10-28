@@ -1,0 +1,7 @@
+{% load i18n %}{# A radio choice as a pill in its colour and icon, filled while chosen. `current` names the Alpine variable holding the chosen value #}
+<label class="inline-flex items-center gap-2 cursor-pointer border rounded-full px-3 py-1 transition-colors"
+       :class="{{ current }} === '{{ radio.data.value }}' ? '{{ colour }} text-secondary border-transparent' : 'border-brown border-opacity-30'">
+  <span class="sr-only">{{ radio.tag }}</span>
+  <i class="fa-solid {{ icon }}" :class="{{ current }} === '{{ radio.data.value }}' ? 'text-secondary' : '{{ text }}'"></i>
+  {% if radio.data.value == "skill" %}<span x-text="type === 'wish' ? '{% trans "Learn a skill"|escapejs %}' : '{% trans "Skill"|escapejs %}'">{{ radio.choice_label }}</span>{% else %}<span>{{ radio.choice_label }}</span>{% endif %}
+</label>

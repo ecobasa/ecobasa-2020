@@ -124,6 +124,11 @@ class Community(UniqueSlugMixin, models.Model):
     def get_type_icon(self):
         return self.TYPE_ICONS.get(self.type, "fa-house")
 
+    def members(self):
+        """Who belongs to the community. For now its ambassador; real membership can
+        extend this."""
+        return [self.owner] if self.owner_id else []
+
     def get_reference_subjects(self):
         """What references on this page can be about: the community and its offers and
         wishes (skills you can learn here, things)."""

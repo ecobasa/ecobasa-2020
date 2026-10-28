@@ -74,6 +74,8 @@ class Listing(RandomIdMixin, models.Model):
     TYPE_OFFER = "offer"
     TYPE_WISH = "wish"
     TYPE_CHOICES = [(TYPE_OFFER, _("Offer")), (TYPE_WISH, _("Wish"))]
+    TYPE_ICONS = {TYPE_OFFER: "fa-gift", TYPE_WISH: "fa-heart"}
+    TYPE_COLOURS = {TYPE_OFFER: "bg-primary", TYPE_WISH: "bg-yellow"}
 
     KIND_MATERIAL = "material"
     KIND_TOOL = "tool"

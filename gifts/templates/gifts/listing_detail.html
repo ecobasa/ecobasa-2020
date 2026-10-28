@@ -62,6 +62,15 @@
       <div class="text-primary font-bold">{{ listing.get_type_display }}{% if listing.project and listing.is_wish %} · {% trans "Project need" %}{% endif %}</div>
       <h1 class="sm:text-3xl sm:leading-9 sm:truncate">{{ listing.display_title }}</h1>
       {% if listing.skill_id and listing.title and listing.title != listing.skill.name %}<div class="mb-1">{{ listing.title }}</div>{% endif %}
+      {% if listing.project and listing.is_wish %}
+        {# What a project's need is for #}
+        <p class="mt-2 mb-2">
+          {% blocktrans trimmed with community=listing.community.name community_url=listing.community.get_absolute_url project=listing.project.title project_url=listing.project.get_absolute_url %}
+            <a href="{{ community_url }}" class="underline">{{ community }}</a> needs this to realize their project <a href="{{ project_url }}" class="underline">{{ project }}</a>
+          {% endblocktrans %}
+          <span class="whitespace-nowrap">· <i class="fa-regular fa-calendar mx-1"></i>{% include "projects/_project_dates.html" with project=listing.project %}</span>
+        </p>
+      {% endif %}
       {% if listing.amount %}<div class="text-lg mb-1"><i class="fa-solid fa-scale-balanced mr-2 text-primary"></i>{{ listing.amount }}{% if listing.progress %} <span class="text-sm opacity-80">· {{ listing.progress }}</span>{% endif %}</div>{% endif %}
       <div class="my-1 flex flex-wrap items-center gap-1">
         {% if can_edit %}
@@ -90,9 +99,13 @@
     {% endif %}
   </div>
 
-  {# ── Description ── #}
+  {# ── Description; for a skill, how good they are at it and how to learn it ── #}
   <div class="mt-10">
-    {% if listing.description %}<p>{{ listing.description|linebreaksbr }}</p>{% endif %}
+    {% if listing.is_offer and listing.skill_id %}
+      {% if listing.level %}<p class="mb-2"><strong>{% trans "Level" %}:</strong> {{ listing.get_level_display }}</p>{% endif %}
+      <h2 class="text-lg font-semibold mb-2">{% if listing.community %}{% trans "How you can learn it here" %}{% else %}{% trans "How they learned it and what they offer" %}{% endif %}</h2>
+      {% if listing.description %}<p>{{ listing.description|linebreaksbr }}</p>{% else %}<p class="italic text-sm">{% trans "No description provided." %}</p>{% endif %}
+    {% elif listing.description %}<p>{{ listing.description|linebreaksbr }}</p>{% endif %}
     {% if listing.is_offer and listing.skill_id and not listing.available %}
       <p class="text-sm opacity-70"><i class="fa fa-clock mr-1"></i>{% trans "Currently not available to teach / share." %}</p>
     {% endif %}
@@ -144,7 +157,7 @@
   {% if help_url and not can_edit %}
   <div class="mt-8">
     <a class="btn btn-lg" href="{% if request.user.is_authenticated %}{{ help_url }}{% else %}{% url 'users:login' %}?next={{ help_url|urlencode }}{% endif %}">
-      <i class="fa-solid fa-hand-holding-heart mr-2"></i>{% trans "Help with this" %}
+      {% if listing.is_offer %}<i class="fa-solid fa-graduation-cap mr-2"></i>{% trans "Learn it here" %}{% else %}<i class="fa-solid fa-hand-holding-heart mr-2"></i>{% trans "Help with this" %}{% endif %}
     </a>
   </div>
   {% elif form %}

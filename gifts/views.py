@@ -75,9 +75,12 @@ def detail(request, pk):
 
 
 def _help_url(listing):
-    """Where to help with a wish that isn't asked for by its own request: a project's need
-    on the project's offer form, a community's wish for a skill on its volunteer form."""
-    if not listing.is_wish:
+    """Where to answer what isn't asked for by its own request: help with a project's need
+    on the project's offer form, with a community's wish for a skill or learning one of
+    its skills on its volunteer form."""
+    if listing.is_offer:
+        if listing.community_id and listing.skill_id:
+            return f"{listing.community.get_absolute_url()}?learn={listing.skill.slug}"
         return ""
     if listing.project_id:
         return f"{reverse('projects:offer_help', args=[listing.project_id])}?need={listing.pk}"
