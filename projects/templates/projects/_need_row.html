@@ -1,7 +1,7 @@
 {% load i18n %}
 <div data-need-row class="grid grid-cols-12 gap-2 items-start p-2 rounded border bg-secondary bg-opacity-50"
-     x-data="{ removed: false, kind: '{{ need_form.kind.value|default:'skill' }}' }" :class="removed && 'opacity-40'">
-  {{ need_form.id }}
+     x-data="{ removed: false, kind: '{{ need_form.kind.value|default:'hands' }}' }" :class="removed && 'opacity-40'">
+  {% for hidden in need_form.hidden_fields %}{{ hidden }}{% endfor %}
   <div class="col-span-12 sm:col-span-4"><span @change="kind = $event.target.value">{{ need_form.kind }}</span></div>
   <div class="col-span-12 sm:col-span-8">
     {{ need_form.title }}
@@ -9,7 +9,7 @@
   </div>
   <div class="col-span-5 sm:col-span-2">{{ need_form.quantity }}</div>
   <div class="col-span-7 sm:col-span-3">{{ need_form.unit }}</div>
-  <div class="col-span-10 sm:col-span-6">{{ need_form.details }}</div>
+  <div class="col-span-10 sm:col-span-6">{{ need_form.description }}</div>
   <label class="col-span-2 sm:col-span-1 flex items-center justify-end gap-1 pt-2 text-sm cursor-pointer" title="{% trans 'Remove' %}">
     <input type="checkbox" name="{{ need_form.DELETE.html_name }}" class="hidden" x-model="removed" {% if need_form.DELETE.value %}checked{% endif %}>
     <i class="fa fa-trash"></i><span class="sr-only">{% trans "Remove" %}</span>

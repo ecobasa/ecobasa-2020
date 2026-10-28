@@ -6,7 +6,9 @@ from django.test import Client
 from django.urls import reverse
 from PIL import Image
 
-from skills.models import Skill, SkillWish, UserSkill
+from gifts.models import Listing
+from gifts.testing import skill_offer, skill_wish
+from skills.models import Skill
 from users.models import User
 
 
@@ -37,9 +39,9 @@ def client_(user):
 def test_a_skill_can_show_a_photo_of_the_work(user, client_):
     from skills.models import SkillTaxonomy, get_or_create_skill
     SkillTaxonomy.objects.create(slug="test-carpentry", names={"en": "Test Carpentry"})
-    us = UserSkill.objects.create(user=user, skill=get_or_create_skill(slug="test-carpentry")[0], level="advanced")
+    us = skill_offer(user, get_or_create_skill(slug="test-carpentry")[0], level="advanced")
     response = client_.post(us.get_edit_url(), {
-        "skill_name": "Test Carpentry", "skill_taxonomy_data": '{"slug": "test-carpentry"}',
+        "type": "offer", "kind": "skill", "skill_name": "Test Carpentry",
         "level": "advanced", "description": "Tables", "available": "on", "image": _photo(),
     })
     assert response.status_code == 302, response.content
@@ -52,7 +54,7 @@ def test_a_skill_can_show_a_photo_of_the_work(user, client_):
 
     # Not a photo: a clear error
     response = client_.post(us.get_edit_url(), {
-        "skill_name": "Test Carpentry", "skill_taxonomy_data": '{"slug": "test-carpentry"}',
+        "type": "offer", "kind": "skill", "skill_name": "Test Carpentry",
         "image": SimpleUploadedFile("x.png", b"nope", content_type="image/png"),
     })
     assert response.status_code == 200 and "image" in response.context["form"].errors
@@ -63,17 +65,19 @@ def test_your_skills_in_the_dashboard(user, client_):
     from django.contrib.contenttypes.models import ContentType
     from references.models import Reference
 
-    us = UserSkill.objects.create(user=user, skill=Skill.objects.create(name="Carpentry"), description="Tables")
+    us = skill_offer(user, Skill.objects.create(name="Carpentry"), description="Tables")
+    Listing.objects.create(owner=user, type="offer", title="Two old scythes")
     other = User.objects.create_user(email="o@example.com", password="x")
     Reference.objects.create(author=other, recipient=user, text="Lovely table",
-                             content_type=ContentType.objects.get_for_model(UserSkill), object_id=str(us.pk))
-    SkillWish.objects.create(user=user, skill=Skill.objects.create(name="Welding"))
+                             content_type=ContentType.objects.get_for_model(Listing), object_id=str(us.pk))
+    skill_wish(user, Skill.objects.create(name="Welding"))
 
-    response = client_.get(reverse("skills:mine"))
-    assert [(s.skill.name, s.reference_count) for s in response.context["skills"]] == [("Carpentry", 1)]
+    # "Your skills" are your offers and wishes that are skills
+    response = client_.get(reverse("skills:mine"), follow=True)
+    assert [(s.display_title, s.reference_count) for s in response.context["page"]] == [("Carpentry", 1)]
     content = response.content.decode()
     assert f"{us.get_absolute_url()}#references" in content and us.get_edit_url() in content
-    assert [(str(t.label), t.count) for t in response.context["tabs"]] == [
-        ("Your skills", 1), ("Skills you would like to learn", 1),
-    ]
-    assert "Welding" in client_.get(reverse("skills:mine"), {"box": "wish"}).content.decode()
+    assert [(str(t.label), t.count) for t in response.context["tabs"]] == [("Your offers", 1), ("Your wishes", 1)]
+    assert "Welding" in client_.get(reverse("gifts:mine"), {"what": "skills", "box": "wish"}).content.decode()
+    # All your gifts: things and skills
+    assert {l.display_title for l in client_.get(reverse("gifts:mine")).context["page"]} == {"Carpentry", "Two old scythes"}

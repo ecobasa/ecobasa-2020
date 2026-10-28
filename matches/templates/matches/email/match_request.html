@@ -47,13 +47,13 @@
                     <p style="margin:0 0 4px;font-size:11px;text-transform:uppercase;letter-spacing:0.06em;opacity:0.6;">{% trans "Other skills I can help with" %}</p>
                     <p style="margin:0 0 16px;font-size:15px;">{{ vd.sender_skills }}</p>
                     {% endif %}
-                    {% with needs=match.need_offers.all %}{% if needs %}
+                    {% with brings=match.brings %}{% if brings %}
                     <p style="margin:0 0 4px;font-size:11px;text-transform:uppercase;letter-spacing:0.06em;opacity:0.6;">{% trans "Offers to help with" %}</p>
-                    <p style="margin:0 0 16px;font-size:15px;">{% for offer in needs %}{{ offer.need.display_title }}{% if offer.amount %} ({{ offer.amount }}){% endif %}{% if not forloop.last %}, {% endif %}{% endfor %}</p>
+                    <p style="margin:0 0 16px;font-size:15px;">{% for c in brings %}{{ c.listing.display_title }}{% if c.amount %} ({{ c.amount }}){% endif %}{% if not forloop.last %}, {% endif %}{% endfor %}</p>
                     {% endif %}{% endwith %}
-                    {% with listings=match.listings.all extra_skills=match.user_skills.all %}{% if listings or extra_skills %}
+                    {% with asks=match.asks_for %}{% if asks %}
                     <p style="margin:0 0 4px;font-size:11px;text-transform:uppercase;letter-spacing:0.06em;opacity:0.6;">{% trans "Also part of this exchange" %}</p>
-                    <p style="margin:0 0 16px;font-size:15px;">{% for us in extra_skills %}{{ us.skill.get_name }}, {% endfor %}{% for listing in listings %}{{ listing.title }}{% if not forloop.last %}, {% endif %}{% endfor %}</p>
+                    <p style="margin:0 0 16px;font-size:15px;">{% for c in asks %}{{ c.listing.display_title }}{% if c.amount %} ({{ c.amount }}){% endif %}{% if not forloop.last %}, {% endif %}{% endfor %}</p>
                     {% endif %}{% endwith %}
                     {% if match.message %}
                     <p style="margin:0 0 4px;font-size:11px;text-transform:uppercase;letter-spacing:0.06em;opacity:0.6;">{% trans "Message" %}</p>

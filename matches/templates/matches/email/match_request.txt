@@ -11,12 +11,11 @@
 {% endif %}{% if vd.sender_skills %}{% trans "Other skills I can help with" %}:
 {{ vd.sender_skills }}
 
-{% endif %}{% endif %}{% endwith %}{% with needs=match.need_offers.all %}{% if needs %}{% trans "Offers to help with" %}:
-{% for offer in needs %}- {{ offer.need.display_title }}{% if offer.amount %} ({{ offer.amount }}){% endif %}
+{% endif %}{% endif %}{% endwith %}{% with brings=match.brings %}{% if brings %}{% trans "Offers to help with" %}:
+{% for c in brings %}- {{ c.listing.display_title }}{% if c.amount %} ({{ c.amount }}){% endif %}
 {% endfor %}
-{% endif %}{% endwith %}{% with listings=match.listings.all extra_skills=match.user_skills.all %}{% if listings or extra_skills %}{% trans "Also part of this exchange" %}:
-{% for us in extra_skills %}- {{ us.skill.get_name }}
-{% endfor %}{% for listing in listings %}- {{ listing.title }}
+{% endif %}{% endwith %}{% with asks=match.asks_for %}{% if asks %}{% trans "Also part of this exchange" %}:
+{% for c in asks %}- {{ c.listing.display_title }}{% if c.amount %} ({{ c.amount }}){% endif %}
 {% endfor %}
 {% endif %}{% endwith %}
 {% if match.message %}{% trans "Message" %}:

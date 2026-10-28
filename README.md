@@ -97,17 +97,26 @@ updated or confirmed for `PROJECT_STALE_DAYS` (60) gets an "Is this still curren
 with a one-click confirm link, and is archived if nobody confirms it within
 `PROJECT_ARCHIVE_GRACE_DAYS` (14). Projects without an end date are ongoing.
 
-Needs have an amount ("200 kg", "2 people"); helpers say how much they bring, so offers
-can cover a need in parts. Material and tool needs can have a gift category, and the open
-needs of current projects show on the gifts map and list ("Project needs").
+A project's needs are the community's wishes in it, and what you can learn there its skill
+offers in it: both are listed (on the map, in the list, on the community) only while the
+project runs.
+
+## Offers and wishes
+
+Everything someone offers or wishes for is one model, `gifts.Listing`: things (material,
+tools, anything else), skills, knowledge and helping hands, of a person or a community
+(managed by its ambassador), maybe in one of the community's projects. Skills, and
+knowledge or helping hands for a known skill, point to the skill vocabulary
+(`skills.Skill`, names in every language). With an amount ("200 kg", "2 people") a wish is
+covered in parts, and an offer given away in parts: each exchange says how much it brings
+or takes (`matches.Contribution`). Covered wishes and given-away offers drop off the lists;
+a skill can be shared again and again.
 
 ## Suggestions
 
-As soon as a gift offer or wish, a skill, a skill wish or a project need is saved, the
-matching (`matches/matching.py`) looks for what fits it nearby and suggests the pair to
-both sides: gift wishes and offers with similar titles, skill wishes and project needs
-with the people and communities offering that skill, and material/tool needs with gift
-offers with similar titles. Each side only hears about things within their own
+As soon as an offer or a wish is saved, the matching (`matches/matching.py`) looks for
+what fits it nearby and suggests the pair to both sides: an offer and a wish with the same
+skill, or (without one) with similar titles. Each side only hears about things within their own
 distance (`User.match_radius`, 150 km by default), or from anywhere if they search worldwide
 (`User.match_global`). Without a place they look in their country, and without a country
 everywhere (with a one-time notification that they can narrow it down). New suggestions show right away in the

@@ -17,22 +17,21 @@ from django.utils.translation import gettext_lazy as _, pgettext_lazy
 from django.views.decorators.http import require_POST
 
 from dashboard_lists import Choice, paginate, query_url
+from gifts.models import Listing
 
 from .emails import notify_match_message, notify_match_response, read_action_token, read_suggestions_unsubscribe_token
 from .forms import MatchMessageForm
 from .models import STAY_APP_LABELS, Match, MatchMessage, Suggestion
 
-# What the matches page can show, by its "type" query param: gifts and skills together on
-# one page (with suggestions first), volunteer visits on their own. Kept as app labels
-# rather than importing models: matches never needs to import a domain app to work with a
-# Match generically.
+# What the matches page can show, by its "type" query param: gifts (things) and skills
+# (and knowledge and helping hands) together on one page (with suggestions first),
+# volunteer visits on their own.
 _TYPES = {
-    "gift": {"app_labels": ("gifts",), "title": _("Gifts"), "icon": "fa fa-gift"},
-    "skills": {"app_labels": ("skills",), "title": _("Skills"), "icon": "fa fa-graduation-cap"},
+    "gift": {"kinds": Listing.THING_KINDS, "title": _("Gifts"), "icon": "fa fa-gift"},
+    "skills": {"kinds": Listing.SKILL_KINDS, "title": _("Skills"), "icon": "fa fa-graduation-cap"},
 }
 _VOLUNTEER = {
-    "app_labels": STAY_APP_LABELS, "title": _("Volunteer Visits"), "icon": "fa-solid fa-campground",
-    "empty": _("No volunteer visits yet."),
+    "title": _("Volunteer Visits"), "icon": "fa-solid fa-campground", "empty": _("No volunteer visits yet."),
 }
 
 _OPEN = (Match.STATUS_PENDING, Match.STATUS_COUNTER)
@@ -44,13 +43,20 @@ _STATUS_FILTERS = {
 }
 
 
-def _matches_with(app_labels):
-    return (
-        Match.objects
-        .filter(content_type__app_label__in=app_labels)
-        .select_related("content_type", "from_user", "recipient")
-        .prefetch_related("target")
-    )
+def _with_details(matches):
+    return matches.select_related("content_type", "from_user", "recipient").prefetch_related("target")
+
+
+def _listing_matches(kinds=None):
+    """Matches about an offer or a wish, of these kinds (all without)."""
+    matches = Match.objects.filter(content_type__app_label="gifts")
+    if kinds:
+        matches = matches.filter(object_id__in=Listing.objects.filter(kind__in=kinds).values("pk"))
+    return _with_details(matches)
+
+
+def _stays():
+    return _with_details(Match.objects.filter(content_type__app_label__in=STAY_APP_LABELS))
 
 
 # ── Matches page ───────────────────────────────────────────────────────────────
@@ -66,14 +72,14 @@ def matches_list(request):
     if kind not in _TYPES:
         kind = ""
     user = request.user
-    app_labels = _TYPES[kind]["app_labels"] if kind else tuple(t for info in _TYPES.values() for t in info["app_labels"])
+    kinds = _TYPES[kind]["kinds"] if kind else None
 
     suggestions = _suggestions_of(user)
     if kind:
         suggestions = suggestions.filter(kind=kind)
     boxes = {
-        "received": _matches_with(app_labels).filter(recipient=user),
-        "sent":     _matches_with(app_labels).filter(from_user=user),
+        "received": _listing_matches(kinds).filter(recipient=user),
+        "sent":     _listing_matches(kinds).filter(from_user=user),
     }
     counts = {"suggestions": suggestions.count(), **{key: matches.count() for key, matches in boxes.items()}}
     # New suggestions; requests to answer (the owner answers a request, the requester a
@@ -131,8 +137,8 @@ def _volunteer_visits(request):
     """Volunteer stays and help with projects, received and sent."""
     user = request.user
     boxes = {
-        "received": _matches_with(_VOLUNTEER["app_labels"]).filter(recipient=user),
-        "sent":     _matches_with(_VOLUNTEER["app_labels"]).filter(from_user=user),
+        "received": _stays().filter(recipient=user),
+        "sent":     _stays().filter(from_user=user),
     }
     waiting = {
         "received": boxes["received"].filter(status=Match.STATUS_PENDING).count(),
@@ -217,21 +223,18 @@ def match_detail(request, pk):
         if action == "extras" and is_party:
             # Ask for more of the other side's gifts and skills as part of this exchange
             other = match.recipient if is_requester else match.from_user
-            new = []
-            for relation, options, field in (
-                (match.listings, other.listings.filter(type="offer") if other else [], "listing"),
-                (match.user_skills, other.user_skills.select_related("skill") if other else [], "user_skill"),
-            ):
-                options = {str(option.pk): option for option in options}
-                asked = [options[pk] for pk in request.POST.getlist(field) if pk in options]
-                had = set(relation.values_list("pk", flat=True))
-                new += [option for option in asked if option.pk not in had]
-                relation.remove(*[pk for pk in had if str(pk) in options and options[str(pk)] not in asked])
-                relation.add(*asked)
+            options = {
+                option.pk: option
+                for option in (Listing.objects.of(other).filter(type=Listing.TYPE_OFFER).select_related("skill") if other else [])
+            }
+            options.pop(match.object_id, None)  # what the exchange is about stays part of it
+            asked = [options[pk] for pk in request.POST.getlist("listing") if pk in options]
+            had = set(match.listings.values_list("pk", flat=True))
+            new = [option for option in asked if option.pk not in had]
+            match.listings.remove(*[pk for pk in had if pk in options and options[pk] not in asked])
+            match.listings.add(*asked)
             if new:
-                body = _("Also asked for: %(things)s") % {"things": ", ".join(
-                    option.title if hasattr(option, "title") else option.skill.get_name() for option in new
-                )}
+                body = _("Also asked for: %(things)s") % {"things": ", ".join(option.display_title for option in new)}
                 MatchMessage.objects.create(match=match, sender=request.user, body=body)
                 notify_match_message(match, sender=request.user, message=body, http_request=request)
             flash.success(request, _("Saved what is part of this exchange."))
@@ -303,7 +306,6 @@ def match_detail(request, pk):
         "loc_choices":          Match.LOC_CHOICES,
         "person":               _person(match.recipient if is_requester else match.from_user),
         "asked_listing_ids":    {listing.pk for listing in match.listings.all()},
-        "asked_skill_ids":      set(match.user_skills.values_list("pk", flat=True)),
     })
 
 
@@ -315,9 +317,10 @@ def _person(user):
     from django.contrib.contenttypes.models import ContentType
     from references.models import Reference
 
-    skills = list(user.user_skills.select_related("skill").order_by("skill__name"))
+    offers = Listing.objects.of(user).filter(type=Listing.TYPE_OFFER).select_related("skill")
+    skills = sorted(offers.filter(kind=Listing.KIND_SKILL), key=lambda listing: listing.display_title)
     references = Counter(Reference.objects.filter(
-        content_type=ContentType.objects.get_for_model(user.user_skills.model),
+        content_type=ContentType.objects.get_for_model(Listing),
         object_id__in=[str(skill.pk) for skill in skills],
     ).values_list("object_id", flat=True))
     for skill in skills:
@@ -325,7 +328,7 @@ def _person(user):
     return {
         "user": user,
         "skills": skills,
-        "offers": list(user.listings.filter(type="offer").order_by("-updated_at")),
+        "offers": list(offers.exclude(kind=Listing.KIND_SKILL).order_by("-updated_at")),
         "communities": list(user.communities.order_by("name")),
     }
 

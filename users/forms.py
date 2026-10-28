@@ -11,7 +11,8 @@ from croppie.fields import CroppieField
 
 from gifts.forms import Fieldset
 from .models import User
-from skills.models import sync_skill_wishes, Skill, UserSkill, SkillWish, get_or_create_skill
+from gifts.models import Listing, add_skill_offer, sync_skill_listings
+from skills.models import get_or_create_skill
 
 
 class SafeCroppieField(CroppieField):
@@ -125,13 +126,10 @@ class RegisterForm(forms.ModelForm):
             skills_val = self.cleaned_data.get("skills", "")
             if skills_val:
                 for name in [s.strip() for s in skills_val.split(",") if s.strip()]:
-                    skill, _ = get_or_create_skill(name)
-                    UserSkill.objects.get_or_create(user=user, skill=skill)
+                    add_skill_offer(user, get_or_create_skill(name)[0])
             wish_val = self.cleaned_data.get("skill_wishes", "")
             if wish_val:
-                for name in [s.strip() for s in wish_val.split(",") if s.strip()]:
-                    skill, _ = get_or_create_skill(name)
-                    SkillWish.objects.get_or_create(user=user, skill=skill)
+                sync_skill_listings(user, Listing.TYPE_WISH, [s.strip() for s in wish_val.split(",") if s.strip()])
         return user
 
 
@@ -171,15 +169,12 @@ class ProfileUpdateForm(forms.ModelForm):
         instance = kwargs.get('instance')
         has_image = bool(instance and instance.image)
         if instance is not None:
-            skills_initial = ', '.join(
-                us.skill.get_name() for us in instance.user_skills.select_related("skill")
-            )
+            skills = Listing.objects.of(instance).filter(kind=Listing.KIND_SKILL).select_related("skill")
+            skills_initial = ', '.join(us.display_title for us in skills if us.is_offer)
             self.fields['skills'].initial = skills_initial
             self.initial['skills'] = skills_initial
             self.fields['skills'].widget.attrs.update({'value': skills_initial})
-            wishes_initial = ', '.join(
-                sw.skill.get_name() for sw in instance.skill_wishes.select_related("skill")
-            )
+            wishes_initial = ', '.join(sw.display_title for sw in skills if sw.is_wish)
             self.fields['skill_wishes'].initial = wishes_initial
             self.initial['skill_wishes'] = wishes_initial
             self.fields['skill_wishes'].widget.attrs.update({'value': wishes_initial})
@@ -221,9 +216,9 @@ class ProfileUpdateForm(forms.ModelForm):
         if commit:
             user.save()
             skills_val = self.cleaned_data.get('skills', '') or ''
+            # Skills are only added here: taking one off would lose its level, photo and references
             for name in [s.strip() for s in skills_val.split(',') if s.strip()]:
-                skill, _ = get_or_create_skill(name)
-                UserSkill.objects.get_or_create(user=user, skill=skill)
+                add_skill_offer(user, get_or_create_skill(name)[0])
             wish_val = self.cleaned_data.get('skill_wishes', '') or ''
-            sync_skill_wishes(user.skill_wishes, [s.strip() for s in wish_val.split(',') if s.strip()], user=user)
+            sync_skill_listings(user, Listing.TYPE_WISH, [s.strip() for s in wish_val.split(',') if s.strip()])
         return user

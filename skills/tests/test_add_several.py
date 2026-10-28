@@ -3,7 +3,9 @@ from django.test import Client
 from django.urls import reverse
 
 from users.models import User
-from ..models import Skill, SkillWish, UserSkill
+from gifts.models import Listing
+from gifts.testing import skill_offer
+from ..models import Skill
 
 
 @pytest.fixture
@@ -35,7 +37,7 @@ class TestUserskillAddSeveral:
         assert "login" in response.url
 
     def test_lists_skills_not_yet_on_profile(self, user, user_client, skills):
-        UserSkill.objects.create(user=user, skill=skills["cooking"])
+        skill_offer(user, skills["cooking"])
         response = user_client.get(URL + "?offer=carpentry,cooking,unknown&wish=permaculture")
         assert response.status_code == 200
         assert [r["skill"].slug for r in response.context["offer_rows"]] == ["carpentry"]
@@ -44,7 +46,7 @@ class TestUserskillAddSeveral:
         assert b'name="description_offer_carpentry"' in response.content
 
     def test_nothing_left_to_add_redirects_to_profile(self, user, user_client, skills):
-        UserSkill.objects.create(user=user, skill=skills["cooking"])
+        skill_offer(user, skills["cooking"])
         response = user_client.get(URL + "?offer=cooking")
         assert response.status_code == 302
         assert response.url == user.get_absolute_url()
@@ -60,20 +62,20 @@ class TestUserskillAddSeveral:
         })
         assert response.status_code == 302
         assert response.url == user.get_absolute_url()
-        assert list(UserSkill.objects.filter(user=user).values_list("skill__slug", "level")) == [("carpentry", "advanced")]
-        assert list(SkillWish.objects.filter(user=user).values_list("skill__slug", "level")) == [("permaculture", "beginner")]
-        assert UserSkill.objects.get(user=user).description == "Built our tiny house."
-        assert SkillWish.objects.get(user=user).description == ""
+        assert list(Listing.objects.filter(type="offer", kind="skill", owner=user).values_list("skill__slug", "level")) == [("carpentry", "advanced")]
+        assert list(Listing.objects.filter(type="wish", owner=user).values_list("skill__slug", "level")) == [("permaculture", "beginner")]
+        assert Listing.objects.get(type="offer", kind="skill", owner=user).description == "Built our tiny house."
+        assert Listing.objects.get(type="wish", owner=user).description == ""
 
     def test_ignores_invalid_level_and_existing_skill(self, user, user_client, skills):
-        UserSkill.objects.create(user=user, skill=skills["cooking"], level="beginner")
+        skill_offer(user, skills["cooking"], level="beginner")
         user_client.post(URL, {
             "offer": ["carpentry", "cooking"],
             "level_offer_carpentry": "grandmaster",
             "level_offer_cooking": "expert",
         })
-        assert UserSkill.objects.get(user=user, skill=skills["carpentry"]).level == ""
-        assert UserSkill.objects.get(user=user, skill=skills["cooking"]).level == "beginner"
+        assert Listing.objects.get(type="offer", kind="skill", owner=user, skill=skills["carpentry"]).level == ""
+        assert Listing.objects.get(type="offer", kind="skill", owner=user, skill=skills["cooking"]).level == "beginner"
 
     def test_taxonomy_skill_without_skill_row_is_created(self, user, user_client):
         from ..models import SkillTaxonomy
@@ -83,4 +85,4 @@ class TestUserskillAddSeveral:
         response = user_client.get(URL + "?offer=fermentation-techniques")
         assert [r["skill"].slug for r in response.context["offer_rows"]] == ["fermentation-techniques"]
         user_client.post(URL, {"offer": ["fermentation-techniques"], "level_offer_fermentation-techniques": "expert"})
-        assert UserSkill.objects.get(user=user, skill__slug="fermentation-techniques").level == "expert"
+        assert Listing.objects.get(type="offer", kind="skill", owner=user, skill__slug="fermentation-techniques").level == "expert"

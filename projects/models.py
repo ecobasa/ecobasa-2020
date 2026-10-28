@@ -8,7 +8,6 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 from communities.models import Community
-from gifts import units
 
 
 class ProjectQuerySet(models.QuerySet):
@@ -47,11 +46,6 @@ class Project(models.Model):
     )
     volunteers_wanted = models.PositiveSmallIntegerField(
         _("How many volunteers at the same time?"), null=True, blank=True,
-    )
-    # What helpers can learn by joining. Also listed on the community (see
-    # share_skills_with_community), so the community is found by people looking for them.
-    skills_to_learn = models.ManyToManyField(
-        "skills.Skill", related_name="learn_projects", blank=True, verbose_name=_("Skills you can learn here"),
     )
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="+",
@@ -104,15 +98,16 @@ class Project(models.Model):
     def can_edit(self, user):
         return user.is_authenticated and (user.is_staff or user == self.community.owner)
 
-    def share_skills_with_community(self):
-        """List the skills you can learn here among the community's skills, so it is found
-        (and suggested) for them. Removing one from the project leaves it on the community:
-        the ambassador decides whether it is still learnable there."""
-        for skill in self.skills_to_learn.all():
-            self.community.add_skill(skill)
+    # Its needs are the community's wishes in it, and what you can learn here its skill
+    # offers in it (gifts.Listing.project). Both are listed only while it runs.
+    def needs(self):
+        return sorted((l for l in self.listings.all() if l.is_wish), key=lambda l: (l.order, l.created_at))
+
+    def skills_to_learn(self):
+        return sorted((l for l in self.listings.all() if l.is_offer and l.skill_id), key=lambda l: l.display_title)
 
     def open_needs(self):
-        return [need for need in self.needs.all() if need.status == Need.STATUS_OPEN]
+        return [need for need in self.needs() if need.status == need.STATUS_OPEN]
 
     # ── matches.Match target protocol ───────────────────────────────
     def get_match_owner(self):
@@ -133,180 +128,3 @@ class Project(models.Model):
 
     def get_match_request_text(self):
         return _("%(actor)s offered to help with your project: %(title)s")
-
-
-class Need(models.Model):
-    """One thing a project needs: people with a skill, a material, a tool or knowledge,
-    with how much of it ("2 people", "200 kg"), so offers can cover it in parts."""
-
-    KIND_SKILL = "skill"
-    KIND_MATERIAL = "material"
-    KIND_TOOL = "tool"
-    KIND_KNOWLEDGE = "knowledge"
-    KIND_CHOICES = [
-        (KIND_SKILL, _("Helping hands / skill")),
-        (KIND_MATERIAL, _("Material")),
-        (KIND_TOOL, _("Tool")),
-        (KIND_KNOWLEDGE, _("Knowledge")),
-    ]
-    KIND_ICONS = {
-        KIND_SKILL: "fa-graduation-cap",
-        KIND_MATERIAL: "fa-cubes",
-        KIND_TOOL: "fa-screwdriver-wrench",
-        KIND_KNOWLEDGE: "fa-lightbulb",
-    }
-    # Things that can be given, like gifts: they can have a gift category, so they show
-    # up with gifts of that category on the map and next to matching gift offers.
-    THING_KINDS = (KIND_MATERIAL, KIND_TOOL)
-    # Pill colour by kind, like skills (purple) and gifts (primary) elsewhere
-    KIND_COLOURS = {KIND_SKILL: "bg-purple", KIND_KNOWLEDGE: "bg-purple", KIND_MATERIAL: "bg-primary", KIND_TOOL: "bg-primary"}
-
-    UNIT_PEOPLE = units.PEOPLE
-    UNIT_CHOICES = units.UNIT_CHOICES
-
-    STATUS_OPEN = "open"
-    STATUS_OFFERED = "offered"
-    STATUS_PROMISED = "promised"
-    STATUS_COVERED = "covered"
-
-    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name="needs")
-    kind = models.CharField(_("Kind"), max_length=20, choices=KIND_CHOICES, default=KIND_SKILL)
-    title = models.CharField(_("What is needed?"), max_length=255)
-    # Set when the title is a known skill (in any language), so people with that skill
-    # can be found for it.
-    skill = models.ForeignKey(
-        "skills.Skill", on_delete=models.SET_NULL, null=True, blank=True, related_name="project_needs",
-    )
-    category = models.ForeignKey(
-        "gifts.ListingCategory", on_delete=models.SET_NULL, null=True, blank=True,
-        related_name="project_needs", verbose_name=_("Gift category"),
-    )
-    quantity = models.PositiveIntegerField(_("How many / how much?"), null=True, blank=True)
-    unit = models.CharField(_("Unit"), max_length=10, choices=UNIT_CHOICES, blank=True)
-    details = models.CharField(_("Details"), max_length=100, blank=True)
-    # The help offers (matches) that include this need, with how much each brings
-    offers = models.ManyToManyField("matches.Match", through="NeedOffer", related_name="needs", blank=True)
-    # Marked as covered by the ambassador, however it was covered
-    covered_at = models.DateTimeField(null=True, blank=True)
-    order = models.PositiveSmallIntegerField(default=0)
-
-    class Meta:
-        ordering = ["order", "pk"]
-        verbose_name = _("Need")
-        verbose_name_plural = _("Needs")
-
-    def __str__(self):
-        return self.title
-
-    @property
-    def icon(self):
-        return self.KIND_ICONS.get(self.kind, "fa-circle")
-
-    @property
-    def colour(self):
-        return self.KIND_COLOURS.get(self.kind, "bg-primary")
-
-    @property
-    def display_title(self):
-        return self.skill.get_name() if self.skill_id else self.title
-
-    def format_amount(self, quantity):
-        """"1 person", "3 people", "200 kg"."""
-        return units.format_amount(quantity, self.unit)
-
-    @property
-    def amount(self):
-        """How much is needed, in words: "200 kg, about 15 cm thick"."""
-        return ", ".join(part for part in (self.format_amount(self.quantity), self.details) if part)
-
-    def _offers_by_status(self):
-        """(accepted, waiting) NeedOffers, each with its match."""
-        from matches.models import Match
-        offers = list(self.need_offers.all())
-        accepted = [o for o in offers if o.match.status == Match.STATUS_ACCEPTED]
-        waiting = [o for o in offers if o.match.status in (Match.STATUS_PENDING, Match.STATUS_COUNTER)]
-        return accepted, waiting
-
-    @staticmethod
-    def _sum(offers):
-        return sum(o.quantity for o in offers if o.quantity)
-
-    @property
-    def promised_quantity(self):
-        return self._sum(self._offers_by_status()[0])
-
-    @property
-    def offered_quantity(self):
-        return self._sum(self._offers_by_status()[1])
-
-    @property
-    def remaining(self):
-        """How much is still missing, if the need has a quantity."""
-        if self.quantity is None:
-            return None
-        return max(self.quantity - self.promised_quantity, 0)
-
-    @property
-    def status(self):
-        """covered (marked by the ambassador) > promised (accepted offers cover it) >
-        offered (an offer waits for an answer, or accepted ones cover only part) > open.
-
-        With a quantity, accepted offers cover it once they add up to it; an accepted offer
-        that doesn't say how much covers it on its own."""
-        if self.covered_at:
-            return self.STATUS_COVERED
-        accepted, waiting = self._offers_by_status()
-        if accepted and (
-            self.quantity is None
-            or any(o.quantity is None for o in accepted)
-            or self._sum(accepted) >= self.quantity
-        ):
-            return self.STATUS_PROMISED
-        if waiting or accepted:
-            return self.STATUS_OFFERED
-        return self.STATUS_OPEN
-
-    @property
-    def is_done(self):
-        return self.status in (self.STATUS_COVERED, self.STATUS_PROMISED)
-
-    @property
-    def progress(self):
-        """"120 of 200 kg promised" while accepted offers cover part of a quantity."""
-        if self.quantity is None or self.is_done:
-            return ""
-        promised = self.promised_quantity
-        if not promised:
-            return ""
-        return _("%(promised)s of %(amount)s promised") % {
-            "promised": promised, "amount": self.format_amount(self.quantity),
-        }
-
-    @property
-    def promises(self):
-        """The accepted offers for this need, each with the helper (match.from_user) and
-        how much they bring (amount)."""
-        return self._offers_by_status()[0]
-
-    def promised_by(self):
-        return [o.match.from_user for o in self._offers_by_status()[0]]
-
-
-class NeedOffer(models.Model):
-    """A help offer (match) for one need, with how much of it the helper brings."""
-
-    need = models.ForeignKey(Need, on_delete=models.CASCADE, related_name="need_offers")
-    match = models.ForeignKey("matches.Match", on_delete=models.CASCADE, related_name="need_offers")
-    quantity = models.PositiveIntegerField(null=True, blank=True)
-
-    class Meta:
-        db_table = "projects_need_offers"
-        unique_together = [("need", "match")]
-
-    def __str__(self):
-        return f"{self.match} → {self.need}"
-
-    @property
-    def amount(self):
-        return self.need.format_amount(self.quantity)
-

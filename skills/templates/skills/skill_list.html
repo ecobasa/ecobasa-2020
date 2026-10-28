@@ -9,7 +9,7 @@
   <div class="flex items-center justify-between mb-6">
     <h1 class="text-3xl text-primary">{% trans "Skills" %}</h1>
     {% if user.is_authenticated %}
-      <a href="{% url 'skills:userskill_add' %}" class="btn">
+      <a href="{% url 'gifts:create' %}?type=offer&kind=skill" class="btn">
         <i class="fa fa-plus mr-1"></i> {% trans "Add a skill" %}
       </a>
     {% endif %}

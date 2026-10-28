@@ -26,7 +26,7 @@
           <div class="flex flex-wrap items-center gap-2 py-1">
             <label class="flex items-center gap-2 cursor-pointer flex-1 min-w-0">
               {{ checkbox }}
-              <i class="fa-solid {{ need.icon }} text-primary"></i>
+              <i class="fa-solid {{ need.kind_icon }} text-primary"></i>
               <span>{{ need.display_title }}
                 {% if need.amount %}<span class="text-xs opacity-70">· {% trans "needed" %}: {{ need.amount }}{% if need.promised_quantity %}, {% blocktrans with promised=need.promised_quantity %}{{ promised }} promised{% endblocktrans %}{% endif %}</span>{% endif %}
               </span>

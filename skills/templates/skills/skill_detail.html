@@ -20,7 +20,7 @@
       {% endif %}
     </div>
     {% if user.is_authenticated %}
-      <a href="{% url 'skills:userskill_add' %}?skill={{ skill|urlencode }}" class="btn flex-shrink-0">
+      <a href="{% url 'gifts:create' %}?type=offer&kind=skill&skill={{ skill|urlencode }}" class="btn flex-shrink-0">
         <i class="fa fa-plus mr-1"></i> {% trans "Add to my profile" %}
       </a>
     {% endif %}
@@ -34,15 +34,17 @@
       {% for us in user_skills %}
         <a href="{{ us.get_absolute_url }}"
           class="flex items-center gap-3 border rounded-lg p-3 bg-secondary hover:border-primary transition-colors">
-          {% if us.user.image %}
-            <img src="{{ us.user.image.url }}" alt="" class="w-12 h-12 rounded-full object-cover flex-shrink-0">
+          {% if us.image %}
+            <img src="{{ us.image.url }}" alt="" class="w-12 h-12 rounded-full object-cover flex-shrink-0">
+          {% elif us.owner.image %}
+            <img src="{{ us.owner.image.url }}" alt="" class="w-12 h-12 rounded-full object-cover flex-shrink-0">
           {% else %}
             <div class="w-12 h-12 rounded-full bg-primary bg-opacity-20 flex items-center justify-center flex-shrink-0">
               <i class="fa fa-user text-primary"></i>
             </div>
           {% endif %}
           <div class="min-w-0">
-            <div class="font-semibold text-primary truncate">{{ us.user.name|default:us.user.username }}</div>
+            <div class="font-semibold text-primary truncate">{{ us.owner.name|default:us.owner.username }}</div>
             {% if us.level %}
               <div class="text-xs pill bg-primary inline-block mt-0.5">{{ us.get_level_display }}</div>
             {% endif %}
@@ -64,6 +66,7 @@
         <a href="{{ cs.get_absolute_url }}"
           class="block border rounded-lg p-3 bg-secondary hover:border-primary transition-colors">
           <div class="font-semibold text-primary">{{ cs.community.name }}</div>
+          {% if cs.project %}<div class="text-xs"><i class="fa-solid fa-person-digging mr-1"></i>{{ cs.project.title }}</div>{% endif %}
           {% if cs.description %}
             <p class="text-xs text-brown mt-1 line-clamp-2">{{ cs.description }}</p>
           {% endif %}
@@ -72,7 +75,24 @@
     </div>
   {% endif %}
 
-  {% if not user_skills and not comm_skills %}
+  {% if wishes %}
+    <h2 class="text-xl text-primary mb-3 mt-8">
+      <i class="fa fa-magnifying-glass mr-2"></i>{% trans "Looking for this skill" %}
+    </h2>
+    <div class="flex flex-col gap-2">
+      {% for wish in wishes %}
+        <a href="{{ wish.get_absolute_url }}" class="flex items-center gap-3 border rounded-lg p-3 bg-secondary hover:border-primary transition-colors">
+          <i class="fa-solid {{ wish.kind_icon }} text-purple w-5 text-center"></i>
+          <span class="flex-1 min-w-0">
+            <span class="font-semibold text-primary">{% if wish.community %}{{ wish.community.name }}{% if wish.project %} · {{ wish.project.title }}{% endif %}{% else %}{{ wish.owner.name|default:wish.owner.username }}{% endif %}</span>
+            <span class="text-xs block">{{ wish.kind_label }}{% if wish.amount %} · {{ wish.amount }}{% endif %}</span>
+          </span>
+        </a>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  {% if not user_skills and not comm_skills and not wishes %}
     <p class="text-brown">{% trans "Nobody has listed this skill yet." %}</p>
   {% endif %}
 
@@ -83,7 +103,7 @@
       {% blocktrans count wish_count as n %}{{ n }} person wants to learn or needs help with this skill.{% plural %}{{ n }} people want to learn or need help with this skill.{% endblocktrans %}
     </p>
     <p class="text-sm text-brown mb-3">{% trans "Can you teach or share it? Add it to your profile and they'll be able to find you." %}</p>
-    <a href="{% url 'skills:userskill_add' %}?skill={{ skill|urlencode }}" class="btn">
+    <a href="{% url 'gifts:create' %}?type=offer&kind=skill&skill={{ skill|urlencode }}" class="btn">
       <i class="fa fa-plus mr-2"></i>{% trans "Add to my profile" %}
     </a>
   </div>

@@ -251,7 +251,7 @@
         <a href="{% url 'gifts:create' %}" class="btn shadow self-start text-sm">
           <i class="fa fa-plus mr-1"></i> {% trans "Add your Wish or Offer" %}
         </a>
-        <a href="{% url 'skills:userskill_add' %}" class="btn shadow self-start text-sm">
+        <a href="{% url 'gifts:create' %}?type=offer&kind=skill" class="btn shadow self-start text-sm">
           <i class="fa fa-graduation-cap mr-1"></i> {% trans "Add your Skill" %}
         </a>
       </div>
@@ -407,20 +407,10 @@
 
   function getDynamicStyle(feature) {
     const props = feature.getProperties();
-    const source = props.source;
-    let iconCode = '';
-    let color = '#da6137';
-    if (source === 'skill' || source === 'user_skill') {
-      iconCode = '';
-      color = '#80143b';
-    } else if (source === 'need') {
-      iconCode = String.fromCharCode(0xf85e);  // fa-person-digging
-      color = '#5A5527';
-    } else if (source === 'listing') {
-      // The kind of thing (material, tool), else a gift for offers and a heart for wishes
-      iconCode = String.fromCharCode(props.glyph || (props.listing_type === 'wish' ? 0xf004 : 0xf06b));
-      if (props.listing_type === 'wish') color = '#de7a08';
-    }
+    // Its kind (material, tool, skill, knowledge, helping hands), else a gift for offers
+    // and a heart for wishes; coloured by what it is (skills purple, project needs green)
+    const iconCode = String.fromCharCode(props.glyph || (props.listing_type === 'wish' ? 0xf004 : 0xf06b));
+    const color = props.color || (props.listing_type === 'wish' ? '#de7a08' : '#da6137');
     return new ol.style.Style({
       image: new ol.style.Icon({
         img: EcoMap.createLayeredIcon(iconCode, color),
@@ -498,13 +488,8 @@
   function buildPopupHTML(props) {
     const td = esc((props.type_display || '').toLowerCase());
     const url = esc(props.url);
-    let badge = '';
-    if (props.source === 'skill')      badge = `<span class="pill bg-purple"><i class="fa fa-graduation-cap mr-1"></i>${td || 'Skill'}</span>`;
-    else if (props.source === 'user_skill') badge = `<span class="pill bg-purple"><i class="fa fa-graduation-cap mr-1"></i>{% trans "skill / teaching" %}</span>`;
-    else if (props.source === 'need')  badge = `<span class="pill bg-green"><i class="fa-solid fa-person-digging mr-1"></i>${td}</span>`;
-    else if (props.listing_type === 'offer') badge = `<span class="pill bg-primary"><i class="fa-solid ${esc(props.kind_icon || 'fa-gift')} mr-1"></i>${td}</span>`;
-    else if (props.listing_type === 'wish')  badge = `<span class="pill bg-yellow"><i class="fa-solid ${esc(props.kind_icon || 'fa-heart')} mr-1"></i>${td}</span>`;
-    else                               badge = `<span class="pill bg-primary">${td}</span>`;
+    const icon = esc(props.kind_icon || (props.listing_type === 'wish' ? 'fa-heart' : 'fa-gift'));
+    const badge = `<span class="pill" style="background:${esc(props.color || '#da6137')}"><i class="fa-solid ${icon} mr-1"></i>${td}</span>`;
     let html = `<button type="button" class="map-popup-close" aria-label="{% trans "Close" %}"><i class="fa fa-times"></i></button>` + badge;
     if (props.title) html += url ? `<h3><a href="${url}" class="hover:underline">${esc(props.title)}</a></h3>` : `<h3>${esc(props.title)}</h3>`;
     if (props.amount) html += `<div class="text-sm mb-1"><i class="fa-solid fa-scale-balanced mr-1"></i>${esc(props.amount)}</div>`;
@@ -512,13 +497,9 @@
     // Shortened first, so an escaped character isn't cut in half
     const desc = esc(truncate(props.description, 150));
     if (desc) html += `<div class="text-sm text-brown mt-2">${desc}</div>`;
-    if (props.source === 'need' && props.needs && props.needs.length) {
-      html += `<div class="flex flex-wrap gap-1 mt-2">` + props.needs.map(n =>
-        `<span class="pill bg-yellow text-xs"><i class="fa-solid ${esc(n.icon)} mr-1"></i>${esc(n.title)}${n.amount ? `<span class="opacity-70 ml-1">(${esc(n.amount)})</span>` : ''}</span>`
-      ).join('') + `</div>`;
-    }
-    if ((props.source === 'skill' || props.source === 'need') && props.community_name) html += `<div class="text-xs text-brown mt-1"><i class="fa fa-home mr-1"></i>${esc(props.community_name)}</div>`;
-    if ((props.source === 'user_skill' || props.source === 'listing') && props.user_name) html += `<div class="text-xs mt-1"><i class="fa fa-user mr-1"></i>${esc(props.user_name)}</div>`;
+    if (props.project) html += `<div class="text-xs text-brown mt-1"><i class="fa-solid fa-person-digging mr-1"></i>${esc(props.project)}</div>`;
+    if (props.community_name) html += `<div class="text-xs text-brown mt-1"><i class="fa fa-home mr-1"></i>${esc(props.community_name)}</div>`;
+    if (props.user_name) html += `<div class="text-xs mt-1"><i class="fa fa-user mr-1"></i>${esc(props.user_name)}</div>`;
     if (url) html += `<a class="text-primary underline" href="${url}">{% trans "Open" %}</a>`;
     return html;
   }

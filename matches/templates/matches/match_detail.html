@@ -171,26 +171,23 @@
     {% endif %}
     {% endwith %}
 
-    {% with needs=match.need_offers.all %}
-      {% if needs %}
+    {% with brings=match.brings %}
+      {% if brings %}
         <div class="text-sm mb-2">
           <strong>{% trans "Offers to help with" %}:</strong>
           <span class="inline-flex flex-wrap gap-1 align-middle">
-            {% for offer in needs %}
-              <span class="pill {{ offer.need.colour }} text-xs"><i class="fa-solid {{ offer.need.icon }} mr-1"></i>{{ offer.need.display_title }}{% if offer.amount %}<span class="ml-1">({{ offer.amount }})</span>{% endif %}</span>
-            {% endfor %}
+            {% for contribution in brings %}{% include "gifts/_listing_pill.html" with listing=contribution.listing amount=contribution.amount link=True %}{% endfor %}
           </span>
         </div>
       {% endif %}
     {% endwith %}
 
-    {% with listings=match.listings.all extra_skills=match.user_skills.all %}
-      {% if listings or extra_skills %}
+    {% with asks=match.asks_for %}
+      {% if asks %}
         <div class="text-sm mb-2">
           <strong>{% trans "Also part of this exchange" %}:</strong>
           <span class="inline-flex flex-wrap gap-1 align-middle">
-            {% for us in extra_skills %}<a href="{{ us.get_absolute_url }}" class="pill bg-purple text-xs">{% include "skills/_skill_icon.html" %}{{ us.skill.get_name }}</a>{% endfor %}
-            {% for listing in listings %}<a href="{{ listing.get_absolute_url }}" class="pill bg-primary text-xs"><i class="fa-solid {{ listing.kind_icon }} mr-1"></i>{{ listing.title|truncatechars:40 }}</a>{% endfor %}
+            {% for contribution in asks %}{% include "gifts/_listing_pill.html" with listing=contribution.listing amount=contribution.amount link=True %}{% endfor %}
           </span>
         </div>
       {% endif %}

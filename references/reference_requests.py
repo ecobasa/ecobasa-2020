@@ -66,14 +66,14 @@ def exchange_text(match, user):
         text = _("Your stay at %(title)s") if is_requester else _("%(name)s's stay at %(title)s")
     elif model == "project":
         text = _("Your help with %(title)s at %(name)s") if is_requester else _("%(name)s's help with %(title)s")
+    elif model == "listing" and target.is_skill and target.is_wish:
+        text = _("Your help with %(title)s for %(name)s") if is_requester else _("%(name)s's help with %(title)s")
+    elif model == "listing" and target.is_skill:
+        text = _("Learning %(title)s with %(name)s") if is_requester else _("Sharing %(title)s with %(name)s")
     elif model == "listing":
         # On an offer the owner gives; on a wish whoever answered it does
-        gave = (target.type == "wish") == is_requester
+        gave = target.is_wish == is_requester
         text = _("%(title)s, your gift to %(name)s") if gave else _("%(title)s, a gift from %(name)s")
-    elif model == "skillwish":
-        text = _("Your help with %(title)s for %(name)s") if is_requester else _("%(name)s's help with %(title)s")
-    elif hasattr(target, "get_skill_holder"):
-        text = _("Learning %(title)s with %(name)s") if is_requester else _("Sharing %(title)s with %(name)s")
     else:
         text = "%(title)s"
     return text % {"title": target.get_match_display_name(), "name": subject_name(subject)}

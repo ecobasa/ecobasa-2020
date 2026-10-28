@@ -100,7 +100,7 @@ document.addEventListener('alpine:init', () => {
         const row = e.target.closest('[data-need-row]');
         const kind = row.querySelector('select').value;
         const q = e.target.value.trim();
-        if (!['skill', 'knowledge'].includes(kind) || q.length < 2) { list.innerHTML = ''; return; }
+        if (!['hands', 'knowledge'].includes(kind) || q.length < 2) { list.innerHTML = ''; return; }
         clearTimeout(timer);
         timer = setTimeout(() => {
           fetch('{% url "skills:api_autocomplete" %}?q=' + encodeURIComponent(q))

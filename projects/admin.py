@@ -1,12 +1,15 @@
 from django.contrib import admin
 
-from .models import Need, Project
+from gifts.models import Listing
+from .models import Project
 
 
-class NeedInline(admin.TabularInline):
-    model = Need
+class ListingInline(admin.TabularInline):
+    """Its needs (wishes) and the skills you can learn in it (offers)."""
+    model = Listing
+    fk_name = "project"
     extra = 0
-    fields = ("kind", "title", "skill", "quantity", "unit", "details", "category", "covered_at", "order")
+    fields = ("type", "kind", "title", "skill", "quantity", "unit", "description", "covered_at", "order")
     raw_id_fields = ("skill",)
 
 
@@ -17,4 +20,4 @@ class ProjectAdmin(admin.ModelAdmin):
     search_fields = ("title", "description", "community__name")
     raw_id_fields = ("community", "created_by")
     readonly_fields = ("created_at",)
-    inlines = [NeedInline]
+    inlines = [ListingInline]

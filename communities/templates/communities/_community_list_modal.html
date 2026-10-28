@@ -56,11 +56,12 @@
 
     <p class="text-sm text-brown mt-2 line-clamp-2">{{ community.description }}</p>
 
-    {% if community.community_skills.all %}
+    {% if community.skill_offers %}
     <div class="mt-2 flex flex-wrap gap-1">
-      {% for cs in community.community_skills.all %}
+      {% regroup community.skill_offers by skill as skills %}
+      {% for skill in skills %}
         <span class="pill bg-purple">
-          <i class="fa fa-graduation-cap mr-1"></i>{{ cs.skill }}
+          <i class="fa fa-graduation-cap mr-1"></i>{{ skill.grouper }}
         </span>
       {% endfor %}
     </div>

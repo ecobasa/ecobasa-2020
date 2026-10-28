@@ -21,11 +21,11 @@
           {% if new_suggestions_count %}<span class="ml-auto pill bg-purple text-secondary text-xs" title="{% trans 'New suggestions' %}">{{ new_suggestions_count }}</span>{% endif %}
         </a>
         <a href="{% url 'gifts:mine' %}"
-           class="flex items-center px-3 py-2 rounded {% if ns == 'gifts' %}bg-secondary text-primary font-semibold{% else %}text-secondary hover:bg-secondary hover:text-primary{% endif %}">
+           class="flex items-center px-3 py-2 rounded {% if ns == 'gifts' and request.GET.what != 'skills' %}bg-secondary text-primary font-semibold{% else %}text-secondary hover:bg-secondary hover:text-primary{% endif %}">
           <i class="fa fa-gift mr-2"></i>{% trans "Your gifts" %}
         </a>
-        <a href="{% url 'skills:mine' %}"
-           class="flex items-center px-3 py-2 rounded {% if ns == 'skills' %}bg-secondary text-primary font-semibold{% else %}text-secondary hover:bg-secondary hover:text-primary{% endif %}">
+        <a href="{% url 'gifts:mine' %}?what=skills"
+           class="flex items-center px-3 py-2 rounded {% if ns == 'gifts' and request.GET.what == 'skills' %}bg-secondary text-primary font-semibold{% else %}text-secondary hover:bg-secondary hover:text-primary{% endif %}">
           <i class="fa fa-graduation-cap mr-2"></i>{% trans "Your skills" %}
         </a>
         {% endwith %}

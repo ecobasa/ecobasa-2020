@@ -13,7 +13,8 @@ from django.views.decorators.http import require_GET, require_POST
 from .models import Community
 from .models import CommunityPhoto
 from .forms import CommunityForm
-from skills.models import sync_skill_wishes, CommunitySkill, Skill, SkillWish, UserSkill, get_or_create_skill, skill_name_q, skill_slug_for_name
+from gifts.models import Listing, skill_offers, sync_skill_listings
+from skills.models import Skill, skill_name_q, skill_slug_for_name
 
 from django.contrib.gis.geos import Polygon, Point
 from django.contrib.gis.db.models.functions import Distance
@@ -24,7 +25,7 @@ from django.http import JsonResponse
 def index(request):
     """Map-first list of communities."""
     from django_countries.fields import Country as DjangoCountry
-    base_qs = Community.objects.all().prefetch_related("photos", "community_skills__skill").order_by("name")
+    base_qs = Community.objects.all().prefetch_related("photos", _skill_offers()).order_by("name")
 
     countries_raw = (
         Community.objects
@@ -66,8 +67,19 @@ def detail(request, slug):
     community = get_object_or_404(Community, slug=slug)
     photos = list(community.photos.all())
     hero_image = photos[0].image.url if photos else None
-    community_skills = list(community.community_skills.select_related("skill").order_by("skill__name"))
-    skill_wishes = list(community.skill_wishes.select_related("skill").order_by("skill__name"))
+    listings = Listing.objects.of(community).current().select_related("skill", "project")
+    # Skills you can learn here, also in its current projects (each skill once)
+    community_skills = list({
+        listing.skill_id: listing
+        for listing in sorted(
+            listings.filter(type=Listing.TYPE_OFFER, kind=Listing.KIND_SKILL),
+            key=lambda listing: listing.project_id is None,  # its own listing wins over a project's
+        )
+    }.values())
+    community_skills.sort(key=lambda listing: listing.display_title)
+    skill_wishes = sorted(
+        listings.filter(type=Listing.TYPE_WISH, project=None).exclude(skill=None), key=lambda listing: listing.display_title,
+    )
 
     # Build a {skill_id: level_display} map for the visiting user so the modal can show their level
     user_levels_json = "{}"
@@ -78,13 +90,14 @@ def detail(request, slug):
         skill_ids = [cs.skill_id for cs in community_skills] + [sw.skill_id for sw in skill_wishes]
         user_levels_json = json.dumps({
             str(us.skill_id): us.get_level_display()
-            for us in UserSkill.objects.filter(user=request.user, skill_id__in=skill_ids)
+            for us in skill_offers(request.user).filter(skill_id__in=skill_ids)
         })
 
-    from projects.models import Need
     projects = (
         community.projects.select_related("community")
-        .prefetch_related(Prefetch("needs", queryset=Need.objects.select_related("skill").prefetch_related("need_offers__match")), "skills_to_learn")
+        .prefetch_related(Prefetch(
+            "listings", queryset=Listing.objects.select_related("skill").prefetch_related("contributions__match"),
+        ))
     )
     is_ambassador = request.user.is_authenticated and (request.user.is_staff or request.user == community.owner)
 
@@ -99,18 +112,23 @@ def detail(request, slug):
         "community_skills": community_skills,
         "skill_wishes":     skill_wishes,
         "user_levels_json": user_levels_json,
+        "own_skill_names":  ", ".join(
+            l.display_title for l in skill_offers(request.user).select_related("skill")
+        ) if request.user.is_authenticated else "",
         "help_wish":        help_wish,
         # What the volunteer form offers to bring along: open needs of current projects
         # and the ambassador's gift wishes
-        "bring_projects":   [(p, needs) for p in projects.current() if (needs := [n for n in p.needs.all() if not n.is_done])],
+        "bring_projects":   [(p, needs) for p in projects.current() if (needs := [n for n in p.needs() if not n.is_done])],
         "bring_wishes":     _community_wishes(community),
     })
 
 
 def _community_wishes(community):
-    if not community.owner_id:
-        return []
-    return list(community.owner.listings.filter(type="wish").order_by("-updated_at"))
+    """The community's wishes for things outside its projects that are still open."""
+    return list(
+        Listing.objects.of(community).open().filter(type=Listing.TYPE_WISH, project=None, kind__in=Listing.THING_KINDS)
+        .order_by("-updated_at")
+    )
 
 
 @login_required
@@ -162,20 +180,18 @@ def volunteer_request(request, community_slug):
         stay_to               = stay_to,
     )
 
-    # Needs of the community's projects and its ambassador's wishes they bring along
-    from projects.models import Need, NeedOffer
-    needs = Need.objects.filter(
-        pk__in=[pk for pk in request.POST.getlist("need") if pk.isdigit()],
-        project__community=community, project__in=community.projects.current(),
-    )
-    NeedOffer.objects.bulk_create([
+    # Needs of the community's projects and its wishes they bring along
+    from gifts import units
+    from matches.models import Contribution
+    needs = Listing.objects.of(community).current().filter(
+        type=Listing.TYPE_WISH, pk__in=request.POST.getlist("need"), project__isnull=False,
+    ).prefetch_related("contributions__match")
+    wishes = [listing for listing in _community_wishes(community) if listing.pk in request.POST.getlist("listing")]
+    Contribution.objects.bulk_create([
         # A volunteer counts as one person towards a need for people
-        NeedOffer(need=need, match=vr, quantity=1 if need.quantity and need.unit == Need.UNIT_PEOPLE else None)
+        Contribution(listing=need, match=vr, quantity=1 if need.quantity and need.unit == units.PEOPLE else None)
         for need in needs if not need.is_done
-    ])
-    vr.listings.set(
-        [listing for listing in _community_wishes(community) if listing.pk in request.POST.getlist("listing")]
-    )
+    ] + [Contribution(listing=listing, match=vr) for listing in wishes])
 
     notify_match_created(vr, http_request=request)
 
@@ -185,8 +201,9 @@ def volunteer_request(request, community_slug):
     wish_list  = [s.strip() for s in practice_skills.split(",") if s.strip()]
 
     if offer_list or wish_list:
-        existing_offers = set(request.user.user_skills.values_list("skill__slug", flat=True))
-        existing_wishes = set(request.user.skill_wishes.values_list("skill__slug", flat=True))
+        mine = Listing.objects.of(request.user).filter(kind=Listing.KIND_SKILL)
+        existing_offers = set(mine.filter(type=Listing.TYPE_OFFER).values_list("skill__slug", flat=True))
+        existing_wishes = set(mine.filter(type=Listing.TYPE_WISH).values_list("skill__slug", flat=True))
         offer_list = [s for s in offer_list if skill_slug_for_name(s) not in existing_offers]
         wish_list  = [s for s in wish_list  if skill_slug_for_name(s) not in existing_wishes]
 
@@ -213,9 +230,10 @@ def _skill_proposal_url(offer_list, wish_list):
     if len(offer_list) + len(wish_list) == 1:
         name, mode = (offer_list[0], "offer") if offer_list else (wish_list[0], "wish")
         skill = Skill.objects.filter(slug=skill_slug_for_name(name)).first()
-        return reverse("skills:userskill_add") + "?" + urlencode({
+        return reverse("gifts:create") + "?" + urlencode({
             "skill": skill.get_name() if skill else name,
-            "mode":  mode,
+            "type":  mode,
+            "kind":  "skill",
         })
     params = {}
     if offer_list:
@@ -227,7 +245,7 @@ def _skill_proposal_url(offer_list, wish_list):
 
 def _sync_community_skill_wishes(community, form):
     wish_val = form.cleaned_data.get('skill_wishes', '') or ''
-    sync_skill_wishes(community.skill_wishes, [s.strip() for s in wish_val.split(',') if s.strip()], community=community)
+    sync_skill_listings(community, Listing.TYPE_WISH, [s.strip() for s in wish_val.split(',') if s.strip()])
 
 
 def _collect_gallery_files(form, request):
@@ -333,18 +351,30 @@ def update(request, slug):
 # ── Helpers ──────────────────────────────────────────────────────────
 
 def _search_q(q):
-    """Communities whose name, description, place or skills match the search, or one of
-    whose current projects does ("rocket stove" finds the community building one)."""
+    """Communities whose name, description or place match the search, or one of whose
+    current offers and wishes (skills you can learn there, what its projects need) or
+    current projects does ("rocket stove" finds the community building one)."""
     from projects.models import Project
-    projects = Project.objects.current().filter(
-        Q(title__icontains=q) | Q(description__icontains=q) | skill_name_q(q, "skills_to_learn__")
+    projects = Project.objects.current().filter(Q(title__icontains=q) | Q(description__icontains=q))
+    listings = Listing.objects.current().filter(community__isnull=False).filter(
+        Q(title__icontains=q) | Q(description__icontains=q) | skill_name_q(q)
     )
     return (
         Q(name__icontains=q)
         | Q(description__icontains=q)
         | Q(location_name__icontains=q)
-        | skill_name_q(q, "community_skills__skill__")
+        | Q(pk__in=listings.values("community_id"))
         | Q(pk__in=projects.values("community_id"))
+    )
+
+
+def _skill_offers():
+    """A community's skills you can learn there (also in its current projects), for its card."""
+    return Prefetch(
+        "listings",
+        queryset=Listing.objects.current().filter(type=Listing.TYPE_OFFER, kind=Listing.KIND_SKILL)
+        .select_related("skill").order_by("skill__name"),
+        to_attr="skill_offers",
     )
 
 
@@ -401,7 +431,7 @@ def community_markers(request):
     )
 
     # Use the helper to get the base filtered queryset
-    qs = _base_qs(request).prefetch_related(hero_prefetch, "community_skills__skill")
+    qs = _base_qs(request).prefetch_related(hero_prefetch, _skill_offers())
 
     bbox_param = request.GET.get("bbox", "")
     if bbox_param:
@@ -439,7 +469,7 @@ def community_markers(request):
                 "inhabitants": c.inhabitants,
                 "children":    c.children,
                 "max_guests":  c.max_guests,
-                "skills":      [cs.skill.get_name() for cs in c.community_skills.all()],
+                "skills":      sorted({cs.skill.get_name() for cs in c.skill_offers}),
             },
         })
 
@@ -461,7 +491,7 @@ def community_list_partial(request):
                   nearest-first so the user naturally sees close ones first.
         page      page number for infinite scroll (default 1)
     """
-    qs = _base_qs(request, require_location=False).prefetch_related("community_skills__skill", "photos", _current_projects())
+    qs = _base_qs(request, require_location=False).prefetch_related(_skill_offers(), "photos", _current_projects())
 
     # ── Proximity sorting ─────────────────────────────────────────────
     # When the user clicks "near me", the browser sends location=lat,lon.
@@ -548,7 +578,7 @@ def community_suggest(request):
         add(title, "project")
 
     # Skills attached to a Community
-    for skill in Skill.objects.filter(skill_name_q(q, ""), community_skills__isnull=False).distinct()[:5]:
+    for skill in Skill.objects.filter(skill_name_q(q, ""), listings__community__isnull=False).distinct()[:5]:
         add(skill.get_name(), "skill")
 
     return JsonResponse(suggestions[:12], safe=False)

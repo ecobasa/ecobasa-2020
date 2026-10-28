@@ -127,14 +127,17 @@ class User(AbstractUser):
         return self.last_seen or self.last_login
 
     def get_reference_subjects(self):
-        """What references on this profile can be about: the person, their listings and skills."""
-        return [self, *self.listings.all(), *self.user_skills.all()]
+        """What references on this profile can be about: the person and their offers and
+        wishes (things and skills)."""
+        return [self, *self.listings.filter(community=None)]
 
     def has_skill(self, skill):
-        return self.user_skills.filter(skill=skill).exists()
+        from gifts.models import skill_offers
+        return skill_offers(self).filter(skill=skill).exists()
 
     def add_skill(self, skill):
-        return self.user_skills.get_or_create(skill=skill)[0]
+        from gifts.models import add_skill_offer
+        return add_skill_offer(self, skill)
 
     def email_user(self, subject, message, from_email=None, **kwargs):
         '''

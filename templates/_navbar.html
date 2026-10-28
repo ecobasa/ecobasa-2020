@@ -148,7 +148,7 @@
                 <a href="{% url 'gifts:mine' %}" class="dropdown-link">
                   <span class="flex items-center"><i class="fa-solid fa-gift mr-2"></i>{% trans "Gifts" %}</span>
                 </a>
-                <a href="{% url 'skills:mine' %}" class="dropdown-link">
+                <a href="{% url 'gifts:mine' %}?what=skills" class="dropdown-link">
                   <span class="flex items-center"><i class="fa-solid fa-graduation-cap mr-2"></i>{% trans "Skills" %}</span>
                 </a>
                 <a href="{% url 'references:list' %}" class="dropdown-link">

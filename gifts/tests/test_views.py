@@ -186,7 +186,7 @@ class TestDelete:
         response = user_client.post(f"/gifts/{listing.pk}/delete/", follow=True)
         assertRedirects(
             response,
-            reverse("gifts:search"),
+            reverse("gifts:mine"),
             status_code=302,
             target_status_code=200,
         )

@@ -19,7 +19,7 @@
       </h1>
 
       <p>
-        {% blocktrans with listing_type=listing.get_type_display listing_title=listing.title %}
+        {% blocktrans with listing_type=listing.get_type_display listing_title=listing.display_title %}
           Are you sure you want to delete the {{ listing_type }} <b>{{ listing_title }}</b>?
         {% endblocktrans %}
       </p>

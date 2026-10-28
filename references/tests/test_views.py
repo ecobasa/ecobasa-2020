@@ -8,7 +8,8 @@ from django.utils import timezone
 from communities.models import Community
 from gifts.models import Listing
 from matches.models import Match
-from skills.models import CommunitySkill, Skill, UserSkill
+from skills.models import Skill
+from gifts.testing import skill_offer, skill_wish
 from users.models import User
 
 from ..models import Reference, ReferenceSkill
@@ -145,7 +146,7 @@ class TestReferencesSection:
 
     def test_community_page_lists_references_about_its_skills(self, author, owner, community):
         skill = Skill.objects.create(name="Cob building", slug="cob-building")
-        community_skill = CommunitySkill.objects.create(community=community, skill=skill)
+        community_skill = skill_offer(community, skill)
         Reference(author=author, recipient=owner, subject=community_skill, text="Learned a lot.").save()
         content = Client().get(community.get_absolute_url()).content.decode()
         assert "Learned a lot." in content
@@ -178,7 +179,7 @@ class TestKindPill:
         assert "fa-screwdriver-wrench" in Client().get(owner.get_absolute_url()).content.decode()
 
     def test_from_its_subject(self, author, owner, listing, community):
-        skill = UserSkill.objects.create(user=owner, skill=Skill.objects.create(name="Cob", slug="cob"))
+        skill = skill_offer(owner, Skill.objects.create(name="Cob", slug="cob"))
         wish = Listing.objects.create(title="Scythe", type="wish", owner=owner)
 
         def kind(subject):
@@ -205,7 +206,7 @@ class TestTagging:
 
     def test_skill_the_person_has_is_confirmed_right_away(self, author, owner):
         skill = Skill.objects.create(name="Cob building", slug="cob-building")
-        UserSkill.objects.create(user=owner, skill=skill)
+        skill_offer(owner, skill)
         self._post(_client_for(author), owner, skill_names="Cob building")
         assert Reference.objects.get().skill_tags.get().status == ReferenceSkill.STATUS_CONFIRMED
 
@@ -213,7 +214,7 @@ class TestTagging:
         self._post(_client_for(author), owner, skill_names="Beekeeping")
         tag = ReferenceSkill.objects.get()
         assert tag.status == ReferenceSkill.STATUS_PENDING
-        assert not UserSkill.objects.filter(user=owner).exists()
+        assert not Listing.objects.filter(type="offer", kind="skill", owner=owner).exists()
 
         # Only the person it is about can confirm
         url = reverse("references:skill_tag", args=[tag.pk, "confirm"])
@@ -221,7 +222,7 @@ class TestTagging:
         _client_for(owner).post(url)
         tag.refresh_from_db()
         assert tag.status == ReferenceSkill.STATUS_CONFIRMED
-        assert UserSkill.objects.filter(user=owner, skill=tag.skill).exists()
+        assert Listing.objects.filter(type="offer", kind="skill", owner=owner, skill=tag.skill).exists()
 
     def test_declined_skill_is_not_added(self, author, owner):
         self._post(_client_for(author), owner, skill_names="Beekeeping")
@@ -229,13 +230,13 @@ class TestTagging:
         _client_for(owner).post(reverse("references:skill_tag", args=[tag.pk, "decline"]))
         tag.refresh_from_db()
         assert tag.status == ReferenceSkill.STATUS_DECLINED
-        assert not UserSkill.objects.filter(user=owner).exists()
+        assert not Listing.objects.filter(type="offer", kind="skill", owner=owner).exists()
 
     def test_confirming_on_a_community_adds_a_community_skill(self, author, owner, community):
         self._post(_client_for(author), community, skill_names="Beekeeping")
         tag = ReferenceSkill.objects.get()
         _client_for(owner).post(reverse("references:skill_tag", args=[tag.pk, "confirm"]))
-        assert CommunitySkill.objects.filter(community=community, skill=tag.skill).exists()
+        assert Listing.objects.filter(type="offer", kind="skill", community=community, skill=tag.skill).exists()
 
     def test_gift_names_are_kept_as_names_only(self, author, owner):
         self._post(_client_for(author), owner, gift_names=["Old Bicycle", " ", "Old Bicycle", "Tent"])
@@ -259,7 +260,7 @@ class TestTagging:
 
     def test_confirmed_tag_shows_on_the_skill_page(self, author, owner):
         skill = Skill.objects.create(name="Cob building", slug="cob-building")
-        user_skill = UserSkill.objects.create(user=owner, skill=skill)
+        user_skill = skill_offer(owner, skill)
         self._post(_client_for(author), owner, skill_names="Cob building", text="Built a wall together.")
         assert "Built a wall together." in Client().get(user_skill.get_absolute_url()).content.decode()
 
@@ -288,7 +289,7 @@ class TestReferenceFromMatch:
 class TestSkillSuggestions:
     def test_profile_skills_are_suggested_in_the_form(self, author, owner):
         skill = Skill.objects.create(name="Cob building", slug="cob-building")
-        UserSkill.objects.create(user=owner, skill=skill)
+        skill_offer(owner, skill)
         content = _client_for(author).get(owner.get_absolute_url()).content.decode()
         assert '<script id="reference-held-skills" type="application/json">["Cob Building"]</script>' in content
 

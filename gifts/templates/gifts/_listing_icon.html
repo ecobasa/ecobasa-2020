@@ -1,0 +1,1 @@
+{# An offer's or wish's mark on a pill: a small round preview of a skill's photo, else its kind's icon #}{% if listing.image and listing.skill_id %}<img src="{{ listing.image.url }}" alt="" class="inline-block w-5 h-5 rounded-full object-cover -ml-1 mr-1 align-middle border border-secondary">{% else %}<i class="fa-solid {{ listing.kind_icon }} mr-1"></i>{% endif %}

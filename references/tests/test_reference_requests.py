@@ -13,7 +13,8 @@ from PIL import Image
 from communities.models import Community
 from gifts.models import Listing
 from matches.models import Match, MatchMessage, VolunteerDetails
-from skills.models import Skill, SkillWish, UserSkill
+from skills.models import Skill
+from gifts.testing import skill_offer, skill_wish
 from notifications.models import Notification
 from users.models import User
 
@@ -222,8 +223,8 @@ class TestWhatItWasAbout:
 
     def test_each_side_of_each_kind(self, stay, gift_match, owner, requester):
         skill = Skill.objects.create(name="Cob building")
-        learning = _match(UserSkill.objects.create(user=owner, skill=skill), requester, owner)
-        helping = _match(SkillWish.objects.create(community=stay.target, skill=skill), requester, owner)
+        learning = _match(skill_offer(owner, skill), requester, owner)
+        helping = _match(skill_wish(stay.target, skill), requester, owner)
         wish = _match(Listing.objects.create(title="Spare tent", type="wish", owner=owner), requester, owner)
         assert exchange_text(stay, requester) == "Your stay at Goat Farm"
         assert exchange_text(stay, owner) == "Rafa's stay at Goat Farm"
@@ -270,7 +271,7 @@ class TestEveryKindOfMatch:
 
     def test_learning_a_skill(self, owner, requester):
         skill = Skill.objects.create(name="Cob building")
-        match = _match(UserSkill.objects.create(user=owner, skill=skill), requester, owner)
+        match = _match(skill_offer(owner, skill), requester, owner)
         page, reference = self._answer(match, requester)
         assert "How to write a reference" in page
         assert reference.subject == owner
@@ -282,7 +283,7 @@ class TestEveryKindOfMatch:
     def test_helping_a_community_with_a_wished_skill(self, owner, requester):
         skill = Skill.objects.create(name="Cob building")
         community = Community.objects.create(name="Goat Farm", owner=owner)
-        match = _match(SkillWish.objects.create(community=community, skill=skill), requester, owner)
+        match = _match(skill_wish(community, skill), requester, owner)
         page, reference = self._answer(match, requester)
         assert "You are writing about a community" in page
         assert reference.subject == community

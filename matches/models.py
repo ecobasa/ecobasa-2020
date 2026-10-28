@@ -13,10 +13,11 @@ STAY_APP_LABELS = ("communities", "projects")
 
 
 class Match(models.Model):
-    """A negotiation between two users over something one of them has: a gift, a skill,
-    or a stay at a community. `target` is whatever is being negotiated over — a Listing,
-    UserSkill, CommunitySkill, SkillWish, or Community — via a generic reference, so this
-    app never has to import gifts/skills/communities models to work with it.
+    """A negotiation between two users over something one of them offers or wishes for
+    (a gift listing: a thing, a skill, knowledge, helping hands), a stay at a community or
+    help with one of its projects. `target` is whatever is being negotiated over — a
+    Listing, Community or Project — via a generic reference, so this app never has to
+    import gifts/communities/projects models to work with it.
     """
 
     LOC_MY_PLACE = "my_place"
@@ -71,15 +72,14 @@ class Match(models.Model):
     responded_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
-    # Further gifts that are part of this exchange, beyond the target: a community's
-    # wishes a volunteer brings along, or another of the other side's offers asked for
-    # while talking it over. Named in the references and shown with the match.
+    # The offers and wishes this exchange takes or brings, with how much of each
+    # (Contribution): the target listing itself, a project's needs a helper brings, a
+    # community's wishes a volunteer brings along, or another of the other side's offers
+    # asked for while talking it over. They cover wishes in parts, are named in the
+    # references and shown with the match.
     listings = models.ManyToManyField(
-        "gifts.Listing", blank=True, related_name="extra_matches", verbose_name=_("Also part of this exchange"),
-    )
-    # The same for skills: the other side's skills asked for too
-    user_skills = models.ManyToManyField(
-        "skills.UserSkill", blank=True, related_name="extra_matches", verbose_name=_("Skills also asked for"),
+        "gifts.Listing", through="Contribution", blank=True, related_name="exchanges",
+        verbose_name=_("Part of this exchange"),
     )
 
     class Meta:
@@ -109,21 +109,33 @@ class Match(models.Model):
 
     @property
     def kind(self):
-        """What the match is about, as a pill: (label, icon, colour). Skills purple, things
-        in the primary colour (by their kind), stays green."""
+        """What the match is about, as a pill: (label, icon, colour). Skills, knowledge and
+        helping hands purple, things in the primary colour (by their kind), stays green."""
         model = self.content_type.model
         if model == "listing":
             listing = self.target
             if listing is not None and listing.kind != listing.KIND_OTHER:
-                return listing.get_kind_display(), listing.kind_icon, "bg-primary"
+                return listing.kind_label, listing.kind_icon, listing.colour
             return _("Gift"), "fa-gift", "bg-primary"
-        if model in ("userskill", "communityskill", "skillwish"):
-            return _("Skill"), "fa-graduation-cap", "bg-purple"
         if model == "project":
             return _("Project"), "fa-person-digging", "bg-green"
         if model == "community":
             return _("Volunteer stay"), "fa-campground", "bg-green"
         return _("Match"), "fa-handshake", "bg-primary"
+
+    def _extras(self):
+        """The contributions beyond what the match is about (its target listing)."""
+        target_id = self.object_id if self.content_type.model == "listing" else None
+        return [c for c in self.contributions.all() if c.listing_id != target_id]
+
+    def brings(self):
+        """The wishes it helps with besides its target: a project's needs a helper or
+        volunteer brings, a community's wishes brought along. Each with how much."""
+        return [c for c in self._extras() if c.listing.is_wish]
+
+    def asks_for(self):
+        """The offers asked for too while talking it over."""
+        return [c for c in self._extras() if c.listing.is_offer]
 
     def stay_period(self):
         """(from, to) of a stay as currently proposed: the latest counter-proposed period,
@@ -249,10 +261,14 @@ class VolunteerDetails(models.Model):
     def _skill_pills(self, names):
         """(name, level, url of the volunteer's skill page) for skill names: the level and
         page if they have that skill on their profile."""
-        from skills.models import UserSkill, skill_slug_for_name
+        from gifts.models import Listing
+        from skills.models import skill_slug_for_name
         if not names:
             return []
-        own = {us.skill.slug: us for us in UserSkill.objects.filter(user=self.match.from_user).select_related("skill")}
+        own = {
+            us.skill.slug: us for us in Listing.objects.of(self.match.from_user)
+            .filter(type=Listing.TYPE_OFFER, kind=Listing.KIND_SKILL).select_related("skill")
+        }
         pills = []
         for name in names:
             us = own.get(skill_slug_for_name(name))
@@ -266,6 +282,29 @@ class VolunteerDetails(models.Model):
     @property
     def sender_skill_pills(self):
         return self._skill_pills(self.sender_skills_list)
+
+
+class Contribution(models.Model):
+    """An offer or wish that is part of an exchange, with how much of it the exchange
+    takes or brings: "120 kg of the 200 kg clay", "1 of 2 people". Without a quantity it
+    is the whole of it. Covers wishes (and gives offers away) in parts, see
+    gifts.Listing.status."""
+
+    match = models.ForeignKey(Match, on_delete=models.CASCADE, related_name="contributions")
+    listing = models.ForeignKey("gifts.Listing", on_delete=models.CASCADE, related_name="contributions")
+    quantity = models.PositiveIntegerField(null=True, blank=True)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=["match", "listing"], name="one_contribution_per_listing")]
+        verbose_name = _("Contribution")
+        verbose_name_plural = _("Contributions")
+
+    def __str__(self):
+        return f"{self.match} → {self.listing}"
+
+    @property
+    def amount(self):
+        return self.listing.format_amount(self.quantity)
 
 
 def _name(user):
@@ -331,52 +370,54 @@ class Suggestion(models.Model):
 
     @property
     def icon(self):
-        return {
-            "listing": "fa-gift" if getattr(self.other, "type", "") == "offer" else "fa-heart",
-            "need": "fa-person-digging",
-            "userskill": "fa-graduation-cap",
-            "communityskill": "fa-graduation-cap",
-            "skillwish": "fa-magnifying-glass",
-        }.get(self.other_model, "fa-handshake-angle")
+        other = self.other
+        if other is None or self.other_model != "listing":
+            return "fa-handshake-angle"
+        if other.project_id and other.is_wish:
+            return "fa-person-digging"
+        if other.kind == other.KIND_OTHER:
+            return "fa-gift" if other.is_offer else "fa-heart"
+        return other.kind_icon
 
     @property
     def text(self):
         """What the other side has or needs, in the reader's language."""
-        other, model = self.other, self.other_model
+        other = self.other
         if other is None:
             return ""
-        if model == "listing":
-            title = f"{other.title} ({other.amount})" if other.amount else other.title
-            template = _("%(name)s gives away: %(title)s") if other.type == "offer" else _("%(name)s is looking for: %(title)s")
-            return template % {"name": _name(other.owner), "title": title}
-        if model == "need":
-            title = f"{other.display_title} ({other.amount})" if other.amount else other.display_title
+        if self.other_model != "listing":
+            return str(other)
+        title = f"{other.display_title} ({other.amount})" if other.amount else other.display_title
+        if other.project_id and other.is_wish:
             return _("%(project)s at %(community)s needs: %(title)s") % {
-                "project": other.project.title, "community": other.project.community.name, "title": title,
+                "project": other.project.title, "community": other.community.name, "title": title,
             }
-        if model == "userskill":
-            return _("%(name)s offers the skill: %(skill)s") % {"name": _name(other.user), "skill": other.skill.get_name()}
-        if model == "communityskill":
-            return _("You can learn %(skill)s at %(community)s") % {
-                "skill": other.skill.get_name(), "community": other.community.name,
-            }
-        if model == "skillwish":
-            if other.community_id:
-                return _("%(community)s is looking for: %(skill)s") % {
-                    "community": other.community.name, "skill": other.skill.get_name(),
-                }
-            return _("%(name)s wants to learn: %(skill)s") % {"name": _name(other.user), "skill": other.skill.get_name()}
-        return str(other)
+        if other.community_id:
+            if other.is_offer:
+                if other.kind == other.KIND_SKILL:
+                    return _("You can learn %(skill)s at %(community)s") % {"skill": title, "community": other.community.name}
+                return _("%(name)s offers: %(title)s") % {"name": other.community.name, "title": title}
+            return _("%(community)s is looking for: %(skill)s") % {"community": other.community.name, "skill": title}
+        name = _name(other.owner)
+        if other.kind == other.KIND_SKILL:
+            if other.is_offer:
+                return _("%(name)s offers the skill: %(skill)s") % {"name": name, "skill": title}
+            return _("%(name)s wants to learn: %(skill)s") % {"name": name, "skill": title}
+        if other.is_offer:
+            if other.is_skill:
+                return _("%(name)s offers: %(title)s") % {"name": name, "title": title}
+            return _("%(name)s gives away: %(title)s") % {"name": name, "title": title}
+        return _("%(name)s is looking for: %(title)s") % {"name": name, "title": title}
 
     @property
     def title_html(self):
         """The text with links: a project need's project to its page and its community to
         its profile, a community's wish to the community, anything else to the thing."""
-        other, model = self.other, self.other_model
+        other = self.other
         if other is None:
             return ""
         link = '<a href="{}" class="font-semibold hover:underline">{}</a>'
-        if model == "need":
+        if self.other_model == "listing" and other.project_id and other.is_wish:
             project = other.project
             title = f"{other.display_title} ({other.amount})" if other.amount else other.display_title
             return format_html(
@@ -386,33 +427,31 @@ class Suggestion(models.Model):
                 community=format_html(link, project.community.get_absolute_url(), project.community.name),
                 title=title,
             )
-        if model == "skillwish" and other.community_id:
+        if self.other_model == "listing" and other.community_id and other.is_wish:
             # The community links to its profile; the button opens its volunteer form
             community = other.community
             return format_html(
                 escape(_("%(community)s is looking for: %(skill)s")).replace("%(community)s", "{community}")
                 .replace("%(skill)s", "{skill}"),
                 community=format_html(link, community.get_absolute_url(), community.name),
-                skill=other.skill.get_name(),
+                skill=other.display_title,
             )
         return format_html(link, self.url, self.text)
 
     @property
     def own_text(self):
         """Which of their own things it fits."""
-        own, model = self.own, self.own_type.model
+        own = self.own
         if own is None:
             return ""
-        if model == "listing":
-            template = _("your offer: %(title)s") if own.type == "offer" else _("your wish: %(title)s")
-            return template % {"title": own.title}
-        if model == "need":
+        if self.own_type.model != "listing":
+            return str(own)
+        if own.project_id:
             return _("your project %(project)s: %(title)s") % {"project": own.project.title, "title": own.display_title}
-        if model in ("userskill", "communityskill"):
-            return _("your skill: %(skill)s") % {"skill": own.skill.get_name()}
-        if model == "skillwish":
-            return _("your wish: %(title)s") % {"title": own.skill.get_name()}
-        return str(own)
+        if own.is_offer and own.kind == own.KIND_SKILL:
+            return _("your skill: %(skill)s") % {"skill": own.display_title}
+        template = _("your offer: %(title)s") if own.is_offer else _("your wish: %(title)s")
+        return template % {"title": own.display_title}
 
     @property
     def url(self):
@@ -420,20 +459,24 @@ class Suggestion(models.Model):
         other = self.other
         if other is None:
             return ""
-        if self.other_model == "need":
+        if self.other_model == "listing" and other.project_id and other.is_wish:
             return f"{other.project.get_absolute_url()}#need-{other.pk}"
         return other.get_absolute_url()
 
     @property
     def helps(self):
         """Whether the other side needs something, so the reader can help with it."""
-        other = self.other
-        return self.other_model in ("need", "skillwish") or getattr(other, "type", "") == "wish"
+        return getattr(self.other, "type", "") == "wish"
 
     @property
     def action_url(self):
-        """Where to act on it: the offer form for a project need, else the thing's page
-        (where a gift or a skill can be asked for or offered)."""
-        if self.other_model == "need" and self.other is not None:
-            return f"{reverse('projects:offer_help', args=[self.other.project_id])}?need={self.other.pk}"
+        """Where to act on it: the offer form for a project need, the volunteer form for a
+        community's wish for a skill, else the thing's page (where it can be asked for or
+        offered)."""
+        other = self.other
+        if self.other_model == "listing" and other is not None and other.is_wish:
+            if other.project_id:
+                return f"{reverse('projects:offer_help', args=[other.project_id])}?need={other.pk}"
+            if other.community_id and other.skill_id:
+                return f"{other.community.get_absolute_url()}?help={other.skill.slug}"
         return self.url

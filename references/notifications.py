@@ -7,11 +7,11 @@ from notifications.models import Notification
 
 
 def _community(reference):
-    """The community a reference is about (itself, or the holder of its skill), if any."""
-    if reference.content_type.model not in ("community", "communityskill"):
-        return None
+    """The community a reference is about (itself, or the community of its offer or wish), if any."""
     subject = reference.subject
-    return subject.get_skill_holder() if hasattr(subject, "get_skill_holder") else subject
+    if reference.content_type.model == "community":
+        return subject
+    return getattr(subject, "community", None)
 
 
 def notify_reference_created(reference, http_request=None, base_url=None):

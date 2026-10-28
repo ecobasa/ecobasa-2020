@@ -1,5 +1,5 @@
 {% load i18n %}{# One need as a pill: coloured by kind, styled by how far it is covered #}
 <span class="pill text-xs {% if need.status == 'open' %}{{ need.colour }}{% elif need.status == 'offered' %}{{ need.colour }} bg-opacity-60 border border-dashed border-primary{% else %}bg-green text-secondary line-through decoration-1{% endif %}"
-      title="{{ need.get_kind_display }}: {% if need.status == 'open' %}{% trans 'Still needed' %}{% elif need.status == 'offered' %}{% trans 'Someone offered this' %}{% else %}{% trans 'Covered' %}{% endif %}">
-  <i class="fa-solid {{ need.icon }} mr-1"></i>{{ need.display_title }}{% if need.quantity and need.promised_quantity and not need.is_done %}<span class="opacity-80 ml-1">({{ need.promised_quantity }}/{{ need.quantity }}{% if need.unit %} {{ need.get_unit_display }}{% endif %})</span>{% elif need.amount %}<span class="opacity-70 ml-1">({{ need.amount }})</span>{% endif %}
+      title="{{ need.kind_label }}: {% if need.status == 'open' %}{% trans 'Still needed' %}{% elif need.status == 'offered' %}{% trans 'Someone offered this' %}{% else %}{% trans 'Covered' %}{% endif %}">
+  <i class="fa-solid {{ need.kind_icon }} mr-1"></i>{{ need.display_title }}{% if need.quantity and need.promised_quantity and not need.is_done %}<span class="opacity-80 ml-1">({{ need.promised_quantity }}/{{ need.quantity }}{% if need.unit %} {{ need.get_unit_display }}{% endif %})</span>{% elif need.amount %}<span class="opacity-70 ml-1">({{ need.amount }})</span>{% endif %}
 </span>

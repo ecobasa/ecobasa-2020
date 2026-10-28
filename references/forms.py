@@ -1,6 +1,7 @@
 from django import forms
 from django.utils.translation import gettext_lazy as _
 
+from gifts.models import Listing
 from skills.models import get_or_create_skill
 
 from .models import Reference, ReferenceSkill, subject_owner
@@ -108,10 +109,12 @@ def form_context(subject, form, own=None, gift_names=()):
         # Skills they already list, suggested first in the skill input
         "held_skills": [
             s.get_match_display_name() for s in getattr(subject, "get_reference_subjects", lambda: [])()
-            if hasattr(s, "get_skill_holder")
+            if getattr(s, "get_skill_holder", lambda: None)() is not None
         ] if form.can_tag else [],
         "held_skills_header": gettext("Skills listed here"),
-        "gift_suggestions": [l.title for l in listings.all()] if form.can_tag and listings is not None else [],
-        # A community (or one of its skills): the guide adds a note about writing to a group
-        "about_community": subject._meta.model_name in ("community", "communityskill"),
+        "gift_suggestions": [
+            l.display_title for l in listings.filter(kind__in=Listing.THING_KINDS)
+        ] if form.can_tag and listings is not None else [],
+        # A community (or one of its offers and wishes): the guide adds a note about writing to a group
+        "about_community": subject._meta.model_name == "community" or bool(getattr(subject, "community_id", None)),
     }

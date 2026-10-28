@@ -1,36 +1,49 @@
 {% extends 'dashboard/base.html' %}
 {% load i18n %}
 
-{% block head_title %}{% trans "Your gifts" %} — ecobasa{% endblock %}
+{% block head_title %}{% if what == "skills" %}{% trans "Your skills" %}{% else %}{% trans "Your gifts" %}{% endif %} — ecobasa{% endblock %}
 
 {% block dashboard_content %}
+{# Your offers and wishes: things and skills, filtered by what they are #}
 <section class="mb-8">
   <div class="flex flex-wrap items-center gap-3 mb-4">
-    <h1 class="text-4xl font-semibold flex items-center gap-2 m-0"><i class="fa fa-gift text-primary"></i>{% trans "Your gifts" %}</h1>
-    <a href="{% url 'gifts:create' %}" class="btn ml-auto"><i class="fa fa-plus mr-1"></i>{% trans "Add your Wish or Offer" %}</a>
+    <h1 class="text-4xl font-semibold flex items-center gap-2 m-0">
+      {% if what == "skills" %}<i class="fa fa-graduation-cap text-primary"></i>{% trans "Your skills" %}{% else %}<i class="fa fa-gift text-primary"></i>{% trans "Your gifts" %}{% endif %}
+    </h1>
+    <a href="{% url 'gifts:create' %}?type={{ box }}{% if what == 'skills' %}&kind=skill{% endif %}" class="btn ml-auto"><i class="fa fa-plus mr-1"></i>{% trans "Add your Wish or Offer" %}</a>
   </div>
 
   {% include "dashboard/_tabs.html" %}
+  {% include "dashboard/_filters.html" with filters=whats %}
 
   {% if page.object_list %}
     <ul class="list-none p-0 space-y-2">
       {% for listing in page %}
-        <li class="flex items-center gap-3 p-4 rounded bg-secondary bg-opacity-50">
-          <i class="fa-solid {{ listing.kind_icon }} text-2xl text-primary opacity-70 w-8 text-center"></i>
+        <li class="flex items-start gap-3 p-4 rounded bg-secondary bg-opacity-50">
+          <a href="{{ listing.get_absolute_url }}" class="flex-none">
+            {% if listing.image %}
+              <img src="{{ listing.image.url }}" alt="" class="w-14 h-14 rounded-lg object-cover">
+            {% else %}
+              <span class="w-14 h-14 rounded-lg {{ listing.colour }} bg-opacity-10 flex items-center justify-center"><i class="fa-solid {{ listing.kind_icon }} text-2xl {% if listing.is_skill %}text-purple{% else %}text-primary{% endif %}"></i></span>
+            {% endif %}
+          </a>
           <div class="flex-1 min-w-0">
-            <a href="{{ listing.get_absolute_url }}" class="font-semibold font-serif hover:underline">{{ listing.title }}</a>
+            <a href="{{ listing.get_absolute_url }}" class="font-semibold font-serif hover:underline">{{ listing.display_title }}</a>
             {% if listing.amount %}<span class="text-sm opacity-80">· {{ listing.amount }}</span>{% endif %}
+            {% if listing.level %}<span class="text-sm opacity-80">· {{ listing.get_level_display }}</span>{% endif %}
+            {% if listing.is_offer and listing.skill_id and not listing.available %}<span class="text-xs opacity-70">· {% trans "not available right now" %}</span>{% endif %}
             <div class="text-xs opacity-70 mt-0.5 flex flex-wrap gap-x-2">
-              {% if listing.kind != "other" %}<span>{{ listing.get_kind_display }}</span>{% endif %}
+              {% if listing.kind != "other" %}<span>{{ listing.kind_label }}</span>{% endif %}
               {% for cat in listing.categories.all %}<span>{{ cat.name }}</span>{% endfor %}
-              <span class="sm:hidden">{% include "projects/_freshness.html" with when=listing.updated_at label_updated=True %}</span>
+              <span>{% include "projects/_freshness.html" with when=listing.updated_at label_updated=True %}</span>
+            </div>
+            {% if listing.description %}<p class="text-sm m-0 mt-1 opacity-90">{{ listing.description|truncatewords:30 }}</p>{% endif %}
+            <div class="text-xs mt-1 flex flex-wrap gap-x-3">
+              {% if listing.reference_count %}<a href="{{ listing.get_absolute_url }}#references" class="underline"><i class="fa-solid fa-comments mr-1"></i>{% blocktrans count counter=listing.reference_count %}{{ counter }} reference{% plural %}{{ counter }} references{% endblocktrans %}</a>{% endif %}
+              {% if listing.match_count %}<span><i class="fa-solid fa-handshake mr-1"></i>{% blocktrans count counter=listing.match_count %}{{ counter }} request{% plural %}{{ counter }} requests{% endblocktrans %}</span>{% endif %}
             </div>
           </div>
-          <span class="hidden sm:inline-flex text-xs opacity-70 whitespace-nowrap">{% include "projects/_freshness.html" with when=listing.updated_at label_updated=True %}</span>
-          {% if listing.match_count %}
-            <span class="pill bg-purple text-xs" title="{% trans 'Requests' %}"><i class="fa-solid fa-handshake mr-1"></i>{{ listing.match_count }}</span>
-          {% endif %}
-          <a href="{% url 'gifts:edit' listing.pk %}" class="btn text-sm py-1 px-3" title="{% trans 'Edit' %}"><i class="fa fa-edit"></i></a>
+          <a href="{% url 'gifts:edit' listing.pk %}" class="btn text-sm py-1 px-3 flex-none" title="{% trans 'Edit' %}"><i class="fa fa-edit"></i></a>
         </li>
       {% endfor %}
     </ul>

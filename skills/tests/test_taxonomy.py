@@ -4,7 +4,8 @@ from django.utils import translation
 
 from users.models import User
 from users.forms import ProfileUpdateForm
-from ..models import Skill, SkillTaxonomy, UserSkill, get_or_create_skill, skill_name_q
+from gifts.models import Listing
+from ..models import Skill, SkillTaxonomy, get_or_create_skill, skill_name_q
 
 
 @pytest.fixture
@@ -56,4 +57,4 @@ class TestSkillTaxonomyLink:
         )
         assert form.is_valid(), form.errors
         form.save()
-        assert list(UserSkill.objects.filter(user=user).values_list("skill__slug", flat=True)) == ["test-carpentry"]
+        assert list(Listing.objects.filter(owner=user, type="offer").values_list("skill__slug", flat=True)) == ["test-carpentry"]

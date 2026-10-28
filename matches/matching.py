@@ -1,19 +1,20 @@
-"""The matching: when a gift offer or wish, a skill, a skill wish or a project need is
-saved, find what fits it nearby and suggest the pair to both sides.
+"""The matching: when an offer or a wish (gifts.Listing) is saved, find what fits it
+nearby and suggest the pair to both sides.
 
-What fits:
-- a skill wish (of a person or a community) or a project need for a skill
-  ↔ the same skill offered by a person (available) or a community;
-- a gift wish or a material/tool need of a project ↔ a gift offer with a similar title
-  ("Clay" ~ "Clay from our pond", "Scythe" ~ "Two old scythes"). Not by gift category
-  alone: firewood and a chimney pipe are both building materials, but neither helps
-  with the other.
+What fits, an offer and a wish:
+- with a skill (a skill, or knowledge or helping hands with a known skill): the same
+  skill, in any language;
+- without one, things (or knowledge or helping hands named in words) with a similar
+  title ("Clay" ~ "Clay from our pond", "Scythe" ~ "Two old scythes"). A material doesn't
+  fit a tool; "other" fits any thing. Not by gift category alone: firewood and a chimney
+  pipe are both building materials, but neither helps with the other.
 
 Where each side looks, by their owner's settings (reaches()):
 - with a place: within their distance (User.match_radius);
 - with only a country: in that country;
 - with neither: anywhere, as with "search worldwide" (User.match_global).
-Nothing is suggested between things of the same person."""
+Nothing is suggested between things of the same person (or community), for skills that
+aren't available, or for what is covered, given away or part of a project that is over."""
 
 import math
 from dataclasses import dataclass
@@ -21,11 +22,8 @@ from dataclasses import dataclass
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.gis.measure import D
 from django.db.models import Q
-from django.utils import timezone
 
 from gifts.models import Listing
-from projects.models import Need
-from skills.models import CommunitySkill, SkillWish, UserSkill
 
 from .models import Suggestion
 
@@ -33,60 +31,39 @@ from .models import Suggestion
 # each side's own settings decide
 MAX_RADIUS_KM = 2000
 
+# The places a listing can have: its own, its person's, its community's
+PLACES = ("location", "owner__location", "community__location")
+WORLDWIDE = ("owner__match_global", "community__owner__match_global")
+
 
 @dataclass
 class Side:
-    """One matchable thing, seen generically."""
+    """One matchable listing, seen generically."""
 
     obj: object
-    owner: object
+    owner: object  # the person who answers for it
     point: object  # None if there is no place, only maybe a country
     country: str
     want: bool
     skill_id: int | None = None
     title: str = ""
-    kind: str = ""  # material or tool, if known: then only the same kind fits
+    kind: str = ""
 
     @property
-    def is_skill(self):
-        return self.skill_id is not None
+    def is_thing(self):
+        return self.kind in Listing.THING_KINDS
 
 
-def side_of(obj):
-    """The Side for a listing, need, user/community skill or skill wish, or None if it
-    can't be matched (no owner, a covered need, a need without a skill …)."""
-    side = None
-    if isinstance(obj, Listing):
-        owner = obj.owner
-        if owner is not None:
-            side = Side(obj, owner, obj.location or owner.location, str(owner.country or ""),
-                        want=obj.type == "wish", title=obj.title,
-                        kind="" if obj.kind == Listing.KIND_OTHER else obj.kind)
-    elif isinstance(obj, Need):
-        project = obj.project
-        if not project.is_current or obj.is_done:
-            return None
-        community = project.community
-        place = (community.location, str(community.country or ""))
-        if obj.kind in Need.THING_KINDS:
-            side = Side(obj, community.owner, *place, want=True, title=obj.title, kind=obj.kind)
-        elif obj.skill_id:
-            side = Side(obj, community.owner, *place, want=True, skill_id=obj.skill_id)
-    elif isinstance(obj, UserSkill):
-        if obj.available:
-            side = Side(obj, obj.user, obj.user.location, str(obj.user.country or ""), want=False, skill_id=obj.skill_id)
-    elif isinstance(obj, CommunitySkill):
-        community = obj.community
-        side = Side(obj, community.owner, community.location, str(community.country or ""), want=False, skill_id=obj.skill_id)
-    elif isinstance(obj, SkillWish):
-        if obj.community_id:
-            community = obj.community
-            side = Side(obj, community.owner, community.location, str(community.country or ""), want=True, skill_id=obj.skill_id)
-        elif obj.user_id:
-            side = Side(obj, obj.user, obj.user.location, str(obj.user.country or ""), want=True, skill_id=obj.skill_id)
-    if side is None or side.owner is None:
+def side_of(listing):
+    """The Side for a listing, or None if it can't be matched (no one answers for it,
+    it is done or its project over, a skill that isn't available)."""
+    if not isinstance(listing, Listing):
         return None
-    return side
+    owner = listing.manager
+    if owner is None or not listing.is_current or (listing.is_offer and listing.skill_id and not listing.available):
+        return None
+    return Side(listing, owner, listing.point, listing.country, want=listing.is_wish,
+                skill_id=listing.skill_id, title=listing.display_title if not listing.skill_id else "", kind=listing.kind)
 
 
 def reaches(recipient, other, km):
@@ -103,56 +80,27 @@ def reaches(recipient, other, km):
     return True
 
 
-def _near(point, *fields, worldwide=()):
-    """Q for any of the location fields within MAX_RADIUS_KM of point, or an owner who
-    searches worldwide (the paths to their match_global in `worldwide`)."""
-    query = Q()
-    for name in fields:
-        query |= Q(**{f"{name}__dwithin": (point, D(km=MAX_RADIUS_KM))})
-    for path in worldwide:
-        query |= Q(**{path: True})
-    return query
-
-
-def _current_needs():
-    today = timezone.localdate()
-    return Need.objects.filter(
-        project__archived_at=None, covered_at=None,
-    ).filter(Q(project__ends_on=None) | Q(project__ends_on__gte=today)).select_related(
-        "project__community__owner", "skill",
-    ).prefetch_related("need_offers__match")
-
-
 def candidates(side):
-    """The things on the other side that could fit `side`: nearby (roughly), without a
+    """The listings on the other side that could fit `side`: nearby (roughly), without a
     place (they may look anywhere or in a country), or anywhere if one of the owners
     searches worldwide. reaches() then decides for each side."""
-    def near(*fields, worldwide=()):
-        if side.point is None or side.owner.match_global:
-            return Q()
-        placeless = Q(**{f"{name}": None for name in fields})
-        return _near(side.point, *fields, worldwide=worldwide) | placeless
-
-    if side.is_skill:
-        if side.want:
-            yield from UserSkill.objects.filter(skill_id=side.skill_id, available=True).filter(
-                near("user__location", worldwide=["user__match_global"])).select_related("user")
-            yield from CommunitySkill.objects.filter(skill_id=side.skill_id).filter(
-                near("community__location", worldwide=["community__owner__match_global"])).select_related("community__owner")
-        else:
-            yield from SkillWish.objects.filter(skill_id=side.skill_id).filter(
-                near("user__location", "community__location",
-                      worldwide=["user__match_global", "community__owner__match_global"])).select_related("user", "community__owner")
-            yield from _current_needs().filter(skill_id=side.skill_id, kind__in=(Need.KIND_SKILL, Need.KIND_KNOWLEDGE)).filter(
-                near("project__community__location", worldwide=["project__community__owner__match_global"]))
-        return
-    listing_near = near("location", "owner__location", worldwide=["owner__match_global"])
-    if side.want:
-        yield from Listing.objects.filter(type="offer").filter(listing_near).select_related("owner")
+    others = Listing.objects.current().filter(type=Listing.TYPE_OFFER if side.want else Listing.TYPE_WISH)
+    if side.skill_id:
+        others = others.filter(skill_id=side.skill_id)
+    elif side.is_thing:
+        others = others.filter(skill=None, kind__in=Listing.THING_KINDS)
     else:
-        yield from Listing.objects.filter(type="wish").filter(listing_near).select_related("owner")
-        yield from _current_needs().filter(kind__in=Need.THING_KINDS).filter(
-            near("project__community__location", worldwide=["project__community__owner__match_global"]))
+        others = others.filter(skill=None, kind=side.kind)
+    if side.point is not None and not side.owner.match_global:
+        near = Q(location=None, owner__location=None, community__location=None)
+        for name in PLACES:
+            near |= Q(**{f"{name}__dwithin": (side.point, D(km=MAX_RADIUS_KM))})
+        for path in WORLDWIDE:
+            near |= Q(**{path: True})
+        others = others.filter(near)
+    return others.select_related("owner", "community__owner", "project__community", "skill").prefetch_related(
+        "contributions__match",
+    )
 
 
 def _words(text):
@@ -167,11 +115,17 @@ def _same_word(a, b):
 
 def fit(a, b):
     """Why a and b fit, as a Suggestion reason, or None."""
-    if a.want == b.want or a.is_skill != b.is_skill:
+    if a.want == b.want or bool(a.skill_id) != bool(b.skill_id):
         return None
-    if a.is_skill:
+    if a.skill_id:
         return Suggestion.REASON_SKILL if a.skill_id == b.skill_id else None
-    if a.kind and b.kind and a.kind != b.kind:
+    if a.is_thing != b.is_thing:
+        return None
+    if a.is_thing:
+        # "Other" fits any thing; a material doesn't fit a tool
+        if Listing.KIND_OTHER not in (a.kind, b.kind) and a.kind != b.kind:
+            return None
+    elif a.kind != b.kind:
         return None
     if any(_same_word(x, y) for x in _words(a.title) for y in _words(b.title)):
         return Suggestion.REASON_WORDS
@@ -197,7 +151,7 @@ def _suggest(recipient_side, other_side, reason, km):
         other_type=ContentType.objects.get_for_model(other_side.obj), other_id=str(other_side.obj.pk),
         defaults={
             "other_user": other_side.owner, "reason": reason, "distance_km": None if km is None else round(km),
-            "kind": Suggestion.KIND_SKILLS if recipient_side.is_skill else Suggestion.KIND_GIFT,
+            "kind": Suggestion.KIND_GIFT if recipient_side.is_thing else Suggestion.KIND_SKILLS,
         },
     )
     return suggestion if created else None
@@ -240,8 +194,7 @@ def match_everything(notify=False):
     """Match all existing things, e.g. after deploying the matching. Returns how many
     suggestions were created."""
     count = 0
-    for model in (Listing, UserSkill, CommunitySkill, SkillWish, Need):
-        for obj in model.objects.all().iterator():
-            count += len(match(obj, notify=notify))
+    for listing in Listing.objects.current().iterator():
+        count += len(match(listing, notify=notify))
     return count
 

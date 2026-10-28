@@ -26,11 +26,11 @@ from django.utils import timezone
 
 from communities.models import Community, CommunityPhoto
 from gifts.models import Listing, ListingCategory
-from matches.models import Match, MatchMessage, VolunteerDetails
+from matches.models import Contribution, Match, MatchMessage, VolunteerDetails
 from notifications.models import Notification, SKILL_NUDGE_TEXT
 from references.models import Reference, ReferenceSkill
 from references.notifications import notify_reference_created
-from skills.models import CommunitySkill, Skill, SkillWish, UserSkill, get_or_create_skill
+from skills.models import Skill, get_or_create_skill
 from users.models import User
 
 DEMO_PASSWORD = "ecobasa123"
@@ -339,35 +339,35 @@ class Command(BaseCommand):
     def _seed_user_skills(self, users, skills):
         self.stdout.write("Seeding user skills…")
         specs = [
-            ("luna@ecobasa.demo", "Permaculture Design", UserSkill.LEVEL_EXPERT,
+            ("luna@ecobasa.demo", "Permaculture Design", Listing.LEVEL_EXPERT,
              "Can diagnose a struggling food forest from across the road."),
-            ("luna@ecobasa.demo", "Nonviolent Communication", UserSkill.LEVEL_ADVANCED,
+            ("luna@ecobasa.demo", "Nonviolent Communication", Listing.LEVEL_ADVANCED,
              "Mostly used on the chore wheel disputes."),
-            ("bjorn@ecobasa.demo", "Woodworking", UserSkill.LEVEL_INTERMEDIATE,
+            ("bjorn@ecobasa.demo", "Woodworking", Listing.LEVEL_INTERMEDIATE,
              "Furniture is sturdy. Aesthetics are 'rustic', we've decided."),
-            ("bjorn@ecobasa.demo", "Beekeeping", UserSkill.LEVEL_BEGINNER,
+            ("bjorn@ecobasa.demo", "Beekeeping", Listing.LEVEL_BEGINNER,
              "The bees mostly tolerate me. I consider this a professional relationship."),
-            ("mireille@ecobasa.demo", "Fermentation", UserSkill.LEVEL_EXPERT,
+            ("mireille@ecobasa.demo", "Fermentation", Listing.LEVEL_EXPERT,
              "SCOBY whisperer. Ask about the hotel. Please ask about the hotel."),
-            ("mireille@ecobasa.demo", "Bread Baking", UserSkill.LEVEL_ADVANCED,
+            ("mireille@ecobasa.demo", "Bread Baking", Listing.LEVEL_ADVANCED,
              "Starter has a name and, allegedly, a personality."),
-            ("diego@ecobasa.demo", "Natural Building", UserSkill.LEVEL_ADVANCED,
+            ("diego@ecobasa.demo", "Natural Building", Listing.LEVEL_ADVANCED,
              "Mud, straw, stubbornness. In that order of importance."),
-            ("diego@ecobasa.demo", "Yoga", UserSkill.LEVEL_BEGINNER,
+            ("diego@ecobasa.demo", "Yoga", Listing.LEVEL_BEGINNER,
              "The goats don't judge my downward dog. Everyone else does."),
-            ("sam@ecobasa.demo", "Solar Panel Installation", UserSkill.LEVEL_INTERMEDIATE,
+            ("sam@ecobasa.demo", "Solar Panel Installation", Listing.LEVEL_INTERMEDIATE,
              "Can wire a panel. Cannot, yet, defeat the printer."),
-            ("sam@ecobasa.demo", "Herbal Medicine", UserSkill.LEVEL_BEGINNER,
+            ("sam@ecobasa.demo", "Herbal Medicine", Listing.LEVEL_BEGINNER,
              "Mostly just tea so far. Ambitious about the future."),
-            ("ana@ecobasa.demo", "Yoga", UserSkill.LEVEL_ADVANCED,
+            ("ana@ecobasa.demo", "Yoga", Listing.LEVEL_ADVANCED,
              "Can hold a pose longer than the WhatsApp group can hold a decision."),
-            ("ana@ecobasa.demo", "Nonviolent Communication", UserSkill.LEVEL_INTERMEDIATE,
+            ("ana@ecobasa.demo", "Nonviolent Communication", Listing.LEVEL_INTERMEDIATE,
              "Still working on applying it to group-chat land debates."),
         ]
         for email, skill_name, level, desc in specs:
-            UserSkill.objects.get_or_create(
-                user=users[email], skill=skills[skill_name],
-                defaults={"level": level, "description": desc},
+            Listing.objects.get_or_create(
+                owner=users[email], community=None, type=Listing.TYPE_OFFER, kind=Listing.KIND_SKILL,
+                skill=skills[skill_name], defaults={"level": level, "description": desc},
             )
 
     def _seed_community_skills(self, communities, skills):
@@ -387,23 +387,23 @@ class Command(BaseCommand):
              "Learn to wire a panel. Printer exorcism not included."),
         ]
         for community_name, skill_name, desc in specs:
-            CommunitySkill.objects.get_or_create(
-                community=communities[community_name], skill=skills[skill_name],
-                defaults={"description": desc},
+            Listing.objects.get_or_create(
+                community=communities[community_name], project=None, type=Listing.TYPE_OFFER,
+                kind=Listing.KIND_SKILL, skill=skills[skill_name], defaults={"description": desc},
             )
 
     def _seed_skill_wishes(self, users, communities, skills):
         self.stdout.write("Seeding skill wishes…")
         user_specs = [
-            ("bjorn@ecobasa.demo", "Fermentation", UserSkill.LEVEL_BEGINNER,
+            ("bjorn@ecobasa.demo", "Fermentation", Listing.LEVEL_BEGINNER,
              "I want my sauerkraut to stop trying to kill me."),
-            ("sam@ecobasa.demo", "Natural Building", UserSkill.LEVEL_BEGINNER,
+            ("sam@ecobasa.demo", "Natural Building", Listing.LEVEL_BEGINNER,
              "So I can build a shed that isn't just spite and duct tape."),
         ]
         for email, skill_name, level, desc in user_specs:
-            SkillWish.objects.get_or_create(
-                user=users[email], skill=skills[skill_name],
-                defaults={"level": level, "description": desc},
+            Listing.objects.get_or_create(
+                owner=users[email], community=None, type=Listing.TYPE_WISH, kind=Listing.KIND_SKILL,
+                skill=skills[skill_name], defaults={"level": level, "description": desc},
             )
 
         community_specs = [
@@ -413,9 +413,10 @@ class Command(BaseCommand):
              "So we have literally any plan at all, beyond 'vibes'."),
         ]
         for community_name, skill_name, desc in community_specs:
-            SkillWish.objects.get_or_create(
-                community=communities[community_name], skill=skills[skill_name],
-                defaults={"description": desc},
+            # A community looks for people with the skill: helping hands with it
+            Listing.objects.get_or_create(
+                community=communities[community_name], project=None, type=Listing.TYPE_WISH,
+                kind=Listing.KIND_HANDS, skill=skills[skill_name], defaults={"description": desc},
             )
 
     # ── Matches, messages, volunteer details, notifications ─────────────
@@ -427,6 +428,9 @@ class Command(BaseCommand):
             content_type=ct, object_id=str(target.pk),
             defaults=defaults,
         )
+        if created and isinstance(target, Listing):
+            # What the exchange is about is part of it (and covers it, once accepted)
+            Contribution.objects.create(match=match, listing=target)
         return match, created
 
     def _notify(self, recipient, actor, tag, match=None, verb="", is_read=False, age_days=0):
@@ -452,11 +456,11 @@ class Command(BaseCommand):
 
         zucchini = Listing.objects.get(title__startswith="17kg of surplus zucchini", owner=luna)
         starter_wish = Listing.objects.get(title__startswith="Wish: someone who understands sourdough", owner=mireille)
-        luna_permaculture = UserSkill.objects.get(user=luna, skill__name="Permaculture Design")
-        kombucha_fermentation = CommunitySkill.objects.get(
-            community=communities["Kombucha Commune"], skill__name="Fermentation",
+        luna_permaculture = Listing.objects.get(owner=luna, type="offer", skill__name="Permaculture Design")
+        kombucha_fermentation = Listing.objects.get(
+            community=communities["Kombucha Commune"], type="offer", skill__name="Fermentation",
         )
-        bjorn_fermentation_wish = SkillWish.objects.get(user=bjorn, skill__name="Fermentation")
+        bjorn_fermentation_wish = Listing.objects.get(owner=bjorn, type="wish", skill__name="Fermentation")
         three_goats_farm = communities["Three Goats and a Dream Farm"]
 
         # 1. Listing offer target — pending
@@ -497,7 +501,7 @@ class Command(BaseCommand):
             match=match2, is_read=True, age_days=5,
         )
 
-        # 3. UserSkill target — declined
+        # 3. A person's skill — declined
         match3, created3 = self._get_or_create_match(
             from_user=sam, recipient=luna, target=luna_permaculture,
             message="Any chance of a permaculture design session for our house project's back garden?",
@@ -518,7 +522,7 @@ class Command(BaseCommand):
             match=match3, age_days=5,
         )
 
-        # 4. CommunitySkill target — counter-proposed
+        # 4. A community's skill — counter-proposed
         match4, created4 = self._get_or_create_match(
             from_user=diego, recipient=mireille, target=kombucha_fermentation,
             message="Could I swing by this weekend to learn the fermentation basics?",
@@ -540,7 +544,7 @@ class Command(BaseCommand):
             match=match4, age_days=1,
         )
 
-        # 5. SkillWish target — pending
+        # 5. A wish to learn a skill — pending
         match5, created5 = self._get_or_create_match(
             from_user=mireille, recipient=bjorn, target=bjorn_fermentation_wish,
             message="I can save your sauerkraut. No lecture required. Okay — maybe a small one.",
@@ -566,7 +570,7 @@ class Command(BaseCommand):
                     "stay_from": timezone.now() + timedelta(days=14),
                     "stay_to": timezone.now() + timedelta(days=28),
                     "practice_skills": "Natural Building, Yoga",
-                    "practice_skill_level": UserSkill.LEVEL_BEGINNER,
+                    "practice_skill_level": Listing.LEVEL_BEGINNER,
                     "sender_skills": "Solar Panel Installation",
                 },
             )
@@ -621,12 +625,12 @@ class Command(BaseCommand):
                  impression=N, age_days=6,
                  text="Took three kilos. Fourteen more followed me home. I did not ask questions."),
             # About a user skill
-            dict(author=luna, subject=UserSkill.objects.get(user=diego, skill__name="Natural Building"),
+            dict(author=luna, subject=Listing.objects.get(owner=diego, type="offer", skill__name="Natural Building"),
                  impression=P, age_days=15,
                  text="Taught me to read a wall by knocking on it. The wall now knocks back. Highly recommended."),
             # About a community skill — the one negative
-            dict(author=ana, subject=CommunitySkill.objects.get(
-                    community=communities["Kombucha Commune"], skill__name="Fermentation"),
+            dict(author=ana, subject=Listing.objects.get(
+                    community=communities["Kombucha Commune"], type="offer", skill__name="Fermentation"),
                  impression=X, age_days=2,
                  text="The lecture lasted three hours and had an intermission. The SCOBY was lovely though."),
         ]
@@ -663,7 +667,7 @@ class Command(BaseCommand):
         """A dated project with needs and stays (confirmed, requested, overlapping so the
         calendar warns), an ongoing one, and a stale one whose ambassador gets asked."""
         from projects.forms import skill_for_title
-        from projects.models import Need, NeedOffer, Project
+        from projects.models import Project
 
         self.stdout.write("Seeding projects…")
         luna, bjorn, mireille = users["luna@ecobasa.demo"], users["bjorn@ecobasa.demo"], users["mireille@ecobasa.demo"]
@@ -676,37 +680,38 @@ class Command(BaseCommand):
             obj, created = Project.objects.get_or_create(
                 community=community, title=title, defaults={"created_by": community.owner, **fields},
             )
-            # What helpers can learn, also listed on the community, like saving the form does
-            obj.skills_to_learn.add(*(get_or_create_skill(name)[0] for name in learn))
-            obj.share_skills_with_community()
-            # Needs are added by title, so re-running adds new demo needs to older demo data
+            # What helpers can learn: the community's skills in the project, listed with it
+            # while the project runs
+            for name in learn:
+                Listing.objects.get_or_create(
+                    project=obj, type=Listing.TYPE_OFFER, kind=Listing.KIND_SKILL, skill=get_or_create_skill(name)[0],
+                )
+            # Needs (the community's wishes in it) are added by title, so re-running adds new
+            # demo needs to older demo data
             for order, (kind, need_title, quantity, unit, details) in enumerate(needs):
-                is_skill = kind in (Need.KIND_SKILL, Need.KIND_KNOWLEDGE)
-                need, _created = Need.objects.get_or_create(project=obj, title=need_title, defaults=dict(
-                    kind=kind, order=order, quantity=quantity, unit=unit, details=details,
-                    skill=(skill_for_title(need_title) or Skill.objects.filter(name__iexact=need_title).first())
-                    if is_skill else None,
-                    category=ListingCategory.objects.filter(name=(
-                        "Tools & Equipment" if kind == Need.KIND_TOOL else "Building Materials"
-                    )).first() if kind in Need.THING_KINDS else None,
-                ))
-                if kind in Need.THING_KINDS and need.category is None:
-                    # Demo needs from before needs had gift categories
-                    need.category = ListingCategory.objects.filter(
-                        name="Tools & Equipment" if kind == Need.KIND_TOOL else "Building Materials"
-                    ).first()
-                    need.save(update_fields=["category"])
+                skill = None
+                if kind in (Listing.KIND_HANDS, Listing.KIND_KNOWLEDGE):
+                    skill = skill_for_title(need_title) or Skill.objects.filter(name__iexact=need_title).first()
+                need, need_created = Listing.objects.get_or_create(
+                    project=obj, type=Listing.TYPE_WISH, title=need_title, defaults=dict(
+                        kind=kind, order=order, quantity=quantity, unit=unit, description=details, skill=skill,
+                    ),
+                )
+                if need_created and kind in (Listing.KIND_MATERIAL, Listing.KIND_TOOL):
+                    need.categories.add(*ListingCategory.objects.filter(
+                        name="Tools & Equipment" if kind == Listing.KIND_TOOL else "Building Materials"
+                    ))
             return obj, created
 
         stove, created = project(
             sonnenkraut, "Rocket stove for the community kitchen",
             [
-                (Need.KIND_SKILL, "Natural Building", 2, "people", ""),
-                (Need.KIND_SKILL, "Masonry", 1, "people", ""),
-                (Need.KIND_MATERIAL, "Field stones", 300, "pieces", "fist to head size"),
-                (Need.KIND_MATERIAL, "Clay", 200, "kg", ""),
-                (Need.KIND_MATERIAL, "Chimney pipe", 3, "m", "15 cm diameter"),
-                (Need.KIND_TOOL, "Cement mixer", None, "", ""),
+                (Listing.KIND_HANDS, "Natural Building", 2, "people", ""),
+                (Listing.KIND_HANDS, "Masonry", 1, "people", ""),
+                (Listing.KIND_MATERIAL, "Field stones", 300, "pieces", "fist to head size"),
+                (Listing.KIND_MATERIAL, "Clay", 200, "kg", ""),
+                (Listing.KIND_MATERIAL, "Chimney pipe", 3, "m", "15 cm diameter"),
+                (Listing.KIND_TOOL, "Cement mixer", None, "", ""),
             ],
             learn=["Natural Building", "Masonry", "Rocket Stove Building"],
             description="Our old kitchen stove eats a forest a winter. We want to build a rocket stove "
@@ -718,9 +723,9 @@ class Command(BaseCommand):
         project(
             sonnenkraut, "Food forest care",
             [
-                (Need.KIND_SKILL, "Permaculture Design", None, "", ""),
-                (Need.KIND_TOOL, "Scythe", 2, "pieces", ""),
-                (Need.KIND_SKILL, "Woodworking", 1, "people", "a bench under the old apple tree"),
+                (Listing.KIND_HANDS, "Permaculture Design", None, "", ""),
+                (Listing.KIND_TOOL, "Scythe", 2, "pieces", ""),
+                (Listing.KIND_HANDS, "Woodworking", 1, "people", "a bench under the old apple tree"),
             ],
             learn=["Permaculture Design"],
             description="Mulching, pruning and planting in our young food forest, whenever you are around.",
@@ -728,7 +733,7 @@ class Command(BaseCommand):
         )
         stale, _stale_created = project(
             kombucha, "Straw-bale guest house",
-            [(Need.KIND_MATERIAL, "Straw bales", 120, "pieces", ""), (Need.KIND_KNOWLEDGE, "Natural Building", None, "", "")],
+            [(Listing.KIND_MATERIAL, "Straw bales", 120, "pieces", ""), (Listing.KIND_KNOWLEDGE, "Natural Building", None, "", "")],
             description="Planning a small guest house for the fermentation workshops.",
             food_provided=True,
         )
@@ -742,6 +747,15 @@ class Command(BaseCommand):
                       "location": bjorn.location},
         )
         scythes.categories.add(*ListingCategory.objects.filter(name="Tools & Equipment"))
+        # Wishes for knowledge and helping hands work outside projects too
+        Listing.objects.get_or_create(
+            owner=sam, type=Listing.TYPE_WISH, kind=Listing.KIND_KNOWLEDGE, title="How to size a battery bank",
+            defaults={"description": "Two panels, one fridge, a lot of optimism.", "skill": get_or_create_skill("Solar Panel Installation")[0]},
+        )
+        Listing.objects.get_or_create(
+            owner=diego, type=Listing.TYPE_WISH, kind=Listing.KIND_HANDS, title="Helping hands for the clay harvest",
+            defaults={"quantity": 3, "unit": "people", "description": "One weekend in spring, lunch included."},
+        )
         # What kind of thing the demo gifts are (also set on older demo data)
         for kind, prefixes in ((Listing.KIND_TOOL, ("Two old scythes", "Desperately seeking a wheelbarrow",
                                                      "Need: a printer", "Looking for scaffolding")),
@@ -751,7 +765,7 @@ class Command(BaseCommand):
 
         if not created:
             return
-        needs = {need.title: need for need in stove.needs.all()}
+        needs = {need.title: need for need in stove.needs()}
         stays = [
             # (who, from, to, status, {need: how much})
             (bjorn, 7, 21, Match.STATUS_ACCEPTED, {"Natural Building": 1, "Field stones": 120}),
@@ -768,7 +782,7 @@ class Command(BaseCommand):
                 stay_from=timezone.now() + timedelta(days=start), stay_to=timezone.now() + timedelta(days=end),
             )
             for title, quantity in need_titles.items():
-                NeedOffer.objects.create(need=needs[title], match=match, quantity=quantity)
+                Contribution.objects.create(listing=needs[title], match=match, quantity=quantity)
             if status == Match.STATUS_ACCEPTED:
                 MatchMessage.objects.create(match=match, sender=luna, body="Welcome!", status_to=status)
                 Match.objects.filter(pk=match.pk).update(responded_at=timezone.now())

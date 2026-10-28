@@ -3,7 +3,7 @@
 
 {% block extrahead %}
   {{ block.super }}
-  {% if listing.location %}
+  {% if listing.point %}
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v7.2.2/ol.css">
   {% endif %}
 {% endblock %}
@@ -29,14 +29,14 @@
     <svg class="h-5 w-5 text-yellow" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/></svg>
     <a href="{% url 'gifts:search' %}?type={{ listing.type }}" class="text-yellow hover:text-purple transition">{{ listing.get_type_display }}</a>
     <svg class="h-5 w-5 text-yellow" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/></svg>
-    <span class="text-primary">{{ listing.title }}</span>
+    <span class="text-primary">{{ listing.display_title }}</span>
   </nav>
 
   {# ── Hero image (opens lightbox) ── #}
   {% if listing.image %}
   <div class="mt-6 flex justify-center">
     <button type="button" @click="imageOpen = true" aria-label="{% trans 'Open image' %}" class="inline-block w-full">
-      <img src="{{ listing.image.url }}" alt="{{ listing.title }}"
+      <img src="{{ listing.image.url }}" alt="{{ listing.display_title }}"
         class="w-full h-52 object-cover rounded-lg shadow mb-4">
     </button>
   </div>
@@ -50,7 +50,7 @@
       <button type="button" @click="imageOpen = false"
         class="modal-close absolute top-0 right-0"
         aria-label="{% trans 'Close' %}">&times;</button>
-      <img src="{{ listing.image.url }}" alt="{{ listing.title }}"
+      <img src="{{ listing.image.url }}" alt="{{ listing.display_title }}"
         class="max-h-[80vh] max-w-full rounded-lg shadow-lg">
     </div>
   </div>
@@ -59,23 +59,26 @@
   {# ── Header ── #}
   <div class="mt-4 md:mt-10 md:flex md:items-center md:justify-between">
     <div class="flex-1 min-w-0">
-      <div class="text-primary font-bold">{{ listing.get_type_display }}</div>
-      <h1 class="sm:text-3xl sm:leading-9 sm:truncate">{{ listing.title }}</h1>
-      {% if listing.amount %}<div class="text-lg mb-1"><i class="fa-solid fa-scale-balanced mr-2 text-primary"></i>{{ listing.amount }}</div>{% endif %}
-      <div class="my-1">
-        {% if listing.owner == request.user %}
-          <span class="border mx-px py-px px-1 rounded text-xs text-secondary bg-purple">{% trans "from me" %}</span>
+      <div class="text-primary font-bold">{{ listing.get_type_display }}{% if listing.project and listing.is_wish %} · {% trans "Project need" %}{% endif %}</div>
+      <h1 class="sm:text-3xl sm:leading-9 sm:truncate">{{ listing.display_title }}</h1>
+      {% if listing.skill_id and listing.title and listing.title != listing.skill.name %}<div class="mb-1">{{ listing.title }}</div>{% endif %}
+      {% if listing.amount %}<div class="text-lg mb-1"><i class="fa-solid fa-scale-balanced mr-2 text-primary"></i>{{ listing.amount }}{% if listing.progress %} <span class="text-sm opacity-80">· {{ listing.progress }}</span>{% endif %}</div>{% endif %}
+      <div class="my-1 flex flex-wrap items-center gap-1">
+        {% if can_edit %}
+          <span class="border mx-px py-px px-1 rounded text-xs text-secondary bg-purple">{% if listing.community %}{% trans "from your community" %}{% else %}{% trans "from me" %}{% endif %}</span>
         {% endif %}
-        {% if listing.kind != "other" %}<span class="border mx-px py-px px-1 rounded text-xs text-secondary bg-primary"><i class="fa-solid {{ listing.kind_icon }} mr-1"></i>{{ listing.get_kind_display }}</span>{% endif %}
+        {% if listing.kind != "other" %}<span class="border mx-px py-px px-1 rounded text-xs text-secondary {{ listing.colour }}"><i class="fa-solid {{ listing.kind_icon }} mr-1"></i>{{ listing.kind_label }}</span>{% endif %}
+        {% if listing.level %}<span class="border mx-px py-px px-1 rounded text-xs text-secondary bg-purple">{% if listing.community and listing.is_wish %}{% trans "Level" %}: {{ listing.get_level_display }}+{% else %}{{ listing.get_level_display }}{% endif %}</span>{% endif %}
         {% for cat in listing.categories.all %}
           <span class="border mx-px py-px px-1 rounded text-xs text-secondary bg-primary">{{ cat.name }}</span>
         {% endfor %}
-        <span class="text-sm mx-2">{{ listing.location_name|default:"" }}</span>
+        {% if listing.status == "covered" or listing.status == "promised" %}<span class="border mx-px py-px px-1 rounded text-xs text-secondary bg-green">{% if listing.is_wish %}{% trans "Covered" %}{% else %}{% trans "Given away" %}{% endif %}</span>{% endif %}
+        <span class="text-sm mx-2">{{ listing.place.0|default:"" }}</span>
         <span class="text-xs">{% include "projects/_freshness.html" with when=listing.updated_at label_updated=True %}</span>
       </div>
     </div>
 
-    {% if listing.owner == request.user %}
+    {% if can_edit %}
       <a href="{% url 'gifts:delete' listing.pk %}" class="btn btn-lg btn-purple flex mx-5">
         <i class="fa fa-recycle mr-1"></i> {% trans "Delete" %}
       </a>
@@ -89,45 +92,65 @@
 
   {# ── Description ── #}
   <div class="mt-10">
-    <p>{{ listing.description }}</p>
+    {% if listing.description %}<p>{{ listing.description|linebreaksbr }}</p>{% endif %}
+    {% if listing.is_offer and listing.skill_id and not listing.available %}
+      <p class="text-sm opacity-70"><i class="fa fa-clock mr-1"></i>{% trans "Currently not available to teach / share." %}</p>
+    {% endif %}
+    {% if listing.skill_id %}
+      <p class="text-sm"><a href="{{ listing.skill.get_absolute_url }}" class="underline">{% blocktrans with skill=listing.skill.get_name %}Everyone who offers or looks for {{ skill }}{% endblocktrans %}</a></p>
+    {% endif %}
   </div>
 
-  {# ── Owner block ── #}
-  {% if listing.owner %}
+  {# ── Who it belongs to: a person, or a community (and its project) ── #}
+  {% with holder=listing.holder %}{% if holder %}
   <div class="mt-8">
     <h2 class="text-lg font-semibold mb-4">
-      {% if listing.type == 'offer' %}{% trans "Offer from" %}{% else %}{% trans "Wish from" %}{% endif %}
+      {% if listing.is_offer %}{% trans "Offer from" %}{% else %}{% trans "Wish from" %}{% endif %}
     </h2>
     <div class="flex flex-col items-center gap-3 p-4 border rounded bg-primary bg-opacity-5">
-      <a href="{{ listing.owner.get_absolute_url }}" class="block">
-        {% if listing.owner.image %}
-          <img src="{{ listing.owner.image.url }}"
-            alt="{% if listing.owner.name %}{{ listing.owner.name }}{% else %}{{ listing.owner.username }}{% endif %}"
-            class="w-20 h-20 rounded-full object-cover mx-auto">
-        {% else %}
-          <div class="w-20 h-20 rounded-full bg-primary flex items-center justify-center text-secondary mx-auto">
-            <i class="fa fa-user text-3xl"></i>
-          </div>
+      {% if listing.community %}
+        {% with photo=holder.photos.all|first %}
+        <a href="{{ holder.get_absolute_url }}" class="block">
+          {% if photo %}<img src="{{ photo.image.url }}" alt="" class="w-20 h-20 rounded-full object-cover mx-auto">
+          {% else %}<div class="w-20 h-20 rounded-full bg-green flex items-center justify-center text-secondary mx-auto"><i class="fa-solid {{ holder.get_type_icon }} text-3xl"></i></div>{% endif %}
+        </a>
+        {% endwith %}
+        <a href="{{ holder.get_absolute_url }}" class="font-serif text-primary">{{ holder.name }}</a>
+        {% if listing.project %}
+          <a href="{{ listing.project.get_absolute_url }}" class="text-sm underline"><i class="fa-solid fa-person-digging mr-1"></i>{{ listing.project.title }}</a>
+          <div class="text-xs"><i class="fa-regular fa-calendar mr-1"></i>{% include "projects/_project_dates.html" with project=listing.project %}</div>
         {% endif %}
-      </a>
-      <a href="{{ listing.owner.get_absolute_url }}" class="font-serif text-primary">
-        {% if listing.owner.name %}{{ listing.owner.name }}
-        {% elif listing.owner.get_full_name %}{{ listing.owner.get_full_name }}
-        {% else %}{{ listing.owner.username }}{% endif %}
-      </a>
-      {% if listing.owner.location_name %}
-        <div class="text-sm"><i class="fa fa-map-marker mr-2"></i>{{ listing.owner.location_name }}</div>
+      {% else %}
+        <a href="{{ holder.get_absolute_url }}" class="block">
+          {% if holder.image %}
+            <img src="{{ holder.image.url }}" alt="{{ holder.name|default:holder.username }}" class="w-20 h-20 rounded-full object-cover mx-auto">
+          {% else %}
+            <div class="w-20 h-20 rounded-full bg-primary flex items-center justify-center text-secondary mx-auto">
+              <i class="fa fa-user text-3xl"></i>
+            </div>
+          {% endif %}
+        </a>
+        <a href="{{ holder.get_absolute_url }}" class="font-serif text-primary">{{ holder.name|default:holder.username }}</a>
+        <div class="text-xs">{% include "projects/_freshness.html" with when=holder.last_active %}</div>
       {% endif %}
-      <div class="text-xs">{% include "projects/_freshness.html" with when=listing.owner.last_active %}</div>
+      {% if holder.location_name %}
+        <div class="text-sm"><i class="fa fa-map-marker mr-2"></i>{{ holder.location_name }}</div>
+      {% endif %}
     </div>
   </div>
-  {% endif %}
+  {% endif %}{% endwith %}
 
-  {# ── Request form (non-owner authenticated) ── #}
-  {% if form %}
+  {# ── How to answer: a project's need and a community's skill wish have their own forms ── #}
+  {% if help_url and not can_edit %}
+  <div class="mt-8">
+    <a class="btn btn-lg" href="{% if request.user.is_authenticated %}{{ help_url }}{% else %}{% url 'users:login' %}?next={{ help_url|urlencode }}{% endif %}">
+      <i class="fa-solid fa-hand-holding-heart mr-2"></i>{% trans "Help with this" %}
+    </a>
+  </div>
+  {% elif form %}
   <div class="mt-8">
     <h2 class="text-lg font-semibold mb-4">
-      {% if listing.type == 'offer' %}{% trans "Express Interest" %}{% else %}{% trans "Offer to fulfill this wish" %}{% endif %}
+      {% if listing.is_offer %}{% trans "Express Interest" %}{% else %}{% trans "Offer to fulfill this wish" %}{% endif %}
     </h2>
     <div class="border rounded-xl bg-secondary p-6" x-data="{ showLoc: false }">
       <form method="post">
@@ -136,6 +159,13 @@
           <label class="form-label">{% trans "Message" %}</label>
           {{ form.message }}
         </div>
+        {% if listing.quantity %}
+        <div class="form-group mb-4">
+          <label class="form-label" for="{{ form.quantity.id_for_label }}">{% if listing.is_offer %}{% trans "How much would you like?" %}{% else %}{% trans "How much do you bring?" %}{% endif %}</label>
+          <div class="flex items-center gap-2">{{ form.quantity }} <span class="text-sm">{{ listing.get_unit_display }}{% if listing.remaining is not None %} <span class="opacity-70">({% blocktrans with amount=listing.remaining %}{{ amount }} left{% endblocktrans %})</span>{% endif %}</span></div>
+          {% for error in form.quantity.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+        </div>
+        {% endif %}
         <div class="form-group mb-4">
           <label class="form-label">{% trans "Proposed meeting location" %}</label>
           <div class="space-y-1">
@@ -155,22 +185,22 @@
         </div>
         <button type="submit" class="btn">
           <i class="fa fa-paper-plane mr-2"></i>
-          {% if listing.type == 'offer' %}{% trans "Express Interest" %}{% else %}{% trans "Send offer" %}{% endif %}
+          {% if listing.is_offer %}{% trans "Express Interest" %}{% else %}{% trans "Send offer" %}{% endif %}
         </button>
       </form>
     </div>
   </div>
-  {% elif not request.user.is_authenticated and listing.owner %}
+  {% elif not request.user.is_authenticated and listing.manager %}
   <div class="mt-8">
     <a class="btn" href="{% url 'users:login' %}?next={{ request.path }}">
       <i class="fa fa-envelope mr-2"></i>
-      {% if listing.type == 'offer' %}{% trans "Log in to express interest" %}{% else %}{% trans "Log in to fulfill this wish" %}{% endif %}
+      {% if listing.is_offer %}{% trans "Log in to express interest" %}{% else %}{% trans "Log in to fulfill this wish" %}{% endif %}
     </a>
   </div>
   {% endif %}
 
   {# ── Incoming requests (owner only) ── #}
-  {% if is_owner %}
+  {% if can_edit %}
     {% if incoming_requests %}
     <div class="mt-8">
       <h2 class="text-lg font-semibold mb-4">{% trans "Incoming Interests" %}</h2>
@@ -216,7 +246,7 @@
   {% references_for listing %}
 
   {# ── Location map ── #}
-  {% if listing.location %}
+  {% if listing.point %}
   <div class="mt-10">
     <h2 class="text-lg font-semibold mb-3">{% trans "Location" %}</h2>
     <div class="relative">
@@ -232,15 +262,15 @@
 
 {% block javascript %}
   {{ block.super }}
-  {% if listing.location %}
+  {% if listing.point %}
   <script src="https://cdn.jsdelivr.net/npm/ol@v7.2.2/dist/ol.js"></script>
   <script>
   /* ================================================================
      Listing detail map — single marker + layer switcher.
      ================================================================ */
   (function () {
-    const LAT  = {{ listing.location.y|unlocalize }};
-    const LON  = {{ listing.location.x|unlocalize }};
+    const LAT  = {{ listing.point.y|unlocalize }};
+    const LON  = {{ listing.point.x|unlocalize }};
 
     document.addEventListener('DOMContentLoaded', function () {
       const mapEl = document.getElementById('listing-detail-map');
@@ -270,8 +300,8 @@
       const popupEl = document.createElement('div');
       popupEl.className = 'gift-popup';
       // Escaped for HTML first: escapejs alone would let "<" through into innerHTML
-      popupEl.innerHTML = '<strong>{{ listing.title|force_escape|escapejs }}</strong>'
-        + '{% if listing.location_name %}<div>{{ listing.location_name|force_escape|escapejs }}</div>{% endif %}';
+      popupEl.innerHTML = '<strong>{{ listing.display_title|force_escape|escapejs }}</strong>'
+        + '{% if listing.place.0 %}<div>{{ listing.place.0|force_escape|escapejs }}</div>{% endif %}';
       const overlay = new ol.Overlay({
         element: popupEl, positioning: 'bottom-center', offset: [0, -12], stopEvent: false
       });

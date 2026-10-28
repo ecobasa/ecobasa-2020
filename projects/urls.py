@@ -13,5 +13,5 @@ urlpatterns = [
     path("<int:pk>/archive/", views.archive, name="archive"),
     path("<int:pk>/confirm/", views.confirm, name="confirm"),
     path("<int:pk>/help/", views.offer_help, name="offer_help"),
-    path("<int:pk>/needs/<int:need_pk>/toggle/", views.toggle_need, name="toggle_need"),
+    path("<int:pk>/needs/<str:need_pk>/toggle/", views.toggle_need, name="toggle_need"),
 ]

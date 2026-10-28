@@ -125,14 +125,17 @@ class Community(UniqueSlugMixin, models.Model):
         return self.TYPE_ICONS.get(self.type, "fa-house")
 
     def get_reference_subjects(self):
-        """What references on this page can be about: the community and its skills."""
-        return [self, *self.community_skills.all()]
+        """What references on this page can be about: the community and its offers and
+        wishes (skills you can learn here, things)."""
+        return [self, *self.listings.all()]
 
     def has_skill(self, skill):
-        return self.community_skills.filter(skill=skill).exists()
+        from gifts.models import skill_offers
+        return skill_offers(self).filter(skill=skill).exists()
 
     def add_skill(self, skill):
-        return self.community_skills.get_or_create(skill=skill)[0]
+        from gifts.models import add_skill_offer
+        return add_skill_offer(self, skill)
 
     # ── matches.Match target protocol ───────────────────────────────
     def get_match_owner(self):

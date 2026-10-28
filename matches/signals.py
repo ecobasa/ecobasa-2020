@@ -11,14 +11,12 @@ from django.db.models.signals import post_delete, post_save, pre_save
 from communities.models import Community
 
 from gifts.models import Listing
-from projects.models import Need
-from skills.models import CommunitySkill, SkillWish, UserSkill
 
 from . import matching
 
 logger = logging.getLogger(__name__)
 
-MATCHED_MODELS = (Listing, Need, UserSkill, CommunitySkill, SkillWish)
+MATCHED_MODELS = (Listing,)
 
 
 def schedule_match(obj):
@@ -76,16 +74,15 @@ def _moved(instance):
 def _user_saved(sender, instance, raw=False, created=False, **kwargs):
     if raw or created or not _moved(instance):
         return
-    # Their gifts (all: a listing's country is its owner's), their skills and their skill wishes
-    for obj in (*instance.listings.all(), *instance.user_skills.all(), *instance.skill_wishes.all()):
+    # All their offers and wishes: a listing's country is its owner's
+    for obj in Listing.objects.of(instance):
         schedule_match(obj)
 
 
 def _community_saved(sender, instance, raw=False, created=False, **kwargs):
     if raw or created or not _moved(instance):
         return
-    needs = Need.objects.filter(project__community=instance, project__archived_at=None, covered_at=None)
-    for obj in (*instance.community_skills.all(), *instance.skill_wishes.all(), *needs):
+    for obj in Listing.objects.of(instance).current():
         schedule_match(obj)
 
 

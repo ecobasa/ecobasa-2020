@@ -11,8 +11,10 @@ from django.utils import timezone, translation
 from communities.models import Community
 from gifts.models import Listing, ListingCategory
 from notifications.models import Notification
-from projects.models import Need, Project
-from skills.models import CommunitySkill, Skill, SkillWish, UserSkill
+from projects.models import Project
+from skills.models import Skill
+from gifts.testing import need, skill_offer, skill_wish
+from matches.models import Contribution
 from users.models import User
 
 from ..emails import make_suggestions_unsubscribe_token, send_suggestion_emails
@@ -51,8 +53,20 @@ def _skill(name):
     return Skill.objects.get_or_create(name=name)[0]
 
 
+def _tag(listing):
+    """What a listing is, in a word: a project's need, a skill (of a person or community),
+    a wish for a skill, or another listing."""
+    if listing.project_id and listing.is_wish:
+        return "need"
+    if listing.skill_id:
+        if listing.is_wish:
+            return "skillwish"
+        return "communityskill" if listing.community_id else "userskill"
+    return "listing"
+
+
 def _pairs(user):
-    return sorted((s.own_type.model, str(s.own), s.other_type.model, str(s.other), s.reason) for s in user.suggestions.all())
+    return sorted((_tag(s.own), str(s.own), _tag(s.other), str(s.other), s.reason) for s in user.suggestions.all())
 
 
 # ── What fits ─────────────────────────────────────────────────────────
@@ -86,10 +100,10 @@ def test_things_match_by_title_not_by_gift_category(anna, ben):
     offer.categories.add(building)
     community = Community.objects.create(name="Hof", owner=anna, location=GOERLITZ)
     project = Project.objects.create(community=community, title="Oven")
-    Need.objects.create(project=project, kind=Need.KIND_MATERIAL, title="Chimney pipe", category=building)
+    need(project, kind=Listing.KIND_MATERIAL, title="Chimney pipe", category=building)
     assert match(offer, notify=False) == []
 
-    Need.objects.create(project=project, kind=Need.KIND_MATERIAL, title="Firewood for the kiln")
+    need(project, kind=Listing.KIND_MATERIAL, title="Firewood for the kiln")
     match(offer, notify=False)
     assert ("need", "Firewood for the kiln", "listing", "Firewood", "words") in _pairs(anna)
 
@@ -106,25 +120,25 @@ def test_a_material_does_not_fit_a_tool(anna, ben):
 @pytest.mark.django_db
 def test_skill_wishes_and_needs_meet_the_skills_of_people_and_communities(anna, ben):
     masonry = _skill("Masonry")
-    wish = SkillWish.objects.create(user=anna, skill=masonry)
+    wish = skill_wish(anna, masonry)
     community = Community.objects.create(name="Hof", owner=_user("amb@example.com", "Amb"), location=BAUTZEN)
-    community_wish = SkillWish.objects.create(community=community, skill=masonry)
+    community_wish = skill_wish(community, masonry)
     project = Project.objects.create(community=community, title="Oven")
-    need = Need.objects.create(project=project, kind=Need.KIND_SKILL, title="Masonry", skill=masonry)
-    teaching = CommunitySkill.objects.create(community=community, skill=masonry)
+    project_need = need(project, kind=Listing.KIND_HANDS, title="Masonry", skill=masonry)
+    teaching = skill_offer(community, masonry)
 
-    user_skill = UserSkill.objects.create(user=ben, skill=masonry)
+    user_skill = skill_offer(ben, masonry)
     match(user_skill, notify=False)
     # Ben hears about Anna's wish, the community's wish and the project
-    assert {(s.other_type.model, s.other.pk) for s in ben.suggestions.all()} == {
-        ("skillwish", wish.pk), ("skillwish", community_wish.pk), ("need", need.pk),
+    assert {(_tag(s.other), s.other.pk) for s in ben.suggestions.all()} == {
+        ("skillwish", wish.pk), ("skillwish", community_wish.pk), ("need", project_need.pk),
     }
     # Anna learns that Ben and the community offer it
     match(wish, notify=False)
-    assert {(s.other_type.model, s.other.pk) for s in anna.suggestions.all()} == {
+    assert {(_tag(s.other), s.other.pk) for s in anna.suggestions.all()} == {
         ("userskill", user_skill.pk), ("communityskill", teaching.pk),
     }
-    about_need = next(s for s in ben.suggestions.all() if s.other == need)
+    about_need = next(s for s in ben.suggestions.all() if s.other == project_need)
     about_teaching = next(s for s in anna.suggestions.all() if s.other == teaching)
     with translation.override("en"):
         assert about_need.text == "Oven at Hof needs: Masonry"
@@ -133,17 +147,17 @@ def test_skill_wishes_and_needs_meet_the_skills_of_people_and_communities(anna, 
     # the button leads to the offer form
     html = str(about_need.title_html)
     assert f'href="{project.get_absolute_url()}"' in html and f'href="{community.get_absolute_url()}"' in html
-    assert about_need.url == f"{project.get_absolute_url()}#need-{need.pk}"
-    assert about_need.action_url.endswith(f"/help/?need={need.pk}") and about_need.helps
+    assert about_need.url == f"{project.get_absolute_url()}#need-{project_need.pk}"
+    assert about_need.action_url.endswith(f"/help/?need={project_need.pk}") and about_need.helps
     # A community's wish opens the volunteer form on its page
     about_community_wish = next(s for s in ben.suggestions.all() if s.other == community_wish)
-    assert about_community_wish.url == f"{community.get_absolute_url()}?help={masonry.slug}" and about_community_wish.helps
+    assert about_community_wish.action_url == f"{community.get_absolute_url()}?help={masonry.slug}" and about_community_wish.helps
     client = Client()
     client.force_login(ben)
-    assert client.get(about_community_wish.url).context["help_wish"] == community_wish
+    assert client.get(about_community_wish.action_url).context["help_wish"] == community_wish
     # Its title links the community's profile, only the button opens the form
     assert f'href="{community.get_absolute_url()}"' in str(about_community_wish.title_html)
-    assert about_community_wish.action_url == about_community_wish.url
+    assert about_community_wish.url == community_wish.get_absolute_url()
     assert not about_teaching.helps
 
 
@@ -199,12 +213,12 @@ def test_nothing_between_own_things_too_far_unavailable_skills_or_covered_needs(
     assert match(_listing(far, "Clay", "offer"), notify=False) == []  # 900 km
 
     masonry = _skill("Masonry")
-    SkillWish.objects.create(user=anna, skill=masonry)
-    assert match(UserSkill.objects.create(user=ben, skill=masonry, available=False), notify=False) == []
+    skill_wish(anna, masonry)
+    assert match(skill_offer(ben, masonry, available=False), notify=False) == []
 
     community = Community.objects.create(name="Hof", owner=ben, location=BAUTZEN)
     project = Project.objects.create(community=community, title="Oven")
-    covered = Need.objects.create(project=project, kind=Need.KIND_MATERIAL, title="Clay", covered_at=timezone.now())
+    covered = need(project, kind=Listing.KIND_MATERIAL, title="Clay", covered_at=timezone.now())
     assert match(covered, notify=False) == []
 
 
@@ -277,8 +291,8 @@ def test_moving_closer_matches_again(anna, ben, django_capture_on_commit_callbac
     far = _user("far@example.com", "Far", PARIS)
     masonry = _skill("Masonry")
     with django_capture_on_commit_callbacks(execute=True):
-        SkillWish.objects.create(user=anna, skill=masonry)
-        UserSkill.objects.create(user=far, skill=masonry)
+        skill_wish(anna, masonry)
+        skill_offer(far, masonry)
         _listing(far, "Clay", "offer")
         _listing(anna, "Clay", "wish")
     assert not Suggestion.objects.exists()
@@ -286,7 +300,7 @@ def test_moving_closer_matches_again(anna, ben, django_capture_on_commit_callbac
     with django_capture_on_commit_callbacks(execute=True):
         far.location = BAUTZEN
         far.save()
-    assert {s.other_type.model for s in anna.suggestions.all()} == {"userskill", "listing"}
+    assert {_tag(s.other) for s in anna.suggestions.all()} == {"userskill", "listing"}
     assert Notification.objects.filter(recipient=anna, tag=Notification.TAG_SUGGESTION).exists()
 
 
@@ -297,13 +311,13 @@ def test_a_community_moving_closer_matches_its_skills_wishes_and_needs(anna, dja
     community = Community.objects.create(name="Hof", owner=owner, location=PARIS)
     project = Project.objects.create(community=community, title="Oven")
     with django_capture_on_commit_callbacks(execute=True):
-        UserSkill.objects.create(user=anna, skill=masonry)
-        Need.objects.create(project=project, kind=Need.KIND_SKILL, title="Masonry", skill=masonry)
+        skill_offer(anna, masonry)
+        need(project, kind=Listing.KIND_HANDS, title="Masonry", skill=masonry)
     assert not anna.suggestions.exists()
     with django_capture_on_commit_callbacks(execute=True):
         community.location = BAUTZEN
         community.save()
-    assert [s.other_type.model for s in anna.suggestions.all()] == ["need"]
+    assert [_tag(s.other) for s in anna.suggestions.all()] == ["need"]
 
 
 @pytest.mark.django_db
@@ -325,18 +339,18 @@ def test_deleting_removes_its_suggestions(anna, ben):
 
 @pytest.mark.django_db
 def test_saving_the_profile_again_does_not_announce_the_same_wishes_again(anna, ben, django_capture_on_commit_callbacks):
-    UserSkill.objects.create(user=ben, skill=_skill("Masonry"))
+    skill_offer(ben, _skill("Masonry"))
     data = {"name": "Anna", "skill_wishes": "Masonry", "match_emails": "on", "match_radius": "150",
             "location": GOERLITZ.ewkt}
     client = Client()
     client.force_login(anna)
     with django_capture_on_commit_callbacks(execute=True):
         assert client.post(reverse("users:update"), data).status_code == 302
-    wish = anna.skill_wishes.get()
+    wish = Listing.objects.get(owner=anna, type="wish")
     assert anna.suggestions.count() == 1
     with django_capture_on_commit_callbacks(execute=True):
         client.post(reverse("users:update"), data)
-    assert anna.skill_wishes.get() == wish  # kept, not removed and added again
+    assert Listing.objects.get(owner=anna, type="wish") == wish  # kept, not removed and added again
     assert anna.suggestions.count() == 1
 
 
@@ -373,12 +387,12 @@ def test_project_needs_are_gifts_or_skills_by_what_they_need(anna, ben):
     masonry = _skill("Masonry")
     community = Community.objects.create(name="Hof", owner=anna, location=GOERLITZ)
     project = Project.objects.create(community=community, title="Oven")
-    Need.objects.create(project=project, kind=Need.KIND_SKILL, title="Masonry", skill=masonry)
-    Need.objects.create(project=project, kind=Need.KIND_MATERIAL, title="Clay")
-    SkillWish.objects.create(user=anna, skill=masonry)
-    match(UserSkill.objects.create(user=ben, skill=masonry), notify=False)
+    need(project, kind=Listing.KIND_HANDS, title="Masonry", skill=masonry)
+    need(project, kind=Listing.KIND_MATERIAL, title="Clay")
+    skill_wish(anna, masonry)
+    match(skill_offer(ben, masonry), notify=False)
     match(_listing(ben, "Clay from the pond", "offer"), notify=False)
-    kinds = sorted((s.other_type.model, s.kind) for s in ben.suggestions.all())
+    kinds = sorted((_tag(s.other), s.kind) for s in ben.suggestions.all())
     assert kinds == [("need", "gift"), ("need", "skills"), ("skillwish", "skills")]
 
 

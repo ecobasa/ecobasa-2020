@@ -9,7 +9,7 @@
 {% block content %}
 <div class="container-content">
 
-  <a class="btn inline-flex items-center text-sm leading-5 font-medium mb-10" href="{% if listing.pk %}{% url "gifts:detail" listing.pk %}{% else %}{% url "gifts:search" %}{% endif %}">
+  <a class="btn inline-flex items-center text-sm leading-5 font-medium mb-10" href="{% if listing.pk %}{% url "gifts:detail" listing.pk %}{% elif community %}{{ community.get_absolute_url }}{% else %}{% url "gifts:search" %}{% endif %}">
     <svg class="flex-shrink-0 -ml-1 mr-1 h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
       <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
     </svg>
@@ -18,15 +18,67 @@
 
   <h1 class="text-3xl md:text-5xl">
     {% if listing.pk %}
-      {% blocktrans with type=listing.get_type_display title=listing.title %}Edit {{ type }} {{ title }}{% endblocktrans %}
+      {% blocktrans with type=listing.get_type_display title=listing.display_title %}Edit {{ type }} {{ title }}{% endblocktrans %}
     {% else %}
       {% trans "Create new Offer or Wish" %}
     {% endif %}
   </h1>
+  {% if community %}<p class="text-sm"><i class="fa fa-home mr-1"></i>{% blocktrans with name=community.name %}For {{ name }}{% endblocktrans %}{% if listing.project %} · <a href="{{ listing.project.get_absolute_url }}" class="underline">{{ listing.project.title }}</a>{% endif %}</p>{% endif %}
 
-  <form enctype="multipart/form-data" method="post" class="w-full form-control-w-full">
+  {# Which fields show depends on the kind: things have a title, amount and categories; a skill names the skill, with a level #}
+  <form enctype="multipart/form-data" method="post" class="w-full form-control-w-full space-y-4"
+        x-data="{ type: '{{ form.type.value|default:'offer'|escapejs }}', kind: '{{ form.kind.value|default:'other'|escapejs }}',
+                  get isThing() { return ['material', 'tool', 'other'].includes(this.kind) },
+                  get isSkill() { return this.kind === 'skill' } }">
     {% csrf_token %}
-    {% crispy form %}
+    {% if community %}<input type="hidden" name="community" value="{{ community.slug }}">{% endif %}
+    {{ form.non_field_errors }}
+
+    <fieldset class="form-group" x-on:change="type = $event.target.value">
+      <legend class="form-label">{% trans "Offer or wish?" %}</legend>
+      <div class="flex flex-wrap gap-4">
+        {% for radio in form.type %}
+          <label class="inline-flex items-center gap-2 cursor-pointer">{{ radio.tag }} <span>{{ radio.choice_label }}</span></label>
+        {% endfor %}
+      </div>
+      {% for error in form.type.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+    </fieldset>
+
+    <fieldset class="form-group" x-on:change="kind = $event.target.value">
+      <legend class="form-label">{% trans "What is it?" %}</legend>
+      <div class="flex flex-wrap gap-2">
+        {% for radio in form.kind %}
+          <label class="inline-flex items-center gap-2 cursor-pointer border rounded-full px-3 py-1 has-[:checked]:bg-primary has-[:checked]:text-secondary">
+            {{ radio.tag }}
+            {% if radio.data.value == "skill" %}
+              <span><i class="fa-solid fa-graduation-cap mr-1"></i><span x-text="type === 'wish' ? '{% trans "Learn a skill"|escapejs %}' : '{% trans "Skill"|escapejs %}'">{{ radio.choice_label }}</span></span>
+            {% else %}
+              <span>{{ radio.choice_label }}</span>
+            {% endif %}
+          </label>
+        {% endfor %}
+      </div>
+      {% for error in form.kind.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+      <p class="text-xs mt-1" x-show="kind === 'skill' && type === 'wish'" x-cloak>{% trans "You want to learn it by doing, with someone who has it." %}</p>
+      <p class="text-xs mt-1" x-show="kind === 'skill' && type === 'offer'" x-cloak>{% trans "You share or teach it." %}</p>
+      <p class="text-xs mt-1" x-show="kind === 'knowledge'" x-cloak>{% trans "Advice or know-how, e.g. someone who has built a rocket stove before." %}</p>
+      <p class="text-xs mt-1" x-show="kind === 'hands'" x-cloak>{% trans "Help on site, with or without a particular skill." %}</p>
+    </fieldset>
+
+    <div x-show="!isThing" x-cloak>{{ form.skill_name|as_crispy_field }}<datalist id="skill-suggestions"></datalist></div>
+    <div x-show="!isSkill">{{ form.title|as_crispy_field }}</div>
+    <div class="flex gap-4" x-show="!isSkill">
+      <div class="w-1/2 sm:w-1/3">{{ form.quantity|as_crispy_field }}</div>
+      <div class="w-1/2 sm:w-1/3">{{ form.unit|as_crispy_field }}</div>
+    </div>
+    <div class="flex flex-wrap gap-4 items-end" x-show="!isThing" x-cloak>
+      <div class="w-full sm:w-1/3">{{ form.level|as_crispy_field }}</div>
+      <div x-show="type === 'offer'">{{ form.available|as_crispy_field }}</div>
+    </div>
+    <div x-show="isThing">{{ form.categories|as_crispy_field }}</div>
+    {{ form.description|as_crispy_field }}
+    {{ form.image|as_crispy_field }}
+    {{ form.location_name }}{{ form.location }}
 
     <!-- Location picker (rendered manually; form.location and form.location_name are hidden inputs) -->
     <h3 class="text-lg font-semibold text-primary mb-2">{% trans "Location" %}</h3>
@@ -36,7 +88,7 @@
       {% if listing.pk %}
       <a href="{% url "gifts:delete" listing.pk %}" class="btn btn-lg btn-red"><i class="fa fa-recycle mr-2"></i>{% trans "Delete" %}</a>
       {% endif %}
-      <a class="btn btn-lg btn-purple flex" href="{% if listing.pk %}{% url "gifts:detail" listing.pk %}{% else %}{% url "gifts:search" %}{% endif %}"><i class="fa fa-times mr-2"></i>{% trans "Cancel" %}</a>
+      <a class="btn btn-lg btn-purple flex" href="{% if listing.pk %}{% url "gifts:detail" listing.pk %}{% elif community %}{{ community.get_absolute_url }}{% else %}{% url "gifts:search" %}{% endif %}"><i class="fa fa-times mr-2"></i>{% trans "Cancel" %}</a>
       <button class="btn btn-lg" type="submit">
         <i class="fa fa-check mr-2"></i>{% trans "Save" %}
       </button>
@@ -49,6 +101,28 @@
 {% block javascript %}
   {{ block.super }}
   <script src="https://cdn.jsdelivr.net/npm/ol@v7.2.2/dist/ol.js"></script>
+  <script>
+    // Skill suggestions in any language while typing
+    document.addEventListener('DOMContentLoaded', () => {
+      const input = document.querySelector('[data-skill-name]');
+      const list = document.getElementById('skill-suggestions');
+      if (!input || !list) return;
+      let timer = null;
+      input.addEventListener('input', () => {
+        const q = input.value.trim();
+        clearTimeout(timer);
+        if (q.length < 2) { list.innerHTML = ''; return; }
+        timer = setTimeout(() => {
+          fetch('{% url "skills:api_autocomplete" %}?q=' + encodeURIComponent(q))
+            .then(r => r.json())
+            .then(data => {
+              list.innerHTML = '';
+              (data.results || []).forEach(r => { const o = document.createElement('option'); o.value = r.text; list.appendChild(o); });
+            });
+        }, 250);
+      });
+    });
+  </script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       const locationInput = document.getElementById('id_location');

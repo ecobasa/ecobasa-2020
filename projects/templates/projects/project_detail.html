@@ -59,11 +59,11 @@
 
       {% if project.description %}<p>{{ project.description|linebreaksbr }}</p>{% endif %}
 
-      {% with skills=project.skills_to_learn.all %}
+      {% with skills=project.skills_to_learn %}
         {% if skills %}
           <h2>{% trans "What you can learn here" %}</h2>
           <div class="flex flex-wrap gap-2">
-            {% for skill in skills %}{% include "projects/_learn_pill.html" %}{% endfor %}
+            {% for skill in skills %}{% include "gifts/_listing_pill.html" with listing=skill link=True %}{% endfor %}
           </div>
         {% endif %}
       {% endwith %}
@@ -73,11 +73,11 @@
         <ul class="list-none p-0 space-y-2">
           {% for need in needs %}
             <li id="need-{{ need.pk }}" class="flex flex-wrap items-center gap-3 p-3 rounded border bg-secondary bg-opacity-50 {% if need.is_done %}opacity-70{% endif %}">
-              <i class="fa-solid {{ need.icon }} text-primary w-5 text-center"></i>
+              <i class="fa-solid {{ need.kind_icon }} text-primary w-5 text-center"></i>
               <div class="flex-1 min-w-0">
                 <span class="font-semibold {% if need.is_done %}line-through{% endif %}">{{ need.display_title }}</span>
                 {% if need.amount %}<span class="opacity-70"> · {{ need.amount }}</span>{% endif %}
-                <span class="text-xs opacity-70 block">{{ need.get_kind_display }}
+                <span class="text-xs opacity-70 block">{{ need.kind_label }}
                   {% if need.status == 'covered' %}· {% trans "covered" %}
                   {% elif need.status == 'promised' or need.progress %}·
                     {% if need.progress %}{{ need.progress }},{% endif %}
@@ -117,9 +117,9 @@
                   {% endif %}{% endwith %}
                   <span class="ml-auto pill text-xs {% if match.status == 'accepted' %}bg-green{% elif match.status == 'counter' %}bg-primary{% else %}bg-yellow{% endif %}">{{ match.get_status_display }}</span>
                 </div>
-                {% with need_offers=match.need_offers.all %}{% if need_offers %}
+                {% with need_offers=match.brings %}{% if need_offers %}
                   <div class="flex flex-wrap gap-1 mt-2">
-                    {% for offer in need_offers %}<span class="pill {{ offer.need.colour }} text-xs"><i class="fa-solid {{ offer.need.icon }} mr-1"></i>{{ offer.need.display_title }}{% if offer.amount %}<span class="ml-1 opacity-80">({{ offer.amount }})</span>{% endif %}</span>{% endfor %}
+                    {% for offer in need_offers %}{% include "gifts/_listing_pill.html" with listing=offer.listing amount=offer.amount %}{% endfor %}
                   </div>
                 {% endif %}{% endwith %}
               </a>

@@ -3,6 +3,7 @@ import pytest
 from django.test import Client
 
 from gifts.models import Listing
+from gifts.testing import need, skill_offer, skill_wish
 from users.models import User
 
 from ..models import Match, MatchMessage
@@ -280,13 +281,13 @@ class TestCommunityStayCounter:
 @pytest.mark.django_db
 def test_the_match_shows_what_the_other_side_brings(owner, requester, stay):
     from communities.models import Community
-    from skills.models import Skill, UserSkill
+    from skills.models import Skill
     from references.models import Reference
     from django.contrib.contenttypes.models import ContentType
 
-    masonry = UserSkill.objects.create(user=requester, skill=Skill.objects.create(name="Masonry"), level="advanced")
+    masonry = skill_offer(requester, Skill.objects.create(name="Masonry"), level="advanced")
     Reference.objects.create(author=owner, recipient=requester, text="Great walls",
-                             content_type=ContentType.objects.get_for_model(UserSkill), object_id=str(masonry.pk))
+                             content_type=ContentType.objects.get_for_model(Listing), object_id=str(masonry.pk))
     Listing.objects.create(title="Lime mortar", type="offer", kind=Listing.KIND_MATERIAL, owner=requester)
     Listing.objects.create(title="A tent", type="wish", owner=requester)
     Community.objects.create(name="Other Hof", owner=requester)
@@ -347,18 +348,18 @@ def test_accepting_a_stay_updates_the_project_needs(owner, requester):
     """A need ticked in the community's volunteer form is promised once the stay is
     accepted on the match page; a volunteer counts as one person."""
     from communities.models import Community
-    from projects.models import Need, Project
+    from projects.models import Project
 
     community = Community.objects.create(name="Hof", owner=owner)
     project = Project.objects.create(community=community, title="Oven")
-    hands = Need.objects.create(project=project, kind=Need.KIND_SKILL, title="Helping hands", quantity=2, unit=Need.UNIT_PEOPLE)
-    clay = Need.objects.create(project=project, kind=Need.KIND_MATERIAL, title="Clay")
+    hands = need(project, kind=Listing.KIND_HANDS, title="Helping hands", quantity=2, unit="people")
+    clay = need(project, kind=Listing.KIND_MATERIAL, title="Clay")
     _client_for(requester).post(f"/communities/volunteer-request/{community.slug}/", {"body": "Hi", "need": [hands.pk, clay.pk]})
     stay = Match.objects.get()
     assert (hands.status, clay.status) == ("offered", "offered")
 
     _client_for(owner).post(stay.get_absolute_url(), {"action": "accept"})
-    hands, clay = Need.objects.get(pk=hands.pk), Need.objects.get(pk=clay.pk)
+    hands, clay = Listing.objects.get(pk=hands.pk), Listing.objects.get(pk=clay.pk)
     assert clay.status == "promised"
     assert hands.status == "offered" and hands.promised_quantity == 1  # one of two people
 
@@ -367,16 +368,16 @@ def test_accepting_a_stay_updates_the_project_needs(owner, requester):
 def test_asking_for_more_skills(owner, requester, stay):
     from references.models import match_skill_names
     from references.templatetags.references_tags import reference_url_for_match
-    from skills.models import Skill, UserSkill
+    from skills.models import Skill
 
-    masonry = UserSkill.objects.create(user=requester, skill=Skill.objects.create(name="Masonry"))
+    masonry = skill_offer(requester, Skill.objects.create(name="Masonry"))
     client = _client_for(owner)
-    client.post(stay.get_absolute_url(), {"action": "extras", "user_skill": [masonry.pk]})
-    assert list(stay.user_skills.all()) == [masonry]
+    client.post(stay.get_absolute_url(), {"action": "extras", "listing": [masonry.pk]})
+    assert list(stay.listings.all()) == [masonry]
     assert "Masonry" in stay.thread.get().body
     content = client.get(stay.get_absolute_url()).content.decode()
     assert "requester@example.com has to offer" in content
-    assert client.get(stay.get_absolute_url()).context["asked_skill_ids"] == {masonry.pk}
+    assert client.get(stay.get_absolute_url()).context["asked_listing_ids"] == {masonry.pk}
     assert "Masonry" in client.get("/matches/?type=volunteer").content.decode()
 
     # Who was helped tags it on the helper in their reference

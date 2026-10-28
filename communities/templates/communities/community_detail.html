@@ -123,7 +123,7 @@
 				<h2>{% trans "Skills you can learn here" %}</h2>
 				<div class="flex flex-wrap gap-2 mb-2">
 					{% for cs in community_skills %}
-						<a {% if request.user == community.owner %}href="{% url 'skills:communityskill_edit' cs.skill.slug community.slug %}"{% elif request.user.is_authenticated %}href="#" @click.prevent="openVolunteer('{{ cs.skill|escapejs }}', 'offer', {{ cs.skill_id }})"{% else %}href="{% url 'users:login' %}?next={{ request.path }}"{% endif %}
+						<a {% if request.user == community.owner %}href="{{ cs.get_edit_url }}"{% elif request.user.is_authenticated %}href="#" @click.prevent="openVolunteer('{{ cs.skill|escapejs }}', 'offer', {{ cs.skill_id }})"{% else %}href="{% url 'users:login' %}?next={{ request.path }}"{% endif %}
 							class="pill pill-lg bg-purple transition-opacity">
 							<i class="mr-1 fa fa-graduation-cap"></i>{{ cs.skill }}
 						</a>
@@ -131,7 +131,7 @@
 				</div>
 			{% elif request.user == community.owner %}
 				<h2>{% trans "Skills you can learn here" %}</h2>
-				<a href="{% url 'skills:communityskill_add' community.slug %}" class="btn">
+				<a href="{% url 'gifts:create' %}?community={{ community.slug }}&type=offer&kind=skill" class="btn">
 					<i class="fa fa-plus mr-1"></i>{% trans "Add a skill" %}
 				</a>
 			{% endif %}
@@ -140,7 +140,7 @@
 				<h2>{% trans "Looking for people with these skills" %}</h2>
 				<div class="flex flex-wrap gap-2 mb-2">
 					{% for sw in skill_wishes %}
-						<a {% if request.user == community.owner %}href="{% url 'skills:skillwish_community_edit' sw.pk community.slug %}"{% elif request.user.is_authenticated %}href="#" @click.prevent="openVolunteer('{{ sw.skill|escapejs }}', 'wish', {{ sw.skill_id }})"{% else %}href="{% url 'users:login' %}?next={{ request.path }}"{% endif %}
+						<a {% if request.user == community.owner %}href="{{ sw.get_edit_url }}"{% elif request.user.is_authenticated %}href="#" @click.prevent="openVolunteer('{{ sw.skill|escapejs }}', 'wish', {{ sw.skill_id }})"{% else %}href="{% url 'users:login' %}?next={{ request.path }}"{% endif %}
 							class="pill pill-lg bg-yellow hover:bg-purple transition-opacity">
 							<i class="mr-1 fa fa-search"></i>{{ sw.skill }}
 							{% if sw.level %}<span class="opacity-70 text-xs ml-1">({{ sw.get_level_display }}+)</span>{% endif %}
@@ -149,7 +149,7 @@
 				</div>
 			{% elif request.user == community.owner %}
 				<h2>{% trans "Looking for people with these skills" %}</h2>
-				<a href="{% url 'skills:communityskill_add' community.slug %}?mode=wish" class="btn">
+				<a href="{% url 'gifts:create' %}?community={{ community.slug }}&type=wish&kind=hands" class="btn">
 					<i class="fa fa-plus mr-1"></i>{% trans "Add skills you're looking for" %}
 				</a>
 			{% endif %}
@@ -325,7 +325,7 @@
 					</div>
 					<label class="text-sm">{% trans "Your skills (comma separated)" %}
 						<input type="text" name="sender_skills" id="volunteer-sender-skills" class="form-input mt-1"
-									value="{% if request.user.is_authenticated %}{% for us in request.user.user_skills.all %}{{ us.skill }}{% if not forloop.last %}, {% endif %}{% endfor %}{% endif %}">
+									value="{% if request.user.is_authenticated %}{{ own_skill_names }}{% endif %}">
 					</label>
 					{% if bring_projects or bring_wishes %}
 						{# What the community needs: tick what you can bring or help with #}
@@ -341,7 +341,7 @@
 									{% for need in needs %}
 										<label class="flex items-center gap-2 cursor-pointer py-0.5">
 											<input type="checkbox" name="need" value="{{ need.pk }}" class="form-checkbox">
-											<i class="fa-solid {{ need.icon }} {% if need.colour == 'bg-purple' %}text-purple{% else %}text-primary{% endif %} w-4 text-center"></i>
+											<i class="fa-solid {{ need.kind_icon }} {% if need.colour == 'bg-purple' %}text-purple{% else %}text-primary{% endif %} w-4 text-center"></i>
 											<span>{{ need.display_title }}{% if need.amount %} <span class="text-xs opacity-70">· {{ need.amount }}</span>{% endif %}</span>
 										</label>
 									{% endfor %}
@@ -353,7 +353,7 @@
 									<label class="flex items-center gap-2 cursor-pointer py-0.5">
 										<input type="checkbox" name="listing" value="{{ listing.pk }}" class="form-checkbox">
 										<i class="fa-solid {{ listing.kind_icon }} text-primary w-4 text-center"></i>
-										<span>{{ listing.title }}{% if listing.amount %} <span class="text-xs opacity-70">· {{ listing.amount }}</span>{% endif %}</span>
+										<span>{{ listing.display_title }}{% if listing.amount %} <span class="text-xs opacity-70">· {{ listing.amount }}</span>{% endif %}</span>
 									</label>
 								{% endfor %}
 							{% endif %}

@@ -15,20 +15,24 @@ from django.views.decorators.http import require_POST
 from communities.models import Community
 from dashboard_lists import Choice, paginate, query_url
 from matches.emails import notify_match_created
-from matches.models import Match, VolunteerDetails
+from gifts.models import Listing
+from matches.models import Contribution, Match, VolunteerDetails
 from skills.models import skill_name_q
 
-from .forms import HelpOfferForm, NeedFormSet, ProjectForm
+from .forms import HelpOfferForm, NeedForm, NeedFormSet, ProjectForm
 from .freshness import read_confirm_token
-from .models import Need, NeedOffer, Project
+from .models import Project
 
-_NEEDS = Prefetch(
-    "needs", queryset=Need.objects.select_related("skill", "category").prefetch_related("need_offers__match__from_user"),
+# A project's needs and skills to learn, with how far each is covered
+_LISTINGS = Prefetch(
+    "listings", queryset=Listing.objects.select_related("skill").prefetch_related(
+        "categories", "contributions__match__from_user",
+    ),
 )
 
 
 def _projects():
-    return Project.objects.select_related("community", "community__owner").prefetch_related(_NEEDS, "skills_to_learn")
+    return Project.objects.select_related("community", "community__owner").prefetch_related(_LISTINGS)
 
 
 def project_list(request):
@@ -45,13 +49,13 @@ def project_list(request):
             | Q(description__icontains=q)
             | Q(community__name__icontains=q)
             | Q(community__location_name__icontains=q)
-            | Q(needs__title__icontains=q)
-            | skill_name_q(q, "needs__skill__")
-            | skill_name_q(q, "skills_to_learn__")
+            | Q(listings__title__icontains=q)
+            | skill_name_q(q, "listings__skill__")
         ).distinct()
     # Current projects by the kind of their open needs, archived ones by any of their needs
     def of_kind(kind):
-        return projects.filter(needs__kind=kind, **({} if archived else {"needs__covered_at": None})).distinct()
+        needs = {"listings__type": Listing.TYPE_WISH, "listings__kind": kind}
+        return projects.filter(**needs, **({} if archived else {"listings__covered_at": None})).distinct()
 
     kind = request.GET.get("kind", "")
     shows = [
@@ -62,10 +66,10 @@ def project_list(request):
         )
     ]
     kinds = [Choice(_("All"), query_url(request, kind=None, page=None), not kind, projects.count())] + [
-        Choice(label, query_url(request, kind=value, page=None), kind == value, of_kind(value).count(), icon=Need.KIND_ICONS[value])
-        for value, label in Need.KIND_CHOICES
+        Choice(label, query_url(request, kind=value, page=None), kind == value, of_kind(value).count(), icon=Listing.KIND_ICONS[value])
+        for value, label in NeedForm.KIND_CHOICES
     ]
-    if kind in dict(Need.KIND_CHOICES):
+    if kind in dict(NeedForm.KIND_CHOICES):
         projects = of_kind(kind)
     page = paginate(request, projects)
     return render(request, "projects/project_list.html", {
@@ -86,13 +90,13 @@ def detail(request, pk):
     offers = []
     if can_edit:
         offers = list(
-            project.matches.select_related("from_user").prefetch_related("need_offers__need__skill")
+            project.matches.select_related("from_user").prefetch_related("contributions__listing__skill")
             .exclude(status=Match.STATUS_DECLINED)
         )
     return render(request, "projects/project_detail.html", {
         "project": project,
         "community": project.community,
-        "needs": list(project.needs.all()),
+        "needs": project.needs(),
         "can_edit": can_edit,
         "offers": offers,
         "own_offer": (
@@ -112,7 +116,7 @@ def _references(project):
 
     matches = Match.objects.filter(
         Q(content_type=ContentType.objects.get_for_model(Project), object_id=str(project.pk))
-        | Q(need_offers__need__project=project)
+        | Q(contributions__listing__project=project)
     )
     references = list(with_card_data(Reference.objects.filter(match__in=matches).distinct()))
     for reference in references:
@@ -132,7 +136,6 @@ def _save_project(request, project, template_context):
             project.touch(save=False)
             project.save()
             form.save_skills_to_learn(project)
-            project.share_skills_with_community()
             formset.instance = project
             formset.save(commit=False)
             for need in formset.deleted_objects:
@@ -144,6 +147,7 @@ def _save_project(request, project, template_context):
                 need.project = project
                 need.order = order
                 need.save()
+                need_form.save_category(need)
         messages.success(request, _("The project has been saved."))
         return redirect(project.get_absolute_url())
     return render(request, "projects/project_form.html", {
@@ -217,7 +221,7 @@ def toggle_need(request, pk, need_pk):
     project = get_object_or_404(Project, pk=pk)
     if not project.can_edit(request.user):
         raise PermissionDenied
-    need = get_object_or_404(project.needs, pk=need_pk)
+    need = get_object_or_404(project.listings.filter(type=Listing.TYPE_WISH), pk=need_pk)
     need.covered_at = None if need.covered_at else timezone.now()
     need.save(update_fields=["covered_at"])
     project.touch()
@@ -247,7 +251,7 @@ def offer_help(request, pk):
                 stay_to=_day_start(form.cleaned_data["stay_to"]),
             )
             for need, quantity in form.chosen_needs():
-                NeedOffer.objects.create(need=need, match=match, quantity=quantity)
+                Contribution.objects.create(listing=need, match=match, quantity=quantity)
         notify_match_created(match, http_request=request)
         messages.success(request, _("Your offer has been sent to %(community)s!") % {"community": community.name})
         return redirect(match.get_absolute_url())
