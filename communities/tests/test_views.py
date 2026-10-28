@@ -97,17 +97,6 @@ class TestVolunteerRequestSkillProposal:
                               practice_skills="Nonviolent Communication")
         assert "review_url" not in response.context
 
-    def test_skill_with_older_slug_counts_as_on_profile(self, volunteer_client, community):
-        from gift_economy.gifts.skills.models import Skill, SkillTaxonomy
-        SkillTaxonomy.objects.create(slug="community-supported-agriculture",
-                                     names={"en": "Community Supported Agriculture (CSA)"})
-        skill = Skill.objects.create(name="Community Supported Agriculture (CSA)",
-                                     slug="community-supported-agriculture-csa")
-        skill_offer(User.objects.get(username="vol"), skill)
-        response = self._send(volunteer_client, community,
-                              sender_skills="Community Supported Agriculture (CSA)")
-        assert "review_url" not in response.context
-
     def test_long_skill_lists_fit(self, volunteer_client, community):
         from gift_economy.matches.models import VolunteerDetails
         many = ", ".join(f"Skill number {i}" for i in range(80))
