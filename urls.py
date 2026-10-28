@@ -12,13 +12,13 @@ urlpatterns = [
     path("i18n/setlang/", user_views.set_language, name="set_language"),
     path("", include("homepage.urls")),
     path("users/", include("users.urls")),
-    path("gifts/", include("gifts.urls")),
+    path("gifts/", include("gift_economy.gifts.urls")),
     path("communities/", include("communities.urls")),
-    path("skills/", include("gifts.skills.urls")),
+    path("skills/", include("gift_economy.gifts.skills.urls")),
     path("notifications/", include("notifications.urls")),
     path("messages/", include(("postman_urls", "postman"), namespace="postman")),
-    path("matches/", include("matches.urls", namespace="matches")),
-    path("references/", include("references.urls", namespace="references")),
+    path("matches/", include("gift_economy.matches.urls", namespace="matches")),
+    path("references/", include("gift_economy.references.urls", namespace="references")),
     path("projects/", include("projects.urls", namespace="projects")),
 ]
 

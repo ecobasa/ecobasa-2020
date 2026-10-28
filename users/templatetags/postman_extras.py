@@ -58,7 +58,7 @@ def _sender_skill_urls(sender_username):
     """{skill slug: the page of the sender's offer of it} for the skills on their profile."""
     if not sender_username:
         return {}
-    from gifts.models import Listing
+    from gift_economy.gifts.models import Listing
     offers = Listing.objects.filter(
         owner__username=sender_username, community=None, type=Listing.TYPE_OFFER, kind=Listing.KIND_SKILL,
     ).select_related("skill")
@@ -70,7 +70,7 @@ def _render_skill_pills(skills_list, sender_username):
     falling back to the general skill page, or plain text if the skill isn't in the database."""
     from django.urls import reverse
     from django.db.models import Q
-    from gifts.skills.models import Skill as SkillModel, skill_slug_for_name
+    from gift_economy.gifts.skills.models import Skill as SkillModel, skill_slug_for_name
 
     # Case-insensitive slug lookup for all skill names at once
     wanted = {name.lower(): skill_slug_for_name(name) for name in skills_list}
@@ -104,7 +104,7 @@ def _render_sender_skill_pills(skills_list, sender_username):
     """Return HTML for purple sender-skill pills with graduation cap icons."""
     from django.urls import reverse
     from django.db.models import Q
-    from gifts.skills.models import Skill as SkillModel, skill_slug_for_name
+    from gift_economy.gifts.skills.models import Skill as SkillModel, skill_slug_for_name
 
     wanted = {name.lower(): skill_slug_for_name(name) for name in skills_list}
     existing = set(SkillModel.objects.filter(slug__in=wanted.values()).values_list('slug', flat=True))

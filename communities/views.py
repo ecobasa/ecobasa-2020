@@ -13,8 +13,8 @@ from django.views.decorators.http import require_GET, require_POST
 from .models import Community
 from .models import CommunityPhoto
 from .forms import CommunityForm
-from gifts.models import Listing, skill_offers, sync_skill_listings
-from gifts.skills.models import Skill, skill_name_q, skill_slug_for_name
+from gift_economy.gifts.models import Listing, skill_offers, sync_skill_listings
+from gift_economy.gifts.skills.models import Skill, skill_name_q, skill_slug_for_name
 
 from django.contrib.gis.geos import Polygon, Point
 from django.contrib.gis.db.models.functions import Distance
@@ -167,8 +167,8 @@ def volunteer_request(request, community_slug):
 
     import datetime
     from django.utils import timezone
-    from matches.models import Match, VolunteerDetails
-    from matches.emails import notify_match_created
+    from gift_economy.matches.models import Match, VolunteerDetails
+    from gift_economy.matches.emails import notify_match_created
 
     volunteer_mode       = request.POST.get("volunteer_mode", "")
     practice_skills      = request.POST.get("practice_skills", "").strip()
@@ -206,8 +206,8 @@ def volunteer_request(request, community_slug):
     )
 
     # Needs of the community's projects and its wishes they bring along
-    from gifts import units
-    from matches.models import Contribution
+    from gift_economy.gifts import units
+    from gift_economy.matches.models import Contribution
     needs = Listing.objects.of(community).current().filter(
         type=Listing.TYPE_WISH, pk__in=request.POST.getlist("need"), project__isnull=False,
     ).prefetch_related("contributions__match")

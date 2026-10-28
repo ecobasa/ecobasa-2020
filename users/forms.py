@@ -9,10 +9,10 @@ from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Field
 from croppie.fields import CroppieField
 
-from gifts.forms import Fieldset
+from gift_economy.gifts.forms import Fieldset
 from .models import User
-from gifts.models import Listing, add_skill_offer, sync_skill_listings
-from gifts.skills.models import get_or_create_skill
+from gift_economy.gifts.models import Listing, add_skill_offer, sync_skill_listings
+from gift_economy.gifts.skills.models import get_or_create_skill
 
 
 class SafeCroppieField(CroppieField):

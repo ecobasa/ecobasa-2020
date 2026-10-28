@@ -1,9 +1,9 @@
 from django import forms
 from django.utils.translation import gettext_lazy as _
 
-from gifts import units
-from gifts.models import Listing, ListingCategory, themed_choices
-from gifts.skills.models import _taxonomy, get_or_create_skill
+from gift_economy.gifts import units
+from gift_economy.gifts.models import Listing, ListingCategory, themed_choices
+from gift_economy.gifts.skills.models import _taxonomy, get_or_create_skill
 
 from .models import Project
 

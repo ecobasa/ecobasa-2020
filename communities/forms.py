@@ -44,7 +44,7 @@ class CommunityForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if self.instance and self.instance.pk:
-            from gifts.models import Listing
+            from gift_economy.gifts.models import Listing
             wishes_initial = ', '.join(
                 sw.display_title for sw in Listing.objects.of(self.instance)
                 .filter(type=Listing.TYPE_WISH, project=None).exclude(skill=None).select_related("skill")
