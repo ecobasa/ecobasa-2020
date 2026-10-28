@@ -88,6 +88,12 @@ class TestVolunteerRequestSkillProposal:
         response = self._send(volunteer_client, community, sender_skills="Carpentry")
         assert "review_url" not in response.context
 
+    def test_long_skill_lists_fit(self, volunteer_client, community):
+        from gift_economy.matches.models import VolunteerDetails
+        many = ", ".join(f"Skill number {i}" for i in range(80))
+        self._send(volunteer_client, community, sender_skills=many, practice_skills=many)
+        assert VolunteerDetails.objects.get().sender_skills == many
+
 
 @pytest.mark.django_db
 def test_volunteers_can_bring_what_the_community_needs(user, community):
