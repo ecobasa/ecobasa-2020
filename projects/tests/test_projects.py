@@ -222,6 +222,23 @@ def test_editing_removes_needs_and_marks_the_project_fresh(project, ambassador):
 
 
 @pytest.mark.django_db
+def test_list_offers_starting_a_project_to_ambassadors_only(community, ambassador, helper):
+    create_url = reverse("projects:create", args=[community.slug])
+    assert create_url not in Client().get(reverse("projects:list")).content.decode()
+    client = Client()
+    client.force_login(helper)
+    assert create_url not in client.get(reverse("projects:list")).content.decode()
+
+    client.force_login(ambassador)
+    assert create_url in client.get(reverse("projects:list")).content.decode()
+
+    # With more communities they pick which one the project is for
+    other = Community.objects.create(name="Waldgarten", owner=ambassador)
+    content = client.get(reverse("projects:list")).content.decode()
+    assert create_url in content and reverse("projects:create", args=[other.slug]) in content
+
+
+@pytest.mark.django_db
 def test_list_shows_current_projects_only(community, project):
     today = timezone.localdate()
     Project.objects.create(community=community, title="Ongoing garden")

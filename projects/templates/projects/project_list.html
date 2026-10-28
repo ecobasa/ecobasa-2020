@@ -5,7 +5,27 @@
 
 {% block content %}
 <div class="container-page">
-  <h1>{% trans "Projects" %}</h1>
+  <div class="flex flex-wrap items-center justify-between gap-4">
+    <h1>{% trans "Projects" %}</h1>
+    {# Only ambassadors start projects, for one of their communities #}
+    {% if owned_communities|length == 1 %}
+      <a href="{% url 'projects:create' owned_communities.0.slug %}" class="btn"><i class="fa fa-plus mr-1"></i>{% trans "Start a project" %}</a>
+    {% elif owned_communities %}
+      <div class="relative" x-data="{ open: false }">
+        <button type="button" @click="open = !open" @keydown.escape="open = false" :aria-expanded="open" aria-haspopup="true" class="btn">
+          <i class="fa fa-plus mr-1"></i>{% trans "Start a project" %}<i class="fa fa-chevron-down ml-2 text-xs"></i>
+        </button>
+        <div x-show="open" x-cloak @click.away="open = false"
+          class="origin-top-right absolute right-0 mt-2 w-60 rounded-md shadow-lg z-40">
+          <div class="py-1 rounded-md bg-primary bg-opacity-75 backdrop-blur shadow-xs">
+            {% for community in owned_communities %}
+              <a href="{% url 'projects:create' community.slug %}" class="dropdown-link">{{ community.name }}</a>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    {% endif %}
+  </div>
   <p class="max-w-3xl">{% blocktrans trimmed %}
     Communities realise projects together with people from the gift network: with helping
     hands, materials, tools and knowledge that are shared. Each gift makes a project need a
