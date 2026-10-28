@@ -263,7 +263,8 @@ def gifts_markers(request):
         location    lat,lon  → distance-ordered results via ListingFilter
     """
     features = []
-    for listing in _apply_bbox(_filtered_listings(request), request.GET.get("bbox", ""))[:700]:
+    listings = _apply_bbox(_filtered_listings(request), request.GET.get("bbox", "")).prefetch_related("owner__communities")
+    for listing in listings[:700]:
         holder = listing.holder
         photo = listing.image.url if listing.image else None
         if photo is None and listing.community_id:
@@ -287,6 +288,7 @@ def gifts_markers(request):
                 "project":        listing.project.title if listing.project_id else "",
                 "community_name": listing.community.name if listing.community_id else "",
                 "user_name":      "" if listing.community_id else _public_name(holder),
+                "member_of":      "" if listing.community_id or not holder else ", ".join(c.name for c in holder.member_communities()),
             },
         })
     return JsonResponse({"type": "FeatureCollection", "features": features})
@@ -294,7 +296,7 @@ def gifts_markers(request):
 
 @require_GET
 def gifts_list_partial(request):
-    listings_queryset = _filtered_listings(request, require_location=False).prefetch_related("categories", "community__photos")
+    listings_queryset = _filtered_listings(request, require_location=False).prefetch_related("categories", "community__photos", "owner__communities")
     # Your own (and your communities') are nearest, so they would always come first; the
     # map still shows them
     if request.user.is_authenticated:

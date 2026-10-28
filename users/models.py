@@ -126,6 +126,11 @@ class User(AbstractUser):
         """Last time they were around: last_seen, or their last login before it existed."""
         return self.last_seen or self.last_login
 
+    def member_communities(self):
+        """The communities they belong to. For now the ones they're the ambassador of
+        (as Community.members); real membership can extend this."""
+        return list(self.communities.all())
+
     def get_reference_subjects(self):
         """What references on this profile can be about: the person and their offers and
         wishes (things and skills)."""

@@ -271,3 +271,17 @@ def test_your_gifts_in_the_dashboard(user_client, user, listings):
     ]
     assert [listing.title for listing in user_client.get(reverse("gifts:mine"), {"box": "wish"}).context["page"]] == ["Foobar"]
     assert reverse("gifts:create") in response.content.decode()
+
+
+@pytest.mark.django_db
+def test_a_persons_gifts_name_their_community(user, listing):
+    from django.contrib.gis.geos import Point
+    from communities.models import Community
+    here = Point(14.9857, 51.1642, srid=4326)
+    user.name, user.location = "Max", here
+    user.save()
+    Community.objects.create(name="Hof Sonnenschein", owner=user, location=here)
+
+    assert "Hof Sonnenschein" in Client().get(reverse("gifts:api-list")).content.decode()
+    props = Client().get(reverse("gifts:api-markers")).json()["features"][0]["properties"]
+    assert props["user_name"] == "Max" and props["member_of"] == "Hof Sonnenschein"

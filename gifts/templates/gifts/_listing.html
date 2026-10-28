@@ -40,7 +40,7 @@
         {% if listing.community_id %}
           <span class="absolute bottom-5"><i class="fa fa-home mr-2"></i>{{ listing.community.name }}{% if listing.project_id %} · {{ listing.project.title }}{% endif %}</span>
         {% else %}
-          <span class="absolute bottom-5"><i class="fa fa-user mr-2"></i>{{ listing.owner.name }}</span>
+          <span class="absolute bottom-5"><i class="fa fa-user mr-2"></i>{{ listing.owner.name }}{% for community in listing.owner.member_communities %}{% if forloop.first %} · <i class="fa fa-home mx-1"></i>{% else %}, {% endif %}{{ community.name }}{% endfor %}</span>
         {% endif %}
       </div>
     </div>

@@ -499,7 +499,7 @@
     if (desc) html += `<div class="text-sm text-brown mt-2">${desc}</div>`;
     if (props.project) html += `<div class="text-xs text-brown mt-1"><i class="fa-solid fa-person-digging mr-1"></i>${esc(props.project)}</div>`;
     if (props.community_name) html += `<div class="text-xs text-brown mt-1"><i class="fa fa-home mr-1"></i>${esc(props.community_name)}</div>`;
-    if (props.user_name) html += `<div class="text-xs mt-1"><i class="fa fa-user mr-1"></i>${esc(props.user_name)}</div>`;
+    if (props.user_name) html += `<div class="text-xs mt-1"><i class="fa fa-user mr-1"></i>${esc(props.user_name)}${props.member_of ? ` · <i class="fa fa-home mx-1"></i>${esc(props.member_of)}` : ''}</div>`;
     if (url) html += `<a class="text-primary underline" href="${url}">{% trans "Open" %}</a>`;
     return html;
   }
