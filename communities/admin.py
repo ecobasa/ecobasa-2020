@@ -9,7 +9,7 @@ class CommunityPhotoInline(admin.TabularInline):
 
 
 @admin.register(Community)
-class CommunityAdmin(admin.GeoModelAdmin):
+class CommunityAdmin(admin.GISModelAdmin):
     list_display = (
         "name",
         "owner",

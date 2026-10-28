@@ -4,7 +4,7 @@ from .skills.models import Skill
 
 
 @admin.register(Listing)
-class ListingAdmin(admin.OSMGeoAdmin):
+class ListingAdmin(admin.GISModelAdmin):
     list_display = ("title", "type", "kind", "owner", "community", "project")
     search_fields = ("title", "skill__name", "owner__name", "community__name")
     ordering = ("title",)
