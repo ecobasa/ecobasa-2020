@@ -37,9 +37,7 @@
       </div>
       <p class="text-sm text-brown">{{ listing.description|truncatewords:20 }}</p>
       <div>
-        {% if listing.owner_id and listing.owner == request.user %}
-          <span class="absolute bottom-5 border mx-px py-1 px-2 rounded text-xs text-secondary bg-purple"><i class="fa fa-user mr-2"></i>{% trans "from me" %}</span>
-        {% elif listing.community_id %}
+        {% if listing.community_id %}
           <span class="absolute bottom-5"><i class="fa fa-home mr-2"></i>{{ listing.community.name }}{% if listing.project_id %} · {{ listing.project.title }}{% endif %}</span>
         {% else %}
           <span class="absolute bottom-5"><i class="fa fa-user mr-2"></i>{{ listing.owner.name }}</span>

@@ -233,6 +233,26 @@ def test_list_card_names_the_giver_not_the_viewer(user, listing):
 
 
 @pytest.mark.django_db
+def test_the_list_leaves_out_your_own_but_the_map_shows_them(user, user_client):
+    from django.contrib.gis.geos import Point
+    from communities.models import Community
+    here = Point(14.9857, 51.1642, srid=4326)
+    other = User.objects.create_user(email="other@example.com", password="x", location=here)
+    hof = Community.objects.create(name="Hof", owner=user, location=here)
+    Listing.objects.create(type="offer", title="Mine", owner=user, location=here)
+    Listing.objects.create(type="offer", title="My community's", community=hof)
+    Listing.objects.create(type="offer", title="Theirs", owner=other)
+
+    content = user_client.get(reverse("gifts:api-list")).content.decode()
+    assert "Theirs" in content and "Mine" not in content and "My community" not in content
+    titles = {f["properties"]["title"] for f in user_client.get(reverse("gifts:api-markers")).json()["features"]}
+    assert titles == {"Mine", "My community's", "Theirs"}
+    # Without signing in, everything
+    content = Client().get(reverse("gifts:api-list")).content.decode()
+    assert "Theirs" in content and "Mine" in content
+
+
+@pytest.mark.django_db
 def test_back_on_the_form_is_a_link(user_client, listing):
     """It was a <button href=…>, which browsers don't follow."""
     back = '<a class="btn inline-flex items-center text-sm leading-5 font-medium mb-10" href="%s">'

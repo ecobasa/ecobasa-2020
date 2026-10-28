@@ -295,6 +295,10 @@ def gifts_markers(request):
 @require_GET
 def gifts_list_partial(request):
     listings_queryset = _filtered_listings(request, require_location=False).prefetch_related("categories", "community__photos")
+    # Your own (and your communities') are nearest, so they would always come first; the
+    # map still shows them
+    if request.user.is_authenticated:
+        listings_queryset = listings_queryset.exclude(Q(owner=request.user) | Q(community__owner=request.user))
     if not request.GET.get("location"):
         listings_queryset = listings_queryset.order_by("-created_at")
 
