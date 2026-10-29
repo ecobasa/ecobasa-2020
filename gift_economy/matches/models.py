@@ -473,9 +473,11 @@ class Suggestion(models.Model):
 
     REASON_SKILL = "skill"
     REASON_WORDS = "words"
+    REASON_THING = "thing"
     REASON_CHOICES = [
         (REASON_SKILL, _("Same skill")),
         (REASON_WORDS, _("Similar title")),
+        (REASON_THING, _("Same kind of thing")),
     ]
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="suggestions")

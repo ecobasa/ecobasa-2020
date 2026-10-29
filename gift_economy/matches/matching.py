@@ -4,7 +4,10 @@ nearby and suggest the pair to both sides.
 What fits, an offer and a wish:
 - with a skill (a skill, or knowledge or helping hands with a known skill): the same
   skill, in any language;
-- without one, things (or knowledge or helping hands named in words) with a similar
+- things recognized as a known thing (gifts.Thing, in any language): the same thing, or
+  a broader or narrower one ("Leiter" ~ "Stepladder", "Saw" ~ "Jigsaw"), but not siblings
+  (firewood and timber);
+- else, things (or knowledge or helping hands named in words) with a similar
   title ("Clay" ~ "Clay from our pond", "Scythe" ~ "Two old scythes"). A material doesn't
   fit a tool; "other" fits any thing. Not by gift category alone: firewood and a chimney
   pipe can both be for building, but neither helps with the other.
@@ -23,6 +26,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.contrib.gis.measure import D
 from django.db.models import Q
 
+from gift_economy.gifts import things
 from gift_economy.gifts.models import Listing
 
 from .models import Suggestion
@@ -48,6 +52,7 @@ class Side:
     skill_id: int | None = None
     title: str = ""
     kind: str = ""
+    thing_id: int | None = None
 
     @property
     def is_thing(self):
@@ -63,7 +68,8 @@ def side_of(listing):
     if owner is None or not listing.is_current or (listing.is_offer and listing.skill_id and not listing.available):
         return None
     return Side(listing, owner, listing.point, listing.country, want=listing.is_wish,
-                skill_id=listing.skill_id, title=listing.display_title if not listing.skill_id else "", kind=listing.kind)
+                skill_id=listing.skill_id, title=listing.display_title if not listing.skill_id else "", kind=listing.kind,
+                thing_id=listing.thing_id)
 
 
 def reaches(recipient, other, km):
@@ -127,6 +133,9 @@ def fit(a, b):
             return None
     elif a.kind != b.kind:
         return None
+    if a.thing_id and b.thing_id:
+        # Both known: what they are decides, not how they're called
+        return Suggestion.REASON_THING if things.related(a.thing_id, b.thing_id) else None
     if any(_same_word(x, y) for x in _words(a.title) for y in _words(b.title)):
         return Suggestion.REASON_WORDS
     return None

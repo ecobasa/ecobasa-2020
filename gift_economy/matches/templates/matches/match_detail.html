@@ -137,7 +137,7 @@
         <a href="{{ match.from_user.get_absolute_url }}" class="font-semibold text-primary hover:underline">
           {{ match.from_user.name|default:match.from_user.email }}
         </a>
-        <p class="text-xs">{{ target.get_match_verb }} <a href="{{ target.get_absolute_url }}" class="hover:underline">{{ target.get_match_display_name }}</a>{% with community=match.community %}{% if community and community != target %} · <a href="{{ community.get_absolute_url }}" class="hover:underline"><i class="fa-solid {{ community.get_type_icon }} mr-1"></i>{{ community.name }}</a>{% endif %}{% endwith %} on {{ match.created_at|date:"d M Y H:i" }}</p>
+        <p class="text-xs">{{ match_verb }} <a href="{{ target.get_absolute_url }}" class="hover:underline">{{ target.get_match_display_name }}</a>{% with community=match.community %}{% if community and community != target %} · <a href="{{ community.get_absolute_url }}" class="hover:underline"><i class="fa-solid {{ community.get_type_icon }} mr-1"></i>{{ community.name }}</a>{% endif %}{% endwith %} on {{ match.created_at|date:"d M Y H:i" }}</p>
       </div>
       <div class="ml-auto flex flex-wrap items-center justify-end gap-1">
         {% include "_kind_pill.html" with kind=match.kind %}

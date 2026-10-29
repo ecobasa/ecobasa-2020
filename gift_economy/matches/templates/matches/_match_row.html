@@ -17,13 +17,14 @@
       <div class="text-sm opacity-70">
         {{ match.from_user.name|default:match.from_user.email }}
       </div>
+      {% if match.target.get_match_verb %}
+        <div class="text-xs opacity-60 mt-0.5">{{ match.target.get_match_verb|capfirst }}</div>
+      {% endif %}
     {% else %}
+      {# Your own request: whom it went to #}
       <div class="text-sm opacity-70">
-        {{ match.recipient.name|default:match.recipient.email }}
+        {% blocktrans with name=match.recipient.name|default:match.recipient.email %}To {{ name }}{% endblocktrans %}
       </div>
-    {% endif %}
-    {% if match.target.get_match_verb %}
-      <div class="text-xs opacity-60 mt-0.5">{{ match.target.get_match_verb|capfirst }}</div>
     {% endif %}
     {% if match.proposed_date %}
       <div class="text-xs opacity-60 mt-0.5">{{ match.proposed_date|date:"SHORT_DATE_FORMAT" }}</div>

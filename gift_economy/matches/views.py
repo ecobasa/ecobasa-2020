@@ -342,6 +342,8 @@ def match_detail(request, pk):
         "thread":               thread,
         "latest_status_msg":    latest_status_msg,
         "latest_counter_msg":   latest_counter_msg,
+        # Said to the one who asked, it isn't "your offer"
+        "match_verb":           target.get_match_verb(own=False) if is_requester and isinstance(target, Listing) else target.get_match_verb(),
         "can_decide":           can_decide,
         "can_counter":          can_counter,
         "proposed_place":       _proposed_place(match, request.user, latest_counter_msg) if can_counter else None,
