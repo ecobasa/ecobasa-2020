@@ -4678,3 +4678,19 @@ msgstr "Anderes Ding"
 
 msgid "Vocabulary: other things"
 msgstr "Vokabular: andere Dinge"
+
+msgid "offered to help with the wish"
+msgstr "hat Hilfe beim Wunsch angeboten"
+
+msgid "wants to fulfill the wish"
+msgstr "möchte den Wunsch erfüllen"
+
+msgid "is interested in the skill"
+msgstr "interessiert sich für die Fähigkeit"
+
+msgid "is interested in the offer"
+msgstr "interessiert sich für das Angebot"
+
+#, python-format
+msgid "To %(name)s"
+msgstr "An %(name)s"

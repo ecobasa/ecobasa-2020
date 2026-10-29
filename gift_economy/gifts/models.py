@@ -634,10 +634,15 @@ class Listing(RandomIdMixin, models.Model):
     def get_match_icon(self):
         return self.kind_icon
 
-    def get_match_verb(self):
+    def get_match_verb(self, own=True):
+        """What the one who asks does, said to whom it belongs (own) or to anyone else."""
+        if own:
+            if self.is_wish:
+                return _("offered to help with your wish") if self.is_skill else _("wants to fulfill your wish")
+            return _("is interested in your skill") if self.is_skill else _("is interested in your offer")
         if self.is_wish:
-            return _("offered to help with your wish") if self.is_skill else _("wants to fulfill your wish")
-        return _("is interested in your skill") if self.is_skill else _("is interested in your offer")
+            return _("offered to help with the wish") if self.is_skill else _("wants to fulfill the wish")
+        return _("is interested in the skill") if self.is_skill else _("is interested in the offer")
 
     def get_match_request_text(self):
         if self.is_wish:

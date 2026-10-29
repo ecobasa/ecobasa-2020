@@ -401,3 +401,14 @@ def test_asking_for_more_skills(owner, requester, stay):
     class Request:
         user = owner
     assert "reference_skill=Masonry" in reference_url_for_match({"request": Request}, stay)
+
+
+@pytest.mark.django_db
+def test_the_one_who_asked_doesnt_read_your_offer(owner, requester, match):
+    page = _client_for(owner).get(match.get_absolute_url(), HTTP_ACCEPT_LANGUAGE="en").content.decode()
+    assert "is interested in your offer" in page
+    page = _client_for(requester).get(match.get_absolute_url(), HTTP_ACCEPT_LANGUAGE="en").content.decode()
+    assert "is interested in the offer" in page and "your offer" not in page
+    # Their own requests say whom they went to
+    page = _client_for(requester).get("/matches/?box=sent", HTTP_ACCEPT_LANGUAGE="en").content.decode()
+    assert "To owner@example.com" in page and "your offer" not in page
