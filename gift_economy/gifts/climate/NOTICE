@@ -1,0 +1,44 @@
+koppen.bin is built (build_koppen_map.py) from the Köppen-Geiger climate classification
+map in the kgcpy package, version 1.1.8 (https://pypi.org/project/kgcpy/), by Xuanji Yu,
+Chelsey Bryant, Nicholas R. Wheeler, Franz Rubel, Julian Ascencio Vasquez and Roger
+H. French. Its map, at 100 arc-seconds, is the one of:
+
+  F. Rubel, K. Brugger, K. Haslinger and I. Auer (2016): The climate of the European Alps:
+  Shift of very high resolution Köppen-Geiger climate zones 1800–2100.
+  Meteorologische Zeitschrift, doi:10.1127/metz/2016/0816
+  F. Rubel and M. Kottek (2010): Observed and projected climate shifts 1901–2100 depicted
+  by world maps of the Köppen-Geiger climate classification.
+  Meteorologische Zeitschrift, doi:10.1127/0941-2948/2010/0430
+  http://koeppen-geiger.vu-wien.ac.at
+
+kgcpy is distributed under this license:
+
+BSD 3-Clause License
+
+Copyright (c) 2022, CWRU SDLE LAB
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.

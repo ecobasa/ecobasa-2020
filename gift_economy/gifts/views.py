@@ -26,7 +26,7 @@ from users.models import User
 from users.places import approximate, town
 from gift_economy.gifts.skills.models import Skill, skill_name_q
 from gift_economy.matches.forms import MatchForm
-from gift_economy.matches.models import Contribution, Match
+from gift_economy.matches.models import Contribution, Loan, Match
 from gift_economy.matches.emails import notify_match_created
 from dashboard_lists import Choice, paginate, query_url
 
@@ -43,7 +43,7 @@ def detail(request, pk):
     with through the project's offer form; a community's wish for a skill through its
     volunteer form."""
     listing = get_object_or_404(
-        Listing.objects.select_related("owner", "community__owner", "project", "skill")
+        Listing.objects.select_related("owner", "community__owner", "project", "skill", "thing")
         .prefetch_related("categories", "contributions__match__from_user"),
         pk=pk,
     )
@@ -66,7 +66,7 @@ def detail(request, pk):
     manager = listing.manager
     # A public good is just there: nobody needs to ask for it
     if request.user.is_authenticated and manager is not None and request.user != manager and not help_url and not listing.public_good:
-        form = MatchForm(request.POST or None)
+        form = MatchForm(request.POST or None, loan_of=listing if listing.lend else None)
         if request.method == "POST" and form.is_valid():
             match = form.save(commit=False)
             match.from_user = request.user
@@ -74,11 +74,16 @@ def detail(request, pk):
             match.target = listing
             match.save()
             Contribution.objects.create(match=match, listing=listing, quantity=form.cleaned_data.get("quantity"))
+            if listing.lend:
+                starts_at, ends_at = form.cleaned_data["loan"]
+                Loan.objects.create(match=match, starts_at=starts_at, ends_at=ends_at)
             notify_match_created(match, http_request=request)
             messages.success(request, _("Your request has been sent."))
             return redirect(match.get_absolute_url())
         context["form"] = form
 
+    if listing.lends_out:
+        context["upcoming_loans"] = listing.upcoming_loans()
     if is_owner:
         context["incoming_requests"] = list(
             Match.objects.filter(contributions__listing=listing).select_related("from_user").distinct().order_by("-created_at")[:20]
@@ -148,13 +153,16 @@ def _holder_for(request):
 
 @login_required
 def create(request):
-    """A new offer or wish: ?type=offer|wish, ?kind=…, ?skill=<name> and ?community=<slug>
-    preset it."""
+    """A new offer or wish: ?type=offer|wish, ?kind=…, ?skill=<name>, ?lend=1 and
+    ?community=<slug> preset it."""
     community = _holder_for(request)
     initial = {
         "type": request.GET.get("type") if request.GET.get("type") in ("offer", "wish") else "offer",
         "kind": request.GET.get("kind") if request.GET.get("kind") in dict(Listing.KIND_CHOICES) else Listing.KIND_OTHER,
         "skill_name": request.GET.get("skill", ""),
+        # Vehicles are mostly lent rather than given away
+        "lend": request.GET.get("lend") == "1" or request.GET.get("kind") == Listing.KIND_VEHICLE,
+        **_holder_place(community or request.user),
     }
     posted = request.method == "POST"
     form = ListingForm(request.POST if posted else None, request.FILES if posted else None, initial=initial)
@@ -164,13 +172,39 @@ def create(request):
             listing.community = community
         else:
             listing.owner = request.user
+        _keep_own_place_only(listing)
         listing.save()
         form.save_m2m()
         messages.success(
             request, _("%(listing_type)s created") % {"listing_type": listing.get_type_display()}
         )
         return redirect(listing.get_absolute_url())
-    return render(request, "gifts/listing_form.html", {"form": form, "community": community})
+    return render(request, "gifts/listing_form.html", {"form": form, "community": community, **_form_context()})
+
+
+def _holder_place(holder):
+    """The form's place to start from: the person's or the community's, from its profile,
+    to keep or move on the map."""
+    if holder is None or holder.location is None:
+        return {}
+    return {"location": holder.location, "location_name": holder.location_name}
+
+
+def _keep_own_place_only(listing):
+    """A place left as the profile's isn't the listing's own: it stays where its person
+    or community is, also when they move. One moved on the map is its own, and a public
+    good's always is (it is shown exactly)."""
+    holder = listing.holder
+    if not listing.public_good and listing.location is not None and holder is not None and holder.location is not None and (
+        listing.location.equals_exact(holder.location, tolerance=1e-6)
+    ):
+        listing.location, listing.location_name = None, None
+
+
+def _form_context():
+    """What the listing form's script needs: the kinds named from their vocabulary only."""
+    from .things import WHITELISTED_KINDS
+    return {"whitelisted_kinds": json.dumps(list(WHITELISTED_KINDS))}
 
 
 @login_required
@@ -181,12 +215,19 @@ def edit(request, pk):
         raise PermissionDenied
 
     posted = request.method == "POST"
-    form = ListingForm(request.POST if posted else None, request.FILES if posted else None, instance=listing)
+    # Without a place of its own, it is where its person or community is: shown on the map
+    initial = {} if listing.location else _holder_place(listing.holder)
+    form = ListingForm(request.POST if posted else None, request.FILES if posted else None, instance=listing, initial=initial)
     if request.method == "POST" and form.is_valid():
-        form.save()
+        listing = form.save(commit=False)
+        _keep_own_place_only(listing)
+        listing.save()
+        form.save_m2m()
         messages.success(request, _("changes saved"))
         return redirect(listing.get_absolute_url())
-    return render(request, "gifts/listing_form.html", {"form": form, "listing": listing, "community": listing.community})
+    return render(request, "gifts/listing_form.html", {
+        "form": form, "listing": listing, "community": listing.community, **_form_context(),
+    })
 
 
 @login_required
@@ -353,6 +394,35 @@ def nominatim_proxy(request):
         return JsonResponse(data, safe=False)
     except Exception:
         return JsonResponse([], safe=False)
+
+
+@require_GET
+def things_recognize(request):
+    """What a title is recognized as while typing, and the categories that sets:
+    ?kind=tool|material|seeds|vehicle&title=… (with &variety=… for seeds)."""
+    from .models import Thing
+    from .things import WHITELISTED_KINDS, recognize, thing_named
+    kind, title = request.GET.get("kind", ""), request.GET.get("title", "").strip()
+    if kind in WHITELISTED_KINDS:
+        thing_id = thing_named(title, kind)
+    else:
+        variety = request.GET.get("variety", "").strip()
+        thing_id = recognize(f"{title} {variety}" if variety else title, kind) if kind in Listing.CATEGORY_KINDS else None
+    thing = Thing.objects.filter(pk=thing_id).select_related("category").first()
+    if thing is None:
+        return JsonResponse({"thing": None, "categories": []})
+    return JsonResponse({
+        "thing": thing.get_name(),
+        "categories": [str(category) for category in Listing.thing_categories(thing, kind)],
+    })
+
+
+@require_GET
+def things_suggest(request):
+    """Names from a vocabulary while typing a title: ?kind=seeds|vehicle|…&q=…"""
+    from .things import suggest
+    lang = (getattr(request, "LANGUAGE_CODE", "") or "en")[:2]
+    return JsonResponse({"results": suggest(request.GET.get("q", ""), request.GET.get("kind", ""), lang)})
 
 
 @require_GET

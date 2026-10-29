@@ -73,13 +73,13 @@ def _pairs(user):
 
 
 @pytest.mark.django_db
-def test_a_gift_wish_and_offer_with_similar_titles_are_suggested_to_both(anna, ben):
+def test_a_gift_wish_and_offer_of_the_same_thing_are_suggested_to_both(anna, ben):
     wish = _listing(anna, "Scythe", "wish")
     offer = _listing(ben, "Two old scythes", "offer")
     created = match(offer, notify=False)
     assert len(created) == 2
-    assert _pairs(anna) == [("listing", "Scythe", "listing", "Two old scythes", "words")]
-    assert _pairs(ben) == [("listing", "Two old scythes", "listing", "Scythe", "words")]
+    assert _pairs(anna) == [("listing", "Scythe", "listing", "Two old scythes", "thing")]
+    assert _pairs(ben) == [("listing", "Two old scythes", "listing", "Scythe", "thing")]
     suggestion = anna.suggestions.get()
     assert 35 <= suggestion.distance_km <= 45 and suggestion.other_user == ben
     assert suggestion.url == offer.get_absolute_url()
@@ -105,7 +105,30 @@ def test_things_match_by_title_not_by_gift_category(anna, ben):
 
     need(project, kind=Listing.KIND_MATERIAL, title="Firewood for the kiln")
     match(offer, notify=False)
-    assert ("need", "Firewood for the kiln", "listing", "Firewood", "words") in _pairs(anna)
+    assert ("need", "Firewood for the kiln", "listing", "Firewood", "thing") in _pairs(anna)
+
+
+@pytest.mark.django_db
+def test_things_not_in_the_vocabulary_match_by_similar_titles(anna, ben):
+    _listing(anna, "Accordion", "wish")
+    offer = _listing(ben, "Two old accordions", "offer")
+    assert offer.thing is None
+    match(offer, notify=False)
+    assert _pairs(anna) == [("listing", "Accordion", "listing", "Two old accordions", "words")]
+
+
+@pytest.mark.django_db
+def test_things_match_in_any_language_and_by_broader_things(anna, ben):
+    _listing(anna, "Leiter", "wish", kind=Listing.KIND_TOOL)
+    _listing(anna, "Säge", "wish", kind=Listing.KIND_TOOL)
+    _listing(anna, "Brennholz", "wish", kind=Listing.KIND_MATERIAL)
+    match(_listing(ben, "Aluminium stepladder", "offer", kind=Listing.KIND_TOOL), notify=False)
+    match(_listing(ben, "Jigsaw with blades", "offer", kind=Listing.KIND_TOOL), notify=False)
+    match(_listing(ben, "Oak beams from a barn", "offer", kind=Listing.KIND_MATERIAL), notify=False)
+    assert _pairs(anna) == [
+        ("listing", "Leiter", "listing", "Aluminium stepladder", "thing"),
+        ("listing", "Säge", "listing", "Jigsaw with blades", "thing"),
+    ]
 
 
 @pytest.mark.django_db
@@ -189,7 +212,7 @@ def test_searching_worldwide(anna, ben):
     far.match_global = True
     far.save()
     Suggestion.objects.all().delete()
-    match(_listing(far, "Clay bricks", "offer"), notify=False)
+    match(_listing(far, "Clay from the river", "offer"), notify=False)
     assert anna.suggestions.count() == 1 and far.suggestions.count() == 1
 
 
@@ -236,7 +259,7 @@ def test_without_a_place_or_country_it_is_anywhere_and_they_hear_how_to_narrow_i
     area = Notification.objects.get(recipient=nowhere, tag=Notification.TAG_MATCH_AREA)
     assert area.link == reverse("users:update") + "#matches"
     # Only once
-    match(_listing(anna, "Clay bricks", "offer"), notify=True)
+    match(_listing(anna, "Clay from the river", "offer"), notify=True)
     assert Notification.objects.filter(recipient=nowhere, tag=Notification.TAG_MATCH_AREA).count() == 1
     client = Client()
     client.force_login(nowhere)
@@ -257,7 +280,7 @@ def test_with_only_a_country_it_is_that_country(anna):
     # Unless they search worldwide
     french.match_global = True
     french.save()
-    match(_listing(anna, "Clay bricks", "offer"), notify=False)
+    match(_listing(anna, "Clay from the river", "offer"), notify=False)
     assert french.suggestions.count() == 1
 
 
@@ -280,7 +303,7 @@ def test_saving_matches_and_notifies_right_away(anna, ben, django_capture_on_com
 
     # More matches bump the unread notification instead of adding one
     with django_capture_on_commit_callbacks(execute=True):
-        _listing(ben, "Clay bricks", "offer")
+        _listing(ben, "Clay from the river", "offer")
     assert Notification.objects.filter(recipient=anna).count() == 1
     with translation.override("en"):
         assert Notification.objects.get(recipient=anna).text.startswith("2 new suggestions near you")
@@ -410,11 +433,11 @@ def test_people_with_only_wishes_get_the_email_too(anna, ben):
 
     # Once a week, and only what's new
     assert send_suggestion_emails() == 0
-    match(_listing(ben, "Clay bricks", "offer"), notify=False)
+    match(_listing(ben, "Clay from the river", "offer"), notify=False)
     assert send_suggestion_emails() == 0
     assert send_suggestion_emails(now=timezone.now() + timedelta(days=7)) >= 1
     later = [m for m in mail.outbox if m.to == ["anna@example.com"]][-1]
-    assert "Clay bricks" in later.body and "Clay from the pond" not in later.body
+    assert "Clay from the river" in later.body and "Clay from the pond" not in later.body
 
 
 @pytest.mark.django_db

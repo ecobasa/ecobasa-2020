@@ -21,7 +21,7 @@ from gift_economy.gifts.models import Listing
 
 from .emails import notify_match_message, notify_match_response, read_action_token, read_suggestions_unsubscribe_token
 from .forms import MatchMessageForm
-from .models import STAY_APP_LABELS, Match, MatchMessage, Suggestion
+from .models import STAY_APP_LABELS, Loan, Match, MatchMessage, Suggestion, loan_span
 
 # What the matches page can show, by its "type" query param: gifts (things) and skills
 # (and knowledge and helping hands) together on one page (with suggestions first),
@@ -165,6 +165,25 @@ def _volunteer_visits(request):
 
 # ── Match detail ────────────────────────────────────────────────────────────────
 
+def _parse_loan(data):
+    """(start, end) of the days, or hours, a counter-proposal suggests for a loan; None if
+    there is no first day, or it would come back before it is borrowed."""
+    from datetime import date, time
+    def parse(kind, raw):
+        try:
+            return kind.fromisoformat(raw) if raw else None
+        except ValueError:
+            return None
+    first = parse(date, data.get("counter_stay_from", ""))
+    if first is None:
+        return None
+    starts_at, ends_at = loan_span(
+        first, parse(date, data.get("counter_stay_to", "")),
+        parse(time, data.get("counter_from_time", "")), parse(time, data.get("counter_to_time", "")),
+    )
+    return (starts_at, ends_at) if ends_at > starts_at else None
+
+
 def _parse_day(raw):
     """A day from a date input, as an aware datetime at its start; None if blank or invalid."""
     try:
@@ -204,14 +223,17 @@ def match_detail(request, pk):
         if latest_status_msg and latest_counter_msg:
             break
 
-    counter_by_owner = (
-        match.status == Match.STATUS_COUNTER
-        and latest_status_msg is not None
-        and match.recipient_id is not None
-        and latest_status_msg.sender_id == match.recipient_id
+    # Whoever didn't make the latest proposal decides on it: the owner on a request (and
+    # may change their mind later), the other side on a counter-proposal
+    if match.status == Match.STATUS_COUNTER and latest_status_msg is not None:
+        can_decide = is_party and latest_status_msg.sender_id != request.user.pk
+    else:
+        can_decide = is_owner
+    # Both sides may propose another time or place; a stay is at the community, so only
+    # the community suggests other dates
+    can_counter = is_owner or (
+        is_requester and not match.is_community_stay and match.status != Match.STATUS_DECLINED
     )
-    owner_can_decide     = is_owner and not counter_by_owner
-    requester_can_decide = is_requester and counter_by_owner
 
     if request.method == "POST":
         action = request.POST.get("action", "message")
@@ -243,8 +265,16 @@ def match_detail(request, pk):
             flash.success(request, _("Saved what is part of this exchange."))
             return redirect(f"{match.get_absolute_url()}#person")
 
-        if action in ("accept", "decline") and (owner_can_decide or requester_can_decide):
+        if action in ("accept", "decline") and can_decide:
             new_status = {"accept": Match.STATUS_ACCEPTED, "decline": Match.STATUS_DECLINED}[action]
+            if new_status == Match.STATUS_ACCEPTED and match.is_loan:
+                # The agreed time is the loan's from now on; a tool is lent once at a time
+                starts_at, ends_at = match.loan_period()
+                if target.lends_out and not target.is_free(starts_at, ends_at, exclude_match=match):
+                    flash.error(request, _("It is already lent on some of these days. Propose other days instead."))
+                    return redirect(match.get_absolute_url())
+                match.loan.starts_at, match.loan.ends_at = starts_at, ends_at
+                match.loan.save()
             body = request.POST.get("body", "").strip()
             MatchMessage.objects.create(match=match, sender=request.user, body=body, status_to=new_status)
             match.status       = new_status
@@ -254,7 +284,7 @@ def match_detail(request, pk):
             flash.success(request, _("Response sent."))
             return redirect(match.get_absolute_url())
 
-        if action == "counter" and is_owner:
+        if action == "counter" and can_counter:
             msg = MatchMessage(
                 match=match, sender=request.user,
                 body=request.POST.get("body", "").strip(),
@@ -271,6 +301,13 @@ def match_detail(request, pk):
                     flash.error(request, _("The stay can't end before it starts."))
                     return redirect(match.get_absolute_url())
             else:
+                if match.is_loan:
+                    # Other days or hours to borrow it, and maybe another place to pick it up
+                    span = _parse_loan(request.POST)
+                    if span is None:
+                        flash.error(request, _("It can't come back before it is borrowed."))
+                        return redirect(match.get_absolute_url())
+                    msg.counter_stay_from, msg.counter_stay_to = span
                 msg.counter_location_type = request.POST.get("counter_location_type", "")
                 msg.counter_location      = request.POST.get("counter_location", "")
                 try:
@@ -296,7 +333,6 @@ def match_detail(request, pk):
 
     return render(request, "matches/match_detail.html", {
         "match":                match,
-        "requester_place":      match.person_place(match.from_user),
         # Volunteer visits have their own place in the sidebar and breadcrumb
         "request_type":         "volunteer" if match.is_community_stay else "",
         "target":               target,
@@ -306,13 +342,36 @@ def match_detail(request, pk):
         "thread":               thread,
         "latest_status_msg":    latest_status_msg,
         "latest_counter_msg":   latest_counter_msg,
-        "owner_can_decide":     owner_can_decide,
-        "requester_can_decide": requester_can_decide,
+        # Said to the one who asked, it isn't "your offer"
+        "match_verb":           target.get_match_verb(own=False) if is_requester and isinstance(target, Listing) else target.get_match_verb(),
+        "can_decide":           can_decide,
+        "can_counter":          can_counter,
+        "proposed_place":       _proposed_place(match, request.user, latest_counter_msg) if can_counter else None,
+        # The time proposed last, to start a counter-proposal from
+        "proposed_loan":        Loan(starts_at=match.loan_period()[0], ends_at=match.loan_period()[1]) if match.is_loan else None,
+        # The other side's only roughly until accepted (Match.place_of)
+        "my_place":             match.place_of(request.user, viewer=request.user),
+        "your_place":           match.place_of(match.recipient if is_requester else match.from_user),
         "message_form":         MatchMessageForm(),
         "loc_choices":          Match.LOC_CHOICES,
         "person":               _person(match.recipient if is_requester else match.from_user),
         "asked_listing_ids":    {listing.pk for listing in match.listings.all()},
     })
+
+
+def _proposed_place(match, viewer, latest_counter):
+    """The place a counter-proposal starts from: the one proposed last (by a
+    counter-proposal, else by the request), as the viewer sees it ("my place" of the other
+    side is "your place"): {"type", "lat", "lon", "name"}."""
+    if latest_counter is not None and latest_counter.counter_location_type:
+        proposer, loc_type, name = latest_counter.sender, latest_counter.counter_location_type, latest_counter.counter_location
+        lat, lon = latest_counter.counter_location_coords()
+    else:
+        proposer, loc_type, name = match.from_user, match.location_type, match.proposed_location
+        lat, lon = match.location_coords()
+    if proposer != viewer and loc_type in (Match.LOC_MY_PLACE, Match.LOC_YOUR_PLACE):
+        loc_type = Match.LOC_YOUR_PLACE if loc_type == Match.LOC_MY_PLACE else Match.LOC_MY_PLACE
+    return {"type": loc_type or Match.LOC_MY_PLACE, "lat": lat, "lon": lon, "name": name}
 
 
 def _person(user):
@@ -353,6 +412,13 @@ def email_action(request, token):
 
     if match.status != Match.STATUS_PENDING:
         flash.info(request, _("This interest has already been responded to."))
+        return redirect(match.get_absolute_url())
+
+    target = match.target
+    if action == "accept" and match.is_loan and target is not None and target.lends_out and not target.is_free(
+        match.loan.starts_at, match.loan.ends_at, exclude_match=match,
+    ):
+        flash.error(request, _("It is already lent on some of these days. Propose other days instead."))
         return redirect(match.get_absolute_url())
 
     actor = match.recipient

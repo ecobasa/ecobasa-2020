@@ -1,12 +1,17 @@
-"""The ambassador's calendar: a community's projects and the volunteer stays requested and
+"""The calendars in the dashboard.
+
+The ambassador's calendar: a community's projects and the volunteer stays requested and
 confirmed for it and its projects, per month, with who brings which skills and things.
 Shows how many people are there each day against the community's room for guests, so
 overbooking stands out, and which needs of its current and coming projects are still
-open. A second view celebrates the needs that are covered, and who covered them."""
+open. A second view celebrates the needs that are covered, and who covered them.
+
+The lending calendar: when the tools someone lends are borrowed, and by whom, requested
+and agreed, and when they borrow tools themselves."""
 
 import calendar as pycalendar
 from dataclasses import dataclass, field
-from datetime import date, timedelta
+from datetime import date, datetime, time, timedelta
 
 from django.contrib.auth.decorators import login_required
 from django.contrib.contenttypes.models import ContentType
@@ -18,7 +23,9 @@ from django.utils import timezone
 from communities.models import Community
 from projects.models import Project
 
-from .models import Match
+from gift_economy.gifts.models import Listing
+
+from .models import Match, period_text, until_text
 
 _ACTIVE = (Match.STATUS_PENDING, Match.STATUS_COUNTER, Match.STATUS_ACCEPTED)
 
@@ -231,3 +238,178 @@ def _helpers(need, community):
         thanked = any(reference.author_id == community.owner_id for reference in match.references.all())
         helpers.append(Helper(person, match, thanked))
     return helpers
+
+
+# ── Lending calendar ────────────────────────────────────────────────
+
+@dataclass
+class Lending:
+    """A loan as one side sees it: their tool or vehicle lent, or one they borrow; for
+    whole days or some hours (Loan)."""
+
+    match: Match
+    starts_at: datetime
+    ends_at: datetime
+    tool: object
+    # Whether it is their tool (lent out), else one they borrow
+    lent_out: bool
+
+    @property
+    def confirmed(self):
+        return self.match.status == Match.STATUS_ACCEPTED
+
+    @property
+    def person(self):
+        """The other side: who borrows it, or who lends it."""
+        return self.match.borrower if self.lent_out else self.match.lender
+
+    @property
+    def start(self):
+        """The first day."""
+        return timezone.localdate(self.starts_at)
+
+    @property
+    def end(self):
+        """The last day (whole days end at the midnight after it)."""
+        return timezone.localdate(self.ends_at - timedelta(microseconds=1))
+
+    @property
+    def period(self):
+        return period_text(self.starts_at, self.ends_at)
+
+    @property
+    def until(self):
+        return until_text(self.starts_at, self.ends_at)
+
+    @property
+    def hours(self):
+        """"14:00–18:00" if it is for some hours of one day, else ""."""
+        start, end = timezone.localtime(self.starts_at), timezone.localtime(self.ends_at)
+        if self.start != self.end or (start.time() == end.time() == time()):
+            return ""
+        return f"{start:%H:%M}–{end:%H:%M}"
+
+    def covers(self, day):
+        return self.start <= day <= self.end
+
+    def overlaps(self, other):
+        return self.starts_at < other.ends_at and self.ends_at > other.starts_at
+
+
+@dataclass
+class LendingDay:
+    date: date
+    in_month: bool
+    is_today: bool
+    lendings: list = field(default_factory=list)
+
+    @property
+    def clashes(self):
+        """Their things asked for at the same time on this day by more people than there
+        are of them, if they said yes to all."""
+        lent = [lending for lending in self.lendings if lending.lent_out]
+        tools = {}
+        for lending in lent:
+            at_once = sum(1 for other in lent if other.tool.pk == lending.tool.pk and other.overlaps(lending))
+            if at_once > (lending.tool.quantity or 1):
+                tools[lending.tool.pk] = lending.tool
+        return list(tools.values())
+
+
+def lendings_of(user=None, community=None):
+    """The requested and agreed loans of what the user lends or borrows themselves, or of
+    what a community lends (its tool library) or wishes to borrow, by start."""
+    matches = (
+        Match.objects.filter(status__in=_ACTIVE, loan__isnull=False)
+        .select_related("loan", "from_user", "recipient", "content_type")
+        .prefetch_related("target")
+    )
+    if community is not None:
+        own = community.listings.filter(lend=True).values_list("pk", flat=True)
+        matches = matches.filter(
+            content_type=ContentType.objects.get_for_model(Listing), object_id__in=[str(pk) for pk in own],
+        )
+    else:
+        matches = matches.filter(Q(from_user=user) | Q(recipient=user))
+    lendings = []
+    for match in matches:
+        tool = match.target
+        if tool is None:
+            continue
+        if community is not None:
+            lent_out = tool.is_offer
+        elif tool.community_id and match.recipient == user:
+            # Answered as the community's ambassador: that is in the community's calendar
+            continue
+        else:
+            lent_out = match.lender == user
+        starts_at, ends_at = match.loan_period()
+        lendings.append(Lending(match, starts_at, ends_at, tool, lent_out=lent_out))
+    lendings.sort(key=lambda lending: (lending.starts_at, lending.ends_at))
+    return lendings
+
+
+def _lending_page(request, lendings, tools, **context):
+    """A month of loans like the ambassador's calendar, the tools to lend with where they
+    are today, and the loans of the month: lent out and borrowed."""
+    first = _month(request.GET.get("month"))
+    last = first.replace(day=pycalendar.monthrange(first.year, first.month)[1])
+    grid_start = first - timedelta(days=first.weekday())
+    grid_end = last + timedelta(days=6 - last.weekday())
+    today = timezone.localdate()
+
+    weeks = []
+    day = grid_start
+    while day <= grid_end:
+        week = []
+        for _ in range(7):
+            week.append(LendingDay(
+                date=day, in_month=day.month == first.month, is_today=day == today,
+                lendings=[lending for lending in lendings if lending.covers(day)],
+            ))
+            day += timedelta(days=1)
+        weeks.append(week)
+
+    now = timezone.now()
+    agreed = [lending for lending in lendings if lending.lent_out and lending.confirmed]
+    for tool in tools:
+        # Where it is right now, and when it is lent next
+        tool.lent_now = [lending for lending in agreed if lending.tool.pk == tool.pk and lending.starts_at <= now < lending.ends_at]
+        tool.lent_next = next((lending for lending in agreed if lending.tool.pk == tool.pk and lending.starts_at > now), None)
+
+    month_lendings = [lending for lending in lendings if lending.start <= last and lending.end >= first]
+    previous_month = (first - timedelta(days=1)).replace(day=1)
+    next_month = last + timedelta(days=1)
+    return render(request, "matches/lending_calendar.html", {
+        "month": first,
+        "previous_month": previous_month.strftime("%Y-%m"),
+        "next_month": next_month.strftime("%Y-%m"),
+        "this_month": today.strftime("%Y-%m"),
+        "weeks": weeks,
+        "weekdays": [weeks[0][i].date for i in range(7)],
+        "tools": tools,
+        "lent_out": [lending for lending in month_lendings if lending.lent_out],
+        "borrowed": [lending for lending in month_lendings if not lending.lent_out],
+        "clash_days": [d for week in weeks for d in week if d.in_month and d.clashes],
+        **context,
+    })
+
+
+@login_required
+def lending(request):
+    """What the user lends themselves, when and to whom; and what they borrow, so they
+    know when to bring it back. A community's tool library has its own calendar."""
+    tools = list(Listing.objects.of(request.user).to_lend().order_by("title"))
+    return _lending_page(request, lendings_of(request.user), tools)
+
+
+@login_required
+def community_lending(request, community_slug):
+    """A community's tool library for its ambassador: who borrows which of its tools,
+    cargo bike, car or trailer when, requested and agreed, and where each is today."""
+    community = _ambassadors_community(request, community_slug)
+    tools = list(community.listings.to_lend().order_by("title"))
+    return _lending_page(
+        request, lendings_of(community=community), tools,
+        community=community, lending_community=community,
+    )

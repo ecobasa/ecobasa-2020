@@ -73,6 +73,11 @@
             </div>
           {% endif %}
           {% endwith %}
+        {% elif match.is_loan %}
+          <div class="flex items-center gap-2 text-sm">
+            <i class="fa-regular fa-calendar text-primary"></i>
+            <span>{% trans "Lent" %}: {{ match.loan.period }}</span>
+          </div>
         {% elif latest_counter_msg and latest_counter_msg.counter_date %}
           <div class="flex items-center gap-2 text-sm">
             <i class="fa fa-calendar text-primary"></i>
@@ -109,8 +114,8 @@
         {% endif %}
         {% if latest_status_msg.counter_stay_from or latest_status_msg.counter_stay_to %}
           <div class="flex items-center gap-2 text-sm">
-            <i class="fa fa-campground text-primary"></i>
-            <span>{% include "matches/_stay_period.html" with stay_from=latest_status_msg.counter_stay_from stay_to=latest_status_msg.counter_stay_to %}</span>
+            <i class="{% if match.is_loan %}fa-regular fa-calendar{% else %}fa fa-campground{% endif %} text-primary"></i>
+            <span>{% if match.is_loan %}{{ latest_status_msg.counter_loan_period }}{% else %}{% include "matches/_stay_period.html" with stay_from=latest_status_msg.counter_stay_from stay_to=latest_status_msg.counter_stay_to %}{% endif %}</span>
           </div>
         {% endif %}
       {% endif %}
@@ -132,7 +137,7 @@
         <a href="{{ match.from_user.get_absolute_url }}" class="font-semibold text-primary hover:underline">
           {{ match.from_user.name|default:match.from_user.email }}
         </a>
-        <p class="text-xs">{{ target.get_match_verb }} <a href="{{ target.get_absolute_url }}" class="hover:underline">{{ target.get_match_display_name }}</a>{% with community=match.community %}{% if community and community != target %} · <a href="{{ community.get_absolute_url }}" class="hover:underline"><i class="fa-solid {{ community.get_type_icon }} mr-1"></i>{{ community.name }}</a>{% endif %}{% endwith %} on {{ match.created_at|date:"d M Y H:i" }}</p>
+        <p class="text-xs">{{ match_verb }} <a href="{{ target.get_absolute_url }}" class="hover:underline">{{ target.get_match_display_name }}</a>{% with community=match.community %}{% if community and community != target %} · <a href="{{ community.get_absolute_url }}" class="hover:underline"><i class="fa-solid {{ community.get_type_icon }} mr-1"></i>{{ community.name }}</a>{% endif %}{% endwith %} on {{ match.created_at|date:"d M Y H:i" }}</p>
       </div>
       <div class="ml-auto flex flex-wrap items-center justify-end gap-1">
         {% include "_kind_pill.html" with kind=match.kind %}
@@ -149,6 +154,14 @@
     </div>
 
     <div class="prose text-sm mb-4">{{ match.message|linebreaksbr }}</div>
+
+    {% if match.is_loan %}
+      <div class="text-sm mb-2">
+        <i class="fa-regular fa-calendar mr-1 text-primary"></i>
+        <strong>{% if match.status == 'accepted' %}{% trans "Lent" %}{% else %}{% trans "Asked to borrow" %}{% endif %}:</strong>
+        {{ match.loan.period }}
+      </div>
+    {% endif %}
 
     {% with vd=match.volunteer_details %}
     {% if vd %}
@@ -276,9 +289,10 @@
             {% endif %}
             {% if msg.counter_stay_from or msg.counter_stay_to %}
               <div class="text-sm mb-2">
-                <i class="fa fa-campground mr-1 text-primary"></i>
-                <strong>{% trans "Suggested stay" %}:</strong>
-                {% include "matches/_stay_period.html" with stay_from=msg.counter_stay_from stay_to=msg.counter_stay_to %}
+                {% if match.is_loan %}<i class="fa-regular fa-calendar mr-1 text-primary"></i>
+                <strong>{% trans "Suggested days" %}:</strong>{% else %}<i class="fa fa-campground mr-1 text-primary"></i>
+                <strong>{% trans "Suggested stay" %}:</strong>{% endif %}
+                {% if match.is_loan %}{{ msg.counter_loan_period }}{% else %}{% include "matches/_stay_period.html" with stay_from=msg.counter_stay_from stay_to=msg.counter_stay_to %}{% endif %}
               </div>
             {% endif %}
             {% with coords=msg.counter_location_coords %}
@@ -296,13 +310,13 @@
   {% if is_party %}
   {# ── Bottom compose area ──────────────────────────────────────────── #}
   <div class="border rounded-xl bg-secondary p-6"
-       x-data="{ isCounter: false, counterLocType: 'my_place' }">
+       x-data="{ isCounter: false, counterLocType: '{{ proposed_place.type|default:"my_place" }}' }">
 
     <form method="post">
       {% csrf_token %}
 
-      {# Counter-proposal extra fields (owner only, collapsible) #}
-      {% if is_owner %}
+      {# Counter-proposal extra fields (collapsible) #}
+      {% if can_counter %}
       <div x-show="isCounter" style="display:none" class="mb-5 pb-5 border-b space-y-4">
         <h3 class="text-sm font-semibold">{% trans "Counter-proposal details" %}</h3>
 
@@ -321,14 +335,36 @@
           </div>
         </div>
         {% else %}
+        {% if match.is_loan %}
+        {# Other days or hours to borrow it; the place to pick it up can change too #}
+        {% with loan=proposed_loan %}
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div class="form-group">
+            <label class="form-label" for="counter-loan-from">{% trans "Borrow from" %}</label>
+            <div class="flex gap-2">
+              <input type="date" name="counter_stay_from" id="counter-loan-from" class="form-input" value="{{ loan.first_day|date:'Y-m-d' }}">
+              <input type="time" name="counter_from_time" class="form-input w-32" value="{{ loan.from_time|time:'H:i' }}" aria-label="{% trans 'at' %}">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="counter-loan-to">{% trans "Borrow until" %}</label>
+            <div class="flex gap-2">
+              <input type="date" name="counter_stay_to" id="counter-loan-to" class="form-input" value="{{ loan.last_day|date:'Y-m-d' }}">
+              <input type="time" name="counter_to_time" class="form-input w-32" value="{{ loan.until_time|time:'H:i' }}" aria-label="{% trans 'at' %}">
+            </div>
+          </div>
+        </div>
+        <p class="text-xs -mt-2">{% trans "Times are optional: without them it is for whole days." %}</p>
+        {% endwith %}
+        {% endif %}
         <div class="form-group">
-          <label class="form-label">{% trans "Counter location type" %}</label>
+          <label class="form-label">{% if match.is_loan %}{% trans "Handover place" %}{% else %}{% trans "Counter location type" %}{% endif %}</label>
           <div class="space-y-1">
             {% for value, label in loc_choices %}
               <label class="flex items-center gap-2 text-sm cursor-pointer">
                 <input type="radio" name="counter_location_type" value="{{ value }}"
                   class="form-radio"
-                  {% if forloop.first %}checked{% endif %}
+                  {% if value == proposed_place.type %}checked{% endif %}
                   @change="counterLocType = $event.target.value; window.updateCounterMode && window.updateCounterMode($event.target.value)">
                 {{ label }}
               </label>
@@ -342,6 +378,7 @@
             <input type="text" id="counter-location-search"
               class="form-input"
               placeholder="{% trans 'Search for a location…' %}"
+              value="{% if proposed_place.type == 'custom' %}{{ proposed_place.name }}{% endif %}"
               @input.debounce="onInput($el.value)"
               autocomplete="off">
             <div x-show="open" @click.outside="open = false" style="display:none"
@@ -367,10 +404,12 @@
           <div id="counter-pick-map" class="w-full h-full bg-secondary bg-opacity-40"></div>
         </div>
 
+        {% if not match.is_loan %}
         <div class="form-group">
           <label class="form-label">{% trans "Counter date" %}</label>
           <input type="datetime-local" name="counter_date" class="form-input">
         </div>
+        {% endif %}
         {% endif %}
       </div>
       {% endif %}
@@ -388,34 +427,34 @@
           <i class="fa fa-paper-plane mr-2"></i>{% trans "Send" %}
         </button>
 
-        {% if is_owner %}
-          {% if owner_can_decide %}
-            {% if match.status == 'pending' %}
-              <button type="submit" name="action" value="accept"
-                x-show="!isCounter" class="btn btn-green">
-                <i class="fa fa-check mr-2"></i>{% trans "Accept" %}
-              </button>
-              <button type="submit" name="action" value="decline"
-                x-show="!isCounter" class="btn btn-red">
-                <i class="fa fa-times mr-2"></i>{% trans "Decline" %}
-              </button>
-            {% elif match.status == 'accepted' %}
-              <button type="submit" name="action" value="decline"
-                x-show="!isCounter" class="btn btn-red">
-                <i class="fa fa-times mr-2"></i>{% trans "Change to Declined" %}
-              </button>
-            {% elif match.status == 'declined' %}
-              <button type="submit" name="action" value="accept"
-                x-show="!isCounter" class="btn btn-green">
-                <i class="fa fa-check mr-2"></i>{% trans "Change to Accepted" %}
-              </button>
-            {% endif %}
+        {% if can_decide %}
+          {% if match.status == 'accepted' %}
+            <button type="submit" name="action" value="decline"
+              x-show="!isCounter" class="btn btn-red">
+              <i class="fa fa-times mr-2"></i>{% trans "Change to Declined" %}
+            </button>
+          {% elif match.status == 'declined' %}
+            <button type="submit" name="action" value="accept"
+              x-show="!isCounter" class="btn btn-green">
+              <i class="fa fa-check mr-2"></i>{% trans "Change to Accepted" %}
+            </button>
           {% else %}
-            <span class="text-xs self-center italic" x-show="!isCounter">
-              {% trans "Waiting for the other party's response…" %}
-            </span>
+            <button type="submit" name="action" value="accept"
+              x-show="!isCounter" class="btn btn-green">
+              <i class="fa fa-check mr-2"></i>{% trans "Accept" %}
+            </button>
+            <button type="submit" name="action" value="decline"
+              x-show="!isCounter" class="btn btn-red">
+              <i class="fa fa-times mr-2"></i>{% trans "Decline" %}
+            </button>
           {% endif %}
+        {% elif match.status == 'pending' or match.status == 'counter' %}
+          <span class="text-xs self-center italic" x-show="!isCounter">
+            {% trans "Waiting for the other party's response…" %}
+          </span>
+        {% endif %}
 
+        {% if can_counter %}
           {% if match.is_community_stay %}
           <button type="button" x-show="!isCounter" @click="isCounter = true" class="btn btn-yellow">
             <i class="fa-solid fa-calendar-days mr-2"></i>{% trans "Propose different dates" %}
@@ -424,7 +463,7 @@
           <button type="button" x-show="!isCounter"
             @click="isCounter = true; $nextTick(() => window.initCounterPicker && window.initCounterPicker())"
             class="btn btn-yellow">
-            <i class="fa-solid fa-location-dot mr-2"></i>{% trans "Propose different location" %}
+            {% if match.is_loan %}<i class="fa-solid fa-calendar-days mr-2"></i>{% trans "Propose another time or handover place" %}{% else %}<i class="fa-solid fa-location-dot mr-2"></i>{% trans "Propose different location" %}{% endif %}
           </button>
           {% endif %}
 
@@ -435,15 +474,6 @@
           <button type="button" x-show="isCounter" style="display:none"
             @click="isCounter = false" class="btn btn-purple">
             <i class="fa fa-times mr-2"></i>{% trans "Cancel" %}
-          </button>
-        {% endif %}
-
-        {% if requester_can_decide %}
-          <button type="submit" name="action" value="accept" class="btn btn-green">
-            <i class="fa fa-check mr-2"></i>{% trans "Accept" %}
-          </button>
-          <button type="submit" name="action" value="decline" class="btn btn-red">
-            <i class="fa fa-times mr-2"></i>{% trans "Decline" %}
           </button>
         {% endif %}
 
@@ -502,7 +532,7 @@ document.fonts.ready.then(function () {
     {% endif %}
   {% endfor %}
 
-  {% if is_owner and not match.is_community_stay %}
+  {% if can_counter and not match.is_community_stay %}
   var counterMapInst = null;
   window.initCounterPicker = function () {
     if (counterMapInst) return;
@@ -554,10 +584,10 @@ document.fonts.ready.then(function () {
       document.getElementById('counter-location-name').value = name || '';
     }
 
+    // Where each side is (for the side it belongs to, where the thing is)
     var knownCoords = {
-      // The requester's only roughly until accepted (Match.person_place)
-      my_place:   {% if match.recipient.location %}[{{ match.recipient.location.x|unlocalize }}, {{ match.recipient.location.y|unlocalize }}, '{{ match.recipient.location_name|escapejs }}']{% else %}null{% endif %},
-      your_place: {% with place=requester_place %}{% if place.1 %}[{{ place.1.x|unlocalize }}, {{ place.1.y|unlocalize }}, '{{ place.0|escapejs }}']{% else %}null{% endif %}{% endwith %},
+      my_place:   {% if my_place.1 %}[{{ my_place.1.x|unlocalize }}, {{ my_place.1.y|unlocalize }}, '{{ my_place.0|escapejs }}']{% else %}null{% endif %},
+      your_place: {% if your_place.1 %}[{{ your_place.1.x|unlocalize }}, {{ your_place.1.y|unlocalize }}, '{{ your_place.0|escapejs }}']{% else %}null{% endif %},
     };
 
     window.updateCounterMode = function (locType) {
@@ -579,8 +609,12 @@ document.fonts.ready.then(function () {
       setHidden(lon, lat, label);
     };
 
+    // Start from the place proposed last
     var checked = document.querySelector('input[name="counter_location_type"]:checked');
     window.updateCounterMode(checked ? checked.value : 'my_place');
+    {% if proposed_place.type == 'custom' and proposed_place.lat and proposed_place.lon %}
+    window.setCounterPoint({{ proposed_place.lon|unlocalize }}, {{ proposed_place.lat|unlocalize }}, '{{ proposed_place.name|escapejs }}');
+    {% endif %}
   };
   {% endif %}
 });

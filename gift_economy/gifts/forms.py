@@ -1,10 +1,12 @@
 from django import forms
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 from crispy_forms.layout import Fieldset as CrispyFieldset
 from django.contrib.gis import forms
 
 from gift_economy.gifts.skills.models import get_or_create_skill
+from gift_economy.gifts.things import WHITELISTED_KINDS, thing_named
 from .models import Listing
 
 
@@ -36,7 +38,7 @@ class ListingForm(forms.ModelForm):
     skill_name = forms.CharField(
         label=_("Skill"), max_length=100, required=False,
         widget=forms.TextInput(attrs={
-            "autocomplete": "off", "list": "skill-suggestions", "data-skill-name": "",
+            "autocomplete": "off", "data-skill-name": "",
             "placeholder": _("e.g. Carpentry, Solar energy, Cooking"),
         }),
     )
@@ -44,7 +46,8 @@ class ListingForm(forms.ModelForm):
     class Meta:
         model = Listing
         fields = (
-            "type", "kind", "skill_name", "title", "quantity", "unit", "level", "available",
+            "type", "kind", "skill_name", "title", "variety", "harvest_year", "open_pollinated", "lend",
+            "quantity", "unit", "level", "available",
             "description", "image", "categories", "public_good", "location_name", "location", "location_public",
         )
         widgets = {
@@ -69,6 +72,10 @@ class ListingForm(forms.ModelForm):
         self.fields["public_good"].widget.attrs["x-model"] = "publicGood"
         for name in ("public_good", "location_public"):
             self.fields[name].widget.attrs["class"] = "form-checkbox mt-1 flex-shrink-0"
+        self.fields["title"].widget.attrs.update({"class": "textinput form-input", "data-thing-title": "", "autocomplete": "off"})
+        self.fields["variety"].widget.attrs["placeholder"] = _("e.g. Ochsenherz, Golden Bantam, Lange Rote")
+        self.fields["harvest_year"].widget.attrs.update({"min": "1990", "placeholder": str(timezone.now().year)})
+        self.fields["open_pollinated"].help_text = _("Its seeds can be saved again and come true (not an F1 hybrid).")
         if self.instance.pk and self.instance.skill_id:
             self.initial["skill_name"] = self.instance.skill.get_name()
 
@@ -102,23 +109,70 @@ class ListingForm(forms.ModelForm):
         title = (cleaned.get("title") or "").strip()
         if kind == Listing.KIND_SKILL and not skill_name:
             self.add_error("skill_name", _("Which skill?"))
+        elif kind in Listing.SKILL_KINDS and skill_name and not self._known_skill(skill_name):
+            # Skills from the list only, as everywhere, so people with the same one meet
+            self.add_error("skill_name", _("Please choose one from the suggestions, so others with the same can find it."))
         elif kind in Listing.SKILL_KINDS and not (skill_name or title):
             self.add_error("title", _("Name a skill or say what for."))
         elif kind in Listing.THING_KINDS and not title:
             self.add_error("title", _("What is it?"))
+        elif kind in WHITELISTED_KINDS and thing_named(title, kind) is None:
+            # Matched by what exactly it is: a crop or a vehicle from the list
+            self.add_error("title", _("Please choose one from the suggestions, so others with the same can find it."))
+        if kind not in Listing.LEND_KINDS:
+            cleaned["lend"] = False
+        if kind in Listing.PIECE_KINDS:
+            cleaned["unit"] = ""
+        if kind in Listing.CATEGORY_KINDS and title and not self.has_error("title"):
+            # What it is decides its categories: a seed or vehicle always; a tool or a
+            # material once recognized, else the categories chosen
+            from .models import Thing
+            from .things import recognize
+            if kind in WHITELISTED_KINDS:
+                thing_id = thing_named(title, kind)
+            else:
+                thing_id = recognize(title, kind)
+            thing = Thing.objects.filter(pk=thing_id).select_related("category").first()
+            if thing is not None or kind in WHITELISTED_KINDS:
+                cleaned["categories"] = Listing.thing_categories(thing, kind)
+        if kind != Listing.KIND_SEEDS:
+            cleaned["variety"], cleaned["harvest_year"], cleaned["open_pollinated"] = "", None, False
         if kind in Listing.THING_KINDS:
             cleaned["skill_name"] = ""
             cleaned["level"] = ""
         else:
             cleaned["categories"] = []
-        # A public good is a thing offered where it's found: always with its exact place
+            # An amount only for things, and for a project's needs ("2 people")
+            if not self.instance.project_id:
+                cleaned["quantity"], cleaned["unit"] = None, ""
+        # A public good is a thing offered where it's found: always with its exact place,
+        # and nobody lends it out (nobody asks for it)
         if cleaned.get("type") != Listing.TYPE_OFFER or kind not in Listing.THING_KINDS:
             cleaned["public_good"] = False
         if cleaned.get("public_good"):
             if not cleaned.get("location"):
                 self.add_error("public_good", _("Set on the map where it is found."))
             cleaned["location_public"] = True
+            cleaned["lend"] = False
         return cleaned
+
+    def has_own_place(self):
+        """Whether its place is its own: set, and not just left where its person or
+        community is (the form starts from there)."""
+        try:
+            point = self.fields["location"].clean(self["location"].value())
+        except forms.ValidationError:
+            return False
+        start = self.initial.get("location")
+        return point is not None and not (start is not None and point.equals_exact(start, tolerance=1e-6))
+
+    def _known_skill(self, name):
+        """A skill of the taxonomy (in any language), or the one it already has."""
+        from gift_economy.gifts.skills.models import _taxonomy
+        if name.strip().lower() in _taxonomy()[1]:
+            return True
+        skill = self.instance.skill if self.instance.pk and self.instance.skill_id else None
+        return skill is not None and name.strip().lower() in (skill.name.lower(), skill.get_name().lower())
 
     def save(self, commit=True):
         listing = super().save(commit=False)

@@ -1223,8 +1223,11 @@ msgid "Help on site, with or without a particular skill."
 msgstr "Hilfe vor Ort, mit oder ohne bestimmte Fähigkeit."
 
 #: gifts/templates/gifts/listing_form.html:64
-msgid "For knowledge or helping hands: what for, if no skill says it."
-msgstr "Bei Wissen oder helfenden Händen: wofür, wenn keine Fähigkeit es sagt."
+msgid "What for?"
+msgstr "Wofür?"
+
+msgid "e.g. building the roof truss, planning our food forest, moving house on Saturday"
+msgstr "z. B. Dachstuhl bauen, unseren Waldgarten planen, Umzug am Samstag"
 
 #: gifts/templates/gifts/mine.html:4 gifts/templates/gifts/mine.html:11
 #: templates/_navbar.html:154 templates/dashboard/base.html:25
@@ -4441,3 +4444,422 @@ msgstr "Andere sehen nur ungefähr, wo du wohnst (auf etwa 1–2 km, ohne Straß
 #~ msgid "Who you are, what you can do or bring, and how you would get there."
 #~ msgstr ""
 #~ "Wer du bist, was du kannst oder mitbringst, und wie du hinkommen würdest."
+
+msgid "Thing"
+msgstr "Ding"
+
+msgid "Other names"
+msgstr "Weitere Namen"
+
+msgid "Broader thing"
+msgstr "Oberbegriff"
+
+msgid "Recognized as"
+msgstr "Erkannt als"
+
+msgid "Same kind of thing"
+msgstr "Gleiche Art von Ding"
+msgid "To lend"
+msgstr "Zum Verleihen"
+
+msgid "Tool to lend"
+msgstr "Werkzeug zum Verleihen"
+
+msgid "Tool to borrow"
+msgstr "Werkzeug zum Ausleihen"
+
+msgid "Already lent"
+msgstr "Schon verliehen"
+
+msgid "There is %(counter)s of it to lend."
+msgid_plural "There are %(counter)s of them to lend at once."
+msgstr[0] "Es gibt %(counter)s davon zum Verleihen."
+msgstr[1] "Es gibt %(counter)s davon, die gleichzeitig verliehen werden können."
+
+msgid "Not lent on any coming day: ask for the days you need it."
+msgstr "An keinem der kommenden Tage verliehen: frag nach den Tagen, an denen du es brauchst."
+
+msgid "Borrow from"
+msgstr "Ausleihen ab"
+
+msgid "Lend from"
+msgstr "Verleihen ab"
+
+msgid "Borrow until"
+msgstr "Ausleihen bis"
+
+msgid "Lend until"
+msgstr "Verleihen bis"
+
+
+
+msgid "Requests say from when until when. You get a lending calendar in your dashboard."
+msgstr "Anfragen sagen, von wann bis wann. Du bekommst einen Verleihkalender in deinem Dashboard."
+
+msgid "It can't come back before it is borrowed."
+msgstr "Es kann nicht zurückkommen, bevor es ausgeliehen wird."
+
+msgid "Please choose a day from today on."
+msgstr "Bitte wähle einen Tag ab heute."
+
+#, python-format
+msgid "It is already lent then: %(days)s"
+msgstr "Dann ist es schon verliehen: %(days)s"
+
+msgid "Loan"
+msgstr "Ausleihe"
+
+msgid "Loans"
+msgstr "Ausleihen"
+
+#, python-format
+msgid "lent to %(name)s"
+msgstr "verliehen an %(name)s"
+
+#, python-format
+msgid "borrowed from %(name)s"
+msgstr "ausgeliehen von %(name)s"
+
+msgid "Agreed"
+msgstr "Vereinbart"
+
+msgid "agreed"
+msgstr "vereinbart"
+
+msgid "Asked to borrow"
+msgstr "Möchte ausleihen"
+
+msgid "Lending calendar"
+msgstr "Verleihkalender"
+
+
+
+
+msgid "Someone asks to borrow it"
+msgstr "Jemand möchte es ausleihen"
+
+msgid "You borrow it"
+msgstr "Du leihst es aus"
+
+
+#, python-format
+msgid "With %(name)s until %(day)s"
+msgstr "Bei %(name)s bis %(day)s"
+
+msgid "At home"
+msgstr "Zu Hause"
+
+#, python-format
+msgid "next: %(day)s"
+msgstr "nächstes Mal: %(day)s"
+
+msgid "Lent this month"
+msgstr "Diesen Monat verliehen"
+
+
+msgid "You borrow this month"
+msgstr "Du leihst diesen Monat aus"
+
+msgid "Lent"
+msgstr "Verliehen"
+
+msgid "Suggested days"
+msgstr "Vorgeschlagene Tage"
+
+msgid "Propose another time or handover place"
+msgstr "Anderen Zeitraum oder Übergabeort vorschlagen"
+
+msgid "It is already lent on some of these days. Propose other days instead."
+msgstr "An einigen dieser Tage ist es schon verliehen. Schlag stattdessen andere Tage vor."
+
+msgid "To borrow here"
+msgstr "Hier ausleihen"
+
+msgid "Tools and vehicles the community and its members lend. Ask for the days you need one."
+msgstr "Werkzeuge und Fahrzeuge, die die Gemeinschaft und ihre Mitglieder verleihen. Frag nach den Tagen, an denen du etwas brauchst."
+
+#, python-format
+msgid "Lent until %(day)s"
+msgstr "Verliehen bis %(day)s"
+
+
+msgid "free"
+msgstr "frei"
+
+msgid "Start a tool library: lend your community's tools, cargo bike, car or trailer to members and neighbours, and see in a calendar who has what when."
+msgstr "Starte eine Werkzeugbibliothek: verleih Werkzeuge, Lastenrad, Auto oder Anhänger eurer Gemeinschaft an Mitglieder und Nachbar*innen und sieh im Kalender, wer wann was hat."
+
+msgid "Add something to lend"
+msgstr "Etwas zum Verleihen hinzufügen"
+
+msgid "To borrow"
+msgstr "Zum Ausleihen"
+
+msgid "For things to share rather than give away: a ladder, a concrete mixer, a cargo bike, a car, a trailer, a van."
+msgstr "Für Dinge zum Teilen statt Verschenken: Leiter, Betonmischer, Lastenrad, Auto, Anhänger, Transporter."
+
+msgid "More people ask for something than can be lent at once on:"
+msgstr "Mehr Leute fragen nach etwas, als gleichzeitig verliehen werden kann, am:"
+
+msgid "Borrowed by the community"
+msgstr "Von der Gemeinschaft ausgeliehen"
+
+msgid "The tool library"
+msgstr "Die Werkzeugbibliothek"
+
+msgid "What you lend"
+msgstr "Was du verleihst"
+
+msgid "Nobody has asked to borrow anything this month yet."
+msgstr "Diesen Monat hat noch niemand gefragt, etwas auszuleihen."
+
+msgid "The community borrows this month"
+msgstr "Die Gemeinschaft leiht diesen Monat aus"
+
+msgid "What you can do on ecobasa"
+msgstr "Was du auf ecobasa tun kannst"
+
+msgid "Give and wish"
+msgstr "Schenken und wünschen"
+
+msgid "Offer what you don't need, wish for what you do. We suggest what fits nearby."
+msgstr "Biete an, was du nicht brauchst, wünsch dir, was du brauchst. Wir schlagen vor, was in der Nähe passt."
+
+msgid "Share skills"
+msgstr "Fähigkeiten teilen"
+
+msgid "Teach, learn by doing, and volunteer at communities and their projects."
+msgstr "Lehren, beim Tun lernen und in Gemeinschaften und ihren Projekten mithelfen."
+
+msgid "Run a tool library"
+msgstr "Eine Werkzeugbibliothek betreiben"
+
+
+msgid "Share cars in your community"
+msgstr "Autos in der Gemeinschaft teilen"
+
+
+#, python-format
+msgid "Tool library · %(name)s"
+msgstr "Werkzeugbibliothek · %(name)s"
+
+msgid "Available now"
+msgstr "Gerade verfügbar"
+
+msgid "Vehicle"
+msgstr "Fahrzeug"
+
+msgid "Vehicle to lend"
+msgstr "Fahrzeug zum Verleihen"
+
+msgid "Vehicle to borrow"
+msgstr "Fahrzeug zum Ausleihen"
+
+msgid "Times are optional: without them it is for whole days. Without a last day, for one day."
+msgstr "Uhrzeiten sind optional: ohne sie gilt es für ganze Tage. Ohne letzten Tag für einen Tag."
+
+msgid "Lend it: people borrow it for some days or hours and bring it back"
+msgstr "Verleihen: Leute leihen es sich für ein paar Tage oder Stunden und bringen es zurück"
+
+msgid "Borrow it: you need it for some days or hours and bring it back"
+msgstr "Ausleihen: du brauchst es für ein paar Tage oder Stunden und bringst es zurück"
+
+msgid "at"
+msgstr "um"
+
+msgid "Give both times, or none for whole days."
+msgstr "Gib beide Uhrzeiten an, oder keine für ganze Tage."
+
+msgid "Times are optional: without them it is for whole days."
+msgstr "Uhrzeiten sind optional: ohne sie gilt es für ganze Tage."
+
+msgid "Lend tools instead of buying them twice. People ask for the days or hours they need them, and your lending calendar shows who has what when."
+msgstr "Werkzeuge verleihen statt doppelt kaufen. Leute fragen nach den Tagen oder Stunden, an denen sie sie brauchen, und dein Verleihkalender zeigt, wer wann was hat."
+
+msgid "The cargo bike, the car, the trailer, the van: book them by the day or the hour, and see every booking in the community's calendar."
+msgstr "Lastenrad, Auto, Anhänger, Transporter: tage- oder stundenweise buchen und jede Buchung im Kalender der Gemeinschaft sehen."
+
+msgid "Handover place"
+msgstr "Übergabeort"
+
+msgid "Tools"
+msgstr "Werkzeuge"
+
+msgid "Materials"
+msgstr "Materialien"
+
+msgid "Vehicles"
+msgstr "Fahrzeuge"
+
+msgid "Other things"
+msgstr "Andere Dinge"
+
+msgid "Vocabulary"
+msgstr "Vokabular"
+
+msgid "Vocabulary: tools"
+msgstr "Vokabular: Werkzeuge"
+
+msgid "Vocabulary: materials"
+msgstr "Vokabular: Materialien"
+
+msgid "Vocabulary: vehicles"
+msgstr "Vokabular: Fahrzeuge"
+
+msgid "Other thing"
+msgstr "Anderes Ding"
+
+msgid "Vocabulary: other things"
+msgstr "Vokabular: andere Dinge"
+
+msgid "offered to help with the wish"
+msgstr "hat Hilfe beim Wunsch angeboten"
+
+msgid "wants to fulfill the wish"
+msgstr "möchte den Wunsch erfüllen"
+
+msgid "is interested in the skill"
+msgstr "interessiert sich für die Fähigkeit"
+
+msgid "is interested in the offer"
+msgstr "interessiert sich für das Angebot"
+
+#, python-format
+msgid "To %(name)s"
+msgstr "An %(name)s"
+
+msgid "Seeds to swap"
+msgstr "Saatgut zum Tauschen"
+
+msgid ""
+"Keep varieties alive: share the seeds you save with members and neighbours, "
+"like a seed library."
+msgstr ""
+"Sorten lebendig halten: teilt euer selbst vermehrtes Saatgut mit Mitgliedern"
+" und Nachbar*innen, wie eine Saatgutbibliothek."
+
+msgid "Add seeds"
+msgstr "Saatgut hinzufügen"
+
+msgid "e.g. Ochsenherz, Golden Bantam, Lange Rote"
+msgstr "z. B. Ochsenherz, Golden Bantam, Lange Rote"
+
+msgid "Its seeds can be saved again and come true (not an F1 hybrid)."
+msgstr ""
+"Daraus lässt sich wieder sortenechtes Saatgut gewinnen (keine F1-Hybride)."
+
+msgid "Seeds"
+msgstr "Saatgut"
+
+msgid "Seed"
+msgstr "Saatgut"
+
+msgid "Vocabulary: seeds"
+msgstr "Vokabular: Saatgut"
+
+msgid "Variety"
+msgstr "Sorte"
+
+msgid "Harvest year"
+msgstr "Erntejahr"
+
+msgid "Open-pollinated"
+msgstr "Samenfest"
+
+#, python-format
+msgid "Harvested %(year)s"
+msgstr "Ernte %(year)s"
+
+msgid "Which crop?"
+msgstr "Welche Kultur?"
+
+msgid "e.g. Tomato, Bush bean, Calendula, Phacelia"
+msgstr "z. B. Tomate, Buschbohne, Ringelblume, Phacelia"
+
+msgid "packets"
+msgstr "Tütchen"
+
+msgid "%(count)s packet"
+msgid_plural "%(count)s packets"
+msgstr[0] "%(count)s Tütchen"
+msgstr[1] "%(count)s Tütchen"
+
+msgid "Swap seeds"
+msgstr "Saatgut tauschen"
+
+msgid ""
+"Share the seeds you save, open-pollinated and with their variety, and find "
+"the ones you are looking for: the tomato, the bean, the flowers for the "
+"bees."
+msgstr ""
+"Teile dein selbst vermehrtes, samenfestes Saatgut mit Sortennamen und finde,"
+" was du suchst: die Tomate, die Bohne, die Blumen für die Bienen."
+
+msgid "%(years)s year old"
+msgid_plural "%(years)s years old"
+msgstr[0] "%(years)s Jahr alt"
+msgstr[1] "%(years)s Jahre alt"
+
+msgid "Tropical: warm all year"
+msgstr "Tropisch: ganzjährig warm"
+
+msgid "Subtropical: hot humid summers, mild winters"
+msgstr "Subtropisch: heiße feuchte Sommer, milde Winter"
+
+msgid "Mediterranean: dry hot summers, mild wet winters"
+msgstr "Mediterran: trockene heiße Sommer, milde feuchte Winter"
+
+msgid "Dry: steppe or desert"
+msgstr "Trocken: Steppe oder Wüste"
+
+msgid "Temperate: mild summers, cool winters (also tropical highlands)"
+msgstr "Gemäßigt: milde Sommer, kühle Winter (auch tropische Hochlagen)"
+
+msgid "Continental: warm summers, cold winters"
+msgstr "Kontinental: warme Sommer, kalte Winter"
+
+msgid "Cool: short summers, long cold winters"
+msgstr "Kühl: kurze Sommer, lange kalte Winter"
+
+msgid "Alpine: high mountains, very short season"
+msgstr "Alpin: Hochgebirge, sehr kurze Saison"
+
+msgid "Seeds grow best in a climate like the one they were grown in."
+msgstr ""
+"Saatgut gedeiht am besten in einem Klima wie dem, in dem es angebaut wurde."
+
+msgid ""
+"Where did the mother plant grow, where were the seeds harvested? We find the"
+" climate zone from the place, so the seeds go where they grow well."
+msgstr ""
+"Wo stand die Mutterpflanze, wo wurden die Samen geerntet? Aus dem Ort "
+"bestimmen wir die Klimazone, damit das Saatgut dorthin kommt, wo es gut "
+"wächst."
+
+msgid ""
+"Where will they grow? We find the climate zone from the place and suggest "
+"seeds from a similar climate."
+msgstr ""
+"Wo soll es wachsen? Aus dem Ort bestimmen wir die Klimazone und schlagen "
+"Saatgut aus einem ähnlichen Klima vor."
+
+msgid ""
+"Please choose one from the suggestions, so others with the same can find it."
+msgstr ""
+"Bitte wähle einen Vorschlag aus der Liste, damit andere mit dem Gleichen es "
+"finden."
+
+msgid "Which vehicle?"
+msgstr "Welches Fahrzeug?"
+
+msgid "Choose from the suggestions; the variety goes below."
+msgstr "Wähle aus den Vorschlägen, die Sorte kommt darunter."
+
+msgid "e.g. Cargo bike, Van, Trailer, Campervan"
+msgstr "z. B. Lastenrad, Transporter, Anhänger, Wohnmobil"
+
+msgid "Choose from the suggestions."
+msgstr "Wähle aus den Vorschlägen."
+
+msgid "Please choose one from the suggestions."
+msgstr "Bitte wähle einen Vorschlag aus der Liste."

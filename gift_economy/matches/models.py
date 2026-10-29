@@ -139,14 +139,18 @@ class Match(models.Model):
         """The offers asked for too while talking it over."""
         return [c for c in self._extras() if c.listing.is_offer]
 
-    def stay_period(self):
-        """(from, to) of a stay as currently proposed: the latest counter-proposed period,
-        else what the volunteer asked for. (None, None) without dates."""
-        counter = (
+    def _counter_period(self):
+        """The latest counter-proposed period (stay or loan), or None."""
+        return (
             self.thread.filter(status_to=self.STATUS_COUNTER)
             .exclude(counter_stay_from=None, counter_stay_to=None)
             .last()
         )
+
+    def stay_period(self):
+        """(from, to) of a stay as currently proposed: the latest counter-proposed period,
+        else what the volunteer asked for. (None, None) without dates."""
+        counter = self._counter_period()
         if counter:
             return counter.counter_stay_from, counter.counter_stay_to
         details = getattr(self, "volunteer_details", None)
@@ -174,6 +178,35 @@ class Match(models.Model):
             name, point = town(name), approximate(point, self.target.place_seed)
         return label, name, point
 
+    @property
+    def is_loan(self):
+        """About a tool to lend or to borrow: it has dates it is lent from and until (Loan)."""
+        return hasattr(self, "loan")
+
+    @property
+    def lender(self):
+        """Who lends the tool: the owner of a tool to lend, the one who answers a wish to borrow."""
+        if not self.is_loan:
+            return None
+        target = self.target
+        return self.recipient if target is not None and target.is_offer else self.from_user
+
+    @property
+    def borrower(self):
+        if not self.is_loan:
+            return None
+        return self.from_user if self.lender == self.recipient else self.recipient
+
+    def loan_period(self):
+        """(start, end) of a loan as currently proposed: the latest counter-proposed one,
+        else the agreed or asked for one. (None, None) if it isn't a loan."""
+        if not self.is_loan:
+            return None, None
+        counter = self._counter_period()
+        if counter and counter.counter_stay_from and counter.counter_stay_to:
+            return counter.counter_stay_from, counter.counter_stay_to
+        return self.loan.starts_at, self.loan.ends_at
+
     def resolved_location(self):
         """Human-readable meeting location, resolving my/your place from profiles."""
         if self.location_type == self.LOC_MY_PLACE:
@@ -185,6 +218,30 @@ class Match(models.Model):
             if label:
                 return f"{label} — {loc_name}" if loc_name else label
         return self.proposed_location or ""
+
+    def place_of(self, user, viewer=None):
+        """(name, point) of where one side is: for the side it belongs to, where the thing
+        is (its own place, its person's or community's), else the person's place. Exactly
+        to the viewer it belongs to, to others only roughly until accepted."""
+        if user is None:
+            return "", None
+        own = viewer is not None and viewer == user
+        if user == self.recipient and self.target is not None:
+            _label, name, point = self.target.get_match_location() if own else self.target_location()
+            if point:
+                return name, point
+        if own:
+            return user.location_name or "", user.location
+        name, point = self.person_place(user)
+        return name or "", point
+
+    def place_is_rough(self, user):
+        """Whether place_of(user) shows others only roughly where it is."""
+        if user is None or self.places_shown:
+            return False
+        if user == self.recipient and self.target is not None and self.target.get_match_location()[2]:
+            return not self.target.place_is_public
+        return True
 
     def location_coords(self):
         """Best coordinates for this match's proposed meeting point."""
@@ -250,27 +307,29 @@ class MatchMessage(models.Model):
             return f"{name}'s place — {loc}" if loc else f"{name}'s place"
         return ""
 
+    @property
+    def counter_loan_period(self):
+        """The counter-proposed time of a loan, in words."""
+        return period_text(self.counter_stay_from, self.counter_stay_to)
+
     def counter_location_coords(self):
         if self.counter_lat and self.counter_lon:
             return self.counter_lat, self.counter_lon
+        # "My place" is the place of whoever proposed it, "your place" the other side's
         match = self.match
-        if self.counter_location_type == Match.LOC_MY_PLACE and match.target is not None:
-            _label, _loc_name, point = match.target_location()
-            if point:
-                return point.y, point.x
-        if self.counter_location_type == Match.LOC_YOUR_PLACE and match.from_user.location:
-            point = match.person_place(match.from_user)[1]
-            return point.y, point.x
-        return None, None
+        _name, point = match.place_of(self._counter_side())
+        return (point.y, point.x) if point else (None, None)
+
+    def _counter_side(self):
+        match = self.match
+        other = match.recipient if self.sender_id == match.from_user_id else match.from_user
+        return {Match.LOC_MY_PLACE: self.sender, Match.LOC_YOUR_PLACE: other}.get(self.counter_location_type)
 
     def counter_location_is_rough(self):
         """Whether counter_location_coords is only roughly where it is."""
-        match = self.match
-        if match.places_shown or self.counter_lat and self.counter_lon:
+        if self.counter_lat and self.counter_lon:
             return False
-        if self.counter_location_type == Match.LOC_MY_PLACE and match.target is not None:
-            return not match.target.place_is_public
-        return self.counter_location_type == Match.LOC_YOUR_PLACE
+        return self.match.place_is_rough(self._counter_side())
 
 
 class VolunteerDetails(models.Model):
@@ -325,6 +384,112 @@ class VolunteerDetails(models.Model):
         return self._skill_pills(self.sender_skills_list)
 
 
+def loan_span(first_day, last_day, from_time=None, until_time=None):
+    """(start, end) as aware datetimes of borrowing from first_day until last_day: whole
+    days without times (until the start of the day after last_day), else from and until
+    the times given ("Sat 14:00–18:00")."""
+    from datetime import datetime, time, timedelta
+    from django.utils import timezone
+    last_day = last_day or first_day
+    if from_time is None or until_time is None:
+        start = datetime.combine(first_day, time())
+        end = datetime.combine(last_day + timedelta(days=1), time())
+    else:
+        start = datetime.combine(first_day, from_time)
+        end = datetime.combine(last_day, until_time)
+    return timezone.make_aware(start), timezone.make_aware(end)
+
+
+def _whole_days(start, end):
+    return start.time() == end.time() and start.hour == start.minute == 0
+
+
+def period_text(start, end):
+    """"Sat 31 Oct", "Sat 31 Oct – Mon 2 Nov" (whole days), "Sat 31 Oct, 14:00–18:00",
+    "Sat 31 Oct 18:00 – Sun 1 Nov 10:00"."""
+    from datetime import timedelta
+    from django.utils import timezone
+    from django.utils.formats import date_format
+    if start is None or end is None:
+        return ""
+    start, end = timezone.localtime(start), timezone.localtime(end)
+    day = lambda value: date_format(value, "D j M")
+    if _whole_days(start, end):
+        last = end - timedelta(days=1)
+        return day(start) if last.date() == start.date() else f"{day(start)} – {day(last)}"
+    if start.date() == end.date():
+        return f"{day(start)}, {date_format(start, 'H:i')}–{date_format(end, 'H:i')}"
+    return f"{day(start)} {date_format(start, 'H:i')} – {day(end)} {date_format(end, 'H:i')}"
+
+
+def until_text(start, end):
+    """When it comes back: "Mon 2 Nov" (whole days, the last one), "Sat 31 Oct, 18:00"."""
+    from datetime import timedelta
+    from django.utils import timezone
+    from django.utils.formats import date_format
+    start, end = timezone.localtime(start), timezone.localtime(end)
+    if _whole_days(start, end):
+        return date_format(end - timedelta(days=1), "D j M")
+    return f"{date_format(end, 'D j M')}, {date_format(end, 'H:i')}"
+
+
+class Loan(models.Model):
+    """When a tool or vehicle is lent: from a day (and maybe an hour) until another, as
+    asked for, and as agreed once the match is accepted (a counter-proposal's, if that is
+    what was accepted). Whole days run from midnight to the midnight after the last day
+    (loan_span). Shown in the lending calendar of both sides."""
+
+    match = models.OneToOneField(Match, on_delete=models.CASCADE, related_name="loan")
+    starts_at = models.DateTimeField(_("Borrow from"))
+    ends_at = models.DateTimeField(_("Borrow until"))
+
+    class Meta:
+        ordering = ["starts_at"]
+        verbose_name = _("Loan")
+        verbose_name_plural = _("Loans")
+
+    def __str__(self):
+        return f"Loan {self.starts_at}–{self.ends_at} of {self.match}"
+
+    def overlaps(self, starts_at, ends_at):
+        return self.starts_at < ends_at and self.ends_at > starts_at
+
+    @property
+    def period(self):
+        return period_text(self.starts_at, self.ends_at)
+
+    # As a form asks for it: the first and last day, and the hours unless whole days
+    @property
+    def first_day(self):
+        from django.utils import timezone
+        return timezone.localdate(self.starts_at)
+
+    @property
+    def last_day(self):
+        from datetime import timedelta
+        from django.utils import timezone
+        return timezone.localdate(self.ends_at - timedelta(microseconds=1) if self.whole_days else self.ends_at)
+
+    @property
+    def whole_days(self):
+        from django.utils import timezone
+        return _whole_days(timezone.localtime(self.starts_at), timezone.localtime(self.ends_at))
+
+    @property
+    def from_time(self):
+        from django.utils import timezone
+        return None if self.whole_days else timezone.localtime(self.starts_at).time()
+
+    @property
+    def until_time(self):
+        from django.utils import timezone
+        return None if self.whole_days else timezone.localtime(self.ends_at).time()
+
+    @property
+    def until(self):
+        return until_text(self.starts_at, self.ends_at)
+
+
 class Contribution(models.Model):
     """An offer or wish that is part of an exchange, with how much of it the exchange
     takes or brings: "120 kg of the 200 kg clay", "1 of 2 people". Without a quantity it
@@ -361,9 +526,11 @@ class Suggestion(models.Model):
 
     REASON_SKILL = "skill"
     REASON_WORDS = "words"
+    REASON_THING = "thing"
     REASON_CHOICES = [
         (REASON_SKILL, _("Same skill")),
         (REASON_WORDS, _("Similar title")),
+        (REASON_THING, _("Same kind of thing")),
     ]
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="suggestions")

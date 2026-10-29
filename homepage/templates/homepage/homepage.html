@@ -15,6 +15,38 @@
   <h5>Unimportant Info</h5>
   <p>More Text</p>
 
+  {# What ecobasa is for, with the sharing that is easy to miss: tool libraries and car sharing #}
+  <section id="features" class="mt-12">
+    <h2>{% trans "What you can do on ecobasa" %}</h2>
+    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <a href="{% url 'gifts:search' %}" class="block p-4 rounded border bg-secondary bg-opacity-50 hover:bg-opacity-80">
+        <i class="fa-solid fa-gift text-2xl text-primary"></i>
+        <h3 class="mt-2">{% trans "Give and wish" %}</h3>
+        <p class="text-sm">{% trans "Offer what you don't need, wish for what you do. We suggest what fits nearby." %}</p>
+      </a>
+      <a href="{% url 'communities:list' %}" class="block p-4 rounded border bg-secondary bg-opacity-50 hover:bg-opacity-80">
+        <i class="fa-solid fa-graduation-cap text-2xl text-purple"></i>
+        <h3 class="mt-2">{% trans "Share skills" %}</h3>
+        <p class="text-sm">{% trans "Teach, learn by doing, and volunteer at communities and their projects." %}</p>
+      </a>
+      <a href="{% url 'gifts:create' %}?type=offer&kind=seeds" class="block p-4 rounded border bg-secondary bg-opacity-50 hover:bg-opacity-80">
+        <i class="fa-solid fa-seedling text-2xl text-green"></i>
+        <h3 class="mt-2">{% trans "Swap seeds" %}</h3>
+        <p class="text-sm">{% trans "Share the seeds you save, open-pollinated and with their variety, and find the ones you are looking for: the tomato, the bean, the flowers for the bees." %}</p>
+      </a>
+      <a href="{% url 'gifts:create' %}?type=offer&kind=tool&lend=1" class="block p-4 rounded border bg-secondary bg-opacity-50 hover:bg-opacity-80">
+        <i class="fa-solid fa-screwdriver-wrench text-2xl text-green"></i>
+        <h3 class="mt-2">{% trans "Run a tool library" %}</h3>
+        <p class="text-sm">{% trans "Lend tools instead of buying them twice. People ask for the days or hours they need them, and your lending calendar shows who has what when." %}</p>
+      </a>
+      <a href="{% url 'gifts:create' %}?type=offer&kind=vehicle&lend=1" class="block p-4 rounded border bg-secondary bg-opacity-50 hover:bg-opacity-80">
+        <i class="fa-solid fa-van-shuttle text-2xl text-yellow"></i>
+        <h3 class="mt-2">{% trans "Share cars in your community" %}</h3>
+        <p class="text-sm">{% trans "The cargo bike, the car, the trailer, the van: book them by the day or the hour, and see every booking in the community's calendar." %}</p>
+      </a>
+    </div>
+  </section>
+
   {% if featured_references %}
     <section id="success-stories" class="mt-12">
       <h2>{% trans "Success stories from the gift network" %}</h2>

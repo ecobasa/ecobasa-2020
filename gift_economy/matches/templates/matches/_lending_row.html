@@ -1,0 +1,11 @@
+{% load i18n %}{# A loan in the lending calendar's lists: `lending` #}
+<li>
+  <a href="{{ lending.match.get_absolute_url }}" class="block p-3 rounded border-2 bg-secondary bg-opacity-50 hover:bg-opacity-80 {% if lending.confirmed %}border-green{% else %}border-yellow border-dashed{% endif %}">
+    <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
+      <span class="font-semibold"><i class="fa-solid {{ lending.tool.kind_icon }} mr-1"></i>{{ lending.tool.display_title }}</span>
+      <span class="text-sm">{% with name=lending.person.name|default:lending.person.email %}{% if lending.lent_out %}{% blocktrans %}lent to {{ name }}{% endblocktrans %}{% else %}{% blocktrans %}borrowed from {{ name }}{% endblocktrans %}{% endif %}{% endwith %}</span>
+      <span class="text-sm"><i class="fa-regular fa-calendar mr-1"></i>{{ lending.period }}</span>
+      <span class="ml-auto pill text-xs {% if lending.confirmed %}bg-green{% else %}bg-yellow{% endif %}">{% if lending.confirmed %}{% trans "Agreed" %}{% else %}{% trans "Requested" %}{% endif %}</span>
+    </div>
+  </a>
+</li>

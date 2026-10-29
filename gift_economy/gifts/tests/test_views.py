@@ -6,6 +6,7 @@ from pytest_django.asserts import assertRedirects
 
 from users.models import User
 from ..models import Listing
+from ..testing import need
 
 
 @pytest.fixture
@@ -407,6 +408,15 @@ class TestPublicGood:
         firewood = Listing.objects.get(title="Firewood")
         assert firewood.public_good and firewood.location_public and firewood.place_is_public
 
+    def test_its_place_is_its_own_also_where_its_person_lives(self, user, user_client):
+        from django.contrib.gis.geos import Point
+        user.location, user.location_name = Point(13.2, 52.4, srid=4326), "Lindenweg 7, 14467 Potsdam, Deutschland"
+        user.save()
+        user_client.post(reverse("gifts:create"), {
+            "type": "offer", "kind": "other", "title": "Firewood", "public_good": "on", "location": "POINT (13.2 52.4)",
+        })
+        assert Listing.objects.get(title="Firewood").location is not None
+
     def test_not_a_skill(self, user_client):
         user_client.post(reverse("gifts:create"), {
             "type": "offer", "kind": "skill", "skill_name": "Pruning", "public_good": "on", "location": "POINT (13.2 52.4)",
@@ -426,3 +436,33 @@ def test_the_form_has_one_place_field(user_client):
     place was never saved."""
     content = user_client.get(reverse("gifts:create")).content.decode()
     assert content.count('name="location"') == 1 and content.count('name="location_name"') == 1
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("kind", ["knowledge", "hands"])
+def test_knowledge_and_helping_hands_have_no_amount(user_client, kind):
+    user_client.post(reverse("gifts:create"), {
+        "type": "offer", "kind": kind, "title": "Rocket stove advice", "quantity": "3", "unit": "kg",
+    })
+    listing = Listing.objects.get(title="Rocket stove advice")
+    assert listing.quantity is None and listing.unit == ""
+
+
+@pytest.mark.django_db
+def test_a_projects_helping_hands_keep_their_amount(user, user_client):
+    from communities.models import Community
+    from projects.models import Project
+    project = Project.objects.create(community=Community.objects.create(name="Hof Sonnenschein", owner=user), title="Roof")
+    hands = need(project, kind=Listing.KIND_HANDS, title="Roofers", quantity=2, unit="people")
+    user_client.post(reverse("gifts:edit", args=[hands.pk]), {
+        "type": "wish", "kind": "hands", "title": "Roofers", "quantity": "3", "unit": "people",
+    })
+    hands.refresh_from_db()
+    assert hands.quantity == 3 and hands.unit == "people"
+
+
+@pytest.mark.django_db
+def test_knowledge_and_helping_hands_ask_what_for(user_client):
+    content = user_client.get(reverse("gifts:create")).content.decode()
+    assert "What for?" in content and "e.g. building the roof truss" in content
+    assert content.count('name="title"') == 1

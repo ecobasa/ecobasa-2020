@@ -82,6 +82,118 @@ class ListingCategory(models.Model):
         ordering = ["order", "name"]
 
 
+class Thing(models.Model):
+    """A tool, material, vehicle or other thing in every language, with broader and
+    narrower ones: "Leiter", "Échelle" and "Ladder" are one thing, a stepladder is a
+    ladder. Each kind is its own vocabulary (the proxies below, curated in
+    gifts/vocabularies/): a listing's title is recognized in the vocabulary of its kind
+    (things.py), so offers and wishes are matched by what they are, not by the words used."""
+
+    KIND_CHOICES = [
+        ("tool", _("Tools")),
+        ("material", _("Materials")),
+        ("vehicle", _("Vehicles")),
+        ("seeds", _("Seeds")),
+        ("other", _("Other things")),
+    ]
+
+    slug = models.SlugField(_("Slug"), max_length=60, unique=True)
+    # {"en": "Ladder", "de": "Leiter", …}
+    names = models.JSONField(_("Names"), default=dict)
+    # More names in any language: synonyms, brands people use for it ("Flex", "Kärcher")
+    other_names = models.JSONField(_("Other names"), default=list, blank=True)
+    parent = models.ForeignKey(
+        "self", on_delete=models.SET_NULL, null=True, blank=True, related_name="narrower",
+        verbose_name=_("Broader thing"),
+    )
+    # Which vocabulary it belongs to
+    kind = models.CharField(_("Vocabulary"), max_length=10, choices=KIND_CHOICES, default="tool")
+    category = models.ForeignKey(
+        ListingCategory, on_delete=models.SET_NULL, null=True, blank=True, related_name="things",
+        verbose_name=_("Category"),
+    )
+
+    class Meta:
+        verbose_name = _("Thing")
+        verbose_name_plural = _("Things")
+        ordering = ["slug"]
+
+    def __str__(self):
+        return self.get_name()
+
+    def get_name(self, lang=None):
+        from django.utils.translation import get_language
+        lang = (lang or get_language() or "en").split("-")[0]
+        return self.names.get(lang) or self.names.get("en") or self.slug
+
+    def save(self, *args, **kwargs):
+        if getattr(self, "VOCABULARY", None):
+            self.kind = self.VOCABULARY
+        super().save(*args, **kwargs)
+        from . import things
+        things.clear_cache()
+
+
+class _VocabularyManager(models.Manager):
+    def __init__(self, kind):
+        super().__init__()
+        self.kind = kind
+
+    def get_queryset(self):
+        return super().get_queryset().filter(kind=self.kind)
+
+
+# Each vocabulary on its own, e.g. in the admin
+class ToolThing(Thing):
+    VOCABULARY = "tool"
+    objects = _VocabularyManager(VOCABULARY)
+
+    class Meta:
+        proxy = True
+        verbose_name = _("Tool")
+        verbose_name_plural = _("Vocabulary: tools")
+
+
+class MaterialThing(Thing):
+    VOCABULARY = "material"
+    objects = _VocabularyManager(VOCABULARY)
+
+    class Meta:
+        proxy = True
+        verbose_name = _("Material")
+        verbose_name_plural = _("Vocabulary: materials")
+
+
+class VehicleThing(Thing):
+    VOCABULARY = "vehicle"
+    objects = _VocabularyManager(VOCABULARY)
+
+    class Meta:
+        proxy = True
+        verbose_name = _("Vehicle")
+        verbose_name_plural = _("Vocabulary: vehicles")
+
+
+class SeedThing(Thing):
+    VOCABULARY = "seeds"
+    objects = _VocabularyManager(VOCABULARY)
+
+    class Meta:
+        proxy = True
+        verbose_name = _("Seed")
+        verbose_name_plural = _("Vocabulary: seeds")
+
+
+class OtherThing(Thing):
+    VOCABULARY = "other"
+    objects = _VocabularyManager(VOCABULARY)
+
+    class Meta:
+        proxy = True
+        verbose_name = _("Other thing")
+        verbose_name_plural = _("Vocabulary: other things")
+
+
 def themed_choices(categories):
     """Categories as choices grouped by their themes, e.g. for a select's optgroups."""
     groups = {}
@@ -115,7 +227,17 @@ class ListingQuerySet(models.QuerySet):
             | Exists(accepted.filter(quantity=None))
             | Q(quantity__lte=Coalesce(Subquery(promised), 0))
         )
-        return self.current().exclude(Q(kind__in=Listing.USED_UP_KINDS) | Q(type=Listing.TYPE_WISH, kind__in=Listing.NEED_KINDS), used_up)
+        # A tool to lend comes back, so lending it doesn't use it up
+        used_up_kinds = Q(kind__in=Listing.USED_UP_KINDS) & ~Q(type=Listing.TYPE_OFFER, lend=True)
+        return self.current().exclude(used_up_kinds | Q(type=Listing.TYPE_WISH, kind__in=Listing.NEED_KINDS), used_up)
+
+    def managed_by(self, user):
+        """What a person answers for: their own, and their communities' (as ambassador)."""
+        return self.filter(Q(owner=user, community=None) | Q(community__owner=user))
+
+    def to_lend(self):
+        """Tools and vehicles to lend (they come back), as opposed to given away."""
+        return self.filter(type=Listing.TYPE_OFFER, kind__in=Listing.LEND_KINDS, lend=True)
 
     def of(self, holder):
         """What a person or a community offers and wishes for (its projects' too)."""
@@ -141,6 +263,10 @@ class Listing(RandomIdMixin, models.Model):
 
     KIND_MATERIAL = "material"
     KIND_TOOL = "tool"
+    # A cargo bike, a car, a trailer, a van: mostly lent rather than given away
+    KIND_VEHICLE = "vehicle"
+    # Seeds to swap, of a crop (the seed vocabulary) and a variety
+    KIND_SEEDS = "seeds"
     KIND_OTHER = "other"
     # Offered: a skill they share or teach. Wished for: a skill they want to learn by doing.
     KIND_SKILL = "skill"
@@ -149,12 +275,21 @@ class Listing(RandomIdMixin, models.Model):
     KIND_CHOICES = [
         (KIND_MATERIAL, _("Material")),
         (KIND_TOOL, _("Tool")),
+        (KIND_VEHICLE, _("Vehicle")),
+        (KIND_SEEDS, _("Seeds")),
         (KIND_OTHER, _("Other")),
         (KIND_SKILL, _("Skill")),
         (KIND_KNOWLEDGE, _("Knowledge")),
         (KIND_HANDS, _("Helping hands")),
     ]
-    THING_KINDS = (KIND_MATERIAL, KIND_TOOL, KIND_OTHER)
+    THING_KINDS = (KIND_MATERIAL, KIND_TOOL, KIND_VEHICLE, KIND_SEEDS, KIND_OTHER)
+    # What can be lent instead of given away: tools, vehicles and other things
+    LEND_KINDS = (KIND_TOOL, KIND_VEHICLE, KIND_OTHER)
+    # Counted in pieces, without a unit to choose ("3 ladders")
+    PIECE_KINDS = (KIND_TOOL, KIND_VEHICLE)
+    # Their gift categories come from what they are, once it is recognized in their
+    # vocabulary; "other" things keep a choice
+    CATEGORY_KINDS = (KIND_MATERIAL, KIND_TOOL, KIND_VEHICLE, KIND_SEEDS)
     SKILL_KINDS = (KIND_SKILL, KIND_KNOWLEDGE, KIND_HANDS)
     # Given away once (in parts, with a quantity); skills, knowledge and helping hands
     # can be shared again and again
@@ -163,14 +298,14 @@ class Listing(RandomIdMixin, models.Model):
     # a skill stays until its owner says otherwise
     NEED_KINDS = (KIND_KNOWLEDGE, KIND_HANDS)
     KIND_ICONS = {
-        KIND_MATERIAL: "fa-cubes", KIND_TOOL: "fa-screwdriver-wrench", KIND_OTHER: "fa-gift",
+        KIND_MATERIAL: "fa-cubes", KIND_TOOL: "fa-screwdriver-wrench", KIND_VEHICLE: "fa-van-shuttle", KIND_SEEDS: "fa-seedling", KIND_OTHER: "fa-gift",
         KIND_SKILL: "fa-graduation-cap", KIND_KNOWLEDGE: "fa-lightbulb", KIND_HANDS: "fa-handshake-angle",
     }
     # Pill colour: skills purple, things in the primary colour
     KIND_COLOURS = {kind: "bg-purple" for kind in SKILL_KINDS}
     # Font Awesome code points for map markers: the kind, else a gift (offer) or heart (wish)
     KIND_GLYPHS = {
-        KIND_MATERIAL: 0xF1B3, KIND_TOOL: 0xF7D9, KIND_SKILL: 0xF19D, KIND_KNOWLEDGE: 0xF0EB, KIND_HANDS: 0xF4C4,
+        KIND_MATERIAL: 0xF1B3, KIND_TOOL: 0xF7D9, KIND_VEHICLE: 0xF5B6, KIND_SEEDS: 0xF4D8, KIND_SKILL: 0xF19D, KIND_KNOWLEDGE: 0xF0EB, KIND_HANDS: 0xF4C4,
     }
 
     LEVEL_BEGINNER = "beginner"
@@ -203,6 +338,12 @@ class Listing(RandomIdMixin, models.Model):
         verbose_name=_("Skill"),
     )
     title = models.CharField(_("Title"), max_length=255, blank=True)
+    # What a thing is, recognized in its title in any language (things.recognize): matched
+    # by it, and by broader or narrower things, instead of by the title's words
+    thing = models.ForeignKey(
+        Thing, on_delete=models.SET_NULL, null=True, blank=True, related_name="listings",
+        verbose_name=_("Recognized as"),
+    )
     description = models.TextField(_("Description"), blank=True)
     image = models.ImageField(_('image'), upload_to='gifts-images', null=True, blank=True)
     quantity = models.PositiveIntegerField(_("How many / how much?"), null=True, blank=True)
@@ -211,6 +352,59 @@ class Listing(RandomIdMixin, models.Model):
     # level it looks for
     level = models.CharField(_("Level"), max_length=20, choices=LEVEL_CHOICES, blank=True)
     available = models.BooleanField(_("Available to teach / share"), default=True)
+    # A tool or vehicle lent for some days that comes back (offer), or to borrow (wish);
+    # requests for it say from when until when (matches.Loan)
+    lend = models.BooleanField(_("To lend"), default=False)
+    # Seeds: the variety ("Ochsenherz"), the year they were harvested (how well they still
+    # germinate), and whether they are open-pollinated, so their seeds can be saved again
+    variety = models.CharField(_("Variety"), max_length=100, blank=True)
+    harvest_year = models.PositiveSmallIntegerField(_("Harvest year"), null=True, blank=True)
+    open_pollinated = models.BooleanField(_("Open-pollinated"), default=False)
+    # Seeds grow best in a climate like the one they were grown in: the climate zone of
+    # their place (where the mother plant grew; for a wish, where they will grow), found
+    # in a Köppen-Geiger map (gifts.climate). The zones put its classes in plain words:
+    # what counts is the climate, not the latitude, so the highlands of the tropics (Cwb,
+    # like Bogotá or Addis Ababa) are temperate like Central Europe (Cfb). KOPPEN lists the
+    # classes in each zone; CLIMATE_FITS which zones' seeds fit which.
+    CLIMATE_TROPICAL = "tropical"
+    CLIMATE_SUBTROPICAL = "subtropical"
+    CLIMATE_MEDITERRANEAN = "mediterranean"
+    CLIMATE_ARID = "arid"
+    CLIMATE_TEMPERATE = "temperate"
+    CLIMATE_CONTINENTAL = "continental"
+    CLIMATE_COLD = "cold"
+    CLIMATE_ALPINE = "alpine"
+    CLIMATE_CHOICES = [
+        (CLIMATE_TROPICAL, _("Tropical: warm all year")),
+        (CLIMATE_SUBTROPICAL, _("Subtropical: hot humid summers, mild winters")),
+        (CLIMATE_MEDITERRANEAN, _("Mediterranean: dry hot summers, mild wet winters")),
+        (CLIMATE_ARID, _("Dry: steppe or desert")),
+        (CLIMATE_TEMPERATE, _("Temperate: mild summers, cool winters (also tropical highlands)")),
+        (CLIMATE_CONTINENTAL, _("Continental: warm summers, cold winters")),
+        (CLIMATE_COLD, _("Cool: short summers, long cold winters")),
+        (CLIMATE_ALPINE, _("Alpine: high mountains, very short season")),
+    ]
+    KOPPEN = {
+        CLIMATE_TROPICAL: ("Af", "Am", "Aw", "As"),
+        CLIMATE_SUBTROPICAL: ("Cfa", "Cwa"),
+        CLIMATE_MEDITERRANEAN: ("Csa", "Csb", "Csc"),
+        CLIMATE_ARID: ("BWh", "BWk", "BSh", "BSk"),
+        CLIMATE_TEMPERATE: ("Cfb", "Cfc", "Cwb", "Cwc"),
+        CLIMATE_CONTINENTAL: ("Dfa", "Dfb", "Dwa", "Dwb", "Dsa", "Dsb"),
+        CLIMATE_COLD: ("Dfc", "Dfd", "Dwc", "Dwd", "Dsc", "Dsd"),
+        CLIMATE_ALPINE: ("ET", "EF"),
+    }
+    # Neighbouring zones: seeds from one often do well in the other
+    CLIMATE_FITS = {
+        CLIMATE_TROPICAL: {CLIMATE_TROPICAL, CLIMATE_SUBTROPICAL},
+        CLIMATE_SUBTROPICAL: {CLIMATE_SUBTROPICAL, CLIMATE_TROPICAL, CLIMATE_MEDITERRANEAN},
+        CLIMATE_MEDITERRANEAN: {CLIMATE_MEDITERRANEAN, CLIMATE_SUBTROPICAL, CLIMATE_ARID},
+        CLIMATE_ARID: {CLIMATE_ARID, CLIMATE_MEDITERRANEAN},
+        CLIMATE_TEMPERATE: {CLIMATE_TEMPERATE, CLIMATE_CONTINENTAL},
+        CLIMATE_CONTINENTAL: {CLIMATE_CONTINENTAL, CLIMATE_TEMPERATE, CLIMATE_COLD},
+        CLIMATE_COLD: {CLIMATE_COLD, CLIMATE_CONTINENTAL, CLIMATE_ALPINE},
+        CLIMATE_ALPINE: {CLIMATE_ALPINE, CLIMATE_COLD},
+    }
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     # A person's listing. A community's has no owner: its ambassador manages it.
@@ -286,6 +480,12 @@ class Listing(RandomIdMixin, models.Model):
             self.owner = None
         if self.skill_id and not self.title:
             self.title = self.skill.name
+        if self.kind in self.THING_KINDS:
+            from .things import recognize
+            # A seed's variety names its crop type too ("Tomate" + "Ochsenherz")
+            self.thing_id = recognize(f"{self.title} {self.variety}" if self.variety else self.title, self.kind)
+        else:
+            self.thing_id = None
         super().save(*args, **kwargs)
 
     def get_absolute_url(self) -> str:
@@ -314,8 +514,10 @@ class Listing(RandomIdMixin, models.Model):
 
     @property
     def display_title(self):
-        """The skill's name in the reader's language, else the title."""
-        return self.skill.get_name() if self.skill_id else self.title
+        """The skill's name in the reader's language, else the title, with a seed's variety."""
+        if self.skill_id:
+            return self.skill.get_name()
+        return f"{self.title} ‘{self.variety}’" if self.variety else self.title
 
     @property
     def kind_icon(self):
@@ -323,7 +525,14 @@ class Listing(RandomIdMixin, models.Model):
 
     @property
     def kind_label(self):
-        """The kind in words, by which side it is on: "Skill" offered, "Learn a skill" wished."""
+        """The kind in words, by which side it is on: "Skill" offered, "Learn a skill" wished;
+        "Tool to lend", "Vehicle to borrow", "To lend"."""
+        if self.lend and self.kind == self.KIND_TOOL:
+            return _("Tool to lend") if self.is_offer else _("Tool to borrow")
+        if self.lend and self.kind == self.KIND_VEHICLE:
+            return _("Vehicle to lend") if self.is_offer else _("Vehicle to borrow")
+        if self.lend:
+            return _("To lend") if self.is_offer else _("To borrow")
         if self.kind == self.KIND_SKILL and self.is_wish:
             return _("Learn a skill") if self.owner_id else _("Skill")
         return self.get_kind_display()
@@ -403,6 +612,66 @@ class Listing(RandomIdMixin, models.Model):
         return self.public_place
 
     @property
+    def latitude(self):
+        """Its latitude in degrees (north positive), if it has a place."""
+        point = self.point
+        return None if point is None else point.y
+
+    @property
+    def latitude_display(self):
+        """"51° N", "33° S"."""
+        latitude = self.latitude
+        if latitude is None:
+            return ""
+        return f"{int(abs(latitude) + 0.5)}° {'N' if latitude >= 0 else 'S'}"
+
+    @property
+    def koppen(self):
+        """The Köppen-Geiger class of a seed's place ("Cfb"), "" if unknown."""
+        if self.kind != self.KIND_SEEDS or self.point is None:
+            return ""
+        from .climate import koppen_at
+        return koppen_at(self.point.y, self.point.x)
+
+    @property
+    def climate(self):
+        """The climate zone of a seed's place (CLIMATE_CHOICES), "" if unknown."""
+        return self.climate_for_koppen(self.koppen)
+
+    def get_climate_display(self):
+        return dict(self.CLIMATE_CHOICES).get(self.climate, "")
+
+    @property
+    def climate_name(self):
+        """"Temperate", without the description."""
+        return self.get_climate_display().split(":")[0]
+
+    @staticmethod
+    def thing_categories(thing, kind):
+        """The gift categories of a seed or a vehicle, set from what it is rather than
+        chosen: its thing's ("Health & Body care" for medicinal herbs, "Clothing &
+        Textiles" for dye plants), and for seeds always "Seeds & Plants"."""
+        slugs = {thing.category.slug} if thing is not None and thing.category_id else set()
+        if kind == Listing.KIND_SEEDS:
+            slugs.add("seeds-plants")
+        return list(ListingCategory.objects.filter(slug__in=slugs))
+
+    @staticmethod
+    def climate_for_koppen(code):
+        """The climate zone of a Köppen-Geiger class ("Cfb" is temperate), or ""."""
+        return next((zone for zone, codes in Listing.KOPPEN.items() if code in codes), "")
+
+    @staticmethod
+    def climates_fit(a, b):
+        """Whether seeds from climate zone a fit zone b; unknown zones always fit."""
+        return not (a and b) or b in Listing.CLIMATE_FITS.get(a, {a})
+
+    @property
+    def seed_age(self):
+        """How many years ago the seeds were harvested, if known."""
+        return timezone.localdate().year - self.harvest_year if self.harvest_year else None
+
+    @property
     def country(self):
         holder = self.holder
         return str(holder.country or "") if holder is not None else ""
@@ -430,7 +699,10 @@ class Listing(RandomIdMixin, models.Model):
     @property
     def can_run_out(self):
         """Whether exchanges use it up: things, and wishes for knowledge or helping hands.
-        A skill can be shared again and again, and someone can keep learning one."""
+        A skill can be shared again and again, and someone can keep learning one, and a
+        tool to lend comes back."""
+        if self.lends_out:
+            return False
         return self.kind in self.USED_UP_KINDS or (self.is_wish and self.kind in self.NEED_KINDS)
 
     @property
@@ -459,6 +731,9 @@ class Listing(RandomIdMixin, models.Model):
         open, however often it is shared."""
         if self.covered_at:
             return self.STATUS_COVERED
+        if self.lends_out:
+            # It comes back after each loan: when it is lent shows in its calendar
+            return self.STATUS_OPEN
         accepted, waiting = self._contributions_by_status()
         if self.can_run_out and accepted and (
             self.quantity is None
@@ -499,6 +774,40 @@ class Listing(RandomIdMixin, models.Model):
     def promised_by(self):
         return [c.match.from_user for c in self.promises]
 
+    # ── Lending ─────────────────────────────────────────────────────
+    @property
+    def lends_out(self):
+        """A tool or vehicle to lend, as opposed to one given away (or wished to borrow)."""
+        return self.lend and self.is_offer
+
+    def loans(self, statuses=None):
+        """The loans of a thing to lend (matches.Loan), each with its match, by start."""
+        from gift_economy.matches.models import Loan, Match
+        statuses = statuses or (Match.STATUS_ACCEPTED,)
+        return Loan.objects.filter(
+            match__contributions__listing=self, match__status__in=statuses,
+        ).select_related("match__from_user").distinct().order_by("starts_at")
+
+    def upcoming_loans(self):
+        """The agreed loans that haven't ended yet, for who wants to borrow it too."""
+        return self.loans().filter(ends_at__gt=timezone.now())
+
+    def lent_now(self, moment=None):
+        """The loan that brings it back last if all of it is lent right now, else None."""
+        moment = moment or timezone.now()
+        current = [loan for loan in self.loans() if loan.starts_at <= moment < loan.ends_at]
+        if len(current) < (self.quantity or 1):
+            return None
+        return max(current, key=lambda loan: loan.ends_at)
+
+    def is_free(self, starts_at, ends_at, exclude_match=None):
+        """Whether it can be lent from starts_at until ends_at: fewer agreed loans overlap
+        than there are of it (a quantity of 3 ladders lends 3 at once)."""
+        overlapping = self.loans().filter(starts_at__lt=ends_at, ends_at__gt=starts_at)
+        if exclude_match is not None:
+            overlapping = overlapping.exclude(match=exclude_match)
+        return overlapping.count() < (self.quantity or 1)
+
     # ── matches.Match target protocol ───────────────────────────────
     def get_match_owner(self):
         return self.manager
@@ -518,10 +827,15 @@ class Listing(RandomIdMixin, models.Model):
     def get_match_icon(self):
         return self.kind_icon
 
-    def get_match_verb(self):
+    def get_match_verb(self, own=True):
+        """What the one who asks does, said to whom it belongs (own) or to anyone else."""
+        if own:
+            if self.is_wish:
+                return _("offered to help with your wish") if self.is_skill else _("wants to fulfill your wish")
+            return _("is interested in your skill") if self.is_skill else _("is interested in your offer")
         if self.is_wish:
-            return _("offered to help with your wish") if self.is_skill else _("wants to fulfill your wish")
-        return _("is interested in your skill") if self.is_skill else _("is interested in your offer")
+            return _("offered to help with the wish") if self.is_skill else _("wants to fulfill the wish")
+        return _("is interested in the skill") if self.is_skill else _("is interested in the offer")
 
     def get_match_request_text(self):
         if self.is_wish:

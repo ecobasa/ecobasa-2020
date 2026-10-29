@@ -77,6 +77,7 @@
           <span class="pill bg-purple">{% if listing.community %}{% trans "from your community" %}{% else %}{% trans "from me" %}{% endif %}</span>
         {% endif %}
         {% if listing.kind != "other" %}<span class="pill {{ listing.colour }}"><i class="fa-solid {{ listing.kind_icon }} mr-1"></i>{{ listing.kind_label }}</span>{% endif %}
+        {% if listing.thing %}<span class="pill bg-primary" title="{% trans 'Recognized as' %}"><i class="fa-solid fa-tag mr-1"></i>{{ listing.thing }}</span>{% endif %}
         {% for cat in listing.categories.all %}
           <span class="pill bg-primary"><i class="fa-solid {{ cat.icon }} mr-1"></i>{{ cat }}</span>
         {% endfor %}
@@ -85,6 +86,13 @@
         <span class="text-xs">{% include "projects/_freshness.html" with when=listing.updated_at label_updated=True %}</span>
       </div>
       {% if listing.level %}<p class="mb-2"><strong>{% trans "Level" %}:</strong> {{ listing.get_level_display }}</p>{% endif %}
+      {% if listing.kind == "seeds" %}
+        <p class="mb-2 flex flex-wrap gap-2 text-sm">
+          {% if listing.harvest_year %}<span class="pill bg-green"><i class="fa-regular fa-calendar mr-1"></i>{% blocktrans with year=listing.harvest_year %}Harvested {{ year }}{% endblocktrans %}{% if listing.seed_age > 1 %} · {% blocktrans count years=listing.seed_age %}{{ years }} year old{% plural %}{{ years }} years old{% endblocktrans %}{% endif %}</span>{% endif %}
+          {% if listing.climate or listing.latitude_display %}<span class="pill bg-green" title="{% trans 'Seeds grow best in a climate like the one they were grown in.' %}"><i class="fa-solid fa-earth-europe mr-1"></i>{% if listing.climate %}<span title="{{ listing.get_climate_display }} (Köppen-Geiger {{ listing.koppen }})">{{ listing.climate_name }} <span class="opacity-70">{{ listing.koppen }}</span></span>{% endif %}{% if listing.climate and listing.latitude_display %} · {% endif %}{{ listing.latitude_display }}</span>{% endif %}
+          {% if listing.open_pollinated %}<span class="pill bg-green" title="{% trans 'Its seeds can be saved again and come true (not an F1 hybrid).' %}"><i class="fa-solid fa-seedling mr-1"></i>{% trans "Open-pollinated" %}</span>{% endif %}
+        </p>
+      {% endif %}
     </div>
 
     {% if can_edit %}
@@ -112,6 +120,23 @@
       <p class="text-sm"><a href="{{ listing.skill.get_absolute_url }}" class="underline">{% blocktrans with skill=listing.skill.get_name %}Everyone who offers or looks for {{ skill }}{% endblocktrans %}</a></p>
     {% endif %}
   </div>
+
+  {# ── When a tool to lend is already lent ── #}
+  {% if listing.lends_out %}
+  <div class="mt-6">
+    <h2 class="text-lg font-semibold mb-2"><i class="fa-regular fa-calendar mr-1"></i>{% trans "Already lent" %}</h2>
+    {% if upcoming_loans %}
+      <ul class="list-none p-0 flex flex-wrap gap-2">
+        {% for loan in upcoming_loans %}
+          <li class="pill bg-green text-sm">{{ loan.period }}</li>
+        {% endfor %}
+      </ul>
+      {% if listing.quantity and listing.quantity > 1 %}<p class="text-xs mt-1">{% blocktrans count counter=listing.quantity %}There is {{ counter }} of it to lend.{% plural %}There are {{ counter }} of them to lend at once.{% endblocktrans %}</p>{% endif %}
+    {% else %}
+      <p class="text-sm">{% trans "Not lent on any coming day: ask for the days you need it." %}</p>
+    {% endif %}
+  </div>
+  {% endif %}
 
   {# ── Who it belongs to: a person, or a community (and its project) ── #}
   {% with holder=listing.holder %}{% if holder %}
@@ -191,10 +216,27 @@
           {{ form.proposed_lat }}
           {{ form.proposed_lon }}
         </div>
+        {% if listing.lend %}
+        {# Borrowed for whole days, or for some hours with times #}
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-1">
+          <div class="form-group">
+            <label class="form-label" for="{{ form.borrow_from.id_for_label }}">{% if listing.is_offer %}{% trans "Borrow from" %}{% else %}{% trans "Lend from" %}{% endif %}</label>
+            <div class="flex gap-2">{{ form.borrow_from }}<span class="w-32">{{ form.borrow_from_time }}</span></div>
+            {% for error in form.borrow_from.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="{{ form.borrow_to.id_for_label }}">{% if listing.is_offer %}{% trans "Borrow until" %}{% else %}{% trans "Lend until" %}{% endif %}</label>
+            <div class="flex gap-2">{{ form.borrow_to }}<span class="w-32">{{ form.borrow_to_time }}</span></div>
+            {% for error in form.borrow_to.errors|add:form.borrow_to_time.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+          </div>
+        </div>
+        <p class="text-xs mb-4">{% trans "Times are optional: without them it is for whole days. Without a last day, for one day." %}</p>
+        {% else %}
         <div class="form-group mb-4">
           <label class="form-label">{% trans "Proposed date (optional)" %}</label>
           {{ form.proposed_date }}
         </div>
+        {% endif %}
         <button type="submit" class="btn">
           <i class="fa fa-paper-plane mr-2"></i>
           {% if listing.is_offer %}{% trans "Express Interest" %}{% else %}{% trans "Send offer" %}{% endif %}

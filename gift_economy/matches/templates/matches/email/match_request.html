@@ -33,6 +33,10 @@
               <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f5ede0;border-radius:6px;border:1px solid #d4b896;margin-bottom:24px;">
                 <tr>
                   <td style="padding:20px;">
+                    {% if match.is_loan %}
+                    <p style="margin:0 0 4px;font-size:11px;text-transform:uppercase;letter-spacing:0.06em;opacity:0.6;">{% trans "Asked to borrow" %}</p>
+                    <p style="margin:0 0 16px;font-size:15px;">{{ match.loan.period }}</p>
+                    {% endif %}
                     {% if vd and vd.stay_from or vd and vd.stay_to %}
                     <p style="margin:0 0 4px;font-size:11px;text-transform:uppercase;letter-spacing:0.06em;opacity:0.6;">{% trans "Proposed stay" %}</p>
                     <p style="margin:0 0 16px;font-size:15px;">
