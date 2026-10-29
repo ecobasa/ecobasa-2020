@@ -67,6 +67,8 @@ class ListingForm(forms.ModelForm):
         self.fields["level"].choices = [("", "—")] + Listing.LEVEL_CHOICES
         self.fields["image"].label = _("Photo")
         self.fields["public_good"].widget.attrs["x-model"] = "publicGood"
+        for name in ("public_good", "location_public"):
+            self.fields[name].widget.attrs["class"] = "form-checkbox mt-1 flex-shrink-0"
         if self.instance.pk and self.instance.skill_id:
             self.initial["skill_name"] = self.instance.skill.get_name()
 
