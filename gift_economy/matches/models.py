@@ -6,6 +6,8 @@ from django.urls import reverse
 from django.utils.html import escape, format_html
 from django.utils.translation import gettext_lazy as _
 
+from users.places import approximate, town
+
 
 # Matches whose target is in one of these apps are volunteer stays: at a community, or
 # helping with one of its projects.
@@ -152,14 +154,34 @@ class Match(models.Model):
             return details.stay_from, details.stay_to
         return None, None
 
+    # ── Places: exactly only once accepted ─────────────────────────
+    # Until then both see each other's place only roughly (users.places), so that asking
+    # never gives anyone an address; places that are public anyway stay exact.
+    @property
+    def places_shown(self):
+        return self.status == self.STATUS_ACCEPTED
+
+    def person_place(self, user):
+        """(name, point) of where `user` lives, as this match shows it."""
+        if self.places_shown:
+            return user.location_name, user.location
+        return town(user.location_name), approximate(user.location, user.pk)
+
+    def target_location(self):
+        """(label, name, point) of what it is about, as this match shows it."""
+        label, name, point = self.target.get_match_location()
+        if not self.places_shown and not self.target.place_is_public:
+            name, point = town(name), approximate(point, self.target.place_seed)
+        return label, name, point
+
     def resolved_location(self):
         """Human-readable meeting location, resolving my/your place from profiles."""
         if self.location_type == self.LOC_MY_PLACE:
-            loc = self.from_user.location_name or self.proposed_location or ""
+            loc = self.person_place(self.from_user)[0] or self.proposed_location or ""
             name = self.from_user.name or self.from_user.email
             return f"{name}'s place — {loc}" if loc else f"{name}'s place"
         if self.location_type == self.LOC_YOUR_PLACE and self.target is not None:
-            label, loc_name, _point = self.target.get_match_location()
+            label, loc_name, _point = self.target_location()
             if label:
                 return f"{label} — {loc_name}" if loc_name else label
         return self.proposed_location or ""
@@ -169,12 +191,21 @@ class Match(models.Model):
         if self.proposed_lat and self.proposed_lon:
             return self.proposed_lat, self.proposed_lon
         if self.location_type == self.LOC_MY_PLACE and self.from_user.location:
-            return self.from_user.location.y, self.from_user.location.x
+            point = self.person_place(self.from_user)[1]
+            return point.y, point.x
         if self.location_type == self.LOC_YOUR_PLACE and self.target is not None:
-            _label, _loc_name, point = self.target.get_match_location()
+            _label, _loc_name, point = self.target_location()
             if point:
                 return point.y, point.x
         return None, None
+
+    def location_is_rough(self):
+        """Whether location_coords is only roughly where it is."""
+        if self.places_shown or self.proposed_lat and self.proposed_lon:
+            return False
+        if self.location_type == self.LOC_YOUR_PLACE and self.target is not None:
+            return not self.target.place_is_public
+        return self.location_type == self.LOC_MY_PLACE
 
 
 class MatchMessage(models.Model):
@@ -210,11 +241,11 @@ class MatchMessage(models.Model):
             return self.counter_location
         match = self.match
         if self.counter_location_type == Match.LOC_MY_PLACE and match.target is not None:
-            label, loc_name, _point = match.target.get_match_location()
+            label, loc_name, _point = match.target_location()
             if label:
                 return f"{label} — {loc_name}" if loc_name else label
         if self.counter_location_type == Match.LOC_YOUR_PLACE:
-            loc = match.from_user.location_name or ""
+            loc = match.person_place(match.from_user)[0] or ""
             name = match.from_user.name or match.from_user.email
             return f"{name}'s place — {loc}" if loc else f"{name}'s place"
         return ""
@@ -224,12 +255,22 @@ class MatchMessage(models.Model):
             return self.counter_lat, self.counter_lon
         match = self.match
         if self.counter_location_type == Match.LOC_MY_PLACE and match.target is not None:
-            _label, _loc_name, point = match.target.get_match_location()
+            _label, _loc_name, point = match.target_location()
             if point:
                 return point.y, point.x
         if self.counter_location_type == Match.LOC_YOUR_PLACE and match.from_user.location:
-            return match.from_user.location.y, match.from_user.location.x
+            point = match.person_place(match.from_user)[1]
+            return point.y, point.x
         return None, None
+
+    def counter_location_is_rough(self):
+        """Whether counter_location_coords is only roughly where it is."""
+        match = self.match
+        if match.places_shown or self.counter_lat and self.counter_lon:
+            return False
+        if self.counter_location_type == Match.LOC_MY_PLACE and match.target is not None:
+            return not match.target.place_is_public
+        return self.counter_location_type == Match.LOC_YOUR_PLACE
 
 
 class VolunteerDetails(models.Model):

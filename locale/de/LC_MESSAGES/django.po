@@ -4111,6 +4111,39 @@ msgstr "Du wurdest abgemeldet."
 msgid "Account created and logged in."
 msgstr "Konto erstellt und angemeldet."
 
+msgid "Public: show our exact place, address and phone number to everyone"
+msgstr "Öffentlich: genauen Ort, Adresse und Telefonnummer allen zeigen"
+
+msgid "Otherwise people see only roughly where you are, and your address and phone number once you have accepted their visit."
+msgstr "Sonst sehen andere nur ungefähr, wo ihr seid, und eure Adresse und Telefonnummer erst, wenn ihr ihren Besuch angenommen habt."
+
+msgid "Show this place exactly — nobody lives here"
+msgstr "Diesen Ort genau zeigen – hier wohnt niemand"
+
+msgid "Public good"
+msgstr "Gemeingut"
+
+msgid "For things found out there, like a fruit tree or wood in the forest. Doesn't need to be requested and accepted. Everybody can edit and delete it."
+msgstr "Für Dinge, die man draußen findet, wie einen Obstbaum oder Holz im Wald. Muss nicht angefragt und angenommen werden. Alle können es bearbeiten und löschen."
+
+msgid "Otherwise others see only roughly where it is until a match is accepted."
+msgstr "Sonst sehen andere nur ungefähr, wo es ist, bis ein Match angenommen ist."
+
+msgid "Set on the map where it is found."
+msgstr "Setz auf der Karte, wo man es findet."
+
+msgid "Address and phone number are shared once your visit is accepted."
+msgstr "Adresse und Telefonnummer bekommst du, sobald dein Besuch angenommen ist."
+
+msgid "Roughly here"
+msgstr "Ungefähr hier"
+
+msgid "The exact place shows once the match is accepted."
+msgstr "Den genauen Ort siehst du, sobald der Match angenommen ist."
+
+msgid "Others see only roughly where you live (about 1–2 km, without the street). Your exact place shows only once a match between you is accepted, so that you meet through ecobasa."
+msgstr "Andere sehen nur ungefähr, wo du wohnst (auf etwa 1–2 km, ohne Straße). Deinen genauen Ort sehen sie erst, wenn ein Match zwischen euch angenommen ist – so lernt ihr euch über ecobasa kennen."
+
 #~ msgid "Your skills"
 #~ msgstr "Deine Fähigkeiten"
 

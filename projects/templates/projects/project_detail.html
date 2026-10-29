@@ -151,7 +151,7 @@
 
       <h2>{% trans "Community" %}</h2>
       <a href="{{ community.get_absolute_url }}" class="font-serif font-bold text-lg hover:underline"><i class="fa-solid {{ community.get_type_icon }} mr-1"></i>{{ community.name }}</a>
-      {% if community.location_name %}<p class="text-sm mt-1"><i class="fa fa-map-marker mr-1"></i>{{ community.location_name }}</p>{% endif %}
+      {% with place=community.rough_place %}{% if place.0 %}<p class="text-sm mt-1"><i class="fa fa-map-marker mr-1"></i>{{ place.0 }}</p>{% endif %}{% endwith %}
       {% if community.owner %}
         <div class="text-center mt-6">
           <h3>{% trans "Gift-economy Ambassador" %}</h3>

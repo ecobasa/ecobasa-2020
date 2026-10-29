@@ -133,6 +133,32 @@ python manage.py match_everything
 `archive_stale_projects` (daily) and `send_suggestion_emails` (weekly) run in the scheduler
 (see [Scheduled jobs](#scheduled-jobs)).
 
+## Places and privacy
+
+People meet through the platform, in a match, so that there can be references (also
+negative ones). So nobody learns where someone lives, or where a community is, just by
+looking or by asking:
+
+- **Profiles** are for members only.
+- **Places of people and communities** are shown only roughly (`users/places.py`): the world
+  is cut into cells of about 1–2 km, and others see a spot somewhere in the cell, always the
+  same one (from the cell, the person or community and `SECRET_KEY`, so it can't be averaged
+  out). The map, the lists, the search by distance and the map section all go by the cell's
+  centre (`gifts.models.public_spot`, `communities.models.public_location`), so no query
+  narrows it down further. Place names lose the street (`town`). Maps draw an area instead
+  of a pin (`EcoMap.makeRoughArea`).
+- **Exactly** see it: the person themself; a community's ambassador and members, and those
+  whose stay (also with one of its projects) was accepted (`Community.shows_place_to`) — only
+  they also get its address and phone number; both sides of a match once it's accepted
+  (`Match.places_shown`).
+- **Public places**: a community can make its place, address and phone number public
+  (`Community.location_public`), an offer or wish its own place (`Listing.location_public`).
+- **Public goods** (`Listing.public_good`, offers only): things found out there, like a fruit
+  tree or wood in the forest. Nobody needs to ask for them (no request form), every member
+  can edit and delete them, and their place (required) is always exact.
+
+The forms (sign-up, profile, community, offer or wish) say who sees what.
+
 ## Scheduled jobs
 
 The jobs that run on their own are in [`crontab`](crontab), run by

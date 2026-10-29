@@ -80,6 +80,7 @@ class CommunityForm(forms.ModelForm):
             "status",
             "location_name",
             "location",
+            "location_public",
             "country",
             "inhabitants",
             "children",

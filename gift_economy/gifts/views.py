@@ -8,23 +8,22 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import PermissionDenied
 from django.shortcuts import render, get_object_or_404, redirect, reverse
 from django.db.models import Count, Q
-from django.db.models.functions import Cast, Coalesce
 from django.core.paginator import Paginator
 from django.contrib import messages
 from django.http import JsonResponse
 from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.decorators import login_required
-from django.contrib.gis.db.models import GeometryField
 from django.contrib.gis.geos import Polygon
 from django.views.decorators.http import require_GET
 from django.core.cache import cache
 
 from .forms import ListingForm
 from .filters import ListingFilter
-from .models import Listing
+from .models import Listing, public_spot
 from communities.models import Community
 from gift_economy.references.models import Reference
 from users.models import User
+from users.places import approximate, town
 from gift_economy.gifts.skills.models import Skill, skill_name_q
 from gift_economy.matches.forms import MatchForm
 from gift_economy.matches.models import Contribution, Match
@@ -49,12 +48,24 @@ def detail(request, pk):
         pk=pk,
     )
     can_edit = listing.can_edit(request.user)
-    context = {"listing": listing, "can_edit": can_edit, "is_owner": can_edit}
+    is_owner = listing.is_managed_by(request.user)
+    context = {
+        "listing": listing, "can_edit": can_edit, "is_owner": is_owner,
+        # Others see it only roughly, unless it's public (users.places)
+        "place": listing.place_for(request.user),
+    }
+    context["place_is_exact"] = context["place"] == listing.place
+    holder = listing.holder
+    if listing.community_id:
+        context["holder_place_name"] = holder.place_for(request.user)[0]
+    elif holder is not None:
+        context["holder_place_name"] = holder.location_name if can_edit else town(holder.location_name)
     help_url = _help_url(listing)
     context["help_url"] = help_url
 
     manager = listing.manager
-    if request.user.is_authenticated and manager is not None and request.user != manager and not help_url:
+    # A public good is just there: nobody needs to ask for it
+    if request.user.is_authenticated and manager is not None and request.user != manager and not help_url and not listing.public_good:
         form = MatchForm(request.POST or None)
         if request.method == "POST" and form.is_valid():
             match = form.save(commit=False)
@@ -68,7 +79,7 @@ def detail(request, pk):
             return redirect(match.get_absolute_url())
         context["form"] = form
 
-    if can_edit:
+    if is_owner:
         context["incoming_requests"] = list(
             Match.objects.filter(contributions__listing=listing).select_related("from_user").distinct().order_by("-created_at")[:20]
         )
@@ -199,8 +210,9 @@ def delete(request, pk):
 # ── Shared helpers ───────────────────────────────────────────────────
 
 def _with_spot(qs):
-    """Each listing with where it is (`spot`): its own place, else its person's or community's."""
-    return qs.annotate(spot=Coalesce("location", "owner__location", "community__location"))
+    """Each listing with where it is (`spot`): its own place, else its person's or
+    community's, a person's only by its cell (public_spot)."""
+    return qs.annotate(spot=public_spot())
 
 
 def _apply_bbox(qs, bbox_param):
@@ -213,9 +225,10 @@ def _apply_bbox(qs, bbox_param):
         return qs
     poly = Polygon.from_bbox((west, south, east, north))
     poly.srid = 4326
-    # As a flat lon/lat box: on geography the box's edges would be great circles, and a
-    # box wider than half the world (the map zoomed out) would turn inside out
-    return qs.annotate(flat_spot=Cast("spot", GeometryField(srid=4326))).filter(flat_spot__intersects=poly)
+    # As a flat lon/lat box (spot is a geometry): on geography the box's edges would be
+    # great circles, and a box wider than half the world (the map zoomed out) would turn
+    # inside out
+    return qs.filter(spot__intersects=poly)
 
 
 def _filtered_listings(request, require_location=True):
@@ -263,6 +276,7 @@ def gifts_markers(request):
         location    lat,lon  → distance-ordered results via ListingFilter
     """
     features = []
+    signed_in = request.user.is_authenticated
     listings = _apply_bbox(_filtered_listings(request), request.GET.get("bbox", "")).prefetch_related("owner__communities")
     for listing in listings[:700]:
         holder = listing.holder
@@ -270,9 +284,11 @@ def gifts_markers(request):
         if photo is None and listing.community_id:
             first = listing.community.photos.first()
             photo = first.image.url if first and first.image else None
+        # Somewhere in its cell, unless it's public
+        spot = listing.spot if listing.place_is_public else approximate(listing.spot, listing.place_seed)
         features.append({
             "type": "Feature",
-            "geometry": {"type": "Point", "coordinates": [listing.spot.x, listing.spot.y]},
+            "geometry": {"type": "Point", "coordinates": [spot.x, spot.y]},
             "properties": {
                 "source":         "listing",
                 "title":          listing.display_title,
@@ -287,8 +303,9 @@ def gifts_markers(request):
                 "url":            listing.get_absolute_url(),
                 "project":        listing.project.title if listing.project_id else "",
                 "community_name": listing.community.name if listing.community_id else "",
-                "user_name":      "" if listing.community_id else _public_name(holder),
-                "member_of":      "" if listing.community_id or not holder else ", ".join(c.name for c in holder.member_communities()),
+                # Who it is only for members: visitors sign up to find out and ask
+                "user_name":      "" if listing.community_id or not signed_in else _public_name(holder),
+                "member_of":      "" if listing.community_id or not holder or not signed_in else ", ".join(c.name for c in holder.member_communities()),
             },
         })
     return JsonResponse({"type": "FeatureCollection", "features": features})

@@ -1,4 +1,5 @@
 from django.contrib.auth import views as django_views
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.utils.translation import gettext_lazy as _
 from django.http import QueryDict
@@ -10,6 +11,7 @@ from django.contrib.auth import logout as auth_logout, login as auth_login, auth
 from django.views.generic.detail import DetailView
 from gift_economy.gifts.models import Listing
 from .models import User
+from .places import approximate, town
 
 from .forms import RegisterForm, LoginForm, ProfileUpdateForm
 from django.http import JsonResponse
@@ -21,7 +23,9 @@ class LoginView(django_views.LoginView):
     template_name = "users/login.html"
     form_class = LoginForm
 
-class DetailView(DetailView):
+class DetailView(LoginRequiredMixin, DetailView):
+    """A person's profile, for members only: visitors sign up to meet people, so that
+    contact goes through the platform (and can get references)."""
     model = User
     template_name = "users/detail.html"
     slug_field = "username"
@@ -50,6 +54,10 @@ class DetailView(DetailView):
             ctx["communities"] = user.communities.prefetch_related("photos").order_by("name")
             ctx["user_skills"] = [l for l in with_skill if l.is_offer]
             ctx["skill_wishes"] = [l for l in with_skill if l.is_wish]
+            # Others see only about where they live (users.places)
+            own = ctx["own_place"] = user == self.request.user
+            ctx["place_name"] = user.location_name if own else town(user.location_name)
+            ctx["place_point"] = user.location if own else approximate(user.location, user.pk)
         except Exception:
             ctx["listings"] = []
             ctx["communities"] = []
@@ -66,6 +74,7 @@ def logout(request):
     return redirect(reverse("homepage:homepage"))
 
 
+@login_required
 @require_GET
 def autocomplete(request):
     """Simple user autocomplete for recipients (returns JSON). `value` is the user id, which

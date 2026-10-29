@@ -296,6 +296,7 @@ def match_detail(request, pk):
 
     return render(request, "matches/match_detail.html", {
         "match":                match,
+        "requester_place":      match.person_place(match.from_user),
         # Volunteer visits have their own place in the sidebar and breadcrumb
         "request_type":         "volunteer" if match.is_community_stay else "",
         "target":               target,

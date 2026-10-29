@@ -45,7 +45,7 @@ class ListingForm(forms.ModelForm):
         model = Listing
         fields = (
             "type", "kind", "skill_name", "title", "quantity", "unit", "level", "available",
-            "description", "image", "categories", "location_name", "location",
+            "description", "image", "categories", "public_good", "location_name", "location", "location_public",
         )
         widgets = {
             "type": forms.RadioSelect,
@@ -66,6 +66,7 @@ class ListingForm(forms.ModelForm):
         self.fields["unit"].choices = [("", _("no unit"))] + list(self.fields["unit"].choices)[1:]
         self.fields["level"].choices = [("", "—")] + Listing.LEVEL_CHOICES
         self.fields["image"].label = _("Photo")
+        self.fields["public_good"].widget.attrs["x-model"] = "publicGood"
         if self.instance.pk and self.instance.skill_id:
             self.initial["skill_name"] = self.instance.skill.get_name()
 
@@ -108,6 +109,13 @@ class ListingForm(forms.ModelForm):
             cleaned["level"] = ""
         else:
             cleaned["categories"] = []
+        # A public good is an offer found somewhere: always with its exact place
+        if cleaned.get("type") != Listing.TYPE_OFFER:
+            cleaned["public_good"] = False
+        if cleaned.get("public_good"):
+            if not cleaned.get("location"):
+                self.add_error("public_good", _("Set on the map where it is found."))
+            cleaned["location_public"] = True
         return cleaned
 
     def save(self, commit=True):
