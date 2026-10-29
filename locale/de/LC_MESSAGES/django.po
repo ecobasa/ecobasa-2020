@@ -4489,14 +4489,8 @@ msgstr "Möchte ausleihen"
 msgid "Lending calendar"
 msgstr "Verleihkalender"
 
-msgid "Lend a tool"
-msgstr "Werkzeug verleihen"
 
-msgid "More people ask for a tool than you can lend at once on:"
-msgstr "Mehr Leute fragen nach einem Werkzeug, als du gleichzeitig verleihen kannst, am:"
 
-msgid "You lend it"
-msgstr "Du verleihst es"
 
 msgid "Someone asks to borrow it"
 msgstr "Jemand möchte es ausleihen"
@@ -4504,8 +4498,6 @@ msgstr "Jemand möchte es ausleihen"
 msgid "You borrow it"
 msgstr "Du leihst es aus"
 
-msgid "Your tools to lend"
-msgstr "Deine Werkzeuge zum Verleihen"
 
 #, python-format
 msgid "With %(name)s until %(day)s"
@@ -4521,8 +4513,6 @@ msgstr "nächstes Mal: %(day)s"
 msgid "Lent this month"
 msgstr "Diesen Monat verliehen"
 
-msgid "Nobody has asked to borrow your tools this month yet."
-msgstr "Diesen Monat hat noch niemand gefragt, deine Werkzeuge auszuleihen."
 
 msgid "You borrow this month"
 msgstr "Du leihst diesen Monat aus"
@@ -4538,3 +4528,80 @@ msgstr "Andere Tage oder Ort vorschlagen"
 
 msgid "It is already lent on some of these days. Propose other days instead."
 msgstr "An einigen dieser Tage ist es schon verliehen. Schlag stattdessen andere Tage vor."
+
+msgid "To borrow here"
+msgstr "Hier ausleihen"
+
+msgid "Tools and vehicles the community and its members lend. Ask for the days you need one."
+msgstr "Werkzeuge und Fahrzeuge, die die Gemeinschaft und ihre Mitglieder verleihen. Frag nach den Tagen, an denen du etwas brauchst."
+
+#, python-format
+msgid "Lent until %(day)s"
+msgstr "Verliehen bis %(day)s"
+
+msgid "Available today"
+msgstr "Heute verfügbar"
+
+msgid "free"
+msgstr "frei"
+
+msgid "Start a tool library: lend your community's tools, cargo bike, car or trailer to members and neighbours, and see in a calendar who has what when."
+msgstr "Starte eine Werkzeugbibliothek: verleih Werkzeuge, Lastenrad, Auto oder Anhänger eurer Gemeinschaft an Mitglieder und Nachbar*innen und sieh im Kalender, wer wann was hat."
+
+msgid "Add something to lend"
+msgstr "Etwas zum Verleihen hinzufügen"
+
+msgid "To borrow"
+msgstr "Zum Ausleihen"
+
+msgid "For things to share rather than give away: a ladder, a concrete mixer, a cargo bike, a car, a trailer, a van."
+msgstr "Für Dinge zum Teilen statt Verschenken: Leiter, Betonmischer, Lastenrad, Auto, Anhänger, Transporter."
+
+msgid "More people ask for something than can be lent at once on:"
+msgstr "Mehr Leute fragen nach etwas, als gleichzeitig verliehen werden kann, am:"
+
+msgid "Borrowed by the community"
+msgstr "Von der Gemeinschaft ausgeliehen"
+
+msgid "The tool library"
+msgstr "Die Werkzeugbibliothek"
+
+msgid "What you lend"
+msgstr "Was du verleihst"
+
+msgid "Nobody has asked to borrow anything this month yet."
+msgstr "Diesen Monat hat noch niemand gefragt, etwas auszuleihen."
+
+msgid "The community borrows this month"
+msgstr "Die Gemeinschaft leiht diesen Monat aus"
+
+msgid "What you can do on ecobasa"
+msgstr "Was du auf ecobasa tun kannst"
+
+msgid "Give and wish"
+msgstr "Schenken und wünschen"
+
+msgid "Offer what you don't need, wish for what you do. We suggest what fits nearby."
+msgstr "Biete an, was du nicht brauchst, wünsch dir, was du brauchst. Wir schlagen vor, was in der Nähe passt."
+
+msgid "Share skills"
+msgstr "Fähigkeiten teilen"
+
+msgid "Teach, learn by doing, and volunteer at communities and their projects."
+msgstr "Lehren, beim Tun lernen und in Gemeinschaften und ihren Projekten mithelfen."
+
+msgid "Run a tool library"
+msgstr "Eine Werkzeugbibliothek betreiben"
+
+msgid "Lend tools instead of buying them twice. People ask for the days they need them, and your lending calendar shows who has what when."
+msgstr "Werkzeuge verleihen statt doppelt kaufen. Leute fragen nach den Tagen, an denen sie sie brauchen, und dein Verleihkalender zeigt, wer wann was hat."
+
+msgid "Share cars in your community"
+msgstr "Autos in der Gemeinschaft teilen"
+
+msgid "The cargo bike, the car, the trailer, the van: book them by the day, and see every booking in the community's calendar."
+msgstr "Lastenrad, Auto, Anhänger, Transporter: tageweise buchen und jede Buchung im Kalender der Gemeinschaft sehen."
+
+#, python-format
+msgid "Tool library · %(name)s"
+msgstr "Werkzeugbibliothek · %(name)s"

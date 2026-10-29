@@ -1,12 +1,12 @@
 {% extends 'dashboard/base.html' %}
 {% load i18n %}
 
-{% block head_title %}{% trans "Lending calendar" %} — ecobasa{% endblock %}
+{% block head_title %}{% trans "Lending calendar" %}{% if community %} — {{ community.name }}{% endif %} — ecobasa{% endblock %}
 
 {% block dashboard_content %}
 <div class="flex flex-wrap items-baseline justify-between gap-2 mb-4">
-  <h1 class="mb-0">{% trans "Lending calendar" %}</h1>
-  <a href="{% url 'gifts:create' %}?type=offer&kind=tool&lend=1" class="btn"><i class="fa fa-plus mr-1"></i>{% trans "Lend a tool" %}</a>
+  <h1 class="mb-0">{% trans "Lending calendar" %}{% if community %} <span class="text-lg font-normal">· <a href="{{ community.get_absolute_url }}#library" class="hover:underline">{{ community.name }}</a></span>{% endif %}</h1>
+  <a href="{% url 'gifts:create' %}?type=offer&kind=tool&lend=1{% if community %}&community={{ community.slug }}{% endif %}" class="btn"><i class="fa fa-plus mr-1"></i>{% trans "Add something to lend" %}</a>
 </div>
 
 <nav class="flex items-center gap-3 mb-4" aria-label="{% trans 'Month' %}">
@@ -19,7 +19,7 @@
 {% if clash_days %}
   <div class="rounded p-3 mb-4 border border-yellow bg-yellow bg-opacity-10 text-sm">
     <i class="fa-solid fa-circle-exclamation text-yellow mr-1"></i>
-    {% trans "More people ask for a tool than you can lend at once on:" %}
+    {% trans "More people ask for something than can be lent at once on:" %}
     {% for day in clash_days %}<strong>{{ day.date|date:"D j" }}</strong> ({% for tool in day.clashes %}{{ tool.display_title }}{% if not forloop.last %}, {% endif %}{% endfor %}){% if not forloop.last %}, {% endif %}{% endfor %}
   </div>
 {% endif %}
@@ -47,19 +47,19 @@
   {% endfor %}
 </div>
 <p class="hidden md:flex flex-wrap gap-4 text-xs mb-6">
-  <span><span class="inline-block w-3 h-3 rounded bg-green align-middle mr-1"></span>{% trans "You lend it" %}</span>
+  <span><span class="inline-block w-3 h-3 rounded bg-green align-middle mr-1"></span>{% trans "Lent" %}</span>
   <span><span class="inline-block w-3 h-3 rounded border border-dashed border-yellow align-middle mr-1"></span>{% trans "Someone asks to borrow it" %}</span>
-  <span><span class="inline-block w-3 h-3 rounded bg-purple align-middle mr-1"></span>{% trans "You borrow it" %}</span>
+  <span><span class="inline-block w-3 h-3 rounded bg-purple align-middle mr-1"></span>{% if community %}{% trans "Borrowed by the community" %}{% else %}{% trans "You borrow it" %}{% endif %}</span>
 </p>
 
 {# Your tools: where they are today #}
 {% if tools %}
-  <h2>{% trans "Your tools to lend" %}</h2>
+  <h2>{% if community %}{% trans "The tool library" %}{% else %}{% trans "What you lend" %}{% endif %}</h2>
   <ul class="list-none p-0 space-y-2 mb-6">
     {% for tool in tools %}
       <li class="flex flex-wrap items-center gap-x-3 gap-y-1 p-3 rounded border bg-secondary bg-opacity-50">
-        <a href="{{ tool.get_absolute_url }}" class="font-semibold hover:underline"><i class="fa-solid fa-screwdriver-wrench mr-1"></i>{{ tool.display_title }}</a>
-        {% if tool.community %}<span class="text-xs opacity-70">· {{ tool.community.name }}</span>{% endif %}
+        <a href="{{ tool.get_absolute_url }}" class="font-semibold hover:underline"><i class="fa-solid {{ tool.kind_icon }} mr-1"></i>{{ tool.display_title }}</a>
+        {% if tool.community and not community %}<span class="text-xs opacity-70">· {{ tool.community.name }}</span>{% endif %}
         {% if tool.amount %}<span class="text-xs opacity-70">· {{ tool.amount }}</span>{% endif %}
         <span class="ml-auto text-sm">
           {% if tool.lent_now %}
@@ -83,11 +83,11 @@
     {% for lending in lent_out %}{% include "matches/_lending_row.html" %}{% endfor %}
   </ul>
 {% else %}
-  <p class="italic mb-6">{% trans "Nobody has asked to borrow your tools this month yet." %}</p>
+  <p class="italic mb-6">{% trans "Nobody has asked to borrow anything this month yet." %}</p>
 {% endif %}
 
 {% if borrowed %}
-  <h2>{% trans "You borrow this month" %}</h2>
+  <h2>{% if community %}{% trans "The community borrows this month" %}{% else %}{% trans "You borrow this month" %}{% endif %}</h2>
   <ul class="list-none p-0 space-y-2 mb-6">
     {% for lending in borrowed %}{% include "matches/_lending_row.html" %}{% endfor %}
   </ul>

@@ -232,3 +232,68 @@ def test_the_pages_show_the_days(ladder, lender, borrower):
     page = _client_for(lender).get(match.get_absolute_url()).content.decode()
     assert "Asked to borrow" in page
     assert 'name="counter_stay_from"' in page and 'name="counter_date"' not in page
+
+
+# ── Vehicles, and a community's tool library ─────────────────────────
+
+
+@pytest.mark.django_db
+def test_vehicles_are_lent_too(lender):
+    response = _client_for(lender).post(reverse("gifts:create"), {
+        "type": "offer", "kind": "other", "title": "Cargo bike", "lend": "on",
+    })
+    assert response.status_code == 302
+    bike = Listing.objects.get(title="Cargo bike")
+    assert bike.lend and bike.lends_out and bike.kind_label == "To lend"
+    assert list(Listing.objects.to_lend()) == [bike]
+
+
+@pytest.fixture
+def community(lender):
+    from communities.models import Community
+    return Community.objects.create(name="Hof Wiese", owner=lender)
+
+
+@pytest.fixture
+def van(community):
+    return Listing.objects.create(title="Van", type="offer", kind="other", lend=True, community=community)
+
+
+@pytest.mark.django_db
+class TestToolLibrary:
+    def test_the_community_page_lists_what_it_lends_apart_from_gifts(self, community, van, ladder, borrower):
+        Listing.objects.create(title="Apples", type="offer", kind="material", community=community)
+        _loan(van, borrower, _day(0), _day(2))
+        response = Client().get(community.get_absolute_url())
+        assert response.context["library"] == [ladder, van]  # the ambassador's ladder too
+        assert [listing.title for listing in response.context["gifts"]] == ["Apples"]
+        page = response.content.decode()
+        assert "To borrow here" in page and "free" in page and "until" in page
+        assert response.context["library"][1].lent_now_until == _day(2)
+
+    def test_the_ambassador_can_start_a_tool_library(self, community, lender):
+        page = _client_for(lender).get(community.get_absolute_url()).content.decode()
+        assert "Start a tool library" in page
+        assert f"community={community.slug}&type=offer&kind=tool&lend=1" in page.replace("&amp;", "&")
+
+    def test_its_calendar_shows_who_borrows_what_when(self, community, van, lender, borrower):
+        _loan(van, borrower, _day(1), _day(1))
+        url = reverse("matches:community_lending", args=[community.slug])
+        response = _client_for(lender).get(url, {"month": _day(1).strftime("%Y-%m")})
+        assert [(lending.tool, lending.person) for lending in response.context["lent_out"]] == [(van, borrower)]
+        assert response.context["tools"] == [van]
+        # Only for its ambassador
+        assert _client_for(borrower).get(url).status_code == 403
+
+    def test_the_ambassadors_own_calendar_leaves_the_community_out(self, community, van, lender, borrower):
+        _loan(van, borrower, _day(1), _day(1))
+        response = _client_for(lender).get(reverse("matches:lending"), {"month": _day(1).strftime("%Y-%m")})
+        assert response.context["lent_out"] == [] and response.context["tools"] == []
+        # But who borrows it sees it in theirs
+        response = _client_for(borrower).get(reverse("matches:lending"), {"month": _day(1).strftime("%Y-%m")})
+        assert [lending.tool for lending in response.context["borrowed"]] == [van]
+
+    def test_the_dashboard_links_its_tool_library(self, community, van, lender):
+        page = _client_for(lender).get(reverse("gifts:mine")).content.decode()
+        assert reverse("matches:community_lending", args=[community.slug]) in page
+        assert "Tool library · Hof Wiese" in page

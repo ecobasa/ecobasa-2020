@@ -105,8 +105,8 @@ class ListingQuerySet(models.QuerySet):
         return self.filter(Q(owner=user, community=None) | Q(community__owner=user))
 
     def to_lend(self):
-        """Tools to lend (they come back), as opposed to given away."""
-        return self.filter(type=Listing.TYPE_OFFER, kind=Listing.KIND_TOOL, lend=True)
+        """Tools and vehicles to lend (they come back), as opposed to given away."""
+        return self.filter(type=Listing.TYPE_OFFER, kind__in=Listing.LEND_KINDS, lend=True)
 
     def of(self, holder):
         """What a person or a community offers and wishes for (its projects' too)."""
@@ -146,6 +146,9 @@ class Listing(RandomIdMixin, models.Model):
         (KIND_HANDS, _("Helping hands")),
     ]
     THING_KINDS = (KIND_MATERIAL, KIND_TOOL, KIND_OTHER)
+    # What can be lent instead of given away: tools, and other things like a cargo bike,
+    # a car, a trailer or a van
+    LEND_KINDS = (KIND_TOOL, KIND_OTHER)
     SKILL_KINDS = (KIND_SKILL, KIND_KNOWLEDGE, KIND_HANDS)
     # Given away once (in parts, with a quantity); skills, knowledge and helping hands
     # can be shared again and again
@@ -202,8 +205,8 @@ class Listing(RandomIdMixin, models.Model):
     # level it looks for
     level = models.CharField(_("Level"), max_length=20, choices=LEVEL_CHOICES, blank=True)
     available = models.BooleanField(_("Available to teach / share"), default=True)
-    # A tool lent for some days that comes back (offer), or to borrow (wish); requests
-    # for it say from when until when (matches.Loan)
+    # A tool or vehicle lent for some days that comes back (offer), or to borrow (wish);
+    # requests for it say from when until when (matches.Loan)
     lend = models.BooleanField(_("To lend"), default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -306,9 +309,11 @@ class Listing(RandomIdMixin, models.Model):
     @property
     def kind_label(self):
         """The kind in words, by which side it is on: "Skill" offered, "Learn a skill" wished;
-        "Tool to lend", "Tool to borrow"."""
-        if self.lend:
+        "Tool to lend", "Tool to borrow", "To lend"."""
+        if self.lend and self.kind == self.KIND_TOOL:
             return _("Tool to lend") if self.is_offer else _("Tool to borrow")
+        if self.lend:
+            return _("To lend") if self.is_offer else _("To borrow")
         if self.kind == self.KIND_SKILL and self.is_wish:
             return _("Learn a skill") if self.owner_id else _("Skill")
         return self.get_kind_display()
@@ -463,7 +468,7 @@ class Listing(RandomIdMixin, models.Model):
     # ── Lending ─────────────────────────────────────────────────────
     @property
     def lends_out(self):
-        """A tool to lend, as opposed to one given away (or wished to borrow)."""
+        """A tool or vehicle to lend, as opposed to one given away (or wished to borrow)."""
         return self.lend and self.is_offer
 
     def loans(self, statuses=None):
@@ -477,6 +482,12 @@ class Listing(RandomIdMixin, models.Model):
     def upcoming_loans(self):
         """The agreed loans that haven't ended yet, for who wants to borrow it too."""
         return self.loans().filter(ends_on__gte=timezone.localdate())
+
+    def lent_until(self, day=None):
+        """The day it comes back if all of it is lent on `day` (today), else None."""
+        day = day or timezone.localdate()
+        ends = [loan.ends_on for loan in self.loans() if loan.starts_on <= day <= loan.ends_on]
+        return max(ends) if len(ends) >= (self.quantity or 1) else None
 
     def is_free(self, starts_on, ends_on, exclude_match=None):
         """Whether it can be lent from starts_on to ends_on: fewer agreed loans overlap than

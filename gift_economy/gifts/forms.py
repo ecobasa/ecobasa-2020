@@ -104,7 +104,7 @@ class ListingForm(forms.ModelForm):
             self.add_error("title", _("Name a skill or say what for."))
         elif kind in Listing.THING_KINDS and not title:
             self.add_error("title", _("What is it?"))
-        if kind != Listing.KIND_TOOL:
+        if kind not in Listing.LEND_KINDS:
             cleaned["lend"] = False
         if kind in Listing.THING_KINDS:
             cleaned["skill_name"] = ""

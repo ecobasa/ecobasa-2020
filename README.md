@@ -3,6 +3,15 @@ Ecobasa is a gift-economy network for sustainable communities
 
 This is a work-in-progress attempt of a redesign.
 
+What people and communities do on ecobasa:
+- **Give and wish for things**: materials, tools, anything else, matched nearby.
+- **Share skills**: teach, learn by doing, lend a hand; volunteer at communities and help
+  with their projects.
+- **Run a tool library**: lend tools instead of giving them away. People ask for the days
+  they need something, and a lending calendar shows who has what when.
+- **Share cars in a community**: the community's cargo bike, car, trailer or van, booked
+  by the day, like the tools.
+
 
 ## Setup for dev
 
@@ -108,6 +117,29 @@ knowledge or helping hands for a known skill, point to the skill vocabulary
 covered in parts, and an offer given away in parts: each exchange says how much it brings
 or takes (`matches.Contribution`). Covered wishes and given-away offers drop off the lists;
 a skill can be shared again and again.
+
+## Lending, tool libraries and car sharing
+
+Tools and other things that come back (a ladder, a concrete mixer, a cargo bike, a car, a
+trailer, a van) can be offered **to lend** instead of given away (`Listing.lend`; a wish
+can be **to borrow**). A request for one says from when until when (`matches.Loan`):
+days on which it is already lent are refused (with an amount, "3 ladders", that many can be
+lent at once), the owner can propose other days, and accepting checks again. Lending
+doesn't use it up, so it stays listed and matched.
+
+- **Lending calendar** (`/matches/lending/`): once someone lends something or borrows
+  something, their dashboard shows a month of who borrows what when (requested and
+  agreed), where each thing is today, days asked for by more people than there are
+  things, and what they borrow themselves.
+- **Tool library of a community**: what a community (and its members) lends is listed
+  on the community page under "To borrow here", with whether it is free today. Its
+  ambassador gets the community's own lending calendar
+  (`/matches/lending/<community>/`, "Tool library" in the dashboard) to track who needs
+  what when.
+- **Car sharing** works the same way: the community lends its car or van to members by
+  the day and sees all bookings in its lending calendar.
+
+The reference request comes after the day it was brought back.
 
 ## Suggestions
 

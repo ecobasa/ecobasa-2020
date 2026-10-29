@@ -4453,14 +4453,8 @@ msgstr "Demande à emprunter"
 msgid "Lending calendar"
 msgstr "Calendrier de prêt"
 
-msgid "Lend a tool"
-msgstr "Prêter un outil"
 
-msgid "More people ask for a tool than you can lend at once on:"
-msgstr "Plus de personnes demandent un outil que tu ne peux en prêter en même temps le :"
 
-msgid "You lend it"
-msgstr "Tu le prêtes"
 
 msgid "Someone asks to borrow it"
 msgstr "Quelqu'un demande à l'emprunter"
@@ -4468,8 +4462,6 @@ msgstr "Quelqu'un demande à l'emprunter"
 msgid "You borrow it"
 msgstr "Tu l'empruntes"
 
-msgid "Your tools to lend"
-msgstr "Tes outils à prêter"
 
 #, python-format
 msgid "With %(name)s until %(day)s"
@@ -4485,8 +4477,6 @@ msgstr "prochain : %(day)s"
 msgid "Lent this month"
 msgstr "Prêté ce mois-ci"
 
-msgid "Nobody has asked to borrow your tools this month yet."
-msgstr "Personne n'a encore demandé à emprunter tes outils ce mois-ci."
 
 msgid "You borrow this month"
 msgstr "Ce que tu empruntes ce mois-ci"
@@ -4502,3 +4492,80 @@ msgstr "Proposer d'autres jours ou un autre lieu"
 
 msgid "It is already lent on some of these days. Propose other days instead."
 msgstr "Il est déjà prêté certains de ces jours. Propose plutôt d'autres jours."
+
+msgid "To borrow here"
+msgstr "À emprunter ici"
+
+msgid "Tools and vehicles the community and its members lend. Ask for the days you need one."
+msgstr "Outils et véhicules que la communauté et ses membres prêtent. Demande les jours où tu en as besoin."
+
+#, python-format
+msgid "Lent until %(day)s"
+msgstr "Prêté jusqu'au %(day)s"
+
+msgid "Available today"
+msgstr "Disponible aujourd'hui"
+
+msgid "free"
+msgstr "libre"
+
+msgid "Start a tool library: lend your community's tools, cargo bike, car or trailer to members and neighbours, and see in a calendar who has what when."
+msgstr "Lance une outilthèque : prête les outils, le vélo cargo, la voiture ou la remorque de ta communauté aux membres et voisins, et vois dans un calendrier qui a quoi et quand."
+
+msgid "Add something to lend"
+msgstr "Ajouter quelque chose à prêter"
+
+msgid "To borrow"
+msgstr "À emprunter"
+
+msgid "For things to share rather than give away: a ladder, a concrete mixer, a cargo bike, a car, a trailer, a van."
+msgstr "Pour ce qu'on partage plutôt que donner : une échelle, une bétonnière, un vélo cargo, une voiture, une remorque, une camionnette."
+
+msgid "More people ask for something than can be lent at once on:"
+msgstr "Plus de personnes demandent quelque chose qu'on ne peut en prêter en même temps le :"
+
+msgid "Borrowed by the community"
+msgstr "Emprunté par la communauté"
+
+msgid "The tool library"
+msgstr "L'outilthèque"
+
+msgid "What you lend"
+msgstr "Ce que tu prêtes"
+
+msgid "Nobody has asked to borrow anything this month yet."
+msgstr "Personne n'a encore demandé à emprunter quoi que ce soit ce mois-ci."
+
+msgid "The community borrows this month"
+msgstr "Ce que la communauté emprunte ce mois-ci"
+
+msgid "What you can do on ecobasa"
+msgstr "Ce que tu peux faire sur ecobasa"
+
+msgid "Give and wish"
+msgstr "Donner et souhaiter"
+
+msgid "Offer what you don't need, wish for what you do. We suggest what fits nearby."
+msgstr "Offre ce dont tu n'as pas besoin, souhaite ce qu'il te faut. Nous te suggérons ce qui correspond près de chez toi."
+
+msgid "Share skills"
+msgstr "Partager des savoir-faire"
+
+msgid "Teach, learn by doing, and volunteer at communities and their projects."
+msgstr "Enseigne, apprends en faisant et aide dans des communautés et leurs projets."
+
+msgid "Run a tool library"
+msgstr "Gérer une outilthèque"
+
+msgid "Lend tools instead of buying them twice. People ask for the days they need them, and your lending calendar shows who has what when."
+msgstr "Prête des outils au lieu de les acheter deux fois. On demande les jours où on en a besoin, et ton calendrier de prêt montre qui a quoi et quand."
+
+msgid "Share cars in your community"
+msgstr "Partager des voitures dans ta communauté"
+
+msgid "The cargo bike, the car, the trailer, the van: book them by the day, and see every booking in the community's calendar."
+msgstr "Le vélo cargo, la voiture, la remorque, la camionnette : réserve-les à la journée et vois chaque réservation dans le calendrier de la communauté."
+
+#, python-format
+msgid "Tool library · %(name)s"
+msgstr "Outilthèque · %(name)s"
