@@ -120,6 +120,15 @@ class Project(models.Model):
         community = self.community
         return community.name, community.location_name, community.location
 
+    # Where it is, and who may know: its community's
+    @property
+    def place_seed(self):
+        return self.community.place_seed
+
+    @property
+    def place_is_public(self):
+        return self.community.place_is_public
+
     def get_match_icon(self):
         return "fa-person-digging"
 

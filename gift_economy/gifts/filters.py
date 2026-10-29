@@ -1,13 +1,14 @@
 from django.utils.translation import gettext_lazy as _
 from django import forms
 from django.db.models import Q
-from django.db.models.functions import Coalesce
+from django.db.models.functions import Cast
 from django.contrib.gis.geos import Point
+from django.contrib.gis.db.models import PointField
 from django.contrib.gis.db.models.functions import Distance
 
 import django_filters
 
-from .models import Listing, ListingCategory
+from .models import Listing, ListingCategory, public_spot
 
 
 # Plural labels here are deliberately distinct from Listing.TYPE_CHOICES (singular,
@@ -72,8 +73,8 @@ class ListingFilter(django_filters.FilterSet):
         except ValueError:
             return queryset
         loc = Point(lon, lat, srid=4326)
-        # Where it is: its own place, else its person's or community's
-        place = Coalesce("location", "owner__location", "community__location")
+        # Where it is, a person's only by its cell: the distance tells nothing finer
+        place = Cast(public_spot(), PointField(geography=True, srid=4326))
         return queryset.annotate(distance=Distance(place, loc)).order_by("distance")
 
     def do_location_name(self, queryset, name, value):

@@ -1,16 +1,35 @@
 from django.conf import settings
 from django.contrib.contenttypes.fields import GenericRelation
 from django.contrib.gis.db import models
-from django.db.models import Exists, OuterRef, Q, Subquery, Sum
-from django.db.models.functions import Coalesce
+from django.contrib.gis.db.models.functions import SnapToGrid
+from django.db.models import Case, Exists, OuterRef, Q, Subquery, Sum, When
+from django.db.models.functions import Cast, Coalesce
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
+
+from users.places import CELL, approximate, town
 
 from . import units
 from .mixins import RandomIdMixin
 # The skill vocabulary is part of this app (its models live in gifts/skills/)
 from .skills.models import Skill, SkillTaxonomy  # noqa: F401
+
+
+def public_spot():
+    """Where a listing is, for sorting and filtering by place (as a flat geometry): its own
+    place, else its community's or person's (Listing.place), only as the centre of its
+    cell unless it's public (users.places), so no search finds out more than the map shows."""
+    holder = Case(When(community__isnull=False, then="community__location"), default="owner__location")
+    spot = Cast(Coalesce("location", holder), models.GeometryField(srid=4326))
+    public = (
+        Q(location__isnull=False, location_public=True) | Q(location__isnull=False, public_good=True)
+        | Q(location__isnull=True, community__location_public=True)
+    )
+    return Case(
+        When(public, then=spot),
+        default=SnapToGrid(spot, CELL), output_field=models.GeometryField(srid=4326),
+    )
 
 
 class ListingCategory(models.Model):
@@ -415,6 +434,18 @@ class Listing(RandomIdMixin, models.Model):
     location = models.PointField(
         _("Geo Location"), null=True, blank=True, geography=True
     )
+    # Something found out there (a fruit tree, wood in the forest), offers of things only: nobody
+    # needs to ask for it, everybody may edit and delete it, and its place is exact
+    public_good = models.BooleanField(
+        _("Public good"), default=False,
+        help_text=_("For things found out there, like a fruit tree or wood in the forest. Doesn't need to be requested and accepted. Everybody can edit and delete it."),
+    )
+    # Its own place exactly for everyone. Otherwise others see only roughly where it is
+    # (users.places).
+    location_public = models.BooleanField(
+        _("Show this place exactly — nobody lives here"), default=False,
+        help_text=_("Otherwise others see only roughly where it is until a match is accepted."),
+    )
     # Marked as covered (a wish) or given away (an offer) by its owner, however it was
     covered_at = models.DateTimeField(_("Covered"), null=True, blank=True)
     # Order among a project's needs
@@ -534,6 +565,10 @@ class Listing(RandomIdMixin, models.Model):
         return self.community.owner if self.community_id else self.owner
 
     def can_edit(self, user):
+        """Its manager (and staff), and for a public good every member."""
+        return user.is_authenticated and (self.public_good or self.is_managed_by(user))
+
+    def is_managed_by(self, user):
         return user.is_authenticated and (user.is_staff or user == self.manager)
 
     @property
@@ -549,6 +584,32 @@ class Listing(RandomIdMixin, models.Model):
     @property
     def point(self):
         return self.place[1]
+
+    # ── Where it is, and who may know (users.places) ────────────────
+    @property
+    def place_seed(self):
+        return self.community.place_seed if self.community_id else self.owner_id
+
+    @property
+    def place_is_public(self):
+        if self.location:
+            return self.location_public or self.public_good
+        return self.community_id is not None and self.community.location_public
+
+    @property
+    def public_place(self):
+        """(name, point) as everyone sees it: only roughly, unless it's public."""
+        name, point = self.place
+        if self.place_is_public:
+            return name, point
+        return town(name), approximate(point, self.place_seed)
+
+    def place_for(self, user):
+        """(name, point) as `user` sees it: exactly if they look after it, or it's their
+        community's and they may know where that is."""
+        if self.can_edit(user) or self.community_id and not self.location and self.community.shows_place_to(user):
+            return self.place
+        return self.public_place
 
     @property
     def latitude(self):

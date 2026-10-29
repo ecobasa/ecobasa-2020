@@ -73,7 +73,7 @@
       {% endif %}
       {% if listing.amount %}<div class="text-lg mb-1"><i class="fa-solid fa-scale-balanced mr-2 text-primary"></i>{{ listing.amount }}{% if listing.progress %} <span class="text-sm opacity-80">· {{ listing.progress }}</span>{% endif %}</div>{% endif %}
       <div class="my-1 flex flex-wrap items-center gap-1">
-        {% if can_edit %}
+        {% if is_owner %}
           <span class="pill bg-purple">{% if listing.community %}{% trans "from your community" %}{% else %}{% trans "from me" %}{% endif %}</span>
         {% endif %}
         {% if listing.kind != "other" %}<span class="pill {{ listing.colour }}"><i class="fa-solid {{ listing.kind_icon }} mr-1"></i>{{ listing.kind_label }}</span>{% endif %}
@@ -82,7 +82,7 @@
           <span class="pill bg-primary"><i class="fa-solid {{ cat.icon }} mr-1"></i>{{ cat }}</span>
         {% endfor %}
         {% if listing.status == "covered" or listing.status == "promised" %}<span class="pill bg-green">{% if listing.is_wish %}{% trans "Covered" %}{% else %}{% trans "Given away" %}{% endif %}</span>{% endif %}
-        <span class="text-sm mx-2">{{ listing.place.0|default:"" }}</span>
+        <span class="text-sm mx-2">{{ place.0|default:"" }}</span>
         <span class="text-xs">{% include "projects/_freshness.html" with when=listing.updated_at label_updated=True %}</span>
       </div>
       {% if listing.level %}<p class="mb-2"><strong>{% trans "Level" %}:</strong> {{ listing.get_level_display }}</p>{% endif %}
@@ -170,8 +170,8 @@
         <a href="{{ holder.get_absolute_url }}" class="font-serif text-primary">{{ holder.name|default:holder.username }}</a>
         <div class="text-xs">{% include "projects/_freshness.html" with when=holder.last_active %}</div>
       {% endif %}
-      {% if holder.location_name %}
-        <div class="text-sm"><i class="fa fa-map-marker mr-2"></i>{{ holder.location_name }}</div>
+      {% if holder_place_name %}
+        <div class="text-sm"><i class="fa fa-map-marker mr-2"></i>{{ holder_place_name }}</div>
       {% endif %}
     </div>
   </div>
@@ -244,6 +244,11 @@
       </form>
     </div>
   </div>
+  {% elif listing.public_good %}
+  <div class="mt-8 p-4 border rounded bg-primary bg-opacity-5">
+    <p class="font-semibold mb-1"><i class="fa-solid fa-tree mr-2 text-primary"></i>{% trans "Public good" %}</p>
+    <p class="text-sm">{% trans "For things found out there, like a fruit tree or wood in the forest. Doesn't need to be requested and accepted. Everybody can edit and delete it." %}</p>
+  </div>
   {% elif not request.user.is_authenticated and listing.manager %}
   <div class="mt-8">
     <a class="btn" href="{% url 'users:login' %}?next={{ request.path }}">
@@ -254,7 +259,7 @@
   {% endif %}
 
   {# ── Incoming requests (owner only) ── #}
-  {% if can_edit %}
+  {% if is_owner %}
     {% if incoming_requests %}
     <div class="mt-8">
       <h2 class="text-lg font-semibold mb-4">{% trans "Incoming Interests" %}</h2>
@@ -316,15 +321,15 @@
 
 {% block javascript %}
   {{ block.super }}
-  {% if listing.point %}
+  {% if place.1 %}
   <script src="https://cdn.jsdelivr.net/npm/ol@v7.2.2/dist/ol.js"></script>
   <script>
   /* ================================================================
      Listing detail map — single marker + layer switcher.
      ================================================================ */
   (function () {
-    const LAT  = {{ listing.point.y|unlocalize }};
-    const LON  = {{ listing.point.x|unlocalize }};
+    const LAT  = {{ place.1.y|unlocalize }};
+    const LON  = {{ place.1.x|unlocalize }};
 
     document.addEventListener('DOMContentLoaded', function () {
       const mapEl = document.getElementById('listing-detail-map');
@@ -333,9 +338,14 @@
       const tiles = EcoMap.buildBaseLayers();
       const center = ol.proj.fromLonLat([LON, LAT]);
 
+      {% if place_is_exact %}
       const marker = new ol.Feature({ geometry: new ol.geom.Point(center) });
       // The kind of thing (material, tool), else a gift or a heart
       marker.setStyle(EcoMap.makeIconStyle({{ listing.marker_glyph }}, '{% if listing.type == 'wish' %}#de7a08{% else %}#da6137{% endif %}'));
+      {% else %}
+      // Only roughly where it is (users/places.py)
+      const marker = EcoMap.makeRoughArea(LON, LAT, '{% if listing.type == 'wish' %}#de7a08{% else %}#da6137{% endif %}');
+      {% endif %}
 
       const map = new ol.Map({
         target: mapEl,
@@ -355,7 +365,8 @@
       popupEl.className = 'gift-popup';
       // Escaped for HTML first: escapejs alone would let "<" through into innerHTML
       popupEl.innerHTML = '<strong>{{ listing.display_title|force_escape|escapejs }}</strong>'
-        + '{% if listing.place.0 %}<div>{{ listing.place.0|force_escape|escapejs }}</div>{% endif %}';
+        + '{% if place.0 %}<div>{{ place.0|force_escape|escapejs }}</div>{% endif %}'
+        + '{% if not place_is_exact %}<div class="italic">{{ _("Roughly here")|force_escape|escapejs }}</div>{% endif %}';
       const overlay = new ol.Overlay({
         element: popupEl, positioning: 'bottom-center', offset: [0, -12], stopEvent: false
       });

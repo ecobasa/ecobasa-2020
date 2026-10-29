@@ -1,10 +1,14 @@
 from django.contrib.contenttypes.fields import GenericRelation
 from django.contrib.gis.db import models
+from django.contrib.gis.db.models.functions import SnapToGrid
+from django.db.models import Case, Q, When
+from django.db.models.functions import Cast
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from django_countries.fields import CountryField
 
 from users.models import User
+from users.places import CELL, approximate, town
 
 from embed_video.fields import EmbedVideoField
 from taggit.managers import TaggableManager
@@ -17,6 +21,17 @@ class TaggedSkills(TaggedItemBase):
 
     class Meta:
         app_label = 'communities'
+
+def public_location():
+    """Where a community is, for sorting and filtering by place (as a flat geometry): only
+    the centre of its cell unless it's public (users.places), so no search finds out more
+    than the map shows."""
+    location = Cast("location", models.GeometryField(srid=4326))
+    return Case(
+        When(location_public=True, then=location),
+        default=SnapToGrid(location, CELL), output_field=models.GeometryField(srid=4326),
+    )
+
 
 class Community(UniqueSlugMixin, models.Model):
     name = models.CharField(_("Name"), max_length=255)
@@ -104,6 +119,13 @@ class Community(UniqueSlugMixin, models.Model):
     location = models.PointField(
         _("Geo Location"), null=True, blank=True, geography=True
     )
+    # Most communities don't want visitors who didn't ask: unless public, others see only
+    # roughly where it is (users.places), and its address and phone number once their
+    # stay is accepted (shows_place_to)
+    location_public = models.BooleanField(
+        _("Public: show our exact place, address and phone number to everyone"), default=False,
+        help_text=_("Otherwise people see only roughly where you are, and your address and phone number once you have accepted their visit."),
+    )
     matches = GenericRelation("matches.Match")
 
     def __str__(self):
@@ -123,6 +145,44 @@ class Community(UniqueSlugMixin, models.Model):
 
     def get_type_icon(self):
         return self.TYPE_ICONS.get(self.type, "fa-house")
+
+    # ── Where it is, and who may know ───────────────────────────────
+    @property
+    def place_seed(self):
+        """Which spot in its cell others see it at (users.places.approximate)."""
+        return f"community:{self.pk}"
+
+    @property
+    def place_is_public(self):
+        return self.location_public
+
+    def shows_place_to(self, user):
+        """Whether `user` sees its exact place, address and phone number: everyone if
+        it's public, else its members and those whose stay (also with one of its
+        projects) was accepted."""
+        if self.location_public:
+            return True
+        if not user.is_authenticated:
+            return False
+        if user.is_staff or user in self.members():
+            return True
+        from django.contrib.contenttypes.models import ContentType
+        from gift_economy.matches.models import Match
+        stays = Q(content_type=ContentType.objects.get_for_model(Community), object_id=str(self.pk)) | Q(
+            content_type__app_label="projects", content_type__model="project",
+            object_id__in=[str(pk) for pk in self.projects.values_list("pk", flat=True)],
+        )
+        return Match.objects.filter(stays, from_user=user, status=Match.STATUS_ACCEPTED).exists()
+
+    def rough_place(self):
+        """(name, point) as everyone sees it (users.places), unless it's public."""
+        if self.location_public:
+            return self.location_name, self.location
+        return town(self.location_name), approximate(self.location, self.place_seed)
+
+    def place_for(self, user):
+        """(name, point) as `user` sees it."""
+        return (self.location_name, self.location) if self.shows_place_to(user) else self.rough_place()
 
     def members(self):
         """Who belongs to the community. For now its ambassador; real membership can

@@ -48,7 +48,7 @@ class ListingForm(forms.ModelForm):
         fields = (
             "type", "kind", "skill_name", "title", "variety", "harvest_year", "open_pollinated", "lend",
             "quantity", "unit", "level", "available",
-            "description", "image", "categories", "location_name", "location",
+            "description", "image", "categories", "public_good", "location_name", "location", "location_public",
         )
         widgets = {
             "type": forms.RadioSelect,
@@ -69,6 +69,9 @@ class ListingForm(forms.ModelForm):
         self.fields["unit"].choices = [("", _("no unit"))] + list(self.fields["unit"].choices)[1:]
         self.fields["level"].choices = [("", "—")] + Listing.LEVEL_CHOICES
         self.fields["image"].label = _("Photo")
+        self.fields["public_good"].widget.attrs["x-model"] = "publicGood"
+        for name in ("public_good", "location_public"):
+            self.fields[name].widget.attrs["class"] = "form-checkbox mt-1 flex-shrink-0"
         self.fields["title"].widget.attrs.update({"class": "textinput form-input", "data-thing-title": "", "autocomplete": "off"})
         self.fields["variety"].widget.attrs["placeholder"] = _("e.g. Ochsenherz, Golden Bantam, Lange Rote")
         self.fields["harvest_year"].widget.attrs.update({"min": "1990", "placeholder": str(timezone.now().year)})
@@ -142,7 +145,26 @@ class ListingForm(forms.ModelForm):
             # An amount only for things, and for a project's needs ("2 people")
             if not self.instance.project_id:
                 cleaned["quantity"], cleaned["unit"] = None, ""
+        # A public good is a thing offered where it's found: always with its exact place,
+        # and nobody lends it out (nobody asks for it)
+        if cleaned.get("type") != Listing.TYPE_OFFER or kind not in Listing.THING_KINDS:
+            cleaned["public_good"] = False
+        if cleaned.get("public_good"):
+            if not cleaned.get("location"):
+                self.add_error("public_good", _("Set on the map where it is found."))
+            cleaned["location_public"] = True
+            cleaned["lend"] = False
         return cleaned
+
+    def has_own_place(self):
+        """Whether its place is its own: set, and not just left where its person or
+        community is (the form starts from there)."""
+        try:
+            point = self.fields["location"].clean(self["location"].value())
+        except forms.ValidationError:
+            return False
+        start = self.initial.get("location")
+        return point is not None and not (start is not None and point.equals_exact(start, tolerance=1e-6))
 
     def _known_skill(self, name):
         """A skill of the taxonomy (in any language), or the one it already has."""

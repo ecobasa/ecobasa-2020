@@ -31,6 +31,7 @@
       </h3>
       <p class="text-xs text-brown">{% trans "Enables other ecobasa members to find you with your skills and as a potential member of their community or community-tour." %}</p>
       {% include "maps/_location_picker.html" with map_id="user-location-map" set_point_fn="setUserPoint" locate_fn="locateUserProfile" map_height="h-60" no_label=True %}
+      <p class="text-xs text-brown">{% trans "Others see only roughly where you live (about 1–2 km, without the street). Your exact place shows only once a match between you is accepted, so that you meet through ecobasa." %}</p>
     </div>
 
     <div class="flex items-center justify-end gap-4 my-5">
