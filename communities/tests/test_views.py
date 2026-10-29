@@ -140,3 +140,18 @@ def test_volunteers_can_bring_what_the_community_needs(user, community):
     owner.login(username=user.email, password="secret")
     content = owner.get("/matches/?type=volunteer").content.decode()
     assert "Clay" in content and "Wheelbarrow" in content
+
+
+@pytest.mark.django_db
+def test_skill_fields_take_skills_from_the_list_only(user_client, community):
+    """Every skill field is marked for the shared Tagify setup (users/_skill_tagify_js.html:
+    suggestions, no free tags)."""
+    for url, fields in (
+        (reverse("communities:create"), 2),
+        (reverse("communities:update", args=[community.slug]), 2),
+        (reverse("projects:create", args=[community.slug]), 1),
+        (reverse("users:update"), 2),
+    ):
+        content = user_client.get(url).content.decode()
+        assert content.count("data-skill-tags=") == fields, url
+        assert "enforceWhitelist: true" in content, url

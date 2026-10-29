@@ -1,11 +1,15 @@
-{% load i18n %}
 <script>
 (function () {
   const AUTOCOMPLETE_URL = '{% url "skills:api_autocomplete" %}';
   const PROPOSALS_URL    = '{% url "skills:api_proposals" %}';
 
+  // Names as the field holds them: comma-separated, a taggit field quotes those with a space
+  function namesIn(value) {
+    return (value || '').split(',').map(s => s.trim().replace(/^"(.*)"$/, '$1')).filter(Boolean);
+  }
+
   function makeTagOpts(existingValue) {
-    const existing = (existingValue || '').split(',').map(s => s.trim()).filter(Boolean);
+    const existing = namesIn(existingValue);
     return {
       editTags: false,
       enforceWhitelist: true,
@@ -17,7 +21,8 @@
         searchKeys: ['value'],
         highlightFirst: true,
       },
-      originalInputValueFormat: vals => vals.map(v => v.value).join(', '),
+      // A trailing comma, so taggit doesn't split a single "Cob building" at the space
+      originalInputValueFormat: vals => vals.length ? vals.map(v => v.value).join(', ') + ',' : '',
     };
   }
 
@@ -48,18 +53,13 @@
     });
   }
 
+  // Every skill field (marked data-skill-tags, its value the header of the proposals):
+  // skills from the list only, suggested in any language
   document.addEventListener('DOMContentLoaded', function () {
-    const skillsInput = document.getElementById('id_skills');
-    if (skillsInput) {
-      const t = new Tagify(skillsInput, makeTagOpts(skillsInput.value));
-      wireTagify(t, '{% trans "Skills communities always need" %}');
-    }
-
-    const wishInput = document.getElementById('id_skill_wishes');
-    if (wishInput) {
-      const t = new Tagify(wishInput, makeTagOpts(wishInput.value));
-      wireTagify(t, '{% trans "Popular skills to explore" %}');
-    }
+    document.querySelectorAll('[data-skill-tags]').forEach(function (input) {
+      input.value = namesIn(input.value).join(', ');
+      wireTagify(new Tagify(input, makeTagOpts(input.value)), input.dataset.skillTags);
+    });
   });
 })();
 </script>

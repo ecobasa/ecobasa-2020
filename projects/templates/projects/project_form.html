@@ -64,29 +64,7 @@
 {% block javascript %}
 {{ block.super }}
 <script src="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.min.js"></script>
-<script>
-// Skills you can learn here: tags, suggested from the skill list in any language
-document.addEventListener('DOMContentLoaded', () => {
-  const input = document.getElementById('id_skills_to_learn');
-  if (!input || typeof Tagify === 'undefined') return;
-  const tagify = new Tagify(input, {
-    editTags: false,
-    dropdown: { enabled: 2 },
-    originalInputValueFormat: vals => vals.map(v => v.value).join(', '),
-  });
-  let timer = null;
-  tagify.on('input', (e) => {
-    const q = e.detail.value.trim();
-    clearTimeout(timer);
-    if (q.length < 2) return;
-    timer = setTimeout(() => {
-      fetch('{% url "skills:api_autocomplete" %}?q=' + encodeURIComponent(q))
-        .then(r => r.json())
-        .then(data => { tagify.whitelist = (data.results || []).map(r => r.text); tagify.dropdown.show(q); });
-    }, 250);
-  });
-});
-</script>
+{% include "users/_skill_tagify_js.html" %}
 <script>
 document.addEventListener('alpine:init', () => {
   Alpine.data('needRows', () => ({

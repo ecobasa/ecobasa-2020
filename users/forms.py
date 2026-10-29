@@ -49,11 +49,13 @@ class RegisterForm(forms.ModelForm):
     skills = forms.CharField(
         required=False,
         label=_("What can you offer or teach?"),
+        widget=forms.TextInput(attrs={"data-skill-tags": _("Skills communities always need")}),
         help_text=_("Everyday skills count just as much as professional ones — cooking, gardening, basic repairs, childcare are all valuable to communities."),
     )
     skill_wishes = forms.CharField(
         required=False,
         label=_("What do you want to learn or need help with?"),
+        widget=forms.TextInput(attrs={"data-skill-tags": _("Popular skills to explore")}),
         help_text=_("Sharing what you need helps communities match you with the right people and experiences."),
     )
 
@@ -145,11 +147,13 @@ class ProfileUpdateForm(forms.ModelForm):
     skills = forms.CharField(
         required=False,
         label=_("What can you offer or teach?"),
+        widget=forms.TextInput(attrs={"data-skill-tags": _("Skills communities always need")}),
         help_text=_("Everyday skills count just as much as professional ones — cooking, gardening, basic repairs, childcare are all valuable to communities."),
     )
     skill_wishes = forms.CharField(
         required=False,
         label=_("What do you want to learn or need help with?"),
+        widget=forms.TextInput(attrs={"data-skill-tags": _("Popular skills to explore")}),
         help_text=_("Sharing what you need helps communities match you with the right people and experiences."),
     )
 

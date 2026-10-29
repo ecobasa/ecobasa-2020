@@ -11,6 +11,7 @@ from .models import Project
 class ProjectForm(forms.ModelForm):
     skills_to_learn = forms.CharField(
         label=_("Skills you can learn here"), required=False,
+        widget=forms.TextInput(attrs={"data-skill-tags": _("Popular skills to explore")}),
         help_text=_("Comma-separated. People looking for these skills find your project and your community."),
     )
     field_order = ["title", "description", "skills_to_learn"]

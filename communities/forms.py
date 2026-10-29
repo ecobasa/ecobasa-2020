@@ -38,6 +38,7 @@ class CommunityForm(forms.ModelForm):
     skill_wishes = forms.CharField(
         required=False,
         label=_("Skills we're looking for"),
+        widget=forms.TextInput(attrs={"data-skill-tags": _("Skills communities always need")}),
         help_text=_("Comma-separated list of skills you're looking for in visitors or new members."),
     )
 
@@ -103,7 +104,7 @@ class CommunityForm(forms.ModelForm):
             "vision": forms.Textarea(attrs={"rows": 3}),
             "accomodation": forms.Textarea(attrs={"rows": 3}),
             "video": forms.URLInput(attrs={"placeholder": _("YouTube or Vimeo link")}),
-            "skills": TagWidget(attrs={"placeholder": _("Add skills, comma separated")}),
+            "skills": TagWidget(attrs={"placeholder": _("Add skills, comma separated"), "data-skill-tags": _("Popular skills to explore")}),
         }
         labels = {
             "location_name": _("Location"),
