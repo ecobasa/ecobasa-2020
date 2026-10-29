@@ -407,6 +407,12 @@ class TestPublicGood:
         firewood = Listing.objects.get(title="Firewood")
         assert firewood.public_good and firewood.location_public and firewood.place_is_public
 
+    def test_not_a_skill(self, user_client):
+        user_client.post(reverse("gifts:create"), {
+            "type": "offer", "kind": "skill", "skill_name": "Pruning", "public_good": "on", "location": "POINT (13.2 52.4)",
+        })
+        assert not Listing.objects.get(skill__name="Pruning").public_good
+
     def test_only_offers(self, user_client):
         user_client.post(reverse("gifts:create"), {
             "type": "wish", "kind": "other", "title": "Bench", "public_good": "on", "location": "POINT (13.2 52.4)",

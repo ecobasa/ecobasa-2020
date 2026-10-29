@@ -76,8 +76,8 @@
     {{ form.image|as_crispy_field }}
 
     <div x-data="{ own: {{ form.location.value|yesno:'true,false' }}, publicGood: {{ form.public_good.value|yesno:'true,false' }} }" @location-set.window="own = true">
-      {# Offers only: found out there, nobody asks for it, everybody may edit it #}
-      <div x-show="type === 'offer'" x-cloak class="mb-4">
+      {# Offers of things only: found out there, nobody asks for it, everybody may edit it #}
+      <div x-show="type === 'offer' && isThing" x-cloak class="mb-4">
         <label class="flex items-start gap-2">
           {{ form.public_good }}
           <span><span class="font-semibold">{{ form.public_good.label }}</span>

@@ -153,7 +153,7 @@ looking or by asking:
   (`Match.places_shown`).
 - **Public places**: a community can make its place, address and phone number public
   (`Community.location_public`), an offer or wish its own place (`Listing.location_public`).
-- **Public goods** (`Listing.public_good`, offers only): things found out there, like a fruit
+- **Public goods** (`Listing.public_good`, offers of things only): things found out there, like a fruit
   tree or wood in the forest. Nobody needs to ask for them (no request form), every member
   can edit and delete them, and their place (required) is always exact.
 

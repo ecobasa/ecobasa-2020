@@ -111,8 +111,8 @@ class ListingForm(forms.ModelForm):
             cleaned["level"] = ""
         else:
             cleaned["categories"] = []
-        # A public good is an offer found somewhere: always with its exact place
-        if cleaned.get("type") != Listing.TYPE_OFFER:
+        # A public good is a thing offered where it's found: always with its exact place
+        if cleaned.get("type") != Listing.TYPE_OFFER or kind not in Listing.THING_KINDS:
             cleaned["public_good"] = False
         if cleaned.get("public_good"):
             if not cleaned.get("location"):

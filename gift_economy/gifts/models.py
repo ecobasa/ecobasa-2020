@@ -240,7 +240,7 @@ class Listing(RandomIdMixin, models.Model):
     location = models.PointField(
         _("Geo Location"), null=True, blank=True, geography=True
     )
-    # Something found out there (a fruit tree, wood in the forest), an offer only: nobody
+    # Something found out there (a fruit tree, wood in the forest), offers of things only: nobody
     # needs to ask for it, everybody may edit and delete it, and its place is exact
     public_good = models.BooleanField(
         _("Public good"), default=False,
