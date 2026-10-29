@@ -4519,8 +4519,8 @@ msgstr "Verliehen"
 msgid "Suggested days"
 msgstr "Vorgeschlagene Tage"
 
-msgid "Propose other days or place"
-msgstr "Andere Tage oder Ort vorschlagen"
+msgid "Propose another time or handover place"
+msgstr "Anderen Zeitraum oder Übergabeort vorschlagen"
 
 msgid "It is already lent on some of these days. Propose other days instead."
 msgstr "An einigen dieser Tage ist es schon verliehen. Schlag stattdessen andere Tage vor."
@@ -4631,3 +4631,6 @@ msgstr "Werkzeuge verleihen statt doppelt kaufen. Leute fragen nach den Tagen od
 
 msgid "The cargo bike, the car, the trailer, the van: book them by the day or the hour, and see every booking in the community's calendar."
 msgstr "Lastenrad, Auto, Anhänger, Transporter: tage- oder stundenweise buchen und jede Buchung im Kalender der Gemeinschaft sehen."
+
+msgid "Handover place"
+msgstr "Übergabeort"

@@ -163,6 +163,54 @@ class TestAgreeing:
         assert match.status == Match.STATUS_ACCEPTED
         assert (match.loan.first_day, match.loan.last_day) == (_day(6), _day(8))
 
+    def test_both_sides_answer_with_another_time_or_place(self, ladder, lender, borrower):
+        match = _loan(ladder, borrower, _day(2), _day(4), status=Match.STATUS_PENDING)
+        # The lender decides on the request, the borrower waits but may change it
+        page = _client_for(lender).get(match.get_absolute_url()).content.decode()
+        assert 'value="accept"' in page and 'value="decline"' in page and 'value="counter"' in page
+        page = _client_for(borrower).get(match.get_absolute_url()).content.decode()
+        assert 'value="accept"' not in page and 'value="counter"' in page
+
+        # The lender proposes other days, the borrower another time and place to hand it over
+        _client_for(lender).post(match.get_absolute_url(), {
+            "action": "counter", "counter_stay_from": _day(6).isoformat(), "counter_stay_to": _day(8).isoformat(),
+            "counter_location_type": Match.LOC_MY_PLACE,
+        })
+        page = _client_for(borrower).get(match.get_absolute_url()).content.decode()
+        assert 'value="accept"' in page and 'value="counter"' in page
+        assert f'value="{_day(6).isoformat()}"' in page
+        _client_for(borrower).post(match.get_absolute_url(), {
+            "action": "counter", "counter_stay_from": _day(7).isoformat(), "counter_stay_to": _day(9).isoformat(),
+            "counter_location_type": Match.LOC_CUSTOM, "counter_location": "Bahnhof", "counter_lat": "48.2", "counter_lon": "16.4",
+        })
+        match.refresh_from_db()
+        assert match.status == Match.STATUS_COUNTER
+        page = _client_for(borrower).get(match.get_absolute_url()).content.decode()
+        assert 'value="accept"' not in page
+
+        # Now it is the lender's turn; their counter-proposal starts from the borrower's
+        response = _client_for(lender).get(match.get_absolute_url())
+        assert response.context["proposed_place"] == {"type": Match.LOC_CUSTOM, "lat": 48.2, "lon": 16.4, "name": "Bahnhof"}
+        assert 'value="accept"' in response.content.decode()
+        _client_for(lender).post(match.get_absolute_url(), {"action": "accept"})
+        match.refresh_from_db()
+        assert match.status == Match.STATUS_ACCEPTED
+        assert (match.loan.first_day, match.loan.last_day) == (_day(7), _day(9))
+
+    def test_the_place_asked_for_is_on_the_map_of_a_counter_proposal(self, ladder, lender, borrower):
+        from django.contrib.gis.geos import Point
+        lender.location, lender.location_name = Point(15.62, 48.52), "Schiltern"
+        lender.save()
+        # Asked to pick it up where it is: for the lender that is their place
+        match = _loan(ladder, borrower, _day(2), _day(4), status=Match.STATUS_PENDING)
+        response = _client_for(lender).get(match.get_absolute_url())
+        assert response.context["proposed_place"]["type"] == Match.LOC_MY_PLACE
+        assert response.context["my_place"] == ("Schiltern", lender.location)
+        # For the borrower, the same place is the other side's
+        response = _client_for(borrower).get(match.get_absolute_url())
+        assert response.context["proposed_place"]["type"] == Match.LOC_YOUR_PLACE
+        assert response.context["your_place"] == ("Schiltern", lender.location)
+
     def test_not_accepted_while_it_is_lent(self, ladder, lender, borrower):
         _loan(ladder, _user("other"), _day(3), _day(5))
         match = _loan(ladder, borrower, _day(4), _day(6), status=Match.STATUS_PENDING)

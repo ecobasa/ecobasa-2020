@@ -4453,8 +4453,8 @@ msgstr "Prestado"
 msgid "Suggested days"
 msgstr "Días propuestos"
 
-msgid "Propose other days or place"
-msgstr "Proponer otros días o lugar"
+msgid "Propose another time or handover place"
+msgstr "Proponer otro periodo o lugar de entrega"
 
 msgid "It is already lent on some of these days. Propose other days instead."
 msgstr "Ya está prestada algunos de esos días. Propón otros días."
@@ -4565,3 +4565,6 @@ msgstr "Presta herramientas en vez de comprarlas dos veces. La gente pide los d�
 
 msgid "The cargo bike, the car, the trailer, the van: book them by the day or the hour, and see every booking in the community's calendar."
 msgstr "La bici de carga, el coche, el remolque, la furgoneta: resérvalos por días u horas y ve cada reserva en el calendario de la comunidad."
+
+msgid "Handover place"
+msgstr "Lugar de entrega"
