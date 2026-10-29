@@ -3,7 +3,7 @@
 {{ headline }}
 {% if match.is_loan %}
 {% trans "Asked to borrow" %}:
-{{ match.loan.starts_on|date:"DATE_FORMAT" }} – {{ match.loan.ends_on|date:"DATE_FORMAT" }}
+{{ match.loan.period }}
 {% endif %}{% with vd=match.volunteer_details %}{% if vd %}
 {% if vd.stay_from or vd.stay_to %}{% trans "Proposed stay" %}:
 {% if vd.stay_from %}{{ vd.stay_from|date:"DATE_FORMAT" }}{% endif %}{% if vd.stay_from and vd.stay_to %} – {% endif %}{% if vd.stay_to %}{{ vd.stay_to|date:"DATE_FORMAT" }}{% endif %}

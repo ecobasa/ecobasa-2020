@@ -38,7 +38,7 @@
             <a href="{{ lending.match.get_absolute_url }}"
                class="block truncate rounded px-1 mb-0.5 hover:underline {% if not lending.confirmed %}border border-dashed {% if lending.lent_out %}border-yellow{% else %}border-purple{% endif %}{% elif lending.lent_out %}bg-green text-secondary{% else %}bg-purple text-secondary{% endif %}"
                title="{{ lending.tool.display_title }} · {% with name=lending.person.name|default:lending.person.email %}{% if lending.lent_out %}{% blocktrans %}lent to {{ name }}{% endblocktrans %}{% else %}{% blocktrans %}borrowed from {{ name }}{% endblocktrans %}{% endif %}{% endwith %} · {% if lending.confirmed %}{% trans 'agreed' %}{% else %}{% trans 'requested' %}{% endif %}">
-              <i class="fa-solid {% if lending.lent_out %}fa-arrow-right-from-bracket{% else %}fa-arrow-right-to-bracket{% endif %} mr-0.5"></i>{{ lending.tool.display_title }}
+              <i class="fa-solid {% if lending.lent_out %}fa-arrow-right-from-bracket{% else %}fa-arrow-right-to-bracket{% endif %} mr-0.5"></i>{% if lending.hours %}{{ lending.hours }} {% endif %}{{ lending.tool.display_title }}
             </a>
           {% endfor %}
         </div>
@@ -64,12 +64,12 @@
         <span class="ml-auto text-sm">
           {% if tool.lent_now %}
             {% for lending in tool.lent_now %}
-              <span class="pill bg-green text-xs">{% blocktrans with name=lending.person.name|default:lending.person.email day=lending.end|date:"D j M" %}With {{ name }} until {{ day }}{% endblocktrans %}</span>
+              <span class="pill bg-green text-xs">{% blocktrans with name=lending.person.name|default:lending.person.email day=lending.until %}With {{ name }} until {{ day }}{% endblocktrans %}</span>
             {% endfor %}
           {% else %}
             <span class="pill bg-primary text-xs">{% trans "At home" %}</span>
           {% endif %}
-          {% if tool.lent_next %}<span class="text-xs ml-1">{% blocktrans with day=tool.lent_next.start|date:"D j M" %}next: {{ day }}{% endblocktrans %}</span>{% endif %}
+          {% if tool.lent_next %}<span class="text-xs ml-1">{% blocktrans with day=tool.lent_next.period %}next: {{ day }}{% endblocktrans %}</span>{% endif %}
         </span>
       </li>
     {% endfor %}

@@ -11,7 +11,7 @@ and agreed, and when they borrow tools themselves."""
 
 import calendar as pycalendar
 from dataclasses import dataclass, field
-from datetime import date, timedelta
+from datetime import date, datetime, time, timedelta
 
 from django.contrib.auth.decorators import login_required
 from django.contrib.contenttypes.models import ContentType
@@ -25,7 +25,7 @@ from projects.models import Project
 
 from gift_economy.gifts.models import Listing
 
-from .models import Match
+from .models import Match, period_text, until_text
 
 _ACTIVE = (Match.STATUS_PENDING, Match.STATUS_COUNTER, Match.STATUS_ACCEPTED)
 
@@ -244,11 +244,12 @@ def _helpers(need, community):
 
 @dataclass
 class Lending:
-    """A loan as one side sees it: their tool lent, or a tool they borrow."""
+    """A loan as one side sees it: their tool or vehicle lent, or one they borrow; for
+    whole days or some hours (Loan)."""
 
     match: Match
-    start: date
-    end: date
+    starts_at: datetime
+    ends_at: datetime
     tool: object
     # Whether it is their tool (lent out), else one they borrow
     lent_out: bool
@@ -262,8 +263,37 @@ class Lending:
         """The other side: who borrows it, or who lends it."""
         return self.match.borrower if self.lent_out else self.match.lender
 
+    @property
+    def start(self):
+        """The first day."""
+        return timezone.localdate(self.starts_at)
+
+    @property
+    def end(self):
+        """The last day (whole days end at the midnight after it)."""
+        return timezone.localdate(self.ends_at - timedelta(microseconds=1))
+
+    @property
+    def period(self):
+        return period_text(self.starts_at, self.ends_at)
+
+    @property
+    def until(self):
+        return until_text(self.starts_at, self.ends_at)
+
+    @property
+    def hours(self):
+        """"14:00–18:00" if it is for some hours of one day, else ""."""
+        start, end = timezone.localtime(self.starts_at), timezone.localtime(self.ends_at)
+        if self.start != self.end or (start.time() == end.time() == time()):
+            return ""
+        return f"{start:%H:%M}–{end:%H:%M}"
+
     def covers(self, day):
         return self.start <= day <= self.end
+
+    def overlaps(self, other):
+        return self.starts_at < other.ends_at and self.ends_at > other.starts_at
 
 
 @dataclass
@@ -275,13 +305,15 @@ class LendingDay:
 
     @property
     def clashes(self):
-        """Their tools asked for on this day by more people than there are of them, if they
-        said yes to all."""
+        """Their things asked for at the same time on this day by more people than there
+        are of them, if they said yes to all."""
+        lent = [lending for lending in self.lendings if lending.lent_out]
         tools = {}
-        for lending in self.lendings:
-            if lending.lent_out:
-                tools.setdefault(lending.tool.pk, [lending.tool, 0])[1] += 1
-        return [tool for tool, count in tools.values() if count > (tool.quantity or 1)]
+        for lending in lent:
+            at_once = sum(1 for other in lent if other.tool.pk == lending.tool.pk and other.overlaps(lending))
+            if at_once > (lending.tool.quantity or 1):
+                tools[lending.tool.pk] = lending.tool
+        return list(tools.values())
 
 
 def lendings_of(user=None, community=None):
@@ -311,9 +343,9 @@ def lendings_of(user=None, community=None):
             continue
         else:
             lent_out = match.lender == user
-        start, end = match.loan_period()
-        lendings.append(Lending(match, start, end, tool, lent_out=lent_out))
-    lendings.sort(key=lambda lending: (lending.start, lending.end))
+        starts_at, ends_at = match.loan_period()
+        lendings.append(Lending(match, starts_at, ends_at, tool, lent_out=lent_out))
+    lendings.sort(key=lambda lending: (lending.starts_at, lending.ends_at))
     return lendings
 
 
@@ -338,11 +370,12 @@ def _lending_page(request, lendings, tools, **context):
             day += timedelta(days=1)
         weeks.append(week)
 
+    now = timezone.now()
     agreed = [lending for lending in lendings if lending.lent_out and lending.confirmed]
     for tool in tools:
-        # Where it is today, and when it is lent next
-        tool.lent_now = [lending for lending in agreed if lending.tool.pk == tool.pk and lending.covers(today)]
-        tool.lent_next = next((lending for lending in agreed if lending.tool.pk == tool.pk and lending.start > today), None)
+        # Where it is right now, and when it is lent next
+        tool.lent_now = [lending for lending in agreed if lending.tool.pk == tool.pk and lending.starts_at <= now < lending.ends_at]
+        tool.lent_next = next((lending for lending in agreed if lending.tool.pk == tool.pk and lending.starts_at > now), None)
 
     month_lendings = [lending for lending in lendings if lending.start <= last and lending.end >= first]
     previous_month = (first - timedelta(days=1)).replace(day=1)

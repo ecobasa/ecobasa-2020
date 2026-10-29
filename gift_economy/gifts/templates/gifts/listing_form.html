@@ -28,7 +28,7 @@
   {# Which fields show depends on the kind: things have a title, amount and categories; a skill names the skill, with a level #}
   <form enctype="multipart/form-data" method="post" class="w-full form-control-w-full space-y-4"
         x-data="{ type: '{{ form.type.value|default:'offer'|escapejs }}', kind: '{{ form.kind.value|default:'other'|escapejs }}',
-                  get isThing() { return ['material', 'tool', 'other'].includes(this.kind) },
+                  get isThing() { return ['material', 'tool', 'vehicle', 'other'].includes(this.kind) },
                   get isSkill() { return this.kind === 'skill' } }">
     {% csrf_token %}
     {% if community %}<input type="hidden" name="community" value="{{ community.slug }}">{% endif %}
@@ -68,13 +68,13 @@
       {% for error in form.title.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
       <p class="text-xs mt-1" x-show="!isThing" x-cloak>{% trans "e.g. building the roof truss, planning our food forest, moving house on Saturday" %}</p>
     </div>
-    {# A tool or vehicle can be lent for some days instead of given away: requests then say when #}
-    <div x-show="kind === 'tool' || kind === 'other'" x-cloak class="form-group">
+    {# A tool or vehicle can be lent for some days or hours instead of given away: requests then say when #}
+    <div x-show="['tool', 'vehicle', 'other'].includes(kind)" x-cloak class="form-group">
       <label class="flex items-start gap-2 cursor-pointer">
         {{ form.lend }}
         <span>
-          <span x-show="type === 'offer'">{% trans "Lend it: people borrow it for some days and bring it back" %}</span>
-          <span x-show="type === 'wish'" x-cloak>{% trans "Borrow it: you need it for some days and bring it back" %}</span>
+          <span x-show="type === 'offer'">{% trans "Lend it: people borrow it for some days or hours and bring it back" %}</span>
+          <span x-show="type === 'wish'" x-cloak>{% trans "Borrow it: you need it for some days or hours and bring it back" %}</span>
           <span class="block text-xs" x-show="type === 'offer'">{% trans "Requests say from when until when. You get a lending calendar in your dashboard." %}</span>
           <span class="block text-xs">{% trans "For things to share rather than give away: a ladder, a concrete mixer, a cargo bike, a car, a trailer, a van." %}</span>
         </span>

@@ -64,9 +64,8 @@ def detail(request, pk):
             match.save()
             Contribution.objects.create(match=match, listing=listing, quantity=form.cleaned_data.get("quantity"))
             if listing.lend:
-                Loan.objects.create(
-                    match=match, starts_on=form.cleaned_data["borrow_from"], ends_on=form.cleaned_data["borrow_to"],
-                )
+                starts_at, ends_at = form.cleaned_data["loan"]
+                Loan.objects.create(match=match, starts_at=starts_at, ends_at=ends_at)
             notify_match_created(match, http_request=request)
             messages.success(request, _("Your request has been sent."))
             return redirect(match.get_absolute_url())
@@ -150,7 +149,8 @@ def create(request):
         "type": request.GET.get("type") if request.GET.get("type") in ("offer", "wish") else "offer",
         "kind": request.GET.get("kind") if request.GET.get("kind") in dict(Listing.KIND_CHOICES) else Listing.KIND_OTHER,
         "skill_name": request.GET.get("skill", ""),
-        "lend": request.GET.get("lend") == "1",
+        # Vehicles are mostly lent rather than given away
+        "lend": request.GET.get("lend") == "1" or request.GET.get("kind") == Listing.KIND_VEHICLE,
     }
     posted = request.method == "POST"
     form = ListingForm(request.POST if posted else None, request.FILES if posted else None, initial=initial)

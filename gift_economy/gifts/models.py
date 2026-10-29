@@ -132,6 +132,8 @@ class Listing(RandomIdMixin, models.Model):
 
     KIND_MATERIAL = "material"
     KIND_TOOL = "tool"
+    # A cargo bike, a car, a trailer, a van: mostly lent rather than given away
+    KIND_VEHICLE = "vehicle"
     KIND_OTHER = "other"
     # Offered: a skill they share or teach. Wished for: a skill they want to learn by doing.
     KIND_SKILL = "skill"
@@ -140,15 +142,15 @@ class Listing(RandomIdMixin, models.Model):
     KIND_CHOICES = [
         (KIND_MATERIAL, _("Material")),
         (KIND_TOOL, _("Tool")),
+        (KIND_VEHICLE, _("Vehicle")),
         (KIND_OTHER, _("Other")),
         (KIND_SKILL, _("Skill")),
         (KIND_KNOWLEDGE, _("Knowledge")),
         (KIND_HANDS, _("Helping hands")),
     ]
-    THING_KINDS = (KIND_MATERIAL, KIND_TOOL, KIND_OTHER)
-    # What can be lent instead of given away: tools, and other things like a cargo bike,
-    # a car, a trailer or a van
-    LEND_KINDS = (KIND_TOOL, KIND_OTHER)
+    THING_KINDS = (KIND_MATERIAL, KIND_TOOL, KIND_VEHICLE, KIND_OTHER)
+    # What can be lent instead of given away: tools, vehicles and other things
+    LEND_KINDS = (KIND_TOOL, KIND_VEHICLE, KIND_OTHER)
     SKILL_KINDS = (KIND_SKILL, KIND_KNOWLEDGE, KIND_HANDS)
     # Given away once (in parts, with a quantity); skills, knowledge and helping hands
     # can be shared again and again
@@ -157,14 +159,14 @@ class Listing(RandomIdMixin, models.Model):
     # a skill stays until its owner says otherwise
     NEED_KINDS = (KIND_KNOWLEDGE, KIND_HANDS)
     KIND_ICONS = {
-        KIND_MATERIAL: "fa-cubes", KIND_TOOL: "fa-screwdriver-wrench", KIND_OTHER: "fa-gift",
+        KIND_MATERIAL: "fa-cubes", KIND_TOOL: "fa-screwdriver-wrench", KIND_VEHICLE: "fa-van-shuttle", KIND_OTHER: "fa-gift",
         KIND_SKILL: "fa-graduation-cap", KIND_KNOWLEDGE: "fa-lightbulb", KIND_HANDS: "fa-handshake-angle",
     }
     # Pill colour: skills purple, things in the primary colour
     KIND_COLOURS = {kind: "bg-purple" for kind in SKILL_KINDS}
     # Font Awesome code points for map markers: the kind, else a gift (offer) or heart (wish)
     KIND_GLYPHS = {
-        KIND_MATERIAL: 0xF1B3, KIND_TOOL: 0xF7D9, KIND_SKILL: 0xF19D, KIND_KNOWLEDGE: 0xF0EB, KIND_HANDS: 0xF4C4,
+        KIND_MATERIAL: 0xF1B3, KIND_TOOL: 0xF7D9, KIND_VEHICLE: 0xF5B6, KIND_SKILL: 0xF19D, KIND_KNOWLEDGE: 0xF0EB, KIND_HANDS: 0xF4C4,
     }
 
     LEVEL_BEGINNER = "beginner"
@@ -309,9 +311,11 @@ class Listing(RandomIdMixin, models.Model):
     @property
     def kind_label(self):
         """The kind in words, by which side it is on: "Skill" offered, "Learn a skill" wished;
-        "Tool to lend", "Tool to borrow", "To lend"."""
+        "Tool to lend", "Vehicle to borrow", "To lend"."""
         if self.lend and self.kind == self.KIND_TOOL:
             return _("Tool to lend") if self.is_offer else _("Tool to borrow")
+        if self.lend and self.kind == self.KIND_VEHICLE:
+            return _("Vehicle to lend") if self.is_offer else _("Vehicle to borrow")
         if self.lend:
             return _("To lend") if self.is_offer else _("To borrow")
         if self.kind == self.KIND_SKILL and self.is_wish:
@@ -472,27 +476,29 @@ class Listing(RandomIdMixin, models.Model):
         return self.lend and self.is_offer
 
     def loans(self, statuses=None):
-        """The loans of a tool to lend (matches.Loan), each with its match, by start."""
+        """The loans of a thing to lend (matches.Loan), each with its match, by start."""
         from gift_economy.matches.models import Loan, Match
         statuses = statuses or (Match.STATUS_ACCEPTED,)
         return Loan.objects.filter(
             match__contributions__listing=self, match__status__in=statuses,
-        ).select_related("match__from_user").distinct().order_by("starts_on")
+        ).select_related("match__from_user").distinct().order_by("starts_at")
 
     def upcoming_loans(self):
         """The agreed loans that haven't ended yet, for who wants to borrow it too."""
-        return self.loans().filter(ends_on__gte=timezone.localdate())
+        return self.loans().filter(ends_at__gt=timezone.now())
 
-    def lent_until(self, day=None):
-        """The day it comes back if all of it is lent on `day` (today), else None."""
-        day = day or timezone.localdate()
-        ends = [loan.ends_on for loan in self.loans() if loan.starts_on <= day <= loan.ends_on]
-        return max(ends) if len(ends) >= (self.quantity or 1) else None
+    def lent_now(self, moment=None):
+        """The loan that brings it back last if all of it is lent right now, else None."""
+        moment = moment or timezone.now()
+        current = [loan for loan in self.loans() if loan.starts_at <= moment < loan.ends_at]
+        if len(current) < (self.quantity or 1):
+            return None
+        return max(current, key=lambda loan: loan.ends_at)
 
-    def is_free(self, starts_on, ends_on, exclude_match=None):
-        """Whether it can be lent from starts_on to ends_on: fewer agreed loans overlap than
-        there are of it (a quantity of 3 ladders lends 3 at once)."""
-        overlapping = self.loans().filter(starts_on__lte=ends_on, ends_on__gte=starts_on)
+    def is_free(self, starts_at, ends_at, exclude_match=None):
+        """Whether it can be lent from starts_at until ends_at: fewer agreed loans overlap
+        than there are of it (a quantity of 3 ladders lends 3 at once)."""
+        overlapping = self.loans().filter(starts_at__lt=ends_at, ends_at__gt=starts_at)
         if exclude_match is not None:
             overlapping = overlapping.exclude(match=exclude_match)
         return overlapping.count() < (self.quantity or 1)

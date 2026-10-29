@@ -8,9 +8,9 @@ What people and communities do on ecobasa:
 - **Share skills**: teach, learn by doing, lend a hand; volunteer at communities and help
   with their projects.
 - **Run a tool library**: lend tools instead of giving them away. People ask for the days
-  they need something, and a lending calendar shows who has what when.
-- **Share cars in a community**: the community's cargo bike, car, trailer or van, booked
-  by the day, like the tools.
+  or hours they need something, and a lending calendar shows who has what when.
+- **Share cars in a community**: the community's cargo bike, car, trailer or van (their
+  own kind, "Vehicle"), booked by the day or the hour, like the tools.
 
 
 ## Setup for dev
@@ -120,10 +120,11 @@ a skill can be shared again and again.
 
 ## Lending, tool libraries and car sharing
 
-Tools and other things that come back (a ladder, a concrete mixer, a cargo bike, a car, a
-trailer, a van) can be offered **to lend** instead of given away (`Listing.lend`; a wish
-can be **to borrow**). A request for one says from when until when (`matches.Loan`):
-days on which it is already lent are refused (with an amount, "3 ladders", that many can be
+Tools, vehicles (`Listing.KIND_VEHICLE`: a cargo bike, a car, a trailer, a van) and other
+things that come back can be offered **to lend** instead of given away (`Listing.lend`,
+preset for vehicles; a wish can be **to borrow**). A request for one says from when until
+when (`matches.Loan`): whole days, or from and until an hour ("Sat 14:00–18:00"). Times
+on which it is already lent are refused (with an amount, "3 ladders", that many can be
 lent at once), the owner can propose other days, and accepting checks again. Lending
 doesn't use it up, so it stays listed and matched.
 
@@ -137,7 +138,7 @@ doesn't use it up, so it stays listed and matched.
   (`/matches/lending/<community>/`, "Tool library" in the dashboard) to track who needs
   what when.
 - **Car sharing** works the same way: the community lends its car or van to members by
-  the day and sees all bookings in its lending calendar.
+  the day or the hour and sees all bookings in its lending calendar.
 
 The reference request comes after the day it was brought back.
 

@@ -4,7 +4,7 @@ or by replying to the email, with a photo if they like. Shared ones can be featu
 
 import io
 import uuid
-from datetime import datetime, time, timedelta
+from datetime import timedelta
 
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
@@ -38,7 +38,7 @@ def exchange_dates(match):
     except ObjectDoesNotExist:
         loan = None
     if loan:
-        return tuple(timezone.make_aware(datetime.combine(day, time())) for day in (loan.starts_on, loan.ends_on))
+        return loan.starts_at, loan.ends_at
     try:
         details = match.volunteer_details
     except ObjectDoesNotExist:

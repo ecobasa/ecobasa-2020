@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import time, timedelta
 
 import pytest
 
@@ -10,7 +10,7 @@ from gift_economy.gifts.models import Listing
 from gift_economy.references.reference_requests import reference_due_at
 from users.models import User
 
-from ..models import Loan, Match, MatchMessage
+from ..models import Loan, Match, MatchMessage, loan_span
 
 
 def _user(name):
@@ -55,7 +55,8 @@ def _loan(listing, user, starts_on, ends_on, status=Match.STATUS_ACCEPTED):
     match.recipient = listing.manager
     match.save()
     match.contributions.create(listing=listing)
-    Loan.objects.create(match=match, starts_on=starts_on, ends_on=ends_on)
+    starts_at, ends_at = loan_span(starts_on, ends_on)
+    Loan.objects.create(match=match, starts_at=starts_at, ends_at=ends_at)
     return match
 
 
@@ -86,21 +87,21 @@ class TestListing:
 
     def test_free_unless_its_loans_overlap(self, ladder, borrower):
         _loan(ladder, borrower, _day(5), _day(7))
-        assert ladder.is_free(_day(1), _day(4))
-        assert not ladder.is_free(_day(7), _day(9))
-        assert ladder.is_free(_day(8), _day(9))
+        assert ladder.is_free(*loan_span(_day(1), _day(4)))
+        assert not ladder.is_free(*loan_span(_day(7), _day(9)))
+        assert ladder.is_free(*loan_span(_day(8), _day(9)))
 
     def test_requested_loans_dont_block(self, ladder, borrower):
         _loan(ladder, borrower, _day(5), _day(7), status=Match.STATUS_PENDING)
-        assert ladder.is_free(_day(5), _day(7))
+        assert ladder.is_free(*loan_span(_day(5), _day(7)))
 
     def test_several_of_it_lend_at_once(self, ladder, borrower):
         ladder.quantity = 2
         ladder.save()
         _loan(ladder, borrower, _day(5), _day(7))
-        assert ladder.is_free(_day(6), _day(6))
+        assert ladder.is_free(*loan_span(_day(6), _day(6)))
         _loan(ladder, _user("other"), _day(6), _day(6))
-        assert not ladder.is_free(_day(6), _day(6))
+        assert not ladder.is_free(*loan_span(_day(6), _day(6)))
 
 
 @pytest.mark.django_db
@@ -110,7 +111,7 @@ class TestAskingToBorrow:
         assert response.status_code == 302
         match = Match.objects.get()
         assert match.is_loan
-        assert (match.loan.starts_on, match.loan.ends_on) == (_day(2), _day(4))
+        assert (match.loan.first_day, match.loan.last_day) == (_day(2), _day(4))
         assert match.lender == ladder.owner and match.borrower == borrower
 
     def test_the_days_are_needed(self, ladder, borrower):
@@ -155,12 +156,12 @@ class TestAgreeing:
         })
         match.refresh_from_db()
         assert match.status == Match.STATUS_COUNTER
-        assert match.loan_period() == (_day(6), _day(8))
+        assert match.loan_period() == loan_span(_day(6), _day(8))
 
         _client_for(borrower).post(match.get_absolute_url(), {"action": "accept"})
         match.refresh_from_db()
         assert match.status == Match.STATUS_ACCEPTED
-        assert (match.loan.starts_on, match.loan.ends_on) == (_day(6), _day(8))
+        assert (match.loan.first_day, match.loan.last_day) == (_day(6), _day(8))
 
     def test_not_accepted_while_it_is_lent(self, ladder, lender, borrower):
         _loan(ladder, _user("other"), _day(3), _day(5))
@@ -173,7 +174,8 @@ class TestAgreeing:
     def test_the_reference_is_asked_for_after_it_came_back(self, ladder, borrower, settings):
         match = _loan(ladder, borrower, _day(2), _day(4))
         due = reference_due_at(match)
-        assert timezone.localdate(due) == _day(4 + settings.REFERENCE_REQUEST_DELAY_DAYS)
+        # Whole days end at the midnight after the last one
+        assert timezone.localdate(due) == _day(5 + settings.REFERENCE_REQUEST_DELAY_DAYS)
 
 
 @pytest.mark.django_db
@@ -269,7 +271,7 @@ class TestToolLibrary:
         assert [listing.title for listing in response.context["gifts"]] == ["Apples"]
         page = response.content.decode()
         assert "To borrow here" in page and "free" in page and "until" in page
-        assert response.context["library"][1].lent_now_until == _day(2)
+        assert response.context["library"][1].lent_now_loan.last_day == _day(2)
 
     def test_the_ambassador_can_start_a_tool_library(self, community, lender):
         page = _client_for(lender).get(community.get_absolute_url()).content.decode()
@@ -297,3 +299,59 @@ class TestToolLibrary:
         page = _client_for(lender).get(reverse("gifts:mine")).content.decode()
         assert reverse("matches:community_lending", args=[community.slug]) in page
         assert "Tool library · Hof Wiese" in page
+
+
+
+# ── For some hours, and vehicles of their own kind ───────────────────
+
+
+@pytest.mark.django_db
+class TestHours:
+    def test_asking_for_some_hours(self, ladder, borrower):
+        response = _client_for(borrower).post(ladder.get_absolute_url(), {
+            "message": "Just the afternoon", "location_type": Match.LOC_YOUR_PLACE,
+            "borrow_from": _day(2).isoformat(), "borrow_from_time": "14:00", "borrow_to_time": "18:00",
+        })
+        assert response.status_code == 302
+        loan = Match.objects.get().loan
+        assert (loan.first_day, loan.last_day, loan.from_time, loan.until_time) == (_day(2), _day(2), time(14), time(18))
+        assert not loan.whole_days and loan.period.endswith("14:00–18:00")
+
+    def test_a_morning_and_an_afternoon_dont_clash(self, ladder, borrower):
+        morning = loan_span(_day(2), _day(2), time(8), time(12))
+        afternoon = loan_span(_day(2), _day(2), time(13), time(17))
+        match = _loan(ladder, borrower, _day(2), _day(2))
+        match.loan.starts_at, match.loan.ends_at = morning
+        match.loan.save()
+        assert ladder.is_free(*afternoon)
+        assert not ladder.is_free(*loan_span(_day(2), _day(2), time(11), time(14)))
+        assert not ladder.is_free(*loan_span(_day(2), _day(2)))  # the whole day
+
+    def test_both_times_or_none(self, ladder, borrower):
+        response = _client_for(borrower).post(ladder.get_absolute_url(), {
+            "message": "x", "location_type": Match.LOC_YOUR_PLACE,
+            "borrow_from": _day(2).isoformat(), "borrow_from_time": "14:00",
+        })
+        assert "Give both times" in response.content.decode()
+        assert not Match.objects.exists()
+
+    def test_other_hours_can_be_proposed(self, ladder, lender, borrower):
+        match = _loan(ladder, borrower, _day(2), _day(2), status=Match.STATUS_PENDING)
+        _client_for(lender).post(match.get_absolute_url(), {
+            "action": "counter", "counter_stay_from": _day(3).isoformat(),
+            "counter_from_time": "09:00", "counter_to_time": "12:00", "counter_location_type": Match.LOC_MY_PLACE,
+        })
+        assert match.loan_period() == loan_span(_day(3), _day(3), time(9), time(12))
+        page = _client_for(borrower).get(match.get_absolute_url()).content.decode()
+        assert "09:00–12:00" in page
+
+
+@pytest.mark.django_db
+def test_vehicles_have_their_own_kind_and_are_lent_by_default(lender):
+    client = _client_for(lender)
+    form = client.get(reverse("gifts:create"), {"type": "offer", "kind": "vehicle"}).context["form"]
+    assert form.initial["lend"] is True
+    client.post(reverse("gifts:create"), {"type": "offer", "kind": "vehicle", "title": "Transporter", "lend": "on"})
+    van = Listing.objects.get(title="Transporter")
+    assert van.kind_label == "Vehicle to lend" and van.kind_icon == "fa-van-shuttle"
+    assert list(Listing.objects.to_lend()) == [van]

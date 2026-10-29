@@ -21,7 +21,7 @@ from gift_economy.gifts.models import Listing
 
 from .emails import notify_match_message, notify_match_response, read_action_token, read_suggestions_unsubscribe_token
 from .forms import MatchMessageForm
-from .models import STAY_APP_LABELS, Match, MatchMessage, Suggestion
+from .models import STAY_APP_LABELS, Match, MatchMessage, Suggestion, loan_span
 
 # What the matches page can show, by its "type" query param: gifts (things) and skills
 # (and knowledge and helping hands) together on one page (with suggestions first),
@@ -165,6 +165,25 @@ def _volunteer_visits(request):
 
 # ── Match detail ────────────────────────────────────────────────────────────────
 
+def _parse_loan(data):
+    """(start, end) of the days, or hours, a counter-proposal suggests for a loan; None if
+    there is no first day, or it would come back before it is borrowed."""
+    from datetime import date, time
+    def parse(kind, raw):
+        try:
+            return kind.fromisoformat(raw) if raw else None
+        except ValueError:
+            return None
+    first = parse(date, data.get("counter_stay_from", ""))
+    if first is None:
+        return None
+    starts_at, ends_at = loan_span(
+        first, parse(date, data.get("counter_stay_to", "")),
+        parse(time, data.get("counter_from_time", "")), parse(time, data.get("counter_to_time", "")),
+    )
+    return (starts_at, ends_at) if ends_at > starts_at else None
+
+
 def _parse_day(raw):
     """A day from a date input, as an aware datetime at its start; None if blank or invalid."""
     try:
@@ -246,12 +265,12 @@ def match_detail(request, pk):
         if action in ("accept", "decline") and (owner_can_decide or requester_can_decide):
             new_status = {"accept": Match.STATUS_ACCEPTED, "decline": Match.STATUS_DECLINED}[action]
             if new_status == Match.STATUS_ACCEPTED and match.is_loan:
-                # The agreed days are the loan's from now on; a tool is lent once at a time
-                starts_on, ends_on = match.loan_period()
-                if target.lends_out and not target.is_free(starts_on, ends_on, exclude_match=match):
+                # The agreed time is the loan's from now on; a tool is lent once at a time
+                starts_at, ends_at = match.loan_period()
+                if target.lends_out and not target.is_free(starts_at, ends_at, exclude_match=match):
                     flash.error(request, _("It is already lent on some of these days. Propose other days instead."))
                     return redirect(match.get_absolute_url())
-                match.loan.starts_on, match.loan.ends_on = starts_on, ends_on
+                match.loan.starts_at, match.loan.ends_at = starts_at, ends_at
                 match.loan.save()
             body = request.POST.get("body", "").strip()
             MatchMessage.objects.create(match=match, sender=request.user, body=body, status_to=new_status)
@@ -280,12 +299,12 @@ def match_detail(request, pk):
                     return redirect(match.get_absolute_url())
             else:
                 if match.is_loan:
-                    # Other days to borrow it, and maybe another place to pick it up
-                    msg.counter_stay_from = _parse_day(request.POST.get("counter_stay_from", ""))
-                    msg.counter_stay_to   = _parse_day(request.POST.get("counter_stay_to", ""))
-                    if msg.counter_stay_from and msg.counter_stay_to and msg.counter_stay_to < msg.counter_stay_from:
+                    # Other days or hours to borrow it, and maybe another place to pick it up
+                    span = _parse_loan(request.POST)
+                    if span is None:
                         flash.error(request, _("It can't come back before it is borrowed."))
                         return redirect(match.get_absolute_url())
+                    msg.counter_stay_from, msg.counter_stay_to = span
                 msg.counter_location_type = request.POST.get("counter_location_type", "")
                 msg.counter_location      = request.POST.get("counter_location", "")
                 try:
@@ -371,7 +390,7 @@ def email_action(request, token):
 
     target = match.target
     if action == "accept" and match.is_loan and target is not None and target.lends_out and not target.is_free(
-        match.loan.starts_on, match.loan.ends_on, exclude_match=match,
+        match.loan.starts_at, match.loan.ends_at, exclude_match=match,
     ):
         flash.error(request, _("It is already lent on some of these days. Propose other days instead."))
         return redirect(match.get_absolute_url())

@@ -97,11 +97,11 @@ def detail(request, slug):
         key=lambda listing: listing.display_title,
     )
     # What the community and its members lend (its tool library), apart from the gifts,
-    # each with whether it is lent today
+    # each with whether it is lent right now
     library = [listing for listing in things if listing.lends_out]
     gifts = [listing for listing in things if not listing.lends_out]
     for listing in library:
-        listing.lent_now_until = listing.lent_until()
+        listing.lent_now_loan = listing.lent_now()
     skill_wishes = sorted(
         listings.filter(type=Listing.TYPE_WISH, project=None).exclude(skill=None), key=lambda listing: listing.display_title,
     )

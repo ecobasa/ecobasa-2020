@@ -4378,11 +4378,7 @@ msgstr "Pedir prestado hasta"
 msgid "Lend until"
 msgstr "Prestar hasta"
 
-msgid "Lend it: people borrow it for some days and bring it back"
-msgstr "Prestarla: la gente la toma prestada unos días y la devuelve"
 
-msgid "Borrow it: you need it for some days and bring it back"
-msgstr "Pedirla prestada: la necesitas unos días y la devuelves"
 
 msgid "Requests say from when until when. You get a lending calendar in your dashboard."
 msgstr "Las solicitudes indican desde cuándo hasta cuándo. Tendrás un calendario de préstamos en tu panel."
@@ -4473,8 +4469,6 @@ msgstr "Herramientas y vehículos que prestan la comunidad y sus miembros. Pide 
 msgid "Lent until %(day)s"
 msgstr "Prestado hasta el %(day)s"
 
-msgid "Available today"
-msgstr "Disponible hoy"
 
 msgid "free"
 msgstr "libre"
@@ -4527,15 +4521,47 @@ msgstr "Enseña, aprende haciendo y colabora como voluntario en comunidades y su
 msgid "Run a tool library"
 msgstr "Gestionar una biblioteca de herramientas"
 
-msgid "Lend tools instead of buying them twice. People ask for the days they need them, and your lending calendar shows who has what when."
-msgstr "Presta herramientas en vez de comprarlas dos veces. La gente pide los días que las necesita y tu calendario de préstamos muestra quién tiene qué y cuándo."
 
 msgid "Share cars in your community"
 msgstr "Compartir coches en tu comunidad"
 
-msgid "The cargo bike, the car, the trailer, the van: book them by the day, and see every booking in the community's calendar."
-msgstr "La bici de carga, el coche, el remolque, la furgoneta: resérvalos por días y ve cada reserva en el calendario de la comunidad."
 
 #, python-format
 msgid "Tool library · %(name)s"
 msgstr "Biblioteca de herramientas · %(name)s"
+
+msgid "Available now"
+msgstr "Disponible ahora"
+
+msgid "Vehicle"
+msgstr "Vehículo"
+
+msgid "Vehicle to lend"
+msgstr "Vehículo para prestar"
+
+msgid "Vehicle to borrow"
+msgstr "Vehículo para pedir prestado"
+
+msgid "Times are optional: without them it is for whole days. Without a last day, for one day."
+msgstr "Las horas son opcionales: sin ellas es por días completos. Sin último día, por un día."
+
+msgid "Lend it: people borrow it for some days or hours and bring it back"
+msgstr "Prestarlo: la gente lo toma prestado unos días u horas y lo devuelve"
+
+msgid "Borrow it: you need it for some days or hours and bring it back"
+msgstr "Pedirlo prestado: lo necesitas unos días u horas y lo devuelves"
+
+msgid "at"
+msgstr "a las"
+
+msgid "Give both times, or none for whole days."
+msgstr "Indica ambas horas, o ninguna para días completos."
+
+msgid "Times are optional: without them it is for whole days."
+msgstr "Las horas son opcionales: sin ellas es por días completos."
+
+msgid "Lend tools instead of buying them twice. People ask for the days or hours they need them, and your lending calendar shows who has what when."
+msgstr "Presta herramientas en vez de comprarlas dos veces. La gente pide los días u horas que las necesita y tu calendario de préstamos muestra quién tiene qué y cuándo."
+
+msgid "The cargo bike, the car, the trailer, the van: book them by the day or the hour, and see every booking in the community's calendar."
+msgstr "La bici de carga, el coche, el remolque, la furgoneta: resérvalos por días u horas y ve cada reserva en el calendario de la comunidad."

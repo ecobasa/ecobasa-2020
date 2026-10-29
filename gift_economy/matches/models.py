@@ -176,16 +176,14 @@ class Match(models.Model):
         return self.from_user if self.lender == self.recipient else self.recipient
 
     def loan_period(self):
-        """(first day, last day) of a loan as currently proposed: the latest counter-proposed
-        days, else the agreed or asked for ones. (None, None) if it isn't a loan."""
-        from django.utils import timezone
+        """(start, end) of a loan as currently proposed: the latest counter-proposed one,
+        else the agreed or asked for one. (None, None) if it isn't a loan."""
         if not self.is_loan:
             return None, None
         counter = self._counter_period()
-        if counter:
-            days = [timezone.localdate(value) if value else None for value in (counter.counter_stay_from, counter.counter_stay_to)]
-            return days[0] or days[1], days[1] or days[0]
-        return self.loan.starts_on, self.loan.ends_on
+        if counter and counter.counter_stay_from and counter.counter_stay_to:
+            return counter.counter_stay_from, counter.counter_stay_to
+        return self.loan.starts_at, self.loan.ends_at
 
     def resolved_location(self):
         """Human-readable meeting location, resolving my/your place from profiles."""
@@ -254,6 +252,11 @@ class MatchMessage(models.Model):
             return f"{name}'s place — {loc}" if loc else f"{name}'s place"
         return ""
 
+    @property
+    def counter_loan_period(self):
+        """The counter-proposed time of a loan, in words."""
+        return period_text(self.counter_stay_from, self.counter_stay_to)
+
     def counter_location_coords(self):
         if self.counter_lat and self.counter_lon:
             return self.counter_lat, self.counter_lon
@@ -319,25 +322,110 @@ class VolunteerDetails(models.Model):
         return self._skill_pills(self.sender_skills_list)
 
 
+def loan_span(first_day, last_day, from_time=None, until_time=None):
+    """(start, end) as aware datetimes of borrowing from first_day until last_day: whole
+    days without times (until the start of the day after last_day), else from and until
+    the times given ("Sat 14:00–18:00")."""
+    from datetime import datetime, time, timedelta
+    from django.utils import timezone
+    last_day = last_day or first_day
+    if from_time is None or until_time is None:
+        start = datetime.combine(first_day, time())
+        end = datetime.combine(last_day + timedelta(days=1), time())
+    else:
+        start = datetime.combine(first_day, from_time)
+        end = datetime.combine(last_day, until_time)
+    return timezone.make_aware(start), timezone.make_aware(end)
+
+
+def _whole_days(start, end):
+    return start.time() == end.time() and start.hour == start.minute == 0
+
+
+def period_text(start, end):
+    """"Sat 31 Oct", "Sat 31 Oct – Mon 2 Nov" (whole days), "Sat 31 Oct, 14:00–18:00",
+    "Sat 31 Oct 18:00 – Sun 1 Nov 10:00"."""
+    from datetime import timedelta
+    from django.utils import timezone
+    from django.utils.formats import date_format
+    if start is None or end is None:
+        return ""
+    start, end = timezone.localtime(start), timezone.localtime(end)
+    day = lambda value: date_format(value, "D j M")
+    if _whole_days(start, end):
+        last = end - timedelta(days=1)
+        return day(start) if last.date() == start.date() else f"{day(start)} – {day(last)}"
+    if start.date() == end.date():
+        return f"{day(start)}, {date_format(start, 'H:i')}–{date_format(end, 'H:i')}"
+    return f"{day(start)} {date_format(start, 'H:i')} – {day(end)} {date_format(end, 'H:i')}"
+
+
+def until_text(start, end):
+    """When it comes back: "Mon 2 Nov" (whole days, the last one), "Sat 31 Oct, 18:00"."""
+    from datetime import timedelta
+    from django.utils import timezone
+    from django.utils.formats import date_format
+    start, end = timezone.localtime(start), timezone.localtime(end)
+    if _whole_days(start, end):
+        return date_format(end - timedelta(days=1), "D j M")
+    return f"{date_format(end, 'D j M')}, {date_format(end, 'H:i')}"
+
+
 class Loan(models.Model):
-    """The days a tool is lent: from the first to the last, as asked for, and as agreed
-    once the match is accepted (a counter-proposal's days, if that is what was accepted).
-    Shown in the lending calendar of both sides."""
+    """When a tool or vehicle is lent: from a day (and maybe an hour) until another, as
+    asked for, and as agreed once the match is accepted (a counter-proposal's, if that is
+    what was accepted). Whole days run from midnight to the midnight after the last day
+    (loan_span). Shown in the lending calendar of both sides."""
 
     match = models.OneToOneField(Match, on_delete=models.CASCADE, related_name="loan")
-    starts_on = models.DateField(_("Borrow from"))
-    ends_on = models.DateField(_("Borrow until"))
+    starts_at = models.DateTimeField(_("Borrow from"))
+    ends_at = models.DateTimeField(_("Borrow until"))
 
     class Meta:
-        ordering = ["starts_on"]
+        ordering = ["starts_at"]
         verbose_name = _("Loan")
         verbose_name_plural = _("Loans")
 
     def __str__(self):
-        return f"Loan {self.starts_on}–{self.ends_on} of {self.match}"
+        return f"Loan {self.starts_at}–{self.ends_at} of {self.match}"
 
-    def overlaps(self, starts_on, ends_on):
-        return self.starts_on <= ends_on and self.ends_on >= starts_on
+    def overlaps(self, starts_at, ends_at):
+        return self.starts_at < ends_at and self.ends_at > starts_at
+
+    @property
+    def period(self):
+        return period_text(self.starts_at, self.ends_at)
+
+    # As a form asks for it: the first and last day, and the hours unless whole days
+    @property
+    def first_day(self):
+        from django.utils import timezone
+        return timezone.localdate(self.starts_at)
+
+    @property
+    def last_day(self):
+        from datetime import timedelta
+        from django.utils import timezone
+        return timezone.localdate(self.ends_at - timedelta(microseconds=1) if self.whole_days else self.ends_at)
+
+    @property
+    def whole_days(self):
+        from django.utils import timezone
+        return _whole_days(timezone.localtime(self.starts_at), timezone.localtime(self.ends_at))
+
+    @property
+    def from_time(self):
+        from django.utils import timezone
+        return None if self.whole_days else timezone.localtime(self.starts_at).time()
+
+    @property
+    def until_time(self):
+        from django.utils import timezone
+        return None if self.whole_days else timezone.localtime(self.ends_at).time()
+
+    @property
+    def until(self):
+        return until_text(self.starts_at, self.ends_at)
 
 
 class Contribution(models.Model):

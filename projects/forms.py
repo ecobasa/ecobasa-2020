@@ -83,6 +83,7 @@ class NeedForm(forms.ModelForm):
         (Listing.KIND_KNOWLEDGE, _("Knowledge")),
         (Listing.KIND_MATERIAL, _("Material")),
         (Listing.KIND_TOOL, _("Tool")),
+        (Listing.KIND_VEHICLE, _("Vehicle")),
         (Listing.KIND_OTHER, _("Something else")),
     ]
     kind = forms.ChoiceField(label=_("Kind"), choices=KIND_CHOICES, initial=Listing.KIND_HANDS)

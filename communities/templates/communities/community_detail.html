@@ -162,12 +162,12 @@
 					<p class="text-sm mb-2">{% trans "Tools and vehicles the community and its members lend. Ask for the days you need one." %}</p>
 					<div class="flex flex-wrap gap-2 mb-2">
 						{% for listing in library %}
-							<a href="{{ listing.get_absolute_url }}" class="pill pill-lg {% if listing.lent_now_until %}bg-yellow{% else %}bg-green{% endif %}"
-							   title="{% if listing.lent_now_until %}{% blocktrans with day=listing.lent_now_until|date:'D j M' %}Lent until {{ day }}{% endblocktrans %}{% else %}{% trans 'Available today' %}{% endif %}">
+							<a href="{{ listing.get_absolute_url }}" class="pill pill-lg {% if listing.lent_now_loan %}bg-yellow{% else %}bg-green{% endif %}"
+							   title="{% if listing.lent_now_loan %}{% blocktrans with day=listing.lent_now_loan.until %}Lent until {{ day }}{% endblocktrans %}{% else %}{% trans 'Available now' %}{% endif %}">
 								{% include "gifts/_listing_icon.html" %}{{ listing.display_title|truncatechars:40 }}
 								{% if listing.amount %}<span class="opacity-70 text-xs ml-1">({{ listing.amount }})</span>{% endif %}
 								{% if not listing.community_id %}<span class="opacity-70 text-xs ml-1">· {{ listing.owner.name|default:listing.owner.username }}</span>{% endif %}
-								<span class="opacity-80 text-xs ml-1">· {% if listing.lent_now_until %}{% blocktrans with day=listing.lent_now_until|date:'j M' %}until {{ day }}{% endblocktrans %}{% else %}{% trans "free" %}{% endif %}</span>
+								<span class="opacity-80 text-xs ml-1">· {% if listing.lent_now_loan %}{% blocktrans with day=listing.lent_now_loan.until %}until {{ day }}{% endblocktrans %}{% else %}{% trans "free" %}{% endif %}</span>
 							</a>
 						{% endfor %}
 					</div>

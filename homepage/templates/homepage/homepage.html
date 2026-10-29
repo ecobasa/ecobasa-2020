@@ -32,12 +32,12 @@
       <a href="{% url 'gifts:create' %}?type=offer&kind=tool&lend=1" class="block p-4 rounded border bg-secondary bg-opacity-50 hover:bg-opacity-80">
         <i class="fa-solid fa-screwdriver-wrench text-2xl text-green"></i>
         <h3 class="mt-2">{% trans "Run a tool library" %}</h3>
-        <p class="text-sm">{% trans "Lend tools instead of buying them twice. People ask for the days they need them, and your lending calendar shows who has what when." %}</p>
+        <p class="text-sm">{% trans "Lend tools instead of buying them twice. People ask for the days or hours they need them, and your lending calendar shows who has what when." %}</p>
       </a>
-      <a href="{% url 'gifts:create' %}?type=offer&kind=other&lend=1" class="block p-4 rounded border bg-secondary bg-opacity-50 hover:bg-opacity-80">
+      <a href="{% url 'gifts:create' %}?type=offer&kind=vehicle&lend=1" class="block p-4 rounded border bg-secondary bg-opacity-50 hover:bg-opacity-80">
         <i class="fa-solid fa-van-shuttle text-2xl text-yellow"></i>
         <h3 class="mt-2">{% trans "Share cars in your community" %}</h3>
-        <p class="text-sm">{% trans "The cargo bike, the car, the trailer, the van: book them by the day, and see every booking in the community's calendar." %}</p>
+        <p class="text-sm">{% trans "The cargo bike, the car, the trailer, the van: book them by the day or the hour, and see every booking in the community's calendar." %}</p>
       </a>
     </div>
   </section>
