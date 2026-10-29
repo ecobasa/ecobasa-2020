@@ -4467,8 +4467,8 @@ msgstr "Prestado"
 msgid "Suggested days"
 msgstr "Días propuestos"
 
-msgid "Propose other days or place"
-msgstr "Proponer otros días o lugar"
+msgid "Propose another time or handover place"
+msgstr "Proponer otro periodo o lugar de entrega"
 
 msgid "It is already lent on some of these days. Propose other days instead."
 msgstr "Ya está prestada algunos de esos días. Propón otros días."
@@ -4735,3 +4735,6 @@ msgstr "Elige de las sugerencias."
 
 msgid "Please choose one from the suggestions."
 msgstr "Elige una de las sugerencias."
+
+msgid "Handover place"
+msgstr "Lugar de entrega"

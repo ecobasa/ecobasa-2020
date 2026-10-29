@@ -197,6 +197,17 @@ class Match(models.Model):
                 return f"{label} — {loc_name}" if loc_name else label
         return self.proposed_location or ""
 
+    def place_of(self, user):
+        """(name, point) of where one side is: for the side it belongs to, where the thing
+        is (its own place, its person's or community's), else the person's place."""
+        if user is None:
+            return "", None
+        if user == self.recipient and self.target is not None:
+            _label, name, point = self.target.get_match_location()
+            if point:
+                return name, point
+        return user.location_name or "", user.location
+
     def location_coords(self):
         """Best coordinates for this match's proposed meeting point."""
         if self.proposed_lat and self.proposed_lon:
@@ -260,14 +271,12 @@ class MatchMessage(models.Model):
     def counter_location_coords(self):
         if self.counter_lat and self.counter_lon:
             return self.counter_lat, self.counter_lon
+        # "My place" is the place of whoever proposed it, "your place" the other side's
         match = self.match
-        if self.counter_location_type == Match.LOC_MY_PLACE and match.target is not None:
-            _label, _loc_name, point = match.target.get_match_location()
-            if point:
-                return point.y, point.x
-        if self.counter_location_type == Match.LOC_YOUR_PLACE and match.from_user.location:
-            return match.from_user.location.y, match.from_user.location.x
-        return None, None
+        other = match.recipient if self.sender_id == match.from_user_id else match.from_user
+        side = {Match.LOC_MY_PLACE: self.sender, Match.LOC_YOUR_PLACE: other}.get(self.counter_location_type)
+        _name, point = match.place_of(side)
+        return (point.y, point.x) if point else (None, None)
 
 
 class VolunteerDetails(models.Model):

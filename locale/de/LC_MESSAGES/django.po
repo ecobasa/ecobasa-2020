@@ -4533,8 +4533,8 @@ msgstr "Verliehen"
 msgid "Suggested days"
 msgstr "Vorgeschlagene Tage"
 
-msgid "Propose other days or place"
-msgstr "Andere Tage oder Ort vorschlagen"
+msgid "Propose another time or handover place"
+msgstr "Anderen Zeitraum oder Übergabeort vorschlagen"
 
 msgid "It is already lent on some of these days. Propose other days instead."
 msgstr "An einigen dieser Tage ist es schon verliehen. Schlag stattdessen andere Tage vor."
@@ -4801,3 +4801,6 @@ msgstr "Wähle aus den Vorschlägen."
 
 msgid "Please choose one from the suggestions."
 msgstr "Bitte wähle einen Vorschlag aus der Liste."
+
+msgid "Handover place"
+msgstr "Übergabeort"
