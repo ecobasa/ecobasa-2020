@@ -31,7 +31,7 @@ VEHICLES = [
     # ── Cars and vans ────────────────────────────────────────────────────
     ("car", "", "bikes-vehicles", "Car", "Auto", "Coche", "Voiture", "PKW|Wagen|automobile"),
     ("estate-car", "car", "bikes-vehicles", "Estate car", "Kombi", "Coche familiar", "Break", "station wagon"),
-    ("electric-car", "car", "bikes-vehicles", "Electric car", "Elektroauto", "Coche eléctrico", "Voiture électrique", "E-Auto|EV"),
+    ("electric-car", "car", "bikes-vehicles", "Electric car", "Elektroauto", "Coche eléctrico", "Voiture électrique", "E-Auto|Stromer"),
     ("off-road-car", "car", "bikes-vehicles", "Off-road vehicle", "Geländewagen", "Todoterreno", "Tout-terrain", "4x4|Allrad|Jeep"),
     ("van", "", "bikes-vehicles", "Van", "Transporter", "Furgoneta", "Camionnette", "Kleintransporter|Bulli|Sprinter|Lieferwagen"),
     ("minibus", "van", "bikes-vehicles", "Minibus", "Kleinbus", "Minibús", "Minibus", "Neunsitzer|9-Sitzer|Bus"),

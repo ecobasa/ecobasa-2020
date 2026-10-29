@@ -1,0 +1,103 @@
+{% load i18n %}{% comment %}
+   One value from suggestions, styled like a plain text field (Tagify in select mode):
+   EcoSelect.attach(input, {url, results, enforce}) and EcoSelect.detach(input, clear),
+   which returns the plain input that takes its place.
+   url gets ?q=…; results(data) turns its answer into names. With enforce, only a
+   suggestion is taken: anything else typed is removed with a hint, as on the tag fields.
+   Needs tagify.min.js and tagify.css.
+{% endcomment %}
+<style>
+  /* The chosen value reads like text in a plain field, not a pill. Here rather than in
+     forms.css, so it holds next to Tagify's own stylesheet whatever is built. */
+  .tagify.tagify--select { width: 100%; background: #fcf3e5; border-radius: .25rem; --tags-border-color: rgba(69, 41, 18, .5); --tags-hover-border-color: rgba(69, 41, 18, .5); }
+  /* Focused like every other field: two pixels of the primary colour */
+  .tagify.tagify--select.tagify--focus { --tags-border-color: #da6137; --tags-focus-border-color: #da6137; border-width: 2px; }
+  .tagify.tagify--select .tagify__tag { background: transparent; font-weight: 400; margin: 0; padding: 0; border-radius: 0; }
+  .tagify.tagify--select .tagify__tag > div { padding: .5rem .75rem; --tag-bg: transparent; --tag-hover: transparent; --tag-inset-shadow-size: 0; }
+  .tagify.tagify--select .tagify__tag > div::before { box-shadow: none; background: transparent; }
+  .tagify.tagify--select .tagify__tag-text { color: #452912; font-size: 1rem; }
+  .tagify.tagify--select .tagify__tag__removeBtn { display: none; }
+  .tagify.tagify--select .tagify__input { padding: .5rem .75rem; font-size: 1rem; }
+</style>
+<script>
+window.EcoSelect = (function () {
+  const HINT = '{{ _("Please choose one from the suggestions.")|escapejs }}';
+
+  function hint(input, show) {
+    const field = input.closest('.form-group, [data-need-row], div');
+    let note = field && field.querySelector(':scope > .eco-select-hint');
+    if (!show) { if (note) note.remove(); return; }
+    if (!note && field) {
+      note = document.createElement('p');
+      note.className = 'field-error eco-select-hint';
+      note.textContent = HINT;
+      field.appendChild(note);
+    }
+    clearTimeout(input._ecoHintTimer);
+    input._ecoHintTimer = setTimeout(() => note && note.remove(), 4000);
+  }
+
+  function attach(input, options) {
+    if (input._ecoTagify) return input._ecoTagify;
+    const current = input.value.trim();
+    const tagify = new Tagify(input, {
+      mode: 'select',
+      enforceWhitelist: !!options.enforce,
+      whitelist: current ? [current] : [],
+      editTags: false,
+      addTagOnBlur: !options.enforce,
+      dropdown: { enabled: 1, maxItems: 15, closeOnSelect: true, highlightFirst: true, searchKeys: ['value'] },
+      // The plain name, as the form expects it
+      originalInputValueFormat: values => values.map(v => v.value).join(''),
+    });
+    let timer = null;
+    tagify.on('input', e => {
+      const q = (e.detail.value || '').trim();
+      clearTimeout(timer);
+      if (q.length < 2) return;
+      timer = setTimeout(() => {
+        tagify.loading(true);
+        fetch(options.url + (options.url.includes('?') ? '&' : '?') + 'q=' + encodeURIComponent(q))
+          .then(r => r.json())
+          .then(data => {
+            tagify.whitelist = options.results(data);
+            tagify.loading(false).dropdown.show(q);
+          });
+      }, 200);
+    });
+    tagify.on('add', () => hint(input, false));
+    // Typed but not chosen: away with it, and say why
+    tagify.on('invalid', () => { tagify.removeAllTags(); hint(input, true); });
+    tagify.on('blur', () => {
+      if (options.enforce && tagify.DOM.input.textContent.trim() && !tagify.value.length) {
+        tagify.DOM.input.textContent = '';
+        hint(input, true);
+      }
+    });
+    input._ecoTagify = tagify;
+    return tagify;
+  }
+
+  // Back to a plain field. Tagify leaves its listeners on the input even when destroyed
+  // (typing would be emptied), so the input is swapped for a fresh copy: query it again.
+  // With clear, its value goes too (a name from a vocabulary that no longer applies).
+  function detach(input, clear) {
+    if (!input._ecoTagify) {
+      if (clear) input.value = '';
+      return input;
+    }
+    const value = clear ? '' : input.value;
+    input._ecoTagify.destroy();
+    hint(input, false);
+    const fresh = input.cloneNode(false);
+    fresh.value = value;
+    fresh.removeAttribute('hidden');
+    fresh.classList.remove('tagify--hidden');
+    fresh.style.display = '';
+    input.replaceWith(fresh);
+    return fresh;
+  }
+
+  return { attach, detach };
+})();
+</script>

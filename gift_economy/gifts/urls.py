@@ -13,5 +13,7 @@ urlpatterns = [
     path("api/markers/",   views.gifts_markers,     name="api-markers"),
     path("api/list/",      views.gifts_list_partial, name="api-list"),
     path("api/suggest/",   views.gifts_suggest,      name="api-suggest"),
+    path("api/things/",    views.things_suggest,     name="api-things"),
+    path("api/recognize/", views.things_recognize,   name="api-recognize"),
     path("api/geocode/",   views.nominatim_proxy,      name="api-geocode"),
 ]

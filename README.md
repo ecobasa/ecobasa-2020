@@ -7,6 +7,9 @@ What people and communities do on ecobasa:
 - **Give and wish for things**: materials, tools, anything else, matched nearby.
 - **Share skills**: teach, learn by doing, lend a hand; volunteer at communities and help
   with their projects.
+- **Swap seeds**: seeds are their own kind, with variety, harvest year and whether they are
+  open-pollinated, matched by crop ("Ochsenherz" is a beefsteak tomato); a community can
+  keep a seed library.
 - **Run a tool library**: lend tools instead of giving them away. People ask for the days
   or hours they need something, and a lending calendar shows who has what when.
 - **Share cars in a community**: the community's cargo bike, car, trailer or van (their
@@ -118,14 +121,54 @@ covered in parts, and an offer given away in parts: each exchange says how much 
 or takes (`matches.Contribution`). Covered wishes and given-away offers drop off the lists;
 a skill can be shared again and again.
 
-Things have curated vocabularies like skills, one per kind: tools, materials, vehicles and
-other things (`gift_economy/gifts/vocabularies/`, in en/de/es/fr with synonyms and broader
+Things have curated vocabularies like skills, one per kind: tools, materials, vehicles,
+seeds and other things (`gift_economy/gifts/vocabularies/`, in en/de/es/fr with synonyms and broader
 things: a stepladder is a ladder, a long john is a cargo bike). The thing in a listing's
 title is recognized in the vocabulary of its kind (`gifts.Thing`, `Listing.thing`), also in
 plurals and German compounds ("Handkreissäge"), and matching goes by it: the same thing
 or a broader or narrower one fits, in any language. Each vocabulary is editable in the
 admin; after editing the files, `python manage.py load_vocabularies` loads them and
 recognizes existing listings again.
+
+## Seeds
+
+Seeds are their own kind of offer and wish (`Listing.KIND_SEEDS`), with the variety
+(`Listing.variety`, "Ochsenherz"), the harvest year (how well they still germinate),
+whether they are open-pollinated (their seeds come true when saved again), in packets or
+grams. Their place says where the mother plant grew (for a wish, where they will grow).
+
+A seed or a vehicle is named from its vocabulary only: the title field suggests names
+while typing (`/gifts/api/things/?kind=seeds&q=…`, in any language and by other names
+like "Paradeiser") and the form accepts nothing else, so matching knows exactly which crop
+or vehicle it is. The field is Tagify with one value, looking like a plain text field
+(`templates/_vocabulary_select_js.html`, also for skills and a project's needs); what is
+typed without choosing is removed with a hint, and a name chosen for one kind is cleared
+when the kind changes. The gift categories of seeds and vehicles are set from what they
+are (seeds always "Seeds & Plants", medicinal herbs also "Health & Body care", dye plants
+"Clothing & Textiles"), and those of tools and materials once their title is recognized
+(the form shows "Recognized as" while typing, `/gifts/api/recognize/`); other things keep a
+choice. Tools and vehicles are counted in pieces, without a unit.
+
+A new offer or wish starts at the place of its person or community (their profile), to
+move on the map; left there, it has no place of its own and follows them when they move. Regional words are other names of the same thing: an offered
+"Paradeiser" matches a wished "Tomate". Tools and materials stay free text.
+
+Seeds grow best in a climate like the one they were grown in. Nobody has to know their
+climate zone: it is found from the place in a Köppen-Geiger map
+(`gift_economy/gifts/climate/`, about 3 km, Rubel et al. via kgcpy, see its NOTICE) and
+put in plain words (tropical, subtropical, mediterranean, dry, temperate, continental,
+cool, alpine; `Listing.KOPPEN`). It is the climate that counts, not the latitude: the
+highlands of the tropics (Bogotá, Quito: Cfb; Addis Ababa: Cwb) are temperate like
+Central Europe. Seeds are only suggested from the same or a neighbouring zone
+(`Listing.CLIMATE_FITS`).
+
+The seed vocabulary (`gift_economy/gifts/vocabularies/seeds.py`) sorts crops like seed
+catalogues do, with regional words (Paradeiser, Melanzani, Fisolen, Kukuruz): vegetables by crop and type (tomato → cherry, beefsteak, paste tomato;
+bean → bush, climbing, runner, broad bean …), culinary, medicinal and wild herbs,
+flowers and bee pasture, green manure, grains and pseudo-grains, oil, fibre and dye plants,
+with botanical names and well-known open-pollinated varieties as other names. A wish for
+"Tomatensamen" finds an offered "Ochsenherz"; beans to eat (a material) don't match beans
+to sow. The community page lists its seeds under "Seeds to swap".
 
 ## Lending, tool libraries and car sharing
 

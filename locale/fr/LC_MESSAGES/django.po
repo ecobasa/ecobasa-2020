@@ -4658,3 +4658,141 @@ msgstr "s'intéresse à l'offre"
 #, python-format
 msgid "To %(name)s"
 msgstr "À %(name)s"
+
+msgid "Seeds to swap"
+msgstr "Semences à échanger"
+
+msgid ""
+"Keep varieties alive: share the seeds you save with members and neighbours, "
+"like a seed library."
+msgstr ""
+"Fais vivre les variétés : partage les semences que tu produis avec les "
+"membres et voisins, comme une grainothèque."
+
+msgid "Add seeds"
+msgstr "Ajouter des semences"
+
+msgid "e.g. Ochsenherz, Golden Bantam, Lange Rote"
+msgstr "p. ex. Cœur de bœuf, Golden Bantam, Lange Rote"
+
+msgid "Its seeds can be saved again and come true (not an F1 hybrid)."
+msgstr ""
+"On peut en ressemer les graines, fidèles à la variété (pas un hybride F1)."
+
+msgid "Seeds"
+msgstr "Semences"
+
+msgid "Seed"
+msgstr "Semence"
+
+msgid "Vocabulary: seeds"
+msgstr "Vocabulaire : semences"
+
+msgid "Variety"
+msgstr "Variété"
+
+msgid "Harvest year"
+msgstr "Année de récolte"
+
+msgid "Open-pollinated"
+msgstr "Reproductible"
+
+#, python-format
+msgid "Harvested %(year)s"
+msgstr "Récolte %(year)s"
+
+msgid "Which crop?"
+msgstr "Quelle culture ?"
+
+msgid "e.g. Tomato, Bush bean, Calendula, Phacelia"
+msgstr "p. ex. Tomate, Haricot nain, Souci, Phacélie"
+
+msgid "packets"
+msgstr "sachets"
+
+msgid "%(count)s packet"
+msgid_plural "%(count)s packets"
+msgstr[0] "%(count)s sachet"
+msgstr[1] "%(count)s sachets"
+
+msgid "Swap seeds"
+msgstr "Échanger des semences"
+
+msgid ""
+"Share the seeds you save, open-pollinated and with their variety, and find "
+"the ones you are looking for: the tomato, the bean, the flowers for the "
+"bees."
+msgstr ""
+"Partage les semences que tu produis, reproductibles et avec leur variété, et"
+" trouve celles que tu cherches : la tomate, le haricot, les fleurs pour les "
+"abeilles."
+
+msgid "%(years)s year old"
+msgid_plural "%(years)s years old"
+msgstr[0] "%(years)s an"
+msgstr[1] "%(years)s ans"
+
+msgid "Tropical: warm all year"
+msgstr "Tropical : chaud toute l'année"
+
+msgid "Subtropical: hot humid summers, mild winters"
+msgstr "Subtropical : étés chauds et humides, hivers doux"
+
+msgid "Mediterranean: dry hot summers, mild wet winters"
+msgstr "Méditerranéen : étés secs et chauds, hivers doux et humides"
+
+msgid "Dry: steppe or desert"
+msgstr "Sec : steppe ou désert"
+
+msgid "Temperate: mild summers, cool winters (also tropical highlands)"
+msgstr "Tempéré : étés doux, hivers frais (aussi hautes terres tropicales)"
+
+msgid "Continental: warm summers, cold winters"
+msgstr "Continental : étés chauds, hivers froids"
+
+msgid "Cool: short summers, long cold winters"
+msgstr "Frais : étés courts, longs hivers froids"
+
+msgid "Alpine: high mountains, very short season"
+msgstr "Alpin : haute montagne, saison très courte"
+
+msgid "Seeds grow best in a climate like the one they were grown in."
+msgstr ""
+"Les semences poussent le mieux dans un climat semblable à celui où elles ont"
+" été cultivées."
+
+msgid ""
+"Where did the mother plant grow, where were the seeds harvested? We find the"
+" climate zone from the place, so the seeds go where they grow well."
+msgstr ""
+"Où poussait la plante mère, où les graines ont-elles été récoltées ? Le lieu"
+" nous donne la zone climatique, pour que les semences aillent là où elles "
+"poussent bien."
+
+msgid ""
+"Where will they grow? We find the climate zone from the place and suggest "
+"seeds from a similar climate."
+msgstr ""
+"Où vont-elles pousser ? Le lieu nous donne la zone climatique et nous "
+"suggérons des semences d'un climat semblable."
+
+msgid ""
+"Please choose one from the suggestions, so others with the same can find it."
+msgstr ""
+"Choisis une des suggestions, pour que d'autres avec la même chose la "
+"trouvent."
+
+msgid "Which vehicle?"
+msgstr "Quel véhicule ?"
+
+msgid "Choose from the suggestions; the variety goes below."
+msgstr "Choisis parmi les suggestions ; la variété se met en dessous."
+
+msgid "e.g. Cargo bike, Van, Trailer, Campervan"
+msgstr "p. ex. Vélo cargo, Camionnette, Remorque, Camping-car"
+
+msgid "Choose from the suggestions."
+msgstr "Choisis parmi les suggestions."
+
+msgid "Please choose one from the suggestions."
+msgstr "Choisis une des suggestions."
