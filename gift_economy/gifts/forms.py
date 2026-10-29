@@ -108,6 +108,9 @@ class ListingForm(forms.ModelForm):
             cleaned["level"] = ""
         else:
             cleaned["categories"] = []
+            # An amount only for things, and for a project's needs ("2 people")
+            if not self.instance.project_id:
+                cleaned["quantity"], cleaned["unit"] = None, ""
         return cleaned
 
     def save(self, commit=True):

@@ -63,7 +63,8 @@
       {{ form.title|as_crispy_field }}
       <p class="text-xs -mt-2 mb-2" x-show="!isThing" x-cloak>{% trans "For knowledge or helping hands: what for, if no skill says it." %}</p>
     </div>
-    <div class="flex gap-4" x-show="!isSkill">
+    {# An amount for things, and for a project's needs ("2 people") #}
+    <div class="flex gap-4" x-show="isThing || {{ form.instance.project_id|yesno:'true,false' }}">
       <div class="w-1/2 sm:w-1/3">{{ form.quantity|as_crispy_field }}</div>
       <div class="w-1/2 sm:w-1/3">{{ form.unit|as_crispy_field }}</div>
     </div>

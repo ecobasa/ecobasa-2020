@@ -6,6 +6,7 @@ from pytest_django.asserts import assertRedirects
 
 from users.models import User
 from ..models import Listing
+from ..testing import need
 
 
 @pytest.fixture
@@ -285,3 +286,26 @@ def test_a_persons_gifts_name_their_community(user, listing):
     assert "Hof Sonnenschein" in Client().get(reverse("gifts:api-list")).content.decode()
     props = Client().get(reverse("gifts:api-markers")).json()["features"][0]["properties"]
     assert props["user_name"] == "Max" and props["member_of"] == "Hof Sonnenschein"
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("kind", ["knowledge", "hands"])
+def test_knowledge_and_helping_hands_have_no_amount(user_client, kind):
+    user_client.post(reverse("gifts:create"), {
+        "type": "offer", "kind": kind, "title": "Rocket stove advice", "quantity": "3", "unit": "kg",
+    })
+    listing = Listing.objects.get(title="Rocket stove advice")
+    assert listing.quantity is None and listing.unit == ""
+
+
+@pytest.mark.django_db
+def test_a_projects_helping_hands_keep_their_amount(user, user_client):
+    from communities.models import Community
+    from projects.models import Project
+    project = Project.objects.create(community=Community.objects.create(name="Hof Sonnenschein", owner=user), title="Roof")
+    hands = need(project, kind=Listing.KIND_HANDS, title="Roofers", quantity=2, unit="people")
+    user_client.post(reverse("gifts:edit", args=[hands.pk]), {
+        "type": "wish", "kind": "hands", "title": "Roofers", "quantity": "3", "unit": "people",
+    })
+    hands.refresh_from_db()
+    assert hands.quantity == 3 and hands.unit == "people"
