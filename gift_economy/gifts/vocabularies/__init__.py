@@ -5,6 +5,7 @@ material one. Loaded into gifts.Thing by the load_vocabularies command."""
 
 from .materials import MATERIALS
 from .other import OTHER
+from .seeds import SEEDS
 from .tools import TOOLS
 from .vehicles import VEHICLES
 
@@ -13,5 +14,6 @@ VOCABULARIES = {
     "tool": TOOLS,
     "material": MATERIALS,
     "vehicle": VEHICLES,
+    "seeds": SEEDS,
     "other": OTHER,
 }

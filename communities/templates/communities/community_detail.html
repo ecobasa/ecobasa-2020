@@ -155,6 +155,28 @@
 				</div>
 			{% endif %}
 
+			{# The seed library: seeds the community and its members swap #}
+			{% if seeds or is_ambassador %}
+				<h2 id="seeds">{% trans "Seeds to swap" %}</h2>
+				{% if seeds %}
+					<div class="flex flex-wrap gap-2 mb-2">
+						{% for listing in seeds %}
+							<a href="{{ listing.get_absolute_url }}" class="pill pill-lg bg-green" title="{% if listing.thing %}{{ listing.thing }}{% endif %}">
+								<i class="fa-solid fa-seedling mr-1"></i>{{ listing.display_title|truncatechars:40 }}
+								{% if listing.harvest_year %}<span class="opacity-70 text-xs ml-1">{{ listing.harvest_year }}</span>{% endif %}
+								{% if listing.amount %}<span class="opacity-70 text-xs ml-1">({{ listing.amount }})</span>{% endif %}
+								{% if not listing.community_id %}<span class="opacity-70 text-xs ml-1">· {{ listing.owner.name|default:listing.owner.username }}</span>{% endif %}
+							</a>
+						{% endfor %}
+					</div>
+				{% else %}
+					<p class="text-sm mb-2">{% trans "Keep varieties alive: share the seeds you save with members and neighbours, like a seed library." %}</p>
+				{% endif %}
+				{% if is_ambassador %}
+					<a href="{% url 'gifts:create' %}?community={{ community.slug }}&type=offer&kind=seeds" class="btn mb-4"><i class="fa fa-plus mr-1"></i>{% trans "Add seeds" %}</a>
+				{% endif %}
+			{% endif %}
+
 			{# The tool library: what the community and its members lend, with whether it is lent today #}
 			{% if library or is_ambassador %}
 				<h2 id="library">{% trans "To borrow here" %}</h2>

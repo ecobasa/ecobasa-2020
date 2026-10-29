@@ -8,7 +8,7 @@ TOOLS = [
     # ── Workshop: saws ───────────────────────────────────────────────────
     ("saw", "", "workshop-repair", "Saw", "Säge", "Sierra", "Scie", "serrucho|wood saw"),
     ("hand-saw", "saw", "workshop-repair", "Hand saw", "Handsäge", "Serrucho de mano", "Scie égoïne", "Fuchsschwanz|Fuchsschwanzsäge"),
-    ("hacksaw", "saw", "workshop-repair", "Hacksaw", "Metallsäge", "Sierra para metales", "Scie à métaux", "Bügelsäge|arco de sierra"),
+    ("hacksaw", "saw", "workshop-repair", "Hacksaw", "Metallsäge", "Sierra para metales", "Scie à métaux", "Bügelsäge"),
     ("japanese-saw", "saw", "workshop-repair", "Japanese saw", "Japansäge", "Sierra japonesa", "Scie japonaise", "Zugsäge|Ryoba"),
     ("bow-saw", "saw", "garden-farm", "Bow saw", "Bogensäge", "Sierra de arco", "Scie à bûches", ""),
     ("pruning-saw", "saw", "garden-farm", "Pruning saw", "Astsäge", "Sierra de podar", "Scie d'élagage", "Baumsäge|Klappsäge"),
@@ -120,7 +120,7 @@ TOOLS = [
     ("pickaxe", "", "garden-farm", "Pickaxe", "Spitzhacke", "Pico", "Pioche", "Kreuzhacke|mattock|Wiedehopfhacke"),
     ("scythe", "", "garden-farm", "Scythe", "Sense", "Guadaña", "Faux", "Sensen"),
     ("sickle", "", "garden-farm", "Sickle", "Sichel", "Hoz", "Faucille", ""),
-    ("axe", "", "garden-farm", "Axe", "Axt", "Hacha", "Hache", "Beil|ax|Spaltaxt|splitting axe"),
+    ("axe", "", "garden-farm", "Axe", "Axt", "Hacha", "Hache", "Beil|Spaltaxt|splitting axe"),
     ("splitting-maul", "axe", "energy-heating", "Splitting maul", "Spalthammer", "Mazo partidor", "Merlin", "Spaltkeil|wedge"),
     ("log-splitter", "", "energy-heating", "Log splitter", "Holzspalter", "Rajadora de leña", "Fendeuse", "Brennholzspalter"),
     ("pruning-shears", "", "garden-farm", "Pruning shears", "Gartenschere", "Tijeras de podar", "Sécateur", "Rosenschere|secateurs|Baumschere"),
@@ -164,7 +164,7 @@ TOOLS = [
     ("bike-tools", "", "bikes-vehicles", "Bike tools", "Fahrradwerkzeug", "Herramientas de bicicleta", "Outils vélo", "Montageständer|repair stand|Kettennieter|Luftpumpe|pump"),
     ("tent", "", "camping-travel", "Tent", "Zelt", "Tienda de campaña", "Tente", "Jurte|yurt|Tipi"),
     # ── Culture, electronics, children ───────────────────────────────────
-    ("sound-system", "", "music-instruments", "Sound system", "Musikanlage", "Equipo de sonido", "Sono", "PA-Anlage|PA|Lautsprecher|speaker|Verstärker|amplifier|Mischpult|mixer desk|Boxen"),
+    ("sound-system", "", "music-instruments", "Sound system", "Musikanlage", "Equipo de sonido", "Sono", "PA-Anlage|Lautsprecher|speaker|Verstärker|amplifier|Mischpult|mixer desk|Boxen"),
     ("projector", "", "electronics-computers", "Projector", "Beamer", "Proyector", "Vidéoprojecteur", "Projektor|Leinwand|screen"),
     ("camera", "", "electronics-computers", "Camera", "Kamera", "Cámara", "Appareil photo", "Fotoapparat|Videokamera|Drohne|drone"),
     ("3d-printer", "", "electronics-computers", "3D printer", "3D-Drucker", "Impresora 3D", "Imprimante 3D", "Lasercutter|laser cutter|CNC|CNC-Fräse"),

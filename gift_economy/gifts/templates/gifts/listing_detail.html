@@ -86,6 +86,13 @@
         <span class="text-xs">{% include "projects/_freshness.html" with when=listing.updated_at label_updated=True %}</span>
       </div>
       {% if listing.level %}<p class="mb-2"><strong>{% trans "Level" %}:</strong> {{ listing.get_level_display }}</p>{% endif %}
+      {% if listing.kind == "seeds" %}
+        <p class="mb-2 flex flex-wrap gap-2 text-sm">
+          {% if listing.harvest_year %}<span class="pill bg-green"><i class="fa-regular fa-calendar mr-1"></i>{% blocktrans with year=listing.harvest_year %}Harvested {{ year }}{% endblocktrans %}{% if listing.seed_age > 1 %} · {% blocktrans count years=listing.seed_age %}{{ years }} year old{% plural %}{{ years }} years old{% endblocktrans %}{% endif %}</span>{% endif %}
+          {% if listing.climate or listing.latitude_display %}<span class="pill bg-green" title="{% trans 'Seeds grow best in a climate like the one they were grown in.' %}"><i class="fa-solid fa-earth-europe mr-1"></i>{% if listing.climate %}<span title="{{ listing.get_climate_display }} (Köppen-Geiger {{ listing.koppen }})">{{ listing.climate_name }} <span class="opacity-70">{{ listing.koppen }}</span></span>{% endif %}{% if listing.climate and listing.latitude_display %} · {% endif %}{{ listing.latitude_display }}</span>{% endif %}
+          {% if listing.open_pollinated %}<span class="pill bg-green" title="{% trans 'Its seeds can be saved again and come true (not an F1 hybrid).' %}"><i class="fa-solid fa-seedling mr-1"></i>{% trans "Open-pollinated" %}</span>{% endif %}
+        </p>
+      {% endif %}
     </div>
 
     {% if can_edit %}

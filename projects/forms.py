@@ -3,6 +3,7 @@ from django.utils.translation import gettext_lazy as _
 
 from gift_economy.gifts import units
 from gift_economy.gifts.models import Listing, ListingCategory, themed_choices
+from gift_economy.gifts.things import WHITELISTED_KINDS, thing_named
 from gift_economy.gifts.skills.models import _taxonomy, get_or_create_skill
 
 from .models import Project
@@ -98,7 +99,7 @@ class NeedForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields["kind"].widget.attrs["class"] = "form-select w-full"
         self.fields["title"].widget.attrs.update({
-            "class": "form-input w-full", "autocomplete": "off", "list": "need-skill-suggestions",
+            "class": "form-input w-full", "autocomplete": "off",
             "data-need-title": "", "placeholder": _("e.g. Carpentry, clay, a cement mixer"),
         })
         self.fields["quantity"].widget.attrs.update({"class": "form-input w-full", "min": "1", "placeholder": _("How many?")})
@@ -124,6 +125,18 @@ class NeedForm(forms.ModelForm):
             cleaned["unit"] = units.PEOPLE
         if cleaned.get("kind") not in Listing.THING_KINDS:
             cleaned["category"] = None
+        if cleaned.get("kind") in Listing.PIECE_KINDS:
+            cleaned["unit"] = ""
+        if cleaned.get("kind") in WHITELISTED_KINDS and cleaned.get("title"):
+            thing_id = thing_named(cleaned["title"], cleaned["kind"])
+            if thing_id is None:
+                # Matched by what exactly it is: a vehicle from the list
+                self.add_error("title", _("Please choose one from the suggestions, so others with the same can find it."))
+            else:
+                # What it is decides its category
+                from gift_economy.gifts.models import Thing
+                categories = Listing.thing_categories(Thing.objects.get(pk=thing_id), cleaned["kind"])
+                cleaned["category"] = categories[0] if categories else None
         return cleaned
 
     def save(self, commit=True):

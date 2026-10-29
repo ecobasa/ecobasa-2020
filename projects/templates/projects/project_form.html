@@ -46,8 +46,6 @@
     <template id="need-row-template">{% include "projects/_need_row.html" with need_form=formset.empty_form %}</template>
     <button type="button" class="btn btn-purple" @click="add()"><i class="fa fa-plus mr-1"></i>{% trans "Add a need" %}</button>
 
-    <datalist id="need-skill-suggestions"></datalist>
-
     <div class="flex justify-end gap-3 pt-4">
       <a href="{% if project %}{{ project.get_absolute_url }}{% else %}{{ community.get_absolute_url }}{% endif %}" class="btn btn-lg btn-purple">{% trans "Cancel" %}</a>
       <button type="submit" class="btn btn-lg"><i class="fa fa-save mr-2"></i>{% trans "Save" %}</button>
@@ -65,36 +63,44 @@
 {{ block.super }}
 <script src="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.min.js"></script>
 {% include "users/_skill_tagify_js.html" %}
+{% include "_vocabulary_select_js.html" %}
 <script>
 document.addEventListener('alpine:init', () => {
   Alpine.data('needRows', () => ({
     init() {
       if (!document.querySelectorAll('#need-rows [data-need-row]').length) this.add();
-      // Skill suggestions for "helping hands / skill" and "knowledge" lines
-      const list = document.getElementById('need-skill-suggestions');
-      let timer = null;
-      this.$el.addEventListener('input', (e) => {
-        if (!e.target.matches('[data-need-title]')) return;
-        const row = e.target.closest('[data-need-row]');
-        const kind = row.querySelector('select').value;
-        const q = e.target.value.trim();
-        if (!['hands', 'knowledge'].includes(kind) || q.length < 2) { list.innerHTML = ''; return; }
-        clearTimeout(timer);
-        timer = setTimeout(() => {
-          fetch('{% url "skills:api_autocomplete" %}?q=' + encodeURIComponent(q))
-            .then(r => r.json())
-            .then(data => {
-              list.innerHTML = '';
-              (data.results || []).forEach(r => { const o = document.createElement('option'); o.value = r.text; list.appendChild(o); });
-            });
-        }, 250);
+      document.querySelectorAll('#need-rows [data-need-row]').forEach(row => this.suggest(row));
+      // A line's suggestions follow its kind
+      this.$el.addEventListener('change', (e) => {
+        if (e.target.matches('[data-need-row] select[name$="-kind"]')) this.suggest(e.target.closest('[data-need-row]'), true);
       });
+    },
+    // Suggestions styled like the tag fields: skills for helping hands and knowledge (other
+    // words allowed: "what for"), tools and materials from their vocabulary (own words
+    // too), vehicles only from theirs, so they can be matched
+    suggest(row, changed) {
+      const kind = row.querySelector('select[name$="-kind"]').value;
+      // A vehicle chosen from the list doesn't fit another kind: it goes
+      const clear = changed && (kind === 'vehicle' || row.dataset.kind === 'vehicle');
+      row.dataset.kind = kind;
+      const title = EcoSelect.detach(row.querySelector('[data-need-title]'), clear);
+      if (['vehicle', 'tool', 'material'].includes(kind)) {
+        // A vehicle only from the list; tools and materials suggested, in own words too
+        EcoSelect.attach(title, {
+          url: '{% url "gifts:api-things" %}?kind=' + kind, enforce: kind === 'vehicle', results: data => data.results || [],
+        });
+      } else if (['hands', 'knowledge'].includes(kind)) {
+        EcoSelect.attach(title, {
+          url: '{% url "skills:api_autocomplete" %}', enforce: false, results: data => (data.results || []).map(r => r.text),
+        });
+      }
     },
     add() {
       const total = document.getElementById('id_needs-TOTAL_FORMS');
       const html = document.getElementById('need-row-template').innerHTML.replace(/__prefix__/g, total.value);
       document.getElementById('need-rows').insertAdjacentHTML('beforeend', html);
       total.value = parseInt(total.value, 10) + 1;
+      this.$nextTick(() => this.suggest(document.querySelector('#need-rows [data-need-row]:last-child')));
     },
   }));
 });
