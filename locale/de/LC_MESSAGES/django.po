@@ -4412,6 +4412,20 @@ msgstr "Konto erstellt und angemeldet."
 #~ msgstr ""
 #~ "Wer du bist, was du kannst oder mitbringst, und wie du hinkommen würdest."
 
+msgid "Thing"
+msgstr "Ding"
+
+msgid "Other names"
+msgstr "Weitere Namen"
+
+msgid "Broader thing"
+msgstr "Oberbegriff"
+
+msgid "Recognized as"
+msgstr "Erkannt als"
+
+msgid "Same kind of thing"
+msgstr "Gleiche Art von Ding"
 msgid "To lend"
 msgstr "Zum Verleihen"
 
@@ -4634,3 +4648,33 @@ msgstr "Lastenrad, Auto, Anhänger, Transporter: tage- oder stundenweise buchen 
 
 msgid "Handover place"
 msgstr "Übergabeort"
+
+msgid "Tools"
+msgstr "Werkzeuge"
+
+msgid "Materials"
+msgstr "Materialien"
+
+msgid "Vehicles"
+msgstr "Fahrzeuge"
+
+msgid "Other things"
+msgstr "Andere Dinge"
+
+msgid "Vocabulary"
+msgstr "Vokabular"
+
+msgid "Vocabulary: tools"
+msgstr "Vokabular: Werkzeuge"
+
+msgid "Vocabulary: materials"
+msgstr "Vokabular: Materialien"
+
+msgid "Vocabulary: vehicles"
+msgstr "Vokabular: Fahrzeuge"
+
+msgid "Other thing"
+msgstr "Anderes Ding"
+
+msgid "Vocabulary: other things"
+msgstr "Vokabular: andere Dinge"

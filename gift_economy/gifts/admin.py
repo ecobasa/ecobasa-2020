@@ -1,15 +1,17 @@
 from django.contrib.gis import admin
-from .models import Listing, ListingCategory
+from .models import Listing, ListingCategory, MaterialThing, OtherThing, ToolThing, VehicleThing
 from .skills.models import Skill
 
 
 @admin.register(Listing)
 class ListingAdmin(admin.GISModelAdmin):
-    list_display = ("title", "type", "kind", "owner", "community", "project")
+    list_display = ("title", "type", "kind", "thing", "owner", "community", "project")
     search_fields = ("title", "skill__name", "owner__name", "community__name")
     ordering = ("title",)
     list_filter = ("type", "kind")
     raw_id_fields = ("owner", "community", "project", "skill")
+    # Recognized from the title on every save
+    readonly_fields = ("thing",)
 
 
 @admin.register(ListingCategory)
@@ -44,3 +46,21 @@ class SkillAdmin(admin.ModelAdmin):
     @admin.display(description="Wishes")
     def wish_count(self, obj):
         return obj.listings.filter(type=Listing.TYPE_WISH).count()
+
+
+class VocabularyAdmin(admin.ModelAdmin):
+    """One vocabulary of things (gifts/vocabularies/); edit names and broader things here,
+    and run load_vocabularies to recognize them in existing listings again."""
+    list_display = ("__str__", "slug", "parent", "category", "listing_count")
+    list_filter = ("category",)
+    search_fields = ("slug", "names", "other_names")
+    raw_id_fields = ("parent",)
+    exclude = ("kind",)
+
+    @admin.display(description="Listings")
+    def listing_count(self, obj):
+        return obj.listings.count()
+
+
+for vocabulary in (ToolThing, MaterialThing, VehicleThing, OtherThing):
+    admin.site.register(vocabulary, VocabularyAdmin)

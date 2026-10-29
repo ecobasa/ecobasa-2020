@@ -44,7 +44,7 @@ def detail(request, pk):
     with through the project's offer form; a community's wish for a skill through its
     volunteer form."""
     listing = get_object_or_404(
-        Listing.objects.select_related("owner", "community__owner", "project", "skill")
+        Listing.objects.select_related("owner", "community__owner", "project", "skill", "thing")
         .prefetch_related("categories", "contributions__match__from_user"),
         pk=pk,
     )
