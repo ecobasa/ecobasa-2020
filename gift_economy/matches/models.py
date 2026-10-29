@@ -137,20 +137,55 @@ class Match(models.Model):
         """The offers asked for too while talking it over."""
         return [c for c in self._extras() if c.listing.is_offer]
 
-    def stay_period(self):
-        """(from, to) of a stay as currently proposed: the latest counter-proposed period,
-        else what the volunteer asked for. (None, None) without dates."""
-        counter = (
+    def _counter_period(self):
+        """The latest counter-proposed period (stay or loan), or None."""
+        return (
             self.thread.filter(status_to=self.STATUS_COUNTER)
             .exclude(counter_stay_from=None, counter_stay_to=None)
             .last()
         )
+
+    def stay_period(self):
+        """(from, to) of a stay as currently proposed: the latest counter-proposed period,
+        else what the volunteer asked for. (None, None) without dates."""
+        counter = self._counter_period()
         if counter:
             return counter.counter_stay_from, counter.counter_stay_to
         details = getattr(self, "volunteer_details", None)
         if details:
             return details.stay_from, details.stay_to
         return None, None
+
+    @property
+    def is_loan(self):
+        """About a tool to lend or to borrow: it has dates it is lent from and until (Loan)."""
+        return hasattr(self, "loan")
+
+    @property
+    def lender(self):
+        """Who lends the tool: the owner of a tool to lend, the one who answers a wish to borrow."""
+        if not self.is_loan:
+            return None
+        target = self.target
+        return self.recipient if target is not None and target.is_offer else self.from_user
+
+    @property
+    def borrower(self):
+        if not self.is_loan:
+            return None
+        return self.from_user if self.lender == self.recipient else self.recipient
+
+    def loan_period(self):
+        """(first day, last day) of a loan as currently proposed: the latest counter-proposed
+        days, else the agreed or asked for ones. (None, None) if it isn't a loan."""
+        from django.utils import timezone
+        if not self.is_loan:
+            return None, None
+        counter = self._counter_period()
+        if counter:
+            days = [timezone.localdate(value) if value else None for value in (counter.counter_stay_from, counter.counter_stay_to)]
+            return days[0] or days[1], days[1] or days[0]
+        return self.loan.starts_on, self.loan.ends_on
 
     def resolved_location(self):
         """Human-readable meeting location, resolving my/your place from profiles."""
@@ -282,6 +317,27 @@ class VolunteerDetails(models.Model):
     @property
     def sender_skill_pills(self):
         return self._skill_pills(self.sender_skills_list)
+
+
+class Loan(models.Model):
+    """The days a tool is lent: from the first to the last, as asked for, and as agreed
+    once the match is accepted (a counter-proposal's days, if that is what was accepted).
+    Shown in the lending calendar of both sides."""
+
+    match = models.OneToOneField(Match, on_delete=models.CASCADE, related_name="loan")
+    starts_on = models.DateField(_("Borrow from"))
+    ends_on = models.DateField(_("Borrow until"))
+
+    class Meta:
+        ordering = ["starts_on"]
+        verbose_name = _("Loan")
+        verbose_name_plural = _("Loans")
+
+    def __str__(self):
+        return f"Loan {self.starts_on}–{self.ends_on} of {self.match}"
+
+    def overlaps(self, starts_on, ends_on):
+        return self.starts_on <= ends_on and self.ends_on >= starts_on
 
 
 class Contribution(models.Model):

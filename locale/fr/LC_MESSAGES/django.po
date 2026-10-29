@@ -4375,3 +4375,130 @@ msgstr "Compte créé et connecté."
 #~ msgid "Who you are, what you can do or bring, and how you would get there."
 #~ msgstr ""
 #~ "Qui tu es, ce que tu sais faire ou peux apporter, et comment tu viendrais."
+
+msgid "To lend"
+msgstr "À prêter"
+
+msgid "Tool to lend"
+msgstr "Outil à prêter"
+
+msgid "Tool to borrow"
+msgstr "Outil à emprunter"
+
+msgid "Already lent"
+msgstr "Déjà prêté"
+
+msgid "There is %(counter)s of it to lend."
+msgid_plural "There are %(counter)s of them to lend at once."
+msgstr[0] "Il y en a %(counter)s à prêter."
+msgstr[1] "Il y en a %(counter)s qui peuvent être prêtés en même temps."
+
+msgid "Not lent on any coming day: ask for the days you need it."
+msgstr "Prêté aucun des prochains jours : demande les jours où tu en as besoin."
+
+msgid "Borrow from"
+msgstr "Emprunter à partir du"
+
+msgid "Lend from"
+msgstr "Prêter à partir du"
+
+msgid "Borrow until"
+msgstr "Emprunter jusqu'au"
+
+msgid "Lend until"
+msgstr "Prêter jusqu'au"
+
+msgid "Lend it: people borrow it for some days and bring it back"
+msgstr "Le prêter : on l'emprunte quelques jours et on le rapporte"
+
+msgid "Borrow it: you need it for some days and bring it back"
+msgstr "L'emprunter : tu en as besoin quelques jours et tu le rapportes"
+
+msgid "Requests say from when until when. You get a lending calendar in your dashboard."
+msgstr "Les demandes indiquent de quand à quand. Tu obtiens un calendrier de prêt dans ton tableau de bord."
+
+msgid "It can't come back before it is borrowed."
+msgstr "Il ne peut pas revenir avant d'être emprunté."
+
+msgid "Please choose a day from today on."
+msgstr "Choisis un jour à partir d'aujourd'hui."
+
+#, python-format
+msgid "It is already lent then: %(days)s"
+msgstr "Il est déjà prêté à ces dates : %(days)s"
+
+msgid "Loan"
+msgstr "Prêt"
+
+msgid "Loans"
+msgstr "Prêts"
+
+#, python-format
+msgid "lent to %(name)s"
+msgstr "prêté à %(name)s"
+
+#, python-format
+msgid "borrowed from %(name)s"
+msgstr "emprunté à %(name)s"
+
+msgid "Agreed"
+msgstr "Convenu"
+
+msgid "agreed"
+msgstr "convenu"
+
+msgid "Asked to borrow"
+msgstr "Demande à emprunter"
+
+msgid "Lending calendar"
+msgstr "Calendrier de prêt"
+
+msgid "Lend a tool"
+msgstr "Prêter un outil"
+
+msgid "More people ask for a tool than you can lend at once on:"
+msgstr "Plus de personnes demandent un outil que tu ne peux en prêter en même temps le :"
+
+msgid "You lend it"
+msgstr "Tu le prêtes"
+
+msgid "Someone asks to borrow it"
+msgstr "Quelqu'un demande à l'emprunter"
+
+msgid "You borrow it"
+msgstr "Tu l'empruntes"
+
+msgid "Your tools to lend"
+msgstr "Tes outils à prêter"
+
+#, python-format
+msgid "With %(name)s until %(day)s"
+msgstr "Chez %(name)s jusqu'au %(day)s"
+
+msgid "At home"
+msgstr "À la maison"
+
+#, python-format
+msgid "next: %(day)s"
+msgstr "prochain : %(day)s"
+
+msgid "Lent this month"
+msgstr "Prêté ce mois-ci"
+
+msgid "Nobody has asked to borrow your tools this month yet."
+msgstr "Personne n'a encore demandé à emprunter tes outils ce mois-ci."
+
+msgid "You borrow this month"
+msgstr "Ce que tu empruntes ce mois-ci"
+
+msgid "Lent"
+msgstr "Prêté"
+
+msgid "Suggested days"
+msgstr "Jours proposés"
+
+msgid "Propose other days or place"
+msgstr "Proposer d'autres jours ou un autre lieu"
+
+msgid "It is already lent on some of these days. Propose other days instead."
+msgstr "Il est déjà prêté certains de ces jours. Propose plutôt d'autres jours."

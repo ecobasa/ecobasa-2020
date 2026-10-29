@@ -27,7 +27,7 @@ from gift_economy.references.models import Reference
 from users.models import User
 from gift_economy.gifts.skills.models import Skill, skill_name_q
 from gift_economy.matches.forms import MatchForm
-from gift_economy.matches.models import Contribution, Match
+from gift_economy.matches.models import Contribution, Loan, Match
 from gift_economy.matches.emails import notify_match_created
 from dashboard_lists import Choice, paginate, query_url
 
@@ -55,7 +55,7 @@ def detail(request, pk):
 
     manager = listing.manager
     if request.user.is_authenticated and manager is not None and request.user != manager and not help_url:
-        form = MatchForm(request.POST or None)
+        form = MatchForm(request.POST or None, loan_of=listing if listing.lend else None)
         if request.method == "POST" and form.is_valid():
             match = form.save(commit=False)
             match.from_user = request.user
@@ -63,11 +63,17 @@ def detail(request, pk):
             match.target = listing
             match.save()
             Contribution.objects.create(match=match, listing=listing, quantity=form.cleaned_data.get("quantity"))
+            if listing.lend:
+                Loan.objects.create(
+                    match=match, starts_on=form.cleaned_data["borrow_from"], ends_on=form.cleaned_data["borrow_to"],
+                )
             notify_match_created(match, http_request=request)
             messages.success(request, _("Your request has been sent."))
             return redirect(match.get_absolute_url())
         context["form"] = form
 
+    if listing.lends_out:
+        context["upcoming_loans"] = listing.upcoming_loans()
     if can_edit:
         context["incoming_requests"] = list(
             Match.objects.filter(contributions__listing=listing).select_related("from_user").distinct().order_by("-created_at")[:20]
@@ -137,13 +143,14 @@ def _holder_for(request):
 
 @login_required
 def create(request):
-    """A new offer or wish: ?type=offer|wish, ?kind=…, ?skill=<name> and ?community=<slug>
-    preset it."""
+    """A new offer or wish: ?type=offer|wish, ?kind=…, ?skill=<name>, ?lend=1 and
+    ?community=<slug> preset it."""
     community = _holder_for(request)
     initial = {
         "type": request.GET.get("type") if request.GET.get("type") in ("offer", "wish") else "offer",
         "kind": request.GET.get("kind") if request.GET.get("kind") in dict(Listing.KIND_CHOICES) else Listing.KIND_OTHER,
         "skill_name": request.GET.get("skill", ""),
+        "lend": request.GET.get("lend") == "1",
     }
     posted = request.method == "POST"
     form = ListingForm(request.POST if posted else None, request.FILES if posted else None, initial=initial)

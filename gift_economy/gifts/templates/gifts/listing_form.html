@@ -68,6 +68,17 @@
       {% for error in form.title.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
       <p class="text-xs mt-1" x-show="!isThing" x-cloak>{% trans "e.g. building the roof truss, planning our food forest, moving house on Saturday" %}</p>
     </div>
+    {# A tool can be lent for some days instead of given away: requests then say when #}
+    <div x-show="kind === 'tool'" x-cloak class="form-group">
+      <label class="flex items-start gap-2 cursor-pointer">
+        {{ form.lend }}
+        <span>
+          <span x-show="type === 'offer'">{% trans "Lend it: people borrow it for some days and bring it back" %}</span>
+          <span x-show="type === 'wish'" x-cloak>{% trans "Borrow it: you need it for some days and bring it back" %}</span>
+          <span class="block text-xs" x-show="type === 'offer'">{% trans "Requests say from when until when. You get a lending calendar in your dashboard." %}</span>
+        </span>
+      </label>
+    </div>
     {# An amount for things, and for a project's needs ("2 people") #}
     <div class="flex gap-4" x-show="isThing || {{ form.instance.project_id|yesno:'true,false' }}">
       <div class="w-1/2 sm:w-1/3">{{ form.quantity|as_crispy_field }}</div>

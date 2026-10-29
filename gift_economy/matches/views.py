@@ -245,6 +245,14 @@ def match_detail(request, pk):
 
         if action in ("accept", "decline") and (owner_can_decide or requester_can_decide):
             new_status = {"accept": Match.STATUS_ACCEPTED, "decline": Match.STATUS_DECLINED}[action]
+            if new_status == Match.STATUS_ACCEPTED and match.is_loan:
+                # The agreed days are the loan's from now on; a tool is lent once at a time
+                starts_on, ends_on = match.loan_period()
+                if target.lends_out and not target.is_free(starts_on, ends_on, exclude_match=match):
+                    flash.error(request, _("It is already lent on some of these days. Propose other days instead."))
+                    return redirect(match.get_absolute_url())
+                match.loan.starts_on, match.loan.ends_on = starts_on, ends_on
+                match.loan.save()
             body = request.POST.get("body", "").strip()
             MatchMessage.objects.create(match=match, sender=request.user, body=body, status_to=new_status)
             match.status       = new_status
@@ -271,6 +279,13 @@ def match_detail(request, pk):
                     flash.error(request, _("The stay can't end before it starts."))
                     return redirect(match.get_absolute_url())
             else:
+                if match.is_loan:
+                    # Other days to borrow it, and maybe another place to pick it up
+                    msg.counter_stay_from = _parse_day(request.POST.get("counter_stay_from", ""))
+                    msg.counter_stay_to   = _parse_day(request.POST.get("counter_stay_to", ""))
+                    if msg.counter_stay_from and msg.counter_stay_to and msg.counter_stay_to < msg.counter_stay_from:
+                        flash.error(request, _("It can't come back before it is borrowed."))
+                        return redirect(match.get_absolute_url())
                 msg.counter_location_type = request.POST.get("counter_location_type", "")
                 msg.counter_location      = request.POST.get("counter_location", "")
                 try:
@@ -352,6 +367,13 @@ def email_action(request, token):
 
     if match.status != Match.STATUS_PENDING:
         flash.info(request, _("This interest has already been responded to."))
+        return redirect(match.get_absolute_url())
+
+    target = match.target
+    if action == "accept" and match.is_loan and target is not None and target.lends_out and not target.is_free(
+        match.loan.starts_on, match.loan.ends_on, exclude_match=match,
+    ):
+        flash.error(request, _("It is already lent on some of these days. Propose other days instead."))
         return redirect(match.get_absolute_url())
 
     actor = match.recipient

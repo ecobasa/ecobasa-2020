@@ -96,7 +96,17 @@ class ListingQuerySet(models.QuerySet):
             | Exists(accepted.filter(quantity=None))
             | Q(quantity__lte=Coalesce(Subquery(promised), 0))
         )
-        return self.current().exclude(Q(kind__in=Listing.USED_UP_KINDS) | Q(type=Listing.TYPE_WISH, kind__in=Listing.NEED_KINDS), used_up)
+        # A tool to lend comes back, so lending it doesn't use it up
+        used_up_kinds = Q(kind__in=Listing.USED_UP_KINDS) & ~Q(type=Listing.TYPE_OFFER, lend=True)
+        return self.current().exclude(used_up_kinds | Q(type=Listing.TYPE_WISH, kind__in=Listing.NEED_KINDS), used_up)
+
+    def managed_by(self, user):
+        """What a person answers for: their own, and their communities' (as ambassador)."""
+        return self.filter(Q(owner=user, community=None) | Q(community__owner=user))
+
+    def to_lend(self):
+        """Tools to lend (they come back), as opposed to given away."""
+        return self.filter(type=Listing.TYPE_OFFER, kind=Listing.KIND_TOOL, lend=True)
 
     def of(self, holder):
         """What a person or a community offers and wishes for (its projects' too)."""
@@ -192,6 +202,9 @@ class Listing(RandomIdMixin, models.Model):
     # level it looks for
     level = models.CharField(_("Level"), max_length=20, choices=LEVEL_CHOICES, blank=True)
     available = models.BooleanField(_("Available to teach / share"), default=True)
+    # A tool lent for some days that comes back (offer), or to borrow (wish); requests
+    # for it say from when until when (matches.Loan)
+    lend = models.BooleanField(_("To lend"), default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     # A person's listing. A community's has no owner: its ambassador manages it.
@@ -292,7 +305,10 @@ class Listing(RandomIdMixin, models.Model):
 
     @property
     def kind_label(self):
-        """The kind in words, by which side it is on: "Skill" offered, "Learn a skill" wished."""
+        """The kind in words, by which side it is on: "Skill" offered, "Learn a skill" wished;
+        "Tool to lend", "Tool to borrow"."""
+        if self.lend:
+            return _("Tool to lend") if self.is_offer else _("Tool to borrow")
         if self.kind == self.KIND_SKILL and self.is_wish:
             return _("Learn a skill") if self.owner_id else _("Skill")
         return self.get_kind_display()
@@ -369,7 +385,10 @@ class Listing(RandomIdMixin, models.Model):
     @property
     def can_run_out(self):
         """Whether exchanges use it up: things, and wishes for knowledge or helping hands.
-        A skill can be shared again and again, and someone can keep learning one."""
+        A skill can be shared again and again, and someone can keep learning one, and a
+        tool to lend comes back."""
+        if self.lends_out:
+            return False
         return self.kind in self.USED_UP_KINDS or (self.is_wish and self.kind in self.NEED_KINDS)
 
     @property
@@ -398,6 +417,9 @@ class Listing(RandomIdMixin, models.Model):
         open, however often it is shared."""
         if self.covered_at:
             return self.STATUS_COVERED
+        if self.lends_out:
+            # It comes back after each loan: when it is lent shows in its calendar
+            return self.STATUS_OPEN
         accepted, waiting = self._contributions_by_status()
         if self.can_run_out and accepted and (
             self.quantity is None
@@ -437,6 +459,32 @@ class Listing(RandomIdMixin, models.Model):
 
     def promised_by(self):
         return [c.match.from_user for c in self.promises]
+
+    # ── Lending ─────────────────────────────────────────────────────
+    @property
+    def lends_out(self):
+        """A tool to lend, as opposed to one given away (or wished to borrow)."""
+        return self.lend and self.is_offer
+
+    def loans(self, statuses=None):
+        """The loans of a tool to lend (matches.Loan), each with its match, by start."""
+        from gift_economy.matches.models import Loan, Match
+        statuses = statuses or (Match.STATUS_ACCEPTED,)
+        return Loan.objects.filter(
+            match__contributions__listing=self, match__status__in=statuses,
+        ).select_related("match__from_user").distinct().order_by("starts_on")
+
+    def upcoming_loans(self):
+        """The agreed loans that haven't ended yet, for who wants to borrow it too."""
+        return self.loans().filter(ends_on__gte=timezone.localdate())
+
+    def is_free(self, starts_on, ends_on, exclude_match=None):
+        """Whether it can be lent from starts_on to ends_on: fewer agreed loans overlap than
+        there are of it (a quantity of 3 ladders lends 3 at once)."""
+        overlapping = self.loans().filter(starts_on__lte=ends_on, ends_on__gte=starts_on)
+        if exclude_match is not None:
+            overlapping = overlapping.exclude(match=exclude_match)
+        return overlapping.count() < (self.quantity or 1)
 
     # ── matches.Match target protocol ───────────────────────────────
     def get_match_owner(self):

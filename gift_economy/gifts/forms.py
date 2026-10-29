@@ -44,7 +44,7 @@ class ListingForm(forms.ModelForm):
     class Meta:
         model = Listing
         fields = (
-            "type", "kind", "skill_name", "title", "quantity", "unit", "level", "available",
+            "type", "kind", "skill_name", "title", "lend", "quantity", "unit", "level", "available",
             "description", "image", "categories", "location_name", "location",
         )
         widgets = {
@@ -104,6 +104,8 @@ class ListingForm(forms.ModelForm):
             self.add_error("title", _("Name a skill or say what for."))
         elif kind in Listing.THING_KINDS and not title:
             self.add_error("title", _("What is it?"))
+        if kind != Listing.KIND_TOOL:
+            cleaned["lend"] = False
         if kind in Listing.THING_KINDS:
             cleaned["skill_name"] = ""
             cleaned["level"] = ""

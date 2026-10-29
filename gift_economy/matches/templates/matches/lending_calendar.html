@@ -1,0 +1,95 @@
+{% extends 'dashboard/base.html' %}
+{% load i18n %}
+
+{% block head_title %}{% trans "Lending calendar" %} — ecobasa{% endblock %}
+
+{% block dashboard_content %}
+<div class="flex flex-wrap items-baseline justify-between gap-2 mb-4">
+  <h1 class="mb-0">{% trans "Lending calendar" %}</h1>
+  <a href="{% url 'gifts:create' %}?type=offer&kind=tool&lend=1" class="btn"><i class="fa fa-plus mr-1"></i>{% trans "Lend a tool" %}</a>
+</div>
+
+<nav class="flex items-center gap-3 mb-4" aria-label="{% trans 'Month' %}">
+  <a href="?month={{ previous_month }}" class="btn btn-purple py-1 px-3" aria-label="{% trans 'Previous month' %}"><i class="fa fa-chevron-left"></i></a>
+  <span class="font-serif text-xl">{{ month|date:"F Y" }}</span>
+  <a href="?month={{ next_month }}" class="btn btn-purple py-1 px-3" aria-label="{% trans 'Next month' %}"><i class="fa fa-chevron-right"></i></a>
+  <a href="?month={{ this_month }}" class="text-sm text-primary underline ml-2">{% trans "Today" %}</a>
+</nav>
+
+{% if clash_days %}
+  <div class="rounded p-3 mb-4 border border-yellow bg-yellow bg-opacity-10 text-sm">
+    <i class="fa-solid fa-circle-exclamation text-yellow mr-1"></i>
+    {% trans "More people ask for a tool than you can lend at once on:" %}
+    {% for day in clash_days %}<strong>{{ day.date|date:"D j" }}</strong> ({% for tool in day.clashes %}{{ tool.display_title }}{% if not forloop.last %}, {% endif %}{% endfor %}){% if not forloop.last %}, {% endif %}{% endfor %}
+  </div>
+{% endif %}
+
+{# Month grid (wider screens) #}
+<div class="hidden md:block border rounded overflow-hidden bg-secondary mb-2">
+  <div class="grid grid-cols-7 text-xs font-semibold uppercase tracking-wide bg-primary bg-opacity-10">
+    {% for weekday in weekdays %}<div class="px-2 py-1">{{ weekday|date:"D" }}</div>{% endfor %}
+  </div>
+  {% for week in weeks %}
+    <div class="grid grid-cols-7 border-t">
+      {% for day in week %}
+        <div class="min-h-[6.5rem] p-1 border-l first:border-l-0 text-xs {% if not day.in_month %}opacity-40{% endif %} {% if day.clashes %}bg-yellow bg-opacity-10{% endif %}">
+          <div class="mb-1"><span class="{% if day.is_today %}bg-primary text-secondary rounded-full px-1.5{% endif %} font-semibold">{{ day.date.day }}</span></div>
+          {% for lending in day.lendings %}
+            <a href="{{ lending.match.get_absolute_url }}"
+               class="block truncate rounded px-1 mb-0.5 hover:underline {% if not lending.confirmed %}border border-dashed {% if lending.lent_out %}border-yellow{% else %}border-purple{% endif %}{% elif lending.lent_out %}bg-green text-secondary{% else %}bg-purple text-secondary{% endif %}"
+               title="{{ lending.tool.display_title }} · {% with name=lending.person.name|default:lending.person.email %}{% if lending.lent_out %}{% blocktrans %}lent to {{ name }}{% endblocktrans %}{% else %}{% blocktrans %}borrowed from {{ name }}{% endblocktrans %}{% endif %}{% endwith %} · {% if lending.confirmed %}{% trans 'agreed' %}{% else %}{% trans 'requested' %}{% endif %}">
+              <i class="fa-solid {% if lending.lent_out %}fa-arrow-right-from-bracket{% else %}fa-arrow-right-to-bracket{% endif %} mr-0.5"></i>{{ lending.tool.display_title }}
+            </a>
+          {% endfor %}
+        </div>
+      {% endfor %}
+    </div>
+  {% endfor %}
+</div>
+<p class="hidden md:flex flex-wrap gap-4 text-xs mb-6">
+  <span><span class="inline-block w-3 h-3 rounded bg-green align-middle mr-1"></span>{% trans "You lend it" %}</span>
+  <span><span class="inline-block w-3 h-3 rounded border border-dashed border-yellow align-middle mr-1"></span>{% trans "Someone asks to borrow it" %}</span>
+  <span><span class="inline-block w-3 h-3 rounded bg-purple align-middle mr-1"></span>{% trans "You borrow it" %}</span>
+</p>
+
+{# Your tools: where they are today #}
+{% if tools %}
+  <h2>{% trans "Your tools to lend" %}</h2>
+  <ul class="list-none p-0 space-y-2 mb-6">
+    {% for tool in tools %}
+      <li class="flex flex-wrap items-center gap-x-3 gap-y-1 p-3 rounded border bg-secondary bg-opacity-50">
+        <a href="{{ tool.get_absolute_url }}" class="font-semibold hover:underline"><i class="fa-solid fa-screwdriver-wrench mr-1"></i>{{ tool.display_title }}</a>
+        {% if tool.community %}<span class="text-xs opacity-70">· {{ tool.community.name }}</span>{% endif %}
+        {% if tool.amount %}<span class="text-xs opacity-70">· {{ tool.amount }}</span>{% endif %}
+        <span class="ml-auto text-sm">
+          {% if tool.lent_now %}
+            {% for lending in tool.lent_now %}
+              <span class="pill bg-green text-xs">{% blocktrans with name=lending.person.name|default:lending.person.email day=lending.end|date:"D j M" %}With {{ name }} until {{ day }}{% endblocktrans %}</span>
+            {% endfor %}
+          {% else %}
+            <span class="pill bg-primary text-xs">{% trans "At home" %}</span>
+          {% endif %}
+          {% if tool.lent_next %}<span class="text-xs ml-1">{% blocktrans with day=tool.lent_next.start|date:"D j M" %}next: {{ day }}{% endblocktrans %}</span>{% endif %}
+        </span>
+      </li>
+    {% endfor %}
+  </ul>
+{% endif %}
+
+{# Who borrows what when (also the calendar on phones) #}
+<h2>{% trans "Lent this month" %}</h2>
+{% if lent_out %}
+  <ul class="list-none p-0 space-y-2 mb-6">
+    {% for lending in lent_out %}{% include "matches/_lending_row.html" %}{% endfor %}
+  </ul>
+{% else %}
+  <p class="italic mb-6">{% trans "Nobody has asked to borrow your tools this month yet." %}</p>
+{% endif %}
+
+{% if borrowed %}
+  <h2>{% trans "You borrow this month" %}</h2>
+  <ul class="list-none p-0 space-y-2 mb-6">
+    {% for lending in borrowed %}{% include "matches/_lending_row.html" %}{% endfor %}
+  </ul>
+{% endif %}
+{% endblock %}

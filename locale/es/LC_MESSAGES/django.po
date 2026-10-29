@@ -4345,3 +4345,130 @@ msgstr "Cuenta creada y sesión iniciada."
 
 #~ msgid "Who you are, what you can do or bring, and how you would get there."
 #~ msgstr "Quién eres, qué sabes hacer o puedes traer, y cómo llegarías."
+
+msgid "To lend"
+msgstr "Para prestar"
+
+msgid "Tool to lend"
+msgstr "Herramienta para prestar"
+
+msgid "Tool to borrow"
+msgstr "Herramienta para pedir prestada"
+
+msgid "Already lent"
+msgstr "Ya prestada"
+
+msgid "There is %(counter)s of it to lend."
+msgid_plural "There are %(counter)s of them to lend at once."
+msgstr[0] "Hay %(counter)s para prestar."
+msgstr[1] "Hay %(counter)s que se pueden prestar a la vez."
+
+msgid "Not lent on any coming day: ask for the days you need it."
+msgstr "No está prestada ningún día próximo: pide los días que la necesitas."
+
+msgid "Borrow from"
+msgstr "Pedir prestado desde"
+
+msgid "Lend from"
+msgstr "Prestar desde"
+
+msgid "Borrow until"
+msgstr "Pedir prestado hasta"
+
+msgid "Lend until"
+msgstr "Prestar hasta"
+
+msgid "Lend it: people borrow it for some days and bring it back"
+msgstr "Prestarla: la gente la toma prestada unos días y la devuelve"
+
+msgid "Borrow it: you need it for some days and bring it back"
+msgstr "Pedirla prestada: la necesitas unos días y la devuelves"
+
+msgid "Requests say from when until when. You get a lending calendar in your dashboard."
+msgstr "Las solicitudes indican desde cuándo hasta cuándo. Tendrás un calendario de préstamos en tu panel."
+
+msgid "It can't come back before it is borrowed."
+msgstr "No puede volver antes de prestarse."
+
+msgid "Please choose a day from today on."
+msgstr "Elige un día a partir de hoy."
+
+#, python-format
+msgid "It is already lent then: %(days)s"
+msgstr "Ya está prestada en esas fechas: %(days)s"
+
+msgid "Loan"
+msgstr "Préstamo"
+
+msgid "Loans"
+msgstr "Préstamos"
+
+#, python-format
+msgid "lent to %(name)s"
+msgstr "prestada a %(name)s"
+
+#, python-format
+msgid "borrowed from %(name)s"
+msgstr "prestada por %(name)s"
+
+msgid "Agreed"
+msgstr "Acordado"
+
+msgid "agreed"
+msgstr "acordado"
+
+msgid "Asked to borrow"
+msgstr "Quiere pedir prestado"
+
+msgid "Lending calendar"
+msgstr "Calendario de préstamos"
+
+msgid "Lend a tool"
+msgstr "Prestar una herramienta"
+
+msgid "More people ask for a tool than you can lend at once on:"
+msgstr "Más personas piden una herramienta de las que puedes prestar a la vez el:"
+
+msgid "You lend it"
+msgstr "La prestas"
+
+msgid "Someone asks to borrow it"
+msgstr "Alguien quiere pedirla prestada"
+
+msgid "You borrow it"
+msgstr "La tomas prestada"
+
+msgid "Your tools to lend"
+msgstr "Tus herramientas para prestar"
+
+#, python-format
+msgid "With %(name)s until %(day)s"
+msgstr "Con %(name)s hasta el %(day)s"
+
+msgid "At home"
+msgstr "En casa"
+
+#, python-format
+msgid "next: %(day)s"
+msgstr "próximo: %(day)s"
+
+msgid "Lent this month"
+msgstr "Prestado este mes"
+
+msgid "Nobody has asked to borrow your tools this month yet."
+msgstr "Nadie ha pedido prestadas tus herramientas este mes todavía."
+
+msgid "You borrow this month"
+msgstr "Lo que tomas prestado este mes"
+
+msgid "Lent"
+msgstr "Prestado"
+
+msgid "Suggested days"
+msgstr "Días propuestos"
+
+msgid "Propose other days or place"
+msgstr "Proponer otros días o lugar"
+
+msgid "It is already lent on some of these days. Propose other days instead."
+msgstr "Ya está prestada algunos de esos días. Propón otros días."

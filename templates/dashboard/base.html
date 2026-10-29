@@ -16,7 +16,7 @@
 
         <div class="pt-3"></div>
         <a href="{% url 'matches:list' %}"
-           class="flex items-center px-3 py-2 rounded {% if ns == 'matches' and request_type != 'volunteer' and u != 'calendar' %}bg-secondary text-primary font-semibold{% else %}text-secondary hover:bg-secondary hover:text-primary{% endif %}">
+           class="flex items-center px-3 py-2 rounded {% if ns == 'matches' and request_type != 'volunteer' and u != 'calendar' and u != 'lending' %}bg-secondary text-primary font-semibold{% else %}text-secondary hover:bg-secondary hover:text-primary{% endif %}">
           <i class="fa-solid fa-handshake mr-2"></i>{% trans "Matches" %}
           {% if new_suggestions_count %}<span class="ml-auto pill bg-purple text-secondary text-xs" title="{% trans 'New suggestions' %}">{{ new_suggestions_count }}</span>{% endif %}
         </a>
@@ -24,6 +24,12 @@
            class="flex items-center px-3 py-2 rounded {% if ns == 'gifts' %}bg-secondary text-primary font-semibold{% else %}text-secondary hover:bg-secondary hover:text-primary{% endif %}">
           <i class="fa fa-gift mr-2"></i>{% trans "Your gifts and wishes" %}
         </a>
+        {% if has_lending_calendar %}
+        <a href="{% url 'matches:lending' %}"
+           class="flex items-center px-3 py-2 rounded {% if ns == 'matches' and u == 'lending' %}bg-secondary text-primary font-semibold{% else %}text-secondary hover:bg-secondary hover:text-primary{% endif %}">
+          <i class="fa-regular fa-calendar mr-2"></i>{% trans "Lending calendar" %}
+        </a>
+        {% endif %}
         {% endwith %}
 
         <div class="pt-4 pb-1 px-3 text-xs text-secondary opacity-60 uppercase tracking-wide">{% trans "References" %}</div>

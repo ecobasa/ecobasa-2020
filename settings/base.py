@@ -198,6 +198,7 @@ TEMPLATES = [
                 "notifications.context_processors.unread_notifications",
                 "gift_economy.references.context_processors.pending_reference_skills",
                 "gift_economy.matches.context_processors.new_suggestions",
+                "gift_economy.matches.context_processors.lending_calendar",
             ],
         },
     }
