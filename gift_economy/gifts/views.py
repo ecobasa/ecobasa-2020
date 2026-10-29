@@ -151,6 +151,7 @@ def create(request):
         "skill_name": request.GET.get("skill", ""),
         # Vehicles are mostly lent rather than given away
         "lend": request.GET.get("lend") == "1" or request.GET.get("kind") == Listing.KIND_VEHICLE,
+        **_holder_place(community or request.user),
     }
     posted = request.method == "POST"
     form = ListingForm(request.POST if posted else None, request.FILES if posted else None, initial=initial)
@@ -160,13 +161,38 @@ def create(request):
             listing.community = community
         else:
             listing.owner = request.user
+        _keep_own_place_only(listing)
         listing.save()
         form.save_m2m()
         messages.success(
             request, _("%(listing_type)s created") % {"listing_type": listing.get_type_display()}
         )
         return redirect(listing.get_absolute_url())
-    return render(request, "gifts/listing_form.html", {"form": form, "community": community})
+    return render(request, "gifts/listing_form.html", {"form": form, "community": community, **_form_context()})
+
+
+def _holder_place(holder):
+    """The form's place to start from: the person's or the community's, from its profile,
+    to keep or move on the map."""
+    if holder is None or holder.location is None:
+        return {}
+    return {"location": holder.location, "location_name": holder.location_name}
+
+
+def _keep_own_place_only(listing):
+    """A place left as the profile's isn't the listing's own: it stays where its person
+    or community is, also when they move. One moved on the map is its own."""
+    holder = listing.holder
+    if listing.location is not None and holder is not None and holder.location is not None and (
+        listing.location.equals_exact(holder.location, tolerance=1e-6)
+    ):
+        listing.location, listing.location_name = None, None
+
+
+def _form_context():
+    """What the listing form's script needs: the kinds named from their vocabulary only."""
+    from .things import WHITELISTED_KINDS
+    return {"whitelisted_kinds": json.dumps(list(WHITELISTED_KINDS))}
 
 
 @login_required
@@ -177,12 +203,19 @@ def edit(request, pk):
         raise PermissionDenied
 
     posted = request.method == "POST"
-    form = ListingForm(request.POST if posted else None, request.FILES if posted else None, instance=listing)
+    # Without a place of its own, it is where its person or community is: shown on the map
+    initial = {} if listing.location else _holder_place(listing.holder)
+    form = ListingForm(request.POST if posted else None, request.FILES if posted else None, instance=listing, initial=initial)
     if request.method == "POST" and form.is_valid():
-        form.save()
+        listing = form.save(commit=False)
+        _keep_own_place_only(listing)
+        listing.save()
+        form.save_m2m()
         messages.success(request, _("changes saved"))
         return redirect(listing.get_absolute_url())
-    return render(request, "gifts/listing_form.html", {"form": form, "listing": listing, "community": listing.community})
+    return render(request, "gifts/listing_form.html", {
+        "form": form, "listing": listing, "community": listing.community, **_form_context(),
+    })
 
 
 @login_required
@@ -343,6 +376,35 @@ def nominatim_proxy(request):
         return JsonResponse(data, safe=False)
     except Exception:
         return JsonResponse([], safe=False)
+
+
+@require_GET
+def things_recognize(request):
+    """What a title is recognized as while typing, and the categories that sets:
+    ?kind=tool|material|seeds|vehicle&title=… (with &variety=… for seeds)."""
+    from .models import Thing
+    from .things import WHITELISTED_KINDS, recognize, thing_named
+    kind, title = request.GET.get("kind", ""), request.GET.get("title", "").strip()
+    if kind in WHITELISTED_KINDS:
+        thing_id = thing_named(title, kind)
+    else:
+        variety = request.GET.get("variety", "").strip()
+        thing_id = recognize(f"{title} {variety}" if variety else title, kind) if kind in Listing.CATEGORY_KINDS else None
+    thing = Thing.objects.filter(pk=thing_id).select_related("category").first()
+    if thing is None:
+        return JsonResponse({"thing": None, "categories": []})
+    return JsonResponse({
+        "thing": thing.get_name(),
+        "categories": [str(category) for category in Listing.thing_categories(thing, kind)],
+    })
+
+
+@require_GET
+def things_suggest(request):
+    """Names from a vocabulary while typing a title: ?kind=seeds|vehicle|…&q=…"""
+    from .things import suggest
+    lang = (getattr(request, "LANGUAGE_CODE", "") or "en")[:2]
+    return JsonResponse({"results": suggest(request.GET.get("q", ""), request.GET.get("kind", ""), lang)})
 
 
 @require_GET

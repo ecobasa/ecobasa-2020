@@ -114,3 +114,67 @@ def test_a_thing_added_to_a_vocabulary_belongs_to_it():
     thing = VehicleThing.objects.create(slug="rickshaw", names={"en": "Rickshaw", "de": "Rikscha"})
     assert Thing.objects.get(pk=thing.pk).kind == "vehicle"
     assert recognize("Rikscha", "vehicle") == thing.pk
+
+
+@pytest.mark.django_db
+def test_every_name_in_the_vocabularies_finds_its_own_thing():
+    """Guards edits of the vocabularies: a name shared by two things, or one a broader
+    thing's name hides, would never be recognized."""
+    slugs = dict(Thing.objects.values_list("pk", "slug"))
+    wrong = [
+        (slug, name, slugs.get(recognize(name, kind)))
+        for kind, entries in VOCABULARIES.items()
+        for slug, _parent, _category, *names, others in entries
+        for name in names + [other for other in others.split("|") if other]
+        if slugs.get(recognize(name, kind)) != slug
+    ]
+    assert wrong == []
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("title, slug", [
+    ("Tomatensamen", "tomato"),
+    ("Tomate Ochsenherz", "beefsteak-tomato"),
+    ("Cocktailtomaten", "cherry-tomato"),
+    ("bean seeds", "bean"),
+    ("graines de tomate", "tomato"),
+    ("semillas de calabaza", "pumpkin"),
+    ("Stangenbohne Borlotti", "pole-bean"),
+    ("Kürbis Hokkaido", "pumpkin"),
+    ("Palmkohl", "kale"),
+    ("Ringelblumensamen", "calendula"),
+    ("Wildblumenmischung", "bee-pasture"),
+    ("Inkarnatklee", "clover"),
+    ("Dinkel", "spelt"),
+    ("Färberwaid", "woad"),
+    ("Solanum lycopersicum", "tomato"),
+    ("Saatgut", "seeds"),
+    # Austrian words
+    ("Paradeiser", "tomato"),
+    ("Fleischparadeiser", "beefsteak-tomato"),
+    ("Melanzani", "aubergine"),
+    ("Fisolen", "bean"),
+    ("Karfiol", "cauliflower"),
+    ("Kukuruz", "maize"),
+    ("Krauthäuptl", "lettuce"),
+    ("Saaterdäpfel", "seed-potato"),
+    ("Zeller", "celery"),
+    ("Kerbelrübe", "chervil-root"),
+    ("Hiobsträne", "jobs-tears"),
+    ("Körneramarant", "amaranth"),
+])
+def test_recognizes_seeds_by_crop(title, slug):
+    assert _slug_in(title, "seeds") == slug
+
+
+def _slug_in(title, kind):
+    thing_id = recognize(title, kind)
+    return Thing.objects.get(pk=thing_id).slug if thing_id else None
+
+
+@pytest.mark.django_db
+def test_vehicles_with_a_letter_before_them():
+    assert _slug_in("Lastenrad", "vehicle") == "cargo-bike"
+    assert _slug_in("E-Lastenrad", "vehicle") == "e-cargo-bike"
+    assert _slug_in("E-Bike", "vehicle") == "e-bike"
+    assert _slug_in("3D-Drucker", "tool") == "3d-printer" and _slug_in("Drucker", "tool") == "printer"

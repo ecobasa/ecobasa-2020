@@ -18,7 +18,7 @@
   {# What ecobasa is for, with the sharing that is easy to miss: tool libraries and car sharing #}
   <section id="features" class="mt-12">
     <h2>{% trans "What you can do on ecobasa" %}</h2>
-    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       <a href="{% url 'gifts:search' %}" class="block p-4 rounded border bg-secondary bg-opacity-50 hover:bg-opacity-80">
         <i class="fa-solid fa-gift text-2xl text-primary"></i>
         <h3 class="mt-2">{% trans "Give and wish" %}</h3>
@@ -28,6 +28,11 @@
         <i class="fa-solid fa-graduation-cap text-2xl text-purple"></i>
         <h3 class="mt-2">{% trans "Share skills" %}</h3>
         <p class="text-sm">{% trans "Teach, learn by doing, and volunteer at communities and their projects." %}</p>
+      </a>
+      <a href="{% url 'gifts:create' %}?type=offer&kind=seeds" class="block p-4 rounded border bg-secondary bg-opacity-50 hover:bg-opacity-80">
+        <i class="fa-solid fa-seedling text-2xl text-green"></i>
+        <h3 class="mt-2">{% trans "Swap seeds" %}</h3>
+        <p class="text-sm">{% trans "Share the seeds you save, open-pollinated and with their variety, and find the ones you are looking for: the tomato, the bean, the flowers for the bees." %}</p>
       </a>
       <a href="{% url 'gifts:create' %}?type=offer&kind=tool&lend=1" class="block p-4 rounded border bg-secondary bg-opacity-50 hover:bg-opacity-80">
         <i class="fa-solid fa-screwdriver-wrench text-2xl text-green"></i>

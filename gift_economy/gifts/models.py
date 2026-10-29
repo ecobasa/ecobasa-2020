@@ -74,6 +74,7 @@ class Thing(models.Model):
         ("tool", _("Tools")),
         ("material", _("Materials")),
         ("vehicle", _("Vehicles")),
+        ("seeds", _("Seeds")),
         ("other", _("Other things")),
     ]
 
@@ -152,6 +153,16 @@ class VehicleThing(Thing):
         proxy = True
         verbose_name = _("Vehicle")
         verbose_name_plural = _("Vocabulary: vehicles")
+
+
+class SeedThing(Thing):
+    VOCABULARY = "seeds"
+    objects = _VocabularyManager(VOCABULARY)
+
+    class Meta:
+        proxy = True
+        verbose_name = _("Seed")
+        verbose_name_plural = _("Vocabulary: seeds")
 
 
 class OtherThing(Thing):
@@ -235,6 +246,8 @@ class Listing(RandomIdMixin, models.Model):
     KIND_TOOL = "tool"
     # A cargo bike, a car, a trailer, a van: mostly lent rather than given away
     KIND_VEHICLE = "vehicle"
+    # Seeds to swap, of a crop (the seed vocabulary) and a variety
+    KIND_SEEDS = "seeds"
     KIND_OTHER = "other"
     # Offered: a skill they share or teach. Wished for: a skill they want to learn by doing.
     KIND_SKILL = "skill"
@@ -244,14 +257,20 @@ class Listing(RandomIdMixin, models.Model):
         (KIND_MATERIAL, _("Material")),
         (KIND_TOOL, _("Tool")),
         (KIND_VEHICLE, _("Vehicle")),
+        (KIND_SEEDS, _("Seeds")),
         (KIND_OTHER, _("Other")),
         (KIND_SKILL, _("Skill")),
         (KIND_KNOWLEDGE, _("Knowledge")),
         (KIND_HANDS, _("Helping hands")),
     ]
-    THING_KINDS = (KIND_MATERIAL, KIND_TOOL, KIND_VEHICLE, KIND_OTHER)
+    THING_KINDS = (KIND_MATERIAL, KIND_TOOL, KIND_VEHICLE, KIND_SEEDS, KIND_OTHER)
     # What can be lent instead of given away: tools, vehicles and other things
     LEND_KINDS = (KIND_TOOL, KIND_VEHICLE, KIND_OTHER)
+    # Counted in pieces, without a unit to choose ("3 ladders")
+    PIECE_KINDS = (KIND_TOOL, KIND_VEHICLE)
+    # Their gift categories come from what they are, once it is recognized in their
+    # vocabulary; "other" things keep a choice
+    CATEGORY_KINDS = (KIND_MATERIAL, KIND_TOOL, KIND_VEHICLE, KIND_SEEDS)
     SKILL_KINDS = (KIND_SKILL, KIND_KNOWLEDGE, KIND_HANDS)
     # Given away once (in parts, with a quantity); skills, knowledge and helping hands
     # can be shared again and again
@@ -260,14 +279,14 @@ class Listing(RandomIdMixin, models.Model):
     # a skill stays until its owner says otherwise
     NEED_KINDS = (KIND_KNOWLEDGE, KIND_HANDS)
     KIND_ICONS = {
-        KIND_MATERIAL: "fa-cubes", KIND_TOOL: "fa-screwdriver-wrench", KIND_VEHICLE: "fa-van-shuttle", KIND_OTHER: "fa-gift",
+        KIND_MATERIAL: "fa-cubes", KIND_TOOL: "fa-screwdriver-wrench", KIND_VEHICLE: "fa-van-shuttle", KIND_SEEDS: "fa-seedling", KIND_OTHER: "fa-gift",
         KIND_SKILL: "fa-graduation-cap", KIND_KNOWLEDGE: "fa-lightbulb", KIND_HANDS: "fa-handshake-angle",
     }
     # Pill colour: skills purple, things in the primary colour
     KIND_COLOURS = {kind: "bg-purple" for kind in SKILL_KINDS}
     # Font Awesome code points for map markers: the kind, else a gift (offer) or heart (wish)
     KIND_GLYPHS = {
-        KIND_MATERIAL: 0xF1B3, KIND_TOOL: 0xF7D9, KIND_VEHICLE: 0xF5B6, KIND_SKILL: 0xF19D, KIND_KNOWLEDGE: 0xF0EB, KIND_HANDS: 0xF4C4,
+        KIND_MATERIAL: 0xF1B3, KIND_TOOL: 0xF7D9, KIND_VEHICLE: 0xF5B6, KIND_SEEDS: 0xF4D8, KIND_SKILL: 0xF19D, KIND_KNOWLEDGE: 0xF0EB, KIND_HANDS: 0xF4C4,
     }
 
     LEVEL_BEGINNER = "beginner"
@@ -317,6 +336,56 @@ class Listing(RandomIdMixin, models.Model):
     # A tool or vehicle lent for some days that comes back (offer), or to borrow (wish);
     # requests for it say from when until when (matches.Loan)
     lend = models.BooleanField(_("To lend"), default=False)
+    # Seeds: the variety ("Ochsenherz"), the year they were harvested (how well they still
+    # germinate), and whether they are open-pollinated, so their seeds can be saved again
+    variety = models.CharField(_("Variety"), max_length=100, blank=True)
+    harvest_year = models.PositiveSmallIntegerField(_("Harvest year"), null=True, blank=True)
+    open_pollinated = models.BooleanField(_("Open-pollinated"), default=False)
+    # Seeds grow best in a climate like the one they were grown in: the climate zone of
+    # their place (where the mother plant grew; for a wish, where they will grow), found
+    # in a Köppen-Geiger map (gifts.climate). The zones put its classes in plain words:
+    # what counts is the climate, not the latitude, so the highlands of the tropics (Cwb,
+    # like Bogotá or Addis Ababa) are temperate like Central Europe (Cfb). KOPPEN lists the
+    # classes in each zone; CLIMATE_FITS which zones' seeds fit which.
+    CLIMATE_TROPICAL = "tropical"
+    CLIMATE_SUBTROPICAL = "subtropical"
+    CLIMATE_MEDITERRANEAN = "mediterranean"
+    CLIMATE_ARID = "arid"
+    CLIMATE_TEMPERATE = "temperate"
+    CLIMATE_CONTINENTAL = "continental"
+    CLIMATE_COLD = "cold"
+    CLIMATE_ALPINE = "alpine"
+    CLIMATE_CHOICES = [
+        (CLIMATE_TROPICAL, _("Tropical: warm all year")),
+        (CLIMATE_SUBTROPICAL, _("Subtropical: hot humid summers, mild winters")),
+        (CLIMATE_MEDITERRANEAN, _("Mediterranean: dry hot summers, mild wet winters")),
+        (CLIMATE_ARID, _("Dry: steppe or desert")),
+        (CLIMATE_TEMPERATE, _("Temperate: mild summers, cool winters (also tropical highlands)")),
+        (CLIMATE_CONTINENTAL, _("Continental: warm summers, cold winters")),
+        (CLIMATE_COLD, _("Cool: short summers, long cold winters")),
+        (CLIMATE_ALPINE, _("Alpine: high mountains, very short season")),
+    ]
+    KOPPEN = {
+        CLIMATE_TROPICAL: ("Af", "Am", "Aw", "As"),
+        CLIMATE_SUBTROPICAL: ("Cfa", "Cwa"),
+        CLIMATE_MEDITERRANEAN: ("Csa", "Csb", "Csc"),
+        CLIMATE_ARID: ("BWh", "BWk", "BSh", "BSk"),
+        CLIMATE_TEMPERATE: ("Cfb", "Cfc", "Cwb", "Cwc"),
+        CLIMATE_CONTINENTAL: ("Dfa", "Dfb", "Dwa", "Dwb", "Dsa", "Dsb"),
+        CLIMATE_COLD: ("Dfc", "Dfd", "Dwc", "Dwd", "Dsc", "Dsd"),
+        CLIMATE_ALPINE: ("ET", "EF"),
+    }
+    # Neighbouring zones: seeds from one often do well in the other
+    CLIMATE_FITS = {
+        CLIMATE_TROPICAL: {CLIMATE_TROPICAL, CLIMATE_SUBTROPICAL},
+        CLIMATE_SUBTROPICAL: {CLIMATE_SUBTROPICAL, CLIMATE_TROPICAL, CLIMATE_MEDITERRANEAN},
+        CLIMATE_MEDITERRANEAN: {CLIMATE_MEDITERRANEAN, CLIMATE_SUBTROPICAL, CLIMATE_ARID},
+        CLIMATE_ARID: {CLIMATE_ARID, CLIMATE_MEDITERRANEAN},
+        CLIMATE_TEMPERATE: {CLIMATE_TEMPERATE, CLIMATE_CONTINENTAL},
+        CLIMATE_CONTINENTAL: {CLIMATE_CONTINENTAL, CLIMATE_TEMPERATE, CLIMATE_COLD},
+        CLIMATE_COLD: {CLIMATE_COLD, CLIMATE_CONTINENTAL, CLIMATE_ALPINE},
+        CLIMATE_ALPINE: {CLIMATE_ALPINE, CLIMATE_COLD},
+    }
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     # A person's listing. A community's has no owner: its ambassador manages it.
@@ -382,7 +451,8 @@ class Listing(RandomIdMixin, models.Model):
             self.title = self.skill.name
         if self.kind in self.THING_KINDS:
             from .things import recognize
-            self.thing_id = recognize(self.title, self.kind)
+            # A seed's variety names its crop type too ("Tomate" + "Ochsenherz")
+            self.thing_id = recognize(f"{self.title} {self.variety}" if self.variety else self.title, self.kind)
         else:
             self.thing_id = None
         super().save(*args, **kwargs)
@@ -413,8 +483,10 @@ class Listing(RandomIdMixin, models.Model):
 
     @property
     def display_title(self):
-        """The skill's name in the reader's language, else the title."""
-        return self.skill.get_name() if self.skill_id else self.title
+        """The skill's name in the reader's language, else the title, with a seed's variety."""
+        if self.skill_id:
+            return self.skill.get_name()
+        return f"{self.title} ‘{self.variety}’" if self.variety else self.title
 
     @property
     def kind_icon(self):
@@ -477,6 +549,66 @@ class Listing(RandomIdMixin, models.Model):
     @property
     def point(self):
         return self.place[1]
+
+    @property
+    def latitude(self):
+        """Its latitude in degrees (north positive), if it has a place."""
+        point = self.point
+        return None if point is None else point.y
+
+    @property
+    def latitude_display(self):
+        """"51° N", "33° S"."""
+        latitude = self.latitude
+        if latitude is None:
+            return ""
+        return f"{int(abs(latitude) + 0.5)}° {'N' if latitude >= 0 else 'S'}"
+
+    @property
+    def koppen(self):
+        """The Köppen-Geiger class of a seed's place ("Cfb"), "" if unknown."""
+        if self.kind != self.KIND_SEEDS or self.point is None:
+            return ""
+        from .climate import koppen_at
+        return koppen_at(self.point.y, self.point.x)
+
+    @property
+    def climate(self):
+        """The climate zone of a seed's place (CLIMATE_CHOICES), "" if unknown."""
+        return self.climate_for_koppen(self.koppen)
+
+    def get_climate_display(self):
+        return dict(self.CLIMATE_CHOICES).get(self.climate, "")
+
+    @property
+    def climate_name(self):
+        """"Temperate", without the description."""
+        return self.get_climate_display().split(":")[0]
+
+    @staticmethod
+    def thing_categories(thing, kind):
+        """The gift categories of a seed or a vehicle, set from what it is rather than
+        chosen: its thing's ("Health & Body care" for medicinal herbs, "Clothing &
+        Textiles" for dye plants), and for seeds always "Seeds & Plants"."""
+        slugs = {thing.category.slug} if thing is not None and thing.category_id else set()
+        if kind == Listing.KIND_SEEDS:
+            slugs.add("seeds-plants")
+        return list(ListingCategory.objects.filter(slug__in=slugs))
+
+    @staticmethod
+    def climate_for_koppen(code):
+        """The climate zone of a Köppen-Geiger class ("Cfb" is temperate), or ""."""
+        return next((zone for zone, codes in Listing.KOPPEN.items() if code in codes), "")
+
+    @staticmethod
+    def climates_fit(a, b):
+        """Whether seeds from climate zone a fit zone b; unknown zones always fit."""
+        return not (a and b) or b in Listing.CLIMATE_FITS.get(a, {a})
+
+    @property
+    def seed_age(self):
+        """How many years ago the seeds were harvested, if known."""
+        return timezone.localdate().year - self.harvest_year if self.harvest_year else None
 
     @property
     def country(self):

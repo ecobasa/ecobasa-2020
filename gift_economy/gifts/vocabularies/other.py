@@ -22,7 +22,7 @@ OTHER = [
     ("guitar", "musical-instrument", "music-instruments", "Guitar", "Gitarre", "Guitarra", "Guitare", "Ukulele"),
     ("piano", "musical-instrument", "music-instruments", "Piano", "Klavier", "Piano", "Piano", "Keyboard|E-Piano"),
     ("drum", "musical-instrument", "music-instruments", "Drum", "Trommel", "Tambor", "Tambour", "Djembe|Schlagzeug|drum kit|Cajon"),
-    ("laptop", "", "electronics-computers", "Laptop", "Laptop", "Portátil", "Ordinateur portable", "Notebook|Computer|PC|Rechner|Tablet"),
+    ("laptop", "", "electronics-computers", "Laptop", "Laptop", "Portátil", "Ordinateur portable", "Notebook|Computer|Rechner|Tablet"),
     ("phone", "", "electronics-computers", "Phone", "Handy", "Teléfono", "Téléphone", "Smartphone|Mobiltelefon"),
     ("toys", "", "children-toys", "Toys", "Spielzeug", "Juguetes", "Jouets", "Spielsachen|Lego|Puppe|doll|Brettspiel|board game|Spiele|games"),
     ("pram", "", "children-toys", "Pram", "Kinderwagen", "Cochecito", "Poussette", "Buggy|stroller|Babytrage|Tragetuch|baby carrier"),

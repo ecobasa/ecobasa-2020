@@ -81,7 +81,6 @@ MATERIALS = [
     ("manure", "", "garden-farm", "Manure", "Mist", "Estiércol", "Fumier", "Pferdemist|Kuhmist|dung|Dünger|fertiliser|Hühnermist"),
     ("mulch", "", "garden-farm", "Mulch", "Mulch", "Acolchado", "Paillage", "Mulchmaterial|Grasschnitt|grass clippings|Laub|leaves"),
     ("soil", "", "garden-farm", "Soil", "Erde", "Tierra", "Terre", "Mutterboden|Pflanzerde|topsoil|Blumenerde|potting soil"),
-    ("seeds", "", "seeds-plants", "Seeds", "Saatgut", "Semillas", "Graines", "Samen|Saat|semences"),
     ("seedlings", "", "seeds-plants", "Seedlings", "Jungpflanzen", "Plantones", "Jeunes plants", "Setzlinge|Pflänzchen|starts|Ableger|cuttings|Stecklinge"),
     ("fruit-tree", "", "seeds-plants", "Fruit tree", "Obstbaum", "Árbol frutal", "Arbre fruitier", "Obstbäume|Apfelbaum|Birnbaum|Kirschbaum|Edelreiser|scions"),
     ("plant", "", "seeds-plants", "Plant", "Pflanze", "Planta", "Plante", "Staude|Strauch|shrub|Zimmerpflanze|houseplant"),

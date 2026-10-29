@@ -7,7 +7,9 @@ for a "Leiter" finds an offered "ladder", and a wish for a "saw" an offered "jig
 A name's words each have to be in the title, as they are, in the plural ("ladder" in
 "ladders", "Leiter" in "Leitern") or, for words of four letters or more, at the end of a
 compound ("Kreissäge" in "Handkreissäge", "Pflanze" in "Tomatenpflanzen"). The thing
-whose matching name is longest wins: "Stepladder" over "Ladder", "Firewood" over "Wood"."""
+whose matching name is longest wins: "Stepladder" over "Ladder", "Firewood" over "Wood";
+and a narrower thing over a broader one also in the title ("bean seeds" are Beans, "Tomate
+Ochsenherz" a Beefsteak tomato). "Tomatensamen" is read as "Tomaten" + "Samen"."""
 
 import re
 
@@ -17,17 +19,25 @@ MIN_WORD = 3
 MIN_COMPOUND = 4
 # Plural endings: "ladder"–"ladders", "Leiter"–"Leitern", "brush"–"brushes"
 MAX_PLURAL = 2
+# German compounds that end in what they are seeds of: "Tomatensamen", "Gemüsesaatgut"
+SEED_ENDINGS = ("saatgut", "samen", "saat")
 
 _cache = None
 
 
 def clear_cache():
-    global _cache
-    _cache = None
+    global _cache, _names_cache
+    _cache = _names_cache = None
 
 
 def _words(text):
-    return [word for word in re.findall(r"\w+", text.casefold()) if len(word) >= MIN_WORD and not word.isdigit()]
+    # "E-Bike", "E-Lastenrad": a one-letter prefix belongs to its word
+    text = re.sub(r"\b(\w)-(?=\w)", r"\1", text.casefold())
+    # Short words say nothing, unless they mix digits and letters ("3D")
+    return [
+        word for word in re.findall(r"\w+", text)
+        if not word.isdigit() and (len(word) >= MIN_WORD or (re.search(r"\d", word) and re.search(r"[^\W\d]", word)))
+    ]
 
 
 def build_index(things):
@@ -42,6 +52,64 @@ def build_index(things):
             if words:
                 names.append((words, thing.pk, thing.kind))
     return names, parents
+
+
+# Kinds of listing whose title has to be a name from their vocabulary: matching seeds and
+# vehicles depends on knowing exactly which crop or vehicle it is
+WHITELISTED_KINDS = ("seeds", "vehicle")
+
+_names_cache = None
+
+
+def _names():
+    """{vocabulary: {name in any language, folded: (thing id, the name)}}, cached."""
+    global _names_cache
+    if _names_cache is None:
+        from .models import Thing
+        _names_cache = {}
+        for thing in Thing.objects.all():
+            names = _names_cache.setdefault(thing.kind, {})
+            for name in list(thing.names.values()) + list(thing.other_names):
+                names.setdefault(" ".join(name.casefold().split()), (thing.pk, name))
+    return _names_cache
+
+
+def thing_named(name, kind):
+    """The id of the thing of the kind's vocabulary called exactly that, in any language
+    or by one of its other names, else None."""
+    found = _names().get(kind, {}).get(" ".join((name or "").casefold().split()))
+    return found[0] if found else None
+
+
+def suggest(q, kind, lang="en", limit=15):
+    """Names from the kind's vocabulary for what is being typed: in the reader's language
+    or by one of a thing's other names (a regional word like "Paradeiser", a botanical
+    name); only if none fits, in another language ("Tomato" typed in German). Each thing
+    once, names starting with what was typed first."""
+    from .models import Thing
+    q = " ".join(q.casefold().split())
+    if len(q) < 2:
+        return []
+
+    def fits(name):
+        folded = " ".join(name.casefold().split())
+        return q in folded, folded.startswith(q) or f" {q}" in folded
+
+    own, foreign = [], []
+    for thing in Thing.objects.filter(kind=kind).only("names", "other_names"):
+        reader = thing.get_name(lang)
+        for name in [reader, *thing.other_names]:
+            found, starts = fits(name)
+            if found:
+                own.append((not starts, name.casefold(), name))
+                break
+        else:
+            for name in thing.names.values():
+                found, starts = fits(name)
+                if found:
+                    foreign.append((not starts, name.casefold(), name))
+                    break
+    return [name for *_, name in sorted(own or foreign)][:limit]
 
 
 def _index():
@@ -73,11 +141,15 @@ ANY_VOCABULARY = ("other", None)
 def recognize(title, kind=None, index=None):
     """The id of the thing in the title, in the vocabulary of the listing's kind (in all of
     them for "other" things), or None."""
-    names, _parents = index or _index()
+    names, parents = index or _index()
     title_words = _words(title or "")
     if not title_words:
         return None
-    best, best_score = None, 0
+    title_words += [
+        word[:-len(ending)] for word in title_words for ending in SEED_ENDINGS
+        if word.endswith(ending) and len(word) - len(ending) >= MIN_WORD
+    ]
+    scores = {}
     for words, thing_id, vocabulary in names:
         if kind not in ANY_VOCABULARY and vocabulary != kind:
             continue
@@ -88,9 +160,11 @@ def recognize(title, kind=None, index=None):
                 break
             score += len(word) * 2 + fits
         else:
-            if score > best_score:
-                best, best_score = thing_id, score
-    return best
+            scores[thing_id] = max(score, scores.get(thing_id, 0))
+    # A broader thing also in the title gives way to the narrower one
+    broader = {ancestor for thing_id in scores for ancestor in _ancestors(thing_id, parents)[1:]}
+    candidates = {thing_id: score for thing_id, score in scores.items() if thing_id not in broader}
+    return max(candidates, key=candidates.get) if candidates else None
 
 
 def _ancestors(thing_id, parents):
@@ -115,8 +189,12 @@ def recognize_all(Listing, Thing):
     models of a migration). Returns how many were recognized."""
     index = build_index(Thing.objects.all())
     count = 0
-    for listing in Listing.objects.filter(kind__in=("material", "tool", "vehicle", "other")).only("pk", "title", "kind", "thing_id"):
-        thing_id = recognize(listing.title, listing.kind, index)
+    # A migration's model may not have every field yet
+    fields = [f for f in ("title", "variety", "kind", "thing_id") if f in {field.attname for field in Listing._meta.fields}]
+    for listing in Listing.objects.filter(kind__in=("material", "tool", "vehicle", "seeds", "other")).only(*fields):
+        variety = getattr(listing, "variety", "")
+        title = f"{listing.title} {variety}" if variety else listing.title
+        thing_id = recognize(title, listing.kind, index)
         if thing_id != listing.thing_id:
             Listing.objects.filter(pk=listing.pk).update(thing_id=thing_id)
         count += thing_id is not None

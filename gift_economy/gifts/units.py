@@ -8,12 +8,15 @@ PEOPLE = "people"
 UNIT_CHOICES = [
     (PEOPLE, _("people")),
     ("pieces", _("pieces")),
+    ("g", "g"),
     ("kg", "kg"),
     ("m", "m"),
     ("m2", "m²"),
     ("m3", "m³"),
     ("l", _("litres")),
     ("days", _("days")),
+    # Seeds come in packets
+    ("packets", _("packets")),
 ]
 
 # Units that read as a count of something, in the right singular or plural
@@ -22,6 +25,7 @@ _COUNTED = {
     "pieces": ngettext_lazy("%(count)s piece", "%(count)s pieces", "count"),
     "l": ngettext_lazy("%(count)s litre", "%(count)s litres", "count"),
     "days": ngettext_lazy("%(count)s day", "%(count)s days", "count"),
+    "packets": ngettext_lazy("%(count)s packet", "%(count)s packets", "count"),
 }
 
 
