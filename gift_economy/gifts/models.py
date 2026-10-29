@@ -63,6 +63,107 @@ class ListingCategory(models.Model):
         ordering = ["order", "name"]
 
 
+class Thing(models.Model):
+    """A tool, material, vehicle or other thing in every language, with broader and
+    narrower ones: "Leiter", "Échelle" and "Ladder" are one thing, a stepladder is a
+    ladder. Each kind is its own vocabulary (the proxies below, curated in
+    gifts/vocabularies/): a listing's title is recognized in the vocabulary of its kind
+    (things.py), so offers and wishes are matched by what they are, not by the words used."""
+
+    KIND_CHOICES = [
+        ("tool", _("Tools")),
+        ("material", _("Materials")),
+        ("vehicle", _("Vehicles")),
+        ("other", _("Other things")),
+    ]
+
+    slug = models.SlugField(_("Slug"), max_length=60, unique=True)
+    # {"en": "Ladder", "de": "Leiter", …}
+    names = models.JSONField(_("Names"), default=dict)
+    # More names in any language: synonyms, brands people use for it ("Flex", "Kärcher")
+    other_names = models.JSONField(_("Other names"), default=list, blank=True)
+    parent = models.ForeignKey(
+        "self", on_delete=models.SET_NULL, null=True, blank=True, related_name="narrower",
+        verbose_name=_("Broader thing"),
+    )
+    # Which vocabulary it belongs to
+    kind = models.CharField(_("Vocabulary"), max_length=10, choices=KIND_CHOICES, default="tool")
+    category = models.ForeignKey(
+        ListingCategory, on_delete=models.SET_NULL, null=True, blank=True, related_name="things",
+        verbose_name=_("Category"),
+    )
+
+    class Meta:
+        verbose_name = _("Thing")
+        verbose_name_plural = _("Things")
+        ordering = ["slug"]
+
+    def __str__(self):
+        return self.get_name()
+
+    def get_name(self, lang=None):
+        from django.utils.translation import get_language
+        lang = (lang or get_language() or "en").split("-")[0]
+        return self.names.get(lang) or self.names.get("en") or self.slug
+
+    def save(self, *args, **kwargs):
+        if getattr(self, "VOCABULARY", None):
+            self.kind = self.VOCABULARY
+        super().save(*args, **kwargs)
+        from . import things
+        things.clear_cache()
+
+
+class _VocabularyManager(models.Manager):
+    def __init__(self, kind):
+        super().__init__()
+        self.kind = kind
+
+    def get_queryset(self):
+        return super().get_queryset().filter(kind=self.kind)
+
+
+# Each vocabulary on its own, e.g. in the admin
+class ToolThing(Thing):
+    VOCABULARY = "tool"
+    objects = _VocabularyManager(VOCABULARY)
+
+    class Meta:
+        proxy = True
+        verbose_name = _("Tool")
+        verbose_name_plural = _("Vocabulary: tools")
+
+
+class MaterialThing(Thing):
+    VOCABULARY = "material"
+    objects = _VocabularyManager(VOCABULARY)
+
+    class Meta:
+        proxy = True
+        verbose_name = _("Material")
+        verbose_name_plural = _("Vocabulary: materials")
+
+
+class VehicleThing(Thing):
+    VOCABULARY = "vehicle"
+    objects = _VocabularyManager(VOCABULARY)
+
+    class Meta:
+        proxy = True
+        verbose_name = _("Vehicle")
+        verbose_name_plural = _("Vocabulary: vehicles")
+
+
+class OtherThing(Thing):
+    VOCABULARY = "other"
+    objects = _VocabularyManager(VOCABULARY)
+
+    class Meta:
+        proxy = True
+        verbose_name = _("Other thing")
+        verbose_name_plural = _("Vocabulary: other things")
+
+
 def themed_choices(categories):
     """Categories as choices grouped by their themes, e.g. for a select's optgroups."""
     groups = {}
@@ -199,6 +300,12 @@ class Listing(RandomIdMixin, models.Model):
         verbose_name=_("Skill"),
     )
     title = models.CharField(_("Title"), max_length=255, blank=True)
+    # What a thing is, recognized in its title in any language (things.recognize): matched
+    # by it, and by broader or narrower things, instead of by the title's words
+    thing = models.ForeignKey(
+        Thing, on_delete=models.SET_NULL, null=True, blank=True, related_name="listings",
+        verbose_name=_("Recognized as"),
+    )
     description = models.TextField(_("Description"), blank=True)
     image = models.ImageField(_('image'), upload_to='gifts-images', null=True, blank=True)
     quantity = models.PositiveIntegerField(_("How many / how much?"), null=True, blank=True)
@@ -273,6 +380,11 @@ class Listing(RandomIdMixin, models.Model):
             self.owner = None
         if self.skill_id and not self.title:
             self.title = self.skill.name
+        if self.kind in self.THING_KINDS:
+            from .things import recognize
+            self.thing_id = recognize(self.title, self.kind)
+        else:
+            self.thing_id = None
         super().save(*args, **kwargs)
 
     def get_absolute_url(self) -> str:

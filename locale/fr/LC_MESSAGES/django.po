@@ -4376,6 +4376,20 @@ msgstr "Compte créé et connecté."
 #~ msgstr ""
 #~ "Qui tu es, ce que tu sais faire ou peux apporter, et comment tu viendrais."
 
+msgid "Thing"
+msgstr "Objet"
+
+msgid "Other names"
+msgstr "Autres noms"
+
+msgid "Broader thing"
+msgstr "Terme générique"
+
+msgid "Recognized as"
+msgstr "Reconnu comme"
+
+msgid "Same kind of thing"
+msgstr "Même type d'objet"
 msgid "To lend"
 msgstr "À prêter"
 
@@ -4595,3 +4609,33 @@ msgstr "Prête des outils au lieu de les acheter deux fois. On demande les jours
 
 msgid "The cargo bike, the car, the trailer, the van: book them by the day or the hour, and see every booking in the community's calendar."
 msgstr "Le vélo cargo, la voiture, la remorque, la camionnette : réserve-les à la journée ou à l'heure et vois chaque réservation dans le calendrier de la communauté."
+
+msgid "Tools"
+msgstr "Outils"
+
+msgid "Materials"
+msgstr "Matériaux"
+
+msgid "Vehicles"
+msgstr "Véhicules"
+
+msgid "Other things"
+msgstr "Autres objets"
+
+msgid "Vocabulary"
+msgstr "Vocabulaire"
+
+msgid "Vocabulary: tools"
+msgstr "Vocabulaire : outils"
+
+msgid "Vocabulary: materials"
+msgstr "Vocabulaire : matériaux"
+
+msgid "Vocabulary: vehicles"
+msgstr "Vocabulaire : véhicules"
+
+msgid "Other thing"
+msgstr "Autre objet"
+
+msgid "Vocabulary: other things"
+msgstr "Vocabulaire : autres objets"

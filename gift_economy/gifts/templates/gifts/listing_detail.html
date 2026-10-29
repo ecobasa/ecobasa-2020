@@ -77,6 +77,7 @@
           <span class="pill bg-purple">{% if listing.community %}{% trans "from your community" %}{% else %}{% trans "from me" %}{% endif %}</span>
         {% endif %}
         {% if listing.kind != "other" %}<span class="pill {{ listing.colour }}"><i class="fa-solid {{ listing.kind_icon }} mr-1"></i>{{ listing.kind_label }}</span>{% endif %}
+        {% if listing.thing %}<span class="pill bg-primary" title="{% trans 'Recognized as' %}"><i class="fa-solid fa-tag mr-1"></i>{{ listing.thing }}</span>{% endif %}
         {% for cat in listing.categories.all %}
           <span class="pill bg-primary"><i class="fa-solid {{ cat.icon }} mr-1"></i>{{ cat }}</span>
         {% endfor %}

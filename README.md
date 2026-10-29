@@ -118,6 +118,15 @@ covered in parts, and an offer given away in parts: each exchange says how much 
 or takes (`matches.Contribution`). Covered wishes and given-away offers drop off the lists;
 a skill can be shared again and again.
 
+Things have curated vocabularies like skills, one per kind: tools, materials, vehicles and
+other things (`gift_economy/gifts/vocabularies/`, in en/de/es/fr with synonyms and broader
+things: a stepladder is a ladder, a long john is a cargo bike). The thing in a listing's
+title is recognized in the vocabulary of its kind (`gifts.Thing`, `Listing.thing`), also in
+plurals and German compounds ("Handkreissäge"), and matching goes by it: the same thing
+or a broader or narrower one fits, in any language. Each vocabulary is editable in the
+admin; after editing the files, `python manage.py load_vocabularies` loads them and
+recognizes existing listings again.
+
 ## Lending, tool libraries and car sharing
 
 Tools, vehicles (`Listing.KIND_VEHICLE`: a cargo bike, a car, a trailer, a van) and other
