@@ -309,3 +309,10 @@ def test_a_projects_helping_hands_keep_their_amount(user, user_client):
     })
     hands.refresh_from_db()
     assert hands.quantity == 3 and hands.unit == "people"
+
+
+@pytest.mark.django_db
+def test_knowledge_and_helping_hands_ask_what_for(user_client):
+    content = user_client.get(reverse("gifts:create")).content.decode()
+    assert "What for?" in content and "e.g. building the roof truss" in content
+    assert content.count('name="title"') == 1

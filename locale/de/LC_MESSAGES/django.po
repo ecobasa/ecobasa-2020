@@ -1223,8 +1223,11 @@ msgid "Help on site, with or without a particular skill."
 msgstr "Hilfe vor Ort, mit oder ohne bestimmte Fähigkeit."
 
 #: gifts/templates/gifts/listing_form.html:64
-msgid "For knowledge or helping hands: what for, if no skill says it."
-msgstr "Bei Wissen oder helfenden Händen: wofür, wenn keine Fähigkeit es sagt."
+msgid "What for?"
+msgstr "Wofür?"
+
+msgid "e.g. building the roof truss, planning our food forest, moving house on Saturday"
+msgstr "z. B. Dachstuhl bauen, unseren Waldgarten planen, Umzug am Samstag"
 
 #: gifts/templates/gifts/mine.html:4 gifts/templates/gifts/mine.html:11
 #: templates/_navbar.html:154 templates/dashboard/base.html:25

@@ -59,9 +59,14 @@
     </fieldset>
 
     <div x-show="!isThing" x-cloak>{{ form.skill_name|as_crispy_field }}<datalist id="skill-suggestions"></datalist></div>
-    <div x-show="!isSkill">
-      {{ form.title|as_crispy_field }}
-      <p class="text-xs -mt-2 mb-2" x-show="!isThing" x-cloak>{% trans "For knowledge or helping hands: what for, if no skill says it." %}</p>
+    {# A thing's name; for knowledge or helping hands what they're for, if no skill says it #}
+    <div x-show="!isSkill" id="div_id_title" class="form-group">
+      <label for="id_title" class="col-form-label">
+        <span x-show="isThing">{{ form.title.label }}</span><span x-show="!isThing" x-cloak>{% trans "What for?" %}</span>
+      </label>
+      {{ form.title }}
+      {% for error in form.title.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+      <p class="text-xs mt-1" x-show="!isThing" x-cloak>{% trans "e.g. building the roof truss, planning our food forest, moving house on Saturday" %}</p>
     </div>
     {# An amount for things, and for a project's needs ("2 people") #}
     <div class="flex gap-4" x-show="isThing || {{ form.instance.project_id|yesno:'true,false' }}">

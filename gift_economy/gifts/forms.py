@@ -66,6 +66,7 @@ class ListingForm(forms.ModelForm):
         self.fields["unit"].choices = [("", _("no unit"))] + list(self.fields["unit"].choices)[1:]
         self.fields["level"].choices = [("", "—")] + Listing.LEVEL_CHOICES
         self.fields["image"].label = _("Photo")
+        self.fields["title"].widget.attrs["class"] = "textinput form-input"
         if self.instance.pk and self.instance.skill_id:
             self.initial["skill_name"] = self.instance.skill.get_name()
 
