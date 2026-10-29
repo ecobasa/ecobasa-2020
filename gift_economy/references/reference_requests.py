@@ -30,8 +30,15 @@ REPLY_MARKER = "## ecobasa: write above this line ##"
 
 
 def exchange_dates(match):
-    """(start, end) of what happened: the stay, or the agreed date (a counter-proposal's if
-    that is what was accepted) with no end. (None, None) if there was no date."""
+    """(start, end) of what happened: the stay, the loan, or the agreed date (a
+    counter-proposal's if that is what was accepted) with no end. (None, None) if there
+    was no date."""
+    try:
+        loan = match.loan
+    except ObjectDoesNotExist:
+        loan = None
+    if loan:
+        return loan.starts_at, loan.ends_at
     try:
         details = match.volunteer_details
     except ObjectDoesNotExist:

@@ -91,11 +91,17 @@ def detail(request, slug):
     skills = [(listing, [o.owner for o in holders.pop(listing.skill_id, [])]) for listing in community_skills]
     skills += [(offers[0], [o.owner for o in offers]) for offers in holders.values()]
     skills.sort(key=lambda pair: pair[0].display_title)
-    gifts = sorted(
+    things = sorted(
         [l for l in listings.filter(type=Listing.TYPE_OFFER, project=None).exclude(kind=Listing.KIND_SKILL)]
         + [o for o in member_offers if o.kind != Listing.KIND_SKILL],
         key=lambda listing: listing.display_title,
     )
+    # What the community and its members lend (its tool library), apart from the gifts,
+    # each with whether it is lent right now
+    library = [listing for listing in things if listing.lends_out]
+    gifts = [listing for listing in things if not listing.lends_out]
+    for listing in library:
+        listing.lent_now_loan = listing.lent_now()
     skill_wishes = sorted(
         listings.filter(type=Listing.TYPE_WISH, project=None).exclude(skill=None), key=lambda listing: listing.display_title,
     )
@@ -134,6 +140,7 @@ def detail(request, slug):
         # Each skill once, with the members who have it too; and the gifts on offer
         "skills":           skills,
         "gifts":            gifts,
+        "library":          library,
         "learn_skill":      learn_skill,
         "skill_wishes":     skill_wishes,
         "user_levels_json": user_levels_json,

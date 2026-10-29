@@ -96,7 +96,17 @@ class ListingQuerySet(models.QuerySet):
             | Exists(accepted.filter(quantity=None))
             | Q(quantity__lte=Coalesce(Subquery(promised), 0))
         )
-        return self.current().exclude(Q(kind__in=Listing.USED_UP_KINDS) | Q(type=Listing.TYPE_WISH, kind__in=Listing.NEED_KINDS), used_up)
+        # A tool to lend comes back, so lending it doesn't use it up
+        used_up_kinds = Q(kind__in=Listing.USED_UP_KINDS) & ~Q(type=Listing.TYPE_OFFER, lend=True)
+        return self.current().exclude(used_up_kinds | Q(type=Listing.TYPE_WISH, kind__in=Listing.NEED_KINDS), used_up)
+
+    def managed_by(self, user):
+        """What a person answers for: their own, and their communities' (as ambassador)."""
+        return self.filter(Q(owner=user, community=None) | Q(community__owner=user))
+
+    def to_lend(self):
+        """Tools and vehicles to lend (they come back), as opposed to given away."""
+        return self.filter(type=Listing.TYPE_OFFER, kind__in=Listing.LEND_KINDS, lend=True)
 
     def of(self, holder):
         """What a person or a community offers and wishes for (its projects' too)."""
@@ -122,6 +132,8 @@ class Listing(RandomIdMixin, models.Model):
 
     KIND_MATERIAL = "material"
     KIND_TOOL = "tool"
+    # A cargo bike, a car, a trailer, a van: mostly lent rather than given away
+    KIND_VEHICLE = "vehicle"
     KIND_OTHER = "other"
     # Offered: a skill they share or teach. Wished for: a skill they want to learn by doing.
     KIND_SKILL = "skill"
@@ -130,12 +142,15 @@ class Listing(RandomIdMixin, models.Model):
     KIND_CHOICES = [
         (KIND_MATERIAL, _("Material")),
         (KIND_TOOL, _("Tool")),
+        (KIND_VEHICLE, _("Vehicle")),
         (KIND_OTHER, _("Other")),
         (KIND_SKILL, _("Skill")),
         (KIND_KNOWLEDGE, _("Knowledge")),
         (KIND_HANDS, _("Helping hands")),
     ]
-    THING_KINDS = (KIND_MATERIAL, KIND_TOOL, KIND_OTHER)
+    THING_KINDS = (KIND_MATERIAL, KIND_TOOL, KIND_VEHICLE, KIND_OTHER)
+    # What can be lent instead of given away: tools, vehicles and other things
+    LEND_KINDS = (KIND_TOOL, KIND_VEHICLE, KIND_OTHER)
     SKILL_KINDS = (KIND_SKILL, KIND_KNOWLEDGE, KIND_HANDS)
     # Given away once (in parts, with a quantity); skills, knowledge and helping hands
     # can be shared again and again
@@ -144,14 +159,14 @@ class Listing(RandomIdMixin, models.Model):
     # a skill stays until its owner says otherwise
     NEED_KINDS = (KIND_KNOWLEDGE, KIND_HANDS)
     KIND_ICONS = {
-        KIND_MATERIAL: "fa-cubes", KIND_TOOL: "fa-screwdriver-wrench", KIND_OTHER: "fa-gift",
+        KIND_MATERIAL: "fa-cubes", KIND_TOOL: "fa-screwdriver-wrench", KIND_VEHICLE: "fa-van-shuttle", KIND_OTHER: "fa-gift",
         KIND_SKILL: "fa-graduation-cap", KIND_KNOWLEDGE: "fa-lightbulb", KIND_HANDS: "fa-handshake-angle",
     }
     # Pill colour: skills purple, things in the primary colour
     KIND_COLOURS = {kind: "bg-purple" for kind in SKILL_KINDS}
     # Font Awesome code points for map markers: the kind, else a gift (offer) or heart (wish)
     KIND_GLYPHS = {
-        KIND_MATERIAL: 0xF1B3, KIND_TOOL: 0xF7D9, KIND_SKILL: 0xF19D, KIND_KNOWLEDGE: 0xF0EB, KIND_HANDS: 0xF4C4,
+        KIND_MATERIAL: 0xF1B3, KIND_TOOL: 0xF7D9, KIND_VEHICLE: 0xF5B6, KIND_SKILL: 0xF19D, KIND_KNOWLEDGE: 0xF0EB, KIND_HANDS: 0xF4C4,
     }
 
     LEVEL_BEGINNER = "beginner"
@@ -192,6 +207,9 @@ class Listing(RandomIdMixin, models.Model):
     # level it looks for
     level = models.CharField(_("Level"), max_length=20, choices=LEVEL_CHOICES, blank=True)
     available = models.BooleanField(_("Available to teach / share"), default=True)
+    # A tool or vehicle lent for some days that comes back (offer), or to borrow (wish);
+    # requests for it say from when until when (matches.Loan)
+    lend = models.BooleanField(_("To lend"), default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     # A person's listing. A community's has no owner: its ambassador manages it.
@@ -292,7 +310,14 @@ class Listing(RandomIdMixin, models.Model):
 
     @property
     def kind_label(self):
-        """The kind in words, by which side it is on: "Skill" offered, "Learn a skill" wished."""
+        """The kind in words, by which side it is on: "Skill" offered, "Learn a skill" wished;
+        "Tool to lend", "Vehicle to borrow", "To lend"."""
+        if self.lend and self.kind == self.KIND_TOOL:
+            return _("Tool to lend") if self.is_offer else _("Tool to borrow")
+        if self.lend and self.kind == self.KIND_VEHICLE:
+            return _("Vehicle to lend") if self.is_offer else _("Vehicle to borrow")
+        if self.lend:
+            return _("To lend") if self.is_offer else _("To borrow")
         if self.kind == self.KIND_SKILL and self.is_wish:
             return _("Learn a skill") if self.owner_id else _("Skill")
         return self.get_kind_display()
@@ -369,7 +394,10 @@ class Listing(RandomIdMixin, models.Model):
     @property
     def can_run_out(self):
         """Whether exchanges use it up: things, and wishes for knowledge or helping hands.
-        A skill can be shared again and again, and someone can keep learning one."""
+        A skill can be shared again and again, and someone can keep learning one, and a
+        tool to lend comes back."""
+        if self.lends_out:
+            return False
         return self.kind in self.USED_UP_KINDS or (self.is_wish and self.kind in self.NEED_KINDS)
 
     @property
@@ -398,6 +426,9 @@ class Listing(RandomIdMixin, models.Model):
         open, however often it is shared."""
         if self.covered_at:
             return self.STATUS_COVERED
+        if self.lends_out:
+            # It comes back after each loan: when it is lent shows in its calendar
+            return self.STATUS_OPEN
         accepted, waiting = self._contributions_by_status()
         if self.can_run_out and accepted and (
             self.quantity is None
@@ -437,6 +468,40 @@ class Listing(RandomIdMixin, models.Model):
 
     def promised_by(self):
         return [c.match.from_user for c in self.promises]
+
+    # ── Lending ─────────────────────────────────────────────────────
+    @property
+    def lends_out(self):
+        """A tool or vehicle to lend, as opposed to one given away (or wished to borrow)."""
+        return self.lend and self.is_offer
+
+    def loans(self, statuses=None):
+        """The loans of a thing to lend (matches.Loan), each with its match, by start."""
+        from gift_economy.matches.models import Loan, Match
+        statuses = statuses or (Match.STATUS_ACCEPTED,)
+        return Loan.objects.filter(
+            match__contributions__listing=self, match__status__in=statuses,
+        ).select_related("match__from_user").distinct().order_by("starts_at")
+
+    def upcoming_loans(self):
+        """The agreed loans that haven't ended yet, for who wants to borrow it too."""
+        return self.loans().filter(ends_at__gt=timezone.now())
+
+    def lent_now(self, moment=None):
+        """The loan that brings it back last if all of it is lent right now, else None."""
+        moment = moment or timezone.now()
+        current = [loan for loan in self.loans() if loan.starts_at <= moment < loan.ends_at]
+        if len(current) < (self.quantity or 1):
+            return None
+        return max(current, key=lambda loan: loan.ends_at)
+
+    def is_free(self, starts_at, ends_at, exclude_match=None):
+        """Whether it can be lent from starts_at until ends_at: fewer agreed loans overlap
+        than there are of it (a quantity of 3 ladders lends 3 at once)."""
+        overlapping = self.loans().filter(starts_at__lt=ends_at, ends_at__gt=starts_at)
+        if exclude_match is not None:
+            overlapping = overlapping.exclude(match=exclude_match)
+        return overlapping.count() < (self.quantity or 1)
 
     # ── matches.Match target protocol ───────────────────────────────
     def get_match_owner(self):

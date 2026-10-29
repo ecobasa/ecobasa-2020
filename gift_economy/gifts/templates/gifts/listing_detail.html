@@ -113,6 +113,23 @@
     {% endif %}
   </div>
 
+  {# ── When a tool to lend is already lent ── #}
+  {% if listing.lends_out %}
+  <div class="mt-6">
+    <h2 class="text-lg font-semibold mb-2"><i class="fa-regular fa-calendar mr-1"></i>{% trans "Already lent" %}</h2>
+    {% if upcoming_loans %}
+      <ul class="list-none p-0 flex flex-wrap gap-2">
+        {% for loan in upcoming_loans %}
+          <li class="pill bg-green text-sm">{{ loan.period }}</li>
+        {% endfor %}
+      </ul>
+      {% if listing.quantity and listing.quantity > 1 %}<p class="text-xs mt-1">{% blocktrans count counter=listing.quantity %}There is {{ counter }} of it to lend.{% plural %}There are {{ counter }} of them to lend at once.{% endblocktrans %}</p>{% endif %}
+    {% else %}
+      <p class="text-sm">{% trans "Not lent on any coming day: ask for the days you need it." %}</p>
+    {% endif %}
+  </div>
+  {% endif %}
+
   {# ── Who it belongs to: a person, or a community (and its project) ── #}
   {% with holder=listing.holder %}{% if holder %}
   <div class="mt-8">
@@ -191,10 +208,27 @@
           {{ form.proposed_lat }}
           {{ form.proposed_lon }}
         </div>
+        {% if listing.lend %}
+        {# Borrowed for whole days, or for some hours with times #}
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-1">
+          <div class="form-group">
+            <label class="form-label" for="{{ form.borrow_from.id_for_label }}">{% if listing.is_offer %}{% trans "Borrow from" %}{% else %}{% trans "Lend from" %}{% endif %}</label>
+            <div class="flex gap-2">{{ form.borrow_from }}<span class="w-32">{{ form.borrow_from_time }}</span></div>
+            {% for error in form.borrow_from.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="{{ form.borrow_to.id_for_label }}">{% if listing.is_offer %}{% trans "Borrow until" %}{% else %}{% trans "Lend until" %}{% endif %}</label>
+            <div class="flex gap-2">{{ form.borrow_to }}<span class="w-32">{{ form.borrow_to_time }}</span></div>
+            {% for error in form.borrow_to.errors|add:form.borrow_to_time.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+          </div>
+        </div>
+        <p class="text-xs mb-4">{% trans "Times are optional: without them it is for whole days. Without a last day, for one day." %}</p>
+        {% else %}
         <div class="form-group mb-4">
           <label class="form-label">{% trans "Proposed date (optional)" %}</label>
           {{ form.proposed_date }}
         </div>
+        {% endif %}
         <button type="submit" class="btn">
           <i class="fa fa-paper-plane mr-2"></i>
           {% if listing.is_offer %}{% trans "Express Interest" %}{% else %}{% trans "Send offer" %}{% endif %}
