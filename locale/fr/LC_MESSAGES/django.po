@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ecobasa\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-30 11:42+0100\n"
+"POT-Creation-Date: 2026-10-30 15:11+0100\n"
 "PO-Revision-Date: 2026-10-23 12:00+0200\n"
 "Last-Translator: ecobasa\n"
 "Language-Team: fr\n"
@@ -3589,78 +3589,130 @@ msgid "Given"
 msgstr "Données"
 
 #: homepage/templates/homepage/homepage.html:20
-msgid "What you can do on ecobasa"
-msgstr "Ce que tu peux faire sur ecobasa"
+msgid "ecobasa is made for"
+msgstr "ecobasa est fait pour"
 
-#: homepage/templates/homepage/homepage.html:24
-msgid "Give and wish"
-msgstr "Donner et souhaiter"
-
-#: homepage/templates/homepage/homepage.html:25
+#: homepage/templates/homepage/homepage.html:22
 msgid ""
-"Offer what you don't need, wish for what you do. We suggest what fits nearby."
+"Communities, permaculture projects and farms – and everyone who wants to "
+"visit them, support them or start something of their own."
 msgstr ""
-"Offre ce dont tu n'as pas besoin, souhaite ce qu'il te faut. Nous te "
-"suggérons ce qui correspond près de chez toi."
+"Les communautés, les projets en permaculture et les fermes – et toutes "
+"celles et ceux qui veulent les visiter, les soutenir ou lancer leur propre "
+"projet."
+
+#: homepage/templates/homepage/homepage.html:23
+msgid ""
+"Share your surplus and close loops beyond your own land. Use your public "
+"community profile like your own website."
+msgstr "Partagez vos surplus et bouclez les cycles au-delà de votre propre terrain. Utilisez le profil public de votre communauté comme votre propre site web."
 
 #: homepage/templates/homepage/homepage.html:29
-msgid "Share skills"
-msgstr "Partager des savoir-faire"
+msgid "Sharing things"
+msgstr "Partager des choses"
 
-#: homepage/templates/homepage/homepage.html:30
-msgid "Teach, learn by doing, and volunteer at communities and their projects."
+#: homepage/templates/homepage/homepage.html:32
+msgid "Gifts and wishes – we suggest Matches nearby"
+msgstr "Dons et souhaits – nous te proposons des Matchs près de chez toi"
+
+#: homepage/templates/homepage/homepage.html:33
+msgid ""
+"Swap seeds & plants: open-pollinated, with variety and harvest year, as well "
+"as young plants, cuttings and scion wood"
 msgstr ""
-"Enseigne, apprends en faisant et aide dans des communautés et leurs projets."
+"Échanger des graines et plantes : reproductibles, avec variété et année de "
+"récolte, ainsi que jeunes plants, boutures et greffons"
 
 #: homepage/templates/homepage/homepage.html:34
-msgid "Swap seeds"
-msgstr "Échanger des semences"
+msgid "Tool library: lend instead of buying twice, with a lending calendar"
+msgstr ""
+"Outilthèque : prêter au lieu d'acheter en double, avec un calendrier de prêt"
 
 #: homepage/templates/homepage/homepage.html:35
-msgid ""
-"Share the seeds you save, open-pollinated and with their variety, and find "
-"the ones you are looking for: the tomato, the bean, the flowers for the bees."
+msgid "Share vehicles: cargo bike, car, trailer or van, by the day or the hour"
 msgstr ""
-"Partage les semences que tu produis, reproductibles et avec leur variété, et "
-"trouve celles que tu cherches : la tomate, le haricot, les fleurs pour les "
-"abeilles."
+"Partager des véhicules : vélo cargo, voiture, remorque ou camionnette, à la "
+"journée ou à l'heure"
 
-#: homepage/templates/homepage/homepage.html:39
-msgid "Run a tool library"
-msgstr "Gérer une outilthèque"
-
-#: homepage/templates/homepage/homepage.html:40
-msgid ""
-"Lend tools instead of buying them twice. People ask for the days or hours "
-"they need them, and your lending calendar shows who has what when."
+#: homepage/templates/homepage/homepage.html:36
+msgid "Public goods: fruit trees, wood and whatever else is free to everyone"
 msgstr ""
-"Prête des outils au lieu de les acheter deux fois. On demande les jours ou "
-"heures où on en a besoin, et ton calendrier de prêt montre qui a quoi et "
-"quand."
+"Biens communs : arbres fruitiers, bois et tout ce qui est libre pour tout le "
+"monde"
 
-#: homepage/templates/homepage/homepage.html:44
-msgid "Share cars in your community"
-msgstr "Partager des voitures dans ta communauté"
+#: homepage/templates/homepage/homepage.html:37
+msgid "Make your life more moneyless"
+msgstr "Rends ta vie moins dépendante de l'argent"
 
-#: homepage/templates/homepage/homepage.html:45
+#: homepage/templates/homepage/homepage.html:43
+msgid "Knowledge & helping out"
+msgstr "Savoir & coup de main"
+
+#: homepage/templates/homepage/homepage.html:46
+msgid "Share skills: teach and learn by doing"
+msgstr "Partager des compétences : enseigner et apprendre en faisant"
+
+#: homepage/templates/homepage/homepage.html:47
 msgid ""
-"The cargo bike, the car, the trailer, the van: book them by the day or the "
-"hour, and see every booking in the community's calendar."
+"Volunteer stays: help out and get food, a place to sleep and new experience"
 msgstr ""
-"Le vélo cargo, la voiture, la remorque, la camionnette : réserve-les à la "
-"journée ou à l'heure et vois chaque réservation dans le calendrier de la "
-"communauté."
+"Séjours en communauté : donner un coup de main, en échange du repas, d'un "
+"toit et de nouvelles expériences"
 
-#: homepage/templates/homepage/homepage.html:52
+#: homepage/templates/homepage/homepage.html:48
+msgid "Organise and join Community-Tours"
+msgstr "Organiser des Community-Tours et y participer"
+
+#: homepage/templates/homepage/homepage.html:48
+#: homepage/templates/homepage/homepage.html:59
+#: homepage/templates/homepage/homepage.html:60
+msgid "soon"
+msgstr "bientôt"
+
+#: homepage/templates/homepage/homepage.html:49
+msgid "Find inspiring places to visit and live in"
+msgstr "Trouver des lieux inspirants à visiter et où vivre"
+
+#: homepage/templates/homepage/homepage.html:50
+msgid "Start a new community with the people and resources you need"
+msgstr ""
+"Fonder une nouvelle communauté avec les personnes et les ressources dont "
+"vous avez besoin"
+
+#: homepage/templates/homepage/homepage.html:56
+msgid "Coming together"
+msgstr "Se rassembler"
+
+#: homepage/templates/homepage/homepage.html:59
+msgid "Gift circles, in person and online"
+msgstr "Cercles de dons, en personne et en ligne"
+
+#: homepage/templates/homepage/homepage.html:60
+msgid "Communities-Convergences"
+msgstr "Communities-Convergences"
+
+#: homepage/templates/homepage/homepage.html:61
+msgid "Build trust through references"
+msgstr "Créer la confiance grâce aux références"
+
+#: homepage/templates/homepage/homepage.html:62
+msgid "Find like-minded people in your area"
+msgstr "Trouver des personnes partageant tes idées près de chez toi"
+
+#: homepage/templates/homepage/homepage.html:63
+msgid "Co-create a global gift-economy network"
+msgstr "Co-créer un réseau mondial d'économie du don"
+
+#: homepage/templates/homepage/homepage.html:72
 msgid "Success stories from the gift network"
 msgstr "Belles histoires du réseau du don"
 
-#: homepage/templates/homepage/homepage.html:53
+#: homepage/templates/homepage/homepage.html:73
 msgid "What people gave and received on ecobasa, in their own words."
 msgstr ""
 "Ce que des personnes ont donné et reçu sur ecobasa, avec leurs propres mots."
 
-#: homepage/templates/homepage/homepage.html:60
+#: homepage/templates/homepage/homepage.html:80
 msgid "Choose stories for the homepage"
 msgstr "Choisir les histoires de la page d'accueil"
 
@@ -4924,6 +4976,62 @@ msgstr "Tu as été déconnecté·e."
 #: users/views.py:122
 msgid "Account created and logged in."
 msgstr "Compte créé et connecté."
+
+#~ msgid "What you can do on ecobasa"
+#~ msgstr "Ce que tu peux faire sur ecobasa"
+
+#~ msgid "Give and wish"
+#~ msgstr "Donner et souhaiter"
+
+#~ msgid ""
+#~ "Offer what you don't need, wish for what you do. We suggest what fits "
+#~ "nearby."
+#~ msgstr ""
+#~ "Offre ce dont tu n'as pas besoin, souhaite ce qu'il te faut. Nous te "
+#~ "suggérons ce qui correspond près de chez toi."
+
+#~ msgid "Share skills"
+#~ msgstr "Partager des savoir-faire"
+
+#~ msgid ""
+#~ "Teach, learn by doing, and volunteer at communities and their projects."
+#~ msgstr ""
+#~ "Enseigne, apprends en faisant et aide dans des communautés et leurs "
+#~ "projets."
+
+#~ msgid "Swap seeds"
+#~ msgstr "Échanger des semences"
+
+#~ msgid ""
+#~ "Share the seeds you save, open-pollinated and with their variety, and "
+#~ "find the ones you are looking for: the tomato, the bean, the flowers for "
+#~ "the bees."
+#~ msgstr ""
+#~ "Partage les semences que tu produis, reproductibles et avec leur variété, "
+#~ "et trouve celles que tu cherches : la tomate, le haricot, les fleurs pour "
+#~ "les abeilles."
+
+#~ msgid "Run a tool library"
+#~ msgstr "Gérer une outilthèque"
+
+#~ msgid ""
+#~ "Lend tools instead of buying them twice. People ask for the days or hours "
+#~ "they need them, and your lending calendar shows who has what when."
+#~ msgstr ""
+#~ "Prête des outils au lieu de les acheter deux fois. On demande les jours "
+#~ "ou heures où on en a besoin, et ton calendrier de prêt montre qui a quoi "
+#~ "et quand."
+
+#~ msgid "Share cars in your community"
+#~ msgstr "Partager des voitures dans ta communauté"
+
+#~ msgid ""
+#~ "The cargo bike, the car, the trailer, the van: book them by the day or "
+#~ "the hour, and see every booking in the community's calendar."
+#~ msgstr ""
+#~ "Le vélo cargo, la voiture, la remorque, la camionnette : réserve-les à la "
+#~ "journée ou à l'heure et vois chaque réservation dans le calendrier de la "
+#~ "communauté."
 
 #~ msgid "No current projects in this month."
 #~ msgstr "Aucun projet en cours ce mois-ci."

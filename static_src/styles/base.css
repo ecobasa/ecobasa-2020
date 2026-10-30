@@ -98,6 +98,19 @@ nav {
 .container-form    { @apply mx-auto max-w-lg px-6 py-8; }           /* small focused forms */
 .container-auth    { @apply flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8; } /* centered auth pages */
 
+/* ── Homepage: "ecobasa is made for" boxes ────────────────────────── */
+.feature-box {
+	@apply px-8 py-12 rounded-2xl shadow-lg border bg-secondary bg-opacity-75 backdrop-blur-sm;
+	border-color: color-mix(in srgb, var(--accent) 50%, transparent);
+	h2, a, li::marker { color: var(--accent); }
+	a:hover { @apply text-brown; }
+}
+.feature-box-primary { --accent: theme('colors.primary'); }
+.feature-box-purple  { --accent: theme('colors.purple'); }
+.feature-box-green   { --accent: theme('colors.green'); }
+.feature-list { @apply mt-8 mb-0 list-outside pl-5 text-sm font-bold; }
+.soon { @apply ml-1 px-2 py-0.5 rounded-full text-xs bg-brown bg-opacity-10; }
+
 .btn {
  	@apply py-2 px-4 rounded border border-solid box-border font-bold bg-primary bg-opacity-75 text-secondary border-primary;
  	&:hover {
