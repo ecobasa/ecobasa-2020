@@ -164,7 +164,7 @@ def test_every_name_in_the_vocabularies_finds_its_own_thing():
     ("Körneramarant", "amaranth"),
 ])
 def test_recognizes_seeds_by_crop(title, slug):
-    assert _slug_in(title, "seeds") == slug
+    assert _slug_in(title, "seeds_plants") == slug
 
 
 def _slug_in(title, kind):

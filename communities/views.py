@@ -102,9 +102,9 @@ def detail(request, slug):
     # What the community and its members lend (its tool library), apart from the gifts,
     # each with whether it is lent right now
     library = [listing for listing in things if listing.lends_out]
-    # Its seeds (a seed library), apart from the other gifts
-    seeds = [listing for listing in things if listing.kind == Listing.KIND_SEEDS]
-    gifts = [listing for listing in things if not listing.lends_out and listing.kind != Listing.KIND_SEEDS]
+    # Its seeds and plants (a seed library), apart from the other gifts
+    seeds_plants = [listing for listing in things if listing.kind == Listing.KIND_SEEDS_PLANTS]
+    gifts = [listing for listing in things if not listing.lends_out and listing.kind != Listing.KIND_SEEDS_PLANTS]
     for listing in library:
         listing.lent_now_loan = listing.lent_now()
     skill_wishes = sorted(
@@ -152,7 +152,7 @@ def detail(request, slug):
         "skills":           skills,
         "gifts":            gifts,
         "library":          library,
-        "seeds":            seeds,
+        "seeds_plants":     seeds_plants,
         "learn_skill":      learn_skill,
         "skill_wishes":     skill_wishes,
         "user_levels_json": user_levels_json,

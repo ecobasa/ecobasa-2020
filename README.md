@@ -7,7 +7,7 @@ What people and communities do on ecobasa:
 - **Give and wish for things**: materials, tools, anything else, matched nearby.
 - **Share skills**: teach, learn by doing, lend a hand; volunteer at communities and help
   with their projects.
-- **Swap seeds**: seeds are their own kind, with variety, harvest year and whether they are
+- **Swap seeds & plants**: seeds and plants are their own kind, with variety, harvest year and whether they are
   open-pollinated, matched by crop ("Ochsenherz" is a beefsteak tomato); a community can
   keep a seed library.
 - **Run a tool library**: lend tools instead of giving them away. People ask for the days
@@ -122,7 +122,7 @@ or takes (`matches.Contribution`). Covered wishes and given-away offers drop off
 a skill can be shared again and again.
 
 Things have curated vocabularies like skills, one per kind: tools, materials, vehicles,
-seeds and other things (`gift_economy/gifts/vocabularies/`, in en/de/es/fr with synonyms and broader
+seeds & plants and other things (`gift_economy/gifts/vocabularies/`, in en/de/es/fr with synonyms and broader
 things: a stepladder is a ladder, a long john is a cargo bike). The thing in a listing's
 title is recognized in the vocabulary of its kind (`gifts.Thing`, `Listing.thing`), also in
 plurals and German compounds ("Handkreissäge"), and matching goes by it: the same thing
@@ -130,15 +130,15 @@ or a broader or narrower one fits, in any language. Each vocabulary is editable 
 admin; after editing the files, `python manage.py load_vocabularies` loads them and
 recognizes existing listings again.
 
-## Seeds
+## Seeds & plants
 
-Seeds are their own kind of offer and wish (`Listing.KIND_SEEDS`), with the variety
+Seeds and plants are their own kind of offer and wish (`Listing.KIND_SEEDS_PLANTS`), with the variety
 (`Listing.variety`, "Ochsenherz"), the harvest year (how well they still germinate),
 whether they are open-pollinated (their seeds come true when saved again), in packets or
 grams. Their place says where the mother plant grew (for a wish, where they will grow).
 
 A seed or a vehicle is named from its vocabulary only: the title field suggests names
-while typing (`/gifts/api/things/?kind=seeds&q=…`, in any language and by other names
+while typing (`/gifts/api/things/?kind=seeds_plants&q=…`, in any language and by other names
 like "Paradeiser") and the form accepts nothing else, so matching knows exactly which crop
 or vehicle it is. The field is Tagify with one value, looking like a plain text field
 (`templates/_vocabulary_select_js.html`, also for skills and a project's needs); what is
@@ -162,13 +162,13 @@ highlands of the tropics (Bogotá, Quito: Cfb; Addis Ababa: Cwb) are temperate l
 Central Europe. Seeds are only suggested from the same or a neighbouring zone
 (`Listing.CLIMATE_FITS`).
 
-The seed vocabulary (`gift_economy/gifts/vocabularies/seeds.py`) sorts crops like seed
+The seed and plant vocabulary (`gift_economy/gifts/vocabularies/seeds.py` and `plants.py`) sorts crops like seed
 catalogues do, with regional words (Paradeiser, Melanzani, Fisolen, Kukuruz): vegetables by crop and type (tomato → cherry, beefsteak, paste tomato;
 bean → bush, climbing, runner, broad bean …), culinary, medicinal and wild herbs,
 flowers and bee pasture, green manure, grains and pseudo-grains, oil, fibre and dye plants,
 with botanical names and well-known open-pollinated varieties as other names. A wish for
 "Tomatensamen" finds an offered "Ochsenherz"; beans to eat (a material) don't match beans
-to sow. The community page lists its seeds under "Seeds to swap".
+to sow. The community page lists its seeds and plants under "Seeds & plants to swap".
 
 ## Lending, tool libraries and car sharing
 

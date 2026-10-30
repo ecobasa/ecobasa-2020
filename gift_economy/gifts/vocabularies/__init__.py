@@ -16,6 +16,6 @@ VOCABULARIES = {
     "tool": TOOLS,
     "material": MATERIALS,
     "vehicle": VEHICLES,
-    "seeds": SEEDS + PLANTS,
+    "seeds_plants": SEEDS + PLANTS,
     "other": OTHER,
 }

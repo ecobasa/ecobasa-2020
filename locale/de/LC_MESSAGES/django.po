@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ecobasa\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-30 11:42+0100\n"
+"POT-Creation-Date: 2026-10-30 13:05+0100\n"
 "PO-Revision-Date: 2026-10-23 12:00+0200\n"
 "Last-Translator: ecobasa\n"
 "Language-Team: de\n"
@@ -396,8 +396,8 @@ msgid "Gifts on offer"
 msgstr "Angebotene Geschenke"
 
 #: communities/templates/communities/community_detail.html:160
-msgid "Seeds to swap"
-msgstr "Saatgut zum Tauschen"
+msgid "Seeds & plants to swap"
+msgstr "Saatgut & Pflanzen zum Tauschen"
 
 #: communities/templates/communities/community_detail.html:173
 msgid ""
@@ -408,8 +408,8 @@ msgstr ""
 "und Nachbar*innen, wie eine Saatgutbibliothek."
 
 #: communities/templates/communities/community_detail.html:176
-msgid "Add seeds"
-msgstr "Saatgut hinzufügen"
+msgid "Add seeds & plants"
+msgstr "Saatgut & Pflanzen hinzufügen"
 
 #: communities/templates/communities/community_detail.html:182
 msgid "To borrow here"
@@ -982,9 +982,9 @@ msgstr "Materialien"
 msgid "Vehicles"
 msgstr "Fahrzeuge"
 
-#: gift_economy/gifts/models.py:98
-msgid "Seeds"
-msgstr "Saatgut"
+#: gift_economy/gifts/models.py:98 gift_economy/gifts/models.py:282
+msgid "Seeds & plants"
+msgstr "Saatgut & Pflanzen"
 
 #: gift_economy/gifts/models.py:99
 msgid "Other things"
@@ -1067,10 +1067,6 @@ msgstr "Angebot"
 #: gift_economy/gifts/models.py:262 gift_economy/references/models.py:141
 msgid "Wish"
 msgstr "Wunsch"
-
-#: gift_economy/gifts/models.py:282
-msgid "Seeds & plants"
-msgstr "Saatgut & Pflanzen"
 
 #: gift_economy/gifts/models.py:283
 msgid "Other"
@@ -3591,8 +3587,8 @@ msgstr ""
 "Lehren, beim Tun lernen und in Gemeinschaften und ihren Projekten mithelfen."
 
 #: homepage/templates/homepage/homepage.html:34
-msgid "Swap seeds"
-msgstr "Saatgut tauschen"
+msgid "Swap seeds & plants"
+msgstr "Saatgut & Pflanzen tauschen"
 
 #: homepage/templates/homepage/homepage.html:35
 msgid ""
@@ -4904,6 +4900,18 @@ msgstr "Du wurdest abgemeldet."
 #: users/views.py:122
 msgid "Account created and logged in."
 msgstr "Konto erstellt und angemeldet."
+
+#~ msgid "Seeds to swap"
+#~ msgstr "Saatgut zum Tauschen"
+
+#~ msgid "Add seeds"
+#~ msgstr "Saatgut hinzufügen"
+
+#~ msgid "Seeds"
+#~ msgstr "Saatgut"
+
+#~ msgid "Swap seeds"
+#~ msgstr "Saatgut tauschen"
 
 #~ msgid "Your skills"
 #~ msgstr "Deine Fähigkeiten"

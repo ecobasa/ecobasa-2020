@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ecobasa\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-30 11:42+0100\n"
+"POT-Creation-Date: 2026-10-30 13:05+0100\n"
 "PO-Revision-Date: 2026-10-23 12:00+0200\n"
 "Last-Translator: ecobasa\n"
 "Language-Team: fr\n"
@@ -403,8 +403,8 @@ msgid "Gifts on offer"
 msgstr "Cadeaux proposés"
 
 #: communities/templates/communities/community_detail.html:160
-msgid "Seeds to swap"
-msgstr "Semences à échanger"
+msgid "Seeds & plants to swap"
+msgstr "Graines et plantes à échanger"
 
 #: communities/templates/communities/community_detail.html:173
 msgid ""
@@ -415,8 +415,8 @@ msgstr ""
 "membres et voisins, comme une grainothèque."
 
 #: communities/templates/communities/community_detail.html:176
-msgid "Add seeds"
-msgstr "Ajouter des semences"
+msgid "Add seeds & plants"
+msgstr "Ajouter des graines et plantes"
 
 #: communities/templates/communities/community_detail.html:182
 msgid "To borrow here"
@@ -989,9 +989,9 @@ msgstr "Matériaux"
 msgid "Vehicles"
 msgstr "Véhicules"
 
-#: gift_economy/gifts/models.py:98
-msgid "Seeds"
-msgstr "Semences"
+#: gift_economy/gifts/models.py:98 gift_economy/gifts/models.py:282
+msgid "Seeds & plants"
+msgstr "Graines et plantes"
 
 #: gift_economy/gifts/models.py:99
 msgid "Other things"
@@ -1074,10 +1074,6 @@ msgstr "Offre"
 #: gift_economy/gifts/models.py:262 gift_economy/references/models.py:141
 msgid "Wish"
 msgstr "Souhait"
-
-#: gift_economy/gifts/models.py:282
-msgid "Seeds & plants"
-msgstr "Graines et plantes"
 
 #: gift_economy/gifts/models.py:283
 msgid "Other"
@@ -3613,8 +3609,8 @@ msgstr ""
 "Enseigne, apprends en faisant et aide dans des communautés et leurs projets."
 
 #: homepage/templates/homepage/homepage.html:34
-msgid "Swap seeds"
-msgstr "Échanger des semences"
+msgid "Swap seeds & plants"
+msgstr "Échanger des graines et plantes"
 
 #: homepage/templates/homepage/homepage.html:35
 msgid ""
@@ -4924,6 +4920,18 @@ msgstr "Tu as été déconnecté·e."
 #: users/views.py:122
 msgid "Account created and logged in."
 msgstr "Compte créé et connecté."
+
+#~ msgid "Seeds to swap"
+#~ msgstr "Semences à échanger"
+
+#~ msgid "Add seeds"
+#~ msgstr "Ajouter des semences"
+
+#~ msgid "Seeds"
+#~ msgstr "Semences"
+
+#~ msgid "Swap seeds"
+#~ msgstr "Échanger des semences"
 
 #~ msgid "No current projects in this month."
 #~ msgstr "Aucun projet en cours ce mois-ci."

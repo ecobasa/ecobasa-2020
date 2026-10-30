@@ -144,7 +144,7 @@ class ListingForm(forms.ModelForm):
             thing = Thing.objects.filter(pk=thing_id).select_related("category").first()
             if thing is not None or kind in WHITELISTED_KINDS:
                 cleaned["categories"] = Listing.thing_categories(thing, kind)
-        if kind != Listing.KIND_SEEDS:
+        if kind != Listing.KIND_SEEDS_PLANTS:
             cleaned["variety"], cleaned["harvest_year"], cleaned["open_pollinated"] = "", None, False
             cleaned["plant_form"], cleaned["hardiness_zone"] = "", None
         else:

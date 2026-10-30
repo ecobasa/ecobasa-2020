@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ecobasa\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-30 11:42+0100\n"
+"POT-Creation-Date: 2026-10-30 13:05+0100\n"
 "PO-Revision-Date: 2026-10-23 12:00+0200\n"
 "Last-Translator: ecobasa\n"
 "Language-Team: es\n"
@@ -398,8 +398,8 @@ msgid "Gifts on offer"
 msgstr "Regalos ofrecidos"
 
 #: communities/templates/communities/community_detail.html:160
-msgid "Seeds to swap"
-msgstr "Semillas para intercambiar"
+msgid "Seeds & plants to swap"
+msgstr "Semillas y plantas para intercambiar"
 
 #: communities/templates/communities/community_detail.html:173
 msgid ""
@@ -410,8 +410,8 @@ msgstr ""
 "y vecinos, como un banco de semillas."
 
 #: communities/templates/communities/community_detail.html:176
-msgid "Add seeds"
-msgstr "Añadir semillas"
+msgid "Add seeds & plants"
+msgstr "Añadir semillas y plantas"
 
 #: communities/templates/communities/community_detail.html:182
 msgid "To borrow here"
@@ -982,9 +982,9 @@ msgstr "Materiales"
 msgid "Vehicles"
 msgstr "Vehículos"
 
-#: gift_economy/gifts/models.py:98
-msgid "Seeds"
-msgstr "Semillas"
+#: gift_economy/gifts/models.py:98 gift_economy/gifts/models.py:282
+msgid "Seeds & plants"
+msgstr "Semillas y plantas"
 
 #: gift_economy/gifts/models.py:99
 msgid "Other things"
@@ -1067,10 +1067,6 @@ msgstr "Oferta"
 #: gift_economy/gifts/models.py:262 gift_economy/references/models.py:141
 msgid "Wish"
 msgstr "Deseo"
-
-#: gift_economy/gifts/models.py:282
-msgid "Seeds & plants"
-msgstr "Semillas y plantas"
 
 #: gift_economy/gifts/models.py:283
 msgid "Other"
@@ -3591,8 +3587,8 @@ msgstr ""
 "proyectos."
 
 #: homepage/templates/homepage/homepage.html:34
-msgid "Swap seeds"
-msgstr "Intercambiar semillas"
+msgid "Swap seeds & plants"
+msgstr "Intercambiar semillas y plantas"
 
 #: homepage/templates/homepage/homepage.html:35
 msgid ""
@@ -4890,6 +4886,18 @@ msgstr "Has cerrado sesión."
 #: users/views.py:122
 msgid "Account created and logged in."
 msgstr "Cuenta creada y sesión iniciada."
+
+#~ msgid "Seeds to swap"
+#~ msgstr "Semillas para intercambiar"
+
+#~ msgid "Add seeds"
+#~ msgstr "Añadir semillas"
+
+#~ msgid "Seeds"
+#~ msgstr "Semillas"
+
+#~ msgid "Swap seeds"
+#~ msgstr "Intercambiar semillas"
 
 #~ msgid "No current projects in this month."
 #~ msgstr "No hay proyectos actuales este mes."
