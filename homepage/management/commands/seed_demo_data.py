@@ -1,11 +1,13 @@
 """
 Seeds the local dev database with a small, tongue-in-cheek but structurally
-complete demo dataset: users, communities (every type/status), listings
-(offers & wishes, some with photos, in the categories the migrations load),
-skills (every level), skill wishes (user + community), matches (every status, every
-target type), match messages, volunteer details, notifications
-(every tag), and references (every impression and subject type, with
-confirmed/pending/declined skill tags and gift names).
+complete demo dataset: users, communities (every type/status, one with a public
+place), listings (offers & wishes, some with photos, categorized as the listing form
+does), seeds & plants (every plant form, from temperate to tropical climates, with
+hardiness zones), vehicles and tools to lend and borrow (with loans, by the day and by
+the hour, also a community's), a public good, skills (every level), skill wishes
+(user + community), matches (every status, every target type), match messages,
+volunteer details, notifications (every tag), and references (every impression and
+subject type, with confirmed/pending/declined skill tags and gift names).
 
 Safe to re-run — everything is get_or_create'd on a natural-ish key, so
 running it twice won't duplicate data.
@@ -26,7 +28,8 @@ from django.utils import timezone
 
 from communities.models import Community, CommunityPhoto
 from gift_economy.gifts.models import Listing, ListingCategory
-from gift_economy.matches.models import Contribution, Match, MatchMessage, VolunteerDetails
+from gift_economy.gifts.things import WHITELISTED_KINDS
+from gift_economy.matches.models import Contribution, Loan, Match, MatchMessage, VolunteerDetails, loan_span
 from notifications.models import Notification, SKILL_NUDGE_TEXT
 from gift_economy.references.models import Reference, ReferenceSkill
 from gift_economy.references.notifications import notify_reference_created
@@ -46,20 +49,45 @@ def _seed_image(field, filename):
         field.save(filename, File(fh), save=False)
 
 
+def _as_the_form_would(listing, kind=None, category=None):
+    """Its kind (also on older demo data), its categories as the listing form
+    sets them (from what it is once recognized, always for seeds and vehicles, else the
+    one given; none for skills), and no own place where it is just where its person is."""
+    changed = []
+    if kind and listing.kind != kind:
+        listing.kind = kind
+        changed.append("kind")
+    owner = listing.owner
+    if (listing.location and not listing.community_id and owner.location
+            and listing.location.equals_exact(owner.location, 1e-6)):
+        listing.location, listing.location_name = None, ""
+        changed += ["location", "location_name"]
+    if changed:
+        # Saving all of it recognizes what it is again
+        listing.save()
+    if listing.kind in Listing.CATEGORY_KINDS and (listing.thing_id or listing.kind in WHITELISTED_KINDS):
+        listing.categories.set(Listing.thing_categories(listing.thing, listing.kind))
+    elif listing.kind not in Listing.THING_KINDS:
+        listing.categories.clear()
+    elif category:
+        listing.categories.set(ListingCategory.objects.filter(slug=category))
+
+
 class Command(BaseCommand):
     help = "Seed the local dev database with themed demo data (safe to re-run)"
 
     def handle(self, *args, **options):
         users = self._seed_users()
         communities = self._seed_communities(users)
-        categories = self._seed_listing_categories()
-        self._seed_listings(users, categories)
+        self._seed_listings(users)
+        self._seed_seeds_and_plants(users, communities)
         self._seed_community_photos(communities)
         skills = self._seed_skills()
         self._seed_user_skills(users, skills)
         self._seed_community_skills(communities, skills)
         self._seed_skill_wishes(users, communities, skills)
         self._seed_matches_and_notifications(users, communities)
+        self._seed_lending(users, communities)
         self._seed_references(users, communities)
         self._seed_projects(users, communities)
 
@@ -68,11 +96,6 @@ class Command(BaseCommand):
         ))
         for u in users.values():
             self.stdout.write(f"  {u.email}")
-        self.stdout.write(self.style.WARNING(
-            "\nNote: no User.image avatars were seeded (attaching real people's "
-            "photos to fictional profiles felt off) — some Listings and "
-            "Communities do have photos now, see seed_images/SOURCES.md."
-        ))
 
     # ── Users ────────────────────────────────────────────────────────────
 
@@ -120,6 +143,13 @@ class Command(BaseCommand):
                 world="Fights the printer so nobody else has to.",
                 ecobasa_what="A printer that isn't possessed by a bureaucratic demon.",
                 location_name="Utrecht, Netherlands", point=(5.1214, 52.0907),
+            ),
+            dict(
+                email="valeria@ecobasa.demo", name="Valeria Mora",
+                about="Grows cacao, raises seedlings, loses daily arguments with the howler monkeys.",
+                world="Keeps a seed bank in a fridge that also, regrettably, holds the cheese.",
+                ecobasa_what="Sending moringa north to people who think a frost is a personality trait.",
+                location_name="Puerto Viejo de Talamanca, Costa Rica", point=(-82.7539, 9.6560),
             ),
         ]
 
@@ -173,6 +203,8 @@ class Command(BaseCommand):
                 accomodation="Spare room upstairs. Please read the house agreement (it's laminated, we're serious).",
                 inhabitants=9, children=0, max_guests=2,
                 location_name="Utrecht, Netherlands", point=(5.1214, 52.0907),
+                # The laminated sign on the door says visitors are welcome
+                location_public=True,
             ),
             dict(
                 name="Three Goats and a Dream Farm", owner="diego@ecobasa.demo",
@@ -212,16 +244,16 @@ class Command(BaseCommand):
             community, _created = Community.objects.get_or_create(
                 name=spec["name"], defaults=defaults,
             )
+            # Also on older demo data
+            if community.location_public != spec.get("location_public", False):
+                community.location_public = spec.get("location_public", False)
+                community.save(update_fields=["location_public"])
             communities[spec["name"]] = community
         return communities
 
-    # ── Listing categories & listings ───────────────────────────────────
+    # ── Listings ─────────────────────────────────────────────────────────
 
-    def _seed_listing_categories(self):
-        # The curated categories come with the migrations (load_listing_categories)
-        return {category.slug: category for category in ListingCategory.objects.all()}
-
-    def _seed_listings(self, users, categories):
+    def _seed_listings(self, users):
         self.stdout.write("Seeding listings…")
         specs = [
             dict(
@@ -269,7 +301,7 @@ class Command(BaseCommand):
             ),
             dict(
                 title="Wish: someone who understands sourdough starters better than my ex", type="wish",
-                owner="mireille@ecobasa.demo", category="food-preserves",
+                owner="mireille@ecobasa.demo", kind=Listing.KIND_KNOWLEDGE,
                 description="Low bar. My ex thought 'discard' meant throwing away the whole jar.",
             ),
             dict(
@@ -285,17 +317,92 @@ class Command(BaseCommand):
                 title=spec["title"], owner=owner,
                 defaults={
                     "type": spec["type"],
+                    "kind": spec.get("kind", Listing.KIND_OTHER),
                     "description": spec["description"],
-                    "location_name": owner.location_name,
-                    "location": owner.location,
-                    **{key: spec[key] for key in ("quantity", "unit", "kind") if key in spec},
+                    **{key: spec[key] for key in ("quantity", "unit") if key in spec},
                 },
             )
             # Also on older demo data
-            listing.categories.set([categories[spec["category"]]])
+            _as_the_form_would(listing, spec.get("kind", Listing.KIND_OTHER), spec.get("category"))
             if spec.get("image") and not listing.image:
                 _seed_image(listing.image, spec["image"])
                 listing.save(update_fields=["image"])
+
+    def _thing(self, holder, type, kind, title, category=None, **fields):
+        """A thing a person or community offers or wishes for, by its title."""
+        holder_fields = (
+            {"community": holder} if isinstance(holder, Community) else {"owner": holder, "community": None}
+        )
+        listing, created = Listing.objects.get_or_create(
+            title=title, type=type, project=None, **holder_fields, defaults={"kind": kind, **fields},
+        )
+        _as_the_form_would(listing, kind, category)
+        return listing, created
+
+    def _seed_seeds_and_plants(self, users, communities):
+        """Seeds and plants in every form they are passed on in, temperate to tropical: the
+        crop is the title, as the form only takes one from the vocabulary."""
+        self.stdout.write("Seeding seeds & plants…")
+        luna, bjorn, mireille = users["luna@ecobasa.demo"], users["bjorn@ecobasa.demo"], users["mireille@ecobasa.demo"]
+        diego, sam, ana = users["diego@ecobasa.demo"], users["sam@ecobasa.demo"], users["ana@ecobasa.demo"]
+        valeria = users["valeria@ecobasa.demo"]
+        last_year = timezone.localdate().year - 1
+        OFFER, WISH, SEEDS_PLANTS = Listing.TYPE_OFFER, Listing.TYPE_WISH, Listing.KIND_SEEDS_PLANTS
+        specs = [
+            # (holder, type, crop, fields)
+            (luna, OFFER, "Beefsteak tomato", dict(
+                variety="Ochsenherz", plant_form=Listing.PLANT_FORM_SEEDS, harvest_year=last_year,
+                open_pollinated=True, quantity=12, unit="packets",
+                description="Saved from the one tomato plant the zucchini didn't smother.")),
+            (mireille, OFFER, "Fig", dict(
+                variety="Ronde de Bordeaux", plant_form=Listing.PLANT_FORM_CUTTING, hardiness_zone=7,
+                quantity=10, unit="pieces",
+                description="Rooted in a jar on the windowsill, next to the SCOBYs. They get along.")),
+            (bjorn, OFFER, "Apple", dict(
+                variety="Boskoop", plant_form=Listing.PLANT_FORM_SCION, hardiness_zone=4, quantity=20, unit="pieces",
+                description="Cut in January from a tree older than my banking career, and far more useful.")),
+            (bjorn, OFFER, "Rhubarb", dict(
+                plant_form=Listing.PLANT_FORM_OFFSHOOT, hardiness_zone=3, quantity=4, unit="pieces",
+                description="Divided with a spade and an apology.")),
+            (ana, OFFER, "Jerusalem artichoke", dict(
+                plant_form=Listing.PLANT_FORM_TUBER, quantity=3, unit="kg",
+                description="Plant them once, have them forever. Like the WhatsApp group.")),
+            (communities["Sonnenkraut Ecovillage"], OFFER, "Seed potato", dict(
+                variety="Linda", plant_form=Listing.PLANT_FORM_TUBER, quantity=20, unit="kg",
+                description="An old variety, kept going by the village since a seed company dropped it.")),
+            (valeria, OFFER, "Moringa", dict(
+                plant_form=Listing.PLANT_FORM_SEEDS, harvest_year=last_year, open_pollinated=True,
+                quantity=30, unit="packets",
+                description="The tree grows faster than the monkeys can steal its pods. Barely.")),
+            (valeria, OFFER, "Cacao", dict(
+                variety="Criollo", plant_form=Listing.PLANT_FORM_YOUNG_PLANT, hardiness_zone=11, quantity=6,
+                unit="pieces", description="Six months old, already sulking whenever it drops below 20 °C.")),
+            (diego, WISH, "Moringa", dict(
+                plant_form=Listing.PLANT_FORM_YOUNG_PLANT, hardiness_zone=9,
+                description="For the sunny wall. The goats have promised to leave it alone (they lie).")),
+            (sam, WISH, "Runner bean", dict(
+                plant_form=Listing.PLANT_FORM_SEEDS, open_pollinated=True,
+                description="Open-pollinated please, so I can save my own and stop asking.")),
+            (sam, WISH, "Apple", dict(
+                plant_form=Listing.PLANT_FORM_ROOTSTOCK, hardiness_zone=8,
+                description="To graft scions onto. I have watched four videos and feel ready.")),
+            (valeria, WISH, "Avocado", dict(
+                variety="Hass", plant_form=Listing.PLANT_FORM_SCION, hardiness_zone=11,
+                description="Our seedlings grow beautifully and fruit terribly. Time for grafting.")),
+        ]
+        for holder, type, crop, fields in specs:
+            self._thing(holder, type, SEEDS_PLANTS, crop, **fields)
+
+        # A seed swap waiting for an answer: Sam asks for two of the twelve packets
+        tomatoes = Listing.objects.get(owner=luna, kind=SEEDS_PLANTS, title="Beefsteak tomato")
+        match, created = self._get_or_create_match(
+            from_user=sam, recipient=luna, target=tomatoes,
+            message="Two packets for the balcony? I'll report back on how they fare against the pigeons.",
+            location_type=Match.LOC_CUSTOM, proposed_location="By post",
+        )
+        if created:
+            Contribution.objects.filter(match=match, listing=tomatoes).update(quantity=2)
+        self._notify(recipient=luna, actor=sam, tag=Notification.TAG_REQUESTED, match=match)
 
     def _seed_community_photos(self, communities):
         self.stdout.write("Seeding community photos…")
@@ -597,6 +704,73 @@ class Command(BaseCommand):
             age_days=3,
         )
 
+    # ── Lending, and a public good ───────────────────────────────────────
+
+    def _loan(self, borrower, listing, first_day, last_day, status, message, from_time=None, until_time=None):
+        """A request to borrow a thing to lend, from first_day until last_day (days from
+        today), by the hour with times."""
+        lender = listing.manager
+        match, created = self._get_or_create_match(
+            from_user=borrower, recipient=lender, target=listing, message=message,
+            location_type=Match.LOC_YOUR_PLACE,
+        )
+        if created:
+            today = timezone.localdate()
+            starts_at, ends_at = loan_span(
+                today + timedelta(days=first_day), today + timedelta(days=last_day), from_time, until_time,
+            )
+            Loan.objects.create(match=match, starts_at=starts_at, ends_at=ends_at)
+            if status == Match.STATUS_ACCEPTED:
+                MatchMessage.objects.create(match=match, sender=lender, body="It's yours for those days.",
+                                            status_to=status)
+                Match.objects.filter(pk=match.pk).update(status=status, responded_at=timezone.now())
+        if status == Match.STATUS_ACCEPTED:
+            self._notify(recipient=borrower, actor=lender, tag=Notification.TAG_ACCEPTED, match=match)
+        else:
+            self._notify(recipient=lender, actor=borrower, tag=Notification.TAG_REQUESTED, match=match)
+        return match
+
+    def _seed_lending(self, users, communities):
+        """Tools and vehicles to lend (a person's, and a community's car sharing), one to
+        borrow, loans by the day and by the hour, and a public good."""
+        from datetime import time
+
+        self.stdout.write("Seeding things to lend & a public good…")
+        luna, bjorn, diego = users["luna@ecobasa.demo"], users["bjorn@ecobasa.demo"], users["diego@ecobasa.demo"]
+        sam = users["sam@ecobasa.demo"]
+        sonnenkraut = communities["Sonnenkraut Ecovillage"]
+        OFFER, WISH = Listing.TYPE_OFFER, Listing.TYPE_WISH
+
+        ladder, _created = self._thing(
+            bjorn, OFFER, Listing.KIND_TOOL, "Ladder", lend=True, quantity=1,
+            description="Seven metres, aluminium, survived one goat. Back by dinner time, please.",
+        )
+        van, _created = self._thing(
+            sonnenkraut, OFFER, Listing.KIND_VEHICLE, "Van", lend=True,
+            description="The village van. Smells faintly of compost, drives fully of character.",
+        )
+        self._thing(
+            sam, OFFER, Listing.KIND_VEHICLE, "Cargo bike", lend=True,
+            description="A bakfiets that has carried three children, a sofa and once, briefly, a goat.",
+        )
+        self._thing(
+            diego, WISH, Listing.KIND_VEHICLE, "Trailer", lend=True,
+            description="For one weekend of hauling clay. The trailer will come back browner but loved.",
+        )
+        # By the hour, waiting for an answer, and by the day, agreed
+        self._loan(luna, ladder, 2, 2, Match.STATUS_PENDING,
+                   "Could I borrow the ladder on Saturday morning? The compost toilet roof calls.",
+                   from_time=time(9), until_time=time(13))
+        self._loan(bjorn, van, 3, 4, Match.STATUS_ACCEPTED,
+                   "Could I take the van for two days? Firewood delivery, very enthusiastic.")
+
+        self._thing(
+            luna, OFFER, Listing.KIND_MATERIAL, "Windfall apples along the old railway path",
+            category="food-preserves", public_good=True, location_public=True,
+            location_name="Old railway path, Görlitz", location=Point(14.9712, 51.1718, srid=4326),
+            description="Three old trees nobody owns. Bring a bag, leave the wasps their share.",
+        )
+
     # ── References ───────────────────────────────────────────────────────
 
     def _seed_references(self, users, communities):
@@ -710,8 +884,7 @@ class Command(BaseCommand):
                         kind=kind, order=order, quantity=quantity, unit=unit, description=details, skill=skill,
                     ),
                 )
-                if need_title in need_categories:
-                    need.categories.set(ListingCategory.objects.filter(slug=need_categories[need_title]))
+                _as_the_form_would(need, category=need_categories.get(need_title))
             return obj, created
 
         stove, created = project(
@@ -752,12 +925,8 @@ class Command(BaseCommand):
 
         # Björn (Bautzen, 40 km away) is a woodworker and gives away scythes: the matching
         # suggests the food forest's needs to him, and him to Luna
-        scythes, _created = Listing.objects.get_or_create(
-            owner=bjorn, title="Two old scythes", type="offer",
-            defaults={"kind": Listing.KIND_TOOL, "description": "Sharp enough, with a whetstone.",
-                      "location_name": bjorn.location_name, "location": bjorn.location},
-        )
-        scythes.categories.set(ListingCategory.objects.filter(slug="garden-farm"))
+        self._thing(bjorn, Listing.TYPE_OFFER, Listing.KIND_TOOL, "Two old scythes", category="garden-farm",
+                    description="Sharp enough, with a whetstone.")
         # Wishes for knowledge and helping hands work outside projects too
         Listing.objects.get_or_create(
             owner=sam, type=Listing.TYPE_WISH, kind=Listing.KIND_KNOWLEDGE, title="How to size a battery bank",
@@ -767,12 +936,6 @@ class Command(BaseCommand):
             owner=diego, type=Listing.TYPE_WISH, kind=Listing.KIND_HANDS, title="Helping hands for the clay harvest",
             defaults={"quantity": 3, "unit": "people", "description": "One weekend in spring, lunch included."},
         )
-        # What kind of thing the demo gifts are (also set on older demo data)
-        for kind, prefixes in ((Listing.KIND_TOOL, ("Two old scythes", "Desperately seeking a wheelbarrow",
-                                                     "Need: a printer", "Looking for scaffolding")),
-                               (Listing.KIND_MATERIAL, ("Firewood",))):
-            for prefix in prefixes:
-                Listing.objects.filter(title__startswith=prefix).update(kind=kind)
 
         if not created:
             return
