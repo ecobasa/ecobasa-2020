@@ -198,7 +198,7 @@
       {% else %}
         {% comment %} Login button {% endcomment %}
         <div class="flex-shrink-0 hidden sm:ml-6 sm:flex sm:items-center">
-          <a href="{% url "users:login" %}?next={{ request.path }}" class="hover:border-brown px-1 py-5 border-b-2 border-transparent leading-5 focus:outline-none focus:text-brown focus:border-brown transition duration-150 ease-in-out">
+          <a href="{% url "users:login" %}?next={{ request.path }}" class="px-1 py-5 leading-5 focus:outline-none focus:text-brown transition duration-150 ease-in-out">
             <i class="fa fa-sign-in-alt mr-2"></i>
             <span>{% trans "Log in" %}</span>
           </a>

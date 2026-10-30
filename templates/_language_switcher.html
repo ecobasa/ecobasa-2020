@@ -19,7 +19,7 @@
   {% else %}
     <div class="relative" x-data="{ open: false }">
       <button type="button" @click="open = !open" @keydown.escape="open = false" :aria-expanded="open"
-        class="flex items-center gap-1 px-2 py-1 rounded hover:text-brown focus:outline-none transition duration-150 ease-in-out"
+        class="flex items-center gap-1 px-2 py-1 rounded hover:text-brown focus:text-brown focus:outline-none transition duration-150 ease-in-out"
         aria-label="{% trans 'Language' %}" aria-haspopup="true">
         <i class="fa fa-globe"></i>
         <span class="uppercase text-sm">{{ LANGUAGE_CODE }}</span>
@@ -29,7 +29,7 @@
         <div class="py-1 rounded-md bg-primary bg-opacity-75 backdrop-blur shadow-xs">
           {% for language in languages %}
             <button type="submit" name="language" value="{{ language.code }}" lang="{{ language.code }}"
-              class="dropdown-link w-full text-left {% if language.code == LANGUAGE_CODE %}text-brown{% endif %}">
+              class="hover:text-brown dropdown-link w-full text-left {% if language.code == LANGUAGE_CODE %}text-brown{% endif %}">
               {{ language.name_local|capfirst }}
             </button>
           {% endfor %}
