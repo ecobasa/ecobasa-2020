@@ -206,9 +206,14 @@ class TestAgreeing:
         response = _client_for(lender).get(match.get_absolute_url())
         assert response.context["proposed_place"]["type"] == Match.LOC_MY_PLACE
         assert response.context["my_place"] == ("Schiltern", lender.location)
-        # For the borrower, the same place is the other side's
+        # For the borrower, the same place is the other side's: only roughly until accepted
+        from users.places import approximate
         response = _client_for(borrower).get(match.get_absolute_url())
         assert response.context["proposed_place"]["type"] == Match.LOC_YOUR_PLACE
+        assert response.context["your_place"] == ("Schiltern", approximate(lender.location, ladder.place_seed))
+        match.status = Match.STATUS_ACCEPTED
+        match.save()
+        response = _client_for(borrower).get(match.get_absolute_url())
         assert response.context["your_place"] == ("Schiltern", lender.location)
 
     def test_not_accepted_while_it_is_lent(self, ladder, lender, borrower):

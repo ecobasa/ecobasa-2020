@@ -349,7 +349,8 @@ def match_detail(request, pk):
         "proposed_place":       _proposed_place(match, request.user, latest_counter_msg) if can_counter else None,
         # The time proposed last, to start a counter-proposal from
         "proposed_loan":        Loan(starts_at=match.loan_period()[0], ends_at=match.loan_period()[1]) if match.is_loan else None,
-        "my_place":             match.place_of(request.user),
+        # The other side's only roughly until accepted (Match.place_of)
+        "my_place":             match.place_of(request.user, viewer=request.user),
         "your_place":           match.place_of(match.recipient if is_requester else match.from_user),
         "message_form":         MatchMessageForm(),
         "loc_choices":          Match.LOC_CHOICES,

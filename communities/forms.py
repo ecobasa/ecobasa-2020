@@ -58,6 +58,8 @@ class CommunityForm(forms.ModelForm):
             field.widget.attrs["class"] = f"{css} form-input".strip()
         if "country" in self.fields:
             self.fields["country"].widget.attrs["class"] = "form-select"
+        if "location_public" in self.fields:
+            self.fields["location_public"].widget.attrs["class"] = "form-checkbox mt-1 flex-shrink-0"
         if "inhabitants" in self.fields:
             self.fields["inhabitants"].widget.attrs.setdefault(
                 "placeholder", _("e.g. 25")
@@ -80,6 +82,7 @@ class CommunityForm(forms.ModelForm):
             "status",
             "location_name",
             "location",
+            "location_public",
             "country",
             "inhabitants",
             "children",

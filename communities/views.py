@@ -10,14 +10,17 @@ from django.contrib import messages
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_GET, require_POST
 
-from .models import Community
+from .models import Community, public_location
 from .models import CommunityPhoto
 from .forms import CommunityForm
 from gift_economy.gifts.models import Listing, skill_offers, sync_skill_listings
 from gift_economy.gifts.skills.models import Skill, skill_name_q, skill_slug_for_name
 
 from django.contrib.gis.geos import Polygon, Point
+from django.contrib.gis.db.models import PointField
 from django.contrib.gis.db.models.functions import Distance
+from django.db.models.functions import Cast
+from users.places import town
 from django.core.paginator import Paginator
 from django.http import JsonResponse
 
@@ -130,8 +133,14 @@ def detail(request, slug):
     )
     is_ambassador = request.user.is_authenticated and (request.user.is_staff or request.user == community.owner)
 
+    shows_place = community.shows_place_to(request.user)
+    place_name, place_point = community.place_for(request.user)
     return render(request, "communities/community_detail.html", {
         "community":        community,
+        # Its exact place, address and phone number only for who may know (users.places)
+        "shows_place":      shows_place,
+        "place_name":       place_name,
+        "place_point":      place_point,
         "projects":         projects.current(),
         # The ambassador also sees archived and ended projects, to bring one back
         "past_projects":    projects.exclude(pk__in=projects.current()).order_by("-updated_at")[:10] if is_ambassador else [],
@@ -484,7 +493,7 @@ def community_markers(request):
             west, south, east, north = map(float, bbox_param.split(","))
             bbox_poly = Polygon.from_bbox((west, south, east, north))
             bbox_poly.srid = 4326
-            qs = qs.filter(location__within=bbox_poly)
+            qs = qs.annotate(spot=public_location()).filter(spot__within=bbox_poly)
         except (ValueError, TypeError):
             pass  # ignore malformed bbox
 
@@ -494,14 +503,15 @@ def community_markers(request):
 
     features = []
     for c in qs[:500]:  # hard cap per request
+        # Somewhere in its cell, unless it's public (users.places)
+        _name, point = c.rough_place()
         first_photo = c.hero_photos[0] if c.hero_photos else None
         photo_url = first_photo.image.url if first_photo and first_photo.image else None
         features.append({
             "type": "Feature",
             "geometry": {
                 "type": "Point",
-                # .location is a PointField; adjust if you store lat/lon separately
-                "coordinates": [c.location.x, c.location.y],
+                "coordinates": [point.x, point.y],
             },
             "properties": {
                 "name":        c.name,
@@ -548,8 +558,9 @@ def community_list_partial(request):
         try:
             lat_str, lon_str = location_param.split(',', 1)
             user_point = Point(float(lon_str), float(lat_str), srid=4326)
+            # To its cell's centre, unless it's public: tells nothing finer (users.places)
             qs = qs.annotate(
-                distance=Distance('location', user_point)
+                distance=Distance(Cast(public_location(), PointField(geography=True, srid=4326)), user_point)
             ).order_by('distance')
             proximity_sort = True
         except (ValueError, TypeError):
@@ -611,7 +622,8 @@ def community_suggest(request):
 
     # Locations (split on comma to surface city/country parts)
     for loc in Community.objects.filter(location_name__icontains=q).values_list("location_name", flat=True)[:10]:
-        for part in (loc or "").split(","):
+        # Never the street (users.places)
+        for part in (town(loc) or "").split(","):
             if q.lower() in part.lower():
                 add(part.strip(), "location")
         if len(suggestions) >= 8:

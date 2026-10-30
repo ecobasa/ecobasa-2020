@@ -303,24 +303,26 @@
 			{% endif %}
 
 			<!-- Address / Location name + Map Widget -->
-			{% if community.location %}
+			{% if place_point %}
 				<h2>{% trans "Location" %}</h2>
-					{% with lat=community.location.y lon=community.location.x %}
-						<p class="text-sm"><i class="fa fa-map-marker mr-1"></i>{{ community.location_name }}</p>
+						<p class="text-sm"><i class="fa fa-map-marker mr-1"></i>{{ place_name }}</p>
 						<div class="relative mt-8">
 							<div id="community-detail-map" class="w-full rounded shadow overflow-hidden h-96"></div>
 						</div>
-					{% endwith %}
 				{% else %}
-					{% if community.location_name %}<p class="text-sm">{{ community.location_name }}</p>
+					{% if place_name %}<p class="text-sm">{{ place_name }}</p>
 				{% endif %}
 			{% endif %}
 
 			<h2>{% trans "Contact Information" %}</h2>
 
 			<!-- Telephone (mobile should show it earlier; on desktop it appears later) -->
-			{% if community.telephone %}
+			{% if shows_place %}
+				{% if community.telephone %}
 					<a href="tel:{{ community.telephone }}" class="text-primary text-xl"><i class="fa fa-phone mr-3"></i>{{ community.telephone }}</a>
+				{% endif %}
+			{% elif community.location_name or community.telephone %}
+				<p class="text-sm italic">{% trans "Address and phone number are shared once your visit is accepted." %}</p>
 			{% endif %}
 
 			<!-- Website -->
@@ -569,17 +571,17 @@ document.addEventListener('DOMContentLoaded', () => {
 	};
 });
 </script>
-{% if community.location %}
+{% if place_point %}
 	<script src="https://cdn.jsdelivr.net/npm/ol@v7.2.2/dist/ol.js"></script>
 	<script>
 		const initCommunityMap = () => {
 			const mapEl = document.getElementById('community-detail-map');
 			if (!mapEl) return;
 			const data = {
-				lat: {{ community.location.y|unlocalize }},
-				lon: {{ community.location.x|unlocalize }},
+				lat: {{ place_point.y|unlocalize }},
+				lon: {{ place_point.x|unlocalize }},
 				title: "{{ community.name|escapejs }}",
-				location_name: "{{ community.location_name|default:""|escapejs }}"
+				location_name: "{{ place_name|default:""|escapejs }}"
 			};
 
 			const baseLayers = EcoMap.buildBaseLayers();
@@ -604,8 +606,12 @@ document.addEventListener('DOMContentLoaded', () => {
 			});
 			baseLayers.setBaseLayer('ecobasa');
 
+			{% if shows_place %}
 			const feature = new ol.Feature({ geometry: new ol.geom.Point(ol.proj.fromLonLat([data.lon, data.lat])) });
 			feature.setStyle(EcoMap.makeIconStyle(0xF015, '#da6137')); //  fa-house
+			{% else %}
+			const feature = EcoMap.makeRoughArea(data.lon, data.lat);
+			{% endif %}
 			const vectorLayer = new ol.layer.Vector({ source: new ol.source.Vector({ features: [feature] }) });
 			map.addLayer(vectorLayer);
 		};

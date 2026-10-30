@@ -25,7 +25,7 @@
         {% for cat in listing.categories.all %}
           <span class="pill bg-primary"><i class="fa-solid {{ cat.icon }} mr-1"></i>{{ cat }}</span>
         {% endfor %}
-        {% with place=listing.place %}{% if place.0 %}
+        {% with place=listing.public_place %}{% if place.0 %}
           <span class="text-xs text-brown"><i class="fa fa-map-marker mr-1"></i>{% if listing.distance != None %}{{ listing.distance.km|floatformat:1 }} km {% trans "to" %} {% endif %}{{ place.0 }}</span>
         {% endif %}{% endwith %}
         <time class="text-xs text-brown opacity-60 whitespace-nowrap sm:ml-auto"><i class="fa fa-calendar mr-1"></i>{{ listing.created_at|date:"SHORT_DATE_FORMAT" }}</time>

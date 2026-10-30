@@ -91,16 +91,16 @@
 			{% if user.location or user.country %}
 			<div class="mt-8">
 				<h2>{% if not user.location %}{% trans "Country" %}{% else %}{% trans "Location" %}{% endif %}</h2>
-				{% if user.country and not user.location_name %}
+				{% if user.country and not place_name %}
 					<p><i class="fa fa-map-marker mr-2"></i>{{ user.country.name }}</p>
 				{% endif %}
-				{% if user.location_name %}
-					<p class="mb-2"><i class="fa fa-map-marker mr-2"></i>{{ user.location_name }}</p>
+				{% if place_name %}
+					<p class="mb-2"><i class="fa fa-map-marker mr-2"></i>{{ place_name }}</p>
 				{% endif %}
 				{% if user.location %}
 					<div class="rounded shadow overflow-hidden" style="height: 260px;">
 						<div id="user-profile-map" class="w-full h-full bg-secondary bg-opacity-40"
-							data-lon="{{ user.location.x|unlocalize }}" data-lat="{{ user.location.y|unlocalize }}"></div>
+							data-lon="{{ place_point.x|unlocalize }}" data-lat="{{ place_point.y|unlocalize }}"{% if not own_place %} data-rough{% endif %}></div>
 					</div>
 				{% endif %}
 			</div>
@@ -217,8 +217,14 @@
 
 			const baseLayers = EcoMap.buildBaseLayers();
 			const coords = ol.proj.fromLonLat([lon, lat]);
-			const feature = new ol.Feature({ geometry: new ol.geom.Point(coords) });
-			feature.setStyle(EcoMap.makeIconStyle(0xF007, '#da6137')); //  fa-user
+			// Others see only roughly where they live (users/places.py)
+			let feature;
+			if ('rough' in mapEl.dataset) {
+				feature = EcoMap.makeRoughArea(lon, lat);
+			} else {
+				feature = new ol.Feature({ geometry: new ol.geom.Point(coords) });
+				feature.setStyle(EcoMap.makeIconStyle(0xF007, '#da6137')); //  fa-user
+			}
 			const vectorLayer = new ol.layer.Vector({ source: new ol.source.Vector({ features: [feature] }) });
 
 			const map = new ol.Map({

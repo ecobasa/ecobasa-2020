@@ -50,6 +50,20 @@
       });
     },
 
+    // A place shown only roughly (users/places.py: somewhere in a cell of about 1–2 km):
+    // an area instead of a pin, so it doesn't look like an address. Map units grow away
+    // from the equator, hence the radius over the cosine.
+    makeRoughArea(lon, lat, color) {
+      const radius = 1200 / Math.cos(lat * Math.PI / 180);
+      const feature = new ol.Feature({ geometry: new ol.geom.Circle(ol.proj.fromLonLat([lon, lat]), radius) });
+      color = color || '#da6137';
+      feature.setStyle(new ol.style.Style({
+        fill: new ol.style.Fill({ color: color + '33' }),
+        stroke: new ol.style.Stroke({ color: color, width: 2, lineDash: [6, 6] }),
+      }));
+      return feature;
+    },
+
     // ── Base tile layers ─────────────────────────────────────────────
 
     buildBaseLayers() {
@@ -200,6 +214,8 @@
         if (cfg.locationInput) cfg.locationInput.value = 'POINT (' + lon + ' ' + lat + ')';
         if (opts.label && cfg.nameInput) cfg.nameInput.value = opts.label;
         if (opts.country && cfg.countryInput) cfg.countryInput.value = opts.country;
+        // E.g. the listing form shows "show this place exactly" once it has a place of its own
+        window.dispatchEvent(new CustomEvent('location-set'));
       };
 
       if (cfg.setPointFn) {

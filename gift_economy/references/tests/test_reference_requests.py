@@ -400,8 +400,8 @@ class TestFeaturing:
         assert f'href="{owner.get_absolute_url()}#reference-{shared.pk}"' in page
         assert "word39" in page and "word45" not in page and "Read more" in page
         assert "Old Bicycle" in page and "Cob Building" in page and "Beekeeping" not in page
-        # The linked page has it in full
-        assert "word59" in Client().get(owner.get_absolute_url()).content.decode()
+        # The linked page (for members) has it in full
+        assert "word59" in self._client(owner).get(owner.get_absolute_url()).content.decode()
 
     def test_only_shared_references_can_be_featured(self, staff, shared):
         shared.share_publicly = False

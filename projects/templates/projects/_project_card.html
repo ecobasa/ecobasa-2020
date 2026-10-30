@@ -5,7 +5,7 @@
     <div class="flex-1 min-w-0">
       <a href="{{ project.get_absolute_url }}" class="font-serif font-bold text-lg leading-snug hover:underline">{{ project.title }}</a>
       {% if show_community %}
-        <div class="text-sm"><a href="{{ project.community.get_absolute_url }}" class="hover:underline"><i class="fa-solid {{ project.community.get_type_icon }} mr-1"></i>{{ project.community.name }}</a>{% if project.community.location_name %} <span class="opacity-70">· {{ project.community.location_name }}</span>{% endif %}</div>
+        <div class="text-sm"><a href="{{ project.community.get_absolute_url }}" class="hover:underline"><i class="fa-solid {{ project.community.get_type_icon }} mr-1"></i>{{ project.community.name }}</a>{% with place=project.community.rough_place %}{% if place.0 %} <span class="opacity-70">· {{ place.0 }}</span>{% endif %}{% endwith %}</div>
       {% endif %}
       <div class="text-sm opacity-80"><i class="fa-regular fa-calendar mr-1"></i>{% include "projects/_project_dates.html" %}
         {% if project.food_provided %}<span class="ml-2" title="{% trans 'Food provided' %}"><i class="fa-solid fa-utensils"></i></span>{% endif %}

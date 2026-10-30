@@ -45,6 +45,11 @@
 
     <!-- Location -->
     {% include "maps/_location_picker.html" with map_id="community-location-map" set_point_fn="setCommunityPoint" locate_fn="locateCommunity" map_height="h-80" %}
+    <label class="flex items-start gap-2 mt-2">
+      {{ form.location_public }}
+      <span><span class="font-semibold">{{ form.location_public.label }}</span>
+        <span class="block text-xs text-brown">{{ form.location_public.help_text }}</span></span>
+    </label>
 
     <div>
       <label class="form-label" for="id_description">{{ form.description.label }}</label>

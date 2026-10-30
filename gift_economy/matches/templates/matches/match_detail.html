@@ -227,6 +227,7 @@
     {% with coords=match.location_coords %}
       {% if coords.0 and coords.1 %}
         <div class="rounded shadow overflow-hidden h-[200px] mt-3" id="match-map"></div>
+        {% if match.location_is_rough %}<p class="text-xs italic mt-1">{% trans "The exact place shows once the match is accepted." %}</p>{% endif %}
       {% endif %}
     {% endwith %}
   </div>
@@ -489,10 +490,16 @@
 <script src="https://cdn.jsdelivr.net/npm/ol@v7.2.2/dist/ol.js"></script>
 <script>
 document.fonts.ready.then(function () {
-  function displayMap(target, lat, lon, badge) {
+  function displayMap(target, lat, lon, badge, rough) {
     var coords = ol.proj.fromLonLat([lon, lat]);
-    var feature = new ol.Feature({ geometry: new ol.geom.Point(coords) });
-    feature.setStyle(EcoMap.makeIconStyle(badge, '#da6137'));
+    var feature;
+    if (rough) {
+      // Only roughly until the match is accepted (users/places.py)
+      feature = EcoMap.makeRoughArea(lon, lat);
+    } else {
+      feature = new ol.Feature({ geometry: new ol.geom.Point(coords) });
+      feature.setStyle(EcoMap.makeIconStyle(badge, '#da6137'));
+    }
     var layers = EcoMap.buildBaseLayers();
     layers.setBaseLayer('ecobasa');
     var map = new ol.Map({
@@ -512,14 +519,14 @@ document.fonts.ready.then(function () {
   }
 
   {% with coords=match.location_coords %}{% if coords.0 and coords.1 %}
-  displayMap('match-map', {{ coords.0 }}, {{ coords.1 }}, badgeFor('{{ match.location_type }}'));
+  displayMap('match-map', {{ coords.0|unlocalize }}, {{ coords.1|unlocalize }}, badgeFor('{{ match.location_type }}'), {{ match.location_is_rough|yesno:"true,false" }});
   {% endif %}{% endwith %}
 
   {% for msg in thread %}
     {% if msg.status_to == 'counter' %}
       {% with coords=msg.counter_location_coords %}
         {% if coords.0 and coords.1 %}
-  displayMap('thread-map-{{ msg.pk }}', {{ coords.0 }}, {{ coords.1 }}, badgeFor('{{ msg.counter_location_type }}'));
+  displayMap('thread-map-{{ msg.pk }}', {{ coords.0|unlocalize }}, {{ coords.1|unlocalize }}, badgeFor('{{ msg.counter_location_type }}'), {{ msg.counter_location_is_rough|yesno:"true,false" }});
         {% endif %}
       {% endwith %}
     {% endif %}

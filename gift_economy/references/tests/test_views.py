@@ -119,7 +119,7 @@ class TestDeleteReference:
 class TestReferencesSection:
     def test_listed_on_profile(self, author, owner):
         Reference(author=author, recipient=owner, subject=owner, text="Lovely host.").save()
-        response = Client().get(owner.get_absolute_url())
+        response = _client_for(author).get(owner.get_absolute_url())
         assert response.status_code == 200
         assert "Lovely host." in response.content.decode()
 
@@ -133,7 +133,7 @@ class TestReferencesSection:
     def test_profile_lists_references_about_their_listings_and_skills(self, author, owner, listing, community):
         Reference(author=author, recipient=owner, subject=listing, text="Bike was great.").save()
         Reference(author=author, recipient=owner, subject=community, text="Community stay.").save()
-        content = Client().get(owner.get_absolute_url()).content.decode()
+        content = _client_for(author).get(owner.get_absolute_url()).content.decode()
         assert "Bike was great." in content
         assert listing.get_absolute_url() in content
         # The community has its own page; its references don't belong to the owner personally
@@ -156,7 +156,7 @@ class TestReferencesSection:
         Reference(author=author, recipient=owner, subject=owner, text="Lovely host.").save()
         other = User.objects.create_user(email="other@example.com", password="secret", name="Bo")
         Reference(author=other, recipient=owner, subject=owner, impression="negative", text="Never answered.").save()
-        content = Client().get(owner.get_absolute_url()).content.decode()
+        content = _client_for(author).get(owner.get_absolute_url()).content.decode()
         assert "@click=\"shown = shown === 'positive' ? '' : 'positive'\"" in content
         assert "@click=\"shown = shown === 'negative' ? '' : 'negative'\"" in content
         assert "shown === 'neutral'" not in content  # no neutral ones, so no filter for them
@@ -176,7 +176,7 @@ class TestKindPill:
         reference = Reference(author=author, recipient=owner, subject=owner, text="Thanks!", match=match)
         assert reference.kind == match.kind
         reference.save()
-        assert "fa-screwdriver-wrench" in Client().get(owner.get_absolute_url()).content.decode()
+        assert "fa-screwdriver-wrench" in _client_for(author).get(owner.get_absolute_url()).content.decode()
 
     def test_from_its_subject(self, author, owner, listing, community):
         skill = skill_offer(owner, Skill.objects.create(name="Cob", slug="cob"))

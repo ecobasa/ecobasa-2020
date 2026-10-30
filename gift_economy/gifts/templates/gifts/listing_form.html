@@ -111,14 +111,33 @@
     <div id="category-choice" x-show="isThing && !['seeds', 'vehicle'].includes(kind) && !(recognized && ['tool', 'material'].includes(kind))">{% include "gifts/_category_checkboxes.html" with field=form.categories %}</div>
     {{ form.description|as_crispy_field }}
     {{ form.image|as_crispy_field }}
-    {{ form.location_name }}{{ form.location }}
 
-    <!-- Location picker (rendered manually; form.location and form.location_name are hidden inputs) -->
-    <h3 class="text-lg font-semibold text-primary mb-2">{% trans "Location" %}</h3>
-    {# Seeds: the place gives their climate zone (Köppen-Geiger), nobody has to know it #}
-    <p class="text-sm mb-2" x-show="kind === 'seeds' && type === 'offer'" x-cloak><i class="fa-solid fa-seedling mr-1"></i>{% trans "Where did the mother plant grow, where were the seeds harvested? We find the climate zone from the place, so the seeds go where they grow well." %}</p>
-    <p class="text-sm mb-2" x-show="kind === 'seeds' && type === 'wish'" x-cloak><i class="fa-solid fa-seedling mr-1"></i>{% trans "Where will they grow? We find the climate zone from the place and suggest seeds from a similar climate." %}</p>
-    {% include "maps/_location_picker.html" with map_id="listing-location-map" set_point_fn="setListingPoint" locate_fn="locateListing" map_height="h-80" %}
+    <div x-data="{ own: {{ form.has_own_place|yesno:'true,false' }}, publicGood: {{ form.public_good.value|yesno:'true,false' }} }" @location-set.window="own = true">
+      {# Offers of things only: found out there, nobody asks for it, everybody may edit it #}
+      <div x-show="type === 'offer' && isThing" x-cloak class="mb-4">
+        <label class="flex items-start gap-2">
+          {{ form.public_good }}
+          <span><span class="font-semibold">{{ form.public_good.label }}</span>
+            <span class="block text-xs text-brown">{{ form.public_good.help_text }}</span></span>
+        </label>
+        {% for error in form.public_good.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+      </div>
+
+      <!-- Location picker (rendered manually; form.location and form.location_name are hidden inputs) -->
+      <h3 class="text-lg font-semibold text-primary mb-2">{% trans "Location" %}</h3>
+      {# Seeds: the place gives their climate zone (Köppen-Geiger), nobody has to know it #}
+      <p class="text-sm mb-2" x-show="kind === 'seeds' && type === 'offer'" x-cloak><i class="fa-solid fa-seedling mr-1"></i>{% trans "Where did the mother plant grow, where were the seeds harvested? We find the climate zone from the place, so the seeds go where they grow well." %}</p>
+      <p class="text-sm mb-2" x-show="kind === 'seeds' && type === 'wish'" x-cloak><i class="fa-solid fa-seedling mr-1"></i>{% trans "Where will they grow? We find the climate zone from the place and suggest seeds from a similar climate." %}</p>
+      {% include "maps/_location_picker.html" with map_id="listing-location-map" set_point_fn="setListingPoint" locate_fn="locateListing" map_height="h-80" %}
+      {# Only with a place of its own (else it's where its person or community is); a public good's is always exact #}
+      <div x-show="own && !publicGood" x-cloak>
+        <label class="flex items-start gap-2 mt-2">
+          {{ form.location_public }}
+          <span><span class="font-semibold">{{ form.location_public.label }}</span>
+            <span class="block text-xs text-brown">{{ form.location_public.help_text }}</span></span>
+        </label>
+      </div>
+    </div>
 
     <div class="flex items-center justify-end gap-4 mt-12">
       {% if listing.pk %}
