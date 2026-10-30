@@ -11,7 +11,7 @@ def seeds_and_plants(apps, schema_editor):
     from gift_economy.gifts.things import recognize_all
     from gift_economy.gifts.vocabularies import VOCABULARIES
     Listing, Thing = apps.get_model("gifts", "Listing"), apps.get_model("gifts", "Thing")
-    Listing.objects.filter(kind="seeds").update(plant_form="seeds")
+    Listing.objects.filter(kind="seeds_plants").update(plant_form="seeds")
     load_vocabularies(Thing, apps.get_model("gifts", "ListingCategory"))
     recognize_all(Listing, Thing)
     slugs = {entry[0] for entries in VOCABULARIES.values() for entry in entries}
@@ -26,7 +26,7 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.AlterModelOptions(
-            name="seedthing",
+            name="seedplantthing",
             options={
                 "verbose_name": "Seed or plant",
                 "verbose_name_plural": "Vocabulary: seeds and plants",
@@ -80,14 +80,14 @@ class Migration(migrations.Migration):
                     ("material", "Material"),
                     ("tool", "Tool"),
                     ("vehicle", "Vehicle"),
-                    ("seeds", "Seeds & plants"),
+                    ("seeds_plants", "Seeds & plants"),
                     ("other", "Other"),
                     ("skill", "Skill"),
                     ("knowledge", "Knowledge"),
                     ("hands", "Helping hands"),
                 ],
                 default="other",
-                max_length=10,
+                max_length=20,
                 verbose_name="Kind",
             ),
         ),

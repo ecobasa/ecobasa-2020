@@ -399,7 +399,7 @@ def nominatim_proxy(request):
 @require_GET
 def things_recognize(request):
     """What a title is recognized as while typing, and the categories that sets:
-    ?kind=tool|material|seeds|vehicle&title=… (with &variety=… for seeds)."""
+    ?kind=tool|material|seeds_plants|vehicle&title=… (with &variety=… for seeds and plants)."""
     from .models import Thing
     from .things import WHITELISTED_KINDS, recognize, thing_named
     kind, title = request.GET.get("kind", ""), request.GET.get("title", "").strip()
@@ -419,7 +419,7 @@ def things_recognize(request):
 
 @require_GET
 def things_suggest(request):
-    """Names from a vocabulary while typing a title: ?kind=seeds|vehicle|…&q=…"""
+    """Names from a vocabulary while typing a title: ?kind=seeds_plants|vehicle|…&q=…"""
     from .things import suggest
     lang = (getattr(request, "LANGUAGE_CODE", "") or "en")[:2]
     return JsonResponse({"results": suggest(request.GET.get("q", ""), request.GET.get("kind", ""), lang)})

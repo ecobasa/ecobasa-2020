@@ -19,14 +19,14 @@ def _client_for(user):
 
 
 def _seeds(owner, title, type="offer", **fields):
-    return Listing.objects.create(owner=owner, title=title, type=type, kind=Listing.KIND_SEEDS, **fields)
+    return Listing.objects.create(owner=owner, title=title, type=type, kind=Listing.KIND_SEEDS_PLANTS, **fields)
 
 
 @pytest.mark.django_db
 def test_offering_seeds_with_variety_year_and_open_pollinated():
     anna = _user("anna")
     response = _client_for(anna).post(reverse("gifts:create"), {
-        "type": "offer", "kind": "seeds", "title": "Tomate", "variety": "Ochsenherz", "harvest_year": "2025",
+        "type": "offer", "kind": "seeds_plants", "title": "Tomate", "variety": "Ochsenherz", "harvest_year": "2025",
         "open_pollinated": "on", "quantity": "5", "unit": "packets",
     })
     assert response.status_code == 302
@@ -54,7 +54,7 @@ def test_seed_details_only_for_seeds():
 def test_offering_a_young_plant_hardy_to_a_zone():
     anna = _user("anna")
     response = _client_for(anna).post(reverse("gifts:create"), {
-        "type": "offer", "kind": "seeds", "title": "Apfel", "variety": "Topaz", "plant_form": "scion",
+        "type": "offer", "kind": "seeds_plants", "title": "Apfel", "variety": "Topaz", "plant_form": "scion",
         "harvest_year": "2025", "open_pollinated": "on", "hardiness_zone": "5",
     })
     assert response.status_code == 302
@@ -70,9 +70,9 @@ def test_offering_a_young_plant_hardy_to_a_zone():
 def test_seeds_are_seeds_unless_another_form_is_chosen():
     anna = _user("anna")
     client = _client_for(anna)
-    client.post(reverse("gifts:create"), {"type": "offer", "kind": "seeds", "title": "Tomate"})
+    client.post(reverse("gifts:create"), {"type": "offer", "kind": "seeds_plants", "title": "Tomate"})
     client.post(reverse("gifts:create"), {"type": "offer", "kind": "tool", "title": "Spaten", "plant_form": "cutting", "hardiness_zone": "6"})
-    assert sorted(Listing.objects.values_list("kind", "plant_form", "hardiness_zone")) == [("seeds", "seeds", None), ("tool", "", None)]
+    assert sorted(Listing.objects.values_list("kind", "plant_form", "hardiness_zone")) == [("seeds_plants", "seeds", None), ("tool", "", None)]
 
 
 def test_hardiness_zones_go_by_the_coldest_night():
@@ -111,10 +111,10 @@ def test_a_wish_for_a_crop_finds_its_varieties_and_not_food():
 
 @pytest.mark.django_db
 def test_seed_vocabulary_in_the_admin():
-    from ..models import SeedThing
-    assert SeedThing.objects.get(slug="beefsteak-tomato").parent.slug == "tomato"
-    assert SeedThing.objects.filter(slug="phacelia").exists()
-    assert not SeedThing.objects.filter(slug="ladder").exists()
+    from ..models import SeedPlantThing
+    assert SeedPlantThing.objects.get(slug="beefsteak-tomato").parent.slug == "tomato"
+    assert SeedPlantThing.objects.filter(slug="phacelia").exists()
+    assert not SeedPlantThing.objects.filter(slug="ladder").exists()
 
 
 @pytest.mark.django_db
@@ -198,28 +198,28 @@ def test_suggestions_while_typing_come_from_the_vocabulary():
     url = reverse("gifts:api-things")
     def suggest(kind, q, lang):
         return Client().get(url, {"kind": kind, "q": q}, HTTP_ACCEPT_LANGUAGE=lang).json()["results"]
-    assert "Tomate" in suggest("seeds", "Tom", "de")
-    assert "Tomato" in suggest("seeds", "Tom", "en")
-    assert "Paradeiser" in suggest("seeds", "Paradei", "de")  # the Austrian word as typed
-    assert suggest("seeds", "Paradei", "de")[0] == "Paradeiser"
+    assert "Tomate" in suggest("seeds_plants", "Tom", "de")
+    assert "Tomato" in suggest("seeds_plants", "Tom", "en")
+    assert "Paradeiser" in suggest("seeds_plants", "Paradei", "de")  # the Austrian word as typed
+    assert suggest("seeds_plants", "Paradei", "de")[0] == "Paradeiser"
     assert "Lastenrad" in suggest("vehicle", "Lasten", "de")
     assert "Tomate" not in suggest("vehicle", "Tom", "de")  # each kind its own vocabulary
-    assert suggest("seeds", "T", "de") == []
+    assert suggest("seeds_plants", "T", "de") == []
     # The reader's language first, names starting with it first; no other languages if it fits
     results = suggest("vehicle", "Trans", "de")
     starting = [name for name in results if name.startswith("Trans")]
     assert results[0] == "Transporter" and "Transportrad" in starting
     assert results[:len(starting)] == starting and "Autotransporter" in results[len(starting):]
-    assert suggest("seeds", "Tom", "de")[0] == "Tomate"
+    assert suggest("seeds_plants", "Tom", "de")[0] == "Tomate"
 
 
 @pytest.mark.django_db
 @pytest.mark.parametrize("kind, title, ok", [
-    ("seeds", "Paradeiser", True),
-    ("seeds", "tomate", True),
-    ("seeds", "Solanum lycopersicum", True),
-    ("seeds", "Mein Lieblingsgemüse", False),
-    ("seeds", "Tomatensamen von Oma", False),
+    ("seeds_plants", "Paradeiser", True),
+    ("seeds_plants", "tomate", True),
+    ("seeds_plants", "Solanum lycopersicum", True),
+    ("seeds_plants", "Mein Lieblingsgemüse", False),
+    ("seeds_plants", "Tomatensamen von Oma", False),
     ("vehicle", "Lastenrad", True),
     ("vehicle", "Rakete", False),
     ("tool", "Selbstgebaute Presse", True),  # tools and materials stay free text
@@ -256,9 +256,9 @@ def test_a_project_needs_a_vehicle_from_the_vocabulary():
 
 @pytest.mark.django_db
 @pytest.mark.parametrize("kind, title, categories", [
-    ("seeds", "Tomate", ["seeds-plants"]),
-    ("seeds", "Kamille", ["health-body", "seeds-plants"]),  # a medicinal herb
-    ("seeds", "Färberwaid", ["clothing-textiles", "seeds-plants"]),  # a dye plant
+    ("seeds_plants", "Tomate", ["seeds-plants"]),
+    ("seeds_plants", "Kamille", ["health-body", "seeds-plants"]),  # a medicinal herb
+    ("seeds_plants", "Färberwaid", ["clothing-textiles", "seeds-plants"]),  # a dye plant
     ("vehicle", "Lastenrad", ["bikes-vehicles"]),
     ("vehicle", "Wohnmobil", ["camping-travel"]),
 ])
@@ -299,8 +299,8 @@ def test_what_a_title_is_recognized_as_while_typing():
     def recognized(**params):
         return Client().get(url, params, HTTP_ACCEPT_LANGUAGE="de").json()
     assert recognized(kind="tool", title="Alte Leiter") == {"thing": "Leiter", "categories": ["Bauen & Renovieren"]}
-    assert sorted(recognized(kind="seeds", title="Kamille")["categories"]) == ["Gesundheit & Körperpflege", "Saatgut & Pflanzen"]
-    assert recognized(kind="seeds", title="Tomatensamen") == {"thing": None, "categories": []}  # seeds: only names from the list
+    assert sorted(recognized(kind="seeds_plants", title="Kamille")["categories"]) == ["Gesundheit & Körperpflege", "Saatgut & Pflanzen"]
+    assert recognized(kind="seeds_plants", title="Tomatensamen") == {"thing": None, "categories": []}  # seeds: only names from the list
     assert recognized(kind="other", title="Leiter") == {"thing": None, "categories": []}  # other things keep a choice
 
 

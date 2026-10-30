@@ -44,7 +44,7 @@ class Migration(migrations.Migration):
                             ("other", "Other things"),
                         ],
                         default="tool",
-                        max_length=10,
+                        max_length=20,
                         verbose_name="Vocabulary",
                     ),
                 ),

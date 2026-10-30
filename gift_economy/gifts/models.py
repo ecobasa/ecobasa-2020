@@ -95,7 +95,7 @@ class Thing(models.Model):
         ("tool", _("Tools")),
         ("material", _("Materials")),
         ("vehicle", _("Vehicles")),
-        ("seeds", _("Seeds")),
+        ("seeds_plants", _("Seeds & plants")),
         ("other", _("Other things")),
     ]
 
@@ -109,7 +109,7 @@ class Thing(models.Model):
         verbose_name=_("Broader thing"),
     )
     # Which vocabulary it belongs to
-    kind = models.CharField(_("Vocabulary"), max_length=10, choices=KIND_CHOICES, default="tool")
+    kind = models.CharField(_("Vocabulary"), max_length=20, choices=KIND_CHOICES, default="tool")
     category = models.ForeignKey(
         ListingCategory, on_delete=models.SET_NULL, null=True, blank=True, related_name="things",
         verbose_name=_("Category"),
@@ -176,8 +176,8 @@ class VehicleThing(Thing):
         verbose_name_plural = _("Vocabulary: vehicles")
 
 
-class SeedThing(Thing):
-    VOCABULARY = "seeds"
+class SeedPlantThing(Thing):
+    VOCABULARY = "seeds_plants"
     objects = _VocabularyManager(VOCABULARY)
 
     class Meta:
@@ -269,7 +269,7 @@ class Listing(RandomIdMixin, models.Model):
     KIND_VEHICLE = "vehicle"
     # Seeds and plants to swap, of a crop or a plant (the seed and plant vocabulary) and
     # a variety
-    KIND_SEEDS = "seeds"
+    KIND_SEEDS_PLANTS = "seeds_plants"
     KIND_OTHER = "other"
     # Offered: a skill they share or teach. Wished for: a skill they want to learn by doing.
     KIND_SKILL = "skill"
@@ -279,20 +279,20 @@ class Listing(RandomIdMixin, models.Model):
         (KIND_MATERIAL, _("Material")),
         (KIND_TOOL, _("Tool")),
         (KIND_VEHICLE, _("Vehicle")),
-        (KIND_SEEDS, _("Seeds & plants")),
+        (KIND_SEEDS_PLANTS, _("Seeds & plants")),
         (KIND_OTHER, _("Other")),
         (KIND_SKILL, _("Skill")),
         (KIND_KNOWLEDGE, _("Knowledge")),
         (KIND_HANDS, _("Helping hands")),
     ]
-    THING_KINDS = (KIND_MATERIAL, KIND_TOOL, KIND_VEHICLE, KIND_SEEDS, KIND_OTHER)
+    THING_KINDS = (KIND_MATERIAL, KIND_TOOL, KIND_VEHICLE, KIND_SEEDS_PLANTS, KIND_OTHER)
     # What can be lent instead of given away: tools, vehicles and other things
     LEND_KINDS = (KIND_TOOL, KIND_VEHICLE, KIND_OTHER)
     # Counted in pieces, without a unit to choose ("3 ladders")
     PIECE_KINDS = (KIND_TOOL, KIND_VEHICLE)
     # Their gift categories come from what they are, once it is recognized in their
     # vocabulary; "other" things keep a choice
-    CATEGORY_KINDS = (KIND_MATERIAL, KIND_TOOL, KIND_VEHICLE, KIND_SEEDS)
+    CATEGORY_KINDS = (KIND_MATERIAL, KIND_TOOL, KIND_VEHICLE, KIND_SEEDS_PLANTS)
     SKILL_KINDS = (KIND_SKILL, KIND_KNOWLEDGE, KIND_HANDS)
     # Given away once (in parts, with a quantity); skills, knowledge and helping hands
     # can be shared again and again
@@ -301,14 +301,14 @@ class Listing(RandomIdMixin, models.Model):
     # a skill stays until its owner says otherwise
     NEED_KINDS = (KIND_KNOWLEDGE, KIND_HANDS)
     KIND_ICONS = {
-        KIND_MATERIAL: "fa-cubes", KIND_TOOL: "fa-screwdriver-wrench", KIND_VEHICLE: "fa-van-shuttle", KIND_SEEDS: "fa-seedling", KIND_OTHER: "fa-gift",
+        KIND_MATERIAL: "fa-cubes", KIND_TOOL: "fa-screwdriver-wrench", KIND_VEHICLE: "fa-van-shuttle", KIND_SEEDS_PLANTS: "fa-seedling", KIND_OTHER: "fa-gift",
         KIND_SKILL: "fa-graduation-cap", KIND_KNOWLEDGE: "fa-lightbulb", KIND_HANDS: "fa-handshake-angle",
     }
     # Pill colour: skills purple, things in the primary colour
     KIND_COLOURS = {kind: "bg-purple" for kind in SKILL_KINDS}
     # Font Awesome code points for map markers: the kind, else a gift (offer) or heart (wish)
     KIND_GLYPHS = {
-        KIND_MATERIAL: 0xF1B3, KIND_TOOL: 0xF7D9, KIND_VEHICLE: 0xF5B6, KIND_SEEDS: 0xF4D8, KIND_SKILL: 0xF19D, KIND_KNOWLEDGE: 0xF0EB, KIND_HANDS: 0xF4C4,
+        KIND_MATERIAL: 0xF1B3, KIND_TOOL: 0xF7D9, KIND_VEHICLE: 0xF5B6, KIND_SEEDS_PLANTS: 0xF4D8, KIND_SKILL: 0xF19D, KIND_KNOWLEDGE: 0xF0EB, KIND_HANDS: 0xF4C4,
     }
 
     LEVEL_BEGINNER = "beginner"
@@ -333,7 +333,7 @@ class Listing(RandomIdMixin, models.Model):
     type = models.CharField(
         _("Type"), choices=TYPE_CHOICES, max_length=5, default=TYPE_OFFER
     )
-    kind = models.CharField(_("Kind"), max_length=10, choices=KIND_CHOICES, default=KIND_OTHER)
+    kind = models.CharField(_("Kind"), max_length=20, choices=KIND_CHOICES, default=KIND_OTHER)
     # Set for a skill, and for knowledge or helping hands with a known skill (in any
     # language, see skills.models.get_or_create_skill): matched by it, not by the title
     skill = models.ForeignKey(
@@ -660,7 +660,7 @@ class Listing(RandomIdMixin, models.Model):
     @property
     def koppen(self):
         """The Köppen-Geiger class of a seed's place ("Cfb"), "" if unknown."""
-        if self.kind != self.KIND_SEEDS or self.point is None:
+        if self.kind != self.KIND_SEEDS_PLANTS or self.point is None:
             return ""
         from .climate import koppen_at
         return koppen_at(self.point.y, self.point.x)
@@ -684,7 +684,7 @@ class Listing(RandomIdMixin, models.Model):
         chosen: its thing's ("Health & Body care" for medicinal herbs, "Clothing &
         Textiles" for dye plants), and for seeds always "Seeds & Plants"."""
         slugs = {thing.category.slug} if thing is not None and thing.category_id else set()
-        if kind == Listing.KIND_SEEDS:
+        if kind == Listing.KIND_SEEDS_PLANTS:
             slugs.add("seeds-plants")
         return list(ListingCategory.objects.filter(slug__in=slugs))
 

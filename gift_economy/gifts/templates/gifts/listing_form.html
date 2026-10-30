@@ -29,7 +29,7 @@
   <form enctype="multipart/form-data" method="post" class="w-full form-control-w-full space-y-4"
         x-data="{ type: '{{ form.type.value|default:'offer'|escapejs }}', kind: '{{ form.kind.value|default:'other'|escapejs }}',
                   plantForm: '{{ form.plant_form.value|default:'seeds'|escapejs }}',
-                  get isThing() { return ['material', 'tool', 'vehicle', 'seeds', 'other'].includes(this.kind) },
+                  get isThing() { return ['material', 'tool', 'vehicle', 'seeds_plants', 'other'].includes(this.kind) },
                   get isSkill() { return this.kind === 'skill' },
                   // What the title is recognized as, and the categories that sets (see the script)
                   recognized: null, recognizedCategories: [] }">
@@ -65,12 +65,12 @@
     {# A thing's name; for knowledge or helping hands what they're for, if no skill says it #}
     <div x-show="!isSkill" id="div_id_title" class="form-group">
       <label for="id_title" class="col-form-label">
-        <span x-show="isThing && kind !== 'seeds' && kind !== 'vehicle'">{{ form.title.label }}</span><span x-show="kind === 'seeds'" x-cloak>{% trans "Which crop or plant?" %}</span><span x-show="kind === 'vehicle'" x-cloak>{% trans "Which vehicle?" %}</span><span x-show="!isThing" x-cloak>{% trans "What for?" %}</span>
+        <span x-show="isThing && kind !== 'seeds_plants' && kind !== 'vehicle'">{{ form.title.label }}</span><span x-show="kind === 'seeds_plants'" x-cloak>{% trans "Which crop or plant?" %}</span><span x-show="kind === 'vehicle'" x-cloak>{% trans "Which vehicle?" %}</span><span x-show="!isThing" x-cloak>{% trans "What for?" %}</span>
       </label>
       {{ form.title }}
       {% for error in form.title.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
       <p class="text-xs mt-1" x-show="!isThing" x-cloak>{% trans "e.g. building the roof truss, planning our food forest, moving house on Saturday" %}</p>
-      <p class="text-xs mt-1" x-show="kind === 'seeds'" x-cloak>{% trans "e.g. Tomato, Bush bean, Calendula, Apple, Hazel" %} · {% trans "Choose from the suggestions; the variety goes below." %}</p>
+      <p class="text-xs mt-1" x-show="kind === 'seeds_plants'" x-cloak>{% trans "e.g. Tomato, Bush bean, Calendula, Apple, Hazel" %} · {% trans "Choose from the suggestions; the variety goes below." %}</p>
       <p class="text-sm mt-1 text-green" x-show="recognized && isThing" x-cloak>
         <i class="fa-solid fa-tag mr-1"></i>{% trans "Recognized as" %}: <strong x-text="recognized"></strong>
         <span x-show="recognizedCategories.length"> · {% trans "Categories" %}: <span x-text="recognizedCategories.join(', ')"></span></span>
@@ -78,7 +78,7 @@
       <p class="text-xs mt-1" x-show="kind === 'vehicle'" x-cloak>{% trans "e.g. Cargo bike, Van, Trailer, Campervan" %} · {% trans "Choose from the suggestions." %}</p>
     </div>
     {# Seeds and plants: in which form, which variety, how hardy; for seeds from which year, and whether they come true when saved #}
-    <div x-show="kind === 'seeds'" x-cloak class="flex flex-wrap gap-4 items-end">
+    <div x-show="kind === 'seeds_plants'" x-cloak class="flex flex-wrap gap-4 items-end">
       <div class="w-full sm:w-1/3">{{ form.plant_form|as_crispy_field }}</div>
       <div class="w-full sm:w-1/2">{{ form.variety|as_crispy_field }}</div>
       <div class="w-1/2 sm:w-1/4" x-show="plantForm === 'seeds'">{{ form.harvest_year|as_crispy_field }}</div>
@@ -108,7 +108,7 @@
       <div x-show="type === 'offer'">{{ form.available|as_crispy_field }}</div>
     </div>
     {# Seeds and vehicles get their categories from what they are, tools and materials too once recognized #}
-    <div id="category-choice" x-show="isThing && !['seeds', 'vehicle'].includes(kind) && !(recognized && ['tool', 'material'].includes(kind))">{% include "gifts/_category_checkboxes.html" with field=form.categories %}</div>
+    <div id="category-choice" x-show="isThing && !['seeds_plants', 'vehicle'].includes(kind) && !(recognized && ['tool', 'material'].includes(kind))">{% include "gifts/_category_checkboxes.html" with field=form.categories %}</div>
     {{ form.description|as_crispy_field }}
     {{ form.image|as_crispy_field }}
 
@@ -126,8 +126,8 @@
       <!-- Location picker (rendered manually; form.location and form.location_name are hidden inputs) -->
       <h3 class="text-lg font-semibold text-primary mb-2">{% trans "Location" %}</h3>
       {# Seeds: the place gives their climate zone (Köppen-Geiger), nobody has to know it #}
-      <p class="text-sm mb-2" x-show="kind === 'seeds' && type === 'offer'" x-cloak><i class="fa-solid fa-seedling mr-1"></i>{% trans "Where did the mother plant grow, where were the seeds harvested? We find the climate zone from the place, so the seeds go where they grow well." %}</p>
-      <p class="text-sm mb-2" x-show="kind === 'seeds' && type === 'wish'" x-cloak><i class="fa-solid fa-seedling mr-1"></i>{% trans "Where will they grow? We find the climate zone from the place and suggest seeds from a similar climate." %}</p>
+      <p class="text-sm mb-2" x-show="kind === 'seeds_plants' && type === 'offer'" x-cloak><i class="fa-solid fa-seedling mr-1"></i>{% trans "Where did the mother plant grow, where were the seeds harvested? We find the climate zone from the place, so the seeds go where they grow well." %}</p>
+      <p class="text-sm mb-2" x-show="kind === 'seeds_plants' && type === 'wish'" x-cloak><i class="fa-solid fa-seedling mr-1"></i>{% trans "Where will they grow? We find the climate zone from the place and suggest seeds from a similar climate." %}</p>
       {% include "maps/_location_picker.html" with map_id="listing-location-map" set_point_fn="setListingPoint" locate_fn="locateListing" map_height="h-80" %}
       {# Only with a place of its own (else it's where its person or community is); a public good's is always exact #}
       <div x-show="own && !publicGood" x-cloak>

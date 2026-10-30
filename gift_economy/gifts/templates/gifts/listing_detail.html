@@ -86,7 +86,7 @@
         <span class="text-xs">{% include "projects/_freshness.html" with when=listing.updated_at label_updated=True %}</span>
       </div>
       {% if listing.level %}<p class="mb-2"><strong>{% trans "Level" %}:</strong> {{ listing.get_level_display }}</p>{% endif %}
-      {% if listing.kind == "seeds" %}
+      {% if listing.kind == "seeds_plants" %}
         <p class="mb-2 flex flex-wrap gap-2 text-sm">
           {% if listing.plant_form and listing.plant_form != "seeds" %}<span class="pill bg-green"><i class="fa-solid fa-leaf mr-1"></i>{{ listing.get_plant_form_display }}</span>{% endif %}
           {% if listing.hardiness_zone %}<span class="pill bg-green" title="{% if listing.is_wish %}{% trans 'The hardiness zone where it will grow' %}{% else %}{% trans 'The coldest winter night it survives' %}{% endif %}"><i class="fa-solid fa-snowflake mr-1"></i>{% trans "Hardy to" %} {{ listing.get_hardiness_zone_display }}</span>{% endif %}

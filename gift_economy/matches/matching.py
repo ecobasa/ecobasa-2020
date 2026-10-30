@@ -149,7 +149,7 @@ def seed_climate_fits(a, b):
     """Seeds fit where they will grow: in the same or a neighbouring climate zone, if both
     places are known. It is the climate that counts, not the latitude: a tropical highland
     is temperate. Anything else always fits."""
-    if Listing.KIND_SEEDS not in (a.kind, b.kind):
+    if Listing.KIND_SEEDS_PLANTS not in (a.kind, b.kind):
         return True
     return Listing.climates_fit(a.climate, b.climate)
 
