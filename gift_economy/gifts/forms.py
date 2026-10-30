@@ -46,7 +46,8 @@ class ListingForm(forms.ModelForm):
     class Meta:
         model = Listing
         fields = (
-            "type", "kind", "skill_name", "title", "variety", "harvest_year", "open_pollinated", "lend",
+            "type", "kind", "skill_name", "title", "plant_form", "variety", "harvest_year", "open_pollinated",
+            "hardiness_zone", "lend",
             "quantity", "unit", "level", "available",
             "description", "image", "categories", "location_name", "location",
         )
@@ -73,6 +74,14 @@ class ListingForm(forms.ModelForm):
         self.fields["variety"].widget.attrs["placeholder"] = _("e.g. Ochsenherz, Golden Bantam, Lange Rote")
         self.fields["harvest_year"].widget.attrs.update({"min": "1990", "placeholder": str(timezone.now().year)})
         self.fields["open_pollinated"].help_text = _("Its seeds can be saved again and come true (not an F1 hybrid).")
+        self.fields["plant_form"].choices = Listing.PLANT_FORM_CHOICES
+        self.fields["plant_form"].widget.attrs["x-model"] = "plantForm"
+        if not self.instance.plant_form:
+            self.initial["plant_form"] = Listing.PLANT_FORM_SEEDS
+        self.fields["hardiness_zone"].choices = [("", "—")] + list(self.fields["hardiness_zone"].choices)[1:]
+        self.fields["hardiness_zone"].help_text = _(
+            "For perennials: the coldest winter night they survive. For a wish: the zone where it will grow."
+        )
         if self.instance.pk and self.instance.skill_id:
             self.initial["skill_name"] = self.instance.skill.get_name()
 
@@ -134,6 +143,12 @@ class ListingForm(forms.ModelForm):
                 cleaned["categories"] = Listing.thing_categories(thing, kind)
         if kind != Listing.KIND_SEEDS:
             cleaned["variety"], cleaned["harvest_year"], cleaned["open_pollinated"] = "", None, False
+            cleaned["plant_form"], cleaned["hardiness_zone"] = "", None
+        else:
+            cleaned["plant_form"] = cleaned.get("plant_form") or Listing.PLANT_FORM_SEEDS
+            if cleaned["plant_form"] != Listing.PLANT_FORM_SEEDS:
+                # How old and whether they come true is about seeds only
+                cleaned["harvest_year"], cleaned["open_pollinated"] = None, False
         if kind in Listing.THING_KINDS:
             cleaned["skill_name"] = ""
             cleaned["level"] = ""

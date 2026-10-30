@@ -26,7 +26,7 @@ OTHER = [
     ("phone", "", "electronics-computers", "Phone", "Handy", "Teléfono", "Téléphone", "Smartphone|Mobiltelefon"),
     ("toys", "", "children-toys", "Toys", "Spielzeug", "Juguetes", "Jouets", "Spielsachen|Lego|Puppe|doll|Brettspiel|board game|Spiele|games"),
     ("pram", "", "children-toys", "Pram", "Kinderwagen", "Cochecito", "Poussette", "Buggy|stroller|Babytrage|Tragetuch|baby carrier"),
-    ("child-seat", "", "children-toys", "Child car seat", "Kindersitz", "Silla de coche", "Siège auto", "Babyschale|Fahrradsitz"),
+    ("child-seat", "", "children-toys", "Child seat", "Kindersitz", "Asiento infantil", "Siège enfant", "Fahrradsitz|Fahrradkindersitz"),
     ("sports-gear", "", "camping-travel", "Sports equipment", "Sportgeräte", "Material deportivo", "Matériel de sport", "Ski|Skier|Snowboard|Schlitten|sledge|Inliner|Tischtennisplatte|Slackline"),
     ("medical-aid", "", "health-body", "Mobility aid", "Gehhilfe", "Ayuda para movilidad", "Aide à la mobilité", "Rollstuhl|wheelchair|Krücken|crutches|Rollator"),
 ]

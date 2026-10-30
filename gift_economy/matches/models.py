@@ -565,6 +565,16 @@ class Suggestion(models.Model):
         return _("%(name)s is looking for: %(title)s") % {"name": name, "title": title}
 
     @property
+    def hardy_enough(self):
+        """False if the offered plant may not survive the winter where the wished-for one
+        will grow, by their hardiness zones; True if either is unknown."""
+        own, other = self.own, self.other
+        if self.other_model != "listing" or self.own_type.model != "listing" or None in (own, other):
+            return True
+        offer, wish = (own, other) if own.is_offer else (other, own)
+        return offer.hardy_enough(offer.hardiness_zone, wish.hardiness_zone)
+
+    @property
     def title_html(self):
         """The text with links: a project need's project to its page and its community to
         its profile, a community's wish to the community, anything else to the thing."""

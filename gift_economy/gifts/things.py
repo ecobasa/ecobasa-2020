@@ -85,29 +85,31 @@ def suggest(q, kind, lang="en", limit=15):
     """Names from the kind's vocabulary for what is being typed: in the reader's language
     or by one of a thing's other names (a regional word like "Paradeiser", a botanical
     name); only if none fits, in another language ("Tomato" typed in German). Each thing
-    once, names starting with what was typed first."""
+    once, names starting with what was typed first, then those with a word starting with
+    it ("Prunus tomentosa" after "Tomate")."""
     from .models import Thing
     q = " ".join(q.casefold().split())
     if len(q) < 2:
         return []
 
-    def fits(name):
+    def rank(name):
+        """0 starts with it, 1 a word starts with it, 2 has it inside, None not at all."""
         folded = " ".join(name.casefold().split())
-        return q in folded, folded.startswith(q) or f" {q}" in folded
+        if q not in folded:
+            return None
+        return 0 if folded.startswith(q) else 1 if f" {q}" in folded else 2
 
     own, foreign = [], []
     for thing in Thing.objects.filter(kind=kind).only("names", "other_names"):
         reader = thing.get_name(lang)
         for name in [reader, *thing.other_names]:
-            found, starts = fits(name)
-            if found:
-                own.append((not starts, name.casefold(), name))
+            if (fit := rank(name)) is not None:
+                own.append((fit, name.casefold(), name))
                 break
         else:
             for name in thing.names.values():
-                found, starts = fits(name)
-                if found:
-                    foreign.append((not starts, name.casefold(), name))
+                if (fit := rank(name)) is not None:
+                    foreign.append((fit, name.casefold(), name))
                     break
     return [name for *_, name in sorted(own or foreign)][:limit]
 

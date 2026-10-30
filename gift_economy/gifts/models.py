@@ -5,7 +5,9 @@ from django.db.models import Exists, OuterRef, Q, Subquery, Sum
 from django.db.models.functions import Coalesce
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.text import format_lazy
 from django.utils.translation import gettext_lazy as _
+from django.utils.translation import pgettext_lazy
 
 from . import units
 from .mixins import RandomIdMixin
@@ -161,8 +163,8 @@ class SeedThing(Thing):
 
     class Meta:
         proxy = True
-        verbose_name = _("Seed")
-        verbose_name_plural = _("Vocabulary: seeds")
+        verbose_name = _("Seed or plant")
+        verbose_name_plural = _("Vocabulary: seeds and plants")
 
 
 class OtherThing(Thing):
@@ -246,7 +248,8 @@ class Listing(RandomIdMixin, models.Model):
     KIND_TOOL = "tool"
     # A cargo bike, a car, a trailer, a van: mostly lent rather than given away
     KIND_VEHICLE = "vehicle"
-    # Seeds to swap, of a crop (the seed vocabulary) and a variety
+    # Seeds and plants to swap, of a crop or a plant (the seed and plant vocabulary) and
+    # a variety
     KIND_SEEDS = "seeds"
     KIND_OTHER = "other"
     # Offered: a skill they share or teach. Wished for: a skill they want to learn by doing.
@@ -257,7 +260,7 @@ class Listing(RandomIdMixin, models.Model):
         (KIND_MATERIAL, _("Material")),
         (KIND_TOOL, _("Tool")),
         (KIND_VEHICLE, _("Vehicle")),
-        (KIND_SEEDS, _("Seeds")),
+        (KIND_SEEDS, _("Seeds & plants")),
         (KIND_OTHER, _("Other")),
         (KIND_SKILL, _("Skill")),
         (KIND_KNOWLEDGE, _("Knowledge")),
@@ -341,6 +344,35 @@ class Listing(RandomIdMixin, models.Model):
     variety = models.CharField(_("Variety"), max_length=100, blank=True)
     harvest_year = models.PositiveSmallIntegerField(_("Harvest year"), null=True, blank=True)
     open_pollinated = models.BooleanField(_("Open-pollinated"), default=False)
+    # Seeds and plants: the form they are passed on in. The harvest year and whether they
+    # are open-pollinated are only asked for seeds.
+    PLANT_FORM_SEEDS = "seeds"
+    PLANT_FORM_YOUNG_PLANT = "young_plant"
+    PLANT_FORM_CUTTING = "cutting"
+    PLANT_FORM_SCION = "scion"
+    PLANT_FORM_ROOTSTOCK = "rootstock"
+    PLANT_FORM_OFFSHOOT = "offshoot"
+    PLANT_FORM_TUBER = "tuber"
+    PLANT_FORM_CHOICES = [
+        (PLANT_FORM_SEEDS, pgettext_lazy("plant form", "Seeds")),
+        (PLANT_FORM_YOUNG_PLANT, _("Young plant")),
+        (PLANT_FORM_CUTTING, _("Cutting")),
+        (PLANT_FORM_SCION, _("Scion wood")),
+        (PLANT_FORM_ROOTSTOCK, _("Rootstock")),
+        (PLANT_FORM_OFFSHOOT, _("Offshoot or division")),
+        (PLANT_FORM_TUBER, _("Tuber or bulb")),
+    ]
+    plant_form = models.CharField(_("Form"), max_length=20, choices=PLANT_FORM_CHOICES, blank=True)
+    # Down to which USDA hardiness zone a perennial survives the winter: the zones go by
+    # the coldest night of an average year, 10 °F (5.6 °C) each, zone 7 from 0 °F
+    # (−17.8 °C). An offer says how hardy the plant is; a wish, the zone where it will grow.
+    HARDINESS_ZONES = range(1, 12)
+    hardiness_zone = models.PositiveSmallIntegerField(
+        _("Hardy to"), null=True, blank=True,
+        choices=[(zone, format_lazy(_("Zone {zone} (to {temperature} °C)"), zone=zone,
+                                    temperature=f"{round((10 * zone - 102) * 5 / 9):d}".replace("-", "−")))
+                 for zone in HARDINESS_ZONES],
+    )
     # Seeds grow best in a climate like the one they were grown in: the climate zone of
     # their place (where the mother plant grew; for a wish, where they will grow), found
     # in a Köppen-Geiger map (gifts.climate). The zones put its classes in plain words:
@@ -599,6 +631,12 @@ class Listing(RandomIdMixin, models.Model):
     def climate_for_koppen(code):
         """The climate zone of a Köppen-Geiger class ("Cfb" is temperate), or ""."""
         return next((zone for zone, codes in Listing.KOPPEN.items() if code in codes), "")
+
+    @staticmethod
+    def hardy_enough(plant_zone, place_zone):
+        """Whether a plant hardy to plant_zone survives the winter in place_zone; unknown
+        zones always do."""
+        return not (plant_zone and place_zone) or plant_zone <= place_zone
 
     @staticmethod
     def climates_fit(a, b):

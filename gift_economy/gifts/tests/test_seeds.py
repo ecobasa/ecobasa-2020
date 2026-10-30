@@ -34,7 +34,7 @@ def test_offering_seeds_with_variety_year_and_open_pollinated():
     assert (seeds.variety, seeds.harvest_year, seeds.open_pollinated) == ("Ochsenherz", 2025, True)
     assert seeds.thing.slug == "beefsteak-tomato"  # the variety names the type
     assert seeds.display_title == "Tomate ‘Ochsenherz’"
-    assert seeds.amount == "5 packets" and seeds.kind_label == "Seeds"
+    assert seeds.amount == "5 packets" and seeds.kind_label == "Seeds & plants"
     page = Client().get(seeds.get_absolute_url(), HTTP_ACCEPT_LANGUAGE="en").content.decode()
     assert "Harvested 2025" in page and "Open-pollinated" in page
 
@@ -48,6 +48,50 @@ def test_seed_details_only_for_seeds():
     beans = Listing.objects.get()
     assert (beans.variety, beans.harvest_year) == ("", None)
     assert beans.thing is None  # beans to eat aren't seeds
+
+
+@pytest.mark.django_db
+def test_offering_a_young_plant_hardy_to_a_zone():
+    anna = _user("anna")
+    response = _client_for(anna).post(reverse("gifts:create"), {
+        "type": "offer", "kind": "seeds", "title": "Apfel", "variety": "Topaz", "plant_form": "scion",
+        "harvest_year": "2025", "open_pollinated": "on", "hardiness_zone": "5",
+    })
+    assert response.status_code == 302
+    scion = Listing.objects.get()
+    assert (scion.plant_form, scion.hardiness_zone, scion.thing.slug) == ("scion", 5, "apple")
+    # How old and whether they come true is about seeds only
+    assert (scion.harvest_year, scion.open_pollinated) == (None, False)
+    page = Client().get(scion.get_absolute_url(), HTTP_ACCEPT_LANGUAGE="de").content.decode()
+    assert "Edelreis" in page and "Winterhart bis Zone 5 (bis −29 °C)" in page
+
+
+@pytest.mark.django_db
+def test_seeds_are_seeds_unless_another_form_is_chosen():
+    anna = _user("anna")
+    client = _client_for(anna)
+    client.post(reverse("gifts:create"), {"type": "offer", "kind": "seeds", "title": "Tomate"})
+    client.post(reverse("gifts:create"), {"type": "offer", "kind": "tool", "title": "Spaten", "plant_form": "cutting", "hardiness_zone": "6"})
+    assert sorted(Listing.objects.values_list("kind", "plant_form", "hardiness_zone")) == [("seeds", "seeds", None), ("tool", "", None)]
+
+
+def test_hardiness_zones_go_by_the_coldest_night():
+    zones = dict(Listing._meta.get_field("hardiness_zone").choices)
+    assert str(zones[7]) == "Zone 7 (to −18 °C)" and str(zones[1]) == "Zone 1 (to −51 °C)" and str(zones[11]) == "Zone 11 (to 4 °C)"
+    assert Listing.hardy_enough(5, 7) and Listing.hardy_enough(7, 7) and not Listing.hardy_enough(8, 6)
+    assert Listing.hardy_enough(None, 6) and Listing.hardy_enough(9, None)
+
+
+@pytest.mark.django_db
+def test_a_plant_not_hardy_enough_is_suggested_with_a_hint():
+    anna, ben = _user("anna"), _user("ben")
+    _seeds(anna, "Feige", type="wish", plant_form="young_plant", hardiness_zone=6)
+    match(_seeds(ben, "Feige", plant_form="cutting", hardiness_zone=8), notify=False)
+    match(_seeds(ben, "Apfel", plant_form="scion", hardiness_zone=4), notify=False)
+    suggestion = anna.suggestions.get()
+    assert not suggestion.hardy_enough and ben.suggestions.get().hardy_enough is False
+    page = _client_for(anna).get(reverse("matches:list")).content.decode()
+    assert "Might not survive the winter here" in page
 
 
 @pytest.mark.django_db
@@ -162,7 +206,10 @@ def test_suggestions_while_typing_come_from_the_vocabulary():
     assert "Tomate" not in suggest("vehicle", "Tom", "de")  # each kind its own vocabulary
     assert suggest("seeds", "T", "de") == []
     # The reader's language first, names starting with it first; no other languages if it fits
-    assert suggest("vehicle", "Trans", "de") == ["Transporter", "Transportrad", "Autotransporter"]
+    results = suggest("vehicle", "Trans", "de")
+    starting = [name for name in results if name.startswith("Trans")]
+    assert results[0] == "Transporter" and "Transportrad" in starting
+    assert results[:len(starting)] == starting and "Autotransporter" in results[len(starting):]
     assert suggest("seeds", "Tom", "de")[0] == "Tomate"
 
 

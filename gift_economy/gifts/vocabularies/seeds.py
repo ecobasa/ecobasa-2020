@@ -23,9 +23,10 @@ SEEDS = [
 
     # ── Vegetables ───────────────────────────────────────────────────────
     ("vegetable-seeds", "seeds", S, "Vegetable seeds", "Gemüsesaatgut", "Semillas de hortalizas", "Graines potagères", "Gemüsesamen|vegetable seed|semences potagères"),
-    # Nightshades
+    
+    # ── Nightshades
     ("tomato", "vegetable-seeds", S, "Tomato", "Tomate", "Tomate", "Tomate", "Solanum lycopersicum|Paradeiser|Paradeis|tomatoes"),
-    ("cherry-tomato", "tomato", S, "Cherry tomato", "Cocktailtomate", "Tomate cherry", "Tomate cerise", "Kirschtomate|Cherrytomate|Johannisbeertomate|Ribiseltomate|Ribisel|Wildtomate|Rote Murmel|Gelbe Birne|Sweet Million|Red Currant|Black Cherry"),
+    ("cherry-tomato", "tomato", S, "Cherry tomato", "Cocktailtomate", "Tomate cherry", "Tomate cerise", "Kirschtomate|Cherrytomate|Johannisbeertomate|Ribiseltomate|Wildtomate|Rote Murmel|Gelbe Birne|Sweet Million|Red Currant|Black Cherry"),
     ("beefsteak-tomato", "tomato", S, "Beefsteak tomato", "Fleischtomate", "Tomate corazón de buey", "Tomate cœur de bœuf", "Fleischparadeiser|Ochsenherz|Coeur de Boeuf|Brandywine|Black Krim|Schwarze von der Krim|Berner Rose|Oxheart|Green Zebra"),
     ("paste-tomato", "tomato", S, "Paste tomato", "Flaschentomate", "Tomate de pera", "Tomate allongée", "Eiertomate|Romatomate|San Marzano|Roma|Saucentomate|plum tomato"),
     ("bush-tomato", "tomato", S, "Bush tomato", "Buschtomate", "Tomate de mata", "Tomate buissonnante", "Balkontomate|determinate tomato"),
@@ -35,14 +36,16 @@ SEEDS = [
     ("tomatillo", "vegetable-seeds", S, "Tomatillo", "Tomatillo", "Tomatillo", "Tomatille", "Physalis philadelphica|Mexikanische Blattkirsche"),
     ("physalis", "vegetable-seeds", S, "Cape gooseberry", "Physalis", "Uchuva", "Physalis", "Andenbeere|Kapstachelbeere|ground cherry|Ananaskirsche"),
     ("seed-potato", "vegetable-seeds", S, "Seed potato", "Saatkartoffel", "Patata de siembra", "Plant de pomme de terre", "Pflanzkartoffel|Saaterdäpfel|Erdäpfel|Erdapfel|Solanum tuberosum|Kartoffelsorte"),
-    # Cucurbits
+    
+    # ── Cucurbits
     ("cucumber", "vegetable-seeds", S, "Cucumber", "Gurke", "Pepino", "Concombre", "Cucumis sativus|Salatgurke|Einlegegurke|Gewürzgurke|Schlangengurke|Stachelgurke|Vorgebirgstraube|gherkin|cornichon"),
     ("courgette", "vegetable-seeds", S, "Courgette", "Zucchini", "Calabacín", "Courgette", "zucchini|Cucurbita pepo|Zucchetti|marrow|Cocozelle"),
     ("pumpkin", "vegetable-seeds", S, "Pumpkin", "Kürbis", "Calabaza", "Courge", "squash|Cucurbita|Hokkaido|Red Kuri|Butternut|Muskatkürbis|Ölkürbis|Riesenkürbis|Zierkürbis|potiron|potimarron|zapallo"),
     ("melon", "vegetable-seeds", S, "Melon", "Melone", "Melón", "Melon", "Cucumis melo|Zuckermelone|Honigmelone|Cantaloupe"),
     ("watermelon", "melon", S, "Watermelon", "Wassermelone", "Sandía", "Pastèque", "Citrullus lanatus|Sugar Baby"),
     ("cucamelon", "vegetable-seeds", S, "Cucamelon", "Mexikanische Minigurke", "Sandía ratón", "Concombre à confire mexicain", "Melothria scabra|Mäusemelone"),
-    # Legumes
+    
+    # ── Legumes
     ("bean", "vegetable-seeds", S, "Bean", "Bohne", "Judía", "Haricot", "Phaseolus|Fisole|Fisolen|frijol|alubia|poroto|Bohnen"),
     ("bush-bean", "bean", S, "Bush bean", "Buschbohne", "Judía enana", "Haricot nain", "French bean|green bean|Phaseolus vulgaris nanus|Prinzessbohne|Wachsbohne|Filetbohne"),
     ("pole-bean", "bean", S, "Climbing bean", "Stangenbohne", "Judía de enrame", "Haricot à rames", "pole bean|Kletterbohne|Phaseolus vulgaris|Borlotti|Cherokee Trail of Tears"),
@@ -57,7 +60,8 @@ SEEDS = [
     ("lentil", "vegetable-seeds", S, "Lentil", "Linse", "Lenteja", "Lentille", "Lens culinaris|Alblinse"),
     ("chickpea", "vegetable-seeds", S, "Chickpea", "Kichererbse", "Garbanzo", "Pois chiche", "Cicer arietinum"),
     ("peanut", "vegetable-seeds", S, "Peanut", "Erdnuss", "Cacahuete", "Arachide", "Arachis hypogaea|maní"),
-    # Leafy vegetables and salads
+    
+    # ── Leafy vegetables and salads
     ("lettuce", "vegetable-seeds", S, "Lettuce", "Salat", "Lechuga", "Laitue", "Lactuca sativa|Kopfsalat|Häuptelsalat|Häuptl|Krauthäuptl|Butterhäuptl|Butterkopf|Pflücksalat|Schnittsalat|Eisbergsalat|Romanasalat|Bindesalat|Batavia|Eichblattsalat|Lollo|salade"),
     ("lambs-lettuce", "vegetable-seeds", S, "Lamb's lettuce", "Feldsalat", "Canónigos", "Mâche", "Valerianella locusta|Rapunzel|Vogerlsalat|corn salad|Nüsslisalat"),
     ("rocket", "vegetable-seeds", S, "Rocket", "Rucola", "Rúcula", "Roquette", "arugula|Eruca sativa|Rauke|Senfrauke|Wilde Rauke"),
@@ -70,7 +74,8 @@ SEEDS = [
     ("cress", "vegetable-seeds", S, "Cress", "Kresse", "Berro", "Cresson", "Gartenkresse|Lepidium sativum|Brunnenkresse|watercress|Kapuzinerkresse-Samen"),
     ("good-king-henry", "vegetable-seeds", S, "Good King Henry", "Guter Heinrich", "Pie de ganso", "Bon-Henri", "Blitum bonus-henricus|Erdbeerspinat|Baumspinat|Ewiger Spinat|perennial spinach"),
     ("malabar-spinach", "vegetable-seeds", S, "Malabar spinach", "Malabarspinat", "Espinaca de Malabar", "Baselle", "Basella alba|Neuseeländer Spinat|New Zealand spinach"),
-    # Brassicas
+    
+    # ── Brassicas
     ("brassica", "vegetable-seeds", S, "Brassica", "Kohl", "Col", "Chou", "Brassica oleracea|Kohlgemüse|Kreuzblütler"),
     ("cabbage", "brassica", S, "Cabbage", "Kopfkohl", "Repollo", "Chou pommé", "Weißkohl|Weißkraut|Rotkohl|Rotkraut|Blaukraut|Spitzkohl|Wirsing|savoy|red cabbage|white cabbage|Kraut"),
     ("kale", "brassica", S, "Kale", "Grünkohl", "Col rizada", "Chou frisé", "Federkohl|Palmkohl|Schwarzkohl|Cavolo nero|Nero di Toscana|Lacinato|Krauskohl|borecole"),
@@ -82,7 +87,8 @@ SEEDS = [
     ("turnip", "brassica", S, "Turnip", "Speiserübe", "Nabo", "Navet", "Mairübe|Herbstrübe|Stoppelrübe|Teltower Rübchen|Stielmus"),
     ("swede", "brassica", S, "Swede", "Steckrübe", "Colinabo sueco", "Rutabaga", "Kohlrübe|rutabaga|Brassica napus"),
     ("mustard-greens", "brassica", S, "Mustard greens", "Blattsenf", "Mostaza de hoja", "Moutarde brune", "Brassica juncea|Sareptasenf|Red Giant|Wasabino"),
-    # Roots and bulbs
+    
+    # ── Roots and bulbs
     ("carrot", "vegetable-seeds", S, "Carrot", "Karotte", "Zanahoria", "Carotte", "Möhre|Mohrrübe|Gelbe Rübe|Rüebli|Daucus carota|Pariser Markt|Nantaise"),
     ("parsnip", "vegetable-seeds", S, "Parsnip", "Pastinake", "Chirivía", "Panais", "Pastinaca sativa"),
     ("root-parsley", "vegetable-seeds", S, "Root parsley", "Wurzelpetersilie", "Perejil de raíz", "Persil racine", "Petersilienwurzel|Hamburg parsley"),
@@ -96,9 +102,10 @@ SEEDS = [
     ("onion", "vegetable-seeds", S, "Onion", "Zwiebel", "Cebolla", "Oignon", "Allium cepa|Speisezwiebel|Steckzwiebel|onion sets|Schalotte|shallot|Frühlingszwiebel|spring onion|Lauchzwiebel|Winterheckzwiebel|Stuttgarter Riesen"),
     ("leek", "vegetable-seeds", S, "Leek", "Lauch", "Puerro", "Poireau", "Porree|Allium porrum|Winterlauch|Sommerlauch"),
     ("garlic", "vegetable-seeds", S, "Garlic", "Knoblauch", "Ajo", "Ail", "Allium sativum|Steckknoblauch"),
-    ("jerusalem-artichoke", "vegetable-seeds", S, "Jerusalem artichoke", "Topinambur", "Tupinambo", "Topinambour", "Helianthus tuberosus|Erdbirne"),
     ("yacon", "vegetable-seeds", S, "Yacon", "Yacon", "Yacón", "Yacon", "Smallanthus sonchifolius|Oca|Knollenziest|Crosne|Andenknollen"),
-    # Other vegetables
+    ("jerusalem-artichoke", "vegetable-seeds", S, "Jerusalem artichoke", "Topinambur", "Tupinambo", "Topinambour", "Helianthus tuberosus|Erdbirne|Ross-Erdäpfel|Rosskartoffel|Indianerknolle|Jerusalem-Artischocke|sunchoke|Aguaturma"),
+    
+    # ── Other vegetables
     ("tiger-nut", "vegetable-seeds", S, "Tiger nut", "Erdmandel", "Chufa", "Souchet", "Cyperus esculentus|Chufa|Tigernuss"),
     ("agretti", "vegetable-seeds", S, "Agretti", "Mönchsbart", "Barrilla", "Barbe de capucin", "Salsola soda|Agretti|Barba di frate|saltwort"),
     ("caigua", "vegetable-seeds", S, "Caigua", "Hörnchenkürbis", "Caigua", "Concombre grimpant", "Cyclanthera pedata|Korila|Inkagurke|achocha"),
@@ -108,7 +115,7 @@ SEEDS = [
     ("asparagus", "vegetable-seeds", S, "Asparagus", "Spargel", "Espárrago", "Asperge", "Asparagus officinalis|Grünspargel"),
     ("rhubarb", "vegetable-seeds", S, "Rhubarb", "Rhabarber", "Ruibarbo", "Rhubarbe", "Rheum"),
     ("strawberry", "vegetable-seeds", S, "Strawberry", "Erdbeere", "Fresa", "Fraise", "Fragaria|Walderdbeere|Monatserdbeere|alpine strawberry"),
-
+    
     # ── Herbs ────────────────────────────────────────────────────────────
     ("herb-seeds", "seeds", S, "Herb seeds", "Kräutersaatgut", "Semillas de hierbas", "Graines d'aromatiques", "Kräutersamen|Küchenkräuter|Gewürzkräuter|herbs|hierbas"),
     ("basil", "herb-seeds", S, "Basil", "Basilikum", "Albahaca", "Basilic", "Ocimum basilicum|Genoveser|Genovese|Thai-Basilikum|Zitronenbasilikum|Tulsi|Königskraut"),
@@ -145,7 +152,8 @@ SEEDS = [
     ("stevia", "herb-seeds", S, "Stevia", "Stevia", "Estevia", "Stévia", "Stevia rebaudiana|Süßkraut|Honigkraut"),
     ("catnip", "herb-seeds", S, "Catnip", "Katzenminze", "Hierba gatera", "Herbe aux chats", "Nepeta cataria"),
     ("lavender", "herb-seeds", S, "Lavender", "Lavendel", "Lavanda", "Lavande", "Lavandula|Speik"),
-    # Medicinal herbs (Heilkräuter)
+    
+    # ──Medicinal herbs (Heilkräuter)
     ("medicinal-herb-seeds", "herb-seeds", H, "Medicinal herb seeds", "Heilkräuter", "Plantas medicinales", "Plantes médicinales", "Heilpflanzen|medicinal plants|Teekräuter|tea herbs|Arzneipflanzen"),
     ("chamomile", "medicinal-herb-seeds", H, "Chamomile", "Kamille", "Manzanilla", "Camomille", "Matricaria chamomilla|Echte Kamille|Römische Kamille"),
     ("calendula", "medicinal-herb-seeds", H, "Pot marigold", "Ringelblume", "Caléndula", "Souci", "Calendula officinalis|calendula"),
@@ -172,13 +180,11 @@ SEEDS = [
     ("feverfew", "medicinal-herb-seeds", H, "Feverfew", "Mutterkraut", "Matricaria", "Grande camomille", "Tanacetum parthenium"),
     ("chaste-tree", "medicinal-herb-seeds", H, "Chaste tree", "Mönchspfeffer", "Sauzgatillo", "Gattilier", "Vitex agnus-castus"),
     ("liquorice", "medicinal-herb-seeds", H, "Liquorice", "Süßholz", "Regaliz", "Réglisse", "Glycyrrhiza glabra|licorice"),
-    ("hops", "medicinal-herb-seeds", H, "Hops", "Hopfen", "Lúpulo", "Houblon", "Humulus lupulus"),
     ("evening-primrose", "medicinal-herb-seeds", H, "Evening primrose", "Nachtkerze", "Onagra", "Onagre", "Oenothera biennis"),
     ("milkweed", "medicinal-herb-seeds", H, "Milkweed", "Seidenpflanze", "Algodoncillo", "Asclépiade", "Asclepias"),
     ("tobacco", "medicinal-herb-seeds", H, "Tobacco", "Tabak", "Tabaco", "Tabac", "Nicotiana|Bauerntabak|Ziertabak"),
     ("ginseng", "medicinal-herb-seeds", H, "Ginseng", "Ginseng", "Ginseng", "Ginseng", "Panax|Jiaogulan|Gynostemma"),
     ("maca", "medicinal-herb-seeds", H, "Maca", "Maca", "Maca", "Maca", "Lepidium meyenii"),
-    ("goji", "medicinal-herb-seeds", H, "Goji", "Goji-Beere", "Goji", "Goji", "Lycium barbarum|Bocksdorn|wolfberry"),
     ("wild-herb-seeds", "herb-seeds", S, "Wild herb seeds", "Wildkräuter", "Hierbas silvestres", "Plantes sauvages", "Wildkräutersamen|wild herbs|Wildpflanzen|Wildgemüse"),
     ("dandelion", "wild-herb-seeds", S, "Dandelion", "Löwenzahn", "Diente de león", "Pissenlit", "Taraxacum"),
     ("wild-garlic", "wild-herb-seeds", S, "Wild garlic", "Bärlauch", "Ajo de oso", "Ail des ours", "Allium ursinum|ramsons"),
@@ -266,5 +272,34 @@ SEEDS = [
     ("safflower", "dye-plant-seeds", T, "Safflower", "Färberdistel", "Cártamo", "Carthame", "Carthamus tinctorius|Saflor"),
 
     # ── Trees and shrubs from seed ──────────────────────────────────────
-    ("tree-seeds", "seeds", S, "Tree and shrub seeds", "Gehölzsamen", "Semillas de árboles", "Graines d'arbres", "Baumsamen|tree seeds|Saatgut Bäume|Nüsse zum Pflanzen|acorns|Eicheln|Kastanien zum Pflanzen"),
+    ("tree-seeds", "seeds", S, "Tree and shrub seeds", "Gehölzsamen", "Semillas de árboles", "Graines d'arbres", "Baumsamen|Strauchsamen|Gehölzsaatgut|stratifiziert|Stratifikation|tree seeds|Saatgut Bäume|Nüsse zum Pflanzen|acorns|Eicheln|Kastanien zum Pflanzen"),
+    # ── Mushrooms ──────────────────────────────────────
+    ("mushroom-spawn", "", "seeds-plants", "Mushroom spawn", "Pilzbrut", "Micelio de setas", "Mycélium", "Impfbrut"),
+    ("grain-spawn", "mushroom-spawn", S, "Grain spawn", "Körnerbrut", "Micelio en grano", "Blanc sur grain", "Getreidebrut|Roggenbrut|Hirsebrut|Weizenbrut"),
+    ("sawdust-spawn", "mushroom-spawn", S, "Sawdust spawn", "Sägemehlbrut", "Micelio en serrín", "Blanc sur sciure", "Substratbrut|Holzbrut"),
+    ("plug-spawn", "mushroom-spawn", S, "Plug spawn", "Impfdübel", "Tacos de micelio", "Chevilles de mycélium", "Dübelbrut|Holzdübel|dowel spawn|Pilzdübel"),
+    ("liquid-culture", "mushroom-spawn", S, "Liquid culture", "Flüssigkultur", "Cultivo líquido", "Culture liquide", "Flüssigmyzel"),
+    ("agar-culture", "mushroom-spawn", S, "Agar culture", "Agarkultur", "Cultivo en agar", "Culture sur gélose", "Petrischale|Schrägagar|slant|Reinkultur"),
+    ("mushroom-spores", "mushroom-spawn", S, "Mushroom spores", "Pilzsporen", "Esporas de hongos", "Spores de champignons", "Sporenabdruck|spore print|Sporenspritze|spore syringe"),
+    # --- Pilzarten (eine Art benennt ihre Brut, so wie "Ochsenherz" die Tomate) ---
+    ("oyster-mushroom", "mushroom-spawn", S, "Oyster mushroom", "Austernpilz", "Seta de ostra", "Pleurote en huître", "Pleurotus ostreatus|Austernseitling|Kalbfleischpilz|Seitling|Gírgola|hiratake|pearl oyster"),
+    ("pink-oyster", "oyster-mushroom", S, "Pink oyster mushroom", "Rosenseitling", "Seta rosa", "Pleurote rose", "Pleurotus djamor|Rosa Austernpilz|Flamingo-Seitling"),
+    ("golden-oyster", "oyster-mushroom", S, "Golden oyster mushroom", "Limonenseitling", "Seta de ostra amarilla", "Pleurote jaune", "Pleurotus citrinopileatus|Zitronenseitling|Gelber Austernpilz"),
+    ("king-oyster", "mushroom-spawn", S, "King oyster mushroom", "Kräuterseitling", "Seta de cardo", "Pleurote du panicaut", "Pleurotus eryngii|Kräuter-Seitling|king trumpet"),
+    ("shiitake", "mushroom-spawn", S, "Shiitake", "Shiitake", "Shiitake", "Shiitaké", "Lentinula edodes|Pasaniapilz"),
+    ("button-mushroom", "mushroom-spawn", S, "Button mushroom", "Champignon", "Champiñón", "Champignon de Paris", "Agaricus bisporus|Zuchtchampignon|Egerling|Brauner Champignon|Portobello|cremini"),
+    ("wine-cap", "mushroom-spawn", G, "Wine cap", "Riesenträuschling", "Estrofaria", "Strophaire à anneau rugueux", "Stropharia rugosoannulata|Kulturträuschling|Braunkappe|garden giant"),
+    ("shaggy-ink-cap", "mushroom-spawn", S, "Shaggy ink cap", "Schopftintling", "Barbuda", "Coprin chevelu", "Coprinus comatus|Spargelpilz|shaggy mane"),
+    ("pioppino", "mushroom-spawn", S, "Pioppino", "Südlicher Ackerling", "Seta de chopo", "Pholiote du peuplier", "Cyclocybe aegerita|Agrocybe aegerita|Pappel-Ackerling|Pioppino"),
+    ("nameko", "mushroom-spawn", S, "Nameko", "Nameko", "Nameko", "Pholiote nameko", "Pholiota nameko|Pholiota microspora|Goldkäppchen"),
+    ("enoki", "mushroom-spawn", S, "Enoki", "Samtfußrübling", "Enoki", "Collybie à pied velouté", "Flammulina velutipes|Winterpilz|enokitake"),
+    ("wood-ear", "mushroom-spawn", S, "Wood ear", "Judasohr", "Oreja de Judas", "Oreille de Judas", "Auricularia auricula-judae|Auricularia polytricha|Mu-Err|Holunderschwamm"),
+    ("maitake", "mushroom-spawn", S, "Maitake", "Klapperschwamm", "Maitake", "Polypore en touffe", "Grifola frondosa|hen of the woods|Laubporling"),
+    ("lions-mane", "mushroom-spawn", H, "Lion's mane", "Igel-Stachelbart", "Melena de león", "Hydne hérisson", "Hericium erinaceus|Igelstachelbart|Affenkopfpilz|yamabushitake"),
+    ("reishi", "mushroom-spawn", H, "Reishi", "Glänzender Lackporling", "Reishi", "Ganoderme luisant", "Ganoderma lucidum|Lackporling|Ling Zhi"),
+    ("turkey-tail", "mushroom-spawn", H, "Turkey tail", "Schmetterlingstramete", "Cola de pavo", "Tramète versicolore", "Trametes versicolor|Coriolus|Bunte Tramete"),
+    ("cordyceps", "mushroom-spawn", H, "Cordyceps", "Puppenkernkeule", "Cordyceps", "Cordyceps", "Cordyceps militaris|Raupenpilz"),
+    ("truffle-tree", "", S, "Truffle-inoculated tree", "Trüffelbaum", "Árbol micorrizado con trufa", "Arbre truffier", "Tuber melanosporum|Tuber aestivum|Burgundertrüffel|Sommertrüffel|Trüffelhaselnuss|Trüffeleiche"),
+    ("mycorrhizal-inoculant", "", G, "Mycorrhizal inoculant", "Mykorrhiza", "Micorrizas", "Mycorhizes", "Mykorrhiza-Impfmittel|Mykorrhizapilze|mycorrhizae|AMF"),
+    ("mushroom-grow-kit", "", G, "Mushroom grow kit", "Pilzzuchtset", "Kit de cultivo de setas", "Kit de culture de champignons", "Pilzkultur|Pilzbox|Fertigkultur|grow kit|Pilzzuchtbeutel"),
 ]
