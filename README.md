@@ -17,7 +17,35 @@ What people and communities do on ecobasa:
   own kind, "Vehicle"), booked by the day or the hour, like the tools.
 
 
-## Setup for dev
+## Setup with Docker
+
+The simplest way to develop: Docker brings PostGIS, GDAL and Mailpit along.
+
+```
+cp django.env.example django.env
+cp postgres.env.example postgres.env
+docker compose up
+```
+
+In `postgres.env`, set the user, password and database that `DATABASE_URL` in `django.env`
+uses (`ecobasa`/`ecobasa`/`ecobasa` in the example).
+
+- `django`: compiles translations, migrates and runs the dev server on http://localhost:8000
+- `database`: PostGIS
+- `mailpit`: catches all emails, at http://localhost:8025
+- `watch`: rebuilds the CSS on changes
+- `scheduler`: the [scheduled jobs](#scheduled-jobs), only with `docker compose --profile scheduler up`
+
+Commands and tests run in the `django` container:
+```
+docker compose exec django python manage.py createsuperuser
+docker compose exec django python manage.py seed_demo_data
+docker compose exec django pytest
+```
+
+After changing `Pipfile`, rebuild the image: `docker compose build django`.
+
+## Setup without Docker
 
 ### Postgis
 Because we are using postgis for location fields,
@@ -71,6 +99,8 @@ https://ecobasa.herokuapp.com/
 
 ## Management commands
 
+add `docker compose exec django` before the following commands for a docker setup
+
 - `python manage.py load_vocabularies`: loads the thing vocabularies
   (`gift_economy/gifts/vocabularies/`) after editing them and recognizes existing listings again.
 - `python manage.py match_everything`: matches all existing offers and wishes, e.g. after
@@ -81,6 +111,7 @@ https://ecobasa.herokuapp.com/
 
 ## Settings (env)
 
+- `STADIA_MAPS_KEY`: for the map tiles
 - `DJANGO_SITE_URL`: base for links in emails, e.g. `https://ecobasa.org`
 - `REFERENCE_REPLY_ADDRESS`: e.g. `references@ecobasa.org`. Replies go to
   `references+<key>@ecobasa.org`; the key is also in the subject, in case the mail server
