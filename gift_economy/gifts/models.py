@@ -96,6 +96,7 @@ class Thing(models.Model):
         ("material", _("Materials")),
         ("vehicle", _("Vehicles")),
         ("seeds_plants", _("Seeds & plants")),
+        ("food", _("Food & harvest")),
         ("other", _("Other things")),
     ]
 
@@ -186,6 +187,16 @@ class SeedPlantThing(Thing):
         verbose_name_plural = _("Vocabulary: seeds and plants")
 
 
+class FoodThing(Thing):
+    VOCABULARY = "food"
+    objects = _VocabularyManager(VOCABULARY)
+
+    class Meta:
+        proxy = True
+        verbose_name = _("Food")
+        verbose_name_plural = _("Vocabulary: food & harvest")
+
+
 class OtherThing(Thing):
     VOCABULARY = "other"
     objects = _VocabularyManager(VOCABULARY)
@@ -270,6 +281,9 @@ class Listing(RandomIdMixin, models.Model):
     # Seeds and plants to swap, of a crop or a plant (the seed and plant vocabulary) and
     # a variety
     KIND_SEEDS_PLANTS = "seeds_plants"
+    # Food to share: a harvest too big to eat, food saved from being thrown away (the food
+    # vocabulary)
+    KIND_FOOD = "food"
     KIND_OTHER = "other"
     # Offered: a skill they share or teach. Wished for: a skill they want to learn by doing.
     KIND_SKILL = "skill"
@@ -280,19 +294,20 @@ class Listing(RandomIdMixin, models.Model):
         (KIND_TOOL, _("Tool")),
         (KIND_VEHICLE, _("Vehicle")),
         (KIND_SEEDS_PLANTS, _("Seeds & plants")),
+        (KIND_FOOD, _("Food & harvest")),
         (KIND_OTHER, _("Other")),
         (KIND_SKILL, _("Skill")),
         (KIND_KNOWLEDGE, _("Knowledge")),
         (KIND_HANDS, _("Helping hands")),
     ]
-    THING_KINDS = (KIND_MATERIAL, KIND_TOOL, KIND_VEHICLE, KIND_SEEDS_PLANTS, KIND_OTHER)
+    THING_KINDS = (KIND_MATERIAL, KIND_TOOL, KIND_VEHICLE, KIND_SEEDS_PLANTS, KIND_FOOD, KIND_OTHER)
     # What can be lent instead of given away: tools, vehicles and other things
     LEND_KINDS = (KIND_TOOL, KIND_VEHICLE, KIND_OTHER)
     # Counted in pieces, without a unit to choose ("3 ladders")
     PIECE_KINDS = (KIND_TOOL, KIND_VEHICLE)
     # Their gift categories come from what they are, once it is recognized in their
     # vocabulary; "other" things keep a choice
-    CATEGORY_KINDS = (KIND_MATERIAL, KIND_TOOL, KIND_VEHICLE, KIND_SEEDS_PLANTS)
+    CATEGORY_KINDS = (KIND_MATERIAL, KIND_TOOL, KIND_VEHICLE, KIND_SEEDS_PLANTS, KIND_FOOD)
     SKILL_KINDS = (KIND_SKILL, KIND_KNOWLEDGE, KIND_HANDS)
     # Given away once (in parts, with a quantity); skills, knowledge and helping hands
     # can be shared again and again
@@ -301,14 +316,14 @@ class Listing(RandomIdMixin, models.Model):
     # a skill stays until its owner says otherwise
     NEED_KINDS = (KIND_KNOWLEDGE, KIND_HANDS)
     KIND_ICONS = {
-        KIND_MATERIAL: "fa-cubes", KIND_TOOL: "fa-screwdriver-wrench", KIND_VEHICLE: "fa-van-shuttle", KIND_SEEDS_PLANTS: "fa-seedling", KIND_OTHER: "fa-gift",
+        KIND_MATERIAL: "fa-cubes", KIND_TOOL: "fa-screwdriver-wrench", KIND_VEHICLE: "fa-van-shuttle", KIND_SEEDS_PLANTS: "fa-seedling", KIND_FOOD: "fa-apple-whole", KIND_OTHER: "fa-gift",
         KIND_SKILL: "fa-graduation-cap", KIND_KNOWLEDGE: "fa-lightbulb", KIND_HANDS: "fa-handshake-angle",
     }
     # Pill colour: skills purple, things in the primary colour
     KIND_COLOURS = {kind: "bg-purple" for kind in SKILL_KINDS}
     # Font Awesome code points for map markers: the kind, else a gift (offer) or heart (wish)
     KIND_GLYPHS = {
-        KIND_MATERIAL: 0xF1B3, KIND_TOOL: 0xF7D9, KIND_VEHICLE: 0xF5B6, KIND_SEEDS_PLANTS: 0xF4D8, KIND_SKILL: 0xF19D, KIND_KNOWLEDGE: 0xF0EB, KIND_HANDS: 0xF4C4,
+        KIND_MATERIAL: 0xF1B3, KIND_TOOL: 0xF7D9, KIND_VEHICLE: 0xF5B6, KIND_SEEDS_PLANTS: 0xF4D8, KIND_FOOD: 0xF5D1, KIND_SKILL: 0xF19D, KIND_KNOWLEDGE: 0xF0EB, KIND_HANDS: 0xF4C4,
     }
 
     LEVEL_BEGINNER = "beginner"
@@ -392,6 +407,9 @@ class Listing(RandomIdMixin, models.Model):
                                     temperature=f"{round((10 * zone - 102) * 5 / 9):d}".replace("-", "−")))
                  for zone in HARDINESS_ZONES],
     )
+    # Food offered: the date on its label. It stays listed after it, as food is often
+    # still good long after; the listing says so.
+    best_before = models.DateField(_("Best before"), null=True, blank=True)
     # Seeds grow best in a climate like the one they were grown in: the climate zone of
     # their place (where the mother plant grew; for a wish, where they will grow), found
     # in a Köppen-Geiger map (gifts.climate). The zones put its classes in plain words:
@@ -680,12 +698,15 @@ class Listing(RandomIdMixin, models.Model):
 
     @staticmethod
     def thing_categories(thing, kind):
-        """The gift categories of a seed or a vehicle, set from what it is rather than
-        chosen: its thing's ("Health & Body care" for medicinal herbs, "Clothing &
-        Textiles" for dye plants), and for seeds always "Seeds & Plants"."""
+        """The gift categories of a seed, food or a vehicle, set from what it is rather
+        than chosen: its thing's ("Health & Body care" for medicinal herbs, "Clothing &
+        Textiles" for dye plants), for seeds always "Seeds & Plants", for food "Food &
+        Preserves"."""
         slugs = {thing.category.slug} if thing is not None and thing.category_id else set()
         if kind == Listing.KIND_SEEDS_PLANTS:
             slugs.add("seeds-plants")
+        if kind == Listing.KIND_FOOD:
+            slugs.add("food-preserves")
         return list(ListingCategory.objects.filter(slug__in=slugs))
 
     @staticmethod
@@ -703,6 +724,11 @@ class Listing(RandomIdMixin, models.Model):
     def climates_fit(a, b):
         """Whether seeds from climate zone a fit zone b; unknown zones always fit."""
         return not (a and b) or b in Listing.CLIMATE_FITS.get(a, {a})
+
+    @property
+    def past_best_before(self):
+        """Whether food is past the date on its label (often still good)."""
+        return self.best_before is not None and self.best_before < timezone.localdate()
 
     @property
     def seed_age(self):

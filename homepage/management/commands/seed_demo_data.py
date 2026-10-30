@@ -257,10 +257,11 @@ class Command(BaseCommand):
         self.stdout.write("Seeding listings…")
         specs = [
             dict(
-                title="17kg of surplus zucchini (please, we beg you)", type="offer",
-                owner="luna@ecobasa.demo", category="food-preserves",
-                description="They will not stop. We have tried everything. Take them, we have more.",
-                image="zucchini.jpg", quantity=17, unit="kg", kind=Listing.KIND_MATERIAL,
+                title="Zucchini", type="offer",
+                owner="luna@ecobasa.demo",
+                description="17 kg of surplus zucchini (please, we beg you). They will not stop. "
+                            "We have tried everything. Take them, we have more.",
+                image="zucchini.jpg", quantity=17, unit="kg", kind=Listing.KIND_FOOD,
             ),
             dict(
                 title="Slightly judgmental goat, free to a good home", type="offer",
@@ -269,10 +270,11 @@ class Command(BaseCommand):
                 image="goat.jpg",
             ),
             dict(
-                title="Kombucha SCOBY, comes with 45-minute lecture on gut health", type="offer",
-                owner="mireille@ecobasa.demo", category="food-preserves",
-                description="The lecture is technically optional. The SCOBY is not.",
-                image="kombucha.jpg",
+                title="Kombucha SCOBY", type="offer",
+                owner="mireille@ecobasa.demo",
+                description="Comes with a 45-minute lecture on gut health. The lecture is technically "
+                            "optional. The SCOBY is not.",
+                image="kombucha.jpg", kind=Listing.KIND_FOOD,
             ),
             dict(
                 title="Desperately seeking a wheelbarrow with actual working wheels", type="wish",
@@ -552,7 +554,7 @@ class Command(BaseCommand):
         luna, bjorn, mireille = users["luna@ecobasa.demo"], users["bjorn@ecobasa.demo"], users["mireille@ecobasa.demo"]
         diego, sam, ana = users["diego@ecobasa.demo"], users["sam@ecobasa.demo"], users["ana@ecobasa.demo"]
 
-        zucchini = Listing.objects.get(title__startswith="17kg of surplus zucchini", owner=luna)
+        zucchini = Listing.objects.get(title="Zucchini", owner=luna)
         starter_wish = Listing.objects.get(title__startswith="Wish: someone who understands sourdough", owner=mireille)
         luna_permaculture = Listing.objects.get(owner=luna, type="offer", skill__name="Permaculture Design")
         kombucha_fermentation = Listing.objects.get(
@@ -732,12 +734,12 @@ class Command(BaseCommand):
 
     def _seed_lending(self, users, communities):
         """Tools and vehicles to lend (a person's, and a community's car sharing), one to
-        borrow, loans by the day and by the hour, and a public good."""
+        borrow, loans by the day and by the hour, a public good and food to share."""
         from datetime import time
 
-        self.stdout.write("Seeding things to lend & a public good…")
+        self.stdout.write("Seeding things to lend, a public good & food…")
         luna, bjorn, diego = users["luna@ecobasa.demo"], users["bjorn@ecobasa.demo"], users["diego@ecobasa.demo"]
-        sam = users["sam@ecobasa.demo"]
+        sam, ana = users["sam@ecobasa.demo"], users["ana@ecobasa.demo"]
         sonnenkraut = communities["Sonnenkraut Ecovillage"]
         OFFER, WISH = Listing.TYPE_OFFER, Listing.TYPE_WISH
 
@@ -765,10 +767,21 @@ class Command(BaseCommand):
                    "Could I take the van for two days? Firewood delivery, very enthusiastic.")
 
         self._thing(
-            luna, OFFER, Listing.KIND_MATERIAL, "Windfall apples along the old railway path",
-            category="food-preserves", public_good=True, location_public=True,
+            luna, OFFER, Listing.KIND_FOOD, "Apples", public_good=True, location_public=True,
             location_name="Old railway path, Görlitz", location=Point(14.9712, 51.1718, srid=4326),
-            description="Three old trees nobody owns. Bring a bag, leave the wasps their share.",
+            description="Windfall apples along the old railway path. Three old trees nobody owns. "
+                        "Bring a bag, leave the wasps their share.",
+        )
+        # Saved from the bin, past its date and still good; and a wish the apples and
+        # the zucchini fit (fruit and vegetables are broader things)
+        self._thing(
+            ana, OFFER, Listing.KIND_FOOD, "Peanut butter", quantity=24, unit="pieces",
+            best_before=timezone.localdate() - timedelta(days=45),
+            description="A shop cleared its shelf: 24 jars, a few weeks past the date and still perfectly nutty.",
+        )
+        self._thing(
+            diego, WISH, Listing.KIND_FOOD, "Fruit",
+            description="For the jam-making weekend. Bruised, wormy, windfall: all welcome, the pot forgives.",
         )
 
     # ── References ───────────────────────────────────────────────────────
@@ -799,9 +812,9 @@ class Command(BaseCommand):
             dict(author=mireille, subject=communities["Sonnenkraut Ecovillage"], impression=N, age_days=20,
                  text="Lovely people. I now own more zucchini than I own furniture."),
             # About a listing
-            dict(author=bjorn, subject=Listing.objects.get(title__startswith="17kg of surplus zucchini", owner=luna),
+            dict(author=bjorn, subject=Listing.objects.get(title="Zucchini", owner=luna),
                  match=Match.objects.filter(from_user=bjorn, content_type__model="listing", object_id__in=Listing.objects.filter(
-                     title__startswith="17kg of surplus zucchini").values("pk")).first(),
+                     title="Zucchini", owner=luna).values("pk")).first(),
                  impression=N, age_days=6,
                  text="Took three kilos. Fourteen more followed me home. I did not ask questions."),
             # About a user skill

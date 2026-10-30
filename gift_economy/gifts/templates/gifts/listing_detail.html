@@ -86,6 +86,12 @@
         <span class="text-xs">{% include "projects/_freshness.html" with when=listing.updated_at label_updated=True %}</span>
       </div>
       {% if listing.level %}<p class="mb-2"><strong>{% trans "Level" %}:</strong> {{ listing.get_level_display }}</p>{% endif %}
+      {% if listing.best_before %}
+        <p class="mb-2 flex flex-wrap gap-2 text-sm">
+          <span class="pill bg-green"><i class="fa-regular fa-calendar mr-1"></i>{% trans "Best before" %} {{ listing.best_before|date:"SHORT_DATE_FORMAT" }}</span>
+          {% if listing.past_best_before %}<span class="text-xs self-center">{% trans "Past its date, often still good: look, smell, taste." %}</span>{% endif %}
+        </p>
+      {% endif %}
       {% if listing.kind == "seeds_plants" %}
         <p class="mb-2 flex flex-wrap gap-2 text-sm">
           {% if listing.plant_form and listing.plant_form != "seeds" %}<span class="pill bg-green"><i class="fa-solid fa-leaf mr-1"></i>{{ listing.get_plant_form_display }}</span>{% endif %}

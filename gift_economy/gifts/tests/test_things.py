@@ -36,7 +36,7 @@ def _slug(title):
     ("Hosen", "clothes"),
     ("Gartenschlauch 25m", "garden-hose"),
     ("Sägespäne", "sawdust"),
-    ("Kartoffeln", None),
+    ("Kartoffeln", "food-potatoes"),
     ("", None),
 ])
 def test_recognizes_things_in_any_language(title, slug):

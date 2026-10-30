@@ -30,7 +30,8 @@
         </div>
         <ul class="feature-list">
           <li><a href="{% url 'gifts:search' %}">{% trans "Gifts and wishes – we suggest Matches nearby" %}</a></li>
-          <li><a href="{% url 'gifts:create' %}?type=offer&kind=seeds">{% trans "Swap seeds & plants: open-pollinated, with variety and harvest year, as well as young plants, cuttings and scion wood" %}</a></li>
+          <li><a href="{% url 'gifts:create' %}?type=offer&kind=seeds_plants">{% trans "Swap seeds & plants: open-pollinated, with variety and harvest year, as well as young plants, cuttings and scion wood" %}</a></li>
+          <li><a href="{% url 'gifts:create' %}?type=offer&kind=food">{% trans "Share food: a harvest too big to eat, preserves, and food saved from the bin, also past its best-before date" %}</a></li>
           <li><a href="{% url 'gifts:create' %}?type=offer&kind=tool&lend=1">{% trans "Tool library: lend instead of buying twice, with a lending calendar" %}</a></li>
           <li><a href="{% url 'gifts:create' %}?type=offer&kind=vehicle&lend=1">{% trans "Share vehicles: cargo bike, car, trailer or van, by the day or the hour" %}</a></li>
           <li><a href="{% url 'gifts:search' %}">{% trans "Public goods: fruit trees, wood and whatever else is free to everyone" %}</a></li>
