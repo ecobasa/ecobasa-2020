@@ -101,7 +101,7 @@ def test_ambassador_creates_project_with_needs_and_known_skills_are_linked(commu
         **_formset([
             {"kind": "hands", "title": "Zimmerei", "quantity": "2"},
             {"kind": "hands", "title": "Helping hands"},
-            {"kind": "material", "title": "Straw bales", "quantity": "120", "unit": "pieces", "category": str(category.pk)},
+            {"kind": "material", "title": "Straw bale", "quantity": "120", "unit": "pieces"},
             {"kind": "hands", "title": ""},  # an empty row added and left alone
         ]),
     })
@@ -109,13 +109,14 @@ def test_ambassador_creates_project_with_needs_and_known_skills_are_linked(commu
     assert response.status_code == 302
     assert project.created_by == ambassador
     needs = list(project.needs())
-    assert [n.title for n in needs] == ["Zimmerei", "Helping hands", "Straw bales"]
+    assert [n.title for n in needs] == ["Zimmerei", "Helping hands", "Straw bale"]
     assert needs[0].skill.slug == "carpentry"
     assert needs[1].skill is None  # not in the taxonomy: plain text, no new skill
     assert needs[2].skill is None
     # Needs are the community's wishes in the project
     assert all(n.is_wish and n.community == community for n in needs)
-    # People are the unit of helping hands; only things get a gift category
+    # People are the unit of helping hands; only things get a gift category, a material
+    # that of what it is
     assert (needs[0].quantity, needs[0].unit, list(needs[0].categories.all())) == (2, "people", [])
     assert (needs[2].quantity, needs[2].unit, list(needs[2].categories.all())) == (120, "pieces", [category])
     with translation.override("en"):

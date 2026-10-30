@@ -130,15 +130,14 @@ class ListingForm(forms.ModelForm):
         elif kind in Listing.THING_KINDS and not title:
             self.add_error("title", _("What is it?"))
         elif kind in WHITELISTED_KINDS and thing_named(title, kind) is None:
-            # Matched by what exactly it is: a crop, food or a vehicle from the list
+            # Matched by what exactly it is: a crop, food, vehicle, tool or material from the list
             self.add_error("title", _("Please choose one from the suggestions, so others with the same can find it."))
         if kind not in Listing.LEND_KINDS:
             cleaned["lend"] = False
         if kind in Listing.PIECE_KINDS:
             cleaned["unit"] = ""
         if kind in Listing.CATEGORY_KINDS and title and not self.has_error("title"):
-            # What it is decides its categories: a seed, food or vehicle always; a tool or a
-            # material once recognized, else the categories chosen
+            # What it is decides its categories: those of the thing from the vocabulary
             from .models import Thing
             from .things import recognize
             if kind in WHITELISTED_KINDS:

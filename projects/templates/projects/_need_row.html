@@ -14,6 +14,7 @@
     <input type="checkbox" name="{{ need_form.DELETE.html_name }}" class="hidden" x-model="removed" {% if need_form.DELETE.value %}checked{% endif %}>
     <i class="fa fa-trash"></i><span class="sr-only">{% trans "Remove" %}</span>
   </label>
-  <div class="col-span-12" x-show="kind === 'material' || kind === 'tool'" {% if need_form.kind.value != 'material' and need_form.kind.value != 'tool' %}style="display:none"{% endif %}>{{ need_form.category }}</div>
+  {# Vehicles, tools and materials get their category from what they are #}
+  <div class="col-span-12" x-show="kind === 'other'" {% if need_form.kind.value != 'other' %}style="display:none"{% endif %}>{{ need_form.category }}</div>
   {% for error in need_form.non_field_errors %}<p class="col-span-12 field-error">{{ error }}</p>{% endfor %}
 </div>

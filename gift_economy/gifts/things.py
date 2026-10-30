@@ -54,9 +54,10 @@ def build_index(things):
     return names, parents
 
 
-# Kinds of listing whose title has to be a name from their vocabulary: matching seeds, food
-# and vehicles depends on knowing exactly which crop, food or vehicle it is
-WHITELISTED_KINDS = ("seeds_plants", "food", "vehicle")
+# Kinds of listing whose title has to be a name from their vocabulary: matching depends on
+# knowing exactly which crop, food, vehicle, tool or material it is (a salvaged window, not
+# "Fenster ausgebaut"); details go in the description
+WHITELISTED_KINDS = ("seeds_plants", "food", "vehicle", "tool", "material")
 
 _names_cache = None
 

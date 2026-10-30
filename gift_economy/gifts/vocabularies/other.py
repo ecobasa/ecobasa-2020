@@ -9,10 +9,9 @@ OTHER = [
     ("furniture", "", "furniture", "Furniture", "Möbel", "Muebles", "Meubles", ""),
     ("table", "furniture", "furniture", "Table", "Tisch", "Mesa", "Table", "Esstisch|Schreibtisch|desk"),
     ("chair", "furniture", "furniture", "Chair", "Stuhl", "Silla", "Chaise", "Stühle|Hocker|stool|Bank|bench"),
-    ("bed", "furniture", "furniture", "Bed", "Bett", "Cama", "Lit", "Matratze|mattress|Hochbett|Etagenbett|bunk bed"),
+    ("bed", "furniture", "furniture", "Bed", "Bett", "Cama", "Lit", "Betten|Hochbett|Etagenbett|bunk bed|Bettgestell|bed frame|Kinderbett"),
     ("sofa", "furniture", "furniture", "Sofa", "Sofa", "Sofá", "Canapé", "Couch|Sessel|armchair"),
     ("shelf", "furniture", "furniture", "Shelf", "Regal", "Estantería", "Étagère", "Bücherregal|shelves|Schrank|cupboard|wardrobe|Kleiderschrank"),
-    ("lamp", "", "kitchen-household", "Lamp", "Lampe", "Lámpara", "Lampe", "Leuchte|Glühbirne|light bulb"),
     # ── On the move, camping ─────────────────────────────────────────────
     ("sleeping-bag", "", "camping-travel", "Sleeping bag", "Schlafsack", "Saco de dormir", "Sac de couchage", "Isomatte|sleeping mat|Schlafmatte"),
     ("backpack", "", "camping-travel", "Backpack", "Rucksack", "Mochila", "Sac à dos", "Trekkingrucksack"),
@@ -29,4 +28,6 @@ OTHER = [
     ("child-seat", "", "children-toys", "Child seat", "Kindersitz", "Asiento infantil", "Siège enfant", "Fahrradsitz|Fahrradkindersitz"),
     ("sports-gear", "", "camping-travel", "Sports equipment", "Sportgeräte", "Material deportivo", "Matériel de sport", "Ski|Skier|Snowboard|Schlitten|sledge|Inliner|Tischtennisplatte|Slackline"),
     ("medical-aid", "", "health-body", "Mobility aid", "Gehhilfe", "Ayuda para movilidad", "Aide à la mobilité", "Rollstuhl|wheelchair|Krücken|crutches|Rollator"),
+    ("mattress", "bed", "furniture", "Mattress", "Matratze", "Colchón", "Matelas", "Matratzen|mattress|Futon|Matratzenauflage|Topper|Gästematratze|Luftmatratze"),
+    ("slatted-frame", "bed", "furniture", "Slatted bed base", "Lattenrost", "Somier de láminas", "Sommier à lattes", "Lattenroste|Rollrost|slatted frame|slatted base|Federholzrahmen"),
 ]

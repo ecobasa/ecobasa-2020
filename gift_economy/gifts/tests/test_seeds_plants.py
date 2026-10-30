@@ -43,11 +43,11 @@ def test_offering_seeds_with_variety_year_and_open_pollinated():
 def test_seed_details_only_for_seeds():
     anna = _user("anna")
     _client_for(anna).post(reverse("gifts:create"), {
-        "type": "offer", "kind": "material", "title": "Bohnen", "variety": "Borlotti", "harvest_year": "2025",
+        "type": "offer", "kind": "material", "title": "Lehm", "variety": "Borlotti", "harvest_year": "2025",
     })
-    beans = Listing.objects.get()
-    assert (beans.variety, beans.harvest_year) == ("", None)
-    assert beans.thing is None  # beans to eat aren't seeds
+    clay = Listing.objects.get()
+    assert (clay.variety, clay.harvest_year) == ("", None)
+    assert clay.thing.slug == "clay"
 
 
 @pytest.mark.django_db
@@ -222,9 +222,14 @@ def test_suggestions_while_typing_come_from_the_vocabulary():
     ("seeds_plants", "Tomatensamen von Oma", False),
     ("vehicle", "Lastenrad", True),
     ("vehicle", "Rakete", False),
-    ("tool", "Selbstgebaute Presse", True),  # tools and materials stay free text
+    ("tool", "Leiter", True),
+    ("tool", "Glasschneider", True),
+    ("tool", "Selbstgebaute Presse", False),
+    ("material", "Fensterrahmen", True),
+    ("material", "Spiegel", True),
+    ("material", "Fenster ausgebaut, 3 Stück", False),  # the details go into the description
 ])
-def test_seeds_and_vehicles_only_by_a_name_from_the_vocabulary(kind, title, ok):
+def test_things_only_by_a_name_from_the_vocabulary(kind, title, ok):
     anna = _user("anna")
     response = _client_for(anna).post(reverse("gifts:create"), {"type": "offer", "kind": kind, "title": title})
     assert (response.status_code == 302) is ok
@@ -281,16 +286,18 @@ def test_tools_and_vehicles_are_counted_in_pieces():
 
 
 @pytest.mark.django_db
-def test_tools_and_materials_get_their_categories_once_recognized():
+def test_tools_and_materials_get_their_categories_from_the_vocabulary():
     from ..models import ListingCategory
     anna = _user("anna")
     garden = ListingCategory.objects.get(slug="garden-farm").pk
     client = _client_for(anna)
     client.post(reverse("gifts:create"), {"type": "offer", "kind": "tool", "title": "Leiter", "categories": [garden]})
-    client.post(reverse("gifts:create"), {"type": "offer", "kind": "material", "title": "Kartoffeln", "categories": [garden]})
-    ladder, potatoes = Listing.objects.get(title="Leiter"), Listing.objects.get(title="Kartoffeln")
+    client.post(reverse("gifts:create"), {"type": "offer", "kind": "material", "title": "Mosaiksteine", "categories": [garden]})
+    client.post(reverse("gifts:create"), {"type": "offer", "kind": "other", "title": "Kartoffeln", "categories": [garden]})
+    ladder, mosaic = Listing.objects.get(title="Leiter"), Listing.objects.get(title="Mosaiksteine")
     assert [c.slug for c in ladder.categories.all()] == ["building-renovation"]  # from the vocabulary
-    assert [c.slug for c in potatoes.categories.all()] == ["garden-farm"]  # not recognized: as chosen
+    assert [c.slug for c in mosaic.categories.all()] == ["arts-crafts"]
+    assert [c.slug for c in Listing.objects.get(title="Kartoffeln").categories.all()] == ["garden-farm"]  # other things: as chosen
 
 
 @pytest.mark.django_db
@@ -298,7 +305,8 @@ def test_what_a_title_is_recognized_as_while_typing():
     url = reverse("gifts:api-recognize")
     def recognized(**params):
         return Client().get(url, params, HTTP_ACCEPT_LANGUAGE="de").json()
-    assert recognized(kind="tool", title="Alte Leiter") == {"thing": "Leiter", "categories": ["Bauen & Renovieren"]}
+    assert recognized(kind="tool", title="Leiter") == {"thing": "Leiter", "categories": ["Bauen & Renovieren"]}
+    assert recognized(kind="tool", title="Alte Leiter") == {"thing": None, "categories": []}  # tools: only names from the list
     assert sorted(recognized(kind="seeds_plants", title="Kamille")["categories"]) == ["Gesundheit & Körperpflege", "Saatgut & Pflanzen"]
     assert recognized(kind="seeds_plants", title="Tomatensamen") == {"thing": None, "categories": []}  # seeds: only names from the list
     assert recognized(kind="other", title="Leiter") == {"thing": None, "categories": []}  # other things keep a choice

@@ -49,10 +49,10 @@ def test_offering_food_with_its_best_before_date():
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("kind, type", [("food", "wish"), ("material", "offer")])
-def test_a_best_before_date_only_for_food_offered(kind, type):
+@pytest.mark.parametrize("kind, type, title", [("food", "wish", "Zucchini"), ("material", "offer", "Lehm")])
+def test_a_best_before_date_only_for_food_offered(kind, type, title):
     anna = _user("anna")
-    _client_for(anna).post(reverse("gifts:create"), {"type": type, "kind": kind, "title": "Zucchini", "best_before": "2026-03-01"})
+    _client_for(anna).post(reverse("gifts:create"), {"type": type, "kind": kind, "title": title, "best_before": "2026-03-01"})
     assert Listing.objects.get().best_before is None
 
 

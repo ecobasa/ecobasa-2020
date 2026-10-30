@@ -76,18 +76,18 @@ document.addEventListener('alpine:init', () => {
       });
     },
     // Suggestions styled like the tag fields: skills for helping hands and knowledge (other
-    // words allowed: "what for"), tools and materials from their vocabulary (own words
-    // too), vehicles only from theirs, so they can be matched
+    // words allowed: "what for"), vehicles, tools and materials only from their
+    // vocabulary, so they can be matched
     suggest(row, changed) {
       const kind = row.querySelector('select[name$="-kind"]').value;
-      // A vehicle chosen from the list doesn't fit another kind: it goes
-      const clear = changed && (kind === 'vehicle' || row.dataset.kind === 'vehicle');
+      // A name chosen from a vocabulary doesn't fit another kind: it goes
+      const listed = ['vehicle', 'tool', 'material'];
+      const clear = changed && (listed.includes(kind) || listed.includes(row.dataset.kind));
       row.dataset.kind = kind;
       const title = EcoSelect.detach(row.querySelector('[data-need-title]'), clear);
-      if (['vehicle', 'tool', 'material'].includes(kind)) {
-        // A vehicle only from the list; tools and materials suggested, in own words too
+      if (listed.includes(kind)) {
         EcoSelect.attach(title, {
-          url: '{% url "gifts:api-things" %}?kind=' + kind, enforce: kind === 'vehicle', results: data => data.results || [],
+          url: '{% url "gifts:api-things" %}?kind=' + kind, enforce: true, results: data => data.results || [],
         });
       } else if (['hands', 'knowledge'].includes(kind)) {
         EcoSelect.attach(title, {

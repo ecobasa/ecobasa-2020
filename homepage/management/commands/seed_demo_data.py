@@ -4,8 +4,9 @@ complete demo dataset: users, communities (every type/status, one with a public
 place), listings (offers & wishes, some with photos, categorized as the listing form
 does), seeds & plants (every plant form, from temperate to tropical climates, with
 hardiness zones), vehicles and tools to lend and borrow (with loans, by the day and by
-the hour, also a community's), a public good, skills (every level), skill wishes
-(user + community), matches (every status, every target type), match messages,
+the hour, also a community's), a public good, things salvaged from houses taken down
+and common goods in places of their own around the map (every kind), skills (every
+level), skill wishes (user + community), matches (every status, every target type), match messages,
 volunteer details, notifications (every tag), and references (every impression and
 subject type, with confirmed/pending/declined skill tags and gift names).
 
@@ -90,6 +91,7 @@ class Command(BaseCommand):
         self._seed_lending(users, communities)
         self._seed_references(users, communities)
         self._seed_projects(users, communities)
+        self._seed_goods_around(users, communities)
 
         self.stdout.write(self.style.SUCCESS(
             "\nDone. Log in as any of these (password: %s):" % DEMO_PASSWORD
@@ -277,29 +279,34 @@ class Command(BaseCommand):
                 image="kombucha.jpg", kind=Listing.KIND_FOOD,
             ),
             dict(
-                title="Desperately seeking a wheelbarrow with actual working wheels", type="wish",
-                owner="diego@ecobasa.demo", category="garden-farm", kind=Listing.KIND_TOOL,
-                description="Ours now travels exclusively in gentle, tragic circles.",
+                title="Wheelbarrow", type="wish",
+                owner="diego@ecobasa.demo", kind=Listing.KIND_TOOL,
+                description="Desperately seeking one with actual working wheels. Ours now travels "
+                            "exclusively in gentle, tragic circles.",
             ),
             dict(
-                title="Need: a printer that isn't possessed by a bureaucratic demon", type="wish",
-                owner="sam@ecobasa.demo", category="electronics-computers", kind=Listing.KIND_TOOL,
-                description="It only prints when it senses fear. We are all very afraid.",
+                title="Printer", type="wish",
+                owner="sam@ecobasa.demo", kind=Listing.KIND_TOOL,
+                description="One that isn't possessed by a bureaucratic demon. Ours only prints when "
+                            "it senses fear. We are all very afraid.",
             ),
             dict(
-                title="Hand-me-down yoga mats (only slightly haunted)", type="offer",
-                owner="ana@ecobasa.demo", category="health-body",
-                description="Previous owner achieved great inner peace, then moved to Bali. Mats remain.",
+                title="Yoga mat", type="offer",
+                owner="ana@ecobasa.demo", kind=Listing.KIND_MATERIAL, quantity=4, unit="pieces",
+                description="Hand-me-downs, only slightly haunted. Previous owner achieved great inner "
+                            "peace, then moved to Bali. Mats remain.",
             ),
             dict(
-                title="Looking for scaffolding to fix our leaning composting toilet", type="wish",
-                owner="luna@ecobasa.demo", category="building-renovation", kind=Listing.KIND_TOOL,
-                description="It has a nice view for now. That will not last much longer.",
+                title="Scaffolding", type="wish",
+                owner="luna@ecobasa.demo", kind=Listing.KIND_TOOL,
+                description="To fix our leaning composting toilet. It has a nice view for now. That "
+                            "will not last much longer.",
             ),
             dict(
-                title="Firewood, chopped with more enthusiasm than technique", type="offer",
-                owner="bjorn@ecobasa.demo", category="energy-heating", kind=Listing.KIND_MATERIAL,
-                description="Sizes range from 'kindling' to 'geological event'. Burns fine either way.",
+                title="Firewood", type="offer",
+                owner="bjorn@ecobasa.demo", kind=Listing.KIND_MATERIAL, quantity=3, unit="m3",
+                description="Chopped with more enthusiasm than technique. Sizes range from 'kindling' "
+                            "to 'geological event'. Burns fine either way.",
             ),
             dict(
                 title="Wish: someone who understands sourdough starters better than my ex", type="wish",
@@ -784,6 +791,110 @@ class Command(BaseCommand):
             description="For the jam-making weekend. Bruised, wormy, windfall: all welcome, the pot forgives.",
         )
 
+    # ── Goods around the map ─────────────────────────────────────────────
+
+    def _seed_goods_around(self, users, communities):
+        """What comes out of houses taken down (windows, doors, tiles, mirrors, bricks) and
+        common goods of every kind, each in a place of its own near its person or community,
+        so the map shows every kind of marker spread out. Titles are names from the
+        vocabularies, as the form only takes those for tools, materials, vehicles, seeds
+        and food; the details are in the description."""
+        self.stdout.write("Seeding salvaged and common goods around the map…")
+        luna, bjorn, mireille = users["luna@ecobasa.demo"], users["bjorn@ecobasa.demo"], users["mireille@ecobasa.demo"]
+        diego, ana, sam = users["diego@ecobasa.demo"], users["ana@ecobasa.demo"], users["sam@ecobasa.demo"]
+        valeria = users["valeria@ecobasa.demo"]
+        goats, barefoot = communities["Three Goats and a Dream Farm"], communities["Barefoot Bureaucracy House Project"]
+        OFFER, WISH = Listing.TYPE_OFFER, Listing.TYPE_WISH
+        MATERIAL, TOOL, VEHICLE = Listing.KIND_MATERIAL, Listing.KIND_TOOL, Listing.KIND_VEHICLE
+        FOOD, SEEDS_PLANTS, OTHER = Listing.KIND_FOOD, Listing.KIND_SEEDS_PLANTS, Listing.KIND_OTHER
+        specs = [
+            # (holder, type, kind, title, place, (lon, lat), fields)
+            (luna, OFFER, MATERIAL, "Wooden window", "Zittau", (14.8072, 50.8962), dict(
+                quantity=6, unit="pieces",
+                description="From a farmhouse being taken down. Single glazing, lovely old frames, "
+                            "ideal for a cold frame or a greenhouse wall.")),
+            (luna, OFFER, MATERIAL, "Floor tiles", "Löbau", (14.6770, 51.0990), dict(
+                quantity=25, unit="m2",
+                description="30 × 30, terracotta-coloured, carefully chiselled off. Some grout still "
+                            "attached at no extra charge.")),
+            (luna, OFFER, MATERIAL, "Mirror", "Weißwasser", (14.6370, 51.5050), dict(
+                quantity=1, unit="pieces",
+                description="Big hallway mirror from the same house. Reflects well, judges nobody.")),
+            (bjorn, OFFER, MATERIAL, "Reclaimed brick", "Kamenz", (14.0939, 51.2686), dict(
+                quantity=800, unit="pieces",
+                description="From an old barn wall, mostly cleaned. Bring gloves and a trailer.")),
+            (bjorn, OFFER, TOOL, "Pallet breaker", "Hoyerswerda", (14.2489, 51.4376), dict(
+                lend=True, quantity=1,
+                description="Turns pallets into planks without turning planks into splinters.")),
+            (bjorn, OFFER, MATERIAL, "Lamp", "Bischofswerda", (14.1797, 51.1272), dict(
+                quantity=3, unit="pieces",
+                description="Three enamel ceiling lamps from a closed-down school. Rewired, tested.")),
+            (mireille, WISH, MATERIAL, "Glass bottle", "Mirepoix", (1.8733, 43.0878), dict(
+                quantity=300, unit="pieces",
+                description="For a bottle wall in the fermentation room. Green and brown preferred.")),
+            (mireille, OFFER, TOOL, "Tile nippers", "Lavelanet", (1.8481, 42.9311), dict(
+                lend=True, quantity=1,
+                description="For mosaics out of broken tiles. Comes with a plaster for the first try.")),
+            (mireille, WISH, MATERIAL, "Stove tiles", "Saint-Girons", (1.1458, 42.9847), dict(
+                description="Rebuilding an old tiled stove. Any colour, as long as they are complete.")),
+            (diego, OFFER, MATERIAL, "Roof tile", "Trujillo", (-5.8826, 39.4597), dict(
+                quantity=400, unit="pieces",
+                description="Old curved clay tiles from a collapsed shed. Some moss, all character.")),
+            (diego, OFFER, MATERIAL, "Front door", "Plasencia", (-6.0884, 40.0303), dict(
+                quantity=1, unit="pieces",
+                description="Solid chestnut, 90 × 210 cm, with the frame. Needs paint and a little love.")),
+            (goats, OFFER, VEHICLE, "Tractor", "Navalmoral de la Mata", (-5.5422, 39.8919), dict(
+                lend=True,
+                description="Older than all three goats together. Starts on the second try, usually.")),
+            (ana, OFFER, MATERIAL, "Cork", "Montemor-o-Novo", (-8.2172, 38.6481), dict(
+                quantity=200, unit="kg",
+                description="Bark offcuts from this year's harvest. Insulation, floats, pin boards.")),
+            (ana, OFFER, FOOD, "Olive", "Estremoz", (-7.5906, 38.8441), dict(
+                quantity=20, unit="kg",
+                description="From the old grove behind the house. Bitter until you cure them.")),
+            (ana, OFFER, OTHER, "Sofa", "Beja", (-7.8632, 38.0151), dict(
+                category="furniture",
+                description="Three-seater, green, seen better decades. Very comfortable for naps.")),
+            (sam, OFFER, MATERIAL, "Interior door", "Amersfoort", (5.3878, 52.1561), dict(
+                quantity=5, unit="pieces",
+                description="Panel doors from a renovation, 83 cm wide, with handles and hinges.")),
+            (sam, OFFER, TOOL, "Glass suction lifter", "Zeist", (5.2332, 52.0894), dict(
+                lend=True, quantity=1,
+                description="Two cups. For carrying old windows and big tiles without dropping them.")),
+            (barefoot, OFFER, MATERIAL, "Pallet", "Nieuwegein", (5.0808, 52.0292), dict(
+                quantity=30, unit="pieces",
+                description="Euro pallets from the house's moving-in. Our upcycling ambitions ran out first.")),
+            (sam, OFFER, MATERIAL, "Mineral wool", "Utrecht Lunetten", (5.1370, 52.0610), dict(
+                quantity=12, unit="m2",
+                description="Leftover rolls from the attic, bought as a lot and over-ordered by a third. "
+                            "Wear a mask, it itches like regret.")),
+            (bjorn, OFFER, MATERIAL, "Building material leftovers", "Radeberg", (13.9214, 51.1166), dict(
+                description="A trailer-load from a junk lot: half bags of screed and plaster, primer, "
+                            "skirting boards, cable conduit, two rolls of vapour barrier.")),
+            (mireille, OFFER, MATERIAL, "Bathtub", "Pamiers", (1.6108, 43.1164), dict(
+                quantity=1, unit="pieces",
+                description="Cast iron, clawfoot, heavier than our disagreements. Makes a great pond.")),
+            (diego, WISH, MATERIAL, "Hot tub", "Cáceres", (-6.3711, 39.4753), dict(
+                description="Or a wooden bathing barrel. For the goats' spa day (and ours).")),
+            (valeria, OFFER, MATERIAL, "Bamboo poles", "Cahuita", (-82.8394, 9.7369), dict(
+                quantity=40, unit="pieces",
+                description="Guadua, cut at the right moon, cured for a year. Four to six metres.")),
+            (valeria, WISH, MATERIAL, "Solar panel", "Limón", (-83.0350, 9.9907), dict(
+                quantity=2, unit="pieces",
+                description="Used ones welcome. For the fridge, and for the monkeys' viewing pleasure.")),
+            (valeria, OFFER, FOOD, "Banana", "Manzanillo", (-82.6553, 9.6331), dict(
+                quantity=30, unit="kg",
+                description="A whole bunch ripened at once. They always do.")),
+            (valeria, OFFER, SEEDS_PLANTS, "Papaya", "Hone Creek", (-82.8000, 9.6900), dict(
+                plant_form=Listing.PLANT_FORM_SEEDS, harvest_year=timezone.localdate().year - 1,
+                open_pollinated=True, quantity=15, unit="packets",
+                description="From the sweetest tree in the garden, dried on the porch.")),
+        ]
+        for holder, type, kind, title, place, (lon, lat), fields in specs:
+            category = fields.pop("category", None)
+            self._thing(holder, type, kind, title, category=category, location=Point(lon, lat, srid=4326),
+                        location_name=place, **fields)
+
     # ── References ───────────────────────────────────────────────────────
 
     def _seed_references(self, users, communities):
@@ -870,12 +981,6 @@ class Command(BaseCommand):
         kombucha = communities["Kombucha Commune"]
         today = timezone.localdate()
 
-        # The category of each thing a demo project needs
-        need_categories = {
-            "Field stones": "building-renovation", "Clay": "building-renovation", "Chimney pipe": "energy-heating",
-            "Cement mixer": "building-renovation", "Scythe": "garden-farm", "Straw bales": "building-renovation",
-        }
-
         def project(community, title, needs, learn=(), **fields):
             obj, created = Project.objects.get_or_create(
                 community=community, title=title, defaults={"created_by": community.owner, **fields},
@@ -897,7 +1002,8 @@ class Command(BaseCommand):
                         kind=kind, order=order, quantity=quantity, unit=unit, description=details, skill=skill,
                     ),
                 )
-                _as_the_form_would(need, category=need_categories.get(need_title))
+                # Tools and materials get their category from what they are
+                _as_the_form_would(need)
             return obj, created
 
         stove, created = project(
@@ -908,7 +1014,7 @@ class Command(BaseCommand):
                 (Listing.KIND_MATERIAL, "Field stones", 300, "pieces", "fist to head size"),
                 (Listing.KIND_MATERIAL, "Clay", 200, "kg", ""),
                 (Listing.KIND_MATERIAL, "Chimney pipe", 3, "m", "15 cm diameter"),
-                (Listing.KIND_TOOL, "Cement mixer", None, "", ""),
+                (Listing.KIND_TOOL, "Concrete mixer", None, "", ""),
             ],
             learn=["Natural Building", "Masonry", "Rocket Stove Building"],
             description="Our old kitchen stove eats a forest a winter. We want to build a rocket stove "
@@ -930,7 +1036,7 @@ class Command(BaseCommand):
         )
         stale, _stale_created = project(
             kombucha, "Straw-bale guest house",
-            [(Listing.KIND_MATERIAL, "Straw bales", 120, "pieces", ""), (Listing.KIND_KNOWLEDGE, "Natural Building", None, "", "")],
+            [(Listing.KIND_MATERIAL, "Straw bale", 120, "pieces", ""), (Listing.KIND_KNOWLEDGE, "Natural Building", None, "", "")],
             description="Planning a small guest house for the fermentation workshops.",
             food_provided=True,
         )
@@ -938,8 +1044,8 @@ class Command(BaseCommand):
 
         # Björn (Bautzen, 40 km away) is a woodworker and gives away scythes: the matching
         # suggests the food forest's needs to him, and him to Luna
-        self._thing(bjorn, Listing.TYPE_OFFER, Listing.KIND_TOOL, "Two old scythes", category="garden-farm",
-                    description="Sharp enough, with a whetstone.")
+        self._thing(bjorn, Listing.TYPE_OFFER, Listing.KIND_TOOL, "Scythe", quantity=2,
+                    description="Two old ones, sharp enough, with a whetstone.")
         # Wishes for knowledge and helping hands work outside projects too
         Listing.objects.get_or_create(
             owner=sam, type=Listing.TYPE_WISH, kind=Listing.KIND_KNOWLEDGE, title="How to size a battery bank",
@@ -957,7 +1063,7 @@ class Command(BaseCommand):
             # (who, from, to, status, {need: how much})
             (bjorn, 7, 21, Match.STATUS_ACCEPTED, {"Natural Building": 1, "Field stones": 120}),
             (mireille, 10, 17, Match.STATUS_ACCEPTED, {"Clay": 80}),
-            (diego, 12, 26, Match.STATUS_PENDING, {"Masonry": 1, "Cement mixer": None}),
+            (diego, 12, 26, Match.STATUS_PENDING, {"Masonry": 1, "Concrete mixer": None}),
             (sam, 14, 20, Match.STATUS_PENDING, {"Natural Building": 1}),
         ]
         for who, start, end, status, need_titles in stays:

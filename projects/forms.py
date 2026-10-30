@@ -130,7 +130,7 @@ class NeedForm(forms.ModelForm):
         if cleaned.get("kind") in WHITELISTED_KINDS and cleaned.get("title"):
             thing_id = thing_named(cleaned["title"], cleaned["kind"])
             if thing_id is None:
-                # Matched by what exactly it is: a vehicle from the list
+                # Matched by what exactly it is: a vehicle, tool or material from the list
                 self.add_error("title", _("Please choose one from the suggestions, so others with the same can find it."))
             else:
                 # What it is decides its category
