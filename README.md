@@ -8,8 +8,9 @@ What people and communities do on ecobasa:
 - **Share skills**: teach, learn by doing, lend a hand; volunteer at communities and help
   with their projects.
 - **Swap seeds & plants**: seeds and plants are their own kind, with variety, harvest year and whether they are
-  open-pollinated, matched by crop ("Ochsenherz" is a beefsteak tomato); a community can
-  keep a seed library.
+  open-pollinated, matched by crop; a community can keep a seed library.
+- **Share food**: a harvest too big to eat, preserves and food saved from the bin, with an
+  optional best-before date.
 - **Run a tool library**: lend tools instead of giving them away. People ask for the days
   or hours they need something, and a lending calendar shows who has what when.
 - **Share cars in a community**: the community's cargo bike, car, trailer or van (their
@@ -67,182 +68,31 @@ pytest
 https://ecobasa.herokuapp.com/
 
 (auto deploys master branch)
-## Reference requests after a match
 
-After a stay ended (or an accepted match's date passed, or a week after acceptance without
-a date), both sides get an email asking for a reference, framed for them as their story.
-They answer on a no-login form (photo upload works from the phone camera) or by replying
-to the email with a photo attached. Staff choose which shared ones appear on the homepage
-at `/references/featured/`.
+## Management commands
 
-`send_reference_requests` (daily) and `fetch_reference_replies` (every five minutes) run in
-the scheduler (see [Scheduled jobs](#scheduled-jobs)).
+- `python manage.py load_vocabularies`: loads the thing vocabularies
+  (`gift_economy/gifts/vocabularies/`) after editing them and recognizes existing listings again.
+- `python manage.py match_everything`: matches all existing offers and wishes, e.g. after
+  changing the matching.
+- `python manage.py send_test_reply "text" [--key KEY] [--photo path]`: in development, answers
+  the latest (or a given) reference request in Mailpit like a mail app would; then run
+  `fetch_reference_replies`.
 
-Settings (env):
-- `DJANGO_SITE_URL`: base for links in these emails, e.g. `https://ecobasa.org`
+## Settings (env)
+
+- `DJANGO_SITE_URL`: base for links in emails, e.g. `https://ecobasa.org`
 - `REFERENCE_REPLY_ADDRESS`: e.g. `references@ecobasa.org`. Replies go to
   `references+<key>@ecobasa.org`; the key is also in the subject, in case the mail server
   doesn't deliver plus addresses. Leave empty to only offer the link.
 - `REFERENCE_IMAP_HOST` (e.g. `mail.ecobytes.net`), `REFERENCE_IMAP_USER`,
   `REFERENCE_IMAP_PASSWORD`, `REFERENCE_IMAP_FOLDER` (default `INBOX`): the mailbox for replies
 - `REFERENCE_REQUEST_DELAY_DAYS` (1), `REFERENCE_REQUEST_UNDATED_DELAY_DAYS` (7),
-  `REFERENCE_REQUEST_MAX_AGE_DAYS` (30): when to ask, and how far back
+  `REFERENCE_REQUEST_MAX_AGE_DAYS` (30): when to ask for a reference, and how far back
+- `PROJECT_STALE_DAYS` (60), `PROJECT_ARCHIVE_GRACE_DAYS` (14): when a project nobody updated
+  gets an "Is this still current?" email, and when it is archived without an answer
 
-In development, replies are read from Mailpit instead of IMAP. Mailpit can't reply itself,
-so `python manage.py send_test_reply "text" [--key KEY] [--photo path]` answers the latest
-(or a given) request like a mail app would; then run `fetch_reference_replies`.
-
-## Projects
-
-Communities post concrete projects ("Build a rocket stove, March–April, food and bed
-provided") with what they need: people with a skill, materials, tools or knowledge.
-People offer help on the project page; the offer is a match like a volunteer stay (date-only
-counter-proposals, references afterwards). Ambassadors see projects, requested and
-confirmed stays and what is still missing in their calendar (`/matches/calendar/<community>/`),
-with a warning when more guests are confirmed than the community's maximum.
-
-Projects stay current: dated ones are archived the day after they end; any project nobody
-updated or confirmed for `PROJECT_STALE_DAYS` (60) gets an "Is this still current?" email
-with a one-click confirm link, and is archived if nobody confirms it within
-`PROJECT_ARCHIVE_GRACE_DAYS` (14). Projects without an end date are ongoing.
-
-A project's needs are the community's wishes in it, and what you can learn there its skill
-offers in it: both are listed (on the map, in the list, on the community) only while the
-project runs.
-
-## Offers and wishes
-
-Everything someone offers or wishes for is one model, `gifts.Listing`: things (material,
-tools, anything else), skills, knowledge and helping hands, of a person or a community
-(managed by its ambassador), maybe in one of the community's projects. Skills, and
-knowledge or helping hands for a known skill, point to the skill vocabulary
-(`gifts.Skill`, names in every language, in `gift_economy/gifts/skills/`). With an amount ("200 kg", "2 people") a wish is
-covered in parts, and an offer given away in parts: each exchange says how much it brings
-or takes (`matches.Contribution`). Covered wishes and given-away offers drop off the lists;
-a skill can be shared again and again.
-
-Things have curated vocabularies like skills, one per kind: tools, materials, vehicles,
-seeds & plants and other things (`gift_economy/gifts/vocabularies/`, in en/de/es/fr with synonyms and broader
-things: a stepladder is a ladder, a long john is a cargo bike). The thing in a listing's
-title is recognized in the vocabulary of its kind (`gifts.Thing`, `Listing.thing`), also in
-plurals and German compounds ("Handkreissäge"), and matching goes by it: the same thing
-or a broader or narrower one fits, in any language. Each vocabulary is editable in the
-admin; after editing the files, `python manage.py load_vocabularies` loads them and
-recognizes existing listings again.
-
-## Seeds & plants
-
-Seeds and plants are their own kind of offer and wish (`Listing.KIND_SEEDS_PLANTS`), with the variety
-(`Listing.variety`, "Ochsenherz"), the harvest year (how well they still germinate),
-whether they are open-pollinated (their seeds come true when saved again), in packets or
-grams. Their place says where the mother plant grew (for a wish, where they will grow).
-
-A seed or a vehicle is named from its vocabulary only: the title field suggests names
-while typing (`/gifts/api/things/?kind=seeds_plants&q=…`, in any language and by other names
-like "Paradeiser") and the form accepts nothing else, so matching knows exactly which crop
-or vehicle it is. The field is Tagify with one value, looking like a plain text field
-(`templates/_vocabulary_select_js.html`, also for skills and a project's needs); what is
-typed without choosing is removed with a hint, and a name chosen for one kind is cleared
-when the kind changes. The gift categories of seeds and vehicles are set from what they
-are (seeds always "Seeds & Plants", medicinal herbs also "Health & Body care", dye plants
-"Clothing & Textiles"), and those of tools and materials once their title is recognized
-(the form shows "Recognized as" while typing, `/gifts/api/recognize/`); other things keep a
-choice. Tools and vehicles are counted in pieces, without a unit.
-
-A new offer or wish starts at the place of its person or community (their profile), to
-move on the map; left there, it has no place of its own and follows them when they move. Regional words are other names of the same thing: an offered
-"Paradeiser" matches a wished "Tomate". Tools and materials stay free text.
-
-Seeds grow best in a climate like the one they were grown in. Nobody has to know their
-climate zone: it is found from the place in a Köppen-Geiger map
-(`gift_economy/gifts/climate/`, about 3 km, Rubel et al. via kgcpy, see its NOTICE) and
-put in plain words (tropical, subtropical, mediterranean, dry, temperate, continental,
-cool, alpine; `Listing.KOPPEN`). It is the climate that counts, not the latitude: the
-highlands of the tropics (Bogotá, Quito: Cfb; Addis Ababa: Cwb) are temperate like
-Central Europe. Seeds are only suggested from the same or a neighbouring zone
-(`Listing.CLIMATE_FITS`).
-
-The seed and plant vocabulary (`gift_economy/gifts/vocabularies/seeds.py` and `plants.py`) sorts crops like seed
-catalogues do, with regional words (Paradeiser, Melanzani, Fisolen, Kukuruz): vegetables by crop and type (tomato → cherry, beefsteak, paste tomato;
-bean → bush, climbing, runner, broad bean …), culinary, medicinal and wild herbs,
-flowers and bee pasture, green manure, grains and pseudo-grains, oil, fibre and dye plants,
-with botanical names and well-known open-pollinated varieties as other names. A wish for
-"Tomatensamen" finds an offered "Ochsenherz"; beans to eat (a material) don't match beans
-to sow. The community page lists its seeds and plants under "Seeds & plants to swap".
-
-## Lending, tool libraries and car sharing
-
-Tools, vehicles (`Listing.KIND_VEHICLE`: a cargo bike, a car, a trailer, a van) and other
-things that come back can be offered **to lend** instead of given away (`Listing.lend`,
-preset for vehicles; a wish can be **to borrow**). A request for one says from when until
-when (`matches.Loan`): whole days, or from and until an hour ("Sat 14:00–18:00"). Times
-on which it is already lent are refused (with an amount, "3 ladders", that many can be
-lent at once), the owner can propose other days, and accepting checks again. Lending
-doesn't use it up, so it stays listed and matched.
-
-- **Lending calendar** (`/matches/lending/`): once someone lends something or borrows
-  something, their dashboard shows a month of who borrows what when (requested and
-  agreed), where each thing is today, days asked for by more people than there are
-  things, and what they borrow themselves.
-- **Tool library of a community**: what a community (and its members) lends is listed
-  on the community page under "To borrow here", with whether it is free today. Its
-  ambassador gets the community's own lending calendar
-  (`/matches/lending/<community>/`, "Tool library" in the dashboard) to track who needs
-  what when.
-- **Car sharing** works the same way: the community lends its car or van to members by
-  the day or the hour and sees all bookings in its lending calendar.
-
-The reference request comes after the day it was brought back.
-
-## Suggestions
-
-As soon as an offer or a wish is saved, the matching (`gift_economy/matches/matching.py`) looks for
-what fits it nearby and suggests the pair to both sides: an offer and a wish with the same
-skill, or (without one) with similar titles. Each side only hears about things within their own
-distance (`User.match_radius`, 150 km by default), or from anywhere if they search worldwide
-(`User.match_global`). Without a place they look in their country, and without a country
-everywhere (with a one-time notification that they can narrow it down). New suggestions show right away in the
-notifications and first on `/matches/`, the one page for gifts and skills (filtered by
-either), before the requests received and sent: a suggestion becomes a match once someone
-asks. A project's need counts as a gift or a skill by what it needs; volunteer visits and
-help with projects have their own page. Once a week, people get an email with what's new
-(also those who only have wishes). When a person or community moves, everything that takes its
-place from them is matched again. The distance and the email switch are in the profile
-("Settings" in the user menu), and every email has a one-click unsubscribe link.
-
-After deploying the matching once, match what already exists:
-```
-python manage.py match_everything
-```
-
-`archive_stale_projects` (daily) and `send_suggestion_emails` (weekly) run in the scheduler
-(see [Scheduled jobs](#scheduled-jobs)).
-
-## Places and privacy
-
-People meet through the platform, in a match, so that there can be references (also
-negative ones). So nobody learns where someone lives, or where a community is, just by
-looking or by asking:
-
-- **Profiles** are for members only.
-- **Places of people and communities** are shown only roughly (`users/places.py`): the world
-  is cut into cells of about 1–2 km, and others see a spot somewhere in the cell, always the
-  same one (from the cell, the person or community and `SECRET_KEY`, so it can't be averaged
-  out). The map, the lists, the search by distance and the map section all go by the cell's
-  centre (`gifts.models.public_spot`, `communities.models.public_location`), so no query
-  narrows it down further. Place names lose the street (`town`). Maps draw an area instead
-  of a pin (`EcoMap.makeRoughArea`).
-- **Exactly** see it: the person themself; a community's ambassador and members, and those
-  whose stay (also with one of its projects) was accepted (`Community.shows_place_to`) — only
-  they also get its address and phone number; both sides of a match once it's accepted
-  (`Match.places_shown`).
-- **Public places**: a community can make its place, address and phone number public
-  (`Community.location_public`), an offer or wish its own place (`Listing.location_public`).
-- **Public goods** (`Listing.public_good`, offers of things only): things found out there, like a fruit
-  tree or wood in the forest. Nobody needs to ask for them (no request form), every member
-  can edit and delete them, and their place (required) is always exact.
-
-The forms (sign-up, profile, community, offer or wish) say who sees what.
+In development, replies are read from Mailpit instead of IMAP.
 
 ## Scheduled jobs
 
