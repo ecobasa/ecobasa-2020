@@ -1,5 +1,5 @@
 from django.contrib.gis import admin
-from .models import FoodThing, Listing, ListingCategory, MaterialThing, OtherThing, SeedPlantThing, ToolThing, VehicleThing
+from .models import ChildrenThing, FoodThing, Listing, ListingCategory, MaterialThing, OtherThing, SeedPlantThing, ToolThing, VehicleThing
 from .skills.models import Skill
 
 
@@ -62,5 +62,5 @@ class VocabularyAdmin(admin.ModelAdmin):
         return obj.listings.count()
 
 
-for vocabulary in (ToolThing, MaterialThing, VehicleThing, SeedPlantThing, FoodThing, OtherThing):
+for vocabulary in (ToolThing, MaterialThing, VehicleThing, SeedPlantThing, FoodThing, ChildrenThing, OtherThing):
     admin.site.register(vocabulary, VocabularyAdmin)

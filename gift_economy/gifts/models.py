@@ -107,6 +107,7 @@ class Thing(models.Model):
         ("vehicle", _("Vehicles")),
         ("seeds_plants", _("Seeds & plants")),
         ("food", _("Food & harvest")),
+        ("children", _("Children")),
         ("other", _("Other things")),
     ]
 
@@ -207,6 +208,16 @@ class FoodThing(Thing):
         verbose_name_plural = _("Vocabulary: food & harvest")
 
 
+class ChildrenThing(Thing):
+    VOCABULARY = "children"
+    objects = _VocabularyManager(VOCABULARY)
+
+    class Meta:
+        proxy = True
+        verbose_name = _("Children's thing")
+        verbose_name_plural = _("Vocabulary: children")
+
+
 class OtherThing(Thing):
     VOCABULARY = "other"
     objects = _VocabularyManager(VOCABULARY)
@@ -302,6 +313,9 @@ class Listing(RandomIdMixin, models.Model):
     # Food to share: a harvest too big to eat, food saved from being thrown away (the food
     # vocabulary)
     KIND_FOOD = "food"
+    # Children's things they grow out of: clothes and shoes (with a size), toys, sports
+    # gear, cloth nappies (the children's vocabulary). Childcare is a skill.
+    KIND_CHILDREN = "children"
     KIND_OTHER = "other"
     # Offered: a skill they share or teach. Wished for: a skill they want to learn by doing.
     KIND_SKILL = "skill"
@@ -313,19 +327,21 @@ class Listing(RandomIdMixin, models.Model):
         (KIND_VEHICLE, _("Vehicle")),
         (KIND_SEEDS_PLANTS, _("Seeds & plants")),
         (KIND_FOOD, _("Food & harvest")),
+        (KIND_CHILDREN, _("Children")),
         (KIND_OTHER, _("Other")),
         (KIND_SKILL, _("Skill")),
         (KIND_KNOWLEDGE, _("Knowledge")),
         (KIND_HANDS, _("Helping hands")),
     ]
-    THING_KINDS = (KIND_MATERIAL, KIND_TOOL, KIND_VEHICLE, KIND_SEEDS_PLANTS, KIND_FOOD, KIND_OTHER)
-    # What can be lent instead of given away: tools, vehicles and other things
-    LEND_KINDS = (KIND_TOOL, KIND_VEHICLE, KIND_OTHER)
+    THING_KINDS = (KIND_MATERIAL, KIND_TOOL, KIND_VEHICLE, KIND_SEEDS_PLANTS, KIND_FOOD, KIND_CHILDREN, KIND_OTHER)
+    # What can be lent instead of given away: tools, vehicles, children's things (skis for
+    # a winter holiday) and other things
+    LEND_KINDS = (KIND_TOOL, KIND_VEHICLE, KIND_CHILDREN, KIND_OTHER)
     # Counted in pieces, without a unit to choose ("3 ladders")
-    PIECE_KINDS = (KIND_TOOL, KIND_VEHICLE)
+    PIECE_KINDS = (KIND_TOOL, KIND_VEHICLE, KIND_CHILDREN)
     # Their gift categories come from what they are, once it is recognized in their
     # vocabulary; "other" things keep a choice
-    CATEGORY_KINDS = (KIND_MATERIAL, KIND_TOOL, KIND_VEHICLE, KIND_SEEDS_PLANTS, KIND_FOOD)
+    CATEGORY_KINDS = (KIND_MATERIAL, KIND_TOOL, KIND_VEHICLE, KIND_SEEDS_PLANTS, KIND_FOOD, KIND_CHILDREN)
     SKILL_KINDS = (KIND_SKILL, KIND_KNOWLEDGE, KIND_HANDS)
     # Given away once (in parts, with a quantity); skills, knowledge and helping hands
     # can be shared again and again
@@ -334,7 +350,7 @@ class Listing(RandomIdMixin, models.Model):
     # a skill stays until its owner says otherwise
     NEED_KINDS = (KIND_KNOWLEDGE, KIND_HANDS)
     KIND_ICONS = {
-        KIND_MATERIAL: "fa-cubes", KIND_TOOL: "fa-screwdriver-wrench", KIND_VEHICLE: "fa-van-shuttle", KIND_SEEDS_PLANTS: "fa-seedling", KIND_FOOD: "fa-apple-whole", KIND_OTHER: "fa-gift",
+        KIND_MATERIAL: "fa-cubes", KIND_TOOL: "fa-screwdriver-wrench", KIND_VEHICLE: "fa-van-shuttle", KIND_SEEDS_PLANTS: "fa-seedling", KIND_FOOD: "fa-apple-whole", KIND_CHILDREN: "fa-child", KIND_OTHER: "fa-gift",
         KIND_SKILL: "fa-graduation-cap", KIND_KNOWLEDGE: "fa-lightbulb", KIND_HANDS: "fa-handshake-angle",
     }
     # Pill colour: skills purple, seeds and plants green, food a lighter green, other things
@@ -353,7 +369,7 @@ class Listing(RandomIdMixin, models.Model):
     }
     # Font Awesome code points for map markers: the kind, else a gift (offer) or heart (wish)
     KIND_GLYPHS = {
-        KIND_MATERIAL: 0xF1B3, KIND_TOOL: 0xF7D9, KIND_VEHICLE: 0xF5B6, KIND_SEEDS_PLANTS: 0xF4D8, KIND_FOOD: 0xF5D1, KIND_SKILL: 0xF19D, KIND_KNOWLEDGE: 0xF0EB, KIND_HANDS: 0xF4C4,
+        KIND_MATERIAL: 0xF1B3, KIND_TOOL: 0xF7D9, KIND_VEHICLE: 0xF5B6, KIND_SEEDS_PLANTS: 0xF4D8, KIND_FOOD: 0xF5D1, KIND_CHILDREN: 0xF1AE, KIND_SKILL: 0xF19D, KIND_KNOWLEDGE: 0xF0EB, KIND_HANDS: 0xF4C4,
     }
 
     LEVEL_BEGINNER = "beginner"
@@ -440,6 +456,21 @@ class Listing(RandomIdMixin, models.Model):
     # Food offered: the date on its label. It stays listed after it, as food is often
     # still good long after; the listing says so.
     best_before = models.DateField(_("Best before"), null=True, blank=True)
+    # Children's clothes and shoes: the size, clothing by height in cm (50 to 176, in
+    # steps of 6), shoes in EU sizes. The two don't overlap, so one field holds either;
+    # which one a thing takes is set by SIZED_THINGS. An offer fits a wish of the same
+    # size or one size smaller: children grow into it.
+    CLOTHING_SIZES = tuple(range(50, 177, 6))
+    SHOE_SIZES = tuple(range(16, 43))
+    # Socks and ice skates by shoe size, though socks are clothes
+    SIZED_THINGS = {"kids-socks": SHOE_SIZES, "kids-ice-skates": SHOE_SIZES, "kids-clothing": CLOTHING_SIZES, "kids-shoes": SHOE_SIZES}
+    size = models.PositiveSmallIntegerField(
+        _("Size"), null=True, blank=True,
+        choices=[
+            (_("Clothes (height in cm)"), [(size, str(size)) for size in CLOTHING_SIZES]),
+            (_("Shoes (EU)"), [(size, str(size)) for size in SHOE_SIZES]),
+        ],
+    )
     # Seeds grow best in a climate like the one they were grown in: the climate zone of
     # their place (where the mother plant grew; for a wish, where they will grow), found
     # in a Köppen-Geiger map (gifts.climate). The zones put its classes in plain words:
@@ -781,12 +812,14 @@ class Listing(RandomIdMixin, models.Model):
         """The gift categories of a seed, food or a vehicle, set from what it is rather
         than chosen: its thing's ("Health & Body care" for medicinal herbs, "Clothing &
         Textiles" for dye plants), for seeds always "Seeds & Plants", for food "Food &
-        Preserves"."""
+        Preserves", for children's things "Children & Toys"."""
         slugs = {thing.category.slug} if thing is not None and thing.category_id else set()
         if kind == Listing.KIND_SEEDS_PLANTS:
             slugs.add("seeds-plants")
         if kind == Listing.KIND_FOOD:
             slugs.add("food-preserves")
+        if kind == Listing.KIND_CHILDREN:
+            slugs.add("children-toys")
         return list(ListingCategory.objects.filter(slug__in=slugs))
 
     @staticmethod
@@ -804,6 +837,36 @@ class Listing(RandomIdMixin, models.Model):
     def climates_fit(a, b):
         """Whether seeds from climate zone a fit zone b; unknown zones always fit."""
         return not (a and b) or b in Listing.CLIMATE_FITS.get(a, {a})
+
+    @staticmethod
+    def sizes_for(thing):
+        """The sizes a thing comes in (CLOTHING_SIZES, SHOE_SIZES), by it or a broader
+        thing, or None."""
+        seen = set()
+        while thing is not None and thing.pk not in seen:
+            if thing.slug in Listing.SIZED_THINGS:
+                return Listing.SIZED_THINGS[thing.slug]
+            seen.add(thing.pk)
+            thing = thing.parent
+        return None
+
+    @staticmethod
+    def sizes_fit(offer_size, wish_size):
+        """Whether an offered size fits a wished-for one: the same or one bigger, to grow
+        into; unknown sizes always fit, clothes never fit shoes."""
+        if not (offer_size and wish_size):
+            return True
+        for sizes in Listing.SIZED_THINGS.values():
+            if offer_size in sizes and wish_size in sizes:
+                return sizes.index(offer_size) - sizes.index(wish_size) in (0, 1)
+        return False
+
+    @property
+    def size_label(self):
+        """"Size 104" for clothes, "Shoe size 28" for shoes, or ""."""
+        if self.size in self.SHOE_SIZES:
+            return _("Shoe size %(size)s") % {"size": self.size}
+        return _("Size %(size)s") % {"size": self.size} if self.size else ""
 
     @property
     def past_best_before(self):

@@ -7,7 +7,8 @@ What fits, an offer and a wish:
 - things recognized as a known thing (gifts.Thing, in any language): the same thing, or
   a broader or narrower one ("Leiter" ~ "Stepladder", "Saw" ~ "Jigsaw"), but not siblings
   (firewood and timber); seeds only from the same or a neighbouring climate zone, found
-  from both places (Listing.climate, Listing.CLIMATE_FITS);
+  from both places (Listing.climate, Listing.CLIMATE_FITS); children's clothes and shoes
+  only in the same size or one bigger offered (Listing.sizes_fit);
 - else, things (or knowledge or helping hands named in words) with a similar
   title ("Clay" ~ "Clay from our pond", "Scythe" ~ "Two old scythes"). A material doesn't
   fit a tool; "other" fits any thing. Not by gift category alone: firewood and a chimney
@@ -61,6 +62,7 @@ class Side:
     kind: str = ""
     thing_id: int | None = None
     climate: str = ""
+    size: int | None = None
 
     @property
     def is_thing(self):
@@ -83,7 +85,7 @@ def side_of(listing):
     return Side(listing, owner, listing.point, listing.country, want=listing.is_wish,
                 route=route, countries=tuple(listing.countries) if listing.tour_id else (),
                 skill_id=listing.skill_id, title=listing.display_title if not listing.skill_id else "", kind=listing.kind,
-                thing_id=listing.thing_id, climate=listing.climate)
+                thing_id=listing.thing_id, climate=listing.climate, size=listing.size)
 
 
 def reaches(recipient, other, km):
@@ -149,6 +151,9 @@ def fit(a, b):
     elif a.kind != b.kind:
         return None
     if not seed_climate_fits(a, b):
+        return None
+    offer, wish = (b, a) if a.want else (a, b)
+    if not Listing.sizes_fit(offer.size, wish.size):
         return None
     if a.thing_id and b.thing_id:
         # Both known: what they are decides, not how they're called

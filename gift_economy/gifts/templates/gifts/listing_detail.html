@@ -98,6 +98,9 @@
           {% if listing.past_best_before %}<span class="text-xs self-center">{% trans "Past its date, often still good: look, smell, taste." %}</span>{% endif %}
         </p>
       {% endif %}
+      {% if listing.size %}
+        <p class="mb-2 text-sm"><span class="pill bg-green"><i class="fa-solid fa-ruler-vertical mr-1"></i>{{ listing.size_label }}</span></p>
+      {% endif %}
       {% if listing.kind == "seeds_plants" %}
         <p class="mb-2 flex flex-wrap gap-2 text-sm">
           {% if listing.plant_form and listing.plant_form != "seeds" %}<span class="pill bg-green"><i class="fa-solid fa-leaf mr-1"></i>{{ listing.get_plant_form_display }}</span>{% endif %}

@@ -47,7 +47,7 @@ class ListingForm(forms.ModelForm):
         model = Listing
         fields = (
             "type", "kind", "skill_name", "title", "plant_form", "variety", "harvest_year", "open_pollinated",
-            "hardiness_zone", "best_before", "lend",
+            "hardiness_zone", "best_before", "size", "lend",
             "quantity", "unit", "level", "available",
             "description", "image", "categories", "public_good", "location_name", "location", "location_public",
         )
@@ -89,6 +89,8 @@ class ListingForm(forms.ModelForm):
         self.fields["best_before"].help_text = _(
             "Optional: the date on the label. Food is often still good long after it; it stays listed."
         )
+        self.fields["size"].choices = [("", "—")] + list(self.fields["size"].choices)[1:]
+        self.fields["size"].help_text = _("Clothes by height in cm, shoes in EU sizes. A wish also finds one size bigger.")
         if self.instance.pk and self.instance.skill_id:
             self.initial["skill_name"] = self.instance.skill.get_name()
 
@@ -154,6 +156,7 @@ class ListingForm(forms.ModelForm):
                 cleaned["harvest_year"], cleaned["open_pollinated"] = None, False
         if kind != Listing.KIND_FOOD or cleaned.get("type") != Listing.TYPE_OFFER:
             cleaned["best_before"] = None
+        self._clean_size(cleaned, kind, title)
         if kind in Listing.THING_KINDS:
             cleaned["skill_name"] = ""
             cleaned["level"] = ""
@@ -182,6 +185,17 @@ class ListingForm(forms.ModelForm):
             return False
         start = self.initial.get("location")
         return point is not None and not (start is not None and point.equals_exact(start, tolerance=1e-6))
+
+    def _clean_size(self, cleaned, kind, title):
+        """A size only for children's clothes and shoes, and one they come in (a shoe size
+        for shoes)."""
+        from .models import Thing
+        thing_id = thing_named(title, kind) if kind == Listing.KIND_CHILDREN else None
+        sizes = Listing.sizes_for(Thing.objects.filter(pk=thing_id).first()) if thing_id else None
+        if not sizes:
+            cleaned["size"] = None
+        elif cleaned.get("size") and cleaned["size"] not in sizes:
+            self.add_error("size", _("Shoes take a shoe size, clothes a size in cm."))
 
     def _known_skill(self, name):
         """A skill of the taxonomy (in any language), or the one it already has."""

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ecobasa\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-30 16:14+0100\n"
+"POT-Creation-Date: 2026-11-02 12:39+0100\n"
 "PO-Revision-Date: 2026-10-23 12:00+0200\n"
 "Last-Translator: ecobasa\n"
 "Language-Team: es\n"
@@ -57,9 +57,9 @@ msgstr "Habilidades populares para descubrir"
 #: communities/forms.py:113 communities/models.py:117
 #: communities/templates/communities/community_detail.html:307
 #: gift_economy/gifts/filters.py:44 gift_economy/gifts/filters.py:46
-#: gift_economy/gifts/models.py:481
-#: gift_economy/gifts/templates/gifts/listing_detail.html:318
-#: gift_economy/gifts/templates/gifts/listing_form.html:131
+#: gift_economy/gifts/models.py:511
+#: gift_economy/gifts/templates/gifts/listing_detail.html:321
+#: gift_economy/gifts/templates/gifts/listing_form.html:135
 #: gift_economy/matches/templates/matches/match_detail.html:216
 #: users/models.py:98 users/templates/users/detail.html:94
 msgid "Location"
@@ -101,7 +101,7 @@ msgid "Name"
 msgstr "Nombre"
 
 #: communities/models.py:38 gift_economy/gifts/models.py:59
-#: gift_economy/gifts/models.py:103
+#: gift_economy/gifts/models.py:104
 msgid "Slug"
 msgstr "Slug"
 
@@ -128,7 +128,7 @@ msgstr ""
 "Habilidades que se pueden aprender colaborando o alojándose en vuestra "
 "comunidad"
 
-#: communities/models.py:42 gift_economy/gifts/models.py:365
+#: communities/models.py:42 gift_economy/gifts/models.py:381
 #: gift_economy/gifts/skills/models.py:112
 #: gift_economy/gifts/templates/skills/_userskill_add_several_row.html:20
 #: projects/models.py:35
@@ -146,8 +146,8 @@ msgstr "Alojamiento para huéspedes"
 
 #: communities/models.py:44
 msgid ""
-"Where can your visitors sleep? Do you have space for a bus, tents? How is "
-"the indoor sleeping situation? Do you have mattresses, a couch? Donations or "
+"Where can your visitors sleep? Do you have space for a bus, tents? How is the"
+" indoor sleeping situation? Do you have mattresses, a couch? Donations or "
 "pricing model? Required daily work or experience?"
 msgstr ""
 "¿Dónde pueden dormir vuestras visitas? ¿Hay sitio para una furgoneta o "
@@ -171,7 +171,7 @@ msgstr "Vídeo"
 msgid "Link to a video showing your community"
 msgstr "Enlace a un vídeo que muestre vuestra comunidad"
 
-#: communities/models.py:63 gift_economy/gifts/models.py:465
+#: communities/models.py:63 gift_economy/gifts/models.py:495
 msgid "Owner"
 msgstr "Responsable"
 
@@ -181,8 +181,8 @@ msgstr "¿cuántos niños y niñas viven con vosotros?"
 
 #: communities/models.py:75
 msgid ""
-"Describe your workshop spaces and what people can build/construct/"
-"manufacture."
+"Describe your workshop spaces and what people can "
+"build/construct/manufacture."
 msgstr ""
 "Describid vuestros talleres y qué se puede construir o fabricar en ellos."
 
@@ -249,7 +249,7 @@ msgstr "Tipo de comunidad"
 msgid "Country"
 msgstr "País"
 
-#: communities/models.py:120 gift_economy/gifts/models.py:485
+#: communities/models.py:120 gift_economy/gifts/models.py:515
 #: users/models.py:99
 msgid "Geo Location"
 msgstr "Geolocalización"
@@ -277,7 +277,7 @@ msgstr "ha solicitado una estancia en"
 msgid "%(actor)s requested a volunteer stay at %(title)s"
 msgstr "%(actor)s ha solicitado una estancia en comunidad en %(title)s"
 
-#: communities/models.py:225 gift_economy/gifts/models.py:470
+#: communities/models.py:225 gift_economy/gifts/models.py:500
 #: gift_economy/references/models.py:144 projects/models.py:32
 #: projects/templates/projects/project_detail.html:152
 msgid "Community"
@@ -322,8 +322,8 @@ msgstr ""
 
 #: communities/templates/communities/_volunteer_skill_proposal.html:22
 msgid ""
-"Your application mentioned skills that you dont have on your profile yet — "
-"Do you want to add them now, so others can find you by them too?"
+"Your application mentioned skills that you dont have on your profile yet — Do"
+" you want to add them now, so others can find you by them too?"
 msgstr ""
 "Tu solicitud menciona habilidades que aún no están en tu perfil. ¿Quieres "
 "añadirlas ahora para que otras personas también te encuentren por ellas?"
@@ -374,7 +374,7 @@ msgid "Close"
 msgstr "Cerrar"
 
 #: communities/templates/communities/community_detail.html:103
-#: gift_economy/gifts/templates/gifts/listing_detail.html:112
+#: gift_economy/gifts/templates/gifts/listing_detail.html:115
 #: gift_economy/gifts/templates/gifts/mine.html:46
 #: gift_economy/references/templates/references/_reference_card.html:36
 #: projects/templates/projects/project_detail.html:47
@@ -406,8 +406,8 @@ msgid ""
 "Keep varieties alive: share the seeds you save with members and neighbours, "
 "like a seed library."
 msgstr ""
-"Mantén vivas las variedades: comparte las semillas que guardas con miembros "
-"y vecinos, como un banco de semillas."
+"Mantén vivas las variedades: comparte las semillas que guardas con miembros y"
+" vecinos, como un banco de semillas."
 
 #: communities/templates/communities/community_detail.html:176
 msgid "Add seeds & plants"
@@ -446,12 +446,12 @@ msgstr "libre"
 
 #: communities/templates/communities/community_detail.html:197
 msgid ""
-"Start a tool library: lend your community's tools, cargo bike, car or "
-"trailer to members and neighbours, and see in a calendar who has what when."
+"Start a tool library: lend your community's tools, cargo bike, car or trailer"
+" to members and neighbours, and see in a calendar who has what when."
 msgstr ""
 "Crea una biblioteca de herramientas: presta las herramientas, la bici de "
-"carga, el coche o el remolque de tu comunidad a miembros y vecinos, y mira "
-"en un calendario quién tiene qué y cuándo."
+"carga, el coche o el remolque de tu comunidad a miembros y vecinos, y mira en"
+" un calendario quién tiene qué y cuándo."
 
 #: communities/templates/communities/community_detail.html:201
 #: gift_economy/matches/templates/matches/lending_calendar.html:9
@@ -586,7 +586,7 @@ msgid "To"
 msgstr "Hasta"
 
 #: communities/templates/communities/community_detail.html:438
-#: gift_economy/gifts/templates/gifts/listing_detail.html:204
+#: gift_economy/gifts/templates/gifts/listing_detail.html:207
 #: gift_economy/matches/forms.py:80 gift_economy/matches/models.py:63
 #: gift_economy/matches/models.py:273
 #: gift_economy/matches/templates/matches/email/match_message.html:34
@@ -608,13 +608,13 @@ msgid ""
 "Also tell them what you need: food (diet, allergies), where you would sleep "
 "(tent, bed …) and anything else that matters to you."
 msgstr ""
-"Cuéntales también lo que necesitas: comida (dieta, alergias), dónde "
-"dormirías (tienda, cama …) y cualquier otra cosa importante para ti."
+"Cuéntales también lo que necesitas: comida (dieta, alergias), dónde dormirías"
+" (tienda, cama …) y cualquier otra cosa importante para ti."
 
 #: communities/templates/communities/community_detail.html:444
 #: communities/templates/communities/community_form.html:185
 #: gift_economy/gifts/templates/gifts/listing_delete_confirm.html:29
-#: gift_economy/gifts/templates/gifts/listing_form.html:150
+#: gift_economy/gifts/templates/gifts/listing_form.html:154
 #: gift_economy/gifts/templates/skills/userskill_add_several.html:44
 #: gift_economy/matches/templates/matches/match_detail.html:476
 #: gift_economy/references/templates/references/_references.html:39
@@ -676,8 +676,8 @@ msgstr "Fotos existentes"
 #: communities/templates/communities/community_form.html:78
 #: communities/templates/communities/community_form.html:177
 #: gift_economy/gifts/templates/gifts/listing_delete_confirm.html:30
-#: gift_economy/gifts/templates/gifts/listing_detail.html:108
-#: gift_economy/gifts/templates/gifts/listing_form.html:148
+#: gift_economy/gifts/templates/gifts/listing_detail.html:111
+#: gift_economy/gifts/templates/gifts/listing_form.html:152
 msgid "Delete"
 msgstr "Eliminar"
 
@@ -701,7 +701,7 @@ msgid "Sure?"
 msgstr "¿Seguro?"
 
 #: communities/templates/communities/community_form.html:189
-#: gift_economy/gifts/templates/gifts/listing_form.html:152
+#: gift_economy/gifts/templates/gifts/listing_form.html:156
 #: projects/templates/projects/project_form.html:51
 msgid "Save"
 msgstr "Guardar"
@@ -728,7 +728,7 @@ msgstr "Filtros"
 
 #: communities/templates/communities/community_list.html:217
 #: communities/templates/communities/community_list.html:461
-#: gift_economy/gifts/models.py:349
+#: gift_economy/gifts/models.py:365
 #: gift_economy/gifts/templates/gifts/_filter_popover.html:21
 #: gift_economy/matches/templates/matches/matches_list.html:12
 msgid "Type"
@@ -849,7 +849,7 @@ msgstr "Necesidades de proyectos"
 msgid "Search"
 msgstr "Buscar"
 
-#: gift_economy/gifts/filters.py:39 gift_economy/gifts/models.py:351
+#: gift_economy/gifts/filters.py:39 gift_economy/gifts/models.py:367
 #: projects/forms.py:90
 msgid "Kind"
 msgstr "Tipo"
@@ -858,8 +858,8 @@ msgstr "Tipo"
 msgid "Please upload a photo."
 msgstr "Sube una foto, por favor."
 
-#: gift_economy/gifts/forms.py:39 gift_economy/gifts/models.py:299
-#: gift_economy/gifts/models.py:356 gift_economy/gifts/models.py:587
+#: gift_economy/gifts/forms.py:39 gift_economy/gifts/models.py:314
+#: gift_economy/gifts/models.py:372 gift_economy/gifts/models.py:617
 #: gift_economy/gifts/skills/models.py:116
 #: gift_economy/gifts/templates/gifts/_choice_radio.html:6
 #: gift_economy/matches/templates/matches/_stay_legend.html:3
@@ -888,7 +888,7 @@ msgid "e.g. Ochsenherz, Golden Bantam, Lange Rote"
 msgstr "p. ej. Corazón de buey, Golden Bantam, Lange Rote"
 
 #: gift_economy/gifts/forms.py:80
-#: gift_economy/gifts/templates/gifts/listing_detail.html:101
+#: gift_economy/gifts/templates/gifts/listing_detail.html:104
 msgid "Its seeds can be saved again and come true (not an F1 hybrid)."
 msgstr ""
 "Sus semillas se pueden volver a guardar y salen fieles a la variedad (no es "
@@ -906,31 +906,45 @@ msgstr ""
 msgid ""
 "Optional: the date on the label. Food is often still good long after it; it "
 "stays listed."
-msgstr "Opcional: la fecha de la etiqueta. Los alimentos suelen estar bien mucho después; la oferta sigue publicada."
+msgstr ""
+"Opcional: la fecha de la etiqueta. Los alimentos suelen estar bien mucho "
+"después; la oferta sigue publicada."
 
-#: gift_economy/gifts/forms.py:124
+#: gift_economy/gifts/forms.py:93
+msgid ""
+"Clothes by height in cm, shoes in EU sizes. A wish also finds one size "
+"bigger."
+msgstr ""
+"Ropa por altura en cm, zapatos en tallas EU. Un deseo también encuentra una "
+"talla más."
+
+#: gift_economy/gifts/forms.py:126
 msgid "Which skill?"
 msgstr "¿Qué habilidad?"
 
-#: gift_economy/gifts/forms.py:127 gift_economy/gifts/forms.py:134
+#: gift_economy/gifts/forms.py:129 gift_economy/gifts/forms.py:136
 #: projects/forms.py:134
 msgid ""
 "Please choose one from the suggestions, so others with the same can find it."
 msgstr ""
 "Elige una de las sugerencias, para que otros con lo mismo lo encuentren."
 
-#: gift_economy/gifts/forms.py:129
+#: gift_economy/gifts/forms.py:131
 msgid "Name a skill or say what for."
 msgstr "Nombra una habilidad o di para qué."
 
-#: gift_economy/gifts/forms.py:131
+#: gift_economy/gifts/forms.py:133
 #: gift_economy/gifts/templates/gifts/listing_form.html:51
 msgid "What is it?"
 msgstr "¿Qué es?"
 
-#: gift_economy/gifts/forms.py:175
+#: gift_economy/gifts/forms.py:177
 msgid "Set on the map where it is found."
 msgstr "Marca en el mapa dónde se encuentra."
+
+#: gift_economy/gifts/forms.py:201
+msgid "Shoes take a shoe size, clothes a size in cm."
+msgstr "Los zapatos llevan número de zapato, la ropa una talla en cm."
 
 #: gift_economy/gifts/models.py:48
 msgid "Land & Food"
@@ -952,7 +966,7 @@ msgstr "En movimiento"
 msgid "Culture & Learning"
 msgstr "Cultura y aprendizaje"
 
-#: gift_economy/gifts/models.py:62 gift_economy/gifts/models.py:105
+#: gift_economy/gifts/models.py:62 gift_economy/gifts/models.py:106
 msgid "Names"
 msgstr "Nombres"
 
@@ -988,290 +1002,314 @@ msgstr "Materiales"
 msgid "Vehicles"
 msgstr "Vehículos"
 
-#: gift_economy/gifts/models.py:98 gift_economy/gifts/models.py:296
+#: gift_economy/gifts/models.py:98 gift_economy/gifts/models.py:310
 msgid "Seeds & plants"
 msgstr "Semillas y plantas"
 
-#: gift_economy/gifts/models.py:99 gift_economy/gifts/models.py:297
+#: gift_economy/gifts/models.py:99 gift_economy/gifts/models.py:311
 msgid "Food & harvest"
 msgstr "Alimentos y cosecha"
 
-#: gift_economy/gifts/models.py:100
+#: gift_economy/gifts/models.py:100 gift_economy/gifts/models.py:312
+msgid "Children"
+msgstr "Niños"
+
+#: gift_economy/gifts/models.py:101
 msgid "Other things"
 msgstr "Otras cosas"
 
-#: gift_economy/gifts/models.py:107
+#: gift_economy/gifts/models.py:108
 msgid "Other names"
 msgstr "Otros nombres"
 
-#: gift_economy/gifts/models.py:110
+#: gift_economy/gifts/models.py:111
 msgid "Broader thing"
 msgstr "Término general"
 
-#: gift_economy/gifts/models.py:113
+#: gift_economy/gifts/models.py:114
 msgid "Vocabulary"
 msgstr "Vocabulario"
 
-#: gift_economy/gifts/models.py:116
+#: gift_economy/gifts/models.py:117
 #: gift_economy/gifts/templates/gifts/_filter_popover.html:50
 msgid "Category"
 msgstr "Categoría"
 
-#: gift_economy/gifts/models.py:120
+#: gift_economy/gifts/models.py:121
 msgid "Thing"
 msgstr "Cosa"
 
-#: gift_economy/gifts/models.py:121 gift_economy/gifts/views.py:130
+#: gift_economy/gifts/models.py:122 gift_economy/gifts/views.py:130
 msgid "Things"
 msgstr "Cosas"
 
-#: gift_economy/gifts/models.py:156 gift_economy/gifts/models.py:294
+#: gift_economy/gifts/models.py:157 gift_economy/gifts/models.py:308
 #: gift_economy/matches/templates/matches/_stay_legend.html:6
 #: projects/forms.py:86
 msgid "Tool"
 msgstr "Herramienta"
 
-#: gift_economy/gifts/models.py:157
+#: gift_economy/gifts/models.py:158
 msgid "Vocabulary: tools"
 msgstr "Vocabulario: herramientas"
 
-#: gift_economy/gifts/models.py:166 gift_economy/gifts/models.py:293
+#: gift_economy/gifts/models.py:167 gift_economy/gifts/models.py:307
 #: gift_economy/matches/templates/matches/_stay_legend.html:5
 #: projects/forms.py:85
 msgid "Material"
 msgstr "Material"
 
-#: gift_economy/gifts/models.py:167
+#: gift_economy/gifts/models.py:168
 msgid "Vocabulary: materials"
 msgstr "Vocabulario: materiales"
 
-#: gift_economy/gifts/models.py:176 gift_economy/gifts/models.py:295
+#: gift_economy/gifts/models.py:177 gift_economy/gifts/models.py:309
 #: projects/forms.py:87
 msgid "Vehicle"
 msgstr "Vehículo"
 
-#: gift_economy/gifts/models.py:177
+#: gift_economy/gifts/models.py:178
 msgid "Vocabulary: vehicles"
 msgstr "Vocabulario: vehículos"
 
-#: gift_economy/gifts/models.py:186
+#: gift_economy/gifts/models.py:187
 msgid "Seed or plant"
 msgstr "Semilla o planta"
 
-#: gift_economy/gifts/models.py:187
+#: gift_economy/gifts/models.py:188
 msgid "Vocabulary: seeds and plants"
 msgstr "Vocabulario: semillas y plantas"
 
-#: gift_economy/gifts/models.py:196
+#: gift_economy/gifts/models.py:197
 #: projects/templates/projects/offer_help.html:15
 #: projects/templates/projects/project_detail.html:145
 msgid "Food"
 msgstr "Comida"
 
-#: gift_economy/gifts/models.py:197
+#: gift_economy/gifts/models.py:198
 msgid "Vocabulary: food & harvest"
 msgstr "Vocabulario: alimentos y cosecha"
 
-#: gift_economy/gifts/models.py:206
+#: gift_economy/gifts/models.py:207
+msgid "Children's thing"
+msgstr "Cosa de niños"
+
+#: gift_economy/gifts/models.py:208
+msgid "Vocabulary: children"
+msgstr "Vocabulario: niños"
+
+#: gift_economy/gifts/models.py:217
 msgid "Other thing"
 msgstr "Otra cosa"
 
-#: gift_economy/gifts/models.py:207
+#: gift_economy/gifts/models.py:218
 msgid "Vocabulary: other things"
 msgstr "Vocabulario: otras cosas"
 
-#: gift_economy/gifts/models.py:273
+#: gift_economy/gifts/models.py:284
 msgid "Offer"
 msgstr "Oferta"
 
-#: gift_economy/gifts/models.py:273 gift_economy/references/models.py:141
+#: gift_economy/gifts/models.py:284 gift_economy/references/models.py:141
 msgid "Wish"
 msgstr "Deseo"
 
-#: gift_economy/gifts/models.py:298
+#: gift_economy/gifts/models.py:313
 msgid "Other"
 msgstr "Otro"
 
-#: gift_economy/gifts/models.py:300
+#: gift_economy/gifts/models.py:315
 #: gift_economy/matches/templates/matches/_stay_legend.html:4
 #: projects/forms.py:84
 msgid "Knowledge"
 msgstr "Conocimiento"
 
-#: gift_economy/gifts/models.py:301 projects/forms.py:83
+#: gift_economy/gifts/models.py:316 projects/forms.py:83
 msgid "Helping hands"
 msgstr "Manos que ayudan"
 
-#: gift_economy/gifts/models.py:334
+#: gift_economy/gifts/models.py:350
 msgid "Beginner"
 msgstr "Principiante"
 
-#: gift_economy/gifts/models.py:335
+#: gift_economy/gifts/models.py:351
 msgid "Intermediate"
 msgstr "Intermedio"
 
-#: gift_economy/gifts/models.py:336
+#: gift_economy/gifts/models.py:352
 msgid "Advanced"
 msgstr "Avanzado"
 
-#: gift_economy/gifts/models.py:337
+#: gift_economy/gifts/models.py:353
 msgid "Expert"
 msgstr "Experto/a"
 
-#: gift_economy/gifts/models.py:346
+#: gift_economy/gifts/models.py:362
 msgid "Random Id"
 msgstr "ID aleatorio"
 
-#: gift_economy/gifts/models.py:358 projects/models.py:34
+#: gift_economy/gifts/models.py:374 projects/models.py:34
 msgid "Title"
 msgstr "Título"
 
-#: gift_economy/gifts/models.py:363
+#: gift_economy/gifts/models.py:379
 #: gift_economy/gifts/templates/gifts/listing_detail.html:80
-#: gift_economy/gifts/templates/gifts/listing_form.html:76
+#: gift_economy/gifts/templates/gifts/listing_form.html:77
 msgid "Recognized as"
 msgstr "Reconocido como"
 
-#: gift_economy/gifts/models.py:366 users/models.py:93
+#: gift_economy/gifts/models.py:382 users/models.py:93
 msgid "image"
 msgstr "imagen"
 
-#: gift_economy/gifts/models.py:367
+#: gift_economy/gifts/models.py:383
 msgid "How many / how much?"
 msgstr "¿Cuánto / cuántos?"
 
-#: gift_economy/gifts/models.py:368 projects/forms.py:107
+#: gift_economy/gifts/models.py:384 projects/forms.py:107
 msgid "Unit"
 msgstr "Unidad"
 
-#: gift_economy/gifts/models.py:371
+#: gift_economy/gifts/models.py:387
 #: gift_economy/gifts/templates/gifts/listing_detail.html:88
 #: gift_economy/gifts/templates/skills/userskill_add_several.html:24
 #: gift_economy/matches/templates/matches/_skill_pill.html:2
 msgid "Level"
 msgstr "Nivel"
 
-#: gift_economy/gifts/models.py:372
+#: gift_economy/gifts/models.py:388
 msgid "Available to teach / share"
 msgstr "Disponible para enseñar / compartir"
 
-#: gift_economy/gifts/models.py:375 gift_economy/gifts/models.py:585
+#: gift_economy/gifts/models.py:391 gift_economy/gifts/models.py:615
 msgid "To lend"
 msgstr "Para prestar"
 
-#: gift_economy/gifts/models.py:378
+#: gift_economy/gifts/models.py:394
 msgid "Variety"
 msgstr "Variedad"
 
-#: gift_economy/gifts/models.py:379
+#: gift_economy/gifts/models.py:395
 msgid "Harvest year"
 msgstr "Año de cosecha"
 
-#: gift_economy/gifts/models.py:380
-#: gift_economy/gifts/templates/gifts/listing_detail.html:101
+#: gift_economy/gifts/models.py:396
+#: gift_economy/gifts/templates/gifts/listing_detail.html:104
 msgid "Open-pollinated"
 msgstr "De polinización abierta"
 
-#: gift_economy/gifts/models.py:391
+#: gift_economy/gifts/models.py:407
 msgctxt "plant form"
 msgid "Seeds"
 msgstr "Semillas"
 
-#: gift_economy/gifts/models.py:392
+#: gift_economy/gifts/models.py:408
 msgid "Young plant"
 msgstr "Planta joven"
 
-#: gift_economy/gifts/models.py:393
+#: gift_economy/gifts/models.py:409
 msgid "Cutting"
 msgstr "Esqueje"
 
-#: gift_economy/gifts/models.py:394
+#: gift_economy/gifts/models.py:410
 msgid "Scion wood"
 msgstr "Púa de injerto"
 
-#: gift_economy/gifts/models.py:395
+#: gift_economy/gifts/models.py:411
 msgid "Rootstock"
 msgstr "Portainjerto"
 
-#: gift_economy/gifts/models.py:396
+#: gift_economy/gifts/models.py:412
 msgid "Offshoot or division"
 msgstr "Acodo o división"
 
-#: gift_economy/gifts/models.py:397
+#: gift_economy/gifts/models.py:413
 msgid "Tuber or bulb"
 msgstr "Tubérculo o bulbo"
 
-#: gift_economy/gifts/models.py:399
+#: gift_economy/gifts/models.py:415
 msgid "Form"
 msgstr "Forma"
 
-#: gift_economy/gifts/models.py:405
-#: gift_economy/gifts/templates/gifts/listing_detail.html:98
+#: gift_economy/gifts/models.py:421
+#: gift_economy/gifts/templates/gifts/listing_detail.html:101
 msgid "Hardy to"
 msgstr "Resistente al frío hasta"
 
-#: gift_economy/gifts/models.py:406
+#: gift_economy/gifts/models.py:422
 #, python-brace-format
 msgid "Zone {zone} (to {temperature} °C)"
 msgstr "Zona {zone} (hasta {temperature} °C)"
 
-#: gift_economy/gifts/models.py:412
+#: gift_economy/gifts/models.py:428
 #: gift_economy/gifts/templates/gifts/listing_detail.html:91
 msgid "Best before"
 msgstr "Consumir preferentemente antes de"
 
-#: gift_economy/gifts/models.py:428
+#: gift_economy/gifts/models.py:437
+msgid "Size"
+msgstr "Talla"
+
+#: gift_economy/gifts/models.py:439
+msgid "Clothes (height in cm)"
+msgstr "Ropa (altura en cm)"
+
+#: gift_economy/gifts/models.py:440
+msgid "Shoes (EU)"
+msgstr "Zapatos (EU)"
+
+#: gift_economy/gifts/models.py:458
 msgid "Tropical: warm all year"
 msgstr "Tropical: cálido todo el año"
 
-#: gift_economy/gifts/models.py:429
+#: gift_economy/gifts/models.py:459
 msgid "Subtropical: hot humid summers, mild winters"
 msgstr "Subtropical: veranos cálidos y húmedos, inviernos suaves"
 
-#: gift_economy/gifts/models.py:430
+#: gift_economy/gifts/models.py:460
 msgid "Mediterranean: dry hot summers, mild wet winters"
 msgstr "Mediterráneo: veranos secos y cálidos, inviernos suaves y húmedos"
 
-#: gift_economy/gifts/models.py:431
+#: gift_economy/gifts/models.py:461
 msgid "Dry: steppe or desert"
 msgstr "Seco: estepa o desierto"
 
-#: gift_economy/gifts/models.py:432
+#: gift_economy/gifts/models.py:462
 msgid "Temperate: mild summers, cool winters (also tropical highlands)"
 msgstr ""
 "Templado: veranos suaves, inviernos frescos (también tierras altas "
 "tropicales)"
 
-#: gift_economy/gifts/models.py:433
+#: gift_economy/gifts/models.py:463
 msgid "Continental: warm summers, cold winters"
 msgstr "Continental: veranos cálidos, inviernos fríos"
 
-#: gift_economy/gifts/models.py:434
+#: gift_economy/gifts/models.py:464
 msgid "Cool: short summers, long cold winters"
 msgstr "Frío: veranos cortos, inviernos largos y fríos"
 
-#: gift_economy/gifts/models.py:435
+#: gift_economy/gifts/models.py:465
 msgid "Alpine: high mountains, very short season"
 msgstr "Alpino: alta montaña, temporada muy corta"
 
-#: gift_economy/gifts/models.py:475 gift_economy/matches/models.py:123
+#: gift_economy/gifts/models.py:505 gift_economy/matches/models.py:123
 #: gift_economy/matches/templates/matches/calendar.html:88
 #: projects/models.py:65
 msgid "Project"
 msgstr "Proyecto"
 
-#: gift_economy/gifts/models.py:478
-#: gift_economy/gifts/templates/gifts/listing_form.html:77
+#: gift_economy/gifts/models.py:508
+#: gift_economy/gifts/templates/gifts/listing_form.html:78
 msgid "Categories"
 msgstr "Categorías"
 
-#: gift_economy/gifts/models.py:490
-#: gift_economy/gifts/templates/gifts/listing_detail.html:257
+#: gift_economy/gifts/models.py:520
+#: gift_economy/gifts/templates/gifts/listing_detail.html:260
 msgid "Public good"
 msgstr "Bien común"
 
-#: gift_economy/gifts/models.py:491
-#: gift_economy/gifts/templates/gifts/listing_detail.html:258
+#: gift_economy/gifts/models.py:521
+#: gift_economy/gifts/templates/gifts/listing_detail.html:261
 msgid ""
 "For things found out there, like a fruit tree or wood in the forest. Doesn't "
 "need to be requested and accepted. Everybody can edit and delete it."
@@ -1280,109 +1318,119 @@ msgstr ""
 "bosque. No hace falta pedirlo ni aceptarlo. Todo el mundo puede editarlo y "
 "borrarlo."
 
-#: gift_economy/gifts/models.py:496
+#: gift_economy/gifts/models.py:526
 msgid "Show this place exactly — nobody lives here"
 msgstr "Mostrar este lugar exacto: aquí no vive nadie"
 
-#: gift_economy/gifts/models.py:497
+#: gift_economy/gifts/models.py:527
 msgid ""
 "Otherwise others see only roughly where it is until a match is accepted."
 msgstr ""
 "Si no, los demás solo ven más o menos dónde está hasta que se acepte un "
 "match."
 
-#: gift_economy/gifts/models.py:500
+#: gift_economy/gifts/models.py:530
 #: gift_economy/gifts/templates/gifts/listing_detail.html:84
 #: projects/templates/projects/_need_pill.html:3
 msgid "Covered"
 msgstr "Cubierto"
 
-#: gift_economy/gifts/models.py:508
+#: gift_economy/gifts/models.py:538
 msgid "Listing"
 msgstr "Publicación"
 
-#: gift_economy/gifts/models.py:509
+#: gift_economy/gifts/models.py:539
 msgid "Listings"
 msgstr "Publicaciones"
 
-#: gift_economy/gifts/models.py:581
+#: gift_economy/gifts/models.py:611
 msgid "Tool to lend"
 msgstr "Herramienta para prestar"
 
-#: gift_economy/gifts/models.py:581
+#: gift_economy/gifts/models.py:611
 msgid "Tool to borrow"
 msgstr "Herramienta para pedir prestada"
 
-#: gift_economy/gifts/models.py:583
+#: gift_economy/gifts/models.py:613
 msgid "Vehicle to lend"
 msgstr "Vehículo para prestar"
 
-#: gift_economy/gifts/models.py:583
+#: gift_economy/gifts/models.py:613
 msgid "Vehicle to borrow"
 msgstr "Vehículo para pedir prestado"
 
-#: gift_economy/gifts/models.py:585
+#: gift_economy/gifts/models.py:615
 msgid "To borrow"
 msgstr "Para pedir prestado"
 
-#: gift_economy/gifts/models.py:587
+#: gift_economy/gifts/models.py:617
 #: gift_economy/gifts/templates/gifts/_choice_radio.html:6
 msgid "Learn a skill"
 msgstr "Aprender una habilidad"
 
-#: gift_economy/gifts/models.py:829
+#: gift_economy/gifts/models.py:787
+#, python-format
+msgid "Shoe size %(size)s"
+msgstr "Número de zapato %(size)s"
+
+#: gift_economy/gifts/models.py:788
+#, python-format
+msgid "Size %(size)s"
+msgstr "Talla %(size)s"
+
+#: gift_economy/gifts/models.py:891
 #, python-format
 msgid "%(promised)s of %(amount)s promised"
 msgstr "%(promised)s de %(amount)s prometidos"
 
-#: gift_economy/gifts/models.py:898
+#: gift_economy/gifts/models.py:960
 msgid "offered to help with your wish"
 msgstr "ofreció ayuda con tu deseo"
 
-#: gift_economy/gifts/models.py:898
+#: gift_economy/gifts/models.py:960
 msgid "wants to fulfill your wish"
 msgstr "quiere cumplir tu deseo"
 
-#: gift_economy/gifts/models.py:899
+#: gift_economy/gifts/models.py:961
 msgid "is interested in your skill"
 msgstr "está interesado/a en tu habilidad"
 
-#: gift_economy/gifts/models.py:899
+#: gift_economy/gifts/models.py:961
 msgid "is interested in your offer"
 msgstr "está interesado/a en tu oferta"
 
-#: gift_economy/gifts/models.py:901
+#: gift_economy/gifts/models.py:963
 msgid "offered to help with the wish"
 msgstr "ofreció ayuda con el deseo"
 
-#: gift_economy/gifts/models.py:901
+#: gift_economy/gifts/models.py:963
 msgid "wants to fulfill the wish"
 msgstr "quiere cumplir el deseo"
 
-#: gift_economy/gifts/models.py:902
+#: gift_economy/gifts/models.py:964
 msgid "is interested in the skill"
 msgstr "está interesado/a en la habilidad"
 
-#: gift_economy/gifts/models.py:902
+#: gift_economy/gifts/models.py:964
 msgid "is interested in the offer"
 msgstr "está interesado/a en la oferta"
 
-#: gift_economy/gifts/models.py:907
+#: gift_economy/gifts/models.py:969
 #, python-format
 msgid "%(actor)s offered to help with: %(title)s"
 msgstr "%(actor)s ofreció ayuda con: %(title)s"
 
-#: gift_economy/gifts/models.py:908
+#: gift_economy/gifts/models.py:970
 #, python-format
 msgid "%(actor)s wants to fulfill your wish: %(title)s"
 msgstr "%(actor)s quiere cumplir tu deseo: %(title)s"
 
-#: gift_economy/gifts/models.py:910
+#: gift_economy/gifts/models.py:972
 #, python-format
 msgid "%(actor)s is interested in your skill: %(title)s"
 msgstr "A %(actor)s le interesa tu habilidad: %(title)s"
 
-#: gift_economy/gifts/models.py:911
+#: gift_economy/gifts/models.py:973
 #, python-format
 msgid "%(actor)s is interested in your offer: %(title)s"
 msgstr "A %(actor)s le interesa tu oferta: %(title)s"
@@ -1440,13 +1488,11 @@ msgstr ""
 #, python-format
 msgid ""
 "\n"
-"          Are you sure you want to delete the %(listing_type)s "
-"<b>%(listing_title)s</b>?\n"
+"          Are you sure you want to delete the %(listing_type)s <b>%(listing_title)s</b>?\n"
 "        "
 msgstr ""
 "\n"
-"          ¿Seguro que quieres eliminar %(listing_type)s "
-"<b>%(listing_title)s</b>?\n"
+"          ¿Seguro que quieres eliminar %(listing_type)s <b>%(listing_title)s</b>?\n"
 "        "
 
 #: gift_economy/gifts/templates/gifts/listing_detail.html:28
@@ -1489,131 +1535,131 @@ msgstr "Regalado"
 msgid "Past its date, often still good: look, smell, taste."
 msgstr "Pasada la fecha, a menudo sigue bien: mira, huele, prueba."
 
-#: gift_economy/gifts/templates/gifts/listing_detail.html:98
+#: gift_economy/gifts/templates/gifts/listing_detail.html:101
 msgid "The hardiness zone where it will grow"
 msgstr "La zona de rusticidad donde va a crecer"
 
-#: gift_economy/gifts/templates/gifts/listing_detail.html:98
+#: gift_economy/gifts/templates/gifts/listing_detail.html:101
 msgid "The coldest winter night it survives"
 msgstr "La noche de invierno más fría que aguanta"
 
-#: gift_economy/gifts/templates/gifts/listing_detail.html:99
+#: gift_economy/gifts/templates/gifts/listing_detail.html:102
 #, python-format
 msgid "Harvested %(year)s"
 msgstr "Cosecha %(year)s"
 
-#: gift_economy/gifts/templates/gifts/listing_detail.html:99
+#: gift_economy/gifts/templates/gifts/listing_detail.html:102
 #, python-format
 msgid "%(years)s year old"
 msgid_plural "%(years)s years old"
 msgstr[0] "%(years)s año"
 msgstr[1] "%(years)s años"
 
-#: gift_economy/gifts/templates/gifts/listing_detail.html:100
+#: gift_economy/gifts/templates/gifts/listing_detail.html:103
 msgid "Seeds grow best in a climate like the one they were grown in."
 msgstr "Las semillas crecen mejor en un clima como aquel en que se cultivaron."
 
-#: gift_economy/gifts/templates/gifts/listing_detail.html:121
+#: gift_economy/gifts/templates/gifts/listing_detail.html:124
 msgid "How you can learn it here"
 msgstr "Cómo puedes aprenderlo aquí"
 
-#: gift_economy/gifts/templates/gifts/listing_detail.html:121
+#: gift_economy/gifts/templates/gifts/listing_detail.html:124
 msgid "How they learned it and what they offer"
 msgstr "Cómo lo aprendieron y qué ofrecen"
 
-#: gift_economy/gifts/templates/gifts/listing_detail.html:122
+#: gift_economy/gifts/templates/gifts/listing_detail.html:125
 msgid "No description provided."
 msgstr "Sin descripción."
 
-#: gift_economy/gifts/templates/gifts/listing_detail.html:125
+#: gift_economy/gifts/templates/gifts/listing_detail.html:128
 msgid "Currently not available to teach / share."
 msgstr "Ahora no está disponible para enseñar / compartir."
 
-#: gift_economy/gifts/templates/gifts/listing_detail.html:128
+#: gift_economy/gifts/templates/gifts/listing_detail.html:131
 #, python-format
 msgid "Everyone who offers or looks for %(skill)s"
 msgstr "Todos los que ofrecen o buscan %(skill)s"
 
-#: gift_economy/gifts/templates/gifts/listing_detail.html:135
+#: gift_economy/gifts/templates/gifts/listing_detail.html:138
 msgid "Already lent"
 msgstr "Ya prestada"
 
-#: gift_economy/gifts/templates/gifts/listing_detail.html:142
+#: gift_economy/gifts/templates/gifts/listing_detail.html:145
 #, python-format
 msgid "There is %(counter)s of it to lend."
 msgid_plural "There are %(counter)s of them to lend at once."
 msgstr[0] "Hay %(counter)s para prestar."
 msgstr[1] "Hay %(counter)s que se pueden prestar a la vez."
 
-#: gift_economy/gifts/templates/gifts/listing_detail.html:144
+#: gift_economy/gifts/templates/gifts/listing_detail.html:147
 msgid "Not lent on any coming day: ask for the days you need it."
 msgstr "No está prestada ningún día próximo: pide los días que la necesitas."
 
-#: gift_economy/gifts/templates/gifts/listing_detail.html:153
+#: gift_economy/gifts/templates/gifts/listing_detail.html:156
 msgid "Offer from"
 msgstr "Oferta de"
 
-#: gift_economy/gifts/templates/gifts/listing_detail.html:153
+#: gift_economy/gifts/templates/gifts/listing_detail.html:156
 msgid "Wish from"
 msgstr "Deseo de"
 
-#: gift_economy/gifts/templates/gifts/listing_detail.html:192
+#: gift_economy/gifts/templates/gifts/listing_detail.html:195
 msgid "Learn it here"
 msgstr "Apréndelo aquí"
 
-#: gift_economy/gifts/templates/gifts/listing_detail.html:192
+#: gift_economy/gifts/templates/gifts/listing_detail.html:195
 #: gift_economy/matches/templates/matches/_suggestion_row.html:13
 #: projects/templates/projects/project_detail.html:92
 msgid "Help with this"
 msgstr "Ayudar con esto"
 
-#: gift_economy/gifts/templates/gifts/listing_detail.html:198
-#: gift_economy/gifts/templates/gifts/listing_detail.html:250
+#: gift_economy/gifts/templates/gifts/listing_detail.html:201
+#: gift_economy/gifts/templates/gifts/listing_detail.html:253
 msgid "Express Interest"
 msgstr "Mostrar interés"
 
-#: gift_economy/gifts/templates/gifts/listing_detail.html:198
+#: gift_economy/gifts/templates/gifts/listing_detail.html:201
 msgid "Offer to fulfill this wish"
 msgstr "Ofrecerte a cumplir este deseo"
 
-#: gift_economy/gifts/templates/gifts/listing_detail.html:209
+#: gift_economy/gifts/templates/gifts/listing_detail.html:212
 msgid "How much would you like?"
 msgstr "¿Cuánto te gustaría?"
 
-#: gift_economy/gifts/templates/gifts/listing_detail.html:209
+#: gift_economy/gifts/templates/gifts/listing_detail.html:212
 msgid "How much do you bring?"
 msgstr "¿Cuánto traes?"
 
-#: gift_economy/gifts/templates/gifts/listing_detail.html:210
+#: gift_economy/gifts/templates/gifts/listing_detail.html:213
 #, python-format
 msgid "%(amount)s left"
 msgstr "quedan %(amount)s"
 
-#: gift_economy/gifts/templates/gifts/listing_detail.html:215
+#: gift_economy/gifts/templates/gifts/listing_detail.html:218
 msgid "Proposed meeting location"
 msgstr "Lugar de encuentro propuesto"
 
-#: gift_economy/gifts/templates/gifts/listing_detail.html:231
+#: gift_economy/gifts/templates/gifts/listing_detail.html:234
 #: gift_economy/matches/forms.py:21 gift_economy/matches/models.py:443
 #: gift_economy/matches/templates/matches/match_detail.html:343
 msgid "Borrow from"
 msgstr "Pedir prestado desde"
 
-#: gift_economy/gifts/templates/gifts/listing_detail.html:231
+#: gift_economy/gifts/templates/gifts/listing_detail.html:234
 msgid "Lend from"
 msgstr "Prestar desde"
 
-#: gift_economy/gifts/templates/gifts/listing_detail.html:236
+#: gift_economy/gifts/templates/gifts/listing_detail.html:239
 #: gift_economy/matches/forms.py:25 gift_economy/matches/models.py:444
 #: gift_economy/matches/templates/matches/match_detail.html:350
 msgid "Borrow until"
 msgstr "Pedir prestado hasta"
 
-#: gift_economy/gifts/templates/gifts/listing_detail.html:236
+#: gift_economy/gifts/templates/gifts/listing_detail.html:239
 msgid "Lend until"
 msgstr "Prestar hasta"
 
-#: gift_economy/gifts/templates/gifts/listing_detail.html:241
+#: gift_economy/gifts/templates/gifts/listing_detail.html:244
 msgid ""
 "Times are optional: without them it is for whole days. Without a last day, "
 "for one day."
@@ -1621,35 +1667,35 @@ msgstr ""
 "Las horas son opcionales: sin ellas es por días completos. Sin último día, "
 "por un día."
 
-#: gift_economy/gifts/templates/gifts/listing_detail.html:244
+#: gift_economy/gifts/templates/gifts/listing_detail.html:247
 msgid "Proposed date (optional)"
 msgstr "Fecha propuesta (opcional)"
 
-#: gift_economy/gifts/templates/gifts/listing_detail.html:250
+#: gift_economy/gifts/templates/gifts/listing_detail.html:253
 #: projects/templates/projects/offer_help.html:70
 msgid "Send offer"
 msgstr "Enviar oferta"
 
-#: gift_economy/gifts/templates/gifts/listing_detail.html:264
+#: gift_economy/gifts/templates/gifts/listing_detail.html:267
 msgid "Log in to express interest"
 msgstr "Inicia sesión para mostrar interés"
 
-#: gift_economy/gifts/templates/gifts/listing_detail.html:264
+#: gift_economy/gifts/templates/gifts/listing_detail.html:267
 msgid "Log in to fulfill this wish"
 msgstr "Inicia sesión para cumplir este deseo"
 
-#: gift_economy/gifts/templates/gifts/listing_detail.html:273
+#: gift_economy/gifts/templates/gifts/listing_detail.html:276
 msgid "Incoming Interests"
 msgstr "Interés recibido"
 
-#: gift_economy/gifts/templates/gifts/listing_detail.html:295
+#: gift_economy/gifts/templates/gifts/listing_detail.html:298
 #: gift_economy/matches/models.py:39
 #: gift_economy/matches/templates/matches/_match_row.html:46
 #: gift_economy/matches/templates/matches/match_detail.html:145
 msgid "Pending"
 msgstr "Pendiente"
 
-#: gift_economy/gifts/templates/gifts/listing_detail.html:297
+#: gift_economy/gifts/templates/gifts/listing_detail.html:300
 #: gift_economy/matches/models.py:40
 #: gift_economy/matches/templates/matches/_match_row.html:50
 #: gift_economy/matches/templates/matches/match_detail.html:147
@@ -1658,7 +1704,7 @@ msgstr "Pendiente"
 msgid "Accepted"
 msgstr "Aceptado"
 
-#: gift_economy/gifts/templates/gifts/listing_detail.html:299
+#: gift_economy/gifts/templates/gifts/listing_detail.html:302
 #: gift_economy/matches/models.py:41
 #: gift_economy/matches/templates/matches/_match_row.html:54
 #: gift_economy/matches/templates/matches/match_detail.html:40
@@ -1668,16 +1714,16 @@ msgstr "Aceptado"
 msgid "Declined"
 msgstr "Rechazado"
 
-#: gift_economy/gifts/templates/gifts/listing_detail.html:301
+#: gift_economy/gifts/templates/gifts/listing_detail.html:304
 #: gift_economy/matches/templates/matches/_match_row.html:58
 msgid "Counter"
 msgstr "Contrapropuesta"
 
-#: gift_economy/gifts/templates/gifts/listing_detail.html:309
+#: gift_economy/gifts/templates/gifts/listing_detail.html:312
 msgid "No interests yet."
 msgstr "Todavía no hay interés."
 
-#: gift_economy/gifts/templates/gifts/listing_detail.html:377
+#: gift_economy/gifts/templates/gifts/listing_detail.html:380
 msgid "Roughly here"
 msgstr "Más o menos aquí"
 
@@ -1711,34 +1757,44 @@ msgstr "La compartes o la enseñas."
 msgid ""
 "More than you can eat: a harvest, preserves, or food saved from being thrown "
 "away."
-msgstr "Más de lo que puedes comer: una cosecha, conservas o alimentos que se iban a tirar."
+msgstr ""
+"Más de lo que puedes comer: una cosecha, conservas o alimentos que se iban a "
+"tirar."
 
 #: gift_economy/gifts/templates/gifts/listing_form.html:61
+msgid ""
+"What children grow out of: outdoor clothes, shoes, toys, sports gear. "
+"Childcare is a skill."
+msgstr ""
+"Lo que se les queda pequeño a los niños: ropa de exterior, zapatos, juguetes,"
+" material deportivo. El cuidado infantil es una habilidad."
+
+#: gift_economy/gifts/templates/gifts/listing_form.html:62
 msgid "Advice or know-how, e.g. someone who has built a rocket stove before."
 msgstr ""
 "Consejo o experiencia, p. ej. alguien que ya ha construido una estufa cohete."
 
-#: gift_economy/gifts/templates/gifts/listing_form.html:62
+#: gift_economy/gifts/templates/gifts/listing_form.html:63
 msgid "Help on site, with or without a particular skill."
 msgstr "Ayuda en el lugar, con o sin una habilidad concreta."
 
-#: gift_economy/gifts/templates/gifts/listing_form.html:69
+#: gift_economy/gifts/templates/gifts/listing_form.html:70
 msgid "Which crop or plant?"
 msgstr "¿Qué cultivo o planta?"
 
-#: gift_economy/gifts/templates/gifts/listing_form.html:69
+#: gift_economy/gifts/templates/gifts/listing_form.html:70
 msgid "Which food?"
 msgstr "¿Qué alimento?"
 
-#: gift_economy/gifts/templates/gifts/listing_form.html:69
+#: gift_economy/gifts/templates/gifts/listing_form.html:70
 msgid "Which vehicle?"
 msgstr "¿Qué vehículo?"
 
-#: gift_economy/gifts/templates/gifts/listing_form.html:69
+#: gift_economy/gifts/templates/gifts/listing_form.html:70
 msgid "What for?"
 msgstr "¿Para qué?"
 
-#: gift_economy/gifts/templates/gifts/listing_form.html:73
+#: gift_economy/gifts/templates/gifts/listing_form.html:74
 msgid ""
 "e.g. building the roof truss, planning our food forest, moving house on "
 "Saturday"
@@ -1746,39 +1802,45 @@ msgstr ""
 "p. ej. construir la estructura del tejado, planificar nuestro bosque "
 "comestible, mudanza el sábado"
 
-#: gift_economy/gifts/templates/gifts/listing_form.html:74
+#: gift_economy/gifts/templates/gifts/listing_form.html:75
 msgid "e.g. Tomato, Bush bean, Calendula, Apple, Hazel"
 msgstr "p. ej. Tomate, Judía enana, Caléndula, Manzano, Avellano"
 
-#: gift_economy/gifts/templates/gifts/listing_form.html:74
+#: gift_economy/gifts/templates/gifts/listing_form.html:75
 msgid "Choose from the suggestions; the variety goes below."
 msgstr "Elige de las sugerencias; la variedad va abajo."
 
-#: gift_economy/gifts/templates/gifts/listing_form.html:79
+#: gift_economy/gifts/templates/gifts/listing_form.html:80
 msgid "e.g. Courgette, Apple, Eggs, Jam, Bread, Peanut butter"
 msgstr "p. ej. Calabacín, Manzana, Huevo, Mermelada, Pan, Crema de cacahuete"
 
-#: gift_economy/gifts/templates/gifts/listing_form.html:79
+#: gift_economy/gifts/templates/gifts/listing_form.html:80
+#: gift_economy/gifts/templates/gifts/listing_form.html:82
 msgid "Choose from the suggestions; say more in the description."
 msgstr "Elige de las sugerencias; cuenta más en la descripción."
 
-#: gift_economy/gifts/templates/gifts/listing_form.html:80
+#: gift_economy/gifts/templates/gifts/listing_form.html:81
 msgid "e.g. Cargo bike, Van, Trailer, Campervan"
 msgstr "p. ej. Bicicleta de carga, Furgoneta, Remolque, Autocaravana"
 
-#: gift_economy/gifts/templates/gifts/listing_form.html:80
+#: gift_economy/gifts/templates/gifts/listing_form.html:81
 msgid "Choose from the suggestions."
 msgstr "Elige de las sugerencias."
 
-#: gift_economy/gifts/templates/gifts/listing_form.html:97
+#: gift_economy/gifts/templates/gifts/listing_form.html:82
+msgid "e.g. Rain trousers, Rubber boots, Balance bike, Lunch box"
+msgstr ""
+"p. ej. Pantalón de lluvia, Botas de agua, Bicicleta sin pedales, Fiambrera"
+
+#: gift_economy/gifts/templates/gifts/listing_form.html:101
 msgid "Lend it: people borrow it for some days or hours and bring it back"
 msgstr "Prestarlo: la gente lo toma prestado unos días u horas y lo devuelve"
 
-#: gift_economy/gifts/templates/gifts/listing_form.html:98
+#: gift_economy/gifts/templates/gifts/listing_form.html:102
 msgid "Borrow it: you need it for some days or hours and bring it back"
 msgstr "Pedirlo prestado: lo necesitas unos días u horas y lo devuelves"
 
-#: gift_economy/gifts/templates/gifts/listing_form.html:99
+#: gift_economy/gifts/templates/gifts/listing_form.html:103
 msgid ""
 "Requests say from when until when. You get a lending calendar in your "
 "dashboard."
@@ -1786,7 +1848,7 @@ msgstr ""
 "Las solicitudes indican desde cuándo hasta cuándo. Tendrás un calendario de "
 "préstamos en tu panel."
 
-#: gift_economy/gifts/templates/gifts/listing_form.html:100
+#: gift_economy/gifts/templates/gifts/listing_form.html:104
 msgid ""
 "For things to share rather than give away: a ladder, a concrete mixer, a "
 "cargo bike, a car, a trailer, a van."
@@ -1794,16 +1856,16 @@ msgstr ""
 "Para cosas que compartir en vez de regalar: una escalera, una hormigonera, "
 "una bici de carga, un coche, un remolque, una furgoneta."
 
-#: gift_economy/gifts/templates/gifts/listing_form.html:133
+#: gift_economy/gifts/templates/gifts/listing_form.html:137
 msgid ""
 "Where did the mother plant grow, where were the seeds harvested? We find the "
 "climate zone from the place, so the seeds go where they grow well."
 msgstr ""
-"¿Dónde creció la planta madre, dónde se cosecharon las semillas? Con el "
-"lugar encontramos la zona climática, para que las semillas lleguen donde "
-"crecen bien."
+"¿Dónde creció la planta madre, dónde se cosecharon las semillas? Con el lugar"
+" encontramos la zona climática, para que las semillas lleguen donde crecen "
+"bien."
 
-#: gift_economy/gifts/templates/gifts/listing_form.html:134
+#: gift_economy/gifts/templates/gifts/listing_form.html:138
 msgid ""
 "Where will they grow? We find the climate zone from the place and suggest "
 "seeds from a similar climate."
@@ -1910,8 +1972,8 @@ msgstr[1] ""
 
 #: gift_economy/gifts/templates/skills/skill_detail.html:105
 msgid ""
-"Can you teach or share it? Add it to your profile and they'll be able to "
-"find you."
+"Can you teach or share it? Add it to your profile and they'll be able to find"
+" you."
 msgstr ""
 "¿Puedes enseñarla o compartirla? Añádela a tu perfil y podrán encontrarte."
 
@@ -1955,8 +2017,8 @@ msgstr "Mi nivel actual"
 
 #: gift_economy/gifts/templates/skills/userskill_add_several.html:34
 msgid ""
-"Why do you want to learn this or need help with it? What would you like to "
-"be able to do?"
+"Why do you want to learn this or need help with it? What would you like to be"
+" able to do?"
 msgstr ""
 "¿Por qué quieres aprenderlo o necesitas ayuda? ¿Qué te gustaría llegar a "
 "hacer?"
@@ -2418,8 +2480,8 @@ msgstr ""
 #, python-format
 msgid ""
 "Suggestions: what people, communities and projects within %(km)s km offer or "
-"need that fits your wishes, offers and skills. It becomes a match once one "
-"of you asks."
+"need that fits your wishes, offers and skills. It becomes a match once one of"
+" you asks."
 msgstr ""
 "Sugerencias: lo que personas, comunidades y proyectos a menos de %(km)s km "
 "ofrecen o necesitan y encaja con tus deseos, ofertas y habilidades. Se "
@@ -2429,8 +2491,8 @@ msgstr ""
 #, python-format
 msgid ""
 "Suggestions: what people, communities and projects in %(country)s offer or "
-"need that fits your wishes, offers and skills. It becomes a match once one "
-"of you asks."
+"need that fits your wishes, offers and skills. It becomes a match once one of"
+" you asks."
 msgstr ""
 "Sugerencias: lo que personas, comunidades y proyectos en %(country)s ofrecen "
 "o necesitan y encaja con tus deseos, ofertas y habilidades. Se convierte en "
@@ -2575,7 +2637,8 @@ msgstr[1] "Gracias a %(counter)s personas que echan una mano."
 
 #: gift_economy/matches/templates/matches/calendar_covered.html:21
 msgid "Say thank you with a reference: it helps them find their next match."
-msgstr "Dad las gracias con una referencia: les ayuda a encontrar su próximo match."
+msgstr ""
+"Dad las gracias con una referencia: les ayuda a encontrar su próximo match."
 
 #: gift_economy/matches/templates/matches/calendar_covered.html:36
 msgid "thanks to"
@@ -2687,8 +2750,8 @@ msgstr "Rechazar"
 #: gift_economy/matches/templates/matches/email/match_request.html:91
 #, python-format
 msgid ""
-"Or <a href=\"%(detail_url)s\" style=\"color:#da6137;\">view the full match</"
-"a> to reply or make a counter-proposal."
+"Or <a href=\"%(detail_url)s\" style=\"color:#da6137;\">view the full "
+"match</a> to reply or make a counter-proposal."
 msgstr ""
 "O <a href=\"%(detail_url)s\" style=\"color:#da6137;\">mira el match "
 "completo</a> para responder o hacer una contrapropuesta."
@@ -2918,9 +2981,8 @@ msgstr "Enviar contrapropuesta"
 
 #: gift_economy/matches/templates/matches/matches_list.html:30
 msgid ""
-"No suggestions yet. Add what you wish for, what you can give and your "
-"skills, and set your place in your profile: we'll let you know when "
-"something fits."
+"No suggestions yet. Add what you wish for, what you can give and your skills,"
+" and set your place in your profile: we'll let you know when something fits."
 msgstr ""
 "Todavía no hay sugerencias. Añade lo que deseas, lo que puedes dar y tus "
 "habilidades, e indica tu lugar en tu perfil: te avisaremos cuando algo "
@@ -3171,8 +3233,8 @@ msgstr "Describe lo que pasó."
 
 #: gift_economy/references/templates/references/_guidelines.html:12
 msgid ""
-"What did you see, hear and do together? Stay concrete, the way a camera "
-"would have recorded it."
+"What did you see, hear and do together? Stay concrete, the way a camera would"
+" have recorded it."
 msgstr ""
 "¿Qué viste, qué oíste, qué hicisteis juntos? Sé concreto/a, como lo habría "
 "grabado una cámara."
@@ -3218,8 +3280,8 @@ msgid ""
 "What others do can touch your feelings; the feelings come from your own "
 "needs. Say what you would have wished for."
 msgstr ""
-"Lo que hacen otras personas puede despertar tus sentimientos; su raíz son "
-"tus propias necesidades. Di qué te habría gustado."
+"Lo que hacen otras personas puede despertar tus sentimientos; su raíz son tus"
+" propias necesidades. Di qué te habría gustado."
 
 #: gift_economy/references/templates/references/_guidelines.html:17
 msgid "Write as if they were reading along."
@@ -3238,8 +3300,8 @@ msgid ""
 "You are writing about a place and a whole group of people. Describe what the "
 "place and living or staying together were like for you."
 msgstr ""
-"Escribes sobre un lugar y todo un grupo de personas. Describe cómo viviste "
-"el lugar y la convivencia o tu estancia."
+"Escribes sobre un lugar y todo un grupo de personas. Describe cómo viviste el"
+" lugar y la convivencia o tu estancia."
 
 #: gift_economy/references/templates/references/_guidelines.html:23
 msgid ""
@@ -3264,13 +3326,13 @@ msgid ""
 "If you felt unsafe, say so clearly."
 msgstr ""
 "Si algo salió mal: ¿lo habéis hablado? Una referencia no es el lugar para "
-"resolver un conflicto, pero puede ayudar a otras personas a saberlo. Si no "
-"te sentiste seguro/a, dilo con claridad."
+"resolver un conflicto, pero puede ayudar a otras personas a saberlo. Si no te"
+" sentiste seguro/a, dilo con claridad."
 
 #: gift_economy/references/templates/references/_guidelines.html:30
 msgid ""
-"You can edit your reference at any time, for example after you have talked "
-"it through."
+"You can edit your reference at any time, for example after you have talked it"
+" through."
 msgstr ""
 "Puedes editar tu referencia en cualquier momento, por ejemplo después de "
 "haberlo hablado."
@@ -3376,11 +3438,11 @@ msgstr "Gracias, hemos guardado tu historia:"
 #: gift_economy/references/templates/references/email/reference_received.txt:9
 #, python-format
 msgid ""
-"We saved it as “%(impression)s”. You can change the impression or add a "
-"photo here:"
+"We saved it as “%(impression)s”. You can change the impression or add a photo"
+" here:"
 msgstr ""
-"La guardamos como «%(impression)s». Aquí puedes cambiar la impresión o "
-"añadir una foto:"
+"La guardamos como «%(impression)s». Aquí puedes cambiar la impresión o añadir"
+" una foto:"
 
 #: gift_economy/references/templates/references/email/reference_received.html:37
 #: gift_economy/references/templates/references/email/reference_received.txt:9
@@ -3389,9 +3451,8 @@ msgid ""
 "We saved it as “%(impression)s”. May we show it on the ecobasa homepage? You "
 "can allow this, change the impression or add a photo here:"
 msgstr ""
-"La guardamos como «%(impression)s». ¿Podemos mostrarla en la página de "
-"inicio de ecobasa? Aquí puedes permitirlo, cambiar la impresión o añadir una "
-"foto:"
+"La guardamos como «%(impression)s». ¿Podemos mostrarla en la página de inicio"
+" de ecobasa? Aquí puedes permitirlo, cambiar la impresión o añadir una foto:"
 
 #: gift_economy/references/templates/references/email/reference_received.html:41
 msgid "Edit your story"
@@ -3428,8 +3489,8 @@ msgid ""
 "How was it? Tell us in a few sentences what happened and what you are "
 "grateful for."
 msgstr ""
-"¿Qué tal fue? Cuéntanos en pocas frases qué pasó y por qué estás agradecido/"
-"a."
+"¿Qué tal fue? Cuéntanos en pocas frases qué pasó y por qué estás "
+"agradecido/a."
 
 #: gift_economy/references/templates/references/email/reference_request.html:41
 #: gift_economy/references/templates/references/email/reference_request.txt:11
@@ -3487,12 +3548,12 @@ msgstr[1] "%(counter)s neutrales o negativas"
 #: gift_economy/references/templates/references/references_list.html:26
 #, python-format
 msgid ""
-"You see these references as ambassador of %(name)s: you represent %(name)s "
-"in the gift-economy network, and the network in %(name)s. Share what you "
-"learn here with your community."
+"You see these references as ambassador of %(name)s: you represent %(name)s in"
+" the gift-economy network, and the network in %(name)s. Share what you learn "
+"here with your community."
 msgstr ""
-"Ves estas referencias como embajador/a de %(name)s: representas a %(name)s "
-"en la red de la economía del regalo, y a la red en %(name)s. Comparte con tu "
+"Ves estas referencias como embajador/a de %(name)s: representas a %(name)s en"
+" la red de la economía del regalo, y a la red en %(name)s. Comparte con tu "
 "comunidad lo que aprendas aquí."
 
 #: gift_economy/references/templates/references/references_list.html:34
@@ -3541,8 +3602,8 @@ msgstr "Aún puedes escribir una referencia en su página de ecobasa."
 
 #: gift_economy/references/templates/references/request_form.html:17
 msgid ""
-"How was it? A few sentences are enough. Stories like yours show that the "
-"gift economy works."
+"How was it? A few sentences are enough. Stories like yours show that the gift"
+" economy works."
 msgstr ""
 "¿Qué tal fue? Bastan unas frases. Historias como la tuya muestran que la "
 "economía del regalo funciona."
@@ -3559,8 +3620,8 @@ msgstr "¡Gracias por tu historia!"
 msgid ""
 "We may show it on the homepage, so others can see what giving makes possible."
 msgstr ""
-"Quizá la mostremos en la página de inicio, para que otros vean lo que "
-"regalar hace posible."
+"Quizá la mostremos en la página de inicio, para que otros vean lo que regalar"
+" hace posible."
 
 #: gift_economy/references/templates/references/request_thanks.html:10
 msgid "It is now shown with the references on ecobasa."
@@ -3634,9 +3695,11 @@ msgstr ""
 
 #: homepage/templates/homepage/homepage.html:34
 msgid ""
-"Share food: a harvest too big to eat, preserves, and food saved from the "
-"bin, also past its best-before date"
-msgstr "Compartir alimentos: una cosecha demasiado grande, conservas y comida salvada de la basura, también pasada su fecha de consumo preferente"
+"Share food: a harvest too big to eat, preserves, and food saved from the bin,"
+" also past its best-before date"
+msgstr ""
+"Compartir alimentos: una cosecha demasiado grande, conservas y comida salvada"
+" de la basura, también pasada su fecha de consumo preferente"
 
 #: homepage/templates/homepage/homepage.html:35
 msgid "Tool library: lend instead of buying twice, with a lending calendar"
@@ -3730,27 +3793,15 @@ msgstr "Elegir historias para la página de inicio"
 msgid ""
 "\n"
 "        <h1>We need your help!</h1>\n"
-"        <a href=\"/contact\" target=\"_blank\">Get in contact with us</a>, "
-"if you want to help with written communication and social media, design, "
-"programming or legal counceling, organising of events or your own creative "
-"ideas.\n"
-"        <p>The gift-economy network and this online platform are all run by "
-"<a href=\"/team/\">volunteers</a>. \n"
-"          You can help developing this open-source project on <a "
-"href=\"http://github.com/ecobasa/ecobasa-2020/\" target=\"_blank\">github</"
-"a> and translate the platform on <a href=\"http://translate.ecobasa.org\" "
-"target=\"_blank\">crowdin</a>. Thanks for your support!</p>\n"
+"        <a href=\"/contact\" target=\"_blank\">Get in contact with us</a>, if you want to help with written communication and social media, design, programming or legal counceling, organising of events or your own creative ideas.\n"
+"        <p>The gift-economy network and this online platform are all run by <a href=\"/team/\">volunteers</a>. \n"
+"          You can help developing this open-source project on <a href=\"http://github.com/ecobasa/ecobasa-2020/\" target=\"_blank\">github</a> and translate the platform on <a href=\"http://translate.ecobasa.org\" target=\"_blank\">crowdin</a>. Thanks for your support!</p>\n"
 "        <h2>Your gifts keep us giving</h2>\n"
-"        <p><strong>We try to cover running costs through donations:</"
-"strong></p>\n"
+"        <p><strong>We try to cover running costs through donations:</strong></p>\n"
 "        <ul>\n"
-"          <li>First we will try to cover external costs for the webserver "
-"and domain: 120€ (Green-hosting by ecobytes.net) <a href=\"/contact\" "
-"target=\"_blank\">Alternatively you can help us with free hosting!</a></li>\n"
-"          <li>Additional donations we will put to our most urgent needs, "
-"like legal counseling.</li>\n"
-"          <li>Monthly donations make it possible for us to plan ahead and to "
-"spend more time away from day jobs to follow our passion.</li>\n"
+"          <li>First we will try to cover external costs for the webserver and domain: 120€ (Green-hosting by ecobytes.net) <a href=\"/contact\" target=\"_blank\">Alternatively you can help us with free hosting!</a></li>\n"
+"          <li>Additional donations we will put to our most urgent needs, like legal counseling.</li>\n"
+"          <li>Monthly donations make it possible for us to plan ahead and to spend more time away from day jobs to follow our passion.</li>\n"
 "        </ul>\n"
 "\n"
 "        <p><i>Happy giving!</i></p>\n"
@@ -3758,27 +3809,15 @@ msgid ""
 msgstr ""
 "\n"
 "        <h1>¡Necesitamos tu ayuda!</h1>\n"
-"        <a href=\"/contact\" target=\"_blank\">Ponte en contacto con "
-"nosotros</a> si quieres ayudar con textos y redes sociales, diseño, "
-"programación o asesoría legal, organización de eventos o con tus propias "
-"ideas creativas.\n"
-"        <p>La red de economía del regalo y esta plataforma funcionan gracias "
-"a <a href=\"/team/\">voluntarios y voluntarias</a>.\n"
-"          Puedes ayudar a desarrollar este proyecto de código abierto en <a "
-"href=\"http://github.com/ecobasa/ecobasa-2020/\" target=\"_blank\">GitHub</"
-"a> y traducir la plataforma en <a href=\"http://translate.ecobasa.org\" "
-"target=\"_blank\">Crowdin</a>. ¡Gracias por tu apoyo!</p>\n"
+"        <a href=\"/contact\" target=\"_blank\">Ponte en contacto con nosotros</a> si quieres ayudar con textos y redes sociales, diseño, programación o asesoría legal, organización de eventos o con tus propias ideas creativas.\n"
+"        <p>La red de economía del regalo y esta plataforma funcionan gracias a <a href=\"/team/\">voluntarios y voluntarias</a>.\n"
+"          Puedes ayudar a desarrollar este proyecto de código abierto en <a href=\"http://github.com/ecobasa/ecobasa-2020/\" target=\"_blank\">GitHub</a> y traducir la plataforma en <a href=\"http://translate.ecobasa.org\" target=\"_blank\">Crowdin</a>. ¡Gracias por tu apoyo!</p>\n"
 "        <h2>Tus regalos nos mantienen dando</h2>\n"
-"        <p><strong>Intentamos cubrir los gastos con donaciones:</strong></"
-"p>\n"
+"        <p><strong>Intentamos cubrir los gastos con donaciones:</strong></p>\n"
 "        <ul>\n"
-"          <li>Primero intentaremos cubrir los costes externos del servidor y "
-"el dominio: 120 € (hosting verde de ecobytes.net). <a href=\"/contact\" "
-"target=\"_blank\">¡También puedes ayudarnos con hosting gratuito!</a></li>\n"
-"          <li>Las donaciones adicionales las destinaremos a lo más urgente, "
-"como la asesoría legal.</li>\n"
-"          <li>Las donaciones mensuales nos permiten planificar y dedicar más "
-"tiempo a nuestra pasión, lejos de nuestros trabajos.</li>\n"
+"          <li>Primero intentaremos cubrir los costes externos del servidor y el dominio: 120 € (hosting verde de ecobytes.net). <a href=\"/contact\" target=\"_blank\">¡También puedes ayudarnos con hosting gratuito!</a></li>\n"
+"          <li>Las donaciones adicionales las destinaremos a lo más urgente, como la asesoría legal.</li>\n"
+"          <li>Las donaciones mensuales nos permiten planificar y dedicar más tiempo a nuestra pasión, lejos de nuestros trabajos.</li>\n"
 "        </ul>\n"
 "\n"
 "        <p><i>¡Feliz regalo!</i></p>\n"
@@ -3867,8 +3906,8 @@ msgid ""
 msgid_plural ""
 "%(count)s new suggestions near you: things fit your wishes, offers or skills."
 msgstr[0] ""
-"%(count)s sugerencia nueva cerca de ti: algo encaja con tus deseos, ofertas "
-"o habilidades."
+"%(count)s sugerencia nueva cerca de ti: algo encaja con tus deseos, ofertas o"
+" habilidades."
 msgstr[1] ""
 "%(count)s sugerencias nuevas cerca de ti: varias cosas encajan con tus "
 "deseos, ofertas o habilidades."
@@ -3965,9 +4004,9 @@ msgstr "Salida"
 
 #: projects/forms.py:176
 msgid ""
-"Who you are, what you can do or bring, and how you would get there. Also "
-"tell them what you need: food (diet, allergies), where you would sleep "
-"(tent, bed …) and anything else that matters to you."
+"Who you are, what you can do or bring, and how you would get there. Also tell"
+" them what you need: food (diet, allergies), where you would sleep (tent, bed"
+" …) and anything else that matters to you."
 msgstr ""
 "Quién eres, qué sabes hacer o traer y cómo llegarías. Cuéntales también lo "
 "que necesitas: comida (dieta, alergias), dónde dormirías (tienda, cama …) y "
@@ -4075,9 +4114,9 @@ msgid ""
 "the gift network only shows what is really happening. You can bring it back "
 "at any time."
 msgstr ""
-"Si es así, basta con un clic. Si no, se archivará el %(day)s, para que la "
-"red del regalo solo muestre lo que de verdad está pasando. Puedes "
-"recuperarlo en cualquier momento."
+"Si es así, basta con un clic. Si no, se archivará el %(day)s, para que la red"
+" del regalo solo muestre lo que de verdad está pasando. Puedes recuperarlo en"
+" cualquier momento."
 
 #: projects/templates/projects/email/stale_reminder.html:28
 #: projects/templates/projects/email/stale_reminder.txt:7
@@ -4283,11 +4322,11 @@ msgstr "Añadir una necesidad"
 
 #: projects/templates/projects/project_list.html:29
 msgid ""
-"Communities realise projects together with people from the gift network: "
-"with helping hands, materials, tools and knowledge that are shared. Each "
-"gift makes a project need a little less money, and along the way it grows a "
-"social net, trust and friendships. Projects that ended or were not updated "
-"for a while are archived automatically, and stay here to look back on."
+"Communities realise projects together with people from the gift network: with"
+" helping hands, materials, tools and knowledge that are shared. Each gift "
+"makes a project need a little less money, and along the way it grows a social"
+" net, trust and friendships. Projects that ended or were not updated for a "
+"while are archived automatically, and stay here to look back on."
 msgstr ""
 "Las comunidades realizan proyectos junto con personas de la red de regalos: "
 "con manos que ayudan, materiales, herramientas y conocimientos que se "
@@ -4654,8 +4693,8 @@ msgstr "¿Qué puedes ofrecer o enseñar?"
 
 #: users/forms.py:53 users/forms.py:151
 msgid ""
-"Everyday skills count just as much as professional ones — cooking, "
-"gardening, basic repairs, childcare are all valuable to communities."
+"Everyday skills count just as much as professional ones — cooking, gardening,"
+" basic repairs, childcare are all valuable to communities."
 msgstr ""
 "Las habilidades cotidianas cuentan tanto como las profesionales: cocinar, "
 "cultivar, hacer pequeñas reparaciones o cuidar niños es valioso para las "
@@ -4853,8 +4892,8 @@ msgid ""
 "If you don’t receive an email, please make sure you’ve entered the address "
 "you registered with, and check your spam folder."
 msgstr ""
-"Si no recibes el correo, comprueba que has escrito la dirección con la que "
-"te registraste y revisa la carpeta de spam."
+"Si no recibes el correo, comprueba que has escrito la dirección con la que te"
+" registraste y revisa la carpeta de spam."
 
 #: users/templates/users/password_reset/email.html:2
 #, python-format
@@ -4916,8 +4955,8 @@ msgstr "Tu ubicación"
 
 #: users/templates/users/register.html:32
 msgid ""
-"Enables other ecobasa members to find you with your skills and as a "
-"potential member of their community or community-tour."
+"Enables other ecobasa members to find you with your skills and as a potential"
+" member of their community or community-tour."
 msgstr ""
 "Permite que otros miembros de ecobasa te encuentren por tus habilidades y "
 "como posible miembro de su comunidad o Community-Tour."
@@ -4925,12 +4964,12 @@ msgstr ""
 #: users/templates/users/register.html:34 users/templates/users/update.html:41
 msgid ""
 "Others see only roughly where you live (about 1–2 km, without the street). "
-"Your exact place shows only once a match between you is accepted, so that "
-"you meet through ecobasa."
+"Your exact place shows only once a match between you is accepted, so that you"
+" meet through ecobasa."
 msgstr ""
-"Los demás solo ven más o menos dónde vives (a 1–2 km, sin la calle). Tu "
-"lugar exacto solo lo ven cuando se acepta un match entre vosotros: así os "
-"conocéis a través de ecobasa."
+"Los demás solo ven más o menos dónde vives (a 1–2 km, sin la calle). Tu lugar"
+" exacto solo lo ven cuando se acepta un match entre vosotros: así os conocéis"
+" a través de ecobasa."
 
 #: users/templates/users/register.html:41
 msgid "Register"
@@ -4955,10 +4994,10 @@ msgid ""
 "added. New suggestions show in your notifications; the email collects them "
 "once a week."
 msgstr ""
-"Comparamos tus deseos, ofertas y habilidades con los de personas, "
-"comunidades y proyectos dentro de esta distancia de tu lugar, en cuanto se "
-"añade algo. Las sugerencias nuevas aparecen en tus notificaciones; el correo "
-"las reúne una vez por semana."
+"Comparamos tus deseos, ofertas y habilidades con los de personas, comunidades"
+" y proyectos dentro de esta distancia de tu lugar, en cuanto se añade algo. "
+"Las sugerencias nuevas aparecen en tus notificaciones; el correo las reúne "
+"una vez por semana."
 
 #: users/templates/users/update.html:66
 msgid "Save changes"

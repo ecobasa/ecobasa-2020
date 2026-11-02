@@ -11,7 +11,6 @@ VEHICLES = [
     ("mountain-bike", "bicycle", "bikes-vehicles", "Mountain bike", "Mountainbike", "Bicicleta de montaña", "VTT", "MTB"),
     ("road-bike", "bicycle", "bikes-vehicles", "Road bike", "Rennrad", "Bicicleta de carretera", "Vélo de route", "Gravelbike|gravel bike"),
     ("e-bike", "bicycle", "bikes-vehicles", "E-bike", "E-Bike", "Bicicleta eléctrica", "Vélo électrique", "Pedelec|ebike|VAE"),
-    ("kids-bike", "bicycle", "children-toys", "Children's bike", "Kinderfahrrad", "Bicicleta infantil", "Vélo enfant", "Laufrad|balance bike|draisienne"),
     ("tandem", "bicycle", "bikes-vehicles", "Tandem", "Tandem", "Tándem", "Tandem", ""),
     ("recumbent", "bicycle", "bikes-vehicles", "Recumbent", "Liegerad", "Bicicleta reclinada", "Vélo couché", "Velomobil"),
     ("tricycle", "bicycle", "bikes-vehicles", "Tricycle", "Dreirad", "Triciclo", "Tricycle", "Erwachsenendreirad"),

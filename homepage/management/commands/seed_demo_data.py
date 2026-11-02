@@ -1053,6 +1053,7 @@ class Command(BaseCommand):
         OFFER, WISH = Listing.TYPE_OFFER, Listing.TYPE_WISH
         MATERIAL, TOOL, VEHICLE = Listing.KIND_MATERIAL, Listing.KIND_TOOL, Listing.KIND_VEHICLE
         FOOD, SEEDS_PLANTS, OTHER = Listing.KIND_FOOD, Listing.KIND_SEEDS_PLANTS, Listing.KIND_OTHER
+        CHILDREN = Listing.KIND_CHILDREN
         specs = [
             # (holder, type, kind, title, place, (lon, lat), fields)
             (luna, OFFER, MATERIAL, "Wooden window", "Zittau", (14.8072, 50.8962), dict(
@@ -1135,6 +1136,16 @@ class Command(BaseCommand):
                 plant_form=Listing.PLANT_FORM_SEEDS, harvest_year=timezone.localdate().year - 1,
                 open_pollinated=True, quantity=15, unit="packets",
                 description="From the sweetest tree in the garden, dried on the porch.")),
+            # Children's things: outdoor clothes in a size, and a wish they fit (one size up)
+            (luna, OFFER, CHILDREN, "Rain trousers", "Herrnhut", (14.7417, 51.0167), dict(
+                size=110, quantity=2,
+                description="Two pairs of puddle trousers, patched at the knees where it counts.")),
+            (mireille, WISH, CHILDREN, "Outdoor clothing", "Foix", (1.6053, 42.9653), dict(
+                size=104, description="For forest kindergarten: rain trousers, a jacket, anything mud-proof.")),
+            (bjorn, OFFER, CHILDREN, "Rubber boots", "Pulsnitz", (14.0136, 51.1830), dict(
+                size=27, description="Outgrown in one summer, like all the others.")),
+            (sam, OFFER, CHILDREN, "Balance bike", "Houten", (5.1683, 52.0283), dict(
+                lend=True, quantity=1, description="Wooden, sturdy, survived three siblings.")),
         ]
         for holder, type, kind, title, place, (lon, lat), fields in specs:
             category = fields.pop("category", None)

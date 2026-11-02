@@ -432,7 +432,8 @@ def nominatim_proxy(request):
 @require_GET
 def things_recognize(request):
     """What a title is recognized as while typing, and the categories that sets:
-    ?kind=tool|material|seeds_plants|food|vehicle&title=… (with &variety=… for seeds and plants)."""
+    ?kind=tool|material|seeds_plants|food|vehicle|children&title=… (with &variety=… for seeds and plants);
+    for children's clothes and shoes also the sizes they come in."""
     from .models import Thing
     from .things import WHITELISTED_KINDS, recognize, thing_named
     kind, title = request.GET.get("kind", ""), request.GET.get("title", "").strip()
@@ -447,7 +448,7 @@ def things_recognize(request):
     return JsonResponse({
         "thing": thing.get_name(),
         "categories": [str(category) for category in Listing.thing_categories(thing, kind)],
-    })
+    } | ({"sizes": list(Listing.sizes_for(thing) or ())} if kind == Listing.KIND_CHILDREN else {}))
 
 
 @require_GET

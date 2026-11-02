@@ -55,9 +55,9 @@ def build_index(things):
 
 
 # Kinds of listing whose title has to be a name from their vocabulary: matching depends on
-# knowing exactly which crop, food, vehicle, tool or material it is (a salvaged window, not
-# "Fenster ausgebaut"); details go in the description
-WHITELISTED_KINDS = ("seeds_plants", "food", "vehicle", "tool", "material")
+# knowing exactly which crop, food, vehicle, tool, material or children's thing it is (a
+# salvaged window, not "Fenster ausgebaut"); details go in the description
+WHITELISTED_KINDS = ("seeds_plants", "food", "vehicle", "tool", "material", "children")
 
 _names_cache = None
 
@@ -194,7 +194,7 @@ def recognize_all(Listing, Thing):
     count = 0
     # A migration's model may not have every field yet
     fields = [f for f in ("title", "variety", "kind", "thing_id") if f in {field.attname for field in Listing._meta.fields}]
-    for listing in Listing.objects.filter(kind__in=("material", "tool", "vehicle", "seeds_plants", "food", "other")).only(*fields):
+    for listing in Listing.objects.filter(kind__in=("material", "tool", "vehicle", "seeds_plants", "food", "children", "other")).only(*fields):
         variety = getattr(listing, "variety", "")
         title = f"{listing.title} {variety}" if variety else listing.title
         thing_id = recognize(title, listing.kind, index)
