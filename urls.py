@@ -13,13 +13,14 @@ urlpatterns = [
     path("", include("homepage.urls")),
     path("users/", include("users.urls")),
     path("gifts/", include("gift_economy.gifts.urls")),
+    # Events live under their host: /communities/<community>/events/<event>/
+    path("", include("events.urls", namespace="events")),
     path("communities/", include("communities.urls")),
     path("skills/", include("gift_economy.gifts.skills.urls")),
     path("notifications/", include("notifications.urls")),
     path("messages/", include(("postman_urls", "postman"), namespace="postman")),
     path("matches/", include("gift_economy.matches.urls", namespace="matches")),
     path("references/", include("gift_economy.references.urls", namespace="references")),
-    path("projects/", include("projects.urls", namespace="projects")),
 ]
 
 if settings.DEBUG:

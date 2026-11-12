@@ -14,13 +14,13 @@
           <tr>
             <td style="background-color:#da6137;padding:28px 32px;">
               <p style="margin:0;font-size:24px;font-weight:bold;color:#fcf3e5;font-family:Georgia,serif;">ecobasa.org</p>
-              <p style="margin:8px 0 0;font-size:14px;color:#fcf3e5;opacity:0.85;">{% trans "Is your project still current?" %}</p>
+              <p style="margin:8px 0 0;font-size:14px;color:#fcf3e5;opacity:0.85;">{{ event.texts.reminder_headline }}</p>
             </td>
           </tr>
           <tr>
             <td style="padding:32px;">
               <p style="margin:0 0 16px;font-size:16px;">{% blocktrans with name=recipient.name|default:recipient.email %}Hello {{ name }},{% endblocktrans %}</p>
-              <p style="margin:0 0 16px;font-size:15px;line-height:1.6;">{% blocktrans with title=project.title community=project.community.name %}nobody has updated the project “{{ title }}” of {{ community }} for a while. Is it still current?{% endblocktrans %}</p>
+              <p style="margin:0 0 16px;font-size:15px;line-height:1.6;">{{ question }}</p>
               <p style="margin:0 0 24px;font-size:15px;line-height:1.6;">{% blocktrans with day=archive_on|date:"DATE_FORMAT" %}If it is, one click is enough. Otherwise it will be archived on {{ day }}, so the gift network only shows what is really happening. You can bring it back at any time.{% endblocktrans %}</p>
               <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
                 <tr>
@@ -28,11 +28,11 @@
                     <a href="{{ confirm_url }}" style="display:inline-block;background-color:#5A5527;color:#fcf3e5;text-decoration:none;font-size:15px;font-weight:bold;padding:12px 28px;border-radius:6px;font-family:Arial,sans-serif;">✓ {% trans "Yes, still current" %}</a>
                   </td>
                   <td align="center" style="padding:0 0 0 8px;">
-                    <a href="{{ edit_url }}" style="display:inline-block;background-color:#da6137;color:#fcf3e5;text-decoration:none;font-size:15px;font-weight:bold;padding:12px 28px;border-radius:6px;font-family:Arial,sans-serif;">{% trans "Update the project" %}</a>
+                    <a href="{{ edit_url }}" style="display:inline-block;background-color:#da6137;color:#fcf3e5;text-decoration:none;font-size:15px;font-weight:bold;padding:12px 28px;border-radius:6px;font-family:Arial,sans-serif;">{{ event.texts.reminder_update }}</a>
                   </td>
                 </tr>
               </table>
-              <p style="margin:0;font-size:13px;opacity:0.7;text-align:center;"><a href="{{ detail_url }}" style="color:#da6137;">{{ project.title }}</a></p>
+              <p style="margin:0;font-size:13px;opacity:0.7;text-align:center;"><a href="{{ detail_url }}" style="color:#da6137;">{{ event.title }}</a></p>
             </td>
           </tr>
           <tr>

@@ -162,8 +162,8 @@ class ListingForm(forms.ModelForm):
             cleaned["level"] = ""
         else:
             cleaned["categories"] = []
-            # An amount only for things, and for a project's needs ("2 people")
-            if not self.instance.project_id:
+            # An amount only for things, and for a event's needs ("2 people")
+            if not self.instance.event_id:
                 cleaned["quantity"], cleaned["unit"] = None, ""
         # A public good is a thing offered where it's found: always with its exact place,
         # and nobody lends it out (nobody asks for it)

@@ -40,7 +40,7 @@ def exchange_dates(match):
     if loan:
         return loan.starts_at, loan.ends_at
     try:
-        details = match.volunteer_details
+        details = match.stay_details
     except ObjectDoesNotExist:
         details = None
     if details and details.stay_to:
@@ -71,7 +71,9 @@ def exchange_text(match, user):
     model = match.content_type.model
     if model == "community":
         text = _("Your stay at %(title)s") if is_requester else _("%(name)s's stay at %(title)s")
-    elif model == "project":
+    elif model == "event" and match.is_coming:
+        text = _("Your visit to %(title)s at %(name)s") if is_requester else _("%(name)s's visit to %(title)s")
+    elif model == "event":
         text = _("Your help with %(title)s at %(name)s") if is_requester else _("%(name)s's help with %(title)s")
     elif model == "listing" and target.is_skill and target.is_wish:
         text = _("Your help with %(title)s for %(name)s") if is_requester else _("%(name)s's help with %(title)s")

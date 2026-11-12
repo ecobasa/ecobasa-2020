@@ -4,6 +4,7 @@
      {% if match.status == 'accepted' %}border-green
      {% elif match.status == 'declined' %}border-red
      {% elif match.status == 'counter' %}border-primary
+     {% elif match.status == 'withdrawn' %}border-brown border-opacity-40
      {% else %}border-yellow{% endif %}">
   <div class="flex-none">
     <i class="fa-solid {{ match.target.get_match_icon }} text-2xl text-primary opacity-70"></i>
@@ -17,7 +18,9 @@
       <div class="text-sm opacity-70">
         {{ match.from_user.name|default:match.from_user.email }}
       </div>
-      {% if match.target.get_match_verb %}
+      {% if match.is_coming %}
+        <div class="text-xs opacity-60 mt-0.5">{% trans "Is coming to" %}</div>
+      {% elif match.target.get_match_verb %}
         <div class="text-xs opacity-60 mt-0.5">{{ match.target.get_match_verb|capfirst }}</div>
       {% endif %}
     {% else %}
@@ -29,7 +32,7 @@
     {% if match.proposed_date %}
       <div class="text-xs opacity-60 mt-0.5">{{ match.proposed_date|date:"SHORT_DATE_FORMAT" }}</div>
     {% endif %}
-    {% with vd=match.volunteer_details %}
+    {% with vd=match.stay_details %}
       {% if vd and vd.stay_from or vd.stay_to %}
         <div class="text-xs opacity-60 mt-0.5">
           {% if vd.stay_from %}{{ vd.stay_from|date:"SHORT_DATE_FORMAT" }}{% endif %}
@@ -52,6 +55,10 @@
     {% elif match.status == "declined" %}
       <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-red text-secondary">
         <i class="fa-solid fa-handshake-simple-slash"></i>{% trans "Declined" %}
+      </span>
+    {% elif match.status == "withdrawn" %}
+      <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-brown text-secondary">
+        <i class="fa-solid fa-rotate-left"></i>{% trans "Withdrawn" %}
       </span>
     {% elif match.status == "counter" %}
       <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-primary text-secondary">

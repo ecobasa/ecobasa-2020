@@ -1,9 +1,9 @@
 """The calendars in the dashboard.
 
-The ambassador's calendar: a community's projects and the volunteer stays requested and
-confirmed for it and its projects, per month, with who brings which skills and things.
+The ambassador's calendar: a community's events and the volunteer stays requested and
+confirmed for it and its events, per month, with who brings which skills and things.
 Shows how many people are there each day against the community's room for guests, so
-overbooking stands out, and which needs of its current and coming projects are still
+overbooking stands out, and which needs of its current and coming events are still
 open. A second view celebrates the needs that are covered, and who covered them.
 
 The lending calendar: when the tools someone lends are borrowed, and by whom, requested
@@ -21,7 +21,8 @@ from django.shortcuts import get_object_or_404, render
 from django.utils import timezone
 
 from communities.models import Community
-from projects.models import Project
+from events.kinds import event_kind_buttons
+from events.models import Event
 
 from gift_economy.gifts.models import Listing
 
@@ -35,7 +36,7 @@ class Stay:
     match: Match
     start: date
     end: date
-    project: Project | None
+    event: Event | None
 
     @property
     def confirmed(self):
@@ -44,6 +45,11 @@ class Stay:
     @property
     def person(self):
         return self.match.from_user
+
+    @property
+    def people(self):
+        """How many come: who asked and those they bring."""
+        return self.match.people
 
     def covers(self, day):
         return self.start <= day <= self.end
@@ -54,17 +60,17 @@ class Day:
     date: date
     in_month: bool
     is_today: bool
-    projects: list = field(default_factory=list)
+    events: list = field(default_factory=list)
     stays: list = field(default_factory=list)
     capacity: int | None = None
 
     @property
     def confirmed(self):
-        return sum(1 for stay in self.stays if stay.confirmed)
+        return sum(stay.people for stay in self.stays if stay.confirmed)
 
     @property
     def requested(self):
-        return sum(1 for stay in self.stays if not stay.confirmed)
+        return sum(stay.people for stay in self.stays if not stay.confirmed)
 
     @property
     def overbooked(self):
@@ -91,27 +97,27 @@ def _local_day(value):
 
 
 def stays_of(community):
-    """Requested and confirmed stays at the community or one of its projects:
+    """Requested and confirmed stays at the community or one of its events:
     (dated stays, stays without dates)."""
-    project_ids = list(community.projects.values_list("pk", flat=True))
+    event_ids = list(community.events.values_list("pk", flat=True))
     matches = (
         Match.objects.filter(status__in=_ACTIVE)
         .filter(
             Q(content_type=ContentType.objects.get_for_model(Community), object_id=str(community.pk))
-            | Q(content_type=ContentType.objects.get_for_model(Project), object_id__in=[str(pk) for pk in project_ids])
+            | Q(content_type=ContentType.objects.get_for_model(Event), object_id__in=[str(pk) for pk in event_ids])
         )
-        .select_related("from_user", "content_type", "volunteer_details")
+        .select_related("from_user", "content_type", "stay_details")
         .prefetch_related("contributions__listing__skill")
     )
-    projects = {str(project.pk): project for project in community.projects.all()}
+    events = {str(event.pk): event for event in community.events.all()}
     dated, undated = [], []
     for match in matches:
         start, end = (_local_day(value) for value in match.stay_period())
-        project = projects.get(match.object_id) if match.content_type.model == "project" else None
+        event = events.get(match.object_id) if match.content_type.model == "event" else None
         if not (start or end):
-            undated.append(Stay(match, None, None, project))
+            undated.append(Stay(match, None, None, event))
             continue
-        dated.append(Stay(match, start or end, end or start, project))
+        dated.append(Stay(match, start or end, end or start, event))
     dated.sort(key=lambda stay: (stay.start, stay.end))
     return dated, undated
 
@@ -123,8 +129,8 @@ def _ambassadors_community(request, community_slug):
     return community
 
 
-def _with_needs(projects):
-    return projects.prefetch_related("listings__skill", "listings__contributions__match__from_user")
+def _with_needs(events):
+    return events.prefetch_related("listings__skill", "listings__contributions__match__from_user")
 
 
 @login_required
@@ -137,9 +143,9 @@ def calendar(request, community_slug):
     grid_end = last + timedelta(days=6 - last.weekday())
     today = timezone.localdate()
 
-    projects = list(
-        community.projects
-        # Manually archived projects are off the calendar; ended ones stay in their months
+    events = list(
+        community.events
+        # Manually archived events are off the calendar; ended ones stay in their months
         .filter(Q(archived_at=None) | Q(ends_on__lt=today))
         .filter(Q(starts_on=None) | Q(starts_on__lte=grid_end))
         .filter(Q(ends_on=None) | Q(ends_on__gte=grid_start))
@@ -157,8 +163,8 @@ def calendar(request, community_slug):
                 date=day,
                 in_month=day.month == first.month,
                 is_today=day == today,
-                # Ongoing projects are listed once above the grid instead of on every day
-                projects=[p for p in projects if p.ends_on and (p.starts_on or p.ends_on) <= day <= p.ends_on],
+                # Ongoing events are listed once above the grid instead of on every day
+                events=[p for p in events if p.ends_on and (p.starts_on or p.ends_on) <= day <= p.ends_on],
                 stays=[stay for stay in stays if stay.covers(day)],
                 capacity=community.max_guests,
             ))
@@ -166,10 +172,10 @@ def calendar(request, community_slug):
         weeks.append(week)
 
     month_stays = [stay for stay in stays if stay.start <= last and stay.end >= first]
-    # What is still missing doesn't depend on the month shown: every running and coming project
+    # What is still missing doesn't depend on the month shown: every running and coming event
     open_needs = [
-        (project, [need for need in project.needs() if not need.is_done])
-        for project in _with_needs(community.projects.current()).order_by(F("starts_on").asc(nulls_first=True), "pk")
+        (event, [need for need in event.needs() if not need.is_done])
+        for event in _with_needs(community.events.current()).order_by(F("starts_on").asc(nulls_first=True), "pk")
     ]
     previous_month = (first - timedelta(days=1)).replace(day=1)
     next_month = last + timedelta(days=1)
@@ -181,13 +187,14 @@ def calendar(request, community_slug):
         "next_month": next_month.strftime("%Y-%m"),
         "this_month": today.strftime("%Y-%m"),
         "weeks": weeks,
-        "ongoing_projects": [p for p in projects if p.is_ongoing],
+        "ongoing_events": [p for p in events if p.is_ongoing],
+        "event_kinds": event_kind_buttons(),
         "weekdays": [weeks[0][i].date for i in range(7)],
         "month_stays": month_stays,
         "undated_stays": undated,
-        "open_needs": [(project, needs) for project, needs in open_needs if needs],
-        "complete_projects": [project for project, needs in open_needs if not needs],
-        "covered_count": sum(len(project.needs()) - len(needs) for project, needs in open_needs),
+        "open_needs": [(event, needs) for event, needs in open_needs if needs],
+        "complete_events": [event for event, needs in open_needs if not needs],
+        "covered_count": sum(len(event.needs()) - len(needs) for event, needs in open_needs),
         "overbooked_days": [d for week in weeks for d in week if d.in_month and d.overbooked],
         "tight_days": [d for week in weeks for d in week if d.in_month and d.tight and not d.overbooked],
     })
@@ -196,18 +203,18 @@ def calendar(request, community_slug):
 @login_required
 def covered(request, community_slug):
     """What all the help has made possible: the covered and promised needs of the
-    community's projects, newest projects first, each with who brings it."""
+    community's events, newest events first, each with who brings it."""
     community = _ambassadors_community(request, community_slug)
-    projects = (
-        _with_needs(community.projects.all())
+    events = (
+        _with_needs(community.events.all())
         .prefetch_related("listings__contributions__match__references")
         .order_by(F("starts_on").desc(nulls_first=True), "-pk")
     )
     covered_needs = []
-    for project in projects:
-        needs = [(need, _helpers(need, community)) for need in project.needs() if need.is_done]
+    for event in events:
+        needs = [(need, _helpers(need, community)) for need in event.needs() if need.is_done]
         if needs:
-            covered_needs.append((project, needs))
+            covered_needs.append((event, needs))
     helpers = {helper.person for _, needs in covered_needs for _, people in needs for helper in people}
     return render(request, "matches/calendar_covered.html", {
         "community": community,

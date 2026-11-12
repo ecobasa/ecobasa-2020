@@ -204,8 +204,8 @@ def match_reference_subject(match, user):
     is_requester = user == match.from_user
     if model == "community" and is_requester:
         return target, "", ""
-    if model == "project" and is_requester:
-        # Who helped with a project writes about the community that runs it
+    if model == "event" and is_requester:
+        # Who helped with or came to an event writes about the community that runs it
         return target.community, "", ""
     if model == "listing" and target.is_skill:
         if target.is_offer:

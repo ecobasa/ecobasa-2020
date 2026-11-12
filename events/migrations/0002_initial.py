@@ -11,12 +11,12 @@ class Migration(migrations.Migration):
 
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ("projects", "0001_initial"),
+        ("events", "0001_initial"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name="project",
+            model_name="event",
             name="created_by",
             field=models.ForeignKey(
                 blank=True,

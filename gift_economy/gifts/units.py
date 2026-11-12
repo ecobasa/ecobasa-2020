@@ -1,4 +1,4 @@
-"""Units for amounts, shared by gift listings and project needs, so "200 kg" means the
+"""Units for amounts, shared by gift listings and event needs, so "200 kg" means the
 same everywhere and gifts can be matched to needs."""
 
 from django.utils.translation import gettext_lazy as _, ngettext_lazy

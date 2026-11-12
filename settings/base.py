@@ -86,7 +86,7 @@ LOCAL_APPS = [
     "notifications",
     "gift_economy.matches",
     "gift_economy.references",
-    "projects",
+    "events",
 ]
 
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
@@ -282,11 +282,11 @@ REFERENCE_IMAP_FOLDER = env("REFERENCE_IMAP_FOLDER", default="INBOX")
 # Development: read replies from Mailpit's API instead of IMAP
 REFERENCE_MAILPIT_URL = env("REFERENCE_MAILPIT_URL", default="")
 
-# PROJECTS
+# EVENTS
 # ------------------------------------------------------------------------------
-# A project nobody updated or confirmed for this many days is stale: its ambassador is
-# asked whether it is still current (archive_stale_projects, daily, see crontab) ...
-PROJECT_STALE_DAYS = env.int("PROJECT_STALE_DAYS", default=60)
-# ... and it is archived if nobody confirms it within this many days. Dated projects are
+# An event nobody updated or confirmed for this many days is stale: its ambassador is
+# asked whether it is still current (archive_stale_events, daily, see crontab) ...
+EVENT_STALE_DAYS = env.int("EVENT_STALE_DAYS", default=60)
+# ... and it is archived if nobody confirms it within this many days. Dated events are
 # archived the day after they end.
-PROJECT_ARCHIVE_GRACE_DAYS = env.int("PROJECT_ARCHIVE_GRACE_DAYS", default=14)
+EVENT_ARCHIVE_GRACE_DAYS = env.int("EVENT_ARCHIVE_GRACE_DAYS", default=14)

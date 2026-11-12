@@ -19,7 +19,7 @@ see seed_images/SOURCES.md for attribution), resized for repo size.
     docker compose exec django python manage.py seed_demo_data
 """
 import os
-from datetime import timedelta
+from datetime import datetime, time as datetime_time, timedelta
 
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.gis.geos import Point
@@ -30,7 +30,7 @@ from django.utils import timezone
 from communities.models import Community, CommunityPhoto
 from gift_economy.gifts.models import Listing, ListingCategory
 from gift_economy.gifts.things import WHITELISTED_KINDS
-from gift_economy.matches.models import Contribution, Loan, Match, MatchMessage, VolunteerDetails, loan_span
+from gift_economy.matches.models import Contribution, Loan, Match, MatchMessage, StayDetails, loan_span
 from notifications.models import Notification, SKILL_NUDGE_TEXT
 from gift_economy.references.models import Reference, ReferenceSkill
 from gift_economy.references.notifications import notify_reference_created
@@ -48,6 +48,10 @@ def _seed_image(field, filename):
     path = os.path.join(SEED_IMAGES_DIR, filename)
     with open(path, "rb") as fh:
         field.save(filename, File(fh), save=False)
+
+
+def _day_start(day):
+    return timezone.make_aware(datetime.combine(day, datetime_time.min))
 
 
 def _as_the_form_would(listing, kind=None, category=None):
@@ -91,6 +95,7 @@ class Command(BaseCommand):
         self._seed_lending(users, communities)
         self._seed_references(users, communities)
         self._seed_projects(users, communities)
+        self._seed_community_events(users, communities)
         self._seed_goods_around(users, communities)
 
         self.stdout.write(self.style.SUCCESS(
@@ -343,7 +348,7 @@ class Command(BaseCommand):
             {"community": holder} if isinstance(holder, Community) else {"owner": holder, "community": None}
         )
         listing, created = Listing.objects.get_or_create(
-            title=title, type=type, project=None, **holder_fields, defaults={"kind": kind, **fields},
+            title=title, type=type, event=None, **holder_fields, defaults={"kind": kind, **fields},
         )
         _as_the_form_would(listing, kind, category)
         return listing, created
@@ -495,7 +500,7 @@ class Command(BaseCommand):
         ]
         for community_name, skill_name, desc in specs:
             Listing.objects.get_or_create(
-                community=communities[community_name], project=None, type=Listing.TYPE_OFFER,
+                community=communities[community_name], event=None, type=Listing.TYPE_OFFER,
                 kind=Listing.KIND_SKILL, skill=skills[skill_name], defaults={"description": desc},
             )
 
@@ -522,7 +527,7 @@ class Command(BaseCommand):
         for community_name, skill_name, desc in community_specs:
             # A community looks for people with the skill: helping hands with it
             Listing.objects.get_or_create(
-                community=communities[community_name], project=None, type=Listing.TYPE_WISH,
+                community=communities[community_name], event=None, type=Listing.TYPE_WISH,
                 kind=Listing.KIND_HANDS, skill=skills[skill_name], defaults={"description": desc},
             )
 
@@ -565,7 +570,7 @@ class Command(BaseCommand):
         starter_wish = Listing.objects.get(title__startswith="Wish: someone who understands sourdough", owner=mireille)
         luna_permaculture = Listing.objects.get(owner=luna, type="offer", skill__name="Permaculture Design")
         kombucha_fermentation = Listing.objects.get(
-            community=communities["Kombucha Commune"], type="offer", skill__name="Fermentation",
+            community=communities["Kombucha Commune"], event=None, type="offer", skill__name="Fermentation",
         )
         bjorn_fermentation_wish = Listing.objects.get(owner=bjorn, type="wish", skill__name="Fermentation")
         three_goats_farm = communities["Three Goats and a Dream Farm"]
@@ -675,7 +680,7 @@ class Command(BaseCommand):
             match=match5,
         )
 
-        # 6. Community target (volunteering) — accepted, with VolunteerDetails
+        # 6. Community target (volunteering) — accepted, with StayDetails
         match6, created6 = self._get_or_create_match(
             from_user=sam, recipient=diego, target=three_goats_farm,
             message="Could I come volunteer for a couple of weeks? Happy to help with the solar setup.",
@@ -683,7 +688,7 @@ class Command(BaseCommand):
         )
         if created6:
             Match.objects.filter(pk=match6.pk).update(created_at=timezone.now() - timedelta(days=10))
-            VolunteerDetails.objects.get_or_create(
+            StayDetails.objects.get_or_create(
                 match=match6,
                 defaults={
                     "volunteer_mode": "offer",
@@ -934,7 +939,7 @@ class Command(BaseCommand):
                  text="Taught me to read a wall by knocking on it. The wall now knocks back. Highly recommended."),
             # About a community skill — the one negative
             dict(author=ana, subject=Listing.objects.get(
-                    community=communities["Kombucha Commune"], type="offer", skill__name="Fermentation"),
+                    community=communities["Kombucha Commune"], event=None, type="offer", skill__name="Fermentation"),
                  impression=X, age_days=2,
                  text="The lecture lasted three hours and had an intermission. The SCOBY was lovely though."),
         ]
@@ -971,8 +976,8 @@ class Command(BaseCommand):
     def _seed_projects(self, users, communities):
         """A dated project with needs and stays (confirmed, requested, overlapping so the
         calendar warns), an ongoing one, and a stale one whose ambassador gets asked."""
-        from projects.forms import skill_for_title
-        from projects.models import Project
+        from events.forms import skill_for_title
+        from events.models import Event
 
         self.stdout.write("Seeding projects…")
         luna, bjorn, mireille = users["luna@ecobasa.demo"], users["bjorn@ecobasa.demo"], users["mireille@ecobasa.demo"]
@@ -982,14 +987,14 @@ class Command(BaseCommand):
         today = timezone.localdate()
 
         def project(community, title, needs, learn=(), **fields):
-            obj, created = Project.objects.get_or_create(
+            obj, created = Event.objects.get_or_create(
                 community=community, title=title, defaults={"created_by": community.owner, **fields},
             )
             # What helpers can learn: the community's skills in the project, listed with it
             # while the project runs
             for name in learn:
                 Listing.objects.get_or_create(
-                    project=obj, type=Listing.TYPE_OFFER, kind=Listing.KIND_SKILL, skill=get_or_create_skill(name)[0],
+                    event=obj, type=Listing.TYPE_OFFER, kind=Listing.KIND_SKILL, skill=get_or_create_skill(name)[0],
                 )
             # Needs (the community's wishes in it) are added by title, so re-running adds new
             # demo needs to older demo data
@@ -998,7 +1003,7 @@ class Command(BaseCommand):
                 if kind in (Listing.KIND_HANDS, Listing.KIND_KNOWLEDGE):
                     skill = skill_for_title(need_title) or Skill.objects.filter(name__iexact=need_title).first()
                 need, _need_created = Listing.objects.get_or_create(
-                    project=obj, type=Listing.TYPE_WISH, title=need_title, defaults=dict(
+                    event=obj, type=Listing.TYPE_WISH, title=need_title, defaults=dict(
                         kind=kind, order=order, quantity=quantity, unit=unit, description=details, skill=skill,
                     ),
                 )
@@ -1040,7 +1045,7 @@ class Command(BaseCommand):
             description="Planning a small guest house for the fermentation workshops.",
             food_provided=True,
         )
-        Project.objects.filter(pk=stale.pk).update(updated_at=timezone.now() - timedelta(days=75))
+        Event.objects.filter(pk=stale.pk).update(updated_at=timezone.now() - timedelta(days=75))
 
         # Björn (Bautzen, 40 km away) is a woodworker and gives away scythes: the matching
         # suggests the food forest's needs to him, and him to Luna
@@ -1070,7 +1075,7 @@ class Command(BaseCommand):
             match = Match(from_user=who, recipient=luna, message="I'd love to help with the rocket stove!", status=status)
             match.target = stove
             match.save()
-            VolunteerDetails.objects.create(
+            StayDetails.objects.create(
                 match=match, volunteer_mode="wish",
                 stay_from=timezone.now() + timedelta(days=start), stay_to=timezone.now() + timedelta(days=end),
             )
@@ -1079,3 +1084,88 @@ class Command(BaseCommand):
             if status == Match.STATUS_ACCEPTED:
                 MatchMessage.objects.create(match=match, sender=luna, body="Welcome!", status_to=status)
                 Match.objects.filter(pk=match.pk).update(responded_at=timezone.now())
+
+    # ── Community events ─────────────────────────────────────────────
+
+    def _seed_community_events(self, users, communities):
+        """Community events: an open day with hours that people just come to, a weekend
+        seminar people ask first for, and a harvest festival over three days that also
+        needs helping hands. Guests who said "I'm coming", some with people they bring,
+        so the calendar counts them."""
+        from events.models import Event
+
+        self.stdout.write("Seeding community events…")
+        luna, bjorn, mireille = users["luna@ecobasa.demo"], users["bjorn@ecobasa.demo"], users["mireille@ecobasa.demo"]
+        diego, ana, sam = users["diego@ecobasa.demo"], users["ana@ecobasa.demo"], users["sam@ecobasa.demo"]
+        today = timezone.localdate()
+
+        def event(community, title, **fields):
+            obj, _created = Event.objects.get_or_create(
+                community=community, title=title,
+                defaults={"created_by": community.owner, "kind": Event.KIND_COMMUNITY_EVENT, **fields},
+            )
+            return obj
+
+        def coming(who, event, people, days=None):
+            """Said "I'm coming": accepted at once, nobody answers."""
+            match, created = self._get_or_create_match(
+                who, event.manager, event, message="", status=Match.STATUS_ACCEPTED, responded_at=timezone.now(),
+            )
+            if created:
+                first, last = days or (event.starts_on, event.ends_on)
+                StayDetails.objects.create(
+                    match=match, volunteer_mode=StayDetails.MODE_COME, people=people,
+                    stay_from=_day_start(first), stay_to=_day_start(last),
+                )
+
+        open_day_on = today + timedelta(days=12)
+        open_day = event(
+            communities["Sonnenkraut Ecovillage"], "Open day: compost toilets and other wonders",
+            description="Guided walks every hour from 14:00, soup at 17:00. Bring questions, "
+                        "children and sturdy shoes; leave the dog at home, the goats object.",
+            starts_on=open_day_on, ends_on=open_day_on,
+            starts_at=datetime_time(14, 0), ends_at=datetime_time(18, 0),
+            is_open=True, food_provided=True,
+        )
+        coming(bjorn, open_day, 3)
+        coming(sam, open_day, 1)
+        coming(diego, open_day, 2)
+
+        seminar_on = today + timedelta(days=26)
+        seminar = event(
+            communities["Kombucha Commune"], "Fermentation weekend",
+            description="Two days of sauerkraut, kefir and kombucha, from the first jar to a cellar "
+                        "full. Twelve places; tell us what you already know.",
+            starts_on=seminar_on, ends_on=seminar_on + timedelta(days=1),
+            is_open=False, food_provided=True, bed_provided=True, volunteers_wanted=12,
+            provided_note="Jars and cultures to take home",
+        )
+        Listing.objects.get_or_create(
+            event=seminar, type=Listing.TYPE_OFFER, kind=Listing.KIND_SKILL,
+            skill=get_or_create_skill("Fermentation")[0],
+        )
+        # People ask first: one asked and waits for Mireille's answer
+        match, created = self._get_or_create_match(
+            luna, mireille, seminar, message="Could I come with my sourdough questions too?",
+        )
+        if created:
+            StayDetails.objects.create(
+                match=match, volunteer_mode="offer",
+                stay_from=_day_start(seminar.starts_on), stay_to=_day_start(seminar.ends_on),
+            )
+
+        festival_from = today + timedelta(days=40)
+        festival = event(
+            communities["Three Goats and a Dream Farm"], "Olive harvest festival",
+            description="Three days of picking, pressing and eating under the trees. Music in the "
+                        "evenings, a tent spot for everyone who helps.",
+            starts_on=festival_from, ends_on=festival_from + timedelta(days=2),
+            is_open=True, food_provided=True, provided_note="Tent spots under the olive trees",
+        )
+        Listing.objects.get_or_create(
+            event=festival, type=Listing.TYPE_WISH, title="Helping hands",
+            defaults=dict(kind=Listing.KIND_HANDS, quantity=6, unit="people", description="for the picking"),
+        )
+        coming(ana, festival, 2)
+        coming(mireille, festival, 1, days=(festival.starts_on + timedelta(days=1), festival.ends_on))
+

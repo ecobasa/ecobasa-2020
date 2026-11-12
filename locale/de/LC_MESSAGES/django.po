@@ -5001,3 +5001,39 @@ msgstr "Du wurdest abgemeldet."
 #: users/views.py:122
 msgid "Account created and logged in."
 msgstr "Konto erstellt und angemeldet."
+
+msgid "Withdraw request"
+msgstr "Anfrage zurückziehen"
+
+msgid "Withdrawn"
+msgstr "Zurückgezogen"
+
+msgid "You withdrew this request"
+msgstr "Du hast diese Anfrage zurückgezogen"
+
+msgid "Withdrawn by the one who asked"
+msgstr "Von der anfragenden Person zurückgezogen"
+
+msgid "Withdraw your request?"
+msgstr "Anfrage zurückziehen?"
+
+msgid ""
+"Withdraw your request? Please write a few words why in the message box, "
+"they were counting on you."
+msgstr ""
+"Anfrage zurückziehen? Bitte schreib im Nachrichtenfeld ein paar Worte "
+"dazu, sie haben mit dir gerechnet."
+
+msgid "Your request has been withdrawn."
+msgstr "Deine Anfrage wurde zurückgezogen."
+
+msgid "Please write a few words why, they were counting on you."
+msgstr "Bitte schreib ein paar Worte dazu, sie haben mit dir gerechnet."
+
+#, python-format
+msgid "%(actor)s withdrew their request: %(title)s"
+msgstr "%(actor)s hat die Anfrage zurückgezogen: %(title)s"
+
+#, python-format
+msgid "%(actor)s suggested other dates for their stay at: %(title)s"
+msgstr "%(actor)s schlägt andere Tage für den Aufenthalt vor: %(title)s"

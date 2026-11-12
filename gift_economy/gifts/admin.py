@@ -5,11 +5,11 @@ from .skills.models import Skill
 
 @admin.register(Listing)
 class ListingAdmin(admin.GISModelAdmin):
-    list_display = ("title", "type", "kind", "thing", "owner", "community", "project")
+    list_display = ("title", "type", "kind", "thing", "owner", "community", "event")
     search_fields = ("title", "skill__name", "owner__name", "community__name")
     ordering = ("title",)
     list_filter = ("type", "kind")
-    raw_id_fields = ("owner", "community", "project", "skill")
+    raw_id_fields = ("owner", "community", "event", "skill")
     # Recognized from the title on every save
     readonly_fields = ("thing",)
 
@@ -28,8 +28,8 @@ class SkillListingInline(admin.TabularInline):
     model = Listing
     fk_name = "skill"
     extra = 0
-    fields = ("type", "kind", "owner", "community", "project", "level", "available")
-    raw_id_fields = ("owner", "community", "project")
+    fields = ("type", "kind", "owner", "community", "event", "level", "available")
+    raw_id_fields = ("owner", "community", "event")
 
 
 @admin.register(Skill)

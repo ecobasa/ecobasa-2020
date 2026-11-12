@@ -18,7 +18,7 @@ Where each side looks, by their owner's settings (reaches()):
 - with only a country: in that country;
 - with neither: anywhere, as with "search worldwide" (User.match_global).
 Nothing is suggested between things of the same person (or community), for skills that
-aren't available, or for what is covered, given away or part of a project that is over."""
+aren't available, or for what is covered, given away or part of a event that is over."""
 
 import math
 from dataclasses import dataclass
@@ -63,7 +63,7 @@ class Side:
 
 def side_of(listing):
     """The Side for a listing, or None if it can't be matched (no one answers for it,
-    it is done or its project over, a skill that isn't available)."""
+    it is done or its event over, a skill that isn't available)."""
     if not isinstance(listing, Listing):
         return None
     owner = listing.manager
@@ -106,7 +106,7 @@ def candidates(side):
         for path in WORLDWIDE:
             near |= Q(**{path: True})
         others = others.filter(near)
-    return others.select_related("owner", "community__owner", "project__community", "skill").prefetch_related(
+    return others.select_related("owner", "community__owner", "event__community", "skill").prefetch_related(
         "contributions__match",
     )
 

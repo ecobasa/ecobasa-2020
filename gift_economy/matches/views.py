@@ -39,6 +39,7 @@ _STATUS_FILTERS = {
     "open":     (pgettext_lazy("match status", "Open"), _OPEN),
     "accepted": (_("Accepted"), (Match.STATUS_ACCEPTED,)),
     "declined": (_("Declined"), (Match.STATUS_DECLINED,)),
+    "withdrawn": (_("Withdrawn"), (Match.STATUS_WITHDRAWN,)),
     "all":      (_("All"), None),
 }
 
@@ -134,7 +135,7 @@ def _requests(request, matches):
 
 
 def _volunteer_visits(request):
-    """Volunteer stays and help with projects, received and sent. Only ambassadors
+    """Volunteer stays and help with events, received and sent. Only ambassadors
     receive them, so the others (who never did) see just their own requests."""
     user = request.user
     boxes = {
@@ -225,15 +226,21 @@ def match_detail(request, pk):
 
     # Whoever didn't make the latest proposal decides on it: the owner on a request (and
     # may change their mind later), the other side on a counter-proposal
-    if match.status == Match.STATUS_COUNTER and latest_status_msg is not None:
+    if match.status == Match.STATUS_WITHDRAWN:
+        can_decide = False
+    elif match.status == Match.STATUS_COUNTER and latest_status_msg is not None:
         can_decide = is_party and latest_status_msg.sender_id != request.user.pk
     else:
         can_decide = is_owner
-    # Both sides may propose another time or place; a stay is at the community, so only
-    # the community suggests other dates
-    can_counter = is_owner or (
-        is_requester and not match.is_community_stay and match.status != Match.STATUS_DECLINED
+    # Both sides may propose another time or place (for a stay: other dates), until it is
+    # declined or withdrawn; also after it was accepted, which the other side then answers.
+    # Who just comes to an open event changes nothing here: they take it back and come
+    # again with other days.
+    can_counter = (is_owner and match.status != Match.STATUS_WITHDRAWN) or (
+        is_requester and not match.is_closed and not match.is_coming
     )
+    # The one who asked can take it back, also after it was accepted
+    can_withdraw = is_requester and not match.is_closed
 
     if request.method == "POST":
         action = request.POST.get("action", "message")
@@ -282,6 +289,20 @@ def match_detail(request, pk):
             match.save()
             notify_match_response(match, actor=request.user, http_request=request, message=body)
             flash.success(request, _("Response sent."))
+            return redirect(match.get_absolute_url())
+
+        if action == "withdraw" and can_withdraw:
+            body = request.POST.get("body", "").strip()
+            if match.status == Match.STATUS_ACCEPTED and not body:
+                # They were expected: a few words, so the other side isn't left guessing
+                flash.error(request, _("Please write a few words why, they were counting on you."))
+                return redirect(f"{match.get_absolute_url()}#compose")
+            MatchMessage.objects.create(match=match, sender=request.user, body=body, status_to=Match.STATUS_WITHDRAWN)
+            match.status       = Match.STATUS_WITHDRAWN
+            match.responded_at = timezone.now()
+            match.save()
+            notify_match_response(match, actor=request.user, http_request=request, message=body)
+            flash.success(request, _("Your request has been withdrawn."))
             return redirect(match.get_absolute_url())
 
         if action == "counter" and can_counter:
@@ -343,9 +364,14 @@ def match_detail(request, pk):
         "latest_status_msg":    latest_status_msg,
         "latest_counter_msg":   latest_counter_msg,
         # Said to the one who asked, it isn't "your offer"
-        "match_verb":           target.get_match_verb(own=False) if is_requester and isinstance(target, Listing) else target.get_match_verb(),
+        "match_verb":           (
+            _("is coming to") if match.is_coming
+            else target.get_match_verb(own=False) if is_requester and isinstance(target, Listing)
+            else target.get_match_verb()
+        ),
         "can_decide":           can_decide,
         "can_counter":          can_counter,
+        "can_withdraw":         can_withdraw,
         "proposed_place":       _proposed_place(match, request.user, latest_counter_msg) if can_counter else None,
         # The time proposed last, to start a counter-proposal from
         "proposed_loan":        Loan(starts_at=match.loan_period()[0], ends_at=match.loan_period()[1]) if match.is_loan else None,

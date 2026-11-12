@@ -66,7 +66,7 @@
         <a href="{{ cs.get_absolute_url }}"
           class="block border rounded-lg p-3 bg-secondary hover:border-primary transition-colors">
           <div class="font-semibold text-primary">{{ cs.community.name }}</div>
-          {% if cs.project %}<div class="text-xs"><i class="fa-solid fa-person-digging mr-1"></i>{{ cs.project.title }}</div>{% endif %}
+          {% if cs.event %}<div class="text-xs"><i class="fa-solid {{ cs.event.kind_icon }} mr-1"></i>{{ cs.event.title }}</div>{% endif %}
           {% if cs.description %}
             <p class="text-xs text-brown mt-1 line-clamp-2">{{ cs.description }}</p>
           {% endif %}
@@ -84,7 +84,7 @@
         <a href="{{ wish.get_absolute_url }}" class="flex items-center gap-3 border rounded-lg p-3 bg-secondary hover:border-primary transition-colors">
           <i class="fa-solid {{ wish.kind_icon }} text-purple w-5 text-center"></i>
           <span class="flex-1 min-w-0">
-            <span class="font-semibold text-primary">{% if wish.community %}{{ wish.community.name }}{% if wish.project %} · {{ wish.project.title }}{% endif %}{% else %}{{ wish.owner.name|default:wish.owner.username }}{% endif %}</span>
+            <span class="font-semibold text-primary">{% if wish.community %}{{ wish.community.name }}{% if wish.event %} · {{ wish.event.title }}{% endif %}{% else %}{{ wish.owner.name|default:wish.owner.username }}{% endif %}</span>
             <span class="text-xs block">{{ wish.kind_label }}{% if wish.amount %} · {{ wish.amount }}{% endif %}</span>
           </span>
         </a>

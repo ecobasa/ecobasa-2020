@@ -6,39 +6,48 @@ from gift_economy.gifts.models import Listing, ListingCategory, themed_choices
 from gift_economy.gifts.things import WHITELISTED_KINDS, thing_named
 from gift_economy.gifts.skills.models import _taxonomy, get_or_create_skill
 
-from .models import Project
+from . import kinds
+from .models import Event
 
 
-class ProjectForm(forms.ModelForm):
+class EventForm(forms.ModelForm):
     skills_to_learn = forms.CharField(
         label=_("Skills you can learn here"), required=False,
         widget=forms.TextInput(attrs={"data-skill-tags": _("Popular skills to explore")}),
-        help_text=_("Comma-separated. People looking for these skills find your project and your community."),
+        help_text=_("Comma-separated. People looking for these skills find your community through it."),
     )
-    field_order = ["title", "description", "skills_to_learn"]
+    field_order = ["kind", "title", "image", "description", "skills_to_learn", "starts_on", "ends_on", "starts_at", "ends_at", "is_open"]
 
     class Meta:
-        model = Project
+        model = Event
         fields = [
-            "title", "description", "starts_on", "ends_on",
+            "kind", "title", "image", "description", "starts_on", "ends_on", "starts_at", "ends_at", "is_open",
             "volunteers_wanted", "food_provided", "bed_provided", "provided_note",
         ]
         widgets = {
+            "kind": forms.RadioSelect,
             "starts_on": forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
             "ends_on": forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
+            "starts_at": forms.TimeInput(attrs={"type": "time"}, format="%H:%M"),
+            "ends_at": forms.TimeInput(attrs={"type": "time"}, format="%H:%M"),
             "description": forms.Textarea(attrs={"rows": 5}),
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["title"].widget.attrs["placeholder"] = _("e.g. Building a rocket stove")
-        self.fields["description"].widget.attrs["placeholder"] = _(
-            "What do you want to build or do, and what will helpers learn?"
-        )
+        texts = self.instance.texts
+        self.fields["kind"].choices = kinds.CHOICES
+        self.fields["title"].widget.attrs["placeholder"] = texts["title_placeholder"]
+        self.fields["description"].widget.attrs["placeholder"] = texts["description_placeholder"]
         self.fields["skills_to_learn"].widget.attrs["placeholder"] = _("e.g. Clay building, Welding")
         if self.instance.pk:
             self.initial["skills_to_learn"] = ", ".join(l.display_title for l in self.instance.skills_to_learn())
+        else:
+            # A new event starts with its kind's settings
+            self.initial.update(kinds.DEFAULTS[self.instance.kind])
         for name, field in self.fields.items():
+            if isinstance(field.widget, (forms.RadioSelect, forms.ClearableFileInput)):
+                continue
             if isinstance(field.widget, forms.CheckboxInput):
                 field.widget.attrs["class"] = "form-checkbox"
             elif isinstance(field.widget, forms.Textarea):
@@ -46,23 +55,34 @@ class ProjectForm(forms.ModelForm):
             else:
                 field.widget.attrs["class"] = "form-input w-full"
 
+    def kind_choices(self):
+        """(value, label, icon, hint, the settings a new one starts with) per kind."""
+        return [
+            (value, label, kinds.ICONS[value], kinds.HINTS[value], kinds.DEFAULTS[value])
+            for value, label in kinds.CHOICES
+        ]
+
     def clean(self):
         cleaned = super().clean()
         starts_on, ends_on = cleaned.get("starts_on"), cleaned.get("ends_on")
         if starts_on and ends_on and ends_on < starts_on:
-            self.add_error("ends_on", _("The project can't end before it starts."))
+            self.add_error("ends_on", _("It can't end before it starts."))
+        starts_at, ends_at = cleaned.get("starts_at"), cleaned.get("ends_at")
+        one_day = ends_on and (starts_on or ends_on) == ends_on
+        if starts_at and ends_at and one_day and ends_at <= starts_at:
+            self.add_error("ends_at", _("It can't end before it starts."))
         return cleaned
 
-    def save_skills_to_learn(self, project):
-        """Make the community's skill offers in the project the skills named (in any
-        language), after the project is saved. They list the community for these skills
-        while the project runs."""
+    def save_skills_to_learn(self, event):
+        """Make the community's skill offers in the event the skills named (in any
+        language), after the event is saved. They list the community for these skills
+        while the event runs."""
         names = [n.strip() for n in self.cleaned_data.get("skills_to_learn", "").split(",") if n.strip()]
         wanted = {get_or_create_skill(name)[0].pk for name in names}
-        offers = project.listings.filter(type=Listing.TYPE_OFFER, kind=Listing.KIND_SKILL)
+        offers = event.listings.filter(type=Listing.TYPE_OFFER, kind=Listing.KIND_SKILL)
         offers.exclude(skill_id__in=wanted).delete()
         for skill_id in wanted - set(offers.values_list("skill_id", flat=True)):
-            Listing.objects.create(type=Listing.TYPE_OFFER, kind=Listing.KIND_SKILL, skill_id=skill_id, project=project)
+            Listing.objects.create(type=Listing.TYPE_OFFER, kind=Listing.KIND_SKILL, skill_id=skill_id, event=event)
 
 
 def skill_for_title(title):
@@ -75,7 +95,7 @@ def skill_for_title(title):
 
 
 class NeedForm(forms.ModelForm):
-    """One thing a project needs, as the community's wish in it: helping hands or
+    """One thing an event needs, as the community's wish in it: helping hands or
     knowledge (with a skill, if it names a known one), a material, a tool or anything
     else, with how much of it."""
 
@@ -155,17 +175,17 @@ class NeedForm(forms.ModelForm):
 
 class BaseNeedFormSet(forms.BaseInlineFormSet):
     def get_queryset(self):
-        # Only the project's needs, not the skills you can learn in it
+        # Only the event's needs, not the skills you can learn in it
         return super().get_queryset().filter(type=Listing.TYPE_WISH).order_by("order", "created_at")
 
 
 NeedFormSet = forms.inlineformset_factory(
-    Project, Listing, form=NeedForm, formset=BaseNeedFormSet, fk_name="project", extra=0, can_delete=True,
+    Event, Listing, form=NeedForm, formset=BaseNeedFormSet, fk_name="event", extra=0, can_delete=True,
 )
 
 
 class HelpOfferForm(forms.Form):
-    """Someone offers to help with a project: with some of its needs, on site and/or by
+    """Someone offers to help with an event: with some of its needs, on site and/or by
     bringing things, saying how much they bring where a need has a quantity. Each open
     need gets a checkbox (need_<id>) and, if it has a quantity, an amount (quantity_<id>)."""
 
@@ -176,10 +196,10 @@ class HelpOfferForm(forms.Form):
         help_text=_("Who you are, what you can do or bring, and how you would get there. Also tell them what you need: food (diet, allergies), where you would sleep (tent, bed …) and anything else that matters to you."),
     )
 
-    def __init__(self, project, *args, preselected=(), **kwargs):
+    def __init__(self, event, *args, preselected=(), **kwargs):
         super().__init__(*args, **kwargs)
-        self.project = project
-        self.needs = [need for need in project.needs() if not need.is_done]
+        self.event = event
+        self.needs = [need for need in event.needs() if not need.is_done]
         preselected = {str(pk) for pk in preselected}
         for need in self.needs:
             self.fields[f"need_{need.pk}"] = forms.BooleanField(
@@ -195,10 +215,10 @@ class HelpOfferForm(forms.Form):
         self.fields["message"].widget.attrs["class"] = "form-textarea w-full"
         for name in ("stay_from", "stay_to"):
             self.fields[name].widget.attrs["class"] = "form-input w-full"
-            if project.starts_on:
-                self.fields[name].widget.attrs["min"] = project.starts_on.isoformat()
-            if project.ends_on:
-                self.fields[name].widget.attrs["max"] = project.ends_on.isoformat()
+            if event.starts_on:
+                self.fields[name].widget.attrs["min"] = event.starts_on.isoformat()
+            if event.ends_on:
+                self.fields[name].widget.attrs["max"] = event.ends_on.isoformat()
 
     def need_rows(self):
         """(need, checkbox, amount field or None) for the template."""
@@ -220,3 +240,39 @@ class HelpOfferForm(forms.Form):
         if stay_from and stay_to and stay_to < stay_from:
             self.add_error("stay_to", _("The stay can't end before it starts."))
         return cleaned
+
+
+class ComingForm(forms.Form):
+    """Someone says they come to an open event: how many they are and, if it runs for
+    more than a day, on which days."""
+
+    people = forms.IntegerField(
+        label=_("How many are you?"), min_value=1, max_value=50, initial=1,
+        widget=forms.NumberInput(attrs={"class": "form-input w-20", "min": "1", "max": "50"}),
+    )
+    stay_from = forms.DateField(label=_("Arrival"), required=False, widget=forms.DateInput(attrs={"type": "date"}))
+    stay_to = forms.DateField(label=_("Departure"), required=False, widget=forms.DateInput(attrs={"type": "date"}))
+
+    def __init__(self, event, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.event = event
+        for name in ("stay_from", "stay_to"):
+            self.fields[name].widget.attrs["class"] = "form-input w-full"
+            if event.starts_on:
+                self.fields[name].widget.attrs["min"] = event.starts_on.isoformat()
+            if event.ends_on:
+                self.fields[name].widget.attrs["max"] = event.ends_on.isoformat()
+
+    def clean(self):
+        cleaned = super().clean()
+        stay_from, stay_to = cleaned.get("stay_from"), cleaned.get("stay_to")
+        if stay_from and stay_to and stay_to < stay_from:
+            self.add_error("stay_to", _("The stay can't end before it starts."))
+        return cleaned
+
+    def days(self):
+        """(from, to): the days given, else the event's own."""
+        event = self.event
+        stay_from = self.cleaned_data.get("stay_from") or event.starts_on or event.ends_on
+        stay_to = self.cleaned_data.get("stay_to") or event.ends_on or stay_from
+        return stay_from, stay_to

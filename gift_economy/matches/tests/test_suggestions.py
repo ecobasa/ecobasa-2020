@@ -11,7 +11,7 @@ from django.utils import timezone, translation
 from communities.models import Community
 from gift_economy.gifts.models import Listing, ListingCategory
 from notifications.models import Notification
-from projects.models import Project
+from events.models import Event
 from gift_economy.gifts.skills.models import Skill
 from gift_economy.gifts.testing import need, skill_offer, skill_wish
 from gift_economy.matches.models import Contribution
@@ -56,7 +56,7 @@ def _skill(name):
 def _tag(listing):
     """What a listing is, in a word: a project's need, a skill (of a person or community),
     a wish for a skill, or another listing."""
-    if listing.project_id and listing.is_wish:
+    if listing.event_id and listing.is_wish:
         return "need"
     if listing.skill_id:
         if listing.is_wish:
@@ -99,7 +99,7 @@ def test_things_match_by_title_not_by_gift_category(anna, ben):
     offer = _listing(ben, "Firewood", "offer")
     offer.categories.add(building)
     community = Community.objects.create(name="Hof", owner=anna, location=GOERLITZ)
-    project = Project.objects.create(community=community, title="Oven")
+    project = Event.objects.create(community=community, title="Oven")
     need(project, kind=Listing.KIND_MATERIAL, title="Chimney pipe", category=building)
     assert match(offer, notify=False) == []
 
@@ -146,7 +146,7 @@ def test_skill_wishes_and_needs_meet_the_skills_of_people_and_communities(anna, 
     wish = skill_wish(anna, masonry)
     community = Community.objects.create(name="Hof", owner=_user("amb@example.com", "Amb"), location=BAUTZEN)
     community_wish = skill_wish(community, masonry)
-    project = Project.objects.create(community=community, title="Oven")
+    project = Event.objects.create(community=community, title="Oven")
     project_need = need(project, kind=Listing.KIND_HANDS, title="Masonry", skill=masonry)
     teaching = skill_offer(community, masonry)
 
@@ -240,7 +240,7 @@ def test_nothing_between_own_things_too_far_unavailable_skills_or_covered_needs(
     assert match(skill_offer(ben, masonry, available=False), notify=False) == []
 
     community = Community.objects.create(name="Hof", owner=ben, location=BAUTZEN)
-    project = Project.objects.create(community=community, title="Oven")
+    project = Event.objects.create(community=community, title="Oven")
     covered = need(project, kind=Listing.KIND_MATERIAL, title="Clay", covered_at=timezone.now())
     assert match(covered, notify=False) == []
 
@@ -332,7 +332,7 @@ def test_a_community_moving_closer_matches_its_skills_wishes_and_needs(anna, dja
     masonry = _skill("Masonry")
     owner = _user("owner@example.com", "Owner", PARIS)
     community = Community.objects.create(name="Hof", owner=owner, location=PARIS)
-    project = Project.objects.create(community=community, title="Oven")
+    project = Event.objects.create(community=community, title="Oven")
     with django_capture_on_commit_callbacks(execute=True):
         skill_offer(anna, masonry)
         need(project, kind=Listing.KIND_HANDS, title="Masonry", skill=masonry)
@@ -409,7 +409,7 @@ def test_matches_page_shows_suggestions_first_by_type_marks_seen_and_hides(anna,
 def test_project_needs_are_gifts_or_skills_by_what_they_need(anna, ben):
     masonry = _skill("Masonry")
     community = Community.objects.create(name="Hof", owner=anna, location=GOERLITZ)
-    project = Project.objects.create(community=community, title="Oven")
+    project = Event.objects.create(community=community, title="Oven")
     need(project, kind=Listing.KIND_HANDS, title="Masonry", skill=masonry)
     need(project, kind=Listing.KIND_MATERIAL, title="Clay")
     skill_wish(anna, masonry)

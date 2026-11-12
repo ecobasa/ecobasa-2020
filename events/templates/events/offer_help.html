@@ -1,19 +1,19 @@
 {% extends 'base.html' %}
 {% load i18n %}
 
-{% block head_title %}{% trans "Offer help" %} — {{ project.title }} — ecobasa{% endblock %}
+{% block head_title %}{% trans "Offer help" %} — {{ event.title }} — ecobasa{% endblock %}
 
 {% block content %}
 <div class="container-form">
   <div class="mb-2 text-sm">
     <a href="{{ community.get_absolute_url }}" class="hover:underline">{{ community.name }}</a>
     <span class="mx-1">/</span>
-    <a href="{{ project.get_absolute_url }}" class="hover:underline">{{ project.title }}</a>
+    <a href="{{ event.get_absolute_url }}" class="hover:underline">{{ event.title }}</a>
   </div>
   <h1>{% trans "Offer help" %}</h1>
-  <p class="text-sm"><i class="fa-regular fa-calendar mr-1"></i>{% include "projects/_project_dates.html" %}
-    {% if project.food_provided %} · <i class="fa-solid fa-utensils"></i> {% trans "Food" %}{% endif %}
-    {% if project.bed_provided %} · <i class="fa-solid fa-bed"></i> {% trans "A bed" %}{% endif %}
+  <p class="text-sm"><i class="fa-regular fa-calendar mr-1"></i>{% include "events/_event_dates.html" %}
+    {% if event.food_provided %} · <i class="fa-solid fa-utensils"></i> {% trans "Food" %}{% endif %}
+    {% if event.bed_provided %} · <i class="fa-solid fa-bed"></i> {% trans "A bed" %}{% endif %}
   </p>
 
   <form method="post" class="border rounded-xl bg-secondary p-6 space-y-4">
@@ -66,7 +66,7 @@
     </div>
 
     <div class="flex justify-end gap-3">
-      <a href="{{ project.get_absolute_url }}" class="btn btn-lg btn-purple"><i class="fa-solid fa-times mr-2"></i>{% trans "Cancel" %}</a>
+      <a href="{{ event.get_absolute_url }}" class="btn btn-lg btn-purple"><i class="fa-solid fa-times mr-2"></i>{% trans "Cancel" %}</a>
       <button type="submit" class="btn btn-lg"><i class="fa-solid fa-paper-plane mr-2"></i>{% trans "Send offer" %}</button>
     </div>
   </form>

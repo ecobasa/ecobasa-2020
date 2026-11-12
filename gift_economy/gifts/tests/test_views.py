@@ -451,8 +451,8 @@ def test_knowledge_and_helping_hands_have_no_amount(user_client, kind):
 @pytest.mark.django_db
 def test_a_projects_helping_hands_keep_their_amount(user, user_client):
     from communities.models import Community
-    from projects.models import Project
-    project = Project.objects.create(community=Community.objects.create(name="Hof Sonnenschein", owner=user), title="Roof")
+    from events.models import Event
+    project = Event.objects.create(community=Community.objects.create(name="Hof Sonnenschein", owner=user), title="Roof")
     hands = need(project, kind=Listing.KIND_HANDS, title="Roofers", quantity=2, unit="people")
     user_client.post(reverse("gifts:edit", args=[hands.pk]), {
         "type": "wish", "kind": "hands", "title": "Roofers", "quantity": "3", "unit": "people",

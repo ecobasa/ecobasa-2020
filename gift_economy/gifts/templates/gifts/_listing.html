@@ -1,7 +1,7 @@
 {% load i18n %}{# An offer or wish as a card in the list: a thing, a skill, knowledge, helping hands or a project's need #}
 <a href="{% url "gifts:detail" listing.pk %}" class="relative w-full max-w-4xl group flex items-stretch justify-between my-5 sm:my-10 md:mb-20 bg-secondary bg-opacity-50 p-5 rounded-md hover:text-primary hover:shadow-lg">
-  <div class="text-xs absolute bottom-0 right-0 rounded-full p-2 text-secondary {% if listing.project_id and listing.is_wish %}bg-green{% elif listing.is_skill %}bg-purple{% elif listing.is_offer %}bg-primary{% else %}bg-yellow{% endif %}">
-    {% if listing.project_id and listing.is_wish %}<i class="fa-solid fa-person-digging mr-1"></i>{% trans "Project need" %}
+  <div class="text-xs absolute bottom-0 right-0 rounded-full p-2 text-secondary {% if listing.event_id and listing.is_wish %}bg-green{% elif listing.is_skill %}bg-purple{% elif listing.is_offer %}bg-primary{% else %}bg-yellow{% endif %}">
+    {% if listing.event_id and listing.is_wish %}<i class="fa-solid {{ listing.event.kind_icon }} mr-1"></i>{{ listing.event.texts.need }}
     {% else %}<i class="fa-solid {% if listing.kind != 'other' %}{{ listing.kind_icon }}{% elif listing.is_offer %}fa-gift{% else %}fa-heart{% endif %} mr-1"></i>{{ listing.get_type_display }}{% endif %}
   </div>
   {# Picture beside the text; the giver's line under both on small screens, under the text on larger ones #}
@@ -40,7 +40,7 @@
     {# Room on the right for the type badge in the corner #}
     <div class="col-span-2 sm:col-span-1 sm:col-start-2 self-end pt-2 pr-24 text-sm sm:text-base">
       {% if listing.community_id %}
-        <i class="fa fa-home mr-2"></i>{{ listing.community.name }}{% if listing.project_id %} · {{ listing.project.title }}{% endif %}
+        <i class="fa fa-home mr-2"></i>{{ listing.community.name }}{% if listing.event_id %} · {{ listing.event.title }}{% endif %}
       {% else %}
         <i class="fa fa-user mr-2"></i>{{ listing.owner.name }}{% for community in listing.owner.member_communities %}{% if forloop.first %} · <i class="fa fa-home mx-1"></i>{% else %}, {% endif %}{{ community.name }}{% endfor %}
       {% endif %}

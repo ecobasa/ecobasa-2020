@@ -12,7 +12,7 @@ class Migration(migrations.Migration):
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
         ("gifts", "0001_initial"),
-        ("projects", "0001_initial"),
+        ("events", "0001_initial"),
     ]
 
     operations = [
@@ -30,14 +30,14 @@ class Migration(migrations.Migration):
         ),
         migrations.AddField(
             model_name="listing",
-            name="project",
+            name="event",
             field=models.ForeignKey(
                 blank=True,
                 null=True,
                 on_delete=django.db.models.deletion.CASCADE,
                 related_name="listings",
-                to="projects.project",
-                verbose_name="Project",
+                to="events.event",
+                verbose_name="Event",
             ),
         ),
         migrations.AddField(
@@ -64,7 +64,7 @@ class Migration(migrations.Migration):
             model_name="listing",
             constraint=models.UniqueConstraint(
                 condition=models.Q(
-                    ("community__isnull", False), ("kind", "skill"), ("project", None)
+                    ("community__isnull", False), ("event", None), ("kind", "skill")
                 ),
                 fields=("community", "type", "skill"),
                 name="one_skill_listing_per_community",
