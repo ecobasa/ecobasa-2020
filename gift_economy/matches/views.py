@@ -134,7 +134,7 @@ def _requests(request, matches):
 
 
 def _volunteer_visits(request):
-    """Volunteer stays and help with projects, received and sent. Only ambassadors
+    """Volunteer stays and help with events, received and sent. Only ambassadors
     receive them, so the others (who never did) see just their own requests."""
     user = request.user
     boxes = {
@@ -343,7 +343,11 @@ def match_detail(request, pk):
         "latest_status_msg":    latest_status_msg,
         "latest_counter_msg":   latest_counter_msg,
         # Said to the one who asked, it isn't "your offer"
-        "match_verb":           target.get_match_verb(own=False) if is_requester and isinstance(target, Listing) else target.get_match_verb(),
+        "match_verb":           (
+            _("is coming to") if match.is_coming
+            else target.get_match_verb(own=False) if is_requester and isinstance(target, Listing)
+            else target.get_match_verb()
+        ),
         "can_decide":           can_decide,
         "can_counter":          can_counter,
         "proposed_place":       _proposed_place(match, request.user, latest_counter_msg) if can_counter else None,

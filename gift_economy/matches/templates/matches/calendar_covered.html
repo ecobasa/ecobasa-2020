@@ -23,10 +23,10 @@
   </div>
 
   <div class="space-y-4 mb-6">
-    {% for project, needs in covered_needs %}
+    {% for event, needs in covered_needs %}
       <div class="p-3 rounded border-2 border-green bg-secondary bg-opacity-50">
-        <a href="{{ project.get_absolute_url }}" class="font-semibold hover:underline"><i class="fa-solid fa-person-digging mr-1"></i>{{ project.title }}</a>
-        <span class="text-xs opacity-70">· {% include "projects/_project_dates.html" %}</span>
+        <a href="{{ event.get_absolute_url }}" class="font-semibold hover:underline"><i class="fa-solid {{ event.kind_icon }} mr-1"></i>{{ event.title }}</a>
+        <span class="text-xs opacity-70">· {% include "events/_event_dates.html" %}</span>
         <ul class="list-none p-0 mt-2 space-y-1">
           {% for need, helpers in needs %}
             <li class="flex flex-wrap items-center gap-2 text-sm">

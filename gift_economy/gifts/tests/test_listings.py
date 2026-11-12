@@ -10,7 +10,7 @@ from django.utils import timezone, translation
 from communities.models import Community
 from gift_economy.matches.matching import match
 from gift_economy.matches.models import Contribution, Match
-from projects.models import Project
+from events.models import Event
 from gift_economy.gifts.skills.models import Skill, SkillTaxonomy
 from users.models import User
 
@@ -154,15 +154,15 @@ def test_a_community_offers_and_wishes_through_its_ambassador(anna, ben):
 @pytest.mark.django_db
 def test_a_projects_listings_are_listed_while_it_runs(anna, ben):
     community = Community.objects.create(name="Hof", owner=anna, location=GOERLITZ)
-    project = Project.objects.create(community=community, title="Rocket stove")
+    project = Event.objects.create(community=community, title="Rocket stove")
     clay = need(project, "Clay", kind=Listing.KIND_MATERIAL)
-    learn = skill_offer(community, Skill.objects.create(name="Masonry"), project=project)
+    learn = skill_offer(community, Skill.objects.create(name="Masonry"), event=project)
     assert clay.community == community and clay.is_wish
     assert set(Listing.objects.current()) >= {clay, learn}
     assert learn in skill_offers(community).current()
     # Its need is helped with on the project's offer form
     content = _client(ben).get(clay.get_absolute_url()).content.decode()
-    assert f"{reverse('projects:offer_help', args=[project.pk])}?need={clay.pk}" in content
+    assert f"{project.url('offer_help')}?need={clay.pk}" in content
     # Off the lists once it is over
     project.archived_at = timezone.now()
     project.save()
@@ -198,11 +198,11 @@ def test_the_community_page_lists_its_and_its_members_skills_and_gifts_once(anna
 @pytest.mark.django_db
 def test_a_projects_need_says_what_it_is_for(anna, ben):
     community = Community.objects.create(name="Hof", owner=anna, location=GOERLITZ)
-    project = Project.objects.create(community=community, title="Rocket stove", starts_on=timezone.localdate())
+    project = Event.objects.create(community=community, title="Rocket stove", starts_on=timezone.localdate())
     clay = need(project, "Clay", kind=Listing.KIND_MATERIAL)
     with translation.override("en"):
         page = _client(ben).get(clay.get_absolute_url()).content.decode()
-    assert "needs this to realize their project" in page
+    assert "needs this for" in page
     assert project.get_absolute_url() in page and community.get_absolute_url() in page
 
 

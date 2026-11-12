@@ -1,31 +1,57 @@
 {% extends 'base.html' %}
 {% load i18n %}
 
-{% block head_title %}{% if project %}{% trans "Edit project" %}{% else %}{% trans "New project" %}{% endif %} — {{ community.name }} — ecobasa{% endblock %}
+{% block head_title %}{% if event %}{{ texts.edit }}{% else %}{{ texts.new }}{% endif %} — {{ community.name }} — ecobasa{% endblock %}
 
 {% block content %}
 <div class="container-form">
   <div class="mb-2 text-sm"><a href="{{ community.get_absolute_url }}" class="hover:underline">{{ community.name }}</a></div>
-  <h1>{% if project %}{% trans "Edit project" %}{% else %}{% trans "New project" %}{% endif %}</h1>
-  <p class="text-sm">{% blocktrans trimmed %}
-    Describe something concrete you want to realise with help from the gift network, and list
-    what you need for it. Keep it short and current: projects nobody updates are archived
-    after a while.
-  {% endblocktrans %}</p>
+  {# Heading and intro follow the kind chosen below #}
+  <div x-data="{ kind: '{{ form.kind.value }}' }" @kind-chosen.window="kind = $event.detail">
+    {% for value, label, icon, hint, defaults in form.kind_choices %}
+      <div x-show="kind === '{{ value }}'" {% if value != form.kind.value %}style="display:none"{% endif %}>
+        <h1><i class="fa-solid {{ icon }} mr-2 text-primary"></i>{{ label }}</h1>
+        <p class="text-sm">{{ hint }}</p>
+      </div>
+    {% endfor %}
+    <p class="text-sm">{% trans "Keep it short and current: what nobody updates is archived after a while." %}</p>
+  </div>
 
-  <form method="post" class="border rounded-xl bg-secondary p-6 space-y-4" x-data="needRows()">
+  <form method="post" enctype="multipart/form-data" class="border rounded-xl bg-secondary p-6 space-y-4" x-data="needRows()">
     {% csrf_token %}
     {{ form.non_field_errors }}
 
+    {# What it is: the kind sets what a new one starts with, everything can be changed #}
+    <fieldset class="form-group" x-data="{ kind: '{{ form.kind.value }}' }">
+      <legend class="form-label">{% trans "What is it?" %}</legend>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {% for value, label, icon, hint, defaults in form.kind_choices %}
+          <label class="flex items-start gap-3 p-3 rounded border cursor-pointer bg-secondary" :class="kind === '{{ value }}' ? 'border-primary border-2' : 'bg-opacity-50'">
+            <input type="radio" name="{{ form.kind.html_name }}" value="{{ value }}" class="mt-1" x-model="kind"
+                   @change="$dispatch('kind-chosen', '{{ value }}'){% if not event %}; document.getElementById('{{ form.is_open.id_for_label }}').checked = {{ defaults.is_open|yesno:'true,false' }}{% endif %}">
+            <span><span class="font-semibold"><i class="fa-solid {{ icon }} mr-1 text-primary"></i>{{ label }}</span><span class="block text-xs">{{ hint }}</span></span>
+          </label>
+        {% endfor %}
+      </div>
+      {% for error in form.kind.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+    </fieldset>
+
     {% for field in form %}
-      {% if field.name == "food_provided" %}
+      {% if field.name == "kind" %}
+      {% elif field.name == "is_open" %}
+        <fieldset class="form-group">
+          <legend class="form-label">{% trans "How people come" %}</legend>
+          <label class="inline-flex items-center gap-2">{{ form.is_open }} {{ form.is_open.label }}</label>
+          <p class="text-xs mt-1">{{ form.is_open.help_text }}</p>
+        </fieldset>
+      {% elif field.name == "food_provided" %}
         <fieldset class="form-group">
           <legend class="form-label">{% trans "What you provide" %}</legend>
           <label class="inline-flex items-center gap-2 mr-6">{{ form.food_provided }} <i class="fa-solid fa-utensils"></i> {{ form.food_provided.label }}</label>
           <label class="inline-flex items-center gap-2">{{ form.bed_provided }} <i class="fa-solid fa-bed"></i> {{ form.bed_provided.label }}</label>
         </fieldset>
       {% elif field.name != "bed_provided" %}
-        <div class="form-group {% if field.name == 'starts_on' or field.name == 'ends_on' %}inline-block w-full sm:w-[48%] sm:mr-[2%] align-top{% endif %}">
+        <div class="form-group {% if field.name == 'starts_on' or field.name == 'ends_on' or field.name == 'starts_at' or field.name == 'ends_at' %}inline-block w-full sm:w-[48%] sm:mr-[2%] align-top{% endif %}">
           <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
           {{ field }}
           {% if field.help_text %}<p class="text-xs mt-1">{{ field.help_text }}</p>{% endif %}
@@ -40,14 +66,14 @@
     {{ formset.non_form_errors }}
     <div id="need-rows" class="space-y-2">
       {% for need_form in formset %}
-        {% include "projects/_need_row.html" with need_form=need_form %}
+        {% include "events/_need_row.html" with need_form=need_form %}
       {% endfor %}
     </div>
-    <template id="need-row-template">{% include "projects/_need_row.html" with need_form=formset.empty_form %}</template>
+    <template id="need-row-template">{% include "events/_need_row.html" with need_form=formset.empty_form %}</template>
     <button type="button" class="btn btn-purple" @click="add()"><i class="fa fa-plus mr-1"></i>{% trans "Add a need" %}</button>
 
     <div class="flex justify-end gap-3 pt-4">
-      <a href="{% if project %}{{ project.get_absolute_url }}{% else %}{{ community.get_absolute_url }}{% endif %}" class="btn btn-lg btn-purple">{% trans "Cancel" %}</a>
+      <a href="{% if event %}{{ event.get_absolute_url }}{% else %}{{ community.get_absolute_url }}{% endif %}" class="btn btn-lg btn-purple">{% trans "Cancel" %}</a>
       <button type="submit" class="btn btn-lg"><i class="fa fa-save mr-2"></i>{% trans "Save" %}</button>
     </div>
   </form>

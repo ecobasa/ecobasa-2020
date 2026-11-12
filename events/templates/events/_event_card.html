@@ -1,0 +1,37 @@
+{% load i18n site_tags %}
+<article class="border rounded-xl bg-secondary bg-opacity-60 p-4 flex flex-col gap-2 {% if not event.is_current %}opacity-60{% endif %}">
+  {% if event.image %}<a href="{{ event.get_absolute_url }}"><img src="{{ event.image.url }}" alt="" class="w-full h-36 object-cover rounded-lg"></a>{% endif %}
+  <div class="flex items-start gap-3">
+    <i class="fa-solid {{ event.kind_icon }} text-2xl text-primary opacity-70 mt-1" title="{{ event.kind_label }}"></i>
+    <div class="flex-1 min-w-0">
+      <a href="{{ event.get_absolute_url }}" class="font-serif font-bold text-lg leading-snug hover:underline">{{ event.title }}</a>
+      {% if show_community %}
+        <div class="text-sm"><a href="{{ event.community.get_absolute_url }}" class="hover:underline"><i class="fa-solid {{ event.community.get_type_icon }} mr-1"></i>{{ event.community.name }}</a>{% with place=event.place.rough_place %}{% if place.0 %} <span class="opacity-70">· {{ place.0 }}</span>{% endif %}{% endwith %}{% if event.km is not None %} <span class="opacity-70">· {% blocktrans with km=event.km %}about {{ km }} km{% endblocktrans %}</span>{% endif %}</div>
+      {% endif %}
+      <div class="text-sm opacity-80"><i class="fa-regular fa-calendar mr-1"></i>{% include "events/_event_dates.html" %}
+        {% if event.food_provided %}<span class="ml-2" title="{% trans 'Food provided' %}"><i class="fa-solid fa-utensils"></i></span>{% endif %}
+        {% if event.bed_provided %}<span class="ml-1" title="{% trans 'Bed provided' %}"><i class="fa-solid fa-bed"></i></span>{% endif %}
+      </div>
+    </div>
+  </div>
+  {% with skills=event.skills_to_learn %}
+    {% if skills %}
+      <div class="flex flex-wrap gap-1">
+        {% for skill in skills %}{% include "gifts/_listing_pill.html" with listing=skill link=True %}{% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+  {% with needs=event.needs %}
+    {% if needs %}
+      <div class="flex flex-wrap gap-1">
+        {% for need in needs %}{% include "events/_need_pill.html" %}{% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+  <div class="text-xs mt-auto flex flex-wrap items-center gap-2">
+    <span class="pill bg-green text-secondary text-xs"><i class="fa-solid {{ event.kind_icon }} mr-1"></i>{{ event.kind_label }}</span>
+    {% if event.is_open %}<span class="pill bg-primary bg-opacity-20 text-xs">{% trans "Just come" %}</span>{% endif %}
+    {% include "events/_freshness.html" with when=event.updated_at label_updated=True %}
+    {% if event.archived_at %}<span class="pill bg-primary bg-opacity-20 text-xs">{% trans "Archived" %}</span>{% endif %}
+  </div>
+</article>

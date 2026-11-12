@@ -98,10 +98,10 @@ class TestVolunteerRequestSkillProposal:
         assert "review_url" not in response.context
 
     def test_long_skill_lists_fit(self, volunteer_client, community):
-        from gift_economy.matches.models import VolunteerDetails
+        from gift_economy.matches.models import StayDetails
         many = ", ".join(f"Skill number {i}" for i in range(80))
         self._send(volunteer_client, community, sender_skills=many, practice_skills=many)
-        assert VolunteerDetails.objects.get().sender_skills == many
+        assert StayDetails.objects.get().sender_skills == many
 
 
 @pytest.mark.django_db
@@ -110,11 +110,11 @@ def test_volunteers_can_bring_what_the_community_needs(user, community):
     wishes for things; what is ticked comes with the request, anything else is ignored."""
     from gift_economy.gifts.models import Listing
     from gift_economy.matches.models import Match
-    from projects.models import Project
+    from events.models import Event
 
-    project = Project.objects.create(community=community, title="Rocket stove")
+    project = Event.objects.create(community=community, title="Rocket stove")
     clay = need(project, kind=Listing.KIND_MATERIAL, title="Clay")
-    other_project = Project.objects.create(community=Community.objects.create(name="Elsewhere", owner=user), title="X")
+    other_project = Event.objects.create(community=Community.objects.create(name="Elsewhere", owner=user), title="X")
     foreign = need(other_project, kind=Listing.KIND_TOOL, title="Spade")
     wish = Listing.objects.create(title="Wheelbarrow", type="wish", community=community)
     Listing.objects.create(title="Old bike", type="offer", community=community)
@@ -125,7 +125,7 @@ def test_volunteers_can_bring_what_the_community_needs(user, community):
     client.login(username="vol@example.com", password="secret")
 
     context = client.get(community.get_absolute_url()).context
-    assert context["bring_projects"] == [(project, [clay])]
+    assert context["bring_events"] == [(project, [clay])]
     assert context["bring_wishes"] == [wish]
 
     client.post(reverse("communities:volunteer_request", args=[community.slug]), {
@@ -149,7 +149,7 @@ def test_skill_fields_take_skills_from_the_list_only(user_client, community):
     for url, fields in (
         (reverse("communities:create"), 2),
         (reverse("communities:update", args=[community.slug]), 2),
-        (reverse("projects:create", args=[community.slug]), 1),
+        (reverse("events:create", args=[community.slug]), 1),
         (reverse("users:update"), 2),
     ):
         content = user_client.get(url).content.decode()

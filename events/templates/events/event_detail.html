@@ -1,0 +1,240 @@
+{% extends 'base.html' %}
+{% load i18n site_tags %}
+
+{% block head_title %}{{ event.title }} — {{ community.name }} — ecobasa{% endblock %}
+
+{% block content %}
+<div class="container-page">
+  <div class="mb-2 text-sm">
+    <a href="{{ community.get_absolute_url }}" class="hover:underline">{{ community.name }}</a>
+    <span class="mx-1">/</span>
+    <a href="{{ community.get_absolute_url }}#events" class="hover:underline">{{ event.texts.plural }}</a>
+  </div>
+
+  {% if event.archived_at or event.is_over %}
+    <div class="rounded-xl p-4 mb-6 border border-primary bg-primary bg-opacity-10 text-sm">
+      <i class="fa-solid fa-box-archive mr-2"></i>
+      {% if event.is_over %}{{ event.texts.ended }}{% else %}{{ event.texts.archived }}{% endif %}
+      {% if can_edit %}
+        {% if event.is_over %}
+          <a href="{% url 'events:edit' community.slug event.slug %}" class="underline ml-1">{% trans "Change its dates to bring it back." %}</a>
+        {% else %}
+          <form method="post" action="{% url 'events:confirm' community.slug event.slug %}" class="inline">{% csrf_token %}
+            <button type="submit" class="underline ml-1">{% trans "Bring it back" %}</button>
+          </form>
+        {% endif %}
+      {% endif %}
+    </div>
+  {% elif can_edit and event.stale_reminder_sent_at %}
+    <div class="rounded-xl p-4 mb-6 border border-yellow bg-yellow bg-opacity-10 text-sm flex flex-wrap items-center gap-3">
+      <span><i class="fa-solid fa-clock-rotate-left mr-2"></i>{{ event.texts.stale }}</span>
+      <form method="post" action="{% url 'events:confirm' community.slug event.slug %}">{% csrf_token %}
+        <button type="submit" class="btn"><i class="fa fa-check mr-1"></i>{% trans "Yes, still current" %}</button>
+      </form>
+    </div>
+  {% endif %}
+
+  <div class="grid grid-cols-1 sm:grid-cols-12 gap-6">
+    <div class="sm:col-span-8">
+      <span class="pill bg-green text-secondary text-xs"><i class="fa-solid {{ event.kind_icon }} mr-1"></i>{{ event.kind_label }}</span>
+      <h1 class="mb-1 mt-2">{{ event.title }}</h1>
+      <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm mb-6">
+        <span><i class="fa-regular fa-calendar mr-1"></i>{% include "events/_event_dates.html" %}</span>
+        {% if event.is_open %}<span><i class="fa-solid fa-door-open mr-1"></i>{% trans "Open event: just come" %}</span>{% endif %}
+        {% include "events/_freshness.html" with when=event.updated_at label_updated=True %}
+      </div>
+
+      {% if can_edit %}
+        <div class="flex flex-wrap gap-2 mb-6">
+          <a href="{% url 'events:edit' community.slug event.slug %}" class="btn"><i class="fa fa-edit mr-1"></i>{% trans "Edit" %}</a>
+          {% if event.is_current %}
+            <form method="post" action="{% url 'events:confirm' community.slug event.slug %}">{% csrf_token %}
+              <button type="submit" class="btn btn-purple" title="{{ event.texts.confirm_title }}"><i class="fa fa-check mr-1"></i>{% trans "Still current" %}</button>
+            </form>
+            <form method="post" action="{% url 'events:archive' community.slug event.slug %}" onsubmit="return confirm('{{ event.texts.archive_question|escapejs }}')">{% csrf_token %}
+              <button type="submit" class="btn btn-purple"><i class="fa-solid fa-box-archive mr-1"></i>{% trans "Archive" %}</button>
+            </form>
+          {% endif %}
+          <a href="{% url 'matches:calendar' community.slug %}" class="btn btn-purple"><i class="fa-regular fa-calendar mr-1"></i>{% trans "Calendar" %}</a>
+        </div>
+      {% endif %}
+
+      {% if event.image %}<img src="{{ event.image.url }}" alt="" class="w-full max-h-96 object-cover rounded-xl mb-4">{% endif %}
+      {% if event.description %}<p>{{ event.description|linebreaksbr }}</p>{% endif %}
+
+      {% with skills=event.skills_to_learn %}
+        {% if skills %}
+          <h2>{% trans "What you can learn here" %}</h2>
+          <div class="flex flex-wrap gap-2">
+            {% for skill in skills %}{% include "gifts/_listing_pill.html" with listing=skill link=True %}{% endfor %}
+          </div>
+        {% endif %}
+      {% endwith %}
+
+      {# An open event without needs has no such section; where people ask first, helping hands are always welcome #}
+      {% if needs or not event.is_open %}
+        <h2>{% trans "What is needed" %}</h2>
+        {% if needs %}
+          <ul class="list-none p-0 space-y-2">
+            {% for need in needs %}
+              <li id="need-{{ need.pk }}" class="flex flex-wrap items-center gap-3 p-3 rounded border bg-secondary bg-opacity-50 {% if need.is_done %}opacity-70{% endif %}">
+                <i class="fa-solid {{ need.kind_icon }} text-primary w-5 text-center"></i>
+                <div class="flex-1 min-w-0">
+                  <span class="font-semibold {% if need.is_done %}line-through{% endif %}">{{ need.display_title }}</span>
+                  {% if need.amount %}<span class="opacity-70"> · {{ need.amount }}</span>{% endif %}
+                  <span class="text-xs opacity-70 block">{{ need.kind_label }}
+                    {% if need.status == 'covered' %}· {% trans "covered" %}
+                    {% elif need.status == 'promised' or need.progress %}·
+                      {% if need.progress %}{{ need.progress }},{% endif %}
+                      {% trans "promised by" %}
+                      {% for offer in need.promises %}{% with person=offer.match.from_user %}<a href="{{ person.get_absolute_url }}" class="underline hover:text-primary">{{ person.name|default:person.email }}</a>{% if offer.amount and need.quantity %} ({{ offer.amount }}){% endif %}{% endwith %}{% if not forloop.last %}, {% endif %}{% endfor %}
+                    {% elif need.status == 'offered' %}· {% trans "someone offered this, waiting for an answer" %}{% endif %}
+                  </span>
+                </div>
+                {% if takes_people and not need.is_done %}
+                  {% url 'events:offer_help' community.slug event.slug as help_url %}
+                  <a href="{% if request.user.is_authenticated %}{{ help_url }}?need={{ need.pk }}{% else %}{% url 'users:login' %}?next={{ help_url|urlencode }}%3Fneed%3D{{ need.pk }}{% endif %}" class="btn text-sm py-1 px-3 whitespace-nowrap">
+                    <i class="fa fa-hands-helping mr-1"></i>{% trans "Help with this" %}
+                  </a>
+                {% endif %}
+                {% if can_edit %}
+                  <form method="post" action="{% url 'events:toggle_need' community.slug event.slug need.pk %}">{% csrf_token %}
+                    <button type="submit" class="text-sm underline">{% if need.covered_at %}{% trans "Needed again" %}{% else %}{% trans "Mark as covered" %}{% endif %}</button>
+                  </form>
+                {% endif %}
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p class="italic">{% trans "No specific needs listed. Helping hands are welcome!" %}</p>
+        {% endif %}
+      {% endif %}
+
+      {% if coming %}
+        {# Everyone accepted, and on an open event everyone who said they come. Names for logged-in people only #}
+        <h2 id="coming">{% trans "Who is coming" %}</h2>
+        <p class="text-sm">{% blocktrans count count=coming_people %}{{ count }} person so far{% plural %}{{ count }} people so far{% endblocktrans %}</p>
+        {% if request.user.is_authenticated %}
+          <ul class="list-none p-0 flex flex-wrap gap-2">
+            {% for match in coming %}{% with person=match.from_user %}
+              <li class="flex items-center gap-2 px-3 py-1 rounded-full border bg-secondary bg-opacity-50 text-sm">
+                {% if person.image %}<img src="{{ person.image.url }}" class="rounded-full h-6 w-6 object-cover" alt="">{% else %}<i class="fa fa-user text-primary"></i>{% endif %}
+                <a href="{{ person.get_absolute_url }}" class="hover:underline">{{ person.name|default:person.email }}</a>
+                {% if match.people > 1 %}<span class="opacity-70">+{{ match.people|add:"-1" }}</span>{% endif %}
+                {% if can_edit and not match.is_coming %}<a href="{{ match.get_absolute_url }}" class="underline text-xs">{% trans "Match" %}</a>{% endif %}
+              </li>
+            {% endwith %}{% endfor %}
+          </ul>
+        {% else %}
+          <p class="text-sm italic">{% trans "Log in to see who is coming." %}</p>
+        {% endif %}
+      {% endif %}
+
+      {% if can_edit and not event.is_open or offers %}
+        <h2>{% trans "Offers" %}</h2>
+        {% if offers %}
+          <div class="space-y-2">
+            {% for match in offers %}
+              <a href="{{ match.get_absolute_url }}" class="block p-3 rounded border-2 bg-secondary bg-opacity-50 hover:bg-opacity-80 {% if match.status == 'accepted' %}border-green{% elif match.status == 'counter' %}border-primary{% else %}border-yellow border-dashed{% endif %}">
+                <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
+                  <span class="font-semibold">{{ match.from_user.name|default:match.from_user.email }}</span>
+                  {% with period=match.stay_period %}{% if period.0 or period.1 %}
+                    <span class="text-sm"><i class="fa-regular fa-calendar mr-1"></i>{% include "matches/_stay_period.html" with stay_from=period.0 stay_to=period.1 %}</span>
+                  {% endif %}{% endwith %}
+                  <span class="ml-auto pill text-xs {% if match.status == 'accepted' %}bg-green{% elif match.status == 'counter' %}bg-primary{% else %}bg-yellow{% endif %}">{{ match.get_status_display }}</span>
+                </div>
+                {% with need_offers=match.brings %}{% if need_offers %}
+                  <div class="flex flex-wrap gap-1 mt-2">
+                    {% for offer in need_offers %}{% include "gifts/_listing_pill.html" with listing=offer.listing amount=offer.amount %}{% endfor %}
+                  </div>
+                {% endif %}{% endwith %}
+              </a>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="italic">{% trans "No offers yet." %}</p>
+        {% endif %}
+      {% endif %}
+
+      {% if references %}
+        {# What guests and the community wrote after taking part #}
+        <h2 id="references">{{ event.texts.references }}</h2>
+        <div class="space-y-3">
+          {% for ref in references %}{% include "references/_reference_card.html" %}{% endfor %}
+        </div>
+      {% endif %}
+    </div>
+
+    <aside class="sm:col-span-4">
+      {% if event.provides_something or not event.is_open %}
+        <h2 class="mt-0">{% trans "What the community provides" %}</h2>
+        <ul class="list-none p-0 space-y-1 text-sm">
+          {% if event.food_provided %}<li><i class="fa-solid fa-utensils w-5 mr-1 text-primary"></i>{% trans "Food" %}</li>{% endif %}
+          {% if event.bed_provided %}<li><i class="fa-solid fa-bed w-5 mr-1 text-primary"></i>{% trans "A bed" %}</li>{% endif %}
+          {% if event.provided_note %}<li><i class="fa-solid fa-gift w-5 mr-1 text-primary"></i>{{ event.provided_note }}</li>{% endif %}
+          {% if event.volunteers_wanted %}<li><i class="fa-solid fa-users w-5 mr-1 text-primary"></i>{% blocktrans count count=event.volunteers_wanted %}Room for {{ count }} volunteer at a time{% plural %}Room for {{ count }} volunteers at a time{% endblocktrans %}</li>{% endif %}
+          {% if not event.provides_something %}<li class="italic">{% trans "Ask the community." %}</li>{% endif %}
+        </ul>
+      {% endif %}
+
+      <h2 {% if not event.provides_something and event.is_open %}class="mt-0"{% endif %}>{% trans "Community" %}</h2>
+      <a href="{{ community.get_absolute_url }}" class="font-serif font-bold text-lg hover:underline"><i class="fa-solid {{ community.get_type_icon }} mr-1"></i>{{ community.name }}</a>
+      {% if place %}<p class="text-sm mt-1"><i class="fa fa-map-marker mr-1"></i>{{ place }}</p>{% endif %}
+      {% with manager=event.manager %}{% if manager %}
+        <div class="text-center mt-6">
+          <h3>{% trans "Gift-economy Ambassador" %}</h3>
+          <a href="{{ manager.get_absolute_url }}" class="block mb-4">
+            {% if manager.image %}
+              <img src="{{ manager.image.url }}" class="rounded-full h-20 w-20 mx-auto mb-2 object-cover" alt="{{ manager.name }}">
+            {% else %}
+              <i class="fa fa-user text-6xl text-primary rounded-full border border-dashed border-primary p-10 mt-15"></i>
+            {% endif %}
+            <div class="font-serif font-bold text-xl">{{ manager.name|default:manager.email }}</div>
+          </a>
+          <div class="text-sm -mt-2">{% include "events/_freshness.html" with when=manager.last_active %}</div>
+        </div>
+      {% endif %}{% endwith %}
+
+      {% if takes_people %}
+        {% if own_match and own_match.is_coming %}
+          <div class="mt-8 p-4 rounded-xl border border-green text-center text-sm">
+            <p class="font-semibold mb-2"><i class="fa fa-check mr-1 text-green"></i>{% blocktrans count count=own_match.people %}You are coming.{% plural %}You are coming, {{ count }} people.{% endblocktrans %}</p>
+            <form method="post" action="{% url 'events:not_coming' community.slug event.slug %}">{% csrf_token %}
+              <button type="submit" class="underline">{% trans "I can't come after all" %}</button>
+            </form>
+          </div>
+        {% elif own_match %}
+          <p class="text-sm text-center mt-8">
+            {% trans "You already offered help." %} <a href="{{ own_match.get_absolute_url }}" class="underline">{% trans "See your offer" %}</a>
+          </p>
+        {% elif event.is_open %}
+          {% if request.user.is_authenticated %}
+            <form method="post" action="{% url 'events:come' community.slug event.slug %}" class="mt-8 p-4 rounded-xl border bg-secondary bg-opacity-50 space-y-3">{% csrf_token %}
+              <label class="flex items-center justify-between gap-2 text-sm">{{ coming_form.people.label }} {{ coming_form.people }}</label>
+              {% if not event.is_one_day %}
+                <div class="grid grid-cols-2 gap-2 text-sm">
+                  <label>{{ coming_form.stay_from.label }} {{ coming_form.stay_from }}</label>
+                  <label>{{ coming_form.stay_to.label }} {{ coming_form.stay_to }}</label>
+                </div>
+              {% endif %}
+              <button type="submit" class="btn btn-lg block w-full text-center"><i class="fa fa-check mr-1"></i>{% trans "I'm coming" %}</button>
+            </form>
+          {% else %}
+            <a href="{% url 'users:login' %}?next={{ event.get_absolute_url|urlencode }}" class="btn btn-lg block w-full mt-8 text-center"><i class="fa fa-check mr-1"></i>{% trans "I'm coming" %}</a>
+          {% endif %}
+          {% if needs %}
+            {% url 'events:offer_help' community.slug event.slug as help_url %}
+            <p class="text-sm text-center mt-2"><a href="{% if request.user.is_authenticated %}{{ help_url }}{% else %}{% url 'users:login' %}?next={{ help_url|urlencode }}{% endif %}" class="underline">{{ event.texts.support }}</a></p>
+          {% endif %}
+        {% else %}
+          {% url 'events:offer_help' community.slug event.slug as help_url %}
+          <a href="{% if request.user.is_authenticated %}{{ help_url }}{% else %}{% url 'users:login' %}?next={{ help_url|urlencode }}{% endif %}"
+             class="btn btn-lg block w-full mt-8 text-center">
+            <i class="fa fa-hands-helping mr-1"></i>{{ event.texts.support }}
+          </a>
+        {% endif %}
+      {% endif %}
+    </aside>
+  </div>
+</div>
+{% endblock %}

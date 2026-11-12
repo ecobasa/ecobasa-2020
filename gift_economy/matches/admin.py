@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Contribution, Match, MatchMessage, Suggestion, VolunteerDetails
+from .models import Contribution, Match, MatchMessage, Suggestion, StayDetails
 
 
 class MatchMessageInline(admin.TabularInline):
@@ -15,7 +15,7 @@ class ContributionInline(admin.TabularInline):
 
 
 class VolunteerDetailsInline(admin.StackedInline):
-    model = VolunteerDetails
+    model = StayDetails
     extra = 0
 
 

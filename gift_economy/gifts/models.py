@@ -224,10 +224,10 @@ class ListingQuerySet(models.QuerySet):
         return self.filter(kind__in=Listing.THING_KINDS)
 
     def current(self):
-        """Not marked as covered, and not part of a project that is archived or over."""
+        """Not marked as covered, and not part of a event that is archived or over."""
         today = timezone.localdate()
         return self.filter(covered_at=None).filter(
-            Q(project=None) | Q(project__archived_at=None) & (Q(project__ends_on=None) | Q(project__ends_on__gte=today))
+            Q(event=None) | Q(event__archived_at=None) & (Q(event__ends_on=None) | Q(event__ends_on__gte=today))
         )
 
     def open(self):
@@ -253,7 +253,7 @@ class ListingQuerySet(models.QuerySet):
         return self.filter(type=Listing.TYPE_OFFER, kind__in=Listing.LEND_KINDS, lend=True)
 
     def of(self, holder):
-        """What a person or a community offers and wishes for (its projects' too)."""
+        """What a person or a community offers and wishes for (its events' too)."""
         from communities.models import Community
         return self.filter(community=holder) if isinstance(holder, Community) else self.filter(owner=holder, community=None)
 
@@ -261,8 +261,8 @@ class ListingQuerySet(models.QuerySet):
 class Listing(RandomIdMixin, models.Model):
     """Everything someone offers or wishes for: things (material, tools, anything else),
     skills, knowledge and helping hands. A person's, or a community's (managed by its
-    ambassador). A community's wish can belong to one of its projects: then it is a
-    need of the project, and is listed only while the project runs.
+    ambassador). A community's wish can belong to one of its events: then it is a
+    need of the event, and is listed only while the event runs.
 
     With a quantity ("200 kg", "3 people") a wish can be covered in parts, and an offer
     given away in parts: each exchange (Match) says how much of it it takes or brings
@@ -469,10 +469,10 @@ class Listing(RandomIdMixin, models.Model):
         "communities.Community", on_delete=models.CASCADE, null=True, blank=True, related_name="listings",
         verbose_name=_("Community"),
     )
-    # A community's need (or what you can learn) in one of its projects
-    project = models.ForeignKey(
-        "projects.Project", on_delete=models.CASCADE, null=True, blank=True, related_name="listings",
-        verbose_name=_("Project"),
+    # A community's need (or what you can learn) in one of its events
+    event = models.ForeignKey(
+        "events.Event", on_delete=models.CASCADE, null=True, blank=True, related_name="listings",
+        verbose_name=_("Event"),
     )
     categories = models.ManyToManyField(
         ListingCategory, related_name="listings", verbose_name=_("Categories"), blank=True
@@ -498,7 +498,7 @@ class Listing(RandomIdMixin, models.Model):
     )
     # Marked as covered (a wish) or given away (an offer) by its owner, however it was
     covered_at = models.DateTimeField(_("Covered"), null=True, blank=True)
-    # Order among a project's needs
+    # Order among a event's needs
     order = models.PositiveSmallIntegerField(default=0)
     matches = GenericRelation("matches.Match")
 
@@ -509,14 +509,14 @@ class Listing(RandomIdMixin, models.Model):
         verbose_name_plural = _("Listings")
         ordering = ["-created_at"]
         constraints = [
-            # A person or community has a skill (or wants it) once; projects list theirs apart
+            # A person or community has a skill (or wants it) once; events list theirs apart
             models.UniqueConstraint(
                 fields=["owner", "type", "skill"], name="one_skill_listing_per_person",
                 condition=Q(kind="skill", community=None),
             ),
             models.UniqueConstraint(
                 fields=["community", "type", "skill"], name="one_skill_listing_per_community",
-                condition=Q(kind="skill", project=None, community__isnull=False),
+                condition=Q(kind="skill", event=None, community__isnull=False),
             ),
         ]
 
@@ -524,8 +524,8 @@ class Listing(RandomIdMixin, models.Model):
         return self.display_title
 
     def save(self, *args, **kwargs):
-        if self.project_id:
-            self.community_id = self.project.community_id
+        if self.event_id:
+            self.community_id = self.event.community_id
         if self.community_id:
             self.owner = None
         if self.skill_id and not self.title:
@@ -815,8 +815,8 @@ class Listing(RandomIdMixin, models.Model):
 
     @property
     def is_current(self):
-        """Still listed: not done, and its project (if any) still runs."""
-        return not self.is_done and (self.project_id is None or self.project.is_current)
+        """Still listed: not done, and its event (if any) still runs."""
+        return not self.is_done and (self.event_id is None or self.event.is_current)
 
     @property
     def progress(self):
@@ -924,14 +924,14 @@ def _holder_fields(holder):
 
 
 def skill_offers(holder):
-    """The skills a person or community offers (its projects' ones too)."""
+    """The skills a person or community offers (its events' ones too)."""
     return Listing.objects.of(holder).filter(type=Listing.TYPE_OFFER, kind=Listing.KIND_SKILL)
 
 
 def add_skill_offer(holder, skill):
     """The holder's offer of the skill, created if needed."""
     return Listing.objects.get_or_create(
-        type=Listing.TYPE_OFFER, kind=Listing.KIND_SKILL, skill=skill, project=None, **_holder_fields(holder),
+        type=Listing.TYPE_OFFER, kind=Listing.KIND_SKILL, skill=skill, event=None, **_holder_fields(holder),
     )[0]
 
 
@@ -942,13 +942,13 @@ def wish_kind_for(holder):
 
 
 def sync_skill_listings(holder, type, names):
-    """Make the holder's skills (type offer) or skill wishes (type wish) outside projects
+    """Make the holder's skills (type offer) or skill wishes (type wish) outside events
     the ones named, in any language, keeping the ones that stay. Removing and re-adding
     them all on every save would make them look new each time (and be matched and
     announced again)."""
     from gift_economy.gifts.skills.models import get_or_create_skill
     kind = Listing.KIND_SKILL if type == Listing.TYPE_OFFER else wish_kind_for(holder)
-    fields = {"type": type, "kind": kind, "project": None, **_holder_fields(holder)}
+    fields = {"type": type, "kind": kind, "event": None, **_holder_fields(holder)}
     wanted = {get_or_create_skill(name)[0].pk for name in names}
     listings = Listing.objects.filter(**fields).exclude(skill=None)
     listings.exclude(skill_id__in=wanted).delete()

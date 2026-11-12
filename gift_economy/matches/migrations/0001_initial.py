@@ -150,7 +150,7 @@ class Migration(migrations.Migration):
             },
         ),
         migrations.CreateModel(
-            name="VolunteerDetails",
+            name="StayDetails",
             fields=[
                 (
                     "id",
@@ -171,14 +171,14 @@ class Migration(migrations.Migration):
                     "match",
                     models.OneToOneField(
                         on_delete=django.db.models.deletion.CASCADE,
-                        related_name="volunteer_details",
+                        related_name="stay_details",
                         to="matches.match",
                     ),
                 ),
             ],
             options={
-                "verbose_name": "Volunteer Details",
-                "verbose_name_plural": "Volunteer Details",
+                "verbose_name": "Stay details",
+                "verbose_name_plural": "Stay details",
             },
         ),
         migrations.CreateModel(

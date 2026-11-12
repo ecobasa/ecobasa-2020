@@ -21,7 +21,7 @@ _MATCH_TYPE_ICONS = {
     "gifts":       "fa-gift",
     "skills":      "fa-graduation-cap",
     "communities": "fa-campground",
-    "projects":    "fa-person-digging",
+    "events":      "fa-calendar-day",
 }
 
 
@@ -143,6 +143,9 @@ class Notification(models.Model):
                 return "fa-bell"
             if getattr(target, "type", None) == "wish":
                 return "fa-hand-holding-heart"
+            # A target with kinds of its own (an event) has its kind's icon
+            if hasattr(target, "get_match_kind"):
+                return target.get_match_kind()[1]
             return _MATCH_TYPE_ICONS.get(self.match.content_type.app_label, "fa-bell")
         return {
             self.TAG_ACCEPTED:    "fa-handshake-simple",

@@ -48,7 +48,7 @@ class CommunityForm(forms.ModelForm):
             from gift_economy.gifts.models import Listing
             wishes_initial = ', '.join(
                 sw.display_title for sw in Listing.objects.of(self.instance)
-                .filter(type=Listing.TYPE_WISH, project=None).exclude(skill=None).select_related("skill")
+                .filter(type=Listing.TYPE_WISH, event=None).exclude(skill=None).select_related("skill")
             )
             self.fields['skill_wishes'].initial = wishes_initial
             self.initial['skill_wishes'] = wishes_initial

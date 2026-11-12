@@ -39,11 +39,11 @@ def search(request):
 
 
 def detail(request, pk):
-    """An offer or a wish of any kind, with the request form. A project's need is helped
-    with through the project's offer form; a community's wish for a skill through its
+    """An offer or a wish of any kind, with the request form. A event's need is helped
+    with through the event's offer form; a community's wish for a skill through its
     volunteer form."""
     listing = get_object_or_404(
-        Listing.objects.select_related("owner", "community__owner", "project", "skill", "thing")
+        Listing.objects.select_related("owner", "community__owner", "event", "skill", "thing")
         .prefetch_related("categories", "contributions__match__from_user"),
         pk=pk,
     )
@@ -92,15 +92,15 @@ def detail(request, pk):
 
 
 def _help_url(listing):
-    """Where to answer what isn't asked for by its own request: help with a project's need
-    on the project's offer form, with a community's wish for a skill or learning one of
+    """Where to answer what isn't asked for by its own request: help with a event's need
+    on the event's offer form, with a community's wish for a skill or learning one of
     its skills on its volunteer form."""
     if listing.is_offer:
         if listing.community_id and listing.skill_id:
             return f"{listing.community.get_absolute_url()}?learn={listing.skill.slug}"
         return ""
-    if listing.project_id:
-        return f"{reverse('projects:offer_help', args=[listing.project_id])}?need={listing.pk}"
+    if listing.event_id:
+        return f"{listing.event.url('offer_help')}?need={listing.pk}"
     if listing.community_id and listing.skill_id:
         return f"{listing.community.get_absolute_url()}?help={listing.skill.slug}"
     return ""
@@ -237,7 +237,7 @@ def delete(request, pk):
         raise PermissionDenied
 
     if request.method == "POST":
-        back = listing.project.get_absolute_url() if listing.project_id else (
+        back = listing.event.get_absolute_url() if listing.event_id else (
             listing.community.get_absolute_url() if listing.community_id else reverse("gifts:mine")
         )
         listing.delete()
@@ -275,9 +275,9 @@ def _apply_bbox(qs, bbox_param):
 def _filtered_listings(request, require_location=True):
     """What the map and list show: current listings, filtered (ListingFilter), each with
     its place. Offers and wishes of things, skills, knowledge and helping hands of people
-    and communities, and the needs of current projects."""
+    and communities, and the needs of current events."""
     base_qs = _with_spot(Listing.objects.open()).select_related(
-        "owner", "community", "project", "skill",
+        "owner", "community", "event", "skill",
     ).exclude(owner=None, community=None).exclude(type=Listing.TYPE_OFFER, skill__isnull=False, available=False)
     if require_location:
         base_qs = base_qs.filter(spot__isnull=False)
@@ -294,8 +294,8 @@ def _public_name(user):
 
 
 def _marker_colour(listing):
-    if listing.project_id and listing.is_wish:
-        return "#5A5527"  # green: a project's need
+    if listing.event_id and listing.is_wish:
+        return "#5A5527"  # green: a event's need
     if listing.is_skill:
         return "#80143b"  # purple
     return "#de7a08" if listing.is_wish else "#da6137"
@@ -305,7 +305,7 @@ def _marker_colour(listing):
 def gifts_markers(request):
     """
     GeoJSON FeatureCollection — one marker per offer or wish (things, skills, knowledge,
-    helping hands, project needs) within the current map viewport bounding box, at its
+    helping hands, event needs) within the current map viewport bounding box, at its
     own place or its person's or community's.
 
     Query params (all optional):
@@ -342,7 +342,7 @@ def gifts_markers(request):
                 "amount":         listing.amount,
                 "type_display":   f"{listing.get_type_display()} · {listing.kind_label}" if listing.kind != Listing.KIND_OTHER else listing.get_type_display(),
                 "url":            listing.get_absolute_url(),
-                "project":        listing.project.title if listing.project_id else "",
+                "event":        listing.event.title if listing.event_id else "",
                 "community_name": listing.community.name if listing.community_id else "",
                 # Who it is only for members: visitors sign up to find out and ask
                 "user_name":      "" if listing.community_id or not signed_in else _public_name(holder),

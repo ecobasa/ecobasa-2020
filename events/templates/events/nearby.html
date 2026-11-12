@@ -1,0 +1,38 @@
+{% extends 'dashboard/base.html' %}
+{% load i18n %}
+
+{% block head_title %}{% trans "Events near you" %} — ecobasa{% endblock %}
+
+{% block dashboard_content %}
+{# Current events of all kinds around the place in one's profile, nearest first #}
+<section class="mb-8">
+  <h1 class="text-4xl font-semibold flex items-center gap-2 m-0 mb-4">
+    <i class="fa-solid fa-calendar-day text-primary"></i>{% trans "Events near you" %}
+  </h1>
+  {% if not has_place %}
+    <p class="rounded-xl p-4 mb-4 border border-yellow bg-yellow bg-opacity-10 text-sm">
+      <i class="fa fa-map-marker mr-1"></i>{% trans "Your profile has no place yet, so this shows events everywhere." %}
+      <a href="{% url 'users:update' %}" class="underline">{% trans "Add your place" %}</a>
+    </p>
+  {% endif %}
+
+  <form method="get" class="flex flex-wrap items-center gap-2 mb-4">
+    {% if everywhere and has_place %}<input type="hidden" name="where" value="everywhere">{% endif %}
+    <input type="search" name="q" value="{{ q }}" class="form-input flex-1 min-w-0" placeholder="{% trans 'Search events, skills, materials, places…' %}">
+    <button type="submit" class="btn"><i class="fa fa-search mr-1"></i>{% trans "Search" %}</button>
+  </form>
+  {% if wheres %}{% include "dashboard/_filters.html" with filters=wheres %}{% endif %}
+  {% include "dashboard/_filters.html" with filters=kinds %}
+
+  {% if events %}
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      {% for event in events %}
+        {% include "events/_event_card.html" with show_community=True %}
+      {% endfor %}
+    </div>
+    {% include "dashboard/_pager.html" %}
+  {% else %}
+    <p class="italic">{% if everywhere %}{% trans "No current events found." %}{% else %}{% trans "No current events found near you." %}{% endif %}</p>
+  {% endif %}
+</section>
+{% endblock %}

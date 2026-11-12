@@ -15,7 +15,7 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name="Project",
+            name="Event",
             fields=[
                 (
                     "id",
@@ -87,15 +87,15 @@ class Migration(migrations.Migration):
                     "community",
                     models.ForeignKey(
                         on_delete=django.db.models.deletion.CASCADE,
-                        related_name="projects",
+                        related_name="events",
                         to="communities.community",
                         verbose_name="Community",
                     ),
                 ),
             ],
             options={
-                "verbose_name": "Project",
-                "verbose_name_plural": "Projects",
+                "verbose_name": "Event",
+                "verbose_name_plural": "Events",
                 "ordering": ["-updated_at"],
             },
         ),

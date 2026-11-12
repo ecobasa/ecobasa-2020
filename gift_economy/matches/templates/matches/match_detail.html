@@ -60,7 +60,7 @@
           </div>
         {% endif %}
         {% if match.is_community_stay %}
-          {% with vd=match.volunteer_details %}
+          {% with vd=match.stay_details %}
           {% if latest_counter_msg.counter_stay_from or latest_counter_msg.counter_stay_to %}
             <div class="flex items-center gap-2 text-sm">
               <i class="fa fa-campground text-primary"></i>
@@ -163,7 +163,7 @@
       </div>
     {% endif %}
 
-    {% with vd=match.volunteer_details %}
+    {% with vd=match.stay_details %}
     {% if vd %}
       {% if vd.stay_from or vd.stay_to %}
         <div class="text-sm mb-2">
@@ -326,12 +326,12 @@
           <div class="form-group">
             <label class="form-label" for="counter-stay-from">{% trans "Stay from" %}</label>
             <input type="date" name="counter_stay_from" id="counter-stay-from" class="form-input"
-              value="{{ match.volunteer_details.stay_from|date:'Y-m-d' }}">
+              value="{{ match.stay_details.stay_from|date:'Y-m-d' }}">
           </div>
           <div class="form-group">
             <label class="form-label" for="counter-stay-to">{% trans "Stay until" %}</label>
             <input type="date" name="counter_stay_to" id="counter-stay-to" class="form-input"
-              value="{{ match.volunteer_details.stay_to|date:'Y-m-d' }}">
+              value="{{ match.stay_details.stay_to|date:'Y-m-d' }}">
           </div>
         </div>
         {% else %}

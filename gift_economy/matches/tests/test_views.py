@@ -210,14 +210,14 @@ def stay(requester, owner):
 
     from communities.models import Community
 
-    from ..models import VolunteerDetails
+    from ..models import StayDetails
 
     community = Community.objects.create(name="Green Valley", owner=owner)
     m = Match(from_user=requester, message="Can I come help?")
     m.target = community
     m.recipient = community.get_match_owner()
     m.save()
-    VolunteerDetails.objects.create(
+    StayDetails.objects.create(
         match=m,
         stay_from=timezone.make_aware(datetime(2027, 5, 1)),
         stay_to=timezone.make_aware(datetime(2027, 5, 14)),
@@ -304,8 +304,8 @@ def test_the_match_shows_what_the_other_side_brings(owner, requester, stay):
     Listing.objects.create(title="Lime mortar", type="offer", kind=Listing.KIND_MATERIAL, owner=requester)
     Listing.objects.create(title="A tent", type="wish", owner=requester)
     Community.objects.create(name="Other Hof", owner=requester)
-    stay.volunteer_details.sender_skills = "Masonry, Juggling"
-    stay.volunteer_details.save()
+    stay.stay_details.sender_skills = "Masonry, Juggling"
+    stay.stay_details.save()
 
     response = _client_for(owner).get(stay.get_absolute_url())
     person = response.context["person"]
@@ -316,7 +316,7 @@ def test_the_match_shows_what_the_other_side_brings(owner, requester, stay):
     content = response.content.decode()
     assert masonry.get_absolute_url() in content and "Other Hof" in content
     # The skills named in the request link to the person's skill page if they have it
-    assert [pill[2] for pill in stay.volunteer_details.sender_skill_pills] == [masonry.get_absolute_url(), ""]
+    assert [pill[2] for pill in stay.stay_details.sender_skill_pills] == [masonry.get_absolute_url(), ""]
     assert str(stay.kind[0]) == "Volunteer stay"
 
 
@@ -361,10 +361,10 @@ def test_accepting_a_stay_updates_the_project_needs(owner, requester):
     """A need ticked in the community's volunteer form is promised once the stay is
     accepted on the match page; a volunteer counts as one person."""
     from communities.models import Community
-    from projects.models import Project
+    from events.models import Event
 
     community = Community.objects.create(name="Hof", owner=owner)
-    project = Project.objects.create(community=community, title="Oven")
+    project = Event.objects.create(community=community, title="Oven")
     hands = need(project, kind=Listing.KIND_HANDS, title="Helping hands", quantity=2, unit="people")
     clay = need(project, kind=Listing.KIND_MATERIAL, title="Clay")
     _client_for(requester).post(f"/communities/volunteer-request/{community.slug}/", {"body": "Hi", "need": [hands.pk, clay.pk]})

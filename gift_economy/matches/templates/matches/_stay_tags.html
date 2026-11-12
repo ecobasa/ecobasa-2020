@@ -1,7 +1,8 @@
 {% load i18n %}{# What a volunteer brings to a stay, as pills: needs and wishes by kind with how much, offers asked for, skills #}
-{% with vd=match.volunteer_details brings=match.brings asks=match.asks_for %}
-  {% if brings or asks or vd.practice_skills or vd.sender_skills %}
+{% with vd=match.stay_details brings=match.brings asks=match.asks_for %}
+  {% if brings or asks or vd.practice_skills or vd.sender_skills or vd.people > 1 %}
     <div class="flex flex-wrap gap-1 mt-2">
+      {% if vd.people > 1 %}<span class="pill bg-green text-secondary text-xs"><i class="fa-solid fa-users mr-1"></i>{% blocktrans with count=vd.people %}{{ count }} people{% endblocktrans %}</span>{% endif %}
       {% for contribution in brings %}{% include "gifts/_listing_pill.html" with listing=contribution.listing amount=contribution.amount %}{% endfor %}
       {% for contribution in asks %}{% include "gifts/_listing_pill.html" with listing=contribution.listing amount=contribution.amount %}{% endfor %}
       {% if vd.volunteer_mode == "wish" %}

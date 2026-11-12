@@ -251,12 +251,12 @@ def test_paradeiser_and_tomatoes_are_the_same_crop():
 @pytest.mark.django_db
 def test_a_project_needs_a_vehicle_from_the_vocabulary():
     from communities.models import Community
-    from projects.forms import NeedForm
-    from projects.models import Project
+    from events.forms import NeedForm
+    from events.models import Event
     community = Community.objects.create(name="Hof", owner=_user("anna"))
-    project = Project.objects.create(community=community, title="Umzug")
-    assert NeedForm({"kind": "vehicle", "title": "Transporter"}, instance=Listing(project=project)).is_valid()
-    assert not NeedForm({"kind": "vehicle", "title": "Raumschiff"}, instance=Listing(project=project)).is_valid()
+    project = Event.objects.create(community=community, title="Umzug")
+    assert NeedForm({"kind": "vehicle", "title": "Transporter"}, instance=Listing(event=project)).is_valid()
+    assert not NeedForm({"kind": "vehicle", "title": "Raumschiff"}, instance=Listing(event=project)).is_valid()
 
 
 @pytest.mark.django_db

@@ -222,24 +222,24 @@
 				</a>
 			{% endif %}
 
-			<!-- Projects -->
-			{% if projects or is_ambassador %}
-				<h2 id="projects">{% trans "Projects" %}</h2>
-				{% if projects %}
+			<!-- Its events: projects and community events -->
+			{% if events or is_ambassador %}
+				<h2 id="events">{% trans "Projects and events" %}</h2>
+				{% if events %}
 					<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-						{% for project in projects %}{% include "projects/_project_card.html" %}{% endfor %}
+						{% for event in events %}{% include "events/_event_card.html" %}{% endfor %}
 					</div>
 				{% endif %}
 				{% if is_ambassador %}
 					<div class="flex flex-wrap gap-2">
-						<a href="{% url 'projects:create' community.slug %}" class="btn"><i class="fa fa-plus mr-1"></i>{% trans "Start a project" %}</a>
+						{% for kind, label, icon in event_kinds %}<a href="{% url 'events:create' community.slug %}?kind={{ kind }}" class="btn"><i class="fa-solid {{ icon }} mr-1"></i>{{ label }}</a>{% endfor %}
 						<a href="{% url 'matches:calendar' community.slug %}" class="btn btn-purple"><i class="fa-regular fa-calendar mr-1"></i>{% trans "Calendar" %}</a>
 					</div>
-					{% if past_projects %}
+					{% if past_events %}
 						<details class="mt-4">
-							<summary class="cursor-pointer text-sm">{% trans "Ended and archived projects" %}</summary>
+							<summary class="cursor-pointer text-sm">{% trans "Ended and archived" %}</summary>
 							<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
-								{% for project in past_projects %}{% include "projects/_project_card.html" %}{% endfor %}
+								{% for event in past_events %}{% include "events/_event_card.html" %}{% endfor %}
 							</div>
 						</details>
 					{% endif %}
@@ -345,7 +345,7 @@
 						{% endif %}
 						<div class="font-serif font-bold text-xl">{{ community.owner.name }}</div>
 					</a>
-					<div class="text-sm -mt-2">{% include "projects/_freshness.html" with when=community.owner.last_active %}</div>
+					<div class="text-sm -mt-2">{% include "events/_freshness.html" with when=community.owner.last_active %}</div>
 				</div>
 			{% endif %}
 
@@ -397,16 +397,16 @@
 						<input type="text" name="sender_skills" id="volunteer-sender-skills" class="form-input mt-1"
 									value="{% if request.user.is_authenticated %}{{ own_skill_names }}{% endif %}">
 					</label>
-					{% if bring_projects or bring_wishes %}
+					{% if bring_events or bring_wishes %}
 						{# What the community needs: tick what you can bring or help with #}
 						<fieldset class="text-sm border rounded p-3">
 							<legend class="px-1 font-semibold">{% trans "Can you bring or help with any of this?" %}</legend>
-							{% for project, needs in bring_projects %}
+							{% for event, needs in bring_events %}
 								<div class="mb-2">
 									<div class="flex flex-wrap items-center gap-x-2 text-xs">
-										<a href="{{ project.get_absolute_url }}" class="font-semibold hover:underline" target="_blank"><i class="fa-solid fa-person-digging mr-1"></i>{{ project.title }}</a>
-										<span class="opacity-70">{% include "projects/_project_dates.html" %}</span>
-										<a href="{% url 'projects:offer_help' project.pk %}" class="underline">{% trans "Join this project" %}</a>
+										<a href="{{ event.get_absolute_url }}" class="font-semibold hover:underline" target="_blank"><i class="fa-solid {{ event.kind_icon }} mr-1"></i>{{ event.title }}</a>
+										<span class="opacity-70">{% include "events/_event_dates.html" %}</span>
+										<a href="{% url 'events:offer_help' community.slug event.slug %}" class="underline">{{ event.texts.join }}</a>
 									</div>
 									{% for need in needs %}
 										<label class="flex items-center gap-2 cursor-pointer py-0.5">

@@ -13,7 +13,7 @@
 	<div class="flex items-start justify-between">
 		<div>
 			<h1 class="text-5xl font-semibold">{{ user.name }}</h1>
-			{% if user.last_active %}<p class="text-sm -mt-2">{% include "projects/_freshness.html" with when=user.last_active %}</p>{% endif %}
+			{% if user.last_active %}<p class="text-sm -mt-2">{% include "events/_freshness.html" with when=user.last_active %}</p>{% endif %}
 		</div>
 		{% if request.user.is_authenticated and request.user.pk == user.pk %}
 			<a href="{% url 'users:update' %}" class="btn btn-lg">

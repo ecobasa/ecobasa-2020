@@ -5,7 +5,7 @@ from django.test import Client
 from django.urls import reverse
 
 from gift_economy.matches.models import Match
-from projects.models import Project
+from events.models import Event
 from users.models import User
 from users.places import approximate
 
@@ -70,7 +70,7 @@ class TestWhoSeesTheCommunitysPlace:
         assert ("1234567" in _client_for(volunteer).get(community.get_absolute_url()).content.decode()) is sees
 
     def test_also_after_helping_with_one_of_its_projects(self, community, volunteer):
-        _stay(volunteer, Project.objects.create(community=community, title="Straw-bale shed"), Match.STATUS_ACCEPTED)
+        _stay(volunteer, Event.objects.create(community=community, title="Straw-bale shed"), Match.STATUS_ACCEPTED)
         assert community.shows_place_to(volunteer)
 
     def test_everyone_if_its_public(self, community):

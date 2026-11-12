@@ -70,13 +70,13 @@ def detail(request, slug):
     community = get_object_or_404(Community, slug=slug)
     photos = list(community.photos.all())
     hero_image = photos[0].image.url if photos else None
-    listings = Listing.objects.of(community).current().select_related("skill", "project")
-    # Skills you can learn here, also in its current projects (each skill once)
+    listings = Listing.objects.of(community).current().select_related("skill", "event")
+    # Skills you can learn here, also in its current events (each skill once)
     community_skills = list({
         listing.skill_id: listing
         for listing in sorted(
             listings.filter(type=Listing.TYPE_OFFER, kind=Listing.KIND_SKILL),
-            key=lambda listing: listing.project_id is None,  # its own listing wins over a project's
+            key=lambda listing: listing.event_id is None,  # its own listing wins over a event's
         )
     }.values())
     community_skills.sort(key=lambda listing: listing.display_title)
@@ -95,7 +95,7 @@ def detail(request, slug):
     skills += [(offers[0], [o.owner for o in offers]) for offers in holders.values()]
     skills.sort(key=lambda pair: pair[0].display_title)
     things = sorted(
-        [l for l in listings.filter(type=Listing.TYPE_OFFER, project=None).exclude(kind=Listing.KIND_SKILL)]
+        [l for l in listings.filter(type=Listing.TYPE_OFFER, event=None).exclude(kind=Listing.KIND_SKILL)]
         + [o for o in member_offers if o.kind != Listing.KIND_SKILL],
         key=lambda listing: listing.display_title,
     )
@@ -108,7 +108,7 @@ def detail(request, slug):
     for listing in library:
         listing.lent_now_loan = listing.lent_now()
     skill_wishes = sorted(
-        listings.filter(type=Listing.TYPE_WISH, project=None).exclude(skill=None), key=lambda listing: listing.display_title,
+        listings.filter(type=Listing.TYPE_WISH, event=None).exclude(skill=None), key=lambda listing: listing.display_title,
     )
 
     # Build a {skill_id: level_display} map for the visiting user so the modal can show their level
@@ -125,8 +125,9 @@ def detail(request, slug):
             for us in skill_offers(request.user).filter(skill_id__in=skill_ids)
         })
 
-    projects = (
-        community.projects.select_related("community")
+    from events.kinds import event_kind_buttons
+    events = (
+        community.events.select_related("community")
         .prefetch_related(Prefetch(
             "listings", queryset=Listing.objects.select_related("skill").prefetch_related("contributions__match"),
         ))
@@ -141,9 +142,11 @@ def detail(request, slug):
         "shows_place":      shows_place,
         "place_name":       place_name,
         "place_point":      place_point,
-        "projects":         projects.current(),
-        # The ambassador also sees archived and ended projects, to bring one back
-        "past_projects":    projects.exclude(pk__in=projects.current()).order_by("-updated_at")[:10] if is_ambassador else [],
+        "events":         events.current(),
+        # What the ambassador can add: one button per kind
+        "event_kinds":    event_kind_buttons(),
+        # The ambassador also sees archived and ended events, to bring one back
+        "past_events":    events.exclude(pk__in=events.current()).order_by("-updated_at")[:10] if is_ambassador else [],
         "is_ambassador":    is_ambassador,
         "photos":           photos,
         "hero_image":       hero_image,
@@ -160,17 +163,17 @@ def detail(request, slug):
             l.display_title for l in skill_offers(request.user).select_related("skill")
         ) if request.user.is_authenticated else "",
         "help_wish":        help_wish,
-        # What the volunteer form offers to bring along: open needs of current projects
+        # What the volunteer form offers to bring along: open needs of current events
         # and the ambassador's gift wishes
-        "bring_projects":   [(p, needs) for p in projects.current() if (needs := [n for n in p.needs() if not n.is_done])],
+        "bring_events":   [(p, needs) for p in events.current() if (needs := [n for n in p.needs() if not n.is_done])],
         "bring_wishes":     _community_wishes(community),
     })
 
 
 def _community_wishes(community):
-    """The community's wishes for things outside its projects that are still open."""
+    """The community's wishes for things outside its events that are still open."""
     return list(
-        Listing.objects.of(community).open().filter(type=Listing.TYPE_WISH, project=None, kind__in=Listing.THING_KINDS)
+        Listing.objects.of(community).open().filter(type=Listing.TYPE_WISH, event=None, kind__in=Listing.THING_KINDS)
         .order_by("-updated_at")
     )
 
@@ -186,7 +189,7 @@ def volunteer_request(request, community_slug):
 
     import datetime
     from django.utils import timezone
-    from gift_economy.matches.models import Match, VolunteerDetails
+    from gift_economy.matches.models import Match, StayDetails
     from gift_economy.matches.emails import notify_match_created
 
     volunteer_mode       = request.POST.get("volunteer_mode", "")
@@ -214,7 +217,7 @@ def volunteer_request(request, community_slug):
     )
     vr.target = community
     vr.save()
-    VolunteerDetails.objects.create(
+    StayDetails.objects.create(
         match                 = vr,
         volunteer_mode        = volunteer_mode,
         practice_skills       = practice_skills,
@@ -224,11 +227,11 @@ def volunteer_request(request, community_slug):
         stay_to               = stay_to,
     )
 
-    # Needs of the community's projects and its wishes they bring along
+    # Needs of the community's events and its wishes they bring along
     from gift_economy.gifts import units
     from gift_economy.matches.models import Contribution
     needs = Listing.objects.of(community).current().filter(
-        type=Listing.TYPE_WISH, pk__in=request.POST.getlist("need"), project__isnull=False,
+        type=Listing.TYPE_WISH, pk__in=request.POST.getlist("need"), event__isnull=False,
     ).prefetch_related("contributions__match")
     wishes = [listing for listing in _community_wishes(community) if listing.pk in request.POST.getlist("listing")]
     Contribution.objects.bulk_create([
@@ -406,10 +409,10 @@ def update(request, slug):
 
 def _search_q(q):
     """Communities whose name, description or place match the search, or one of whose
-    current offers and wishes (skills you can learn there, what its projects need) or
-    current projects does ("rocket stove" finds the community building one)."""
-    from projects.models import Project
-    projects = Project.objects.current().filter(Q(title__icontains=q) | Q(description__icontains=q))
+    current offers and wishes (skills you can learn there, what its events need) or
+    current events does ("rocket stove" finds the community building one)."""
+    from events.models import Event
+    events = Event.objects.current().filter(Q(title__icontains=q) | Q(description__icontains=q))
     listings = Listing.objects.current().filter(community__isnull=False).filter(
         Q(title__icontains=q) | Q(description__icontains=q) | skill_name_q(q)
     )
@@ -418,12 +421,12 @@ def _search_q(q):
         | Q(description__icontains=q)
         | Q(location_name__icontains=q)
         | Q(pk__in=listings.values("community_id"))
-        | Q(pk__in=projects.values("community_id"))
+        | Q(pk__in=events.values("community_id"))
     )
 
 
 def _skill_offers():
-    """A community's skills you can learn there (also in its current projects), for its card."""
+    """A community's skills you can learn there (also in its current events), for its card."""
     return Prefetch(
         "listings",
         queryset=Listing.objects.current().filter(type=Listing.TYPE_OFFER, kind=Listing.KIND_SKILL)
@@ -432,13 +435,13 @@ def _skill_offers():
     )
 
 
-def _current_projects():
-    """A community's current projects for its list card: dated ones by start, ongoing last."""
-    from projects.models import Project
+def _current_events():
+    """A community's current events for its list card: dated ones by start, ongoing last."""
+    from events.models import Event
     return Prefetch(
-        "projects",
-        queryset=Project.objects.current().order_by(F("starts_on").asc(nulls_last=True), "title"),
-        to_attr="current_projects",
+        "events",
+        queryset=Event.objects.current().order_by(F("starts_on").asc(nulls_last=True), "title"),
+        to_attr="current_events",
     )
 
 
@@ -537,7 +540,7 @@ def community_list_partial(request):
     HTML partial for the list modal — HTMX swaps into #community-modal-list.
 
     Supports:
-        q         full-text search (name, description, location, skills, current projects)
+        q         full-text search (name, description, location, skills, current events)
         country   ISO country code filter (exact, from CountryField)
         type      community type filter (repeatable)
         status    community status filter (repeatable)
@@ -546,7 +549,7 @@ def community_list_partial(request):
                   nearest-first so the user naturally sees close ones first.
         page      page number for infinite scroll (default 1)
     """
-    qs = _base_qs(request, require_location=False).prefetch_related(_skill_offers(), "photos", _current_projects())
+    qs = _base_qs(request, require_location=False).prefetch_related(_skill_offers(), "photos", _current_events())
 
     # ── Proximity sorting ─────────────────────────────────────────────
     # When the user clicks "near me", the browser sends location=lat,lon.
@@ -590,7 +593,7 @@ def community_suggest(request):
         q   partial search term (min 2 chars)
 
     Returns JSON list: [{value, type}]
-    where type is one of 'name' | 'location' | 'skill' | 'project' | 'text'.
+    where type is one of 'name' | 'location' | 'skill' | 'event' | 'text'.
     """
     q = request.GET.get("q", "").strip()
     if len(q) < 2:
@@ -629,10 +632,10 @@ def community_suggest(request):
         if len(suggestions) >= 8:
             break
 
-    # Current projects ("Rocket stove")
-    from projects.models import Project
-    for title in Project.objects.current().filter(title__icontains=q).values_list("title", flat=True)[:5]:
-        add(title, "project")
+    # Current events ("Rocket stove")
+    from events.models import Event
+    for title in Event.objects.current().filter(title__icontains=q).values_list("title", flat=True)[:5]:
+        add(title, "event")
 
     # Skills attached to a Community
     for skill in Skill.objects.filter(skill_name_q(q, ""), listings__community__isnull=False).distinct()[:5]:

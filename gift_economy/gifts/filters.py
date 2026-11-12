@@ -26,7 +26,7 @@ _TYPE_QUERIES = {
     "offer": Q(type=Listing.TYPE_OFFER),
     "wish": Q(type=Listing.TYPE_WISH),
     "skill": Q(kind__in=Listing.SKILL_KINDS),
-    "need": Q(project__isnull=False, type=Listing.TYPE_WISH),
+    "need": Q(event__isnull=False, type=Listing.TYPE_WISH),
 }
 
 
@@ -63,7 +63,7 @@ class ListingFilter(django_filters.FilterSet):
             Q(description__icontains=value) |
             Q(owner__name__icontains=value) |
             Q(community__name__icontains=value) |
-            Q(project__title__icontains=value) |
+            Q(event__title__icontains=value) |
             skill_name_q(value)
         )
 

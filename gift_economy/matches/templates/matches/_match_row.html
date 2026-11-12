@@ -17,7 +17,9 @@
       <div class="text-sm opacity-70">
         {{ match.from_user.name|default:match.from_user.email }}
       </div>
-      {% if match.target.get_match_verb %}
+      {% if match.is_coming %}
+        <div class="text-xs opacity-60 mt-0.5">{% trans "Is coming to" %}</div>
+      {% elif match.target.get_match_verb %}
         <div class="text-xs opacity-60 mt-0.5">{{ match.target.get_match_verb|capfirst }}</div>
       {% endif %}
     {% else %}
@@ -29,7 +31,7 @@
     {% if match.proposed_date %}
       <div class="text-xs opacity-60 mt-0.5">{{ match.proposed_date|date:"SHORT_DATE_FORMAT" }}</div>
     {% endif %}
-    {% with vd=match.volunteer_details %}
+    {% with vd=match.stay_details %}
       {% if vd and vd.stay_from or vd.stay_to %}
         <div class="text-xs opacity-60 mt-0.5">
           {% if vd.stay_from %}{{ vd.stay_from|date:"SHORT_DATE_FORMAT" }}{% endif %}

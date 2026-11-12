@@ -5,8 +5,8 @@
 # Replies to reference requests by email, picked up from the mailbox
 */5 * * * *  python manage.py fetch_reference_replies
 
-# Archive ended and unconfirmed projects, ask ambassadors about stale ones
-0 9 * * *    python manage.py archive_stale_projects
+# Archive ended and unconfirmed events, ask ambassadors about stale ones
+0 9 * * *    python manage.py archive_stale_events
 
 # Ask both sides of a past match for their story
 0 10 * * *   python manage.py send_reference_requests

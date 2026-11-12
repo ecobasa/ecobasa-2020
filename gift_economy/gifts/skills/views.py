@@ -32,7 +32,7 @@ def skill_list(request):
 def skill_detail(request, slug):
     """Everyone who offers a skill (people and communities) and who looks for it."""
     skill    = get_object_or_404(Skill, slug=slug)
-    listings = skill.listings.current().select_related("owner", "community", "project")
+    listings = skill.listings.current().select_related("owner", "community", "event")
     offers   = listings.filter(type=Listing.TYPE_OFFER, kind=Listing.KIND_SKILL)
     user_skills = offers.filter(community=None, available=True).order_by("owner__name")
     comm_skills = offers.exclude(community=None).order_by("community__name")

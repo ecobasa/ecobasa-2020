@@ -9,17 +9,17 @@ from django.utils.translation import gettext_lazy as _
 from users.places import approximate, town
 
 
-# Matches whose target is in one of these apps are volunteer stays: at a community, or
-# helping with one of its projects.
-STAY_APP_LABELS = ("communities", "projects")
+# Matches whose target is in one of these apps are stays: at a community, or at one of
+# its events (helping with a project, coming to a community event).
+STAY_APP_LABELS = ("communities", "events")
 
 
 class Match(models.Model):
     """A negotiation between two users over something one of them offers or wishes for
     (a gift listing: a thing, a skill, knowledge, helping hands), a stay at a community or
-    help with one of its projects. `target` is whatever is being negotiated over — a
-    Listing, Community or Project — via a generic reference, so this app never has to
-    import gifts/communities/projects models to work with it.
+    taking part in one of its events. `target` is whatever is being negotiated over — a
+    Listing, Community or Event — via a generic reference, so this app never has to
+    import gifts/communities/events models to work with it.
     """
 
     LOC_MY_PLACE = "my_place"
@@ -41,6 +41,8 @@ class Match(models.Model):
         (STATUS_DECLINED, _("Declined")),
         (STATUS_COUNTER, _("Counter-proposed")),
     ]
+    # Over: nobody acts on it any more
+    CLOSED_STATUSES = (STATUS_DECLINED,)
 
     from_user = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="matches_sent"
@@ -75,7 +77,7 @@ class Match(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     # The offers and wishes this exchange takes or brings, with how much of each
-    # (Contribution): the target listing itself, a project's needs a helper brings, a
+    # (Contribution): the target listing itself, an event's needs a helper brings, a
     # community's wishes a volunteer brings along, or another of the other side's offers
     # asked for while talking it over. They cover wishes in parts, are named in the
     # references and shown with the match.
@@ -97,13 +99,13 @@ class Match(models.Model):
 
     @property
     def is_community_stay(self):
-        """A volunteer stay happens at the community itself (also when helping with one
-        of its projects), so only its dates are open to a counter-proposal, never the place."""
+        """A stay happens at the community itself (also at one of its events), so only
+        its dates are open to a counter-proposal, never the place."""
         return self.content_type.app_label in STAY_APP_LABELS
 
     @property
     def community(self):
-        """The community a stay is at: the target, or the project's community."""
+        """The community a stay is at: the target, or the event's community."""
         if not self.is_community_stay:
             return None
         target = self.target
@@ -119,11 +121,29 @@ class Match(models.Model):
             if listing is not None and listing.kind != listing.KIND_OTHER:
                 return listing.kind_label, listing.kind_icon, listing.colour
             return _("Gift"), "fa-gift", "bg-primary"
-        if model == "project":
-            return _("Project"), "fa-person-digging", "bg-green"
+        # A target with kinds of its own (an event) says what it is
+        own_kind = getattr(self.target, "get_match_kind", None)
+        if own_kind is not None:
+            return own_kind()
         if model == "community":
             return _("Volunteer stay"), "fa-campground", "bg-green"
         return _("Match"), "fa-handshake", "bg-primary"
+
+    @property
+    def is_coming(self):
+        """Someone said they come to an open event: accepted at once, nobody answers."""
+        details = getattr(self, "stay_details", None)
+        return details is not None and details.is_coming
+
+    @property
+    def people(self):
+        """How many people a stay is for: who asked and those they bring."""
+        details = getattr(self, "stay_details", None)
+        return details.people if details is not None else 1
+
+    @property
+    def is_closed(self):
+        return self.status in self.CLOSED_STATUSES
 
     def _extras(self):
         """The contributions beyond what the match is about (its target listing)."""
@@ -131,7 +151,7 @@ class Match(models.Model):
         return [c for c in self.contributions.all() if c.listing_id != target_id]
 
     def brings(self):
-        """The wishes it helps with besides its target: a project's needs a helper or
+        """The wishes it helps with besides its target: an event's needs a helper or
         volunteer brings, a community's wishes brought along. Each with how much."""
         return [c for c in self._extras() if c.listing.is_wish]
 
@@ -153,7 +173,7 @@ class Match(models.Model):
         counter = self._counter_period()
         if counter:
             return counter.counter_stay_from, counter.counter_stay_to
-        details = getattr(self, "volunteer_details", None)
+        details = getattr(self, "stay_details", None)
         if details:
             return details.stay_from, details.stay_to
         return None, None
@@ -279,7 +299,7 @@ class MatchMessage(models.Model):
     counter_lat = models.FloatField(null=True, blank=True)
     counter_lon = models.FloatField(null=True, blank=True)
     counter_date = models.DateTimeField(null=True, blank=True)
-    # Counter-proposed stay period, for community stays (see VolunteerDetails.stay_from/to)
+    # Counter-proposed stay period, for community stays (see StayDetails.stay_from/to)
     counter_stay_from = models.DateTimeField(null=True, blank=True)
     counter_stay_to = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -332,23 +352,33 @@ class MatchMessage(models.Model):
         return self.match.place_is_rough(self._counter_side())
 
 
-class VolunteerDetails(models.Model):
-    """Volunteer-only extra fields that don't generalize to gifts/skills matches."""
+class StayDetails(models.Model):
+    """What only a stay has, at a community or one of its events: its days, how many
+    people come, and for volunteers the skills they offer or want to practise."""
 
-    match = models.OneToOneField(Match, on_delete=models.CASCADE, related_name="volunteer_details")
-    volunteer_mode = models.CharField(max_length=20, blank=True)  # 'offer' | 'wish'
+    # Said "I'm coming" to an open event: accepted at once, nobody answers
+    MODE_COME = "come"
+
+    match = models.OneToOneField(Match, on_delete=models.CASCADE, related_name="stay_details")
+    volunteer_mode = models.CharField(max_length=20, blank=True)  # 'offer' | 'wish' | 'come'
     stay_from = models.DateTimeField(null=True, blank=True)
     stay_to = models.DateTimeField(null=True, blank=True)
+    # Who asked and those they bring (children, friends without an account)
+    people = models.PositiveSmallIntegerField(_("People coming"), default=1)
     practice_skills = models.TextField(blank=True)
     practice_skill_level = models.CharField(max_length=20, blank=True)
     sender_skills = models.TextField(blank=True)
 
     class Meta:
-        verbose_name = _("Volunteer Details")
-        verbose_name_plural = _("Volunteer Details")
+        verbose_name = _("Stay details")
+        verbose_name_plural = _("Stay details")
 
     def __str__(self):
-        return f"Volunteer details for {self.match}"
+        return f"Stay details for {self.match}"
+
+    @property
+    def is_coming(self):
+        return self.volunteer_mode == self.MODE_COME
 
     @property
     def practice_skills_list(self):
@@ -520,7 +550,7 @@ def _name(user):
 class Suggestion(models.Model):
     """Something of someone else's that fits something of yours, found by the matching
     (matching.py) as soon as either was saved: their gift offer for your wish, their wish
-    for your offer, a project that needs your skill, a person with the skill your project
+    for your offer, an event that needs your skill, a person with the skill your event
     or your wish asks for. Each pair is suggested to both sides, each within their own
     distance (User.match_radius)."""
 
@@ -534,7 +564,7 @@ class Suggestion(models.Model):
     ]
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="suggestions")
-    # Their own thing it fits: a gift listing, skill, skill wish or project need
+    # Their own thing it fits: a gift listing, skill, skill wish or event need
     own_type = models.ForeignKey(ContentType, on_delete=models.CASCADE, related_name="+")
     own_id = models.CharField(max_length=255)
     own = GenericForeignKey("own_type", "own_id")
@@ -547,7 +577,7 @@ class Suggestion(models.Model):
     )
     KIND_GIFT = "gift"
     KIND_SKILLS = "skills"
-    # Things (gifts, and materials and tools for projects) or skills (and knowledge)
+    # Things (gifts, and materials and tools for events) or skills (and knowledge)
     KIND_CHOICES = [(KIND_GIFT, _("Gifts")), (KIND_SKILLS, _("Skills"))]
 
     kind = models.CharField(max_length=10, choices=KIND_CHOICES, default=KIND_GIFT)
@@ -581,8 +611,8 @@ class Suggestion(models.Model):
         other = self.other
         if other is None or self.other_model != "listing":
             return "fa-handshake-angle"
-        if other.project_id and other.is_wish:
-            return "fa-person-digging"
+        if other.event_id and other.is_wish:
+            return other.event.kind_icon
         if other.kind == other.KIND_OTHER:
             return "fa-gift" if other.is_offer else "fa-heart"
         return other.kind_icon
@@ -596,9 +626,9 @@ class Suggestion(models.Model):
         if self.other_model != "listing":
             return str(other)
         title = f"{other.display_title} ({other.amount})" if other.amount else other.display_title
-        if other.project_id and other.is_wish:
+        if other.event_id and other.is_wish:
             return _("%(project)s at %(community)s needs: %(title)s") % {
-                "project": other.project.title, "community": other.community.name, "title": title,
+                "project": other.event.title, "community": other.community.name, "title": title,
             }
         if other.community_id:
             if other.is_offer:
@@ -629,20 +659,20 @@ class Suggestion(models.Model):
 
     @property
     def title_html(self):
-        """The text with links: a project need's project to its page and its community to
+        """The text with links: an event need's event to its page and its community to
         its profile, a community's wish to the community, anything else to the thing."""
         other = self.other
         if other is None:
             return ""
         link = '<a href="{}" class="font-semibold hover:underline">{}</a>'
-        if self.other_model == "listing" and other.project_id and other.is_wish:
-            project = other.project
+        if self.other_model == "listing" and other.event_id and other.is_wish:
+            event = other.event
             title = f"{other.display_title} ({other.amount})" if other.amount else other.display_title
             return format_html(
                 escape(_("%(project)s at %(community)s needs: %(title)s")).replace("%(project)s", "{project}")
                 .replace("%(community)s", "{community}").replace("%(title)s", "{title}"),
-                project=format_html(link, project.get_absolute_url(), project.title),
-                community=format_html(link, project.community.get_absolute_url(), project.community.name),
+                project=format_html(link, event.get_absolute_url(), event.title),
+                community=format_html(link, event.community.get_absolute_url(), event.community.name),
                 title=title,
             )
         if self.other_model == "listing" and other.community_id and other.is_wish:
@@ -664,8 +694,8 @@ class Suggestion(models.Model):
             return ""
         if self.own_type.model != "listing":
             return str(own)
-        if own.project_id:
-            return _("your project %(project)s: %(title)s") % {"project": own.project.title, "title": own.display_title}
+        if own.event_id:
+            return own.event.texts["own_need"] % {"project": own.event.title, "title": own.display_title}
         if own.is_offer and own.kind == own.KIND_SKILL:
             return _("your skill: %(skill)s") % {"skill": own.display_title}
         template = _("your offer: %(title)s") if own.is_offer else _("your wish: %(title)s")
@@ -673,12 +703,12 @@ class Suggestion(models.Model):
 
     @property
     def url(self):
-        """The thing's page: a project need on its project's page."""
+        """The thing's page: an event need on its event's page."""
         other = self.other
         if other is None:
             return ""
-        if self.other_model == "listing" and other.project_id and other.is_wish:
-            return f"{other.project.get_absolute_url()}#need-{other.pk}"
+        if self.other_model == "listing" and other.event_id and other.is_wish:
+            return f"{other.event.get_absolute_url()}#need-{other.pk}"
         return other.get_absolute_url()
 
     @property
@@ -688,13 +718,13 @@ class Suggestion(models.Model):
 
     @property
     def action_url(self):
-        """Where to act on it: the offer form for a project need, the volunteer form for a
+        """Where to act on it: the offer form for an event need, the volunteer form for a
         community's wish for a skill, else the thing's page (where it can be asked for or
         offered)."""
         other = self.other
         if self.other_model == "listing" and other is not None and other.is_wish:
-            if other.project_id:
-                return f"{reverse('projects:offer_help', args=[other.project_id])}?need={other.pk}"
+            if other.event_id:
+                return f"{other.event.url('offer_help')}?need={other.pk}"
             if other.community_id and other.skill_id:
                 return f"{other.community.get_absolute_url()}?help={other.skill.slug}"
         return self.url

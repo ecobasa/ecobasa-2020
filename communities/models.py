@@ -159,7 +159,7 @@ class Community(UniqueSlugMixin, models.Model):
     def shows_place_to(self, user):
         """Whether `user` sees its exact place, address and phone number: everyone if
         it's public, else its members and those whose stay (also with one of its
-        projects) was accepted."""
+        events) was accepted."""
         if self.location_public:
             return True
         if not user.is_authenticated:
@@ -169,8 +169,8 @@ class Community(UniqueSlugMixin, models.Model):
         from django.contrib.contenttypes.models import ContentType
         from gift_economy.matches.models import Match
         stays = Q(content_type=ContentType.objects.get_for_model(Community), object_id=str(self.pk)) | Q(
-            content_type__app_label="projects", content_type__model="project",
-            object_id__in=[str(pk) for pk in self.projects.values_list("pk", flat=True)],
+            content_type__app_label="events", content_type__model="event",
+            object_id__in=[str(pk) for pk in self.events.values_list("pk", flat=True)],
         )
         return Match.objects.filter(stays, from_user=user, status=Match.STATUS_ACCEPTED).exists()
 

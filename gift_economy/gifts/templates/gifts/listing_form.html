@@ -23,7 +23,7 @@
       {% trans "Create new Offer or Wish" %}
     {% endif %}
   </h1>
-  {% if community %}<p class="text-sm"><i class="fa fa-home mr-1"></i>{% blocktrans with name=community.name %}For {{ name }}{% endblocktrans %}{% if listing.project %} · <a href="{{ listing.project.get_absolute_url }}" class="underline">{{ listing.project.title }}</a>{% endif %}</p>{% endif %}
+  {% if community %}<p class="text-sm"><i class="fa fa-home mr-1"></i>{% blocktrans with name=community.name %}For {{ name }}{% endblocktrans %}{% if listing.event %} · <a href="{{ listing.event.get_absolute_url }}" class="underline">{{ listing.event.title }}</a>{% endif %}</p>{% endif %}
 
   {# Which fields show depends on the kind: things have a title, amount and categories; a skill names the skill, with a level #}
   <form enctype="multipart/form-data" method="post" class="w-full form-control-w-full space-y-4"
@@ -102,7 +102,7 @@
       </label>
     </div>
     {# An amount for things, and for a project's needs ("2 people") #}
-    <div class="flex gap-4" x-show="isThing || {{ form.instance.project_id|yesno:'true,false' }}">
+    <div class="flex gap-4" x-show="isThing || {{ form.instance.event_id|yesno:'true,false' }}">
       <div class="w-1/2 sm:w-1/3">{{ form.quantity|as_crispy_field }}</div>
       {# Tools and vehicles are counted in pieces #}
       <div class="w-1/2 sm:w-1/3" x-show="!['tool', 'vehicle'].includes(kind)">{{ form.unit|as_crispy_field }}</div>

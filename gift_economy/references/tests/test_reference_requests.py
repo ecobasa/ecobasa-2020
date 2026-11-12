@@ -12,7 +12,7 @@ from PIL import Image
 
 from communities.models import Community
 from gift_economy.gifts.models import Listing
-from gift_economy.matches.models import Match, MatchMessage, VolunteerDetails
+from gift_economy.matches.models import Match, MatchMessage, StayDetails
 from gift_economy.gifts.skills.models import Skill
 from gift_economy.gifts.testing import skill_offer, skill_wish
 from notifications.models import Notification
@@ -60,7 +60,7 @@ def gift_match(owner, requester):
 @pytest.fixture
 def stay(owner, requester):
     match = _match(Community.objects.create(name="Goat Farm", owner=owner), requester, owner, days_ago=40)
-    VolunteerDetails.objects.create(match=match, stay_to=timezone.now() - timedelta(days=2))
+    StayDetails.objects.create(match=match, stay_to=timezone.now() - timedelta(days=2))
     return match
 
 
@@ -73,7 +73,7 @@ def _photo(name="photo.jpg", size=(3000, 2000)):
 @pytest.mark.django_db
 class TestWhenToAsk:
     def test_after_the_stay(self, stay):
-        assert reference_due_at(stay) == stay.volunteer_details.stay_to + timedelta(days=1)
+        assert reference_due_at(stay) == stay.stay_details.stay_to + timedelta(days=1)
 
     def test_after_the_agreed_date(self, gift_match):
         gift_match.proposed_date = timezone.now() - timedelta(days=3)
@@ -113,13 +113,13 @@ class TestSendReferenceRequests:
         assert REPLY_MARKER not in mailoutbox[0].body
 
     def test_not_before_the_stay_ended(self, stay):
-        stay.volunteer_details.stay_to = timezone.now() + timedelta(days=3)
-        stay.volunteer_details.save()
+        stay.stay_details.stay_to = timezone.now() + timedelta(days=3)
+        stay.stay_details.save()
         assert send_reference_requests() == 0
 
     def test_not_about_long_past_matches(self, stay):
-        stay.volunteer_details.stay_to = timezone.now() - timedelta(days=60)
-        stay.volunteer_details.save()
+        stay.stay_details.stay_to = timezone.now() - timedelta(days=60)
+        stay.stay_details.save()
         assert send_reference_requests() == 0
 
     def test_not_about_pending_matches(self, stay):
@@ -242,7 +242,7 @@ class TestWhatItWasAbout:
         assert mail.subject.startswith("Your stay at Goat Farm: how was it?")
         assert "Your stay at Goat Farm" in mail.body
         assert "You wrote: “Hi”" in mail.body
-        assert stay.volunteer_details.stay_to.strftime("%Y") in mail.body
+        assert stay.stay_details.stay_to.strftime("%Y") in mail.body
         page = Client().get(_request_url(stay, requester)).content.decode()
         assert "Your stay at Goat Farm" in page
 

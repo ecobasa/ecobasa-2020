@@ -1,6 +1,7 @@
-from datetime import date, timedelta
+from datetime import date, time, timedelta
 
 import pytest
+from django.contrib.gis.geos import Point
 from django.core import mail
 from django.test import Client
 from django.urls import reverse
@@ -8,7 +9,7 @@ from django.utils import timezone, translation
 
 from communities.models import Community
 from gift_economy.gifts.models import Listing, ListingCategory
-from gift_economy.matches.models import Match, MatchMessage, VolunteerDetails
+from gift_economy.matches.models import Match, MatchMessage, StayDetails
 from notifications.models import Notification
 from gift_economy.references.models import match_reference_subject
 from gift_economy.references.reference_requests import exchange_text
@@ -17,8 +18,8 @@ from templatetags.site_tags import ago
 from users.models import User
 
 from gift_economy.matches.calendar import stays_of
-from ..freshness import archive_stale_projects, make_confirm_token
-from ..models import Project
+from ..freshness import archive_stale_events, make_confirm_token
+from ..models import Event
 from gift_economy.gifts.models import skill_offers
 from gift_economy.gifts.testing import need, skill_offer, skill_wish
 from gift_economy.matches.models import Contribution
@@ -27,8 +28,8 @@ from gift_economy.matches.models import Contribution
 @pytest.fixture(autouse=True)
 def site(settings):
     settings.SITE_URL = "https://ecobasa.test"
-    settings.PROJECT_STALE_DAYS = 60
-    settings.PROJECT_ARCHIVE_GRACE_DAYS = 14
+    settings.EVENT_STALE_DAYS = 60
+    settings.EVENT_ARCHIVE_GRACE_DAYS = 14
 
 
 @pytest.fixture
@@ -49,7 +50,7 @@ def community(ambassador):
 @pytest.fixture
 def project(community):
     today = timezone.localdate()
-    project = Project.objects.create(
+    project = Event.objects.create(
         community=community, title="Rocket stove",
         starts_on=today + timedelta(days=5), ends_on=today + timedelta(days=40), food_provided=True,
     )
@@ -68,7 +69,7 @@ def _offer(project, user, status=Match.STATUS_PENDING, needs=(), stay=(None, Non
     match = Match(from_user=user, recipient=project.community.owner, message="Hi", status=status)
     match.target = project
     match.save()
-    VolunteerDetails.objects.create(match=match, stay_from=stay[0], stay_to=stay[1])
+    StayDetails.objects.create(match=match, stay_from=stay[0], stay_to=stay[1])
     for listing in needs:
         Contribution.objects.create(match=match, listing=listing)
     return match
@@ -96,8 +97,8 @@ def _formset(needs, prefix="needs"):
 def test_ambassador_creates_project_with_needs_and_known_skills_are_linked(community, ambassador):
     SkillTaxonomy.objects.create(names={"en": "Carpentry", "de": "Zimmerei"})
     category = ListingCategory.objects.get(slug="building-renovation")
-    response = _client(ambassador).post(reverse("projects:create", args=[community.slug]), {
-        "title": "Guest house", "starts_on": "2030-03-01", "ends_on": "2030-04-30", "food_provided": "on",
+    response = _client(ambassador).post(reverse("events:create", args=[community.slug]), {
+        "kind": "project", "title": "Guest house", "starts_on": "2030-03-01", "ends_on": "2030-04-30", "food_provided": "on",
         **_formset([
             {"kind": "hands", "title": "Zimmerei", "quantity": "2"},
             {"kind": "hands", "title": "Helping hands"},
@@ -105,7 +106,7 @@ def test_ambassador_creates_project_with_needs_and_known_skills_are_linked(commu
             {"kind": "hands", "title": ""},  # an empty row added and left alone
         ]),
     })
-    project = Project.objects.get(title="Guest house")
+    project = Event.objects.get(title="Guest house")
     assert response.status_code == 302
     assert project.created_by == ambassador
     needs = list(project.needs())
@@ -126,11 +127,11 @@ def test_ambassador_creates_project_with_needs_and_known_skills_are_linked(commu
 @pytest.mark.django_db
 def test_skills_to_learn_are_listed_on_the_community(community, ambassador):
     SkillTaxonomy.objects.create(names={"en": "Clay building", "de": "Lehmbau"})
-    response = _client(ambassador).post(reverse("projects:create", args=[community.slug]), {
-        "title": "Cob oven", "skills_to_learn": "Lehmbau, Welding", **_formset([]),
+    response = _client(ambassador).post(reverse("events:create", args=[community.slug]), {
+        "kind": "project", "title": "Cob oven", "skills_to_learn": "Lehmbau, Welding", **_formset([]),
     })
     assert response.status_code == 302
-    project = Project.objects.get(title="Cob oven")
+    project = Event.objects.get(title="Cob oven")
     assert sorted(s.skill.slug for s in project.skills_to_learn()) == ["clay-building", "welding"]
     # They are the community's skills while the project runs: it can be found (and
     # suggested) for them
@@ -139,10 +140,10 @@ def test_skills_to_learn_are_listed_on_the_community(community, ambassador):
     assert "What you can learn here" in page and "Welding" in page
 
     # Editing shows them in the editor's language
-    form_page = _client(ambassador).get(reverse("projects:edit", args=[project.pk])).content.decode()
+    form_page = _client(ambassador).get(project.url("edit")).content.decode()
     assert 'value="Lehmbau, ' in form_page
-    _client(ambassador).post(reverse("projects:edit", args=[project.pk]), {
-        "title": "Cob oven", "skills_to_learn": "Clay building", **_formset([]),
+    _client(ambassador).post(project.url("edit"), {
+        "kind": "project", "title": "Cob oven", "skills_to_learn": "Clay building", **_formset([]),
     })
     assert [s.skill.slug for s in project.skills_to_learn()] == ["clay-building"]
     assert skill_offers(community).count() == 1
@@ -153,10 +154,11 @@ def test_skills_to_learn_are_listed_on_the_community(community, ambassador):
 
 
 @pytest.mark.django_db
-def test_project_list_finds_projects_by_skill_to_learn(project):
-    skill_offer(project.community, Skill.objects.create(name="Welding", slug="welding"), project=project)
-    content = Client().get(reverse("projects:list") + "?q=weld").content.decode()
+def test_nearby_list_finds_events_by_skill_to_learn(project, helper):
+    skill_offer(project.community, Skill.objects.create(name="Welding", slug="welding"), event=project)
+    content = _client(helper).get(reverse("events:nearby") + "?q=weld").content.decode()
     assert "Rocket stove" in content
+    assert "Rocket stove" not in _client(helper).get(reverse("events:nearby") + "?q=pottery").content.decode()
 
 
 @pytest.mark.django_db
@@ -166,7 +168,7 @@ def test_communities_are_found_by_their_current_projects(community, project):
     content = Client().get(list_url + "?q=rocket").content.decode()
     assert "Sonnenhof" in content and "Elsewhere" not in content
     suggestions = Client().get(reverse("communities:api-suggest") + "?q=rocket").json()
-    assert {"value": "Rocket stove", "type": "project"} in suggestions
+    assert {"value": "Rocket stove", "type": "event"} in suggestions
     # Not by an archived one
     project.archived_at = timezone.now()
     project.save()
@@ -175,8 +177,8 @@ def test_communities_are_found_by_their_current_projects(community, project):
 
 @pytest.mark.django_db
 def test_community_cards_list_current_projects_with_dates(community, project):
-    ongoing = Project.objects.create(community=community, title="Food forest care")
-    Project.objects.create(community=community, title="Old barn", archived_at=timezone.now())
+    ongoing = Event.objects.create(community=community, title="Food forest care")
+    Event.objects.create(community=community, title="Old barn", archived_at=timezone.now())
     content = Client().get(reverse("communities:api-list")).content.decode()
     assert project.get_absolute_url() in content and ongoing.get_absolute_url() in content
     assert "Old barn" not in content
@@ -188,31 +190,32 @@ def test_community_cards_list_current_projects_with_dates(community, project):
 @pytest.mark.django_db
 def test_only_the_ambassador_creates_and_edits(community, project, helper):
     client = _client(helper)
-    assert client.get(reverse("projects:create", args=[community.slug])).status_code == 403
-    assert client.get(reverse("projects:edit", args=[project.pk])).status_code == 403
-    assert client.post(reverse("projects:archive", args=[project.pk])).status_code == 403
+    assert client.get(reverse("events:create", args=[community.slug])).status_code == 403
+    assert client.get(project.url("edit")).status_code == 403
+    assert client.post(project.url("archive")).status_code == 403
 
 
 @pytest.mark.django_db
 def test_end_before_start_is_rejected(community, ambassador):
-    response = _client(ambassador).post(reverse("projects:create", args=[community.slug]), {
-        "title": "Backwards", "starts_on": "2030-03-01", "ends_on": "2030-02-01", **_formset([]),
+    response = _client(ambassador).post(reverse("events:create", args=[community.slug]), {
+        "kind": "project", "title": "Backwards", "starts_on": "2030-03-01", "ends_on": "2030-02-01", **_formset([]),
     })
     assert response.status_code == 200
-    assert not Project.objects.filter(title="Backwards").exists()
+    assert list(response.context["form"].errors) == ["ends_on"]
+    assert not Event.objects.filter(title="Backwards").exists()
 
 
 @pytest.mark.django_db
 def test_editing_removes_needs_and_marks_the_project_fresh(project, ambassador):
-    Project.objects.filter(pk=project.pk).update(updated_at=timezone.now() - timedelta(days=30))
+    Event.objects.filter(pk=project.pk).update(updated_at=timezone.now() - timedelta(days=30))
     masonry, clay = project.needs()
     data = {
-        "title": "Rocket stove", "starts_on": project.starts_on.isoformat(), "ends_on": project.ends_on.isoformat(),
+        "kind": "project", "title": "Rocket stove", "starts_on": project.starts_on.isoformat(), "ends_on": project.ends_on.isoformat(),
         "needs-TOTAL_FORMS": "2", "needs-INITIAL_FORMS": "2", "needs-MIN_NUM_FORMS": "0", "needs-MAX_NUM_FORMS": "1000",
         "needs-0-random_id": masonry.pk, "needs-0-kind": "hands", "needs-0-title": "Masonry", "needs-0-DELETE": "on",
         "needs-1-random_id": clay.pk, "needs-1-kind": "material", "needs-1-title": "Clay", "needs-1-quantity": "300", "needs-1-unit": "kg",
     }
-    response = _client(ambassador).post(reverse("projects:edit", args=[project.pk]), data)
+    response = _client(ambassador).post(project.url("edit"), data)
     assert response.status_code == 302, (response.context["form"].errors, response.context["formset"].errors)
     project.refresh_from_db()
     assert [(n.title, n.amount) for n in project.needs()] == [("Clay", "300 kg")]
@@ -223,61 +226,59 @@ def test_editing_removes_needs_and_marks_the_project_fresh(project, ambassador):
 
 
 @pytest.mark.django_db
-def test_list_offers_starting_a_project_to_ambassadors_only(community, ambassador, helper):
-    create_url = reverse("projects:create", args=[community.slug])
-    assert create_url not in Client().get(reverse("projects:list")).content.decode()
-    client = Client()
-    client.force_login(helper)
-    assert create_url not in client.get(reverse("projects:list")).content.decode()
-
-    client.force_login(ambassador)
-    assert create_url in client.get(reverse("projects:list")).content.decode()
-
-    # With more communities they pick which one the project is for
-    other = Community.objects.create(name="Waldgarten", owner=ambassador)
-    content = client.get(reverse("projects:list")).content.decode()
-    assert create_url in content and reverse("projects:create", args=[other.slug]) in content
-
-
-@pytest.mark.django_db
-def test_list_shows_current_projects_only(community, project):
+def test_nearby_list_is_for_logged_in_people_and_shows_current_events_only(community, project, helper):
+    assert Client().get(reverse("events:nearby")).status_code == 302
     today = timezone.localdate()
-    Project.objects.create(community=community, title="Ongoing garden")
-    Project.objects.create(community=community, title="Old roof", ends_on=today - timedelta(days=1))
-    Project.objects.create(community=community, title="Shelved", archived_at=timezone.now())
-    content = Client().get(reverse("projects:list")).content.decode()
+    Event.objects.create(community=community, title="Ongoing garden")
+    Event.objects.create(community=community, title="Old roof", ends_on=today - timedelta(days=1))
+    Event.objects.create(community=community, title="Shelved", archived_at=timezone.now())
+    # Without a place in the profile it lists events everywhere
+    response = _client(helper).get(reverse("events:nearby"))
+    content = response.content.decode()
     assert "Rocket stove" in content and "Ongoing garden" in content
     assert "Old roof" not in content and "Shelved" not in content
-
-    # The archived (and ended) ones have their own filter
-    response = Client().get(reverse("projects:list"), {"show": "archived"})
-    content = response.content.decode()
-    assert "Old roof" in content and "Shelved" in content and "Rocket stove" not in content
-    assert [(str(c.label), c.count, c.active) for c in response.context["shows"]] == [
-        ("Current", 2, False), ("Archived", 2, True),
-    ]
-    assert 'name="show" value="archived"' in content  # the search stays in the archive
+    assert response.context["wheres"] == [] and not response.context["has_place"]
 
 
 @pytest.mark.django_db
-def test_list_filters_by_kind_of_open_need(community, project):
-    Project.objects.create(community=community, title="Nothing needed")
-    content = Client().get(reverse("projects:list"), {"kind": "material"}).content.decode()
-    assert "Rocket stove" in content and "Nothing needed" not in content
-    project.listings.filter(type="wish").filter(kind=Listing.KIND_MATERIAL).update(covered_at=timezone.now())
-    content = Client().get(reverse("projects:list"), {"kind": "material"}).content.decode()
-    assert "Rocket stove" not in content
-    kinds = Client().get(reverse("projects:list"), {"kind": "hands"}).context["kinds"]
-    assert [(str(c.label), c.count, c.active) for c in kinds][:2] == [("All", 2, False), ("Helping hands", 1, True)]
+def test_nearby_list_is_nearest_first_within_the_distance_one_looks_in(community, project, ambassador, helper):
+    Community.objects.filter(pk=community.pk).update(location=Point(13.4, 52.5), location_public=True)
+    far = Community.objects.create(name="Waldgarten", owner=ambassador, location=Point(2.35, 48.85), location_public=True)
+    Event.objects.create(community=far, title="Forest garden days")
+    User.objects.filter(pk=helper.pk).update(location=Point(13.0, 52.4), match_radius=100)
+    client = _client(helper)
+    response = client.get(reverse("events:nearby"))
+    assert [event.title for event in response.context["events"]] == ["Rocket stove"]
+    assert response.context["events"][0].km < 50
+    response = client.get(reverse("events:nearby"), {"where": "everywhere"})
+    assert [event.title for event in response.context["events"]] == ["Rocket stove", "Forest garden days"]
+
+
+@pytest.mark.django_db
+def test_nearby_list_filters_by_kind(community, project, helper):
+    Event.objects.create(community=community, title="Open day", kind=Event.KIND_COMMUNITY_EVENT)
+    response = _client(helper).get(reverse("events:nearby"), {"kind": "community_event"})
+    assert [event.title for event in response.context["events"]] == ["Open day"]
+    with translation.override("en"):
+        assert [(str(c.label), c.count, c.active) for c in response.context["kinds"]] == [
+            ("All", 2, False), ("Projects", 1, False), ("Community events", 1, True),
+        ]
+
+
+@pytest.mark.django_db
+def test_there_is_no_menu_entry_and_no_global_list(project):
+    assert Client().get("/projects/").status_code == 404
+    content = Client().get(project.get_absolute_url()).content.decode()
+    assert f'href="{reverse("events:nearby")}"' not in content
 
 
 @pytest.mark.django_db
 def test_community_page_shows_its_projects(community, project, ambassador):
     content = Client().get(community.get_absolute_url()).content.decode()
     assert "Rocket stove" in content
-    assert reverse("projects:create", args=[community.slug]) not in content
+    assert reverse("events:create", args=[community.slug]) not in content
     content = _client(ambassador).get(community.get_absolute_url()).content.decode()
-    assert reverse("projects:create", args=[community.slug]) in content
+    assert reverse("events:create", args=[community.slug]) in content
 
 
 # ── Offering help ─────────────────────────────────────────────────────
@@ -286,7 +287,7 @@ def test_community_page_shows_its_projects(community, project, ambassador):
 @pytest.mark.django_db
 def test_offering_help_creates_a_stay_match_with_the_needs(project, helper, ambassador):
     masonry, clay = project.needs()
-    response = _client(helper).post(reverse("projects:offer_help", args=[project.pk]), {
+    response = _client(helper).post(project.url("offer_help"), {
         f"need_{masonry.pk}": "on", f"need_{clay.pk}": "on", f"quantity_{clay.pk}": "50",
         "stay_from": project.starts_on.isoformat(), "stay_to": (project.starts_on + timedelta(days=6)).isoformat(),
         "message": "I can build and bring clay.",
@@ -309,9 +310,9 @@ def test_offering_help_creates_a_stay_match_with_the_needs(project, helper, amba
 
 @pytest.mark.django_db
 def test_no_offers_on_ended_projects_or_from_the_ambassador(project, helper, ambassador):
-    assert _client(ambassador).get(reverse("projects:offer_help", args=[project.pk])).status_code == 302
-    Project.objects.filter(pk=project.pk).update(archived_at=timezone.now())
-    _client(helper).post(reverse("projects:offer_help", args=[project.pk]), {"message": "Hi"})
+    assert _client(ambassador).get(project.url("offer_help")).status_code == 302
+    Event.objects.filter(pk=project.pk).update(archived_at=timezone.now())
+    _client(helper).post(project.url("offer_help"), {"message": "Hi"})
     assert not Match.objects.exists()
 
 
@@ -325,7 +326,7 @@ def test_need_status_follows_offers_and_the_ambassador(project, helper, ambassad
     masonry = Listing.objects.get(pk=masonry.pk)
     assert masonry.status == Listing.STATUS_PROMISED and masonry.promised_by() == [helper]
 
-    url = reverse("projects:toggle_need", args=[project.pk, masonry.pk])
+    url = project.url("toggle_need", masonry.pk)
     _client(ambassador).post(url)
     assert Listing.objects.get(pk=masonry.pk).status == Listing.STATUS_COVERED
     _client(ambassador).post(url)
@@ -407,9 +408,9 @@ def test_calendar_lists_open_needs(community, project, ambassador):
 @pytest.mark.django_db
 def test_calendar_lists_needs_of_all_coming_projects_whatever_the_month(community, project, ambassador):
     today = timezone.localdate()
-    later = Project.objects.create(community=community, title="Greenhouse", starts_on=today + timedelta(days=200))
+    later = Event.objects.create(community=community, title="Greenhouse", starts_on=today + timedelta(days=200))
     need(later, kind=Listing.KIND_MATERIAL, title="Glass")
-    over = Project.objects.create(community=community, title="Old roof", ends_on=today - timedelta(days=1))
+    over = Event.objects.create(community=community, title="Old roof", ends_on=today - timedelta(days=1))
     need(over, kind=Listing.KIND_MATERIAL, title="Tiles")
     response = _client(ambassador).get(reverse("matches:calendar", args=[community.slug]), {"month": "2000-01"})
     assert [p.title for p, _ in response.context["open_needs"]] == ["Rocket stove", "Greenhouse"]
@@ -456,57 +457,57 @@ def test_calendar_survives_a_bad_month(community, ambassador):
 
 @pytest.mark.django_db
 def test_ended_projects_are_archived_without_looking_updated(community):
-    ended = Project.objects.create(community=community, title="Done", ends_on=timezone.localdate() - timedelta(days=1))
+    ended = Event.objects.create(community=community, title="Done", ends_on=timezone.localdate() - timedelta(days=1))
     updated_at = ended.updated_at
-    assert archive_stale_projects() == (1, 0)
+    assert archive_stale_events() == (1, 0)
     ended.refresh_from_db()
     assert ended.archived_at is not None and ended.updated_at == updated_at
 
 
 @pytest.mark.django_db
 def test_stale_projects_are_asked_about_then_archived(community):
-    stale = Project.objects.create(community=community, title="Garden")
-    Project.objects.filter(pk=stale.pk).update(updated_at=timezone.now() - timedelta(days=61))
+    stale = Event.objects.create(community=community, title="Garden")
+    Event.objects.filter(pk=stale.pk).update(updated_at=timezone.now() - timedelta(days=61))
 
-    assert archive_stale_projects() == (0, 1)
+    assert archive_stale_events() == (0, 1)
     assert mail.outbox[0].to == ["amb@example.com"]
     assert "Garden" in mail.outbox[0].subject and "noch aktuell" in mail.outbox[0].subject  # her language
     assert make_confirm_token(stale)[:10] in mail.outbox[0].body
     # Asked only once
-    assert archive_stale_projects() == (0, 0)
+    assert archive_stale_events() == (0, 0)
 
     later = timezone.now() + timedelta(days=15)
-    assert archive_stale_projects(now=later) == (1, 0)
-    assert Project.objects.get(pk=stale.pk).archived_at is not None
+    assert archive_stale_events(now=later) == (1, 0)
+    assert Event.objects.get(pk=stale.pk).archived_at is not None
 
 
 @pytest.mark.django_db
 def test_one_click_confirms_and_brings_back(community):
-    stale = Project.objects.create(
+    stale = Event.objects.create(
         community=community, title="Garden", archived_at=timezone.now(), stale_reminder_sent_at=timezone.now(),
     )
-    Project.objects.filter(pk=stale.pk).update(updated_at=timezone.now() - timedelta(days=80))
-    response = Client().get(reverse("projects:confirm_by_email", args=[make_confirm_token(stale)]))
+    Event.objects.filter(pk=stale.pk).update(updated_at=timezone.now() - timedelta(days=80))
+    response = Client().get(stale.url("confirm_by_email", make_confirm_token(stale)))
     assert response.status_code == 302
     stale.refresh_from_db()
     assert stale.archived_at is None and stale.stale_reminder_sent_at is None
     assert timezone.now() - stale.updated_at < timedelta(minutes=1)
-    assert Client().get(reverse("projects:confirm_by_email", args=["forged"])).status_code == 400
+    assert Client().get(stale.url("confirm_by_email", "forged")).status_code == 400
 
 
 @pytest.mark.django_db
 def test_an_ended_project_is_not_brought_back_by_confirming(community, ambassador):
-    ended = Project.objects.create(
+    ended = Event.objects.create(
         community=community, title="Done", ends_on=date(2020, 1, 1), archived_at=timezone.now(),
     )
-    _client(ambassador).post(reverse("projects:confirm", args=[ended.pk]))
-    assert Project.objects.get(pk=ended.pk).archived_at is not None
+    _client(ambassador).post(ended.url("confirm"))
+    assert Event.objects.get(pk=ended.pk).archived_at is not None
 
 
 @pytest.mark.django_db
 def test_last_seen_is_kept_up_to_date(helper):
     assert helper.last_active is None
-    _client(helper).get(reverse("projects:list"))
+    _client(helper).get(reverse("events:nearby"))
     helper.refresh_from_db()
     assert helper.last_seen is not None and helper.last_active == helper.last_seen
 
@@ -560,7 +561,7 @@ def test_offer_form_only_lists_needs_still_missing(project, helper):
     match = _offer(project, helper, Match.STATUS_ACCEPTED)
     Contribution.objects.create(listing=masonry, match=match)
     other = User.objects.create_user(email="other@example.com", password="x")
-    response = _client(other).get(reverse("projects:offer_help", args=[project.pk]))
+    response = _client(other).get(project.url("offer_help"))
     assert [need.title for need, _box, _amount in response.context["form"].need_rows()] == ["Clay"]
 
 
@@ -583,10 +584,10 @@ def test_open_needs_show_on_the_gifts_map(mapped):
 
     def needs(params=None):
         features = Client().get(reverse("gifts:api-markers"), params or {}).json()["features"]
-        return [f["properties"] for f in features if f["properties"]["project"]]
+        return [f["properties"] for f in features if f["properties"]["event"]]
 
     [clay] = needs()  # covered ones drop off
-    assert (clay["title"], clay["amount"], clay["project"], clay["community_name"]) == ("Clay", "200 kg", "Rocket stove", "Sonnenhof")
+    assert (clay["title"], clay["amount"], clay["event"], clay["community_name"]) == ("Clay", "200 kg", "Rocket stove", "Sonnenhof")
     assert clay["url"] == project.listings.get(title="Clay").get_absolute_url()
 
     # With the "need" or "wish" type or no type filter; outside the viewport not at all
@@ -609,7 +610,7 @@ def test_gifts_filters_apply_to_needs(mapped):
 
     def needs_of(params):
         features = Client().get(reverse("gifts:api-markers"), params).json()["features"]
-        return sorted(f["properties"]["title"] for f in features if f["properties"]["project"])
+        return sorted(f["properties"]["title"] for f in features if f["properties"]["event"])
 
     assert needs_of({"categories": building.pk}) == ["Clay"]
     assert needs_of({"categories": garden.pk}) == []
@@ -687,3 +688,159 @@ def test_project_page_shows_references_from_anything_part_of_it(community, proje
     assert sorted(r.text for r in response.context["references"]) == ["Brought the clay", "Great build days", "Strong hands"]
     content = response.content.decode()
     assert "References from this project" in content and "Unrelated visit" not in content
+
+
+# ── Events: kinds, addresses, hours, just coming ──────────────────────
+
+
+@pytest.fixture
+def open_day(community):
+    day = timezone.localdate() + timedelta(days=10)
+    return Event.objects.create(
+        community=community, kind=Event.KIND_COMMUNITY_EVENT, title="Open day", is_open=True,
+        starts_on=day, ends_on=day, starts_at=time(14, 0), ends_at=time(18, 0),
+    )
+
+
+@pytest.mark.django_db
+def test_an_event_lives_under_its_community_with_a_slug_of_its_own(community, ambassador, project):
+    assert project.get_absolute_url() == f"/communities/{community.slug}/events/rocket-stove/"
+    # The same title again, and titles that would be a path beside an event's page
+    again = Event.objects.create(community=community, title="Rocket stove")
+    new = Event.objects.create(community=community, title="New")
+    assert (again.slug, new.slug) == ("rocket-stove-2", "new-2")
+    # Another community can use the same slug; the address stays when the title changes
+    other = Community.objects.create(name="Waldgarten", owner=ambassador)
+    assert Event.objects.create(community=other, title="Rocket stove").slug == "rocket-stove"
+    project.title = "Rocket mass heater"
+    project.save()
+    assert project.slug == "rocket-stove"
+    assert Client().get(project.get_absolute_url()).status_code == 200
+    assert Client().get(f"/communities/{other.slug}/events/rocket-stove-2/").status_code == 404
+
+
+@pytest.mark.django_db
+def test_a_kind_sets_what_a_new_event_starts_with(community, ambassador):
+    client = _client(ambassador)
+    create_url = reverse("events:create", args=[community.slug])
+    assert client.get(create_url).context["form"].initial["is_open"] is False
+    form = client.get(create_url, {"kind": "community_event"}).context["form"]
+    assert form.initial["is_open"] is True and form.instance.kind == Event.KIND_COMMUNITY_EVENT
+    # Every setting can be changed: a community event people ask first for
+    client.post(create_url, {"kind": "community_event", "title": "Seminar", **_formset([])})
+    seminar = Event.objects.get(title="Seminar")
+    assert seminar.kind == Event.KIND_COMMUNITY_EVENT and not seminar.is_open
+    with translation.override("en"):
+        assert str(seminar.kind_label) == "Community event"
+        assert seminar.get_match_kind() == ("Community event", "fa-people-group", "bg-green")
+
+
+@pytest.mark.django_db
+def test_an_open_day_with_hours(community, ambassador):
+    response = _client(ambassador).post(reverse("events:create", args=[community.slug]), {
+        "kind": "community_event", "title": "Open day", "is_open": "on",
+        "starts_on": "2030-06-01", "ends_on": "2030-06-01", "starts_at": "14:00", "ends_at": "18:00",
+        **_formset([]),
+    })
+    assert response.status_code == 302
+    event = Event.objects.get(title="Open day")
+    assert (event.starts_at, event.ends_at, event.is_open, event.is_one_day) == (time(14, 0), time(18, 0), True, True)
+    with translation.override("en"):
+        content = Client().get(event.get_absolute_url()).content.decode()
+    assert "14:00–18:00" in content and "Community event" in content
+    # No needs and nothing provided: those sections are left out
+    assert "What is needed" not in content and "What the community provides" not in content
+
+    # Hours the wrong way round on one day
+    response = _client(ambassador).post(reverse("events:create", args=[community.slug]), {
+        "kind": "community_event", "title": "Backwards", "starts_on": "2030-06-01", "ends_on": "2030-06-01",
+        "starts_at": "18:00", "ends_at": "14:00", **_formset([]),
+    })
+    assert response.status_code == 200 and not Event.objects.filter(title="Backwards").exists()
+
+
+@pytest.mark.django_db
+def test_just_coming_needs_no_answer_and_shows_in_the_calendar(community, open_day, helper, ambassador):
+    mail.outbox.clear()
+    with translation.override("en"):
+        content = _client(helper).get(open_day.get_absolute_url()).content.decode()
+    assert "I&#x27;m coming" in content or "I'm coming" in content
+    response = _client(helper).post(open_day.url("come"), {"people": "3"})
+    assert response.status_code == 302
+    match = Match.objects.get(from_user=helper)
+    assert match.target == open_day and match.recipient == ambassador
+    assert match.status == Match.STATUS_ACCEPTED and match.is_coming and match.people == 3
+    assert timezone.localdate(match.stay_details.stay_from) == open_day.starts_on
+    # Nobody has to answer, and the host gets no message per person
+    assert mail.outbox == [] and not Notification.objects.filter(recipient=ambassador).exists()
+
+    # Pressing it twice doesn't count twice
+    _client(helper).post(open_day.url("come"), {"people": "3"})
+    assert Match.objects.filter(from_user=helper).count() == 1
+
+    # The page lists who comes; the calendar counts the people on that day
+    with translation.override("en"):
+        content = _client(ambassador).get(open_day.get_absolute_url()).content.decode()
+    assert "Who is coming" in content and "Hugo" in content and "3 people so far" in content
+    response = _client(ambassador).get(
+        reverse("matches:calendar", args=[community.slug]), {"month": open_day.starts_on.strftime("%Y-%m")},
+    )
+    day = next(d for week in response.context["weeks"] for d in week if d.date == open_day.starts_on)
+    assert day.confirmed == 3 and day.events == [open_day]
+    # Three people where there is room for two
+    assert [d.date for d in response.context["overbooked_days"]] == [open_day.starts_on]
+    assert "14:00" in response.content.decode()
+
+
+@pytest.mark.django_db
+def test_coming_can_be_taken_back(open_day, helper):
+    client = _client(helper)
+    client.post(open_day.url("come"), {"people": "2"})
+    with translation.override("en"):
+        assert "You are coming, 2 people." in client.get(open_day.get_absolute_url()).content.decode()
+    client.post(open_day.url("not_coming"))
+    assert not Match.objects.filter(from_user=helper).exists()
+
+
+@pytest.mark.django_db
+def test_just_coming_only_where_people_just_come(project, open_day, helper, ambassador):
+    # Where people ask first there is nothing to press
+    _client(helper).post(project.url("come"), {"people": "1"})
+    assert not Match.objects.exists()
+    # Not to one's own event, not to one that is over, and not without saying how many
+    _client(ambassador).post(open_day.url("come"), {"people": "1"})
+    _client(helper).post(open_day.url("come"), {"people": "0"})
+    assert not Match.objects.exists()
+    Event.objects.filter(pk=open_day.pk).update(archived_at=timezone.now())
+    _client(helper).post(open_day.url("come"), {"people": "1"})
+    assert not Match.objects.exists()
+    assert Client().post(open_day.url("come"), {"people": "1"}).status_code == 302  # to the login
+
+
+@pytest.mark.django_db
+def test_who_is_coming_names_people_to_logged_in_visitors_only(open_day, helper):
+    _client(helper).post(open_day.url("come"), {"people": "2"})
+    with translation.override("en"):
+        content = Client().get(open_day.get_absolute_url()).content.decode()
+    assert "2 people so far" in content and "Hugo" not in content
+
+
+@pytest.mark.django_db
+def test_a_visit_to_an_open_event_is_what_references_are_about(open_day, helper, ambassador):
+    _client(helper).post(open_day.url("come"), {"people": "1"})
+    match = Match.objects.get(from_user=helper)
+    assert match_reference_subject(match, helper)[0] == open_day.community
+    with translation.override("en"):
+        assert str(exchange_text(match, helper)) == "Your visit to Open day at Sonnenhof"
+        assert str(match.kind[0]) == "Community event"
+
+
+@pytest.mark.django_db
+def test_texts_say_the_kinds_word(community, open_day, project):
+    Event.objects.filter(pk=open_day.pk).update(updated_at=timezone.now() - timedelta(days=61))
+    mail.outbox.clear()
+    assert archive_stale_events() == (0, 1)
+    assert "Gemeinschafts-Event" in mail.outbox[0].subject or "community event" in mail.outbox[0].subject
+    with translation.override("en"):
+        assert str(open_day.texts["ended"]) == "This community event is over."
+        assert str(project.texts["ended"]) == "This project has ended."

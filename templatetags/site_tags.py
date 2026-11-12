@@ -43,6 +43,6 @@ def freshness(value):
     age = timezone.now() - value
     if age <= timedelta(days=14):
         return "fresh"
-    if age <= timedelta(days=settings.PROJECT_STALE_DAYS):
+    if age <= timedelta(days=settings.EVENT_STALE_DAYS):
         return "recent"
     return "stale"

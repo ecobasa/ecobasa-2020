@@ -50,6 +50,10 @@
 
         <div class="pt-4 pb-1 px-3 text-xs text-secondary opacity-60 uppercase tracking-wide">{% trans "Communities" %}</div>
 
+        <a href="{% url 'events:nearby' %}"
+          class="flex items-center px-3 py-2 rounded {% if request.resolver_match.namespace == 'events' and request.resolver_match.url_name == 'nearby' %}bg-secondary text-primary font-semibold{% else %}text-secondary hover:bg-secondary hover:text-primary{% endif %}">
+          <i class="fa-solid fa-calendar-day mr-2"></i>{% trans "Events near you" %}
+        </a>
         <a href="{% url 'matches:list' %}?type=volunteer"
           class="flex items-center px-3 py-2 rounded {% if request_type == 'volunteer' %}bg-secondary text-primary font-semibold{% else %}text-secondary hover:bg-secondary hover:text-primary{% endif %}">
           <i class="fa-solid fa-campground mr-2"></i>{% trans "Volunteer Visits" %}
