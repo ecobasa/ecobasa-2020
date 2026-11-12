@@ -82,6 +82,7 @@ def notify_match_response(match, actor, http_request=None, message="", counter=N
     tag_map = {
         Match.STATUS_ACCEPTED: Notification.TAG_ACCEPTED,
         Match.STATUS_DECLINED: Notification.TAG_DECLINED,
+        Match.STATUS_WITHDRAWN: Notification.TAG_WITHDRAWN,
         Match.STATUS_COUNTER:  Notification.TAG_COUNTER,
     }
     notification = _notify(match, recipient, actor, tag_map.get(match.status, ""))

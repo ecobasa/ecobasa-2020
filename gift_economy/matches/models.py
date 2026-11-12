@@ -35,14 +35,17 @@ class Match(models.Model):
     STATUS_ACCEPTED = "accepted"
     STATUS_DECLINED = "declined"
     STATUS_COUNTER = "counter"
+    # The one who asked took it back, before or after it was accepted
+    STATUS_WITHDRAWN = "withdrawn"
     STATUS_CHOICES = [
         (STATUS_PENDING, _("Pending")),
         (STATUS_ACCEPTED, _("Accepted")),
         (STATUS_DECLINED, _("Declined")),
         (STATUS_COUNTER, _("Counter-proposed")),
+        (STATUS_WITHDRAWN, _("Withdrawn")),
     ]
     # Over: nobody acts on it any more
-    CLOSED_STATUSES = (STATUS_DECLINED,)
+    CLOSED_STATUSES = (STATUS_DECLINED, STATUS_WITHDRAWN)
 
     from_user = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="matches_sent"

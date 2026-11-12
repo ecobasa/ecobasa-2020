@@ -172,7 +172,7 @@ class TestMatchLists:
 
         context = client.get("/matches/?type=gift&box=received").context
         assert list(context["page"]) == [match]
-        assert [(f.count, f.active) for f in context["filters"]] == [(1, True), (0, False), (1, False), (2, False)]
+        assert [(f.count, f.active) for f in context["filters"]] == [(1, True), (0, False), (1, False), (0, False), (2, False)]
 
         assert list(client.get("/matches/?type=gift&box=received&status=declined").context["page"]) == [done]
         assert len(client.get("/matches/?type=gift&box=received&status=all").context["page"].object_list) == 2
@@ -412,3 +412,101 @@ def test_the_one_who_asked_doesnt_read_your_offer(owner, requester, match):
     # Their own requests say whom they went to
     page = _client_for(requester).get("/matches/?box=sent", HTTP_ACCEPT_LANGUAGE="en").content.decode()
     assert "To owner@example.com" in page and "your offer" not in page
+
+
+# ── The one who asked changes their mind ─────────────────────────────
+
+
+@pytest.mark.django_db
+class TestWithdrawing:
+    def test_withdrawing_a_waiting_request(self, owner, requester, stay, mailoutbox):
+        from notifications.models import Notification
+
+        content = _client_for(requester).get(stay.get_absolute_url()).content.decode()
+        assert 'value="withdraw"' in content
+        _client_for(requester).post(stay.get_absolute_url(), {"action": "withdraw"})
+        stay.refresh_from_db()
+        assert stay.status == Match.STATUS_WITHDRAWN and stay.is_closed
+        assert stay.thread.get().status_to == Match.STATUS_WITHDRAWN
+        notification = owner.notifications.get()
+        assert notification.tag == Notification.TAG_WITHDRAWN
+        assert notification.text == "requester@example.com withdrew their request: Green Valley"
+        assert len(mailoutbox) == 1
+
+        # Closed: the host can't accept it any more, nobody can withdraw or counter it again
+        _client_for(owner).post(stay.get_absolute_url(), {"action": "accept"})
+        _client_for(owner).post(stay.get_absolute_url(), {"action": "counter", "counter_stay_from": "2027-06-01"})
+        _client_for(requester).post(stay.get_absolute_url(), {"action": "withdraw"})
+        stay.refresh_from_db()
+        assert stay.status == Match.STATUS_WITHDRAWN and stay.thread.count() == 1
+        content = _client_for(owner).get(stay.get_absolute_url()).content.decode()
+        assert 'value="accept"' not in content and "Withdrawn by the one who asked" in content
+
+    def test_after_acceptance_it_takes_a_few_words(self, owner, requester, stay):
+        stay.status = Match.STATUS_ACCEPTED
+        stay.save()
+        _client_for(requester).post(stay.get_absolute_url(), {"action": "withdraw"})
+        stay.refresh_from_db()
+        assert stay.status == Match.STATUS_ACCEPTED
+        _client_for(requester).post(stay.get_absolute_url(), {"action": "withdraw", "body": "I broke my leg, sorry!"})
+        stay.refresh_from_db()
+        assert stay.status == Match.STATUS_WITHDRAWN
+        assert stay.thread.get().body == "I broke my leg, sorry!"
+
+    def test_only_the_one_who_asked_withdraws(self, owner, stay):
+        content = _client_for(owner).get(stay.get_absolute_url()).content.decode()
+        assert 'value="withdraw"' not in content
+        _client_for(owner).post(stay.get_absolute_url(), {"action": "withdraw"})
+        stay.refresh_from_db()
+        assert stay.status == Match.STATUS_PENDING
+
+    def test_withdrawn_ones_have_their_own_filter(self, requester, stay):
+        stay.status = Match.STATUS_WITHDRAWN
+        stay.save()
+        response = _client_for(requester).get("/matches/?type=volunteer&box=sent&status=withdrawn")
+        assert [m.pk for m in response.context["page"].object_list] == [stay.pk]
+
+    def test_a_withdrawn_stay_leaves_the_calendar(self, owner, requester, stay):
+        from gift_economy.matches.calendar import stays_of
+
+        assert len(stays_of(stay.target)[0]) == 1
+        _client_for(requester).post(stay.get_absolute_url(), {"action": "withdraw"})
+        assert stays_of(stay.target) == ([], [])
+
+
+@pytest.mark.django_db
+class TestOtherDatesFromTheOneWhoAsked:
+    def test_proposing_other_dates_for_a_waiting_stay(self, owner, requester, stay):
+        from django.utils import timezone
+
+        content = _client_for(requester).get(stay.get_absolute_url()).content.decode()
+        assert 'name="counter_stay_from"' in content and 'name="counter_location_type"' not in content
+        _client_for(requester).post(stay.get_absolute_url(), {
+            "action": "counter", "counter_stay_from": "2027-07-01", "counter_stay_to": "2027-07-08",
+        })
+        stay.refresh_from_db()
+        assert stay.status == Match.STATUS_COUNTER
+        assert "other dates for their stay at" in owner.notifications.get().text
+        # The host decides on them, the one who asked waits
+        assert 'value="accept"' in _client_for(owner).get(stay.get_absolute_url()).content.decode()
+        assert 'value="accept"' not in _client_for(requester).get(stay.get_absolute_url()).content.decode()
+        _client_for(owner).post(stay.get_absolute_url(), {"action": "accept"})
+        stay.refresh_from_db()
+        assert stay.status == Match.STATUS_ACCEPTED
+        assert [timezone.localdate(day).isoformat() for day in stay.stay_period()] == ["2027-07-01", "2027-07-08"]
+
+    def test_an_accepted_stay_can_be_moved_and_waits_for_the_host_again(self, owner, requester, stay):
+        stay.status = Match.STATUS_ACCEPTED
+        stay.save()
+        _client_for(requester).post(stay.get_absolute_url(), {
+            "action": "counter", "counter_stay_from": "2027-08-01", "counter_stay_to": "2027-08-05",
+        })
+        stay.refresh_from_db()
+        assert stay.status == Match.STATUS_COUNTER
+
+    def test_not_on_a_declined_stay(self, requester, stay):
+        stay.status = Match.STATUS_DECLINED
+        stay.save()
+        _client_for(requester).post(stay.get_absolute_url(), {"action": "counter", "counter_stay_from": "2027-08-01"})
+        stay.refresh_from_db()
+        assert stay.status == Match.STATUS_DECLINED

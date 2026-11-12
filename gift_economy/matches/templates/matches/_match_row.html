@@ -4,6 +4,7 @@
      {% if match.status == 'accepted' %}border-green
      {% elif match.status == 'declined' %}border-red
      {% elif match.status == 'counter' %}border-primary
+     {% elif match.status == 'withdrawn' %}border-brown border-opacity-40
      {% else %}border-yellow{% endif %}">
   <div class="flex-none">
     <i class="fa-solid {{ match.target.get_match_icon }} text-2xl text-primary opacity-70"></i>
@@ -54,6 +55,10 @@
     {% elif match.status == "declined" %}
       <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-red text-secondary">
         <i class="fa-solid fa-handshake-simple-slash"></i>{% trans "Declined" %}
+      </span>
+    {% elif match.status == "withdrawn" %}
+      <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-brown text-secondary">
+        <i class="fa-solid fa-rotate-left"></i>{% trans "Withdrawn" %}
       </span>
     {% elif match.status == "counter" %}
       <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-primary text-secondary">

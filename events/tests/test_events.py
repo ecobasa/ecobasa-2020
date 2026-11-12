@@ -844,3 +844,19 @@ def test_texts_say_the_kinds_word(community, open_day, project):
     with translation.override("en"):
         assert str(open_day.texts["ended"]) == "This community event is over."
         assert str(project.texts["ended"]) == "This project has ended."
+
+
+@pytest.mark.django_db
+def test_who_withdrew_can_ask_again(project, helper):
+    match = _offer(project, helper, Match.STATUS_WITHDRAWN)
+    content = _client(helper).get(project.get_absolute_url()).content.decode()
+    assert "You already offered help." not in content
+    assert match not in _client(project.manager).get(project.get_absolute_url()).context["offers"]
+
+
+@pytest.mark.django_db
+def test_who_withdrew_can_come_again(open_day, helper):
+    _client(helper).post(open_day.url("come"), {"people": "1"})
+    Match.objects.filter(from_user=helper).update(status=Match.STATUS_WITHDRAWN)
+    _client(helper).post(open_day.url("come"), {"people": "2"})
+    assert Match.objects.get(from_user=helper, status=Match.STATUS_ACCEPTED).people == 2

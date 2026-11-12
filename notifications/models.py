@@ -30,6 +30,7 @@ class Notification(models.Model):
     TAG_ACCEPTED    = "accepted"
     TAG_DECLINED    = "declined"
     TAG_COUNTER     = "counter"
+    TAG_WITHDRAWN   = "withdrawn"
     TAG_MESSAGE     = "message"
     TAG_SKILL_NUDGE = "skill_nudge"
     TAG_REFERENCE   = "reference"
@@ -98,9 +99,14 @@ class Notification(models.Model):
                         if self.actor_id == self.match.from_user_id
                         else _("%(actor)s declined your request: %(title)s"))
         elif self.tag == self.TAG_COUNTER:
-            template = (_("%(actor)s suggested other dates for your stay at: %(title)s")
-                        if self.match.is_community_stay
-                        else _("%(actor)s suggested another time or place for: %(title)s"))
+            if not self.match.is_community_stay:
+                template = _("%(actor)s suggested another time or place for: %(title)s")
+            elif self.actor_id == self.match.from_user_id:
+                template = _("%(actor)s suggested other dates for their stay at: %(title)s")
+            else:
+                template = _("%(actor)s suggested other dates for your stay at: %(title)s")
+        elif self.tag == self.TAG_WITHDRAWN:
+            template = _("%(actor)s withdrew their request: %(title)s")
         elif self.tag == self.TAG_MESSAGE:
             template = _("%(actor)s sent you a message about: %(title)s")
         else:
@@ -151,6 +157,7 @@ class Notification(models.Model):
             self.TAG_ACCEPTED:    "fa-handshake-simple",
             self.TAG_DECLINED:    "fa-handshake-simple-slash",
             self.TAG_COUNTER:     "fa-hand-holding-hand",
+            self.TAG_WITHDRAWN:   "fa-rotate-left",
             self.TAG_MESSAGE:     "fa-comment",
             self.TAG_SKILL_NUDGE: "fa-graduation-cap",
             self.TAG_REFERENCE:   "fa-comments",

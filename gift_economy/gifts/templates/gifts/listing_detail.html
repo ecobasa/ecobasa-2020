@@ -278,6 +278,7 @@
               {% if req.status == 'accepted' %}border-green bg-green bg-opacity-5
               {% elif req.status == 'declined' %}border-red bg-red bg-opacity-5
               {% elif req.status == 'counter' %}border-yellow bg-yellow bg-opacity-5
+              {% elif req.status == 'withdrawn' %}border-brown border-opacity-40 opacity-70
               {% else %}border bg-secondary{% endif %}">
             {% if req.from_user.image %}
               <img src="{{ req.from_user.image.url }}" alt="" class="w-8 h-8 rounded-full object-cover flex-shrink-0">
@@ -297,6 +298,8 @@
                 <span class="pill bg-green text-xs">{% trans "Accepted" %}</span>
               {% elif req.status == 'declined' %}
                 <span class="pill bg-red text-xs">{% trans "Declined" %}</span>
+              {% elif req.status == 'withdrawn' %}
+                <span class="pill bg-brown text-secondary text-xs">{% trans "Withdrawn" %}</span>
               {% elif req.status == 'counter' %}
                 <span class="pill bg-primary text-xs">{% trans "Counter" %}</span>
               {% endif %}
