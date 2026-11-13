@@ -188,11 +188,7 @@
         <div class="text-center mt-6">
           <h3>{% trans "Gift-economy Ambassador" %}</h3>
           <a href="{{ manager.get_absolute_url }}" class="block mb-4">
-            {% if manager.image %}
-              <img src="{{ manager.image.url }}" class="rounded-full h-20 w-20 mx-auto mb-2 object-cover" alt="{{ manager.name }}">
-            {% else %}
-              <i class="fa fa-user text-6xl text-primary rounded-full border border-dashed border-primary p-10 mt-15"></i>
-            {% endif %}
+            {% include "_avatar.html" with who=manager large=True classes="mx-auto mb-2" %}
             <div class="font-serif font-bold text-xl">{{ manager.name|default:manager.email }}</div>
           </a>
           <div class="text-sm -mt-2">{% include "events/_freshness.html" with when=manager.last_active %}</div>

@@ -6,15 +6,7 @@
   {% else %}border-brown bg-secondary bg-opacity-5{% endif %}">
   {% with person=ref.person|default:ref.author %}
   <header class="flex items-center gap-3 mb-2">
-    <a href="{{ person.get_absolute_url }}" class="flex-shrink-0">
-      {% if person.image %}
-        <img src="{{ person.image.url }}" alt="" class="w-8 h-8 rounded-full object-cover">
-      {% else %}
-        <div class="w-8 h-8 rounded-full bg-primary bg-opacity-20 flex items-center justify-center">
-          <i class="fa fa-user text-xs text-primary"></i>
-        </div>
-      {% endif %}
-    </a>
+    <a href="{{ person.get_absolute_url }}" class="flex-shrink-0 text-primary">{% include "_avatar.html" with who=person %}</a>
     <div class="flex-1 min-w-0">
       <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
         <a href="{{ person.get_absolute_url }}" class="text-sm font-semibold text-primary">{{ person.name|default:person.username }}</a>

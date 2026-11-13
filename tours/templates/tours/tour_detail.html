@@ -200,11 +200,7 @@
               {% with person=traveller.user %}
               <div>
                 <a href="{{ person.get_absolute_url }}" class="block hover:text-primary">
-                  {% if person.image %}
-                    <img src="{{ person.image.url }}" class="rounded-full h-20 w-20 mx-auto mb-2 object-cover" alt="{{ person.name }}">
-                  {% else %}
-                    <span class="rounded-full h-20 w-20 mx-auto mb-2 border border-dashed border-primary flex items-center justify-center"><i class="fa fa-user text-3xl text-primary"></i></span>
-                  {% endif %}
+                  {% include "_avatar.html" with who=person large=True classes="mx-auto mb-2" %}
                   <div class="font-serif font-bold text-xl">{{ person.name }}</div>
                 </a>
                 {% if traveller.is_organiser %}<div class="text-xs opacity-70">{% trans "Organiser" %}</div>{% endif %}

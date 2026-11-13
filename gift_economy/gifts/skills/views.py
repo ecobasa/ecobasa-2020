@@ -35,7 +35,7 @@ def skill_detail(request, slug):
     listings = skill.listings.current().select_related("owner", "community", "event")
     offers   = listings.filter(type=Listing.TYPE_OFFER, kind=Listing.KIND_SKILL)
     user_skills = offers.filter(community=None, available=True).order_by("owner__name")
-    comm_skills = offers.exclude(community=None).order_by("community__name")
+    comm_skills = offers.exclude(community=None).prefetch_related("community__photos").order_by("community__name")
     wishes   = listings.filter(type=Listing.TYPE_WISH).order_by("-updated_at")
     user_has_skill = request.user.is_authenticated and listings.filter(owner=request.user, community=None).exists()
     return render(request, "skills/skill_detail.html", {

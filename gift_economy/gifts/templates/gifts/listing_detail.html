@@ -171,12 +171,7 @@
         {# What the tour is, who travels and where it goes (tours_tags) #}
         {% tour_box holder %}
       {% elif listing.community %}
-        {% with photo=holder.photos.all|first %}
-        <a href="{{ holder.get_absolute_url }}" class="block">
-          {% if photo %}<img src="{{ photo.image.url }}" alt="" class="w-20 h-20 rounded-full object-cover mx-auto">
-          {% else %}<div class="w-20 h-20 rounded-full bg-green flex items-center justify-center text-secondary mx-auto"><i class="fa-solid {{ holder.get_type_icon }} text-3xl"></i></div>{% endif %}
-        </a>
-        {% endwith %}
+        <a href="{{ holder.get_absolute_url }}" class="block">{% include "_avatar.html" with who=holder large=True classes="mx-auto" %}</a>
         <span class="pill bg-green"><i class="fa-solid {{ holder.get_type_icon }} mr-1"></i>{{ holder.get_type_display|default:_("Community") }}</span>
         <a href="{{ holder.get_absolute_url }}" class="font-serif text-primary text-lg">{{ holder.name }}</a>
         {% if request.user.is_authenticated and holder.owner %}
@@ -187,15 +182,7 @@
           <div class="text-xs"><i class="fa-regular fa-calendar mr-1"></i>{% include "events/_event_dates.html" with event=listing.event %}</div>
         {% endif %}
       {% else %}
-        <a href="{{ holder.get_absolute_url }}" class="block">
-          {% if holder.image %}
-            <img src="{{ holder.image.url }}" alt="{{ holder.name|default:holder.username }}" class="w-20 h-20 rounded-full object-cover mx-auto">
-          {% else %}
-            <div class="w-20 h-20 rounded-full bg-primary flex items-center justify-center text-secondary mx-auto">
-              <i class="fa fa-user text-3xl"></i>
-            </div>
-          {% endif %}
-        </a>
+        <a href="{{ holder.get_absolute_url }}" class="block">{% include "_avatar.html" with who=holder large=True classes="mx-auto" %}</a>
         <a href="{{ holder.get_absolute_url }}" class="font-serif text-primary">{{ holder.name|default:holder.username }}</a>
         <div class="text-xs">{% include "events/_freshness.html" with when=holder.last_active %}</div>
       {% endif %}
@@ -310,13 +297,7 @@
               {% elif req.status == 'counter' %}border-yellow bg-yellow bg-opacity-5
               {% elif req.status == 'withdrawn' %}border-brown border-opacity-40 opacity-70
               {% else %}border bg-secondary{% endif %}">
-            {% if req.from_user.image %}
-              <img src="{{ req.from_user.image.url }}" alt="" class="w-8 h-8 rounded-full object-cover flex-shrink-0">
-            {% else %}
-              <div class="w-8 h-8 rounded-full bg-primary bg-opacity-20 flex items-center justify-center flex-shrink-0">
-                <i class="fa fa-user text-xs text-primary"></i>
-              </div>
-            {% endif %}
+            {% include "_avatar.html" with who=req.from_user %}
             <div class="flex-1 min-w-0">
               <p class="text-sm font-semibold text-primary">{{ req.from_user.name|default:req.from_user.email }}</p>
               <p class="text-xs text-brown truncate">{{ req.message }}</p>

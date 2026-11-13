@@ -39,13 +39,7 @@
                 </div>
               </div>
               <div class="flex-none flex flex-col items-center">
-                {% if part.sender and part.sender.image %}
-                  <a href="{{ part.sender.get_absolute_url }}">
-                    <img class="w-10 h-10 rounded-full object-cover" src="{{ part.sender.image.url }}" alt="{{ part.sender.get_username }}">
-                  </a>
-                {% else %}
-                  <i class="fa fa-user text-3xl text-primary rounded-full border border-dashed border-primary p-3"></i>
-                {% endif %}
+                {% if part.sender %}<a href="{{ part.sender.get_absolute_url }}">{% include "_avatar.html" with who=part.sender %}</a>{% else %}{% include "_avatar.html" with who=None %}{% endif %}
                 <div class="text-xs text-secondary mt-2 font-serif text-center">
                   {% if part.sender %}
                     <a href="{{ part.sender.get_absolute_url }}" class="hover:underline">
@@ -61,13 +55,7 @@
             {% else %}
             <div class="flex items-start gap-4">
               <div class="flex-none flex flex-col items-center">
-                {% if part.sender and part.sender.image %}
-                  <a href="{{ part.sender.get_absolute_url }}">
-                    <img class="w-10 h-10 rounded-full object-cover" src="{{ part.sender.image.url }}" alt="{{ part.sender.get_username }}">
-                  </a>
-                {% else %}
-                  <i class="fa fa-user text-3xl text-primary rounded-full border border-dashed border-primary p-3"></i>
-                {% endif %}
+                {% if part.sender %}<a href="{{ part.sender.get_absolute_url }}">{% include "_avatar.html" with who=part.sender %}</a>{% else %}{% include "_avatar.html" with who=None %}{% endif %}
                 <div class="text-xs text-secondary mt-2 font-serif text-center">
                   {% if part.sender %}
                     <a href="{{ part.sender.get_absolute_url }}" class="hover:underline">

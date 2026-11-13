@@ -9,15 +9,7 @@
       {% for m in pm_messages %}
         <li class="p-3 bg-primary rounded flex items-start gap-4">
           <div class="flex-none flex flex-col items-center">
-            {% if m.recipient and m.recipient.image %}
-              <a href="{{ m.recipient.get_absolute_url }}">
-                <img class="w-10 h-10 rounded-full object-cover" src="{{ m.recipient.image.url }}" alt="{% if m.recipient.name %}{{ m.recipient.name }}{% elif m.recipient.get_full_name %}{{ m.recipient.get_full_name }}{% elif m.recipient.get_username %}{{ m.recipient.get_username }}{% else %}{{ m.recipient.email }}{% endif %}">
-              </a>
-            {% else %}
-              <a href="{{ m.recipient.get_absolute_url }}">
-                <i class="fa fa-user text-3xl text-primary rounded-full border border-dashed border-primary p-3" title="{% if m.recipient.name %}{{ m.recipient.name }}{% elif m.recipient.get_full_name %}{{ m.recipient.get_full_name }}{% elif m.recipient.get_username %}{{ m.recipient.get_username }}{% else %}{{ m.recipient.email }}{% endif %}"></i>
-              </a>
-            {% endif %}
+            <a href="{{ m.recipient.get_absolute_url }}">{% include "_avatar.html" with who=m.recipient color="secondary" %}</a>
             <div class="text-xs text-secondary mt-2 font-serif text-center">
               {% if m.recipient %}
                 <a href="{{ m.recipient.get_absolute_url }}" class="text-secondary hover:underline">

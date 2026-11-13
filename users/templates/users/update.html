@@ -20,7 +20,7 @@
 
     {% if user_obj.image %}
     <div class="flex items-center gap-5 mb-6 p-4 bg-secondary bg-opacity-75 rounded-md shadow">
-      <img src="{{ user_obj.image.url }}" alt="" class="w-16 h-16 rounded-full object-cover flex-shrink-0">
+      {% include "_avatar.html" with who=user_obj large=True %}
       <div>
         <p class="text-sm font-semibold mb-1">{% trans "Current photo" %}</p>
         <label class="flex items-center gap-2 text-sm cursor-pointer">

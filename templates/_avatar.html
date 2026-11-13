@@ -1,0 +1,13 @@
+{# A round picture of a person, community or tour: their image, a community's first photo, else their icon in a light circle with a dashed ring, as on a profile (primary, or color="secondary" on dark ground). 40px next to a name, 140px (large) in a profile box #}
+{% with photo=who.photos.all|first %}
+  {% if who.image or photo %}
+    <img src="{% if who.image %}{{ who.image.url }}{% else %}{{ photo.image.url }}{% endif %}" alt="{% firstof who.name who.username who.title %}" loading="lazy"
+      class="{% if large %}w-[140px] h-[140px]{% else %}w-10 h-10{% endif %} rounded-full object-cover flex-shrink-0 {{ classes }}">
+  {% else %}
+    <span class="{% if large %}w-[140px] h-[140px] p-1 text-6xl{% else %}w-10 h-10 p-0.5 text-base{% endif %} flex flex-shrink-0 rounded-full border border-dashed border-current {% if color == 'secondary' %}text-secondary{% else %}text-primary{% endif %} {{ classes }}">
+      <span class="flex flex-1 items-center justify-center rounded-full {% if color == 'secondary' %}bg-secondary{% else %}bg-primary{% endif %} bg-opacity-10">
+        <i class="{% if who.get_type_icon %}fa-solid {{ who.get_type_icon }}{% elif who.stops %}fa-solid fa-route{% else %}fa fa-user{% endif %}"></i>
+      </span>
+    </span>
+  {% endif %}
+{% endwith %}

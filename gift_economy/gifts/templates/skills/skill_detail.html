@@ -34,14 +34,11 @@
       {% for us in user_skills %}
         <a href="{{ us.get_absolute_url }}"
           class="flex items-center gap-3 border rounded-lg p-3 bg-secondary hover:border-primary transition-colors">
+          {# The skill's own photo, else its holder's picture #}
           {% if us.image %}
-            <img src="{{ us.image.url }}" alt="" class="w-12 h-12 rounded-full object-cover flex-shrink-0">
-          {% elif us.owner.image %}
-            <img src="{{ us.owner.image.url }}" alt="" class="w-12 h-12 rounded-full object-cover flex-shrink-0">
+            <img src="{{ us.image.url }}" alt="" class="w-10 h-10 rounded-full object-cover flex-shrink-0">
           {% else %}
-            <div class="w-12 h-12 rounded-full bg-primary bg-opacity-20 flex items-center justify-center flex-shrink-0">
-              <i class="fa fa-user text-primary"></i>
-            </div>
+            {% include "_avatar.html" with who=us.owner %}
           {% endif %}
           <div class="min-w-0">
             <div class="font-semibold text-primary truncate">{{ us.owner.name|default:us.owner.username }}</div>
@@ -64,12 +61,20 @@
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
       {% for cs in comm_skills %}
         <a href="{{ cs.get_absolute_url }}"
-          class="block border rounded-lg p-3 bg-secondary hover:border-primary transition-colors">
-          <div class="font-semibold text-primary">{{ cs.community.name }}</div>
-          {% if cs.event %}<div class="text-xs"><i class="fa-solid {{ cs.event.kind_icon }} mr-1"></i>{{ cs.event.title }}</div>{% endif %}
-          {% if cs.description %}
-            <p class="text-xs text-brown mt-1 line-clamp-2">{{ cs.description }}</p>
+          class="flex items-center gap-3 border rounded-lg p-3 bg-secondary hover:border-primary transition-colors">
+          {# The skill's own photo, else the community's #}
+          {% if cs.image %}
+            <img src="{{ cs.image.url }}" alt="" class="w-10 h-10 rounded-full object-cover flex-shrink-0">
+          {% else %}
+            {% include "_avatar.html" with who=cs.community %}
           {% endif %}
+          <div class="min-w-0">
+            <div class="font-semibold text-primary truncate">{{ cs.community.name }}</div>
+            {% if cs.event %}<div class="text-xs"><i class="fa-solid {{ cs.event.kind_icon }} mr-1"></i>{{ cs.event.title }}</div>{% endif %}
+            {% if cs.description %}
+              <p class="text-xs text-brown mt-1 line-clamp-2">{{ cs.description }}</p>
+            {% endif %}
+          </div>
         </a>
       {% endfor %}
     </div>
