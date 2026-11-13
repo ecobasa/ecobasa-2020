@@ -109,3 +109,28 @@ def test_a_host_who_travels_along_is_asked_once_as_host(tour, organiser, farm, d
     request = ReferenceRequest.objects.get(match=stop.visit_match, user=farm.owner)
     page = Client().get(reverse("references:request", args=[request.key])).content.decode()
     assert "The whole group" in page
+
+
+def test_once_over_the_tour_page_says_how_it_went_and_whom_to_write_about(visited, organiser, farm):
+    tour = visited.tour
+    assert "How the tour went" not in Client().get(tour.get_absolute_url()).content.decode()
+    # Move the tour into the past
+    for stop in tour.stops.all():
+        stop.arrive_on -= timedelta(days=120)
+        stop.leave_on -= timedelta(days=120)
+        stop.save(update_fields=["arrive_on", "leave_on"])
+    tour.rebuild_route()
+    assert tour.is_over
+
+    otto = tour.travellers.get(user__name="Otto").user
+    page = login(otto).get(tour.get_absolute_url()).content.decode()
+    assert "How the tour went" in page and "Where it went" in page and "Write references" in page
+    assert f"{farm.get_absolute_url()}#references" in page
+    assert f"{organiser.get_absolute_url()}#references" in page
+    assert f"{otto.get_absolute_url()}#references" not in page
+    # The host writes about the group
+    page = login(farm.owner).get(tour.get_absolute_url()).content.decode()
+    assert f"{tour.get_absolute_url()}#references" in page
+    # Someone who wasn't there only reads how it went
+    page = login(person("Vera")).get(tour.get_absolute_url()).content.decode()
+    assert "How the tour went" in page and "Write references" not in page

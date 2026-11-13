@@ -23,12 +23,15 @@
       free: {{ filters.free|yesno:'true,false' }},
       fits: {{ filters.fits|yesno:'true,false' }},
       passes: {{ filters.passes|yesno:'true,false' }},
+      // Archived tours too: on by default while no current tour is listed
+      archived: {{ filters.archived|yesno:'true,false' }},
+      archivedDefault: {{ filters.archived_default|yesno:'true,false' }},
       near: '{{ request.GET.near|escapejs }}',
       country: '{{ filters.country|escapejs }}',
       loading: false,
       count: 0,
       get filterCount() {
-        return [this.show, this.from || this.until, this.learn, this.mode, this.children, this.animals, this.free, this.fits, this.passes, this.country].filter(Boolean).length;
+        return [this.show, this.from || this.until, this.learn, this.mode, this.children, this.animals, this.free, this.fits, this.passes, this.country, this.archived !== this.archivedDefault].filter(Boolean).length;
       },
       get anything() { return this.filterCount > 0 || !!this.q || !!this.near; },
       // The filters in use, as small pills to take off one by one
@@ -50,6 +53,7 @@
         if (this.free) pills.push({ key: 'free', icon: 'fa-user-plus', label: TOUR_LABELS.free });
         if (this.fits) pills.push({ key: 'fits', icon: 'fa-hands-helping', label: TOUR_LABELS.fits });
         if (this.passes) pills.push({ key: 'passes', icon: 'fa-house', label: TOUR_LABELS.passes });
+        if (this.archived && !this.archivedDefault) pills.push({ key: 'archived', icon: 'fa-box-archive', label: TOUR_LABELS.archived });
         return pills;
       },
       unset(key) {
@@ -57,7 +61,7 @@
           const name = key.slice(6);
           this.learn = this.learn.split(',').filter(n => n && n !== name).join(',');
           document.querySelectorAll('[data-tour-learn]').forEach(input => input.__tagify && input.__tagify.removeTags(name));
-        } else if (['children', 'animals', 'free', 'fits', 'passes'].includes(key)) {
+        } else if (['children', 'animals', 'free', 'fits', 'passes', 'archived'].includes(key)) {
           this[key] = false;
         } else {
           this[key] = '';
@@ -72,10 +76,11 @@
         if (this.free) params.set('free', '1');
         if (this.fits) params.set('fits', '1');
         if (this.passes) params.set('passes', '1');
+        if (this.archived !== this.archivedDefault) params.set('archived', this.archived ? '1' : '0');
         return params;
       },
       clear() {
-        Object.assign(this, { show: '', country: '', q: '', from: '', until: '', learn: '', mode: '', children: false, animals: false, free: false, fits: false, passes: false, near: '' });
+        Object.assign(this, { show: '', country: '', q: '', from: '', until: '', learn: '', mode: '', children: false, animals: false, free: false, fits: false, passes: false, near: '', archived: this.archivedDefault });
         document.querySelectorAll('[data-tour-learn]').forEach(input => input.__tagify && input.__tagify.removeAllTags());
         window.tourFiltersChanged();
       },
@@ -99,6 +104,7 @@
     children: '{% trans "Children welcome"|escapejs %}', animals: '{% trans "Animals welcome"|escapejs %}',
     free: '{% trans "Has free places"|escapejs %}',
     fits: '{% trans "Fits my skills"|escapejs %}', passes: '{% trans "Passes near me"|escapejs %}',
+    archived: '{% trans "Archived tours"|escapejs %}',
   };
   const TOUR_KINDS = { tours: '{% trans "Tours"|escapejs %}', ideas: '{% trans "Tour ideas"|escapejs %}', rides: '{% trans "Rides"|escapejs %}' };
   const TOUR_KIND_ICONS = { tours: 'fa-route', ideas: 'fa-lightbulb', rides: 'fa-people-arrows' };

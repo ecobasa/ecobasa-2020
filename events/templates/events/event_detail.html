@@ -48,9 +48,12 @@
         <div class="flex flex-wrap gap-2 mb-6">
           <a href="{% url 'events:edit' community.slug event.slug %}" class="btn"><i class="fa fa-edit mr-1"></i>{% trans "Edit" %}</a>
           {% if event.is_current %}
-            <form method="post" action="{% url 'events:confirm' community.slug event.slug %}">{% csrf_token %}
-              <button type="submit" class="btn btn-purple" title="{{ event.texts.confirm_title }}"><i class="fa fa-check mr-1"></i>{% trans "Still current" %}</button>
-            </form>
+            {# Only ongoing events are asked whether they are still current; dated ones end with their days #}
+            {% if event.is_ongoing %}
+              <form method="post" action="{% url 'events:confirm' community.slug event.slug %}">{% csrf_token %}
+                <button type="submit" class="btn btn-purple" title="{{ event.texts.confirm_title }}"><i class="fa fa-check mr-1"></i>{% trans "Still current" %}</button>
+              </form>
+            {% endif %}
             <form method="post" action="{% url 'events:archive' community.slug event.slug %}" onsubmit="return confirm('{{ event.texts.archive_question|escapejs }}')">{% csrf_token %}
               <button type="submit" class="btn btn-purple"><i class="fa-solid fa-box-archive mr-1"></i>{% trans "Archive" %}</button>
             </form>

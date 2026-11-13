@@ -109,6 +109,9 @@ def test_only_travellers_on_the_stretch_can_take_it(east, farm, project, organis
     Traveller.objects.create(tour=east, user=other, from_stop=stops[1], to_stop=stops[2])
     pair = deliveries.delivery_suggestions(east)[0]
     assert pair.bringers == [organiser.pk]
+    # The one who gets on later sees who could take it instead
+    page = login(other).get(reverse("tours:deliveries", args=[east.slug])).content.decode()
+    assert "could take it" in page and organiser.get_absolute_url() in page
     assert take(east, other, pair).status_code == 302
     assert not Delivery.objects.exists()
 

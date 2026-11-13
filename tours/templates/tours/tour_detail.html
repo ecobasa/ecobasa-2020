@@ -79,7 +79,8 @@
           <a href="{% url 'tours:edit' tour.slug %}" class="btn"><i class="fa fa-edit mr-1"></i>{% trans "Edit" %}</a>
           <a href="{% url 'tours:plan' tour.slug %}" class="btn"><i class="fa-solid fa-route mr-1"></i>{% trans "Plan the route" %}</a>
           <a href="{% url 'tours:needs' tour.slug %}" class="btn"><i class="fa-solid fa-van-shuttle mr-1"></i>{% trans "Vehicles and needs" %}</a>
-          {% if tour.is_published and tour.is_current %}
+          {# Only tour ideas are asked whether they are still current; dated tours end with their days #}
+          {% if tour.is_published and tour.is_current and tour.is_idea %}
             <form method="post" action="{% url 'tours:confirm' tour.slug %}">{% csrf_token %}
               <button type="submit" class="btn btn-purple" title="{% trans 'Say that this tour is still planned as it is' %}"><i class="fa fa-check mr-1"></i>{% trans "Still current" %}</button>
             </form>
@@ -91,6 +92,8 @@
           {% endif %}
         </div>
       {% endif %}
+
+      {% if wrap_up %}{% include "tours/_wrap_up.html" %}{% endif %}
 
       {% if tour.description %}<p>{{ tour.description|linebreaksbr }}</p>{% endif %}
 
@@ -215,20 +218,20 @@
                 <div class="flex flex-col items-center gap-1 mt-2">
                   {% if can_edit and not traveller.is_organiser %}
                     <form method="post" action="{% url 'tours:make_organiser' tour.slug traveller.pk %}">{% csrf_token %}
-                      <button type="submit" class="btn btn-purple text-xs py-0.5 px-2 w-36 text-center">{% trans "Make organiser" %}</button>
+                      <button type="submit" class="btn btn-primary text-xs py-0.5 px-2 w-44 text-center"><i class="fa-solid fa-user-gear mr-1"></i>{% trans "Make organiser" %}</button>
                     </form>
                   {% elif can_hand_over and traveller.is_organiser and traveller.user_id != tour.organiser_id %}
                     <form method="post" action="{% url 'tours:hand_over' tour.slug traveller.pk %}"
                           onsubmit="return confirm('{% blocktrans with name=person.name|default:person.email asvar question %}Hand the tour over to {{ name }}? Join requests and hosts then go to them; you stay an organiser.{% endblocktrans %}{{ question|escapejs }}')">{% csrf_token %}
-                      <button type="submit" class="btn btn-purple text-xs py-0.5 px-2 w-36 text-center">{% trans "Hand over the tour" %}</button>
+                      <button type="submit" class="btn btn-primary text-xs py-0.5 px-2 w-44 text-center"><i class="fa-solid fa-handshake mr-1"></i>{% trans "Hand over the tour" %}</button>
                     </form>
                   {% endif %}
                   {% if can_edit and traveller.match_id and traveller.user_id != tour.organiser_id and traveller.user_id != user.pk %}
                     <details class="text-xs flex flex-col items-center">
-                      <summary class="btn btn-purple text-xs py-0.5 px-2 w-36 text-center cursor-pointer list-none [&::-webkit-details-marker]:hidden">{% trans "Remove from tour" %}</summary>
-                      <form method="post" action="{% url 'tours:remove' tour.slug traveller.pk %}" class="mt-1 space-y-1 w-48 text-left">{% csrf_token %}
+                      <summary class="btn btn-purple text-xs py-0.5 px-2 w-44 text-center cursor-pointer list-none [&::-webkit-details-marker]:hidden"><i class="fa-solid fa-user-minus mr-1"></i>{% trans "Remove from tour" %}</summary>
+                      <form method="post" action="{% url 'tours:remove' tour.slug traveller.pk %}" class="mt-1 space-y-1 w-48 max-w-full text-left">{% csrf_token %}
                         <textarea name="body" rows="3" required class="form-textarea w-full text-sm" placeholder="{% trans 'A few words to them why' %}"></textarea>
-                        <button type="submit" class="btn btn-purple text-xs py-0.5 px-2 w-36 text-center">{% trans "Remove from tour" %}</button>
+                        <button type="submit" class="btn btn-purple text-xs py-0.5 px-2 w-44 text-center"><i class="fa-solid fa-user-minus mr-1"></i>{% trans "Remove from tour" %}</button>
                       </form>
                     </details>
                   {% endif %}

@@ -1,7 +1,8 @@
-"""Keeping events current: dated events are archived once they end; any event nobody
-updated or confirmed for EVENT_STALE_DAYS gets an "Is this still current?" email to
-whoever answers for it (one click confirms it), and is archived if nobody confirms it
-within EVENT_ARCHIVE_GRACE_DAYS. Old entries are what kill a directory; a short, current
+"""Keeping events current: dated events are archived once they end, and are left alone
+until then. An ongoing event (no end date) that has run and that nobody updated or
+confirmed for EVENT_STALE_DAYS gets an "Is this still current?" email to whoever answers
+for it (one click confirms it), and is archived if nobody confirms it within
+EVENT_ARCHIVE_GRACE_DAYS. Old entries are what kill a directory; a short, current
 one is worth more than a long, outdated one. Run daily by `archive_stale_events`."""
 
 from datetime import timedelta
@@ -9,6 +10,7 @@ from datetime import timedelta
 from django.conf import settings
 from django.core import signing
 from django.core.mail import EmailMultiAlternatives
+from django.db.models import Q
 from django.template.loader import render_to_string
 from django.utils import timezone, translation
 
@@ -73,7 +75,11 @@ def archive_stale_events(now=None):
 
     stale_before = now - timedelta(days=settings.EVENT_STALE_DAYS)
     grace_before = now - timedelta(days=settings.EVENT_ARCHIVE_GRACE_DAYS)
-    stale = live.filter(updated_at__lt=stale_before)
+    # Only ongoing ones that have been running that long: people rarely update an event
+    # with its days ahead
+    stale = live.filter(ends_on=None, updated_at__lt=stale_before).filter(
+        Q(starts_on=None) | Q(starts_on__lt=timezone.localdate(stale_before))
+    )
     # Reminded a while ago and still not confirmed
     archived += stale.filter(stale_reminder_sent_at__lt=grace_before).update(archived_at=now)
 

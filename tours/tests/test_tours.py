@@ -539,3 +539,74 @@ def test_filter_by_country(organiser, farm, village):
     # The list offers the countries tours go through
     page = Client().get(reverse("tours:list")).content.decode()
     assert '<option value="DK">' in page and '<option value="FR">' in page and '<option value="DE">' not in page
+
+
+# ── Freshness ───────────────────────────────────────────────────────
+
+
+def test_tours_are_archived_a_week_after_they_end_without_looking_updated(tour, village):
+    from ..freshness import archive_stale_tours
+
+    add(tour, community=village, arrive_on=timezone.localdate() - timedelta(days=3))
+    updated_at = Tour.objects.get(pk=tour.pk).updated_at
+    # Tours often go on a few days longer
+    assert archive_stale_tours() == (0, 0)
+    assert archive_stale_tours(now=timezone.now() + timedelta(days=5)) == (1, 0)
+    tour.refresh_from_db()
+    assert tour.archived_at is not None and tour.updated_at == updated_at
+
+
+def test_a_stale_tour_idea_is_asked_about_once_then_archived(organiser, other):
+    from django.core import mail
+
+    from ..freshness import archive_stale_tours, make_confirm_token
+
+    organiser.language = "de"
+    organiser.save(update_fields=["language"])
+    idea = published(organiser, "Seed swap tour")
+    draft = Tour.objects.create(title="Just a note", organiser=organiser)
+    dated = published(organiser, "Dated")
+    Tour.objects.filter(pk=dated.pk).update(starts_on=timezone.localdate() + timedelta(days=30))
+    Tour.objects.update(updated_at=timezone.now() - timedelta(days=181))
+
+    assert archive_stale_tours() == (0, 1)
+    assert mail.outbox[0].to == ["olga@example.com"]
+    assert "Seed swap tour" in mail.outbox[0].subject and "noch aktuell" in mail.outbox[0].subject  # her language
+    assert make_confirm_token(idea)[:10] in mail.outbox[0].body
+    # Asked only once, and not about a draft or a tour with days
+    assert archive_stale_tours() == (0, 0)
+
+    later = timezone.now() + timedelta(days=15)
+    assert archive_stale_tours(now=later) == (1, 0)
+    assert Tour.objects.get(pk=idea.pk).archived_at is not None
+    assert Tour.objects.get(pk=draft.pk).archived_at is None
+    assert Tour.objects.get(pk=dated.pk).archived_at is None
+
+
+def test_one_click_confirms_a_tour_idea_and_brings_it_back(organiser):
+    from ..freshness import make_confirm_token
+
+    idea = published(organiser, "Seed swap tour")
+    Tour.objects.filter(pk=idea.pk).update(
+        archived_at=timezone.now(), stale_reminder_sent_at=timezone.now(), updated_at=timezone.now() - timedelta(days=200),
+    )
+    assert Client().get(idea.url("confirm_by_email", make_confirm_token(idea))).status_code == 302
+    idea.refresh_from_db()
+    assert idea.archived_at is None and idea.stale_reminder_sent_at is None
+    assert timezone.now() - idea.updated_at < timedelta(minutes=1)
+    assert Client().get(idea.url("confirm_by_email", "forged")).status_code == 400
+
+
+def test_archived_tours_are_shown_on_request_and_by_default_when_nothing_is_current(organiser, farm, village):
+    old = published(organiser, "Last summer", {"community": village}, archived_at=timezone.now())
+    list_url = reverse("tours:api-list")
+    # Nothing current: the archived ones are shown, unless one says no
+    assert slugs(routes()) == {old.slug}
+    assert old.title in Client().get(list_url).content.decode()
+    assert slugs(routes(archived="0")) == set()
+
+    current = published(organiser, "Next spring", {"community": farm, "arrive_on": timezone.localdate() + timedelta(days=30)})
+    assert slugs(routes()) == {current.slug}
+    assert slugs(routes(archived="1")) == {current.slug, old.slug}
+    page = Client().get(list_url, {"archived": "1"}).content.decode()
+    assert page.index(current.title) < page.index(old.title)

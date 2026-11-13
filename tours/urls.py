@@ -35,6 +35,7 @@ urlpatterns = [
     path("<slug:slug>/publish/", views.publish, name="publish"),
     path("<slug:slug>/archive/", views.archive, name="archive"),
     path("<slug:slug>/confirm/", views.confirm, name="confirm"),
+    path("<slug:slug>/confirm/<str:token>/", views.confirm_by_email, name="confirm_by_email"),
     path("<slug:slug>/join/", views.join, name="join"),
     path("<slug:slug>/leave/", views.leave, name="leave"),
     path("<slug:slug>/invite/", views.invite, name="invite"),

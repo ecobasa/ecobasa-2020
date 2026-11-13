@@ -140,7 +140,8 @@ def search_q(q):
 
 class TourFilters:
     """The filters of the tours index, read from the query string: which of tours with dates, tour ideas and
-    rides to show (show, comma-separated; all of them when empty), a search, when (from, until), what it wants to learn (skill names, any of them), how it travels, children
+    rides to show (show, comma-separated; all of them when empty), whether archived tours (and those that
+    are over) are shown too (archived, 1 or 0; on by default while no current tour is listed), a search, when (from, until), what it wants to learn (skill names, any of them), how it travels, children
     or animals welcome, with free places, and the map's visible area. `near` (lat,lon) only sorts the
     list, nearest first."""
 
@@ -151,6 +152,11 @@ class TourFilters:
         kinds = (params.get("show") or "").split(",")
         kinds = [kind for kind in self.KINDS if kind in kinds]
         self.show = ",".join(kinds) if 0 < len(kinds) < len(self.KINDS) else ""
+        # With hardly any tours on the road at a time, the list would often be empty
+        from .models import Tour
+
+        self.archived_default = not Tour.objects.listed().current().exists()
+        self.archived = {"1": True, "0": False}.get(params.get("archived"), self.archived_default)
         self.q = (params.get("q") or "").strip()
         self.since = _day(params.get("from"))
         self.until = _day(params.get("until"))
@@ -175,7 +181,13 @@ class TourFilters:
         return bool(
             self.show or self.country or self.q or self.since or self.until or self.learn or self.mode
             or self.children or self.animals or self.free or self.fits or self.passes
+            or self.archived != self.archived_default
         )
+
+    def base(self, tours):
+        """The listed tours: the current ones, or all of them with the archived ones."""
+        tours = tours.listed()
+        return tours if self.archived else tours.current()
 
     def apply(self, tours):
         """Narrow a queryset of tours. Tour ideas have no dates: the dates leave them be."""
@@ -272,7 +284,7 @@ def stop_image(stop):
 
 
 def tour_state(tour):
-    if tour.is_over:
+    if tour.is_over or tour.archived_at:
         return "past"
     if tour.is_idea:
         return "idea"

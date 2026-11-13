@@ -6732,3 +6732,39 @@ msgid "%(count)s other from near you is coming in your days"
 msgid_plural "%(count)s others from near you are coming in your days"
 msgstr[0] "%(count)s andere*r aus deiner Nähe kommt in deinen Tagen"
 msgstr[1] "%(count)s andere aus deiner Nähe kommen in deinen Tagen"
+
+#, python-format
+msgid "Is your tour idea “%(title)s” still current?"
+msgstr "Ist deine Tour-Idee „%(title)s“ noch aktuell?"
+
+msgid "Is your tour idea still current?"
+msgstr "Ist deine Tour-Idee noch aktuell?"
+
+#, python-format
+msgid "nobody has updated the tour idea “%(title)s” for a while. Is it still current?"
+msgstr "die Tour-Idee „%(title)s“ wurde seit einer Weile nicht aktualisiert. Ist sie noch aktuell?"
+
+msgid "How the tour went"
+msgstr "So war die Tour"
+
+msgid "Where it went"
+msgstr "Wo es hinging"
+
+msgid "What we found"
+msgstr "Was wir gefunden haben"
+
+msgid "What travelled along"
+msgstr "Was mitgereist ist"
+
+msgid "Write references"
+msgstr "Referenzen schreiben"
+
+#, python-format
+msgid "About %(name)s"
+msgstr "Über %(name)s"
+
+msgid "Archived tours"
+msgstr "Archivierte Touren"
+
+msgid "Travels this stretch and could take it:"
+msgstr "Fährt diese Strecke und könnte es mitnehmen:"

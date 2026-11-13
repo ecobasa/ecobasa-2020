@@ -3,11 +3,12 @@ from collections import Counter
 from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
+from django.core import signing
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
 from django.contrib.contenttypes.models import ContentType
 from django.db.models import F, prefetch_related_objects, Q
-from django.http import Http404, JsonResponse
+from django.http import Http404, HttpResponseBadRequest, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
 from django.urls import reverse
@@ -27,6 +28,7 @@ from gift_economy.matches.emails import notify_match_created, notify_match_messa
 from gift_economy.matches.models import Contribution, Match, MatchMessage
 
 from . import deliveries as deliveries_module, matching
+from .freshness import read_confirm_token
 from .forms import (
     DeliveryForm, HostForm, InviteForm, JoinForm, PlaceForm, RideForm, StopForm, TourForm, TourNeedFormSet, VehicleFormSet,
 )
@@ -62,11 +64,17 @@ def _results(request):
     when they start, then tour ideas, the freshest first (`show` keeps to some of them, rides among them).
     Page links point at the list partial, which the page swaps in."""
     filters = TourFilters(request.GET, request.user)
-    tours = list(filters.apply(_tours().listed().current()))
-    ideas = sorted((tour for tour in tours if tour.is_idea), key=lambda tour: -tour.updated_at.timestamp())
-    dated = sorted((tour for tour in tours if not tour.is_idea), key=lambda tour: tour.starts_on)
+    tours = list(filters.apply(filters.base(_tours())))
+    current = [tour for tour in tours if tour.is_current]
+    ideas = sorted((tour for tour in current if tour.is_idea), key=lambda tour: -tour.updated_at.timestamp())
+    dated = sorted((tour for tour in current if not tour.is_idea), key=lambda tour: tour.starts_on)
+    # Archived ones (with the archived filter) last, the latest first
+    past = sorted(
+        (tour for tour in tours if not tour.is_current),
+        key=lambda tour: tour.ends_on or timezone.localdate(tour.updated_at), reverse=True,
+    )
     # Near a place: nearest first (dates and freshness keep their order among equals)
-    page = paginate(request, filters.by_distance(dated) + filters.by_distance(ideas))
+    page = paginate(request, filters.by_distance(dated) + filters.by_distance(ideas) + filters.by_distance(past))
     base = reverse("tours:api-list")
 
     def url(number):
@@ -89,16 +97,17 @@ def tour_list(request):
             _tours().filter(organiser=request.user, archived_at=None)
             .filter(Q(published_at=None) | Q(listed=False))
         )
+    filters = TourFilters(request.GET)
     return render(request, "tours/tour_list.html", {
-        "filters": TourFilters(request.GET), "own": own, "mode_choices": Tour.MODE_CHOICES,
-        "countries": _countries(),
+        "filters": filters, "own": own, "mode_choices": Tour.MODE_CHOICES,
+        "countries": _countries(filters.base(Tour.objects.all())),
     })
 
 
-def _countries():
-    """The countries the listed, current tours travel through, by name: (code, name)."""
+def _countries(tours):
+    """The countries `tours` travel through, by name: (code, name)."""
     codes = set()
-    for countries in Tour.objects.listed().current().values_list("countries", flat=True):
+    for countries in tours.values_list("countries", flat=True):
         # Stored as "DE,NL,FR"
         codes.update(code for code in (countries or "").split(",") if code)
     return sorted(((code, all_countries.name(code)) for code in codes if all_countries.name(code)), key=lambda pair: pair[1])
@@ -114,8 +123,9 @@ def api_routes(request):
     area (bbox), with the filters of the index. At most MAX_TOURS tours, nearest the
     present first. Places only as everyone sees them."""
     filters = TourFilters(request.GET, request.user)
-    tours = filters.in_view(filters.apply(_tours().listed().current()))
-    tours.sort(key=lambda tour: (tour.starts_on is None, tour.starts_on or timezone.localdate()))
+    tours = filters.in_view(filters.apply(filters.base(_tours())))
+    # Current ones first, so the archived ones don't crowd them out
+    tours.sort(key=lambda tour: (not tour.is_current, tour.starts_on is None, tour.starts_on or timezone.localdate()))
     tours = tours[:MAX_TOURS]
     geojson = feature_collection(tours, request.user)
     # What travels along with each, shown while one hovers the tour
@@ -199,6 +209,7 @@ def tour_detail(request, slug):
     travelling = request.user.is_authenticated and (can_edit or on_tour)
     gifts = [d for d in _deliveries_of(tour) if travelling or d.status != Delivery.STATUS_FELL_THROUGH]
     return render(request, "tours/tour_detail.html", {
+        "wrap_up": _wrap_up(tour, request.user, stops, needs, gifts, counted) if tour.is_over and tour.is_published else None,
         "deliveries": gifts,
         "travelling": travelling,
         "could_travel": len(deliveries_module.delivery_suggestions(tour, stops)) if travelling else 0,
@@ -216,6 +227,31 @@ def tour_detail(request, slug):
         "route": _route(tour, viewer=request.user if on_tour else None),
         "geojson": _with_deliveries(feature_collection([tour], request.user), tour, gifts),
     })
+
+
+def _wrap_up(tour, user, stops, needs, gifts, travellers):
+    """How a tour that is over went: where it went (the hosts that agreed marked), what
+    it found and what travelled along, and whom `user` can write references about. A
+    traveller writes about the hosts and the others on the tour, a host about the group."""
+    references = []
+    if user.is_authenticated:
+        agreed = [stop for stop in stops if stop.host_status == Stop.HOST_AGREED]
+        if any(traveller.user_id == user.pk for traveller in travellers):
+            hosts = {stop.community_id: stop.community for stop in agreed if stop.community_id}
+            references += [
+                (community.name, f"{community.get_absolute_url()}#references")
+                for community in hosts.values() if community.owner_id != user.pk
+            ]
+            others = {t.user_id: t.user for t in travellers if t.user_id != user.pk}
+            references += [(person.name or person.email, f"{person.get_absolute_url()}#references") for person in others.values()]
+        elif any(stop.visit_match.recipient_id == user.pk for stop in agreed):
+            references.append((tour.title, f"{tour.get_absolute_url()}#references"))
+    return {
+        "stops": stops,
+        "found": [need for need, _role in needs if need.is_done],
+        "delivered": [d for d in gifts if d.status == Delivery.STATUS_HANDED_OVER],
+        "references": references,
+    }
 
 
 def _with_deliveries(geojson, tour, gifts):
@@ -569,6 +605,23 @@ def confirm(request, slug):
         return redirect(tour.url("plan"))
     tour.touch()
     messages.success(request, _("Thanks, the tour is marked as current."))
+    return redirect(tour.get_absolute_url())
+
+
+def confirm_by_email(request, slug, token):
+    """One click from the "Is this still current?" email, no login needed."""
+    tour = get_object_or_404(Tour, slug=slug)
+    try:
+        pk = read_confirm_token(token)
+    except signing.BadSignature:
+        return HttpResponseBadRequest("Invalid or expired link.")
+    if pk != tour.pk:
+        return HttpResponseBadRequest("Invalid or expired link.")
+    if tour.is_over:
+        messages.error(request, _("This tour is over. Change the days of its stops to bring it back."))
+    else:
+        tour.touch()
+        messages.success(request, _("Thanks, the tour is marked as current."))
     return redirect(tour.get_absolute_url())
 
 
@@ -1052,9 +1105,12 @@ def _deliveries_of(tour):
 def _pairs(tour, user, stops=None):
     """What could travel along, each with ready-made messages for `user` to change."""
     pairs = deliveries_module.delivery_suggestions(tour, stops)
+    people = get_user_model().objects.in_bulk({pk for pair in pairs for pk in pair.bringers})
     for pair in pairs:
         pair.to_giver, pair.to_receiver = deliveries_module.default_messages(tour, pair)
         pair.ask_giver = pair.asks_giver(user)
+        # Who else could take it, when `user` can't
+        pair.others = [people[pk] for pk in pair.bringers if pk != user.pk and pk in people]
     return pairs
 
 

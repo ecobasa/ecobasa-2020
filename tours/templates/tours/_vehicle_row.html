@@ -6,7 +6,8 @@
     <label class="form-label" for="{{ form.label.id_for_label }}">{{ form.label.label }}</label>
     {{ form.label }}
   </div>
-  <div class="form-group">
+  {# A long file name of the current picture wraps instead of widening the page #}
+  <div class="form-group break-all [&_input[type=file]]:max-w-full">
       <label class="form-label" for="{{ form.image.id_for_label }}">{{ form.image.label }}</label>
       {{ form.image }}
     </div>

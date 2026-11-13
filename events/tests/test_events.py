@@ -482,6 +482,17 @@ def test_stale_projects_are_asked_about_then_archived(community):
 
 
 @pytest.mark.django_db
+def test_events_with_their_days_ahead_are_left_alone(community):
+    today = timezone.localdate()
+    Event.objects.create(community=community, title="Harvest", starts_on=today + timedelta(days=90), ends_on=today + timedelta(days=92))
+    Event.objects.create(community=community, title="From spring on", starts_on=today + timedelta(days=30))
+    # Ongoing, but only since last week
+    Event.objects.create(community=community, title="Just started", starts_on=today - timedelta(days=7))
+    Event.objects.update(updated_at=timezone.now() - timedelta(days=200))
+    assert archive_stale_events() == (0, 0)
+
+
+@pytest.mark.django_db
 def test_one_click_confirms_and_brings_back(community):
     stale = Event.objects.create(
         community=community, title="Garden", archived_at=timezone.now(), stale_reminder_sent_at=timezone.now(),
@@ -837,7 +848,7 @@ def test_a_visit_to_an_open_event_is_what_references_are_about(open_day, helper,
 
 @pytest.mark.django_db
 def test_texts_say_the_kinds_word(community, open_day, project):
-    Event.objects.filter(pk=open_day.pk).update(updated_at=timezone.now() - timedelta(days=61))
+    Event.objects.filter(pk=open_day.pk).update(starts_on=None, ends_on=None, updated_at=timezone.now() - timedelta(days=61))
     mail.outbox.clear()
     assert archive_stale_events() == (0, 1)
     assert "Gemeinschafts-Event" in mail.outbox[0].subject or "community event" in mail.outbox[0].subject
