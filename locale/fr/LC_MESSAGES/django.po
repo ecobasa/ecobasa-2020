@@ -3169,6 +3169,11 @@ msgctxt "reference subject"
 msgid "about"
 msgstr "à propos de"
 
+#: gift_economy/references/templates/references/_featured_card.html
+msgctxt "whose gift"
+msgid "by"
+msgstr "de"
+
 #: gift_economy/references/templates/references/_guidelines.html:7
 msgid "How to write a reference"
 msgstr "Comment écrire une référence"

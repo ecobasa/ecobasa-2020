@@ -3160,7 +3160,12 @@ msgstr "Weiterlesen"
 #: gift_economy/references/templates/references/_reference_card.html:25
 msgctxt "reference subject"
 msgid "about"
-msgstr "zu"
+msgstr "über"
+
+#: gift_economy/references/templates/references/_featured_card.html
+msgctxt "whose gift"
+msgid "by"
+msgstr "von"
 
 #: gift_economy/references/templates/references/_guidelines.html:7
 msgid "How to write a reference"

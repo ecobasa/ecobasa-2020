@@ -969,7 +969,7 @@ class Command(BaseCommand):
                  gift_names=["Sourdough starter (opinionated)"], skills=[("Bread Baking", PENDING)]),
             # About a person — a skill they have (confirmed) and one of their offers by name
             dict(author=diego, subject=bjorn, impression=P, age_days=12, share=True, featured=True,
-                 text="Built us a gate the goat can't open. The goat is furious. We are delighted.",
+                 text="Built us a gate the goat can't open. The goat is furious. We are delighted.", photo="goat.jpg",
                  gift_names=["Slightly judgmental goat"], skills=[("Woodworking", CONFIRMED)]),
             # About a community — from the accepted volunteer stay; one tag declined
             dict(author=sam, subject=communities["Three Goats and a Dream Farm"], impression=P, age_days=8,
@@ -1016,6 +1016,9 @@ class Command(BaseCommand):
             Reference.objects.filter(pk=reference.pk).update(
                 created_at=created_at, featured_at=created_at if spec.get("featured") else None,
             )
+            if spec.get("photo"):
+                _seed_image(reference.photo, spec["photo"])
+                reference.save(update_fields=["photo"])
             for skill_name, status in spec.get("skills", []):
                 skill, _created = Skill.objects.get_or_create(name=skill_name)
                 ReferenceSkill.objects.create(reference=reference, skill=skill, status=status)
