@@ -17,10 +17,10 @@ from users.places import approximate, town
 MAX_TOURS = 200
 
 # A stop's pin: a Font Awesome codepoint and a colour of the theme (tailwind.config.js).
-# Communities as on the communities map (by type), events in brown with their kind's
+# Communities as on the communities map (by type), events in light brown with their kind's
 # icon, another place as a plain pin.
 COMMUNITY_PINS = {
-    "f": (0xF4D8, "#5A5527"),  # Permaculture Farm: seedling
+    "f": (0xF4D8, "#4f5613"),  # Permaculture Farm: seedling
     "e": (0xE537, "#b4502c"),  # Ecovillage: people-roof
     "c": (0xE3AF, "#de7a08"),  # Commune: house-chimney
     "h": (0xE3AF, "#e34a26"),  # Houseproject: house-chimney
@@ -28,8 +28,8 @@ COMMUNITY_PINS = {
 }
 COMMUNITY_PIN = (0xF015, "#da6137")  # house
 EVENT_PINS = {
-    "project": (0xF85E, "#452912"),  # brown, person-digging
-    "community_event": (0xE533, "#452912"),  # brown, people-group
+    "project": (0xF85E, "#6a5441"),  # light brown, person-digging
+    "community_event": (0xE533, "#6a5441"),  # light brown, people-group
 }
 # The travel modes' icons (Tour.MODE_ICONS) as codepoints, for the map's canvas
 MODE_CODEPOINTS = {

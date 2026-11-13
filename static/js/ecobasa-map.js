@@ -74,7 +74,7 @@
     // coordinate) is called on a click. Returns { layer, source, setData, highlight, fit }.
     addRouteLayer(map, geojson, options) {
       options = options || {};
-      const colors = { tour: '#da6137', ride: '#80143b', bicycle: '#5A5527' };
+      const colors = { tour: '#da6137', ride: '#80143b', bicycle: '#4f5613' };
       const source = new ol.source.Vector();
       const format = new ol.format.GeoJSON();
       let lit = null;
