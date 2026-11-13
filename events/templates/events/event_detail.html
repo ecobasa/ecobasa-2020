@@ -182,7 +182,7 @@
       {% endif %}
 
       <h2 {% if not event.provides_something and event.is_open %}class="mt-0"{% endif %}>{% trans "Community" %}</h2>
-      <a href="{{ community.get_absolute_url }}" class="font-serif font-bold text-lg hover:underline"><i class="fa-solid {{ community.get_type_icon }} mr-1"></i>{{ community.name }}</a>
+      {% include "communities/_community_card.html" %}
       {% if place %}<p class="text-sm mt-1"><i class="fa fa-map-marker mr-1"></i>{{ place }}</p>{% endif %}
       {% with manager=event.manager %}{% if manager %}
         <div class="text-center mt-6">

@@ -66,22 +66,7 @@
 			<div class="mt-8">
 				<h2>{% trans "Communities" %}</h2>
 				<div class="space-y-4">
-					{% for community in communities %}
-						{% with community.photos.all|first as header_photo %}
-						<a href="{{ community.get_absolute_url }}" class="block overflow-hidden">
-							{% if header_photo %}
-								<img src="{{ header_photo.image.url }}" alt="" class="w-full h-32 object-cover" loading="lazy">
-							{% endif %}
-							<div class="flex items-center gap-3 p-3">
-								<i class="fa-solid {{ community.get_type_icon }} text-xl text-primary flex-shrink-0"></i>
-								<div class="min-w-0">
-									<div class="font-serif text-primary truncate">{{ community.name }}</div>
-									{% if community.type %}<div class="text-xs text-brown">{{ community.get_type_display }}</div>{% endif %}
-								</div>
-							</div>
-						</a>
-						{% endwith %}
-					{% endfor %}
+					{% for community in communities %}{% include "communities/_community_card.html" %}{% endfor %}
 				</div>
 			</div>
 			{% endif %}
