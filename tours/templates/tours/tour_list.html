@@ -319,6 +319,8 @@ document.addEventListener('DOMContentLoaded', function () {
   const popup = new ol.Overlay({ element: popupEl, positioning: 'bottom-center', offset: [0, -8], autoPan: { animation: { duration: 250 }, margin: 90 } });
   tourMap.addOverlay(popup);
   tourRoutes = EcoMap.addRouteLayer(tourMap, null, {
+    // How each leg travels, as on a tour's page
+    legModes: true,
     onSelect(props, coordinate) {
       if (!props) { popup.setPosition(undefined); return; }
       popupEl.replaceChildren(tourPopup(props));
