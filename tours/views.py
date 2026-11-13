@@ -19,13 +19,14 @@ from gift_economy.gifts.models import Listing
 from gift_economy.gifts.skills.models import Skill, skill_name_q
 
 from gift_economy.matches.emails import notify_match_created, notify_match_message, notify_match_response
-from gift_economy.matches.models import Match, MatchMessage
+from gift_economy.matches.models import Contribution, Match, MatchMessage
 
-from .forms import HostForm, JoinForm, StopForm, TourForm
+from . import matching
+from .forms import HostForm, JoinForm, StopForm, TourForm, TourNeedFormSet, VehicleFormSet
 from .geo import MAX_TOURS, TourFilters, feature_collection
 from .models import Stop, Tour, Traveller, append_stop, move_stop, remove_stop
 
-_STOPS = ("stops__event__community", "stops__community__photos", "learn_skills")
+_STOPS = ("stops__event__community", "stops__community__photos", "learn_skills", "vehicles__drivers")
 
 
 def _tours():
@@ -168,11 +169,15 @@ def tour_detail(request, slug):
         traveller.stretch = "" if traveller.whole_route else _stretch_text(traveller)
     # The communities they are ambassador of, shown with them
     prefetch_related_objects([traveller.user for traveller in travellers], "communities")
+    team = tour.team_skill_ids()
+    needs = [(need, matching.role(need, team)) for need in tour.needs()]
     return render(request, "tours/tour_detail.html", {
+        "needs": needs,
+        "vehicles": tour.vehicles.all(),
         "tour": tour,
         "can_edit": can_edit,
         "travellers": travellers,
-        # Logged out, one sees how many travel, not who (5.5 rule 5)
+        # Logged out, one sees how many travel, not who
         "traveller_count": sum(t.people for t in counted),
         "stops": stops,
         "join": _join_state(tour, request.user),
@@ -189,7 +194,7 @@ def _route(tour):
 
     stops = tour.ordered_stops()
     legs = tour.legs(stops)
-    free = tour.free_places(stops=stops) if tour.open_to_join and tour.max_people else [None] * len(legs)
+    free = tour.free_places(stops=stops) if tour.open_to_join else [None] * len(legs)
     clashing = clashes(stops)
     route = []
     for index, stop in enumerate(stops):
@@ -449,7 +454,10 @@ def join(request, slug):
         messages.error(request, _("This tour doesn't look for travellers."))
         return redirect(tour.get_absolute_url())
 
-    form = JoinForm(tour, request.POST or None, instance=own or Traveller(tour=tour, user=request.user), with_message=own is None)
+    form = JoinForm(
+        tour, request.POST or None, instance=own or Traveller(tour=tour, user=request.user), with_message=own is None,
+        preselected=request.GET.getlist("need"),
+    )
     if request.method == "POST" and form.is_valid():
         if own is None:
             with transaction.atomic():
@@ -463,22 +471,33 @@ def join(request, slug):
                 traveller = form.save(commit=False)
                 traveller.match = match
                 traveller.save()
+                _cover(match, form.chosen_needs())
             notify_match_created(match, http_request=request)
             messages.success(request, _("Your join request has been sent to the organisers."))
         else:
-            traveller = form.save()
-            match = traveller.match
+            with transaction.atomic():
+                traveller = form.save()
+                match = traveller.match
+                _cover(match, form.chosen_needs())
             body = _("Changed the request: %(summary)s") % {"summary": tour.get_match_summary(match)}
             MatchMessage.objects.create(match=match, sender=request.user, body=body)
             notify_match_message(match, sender=request.user, message=body, http_request=request)
             messages.success(request, _("Your join request has been changed."))
         return redirect(match.get_absolute_url())
 
+    free = tour.free_places()
     return render(request, "tours/join.html", {
         "tour": tour, "form": form, "own": own,
-        "free": tour.free_places() if tour.max_people else None,
+        "free": free if any(places is not None for places in free) else None,
         "stops": tour.ordered_stops(),
     })
+
+
+def _cover(match, chosen):
+    """The tour's needs a join request covers (Contribution), as chosen on the join page."""
+    match.contributions.exclude(listing__in=[need for need, _quantity in chosen]).delete()
+    for need, quantity in chosen:
+        Contribution.objects.update_or_create(match=match, listing=need, defaults={"quantity": quantity})
 
 
 def _stretch_text(traveller):
@@ -512,7 +531,7 @@ def leave(request, slug):
 @login_required
 @require_POST
 def remove(request, slug, pk):
-    """An organiser takes someone off the tour (N16), always with a few words to them."""
+    """An organiser takes someone off the tour, always with a few words to them."""
     tour = _editable(slug, request.user)
     traveller = get_object_or_404(tour.travellers.select_related("match", "user"), pk=pk)
     if traveller.is_organiser or traveller.user_id == tour.organiser_id:
@@ -563,7 +582,7 @@ def mine(request):
 
 @login_required
 def ask_host(request, slug, pk):
-    """"Ask to host us" on a stop with a host (plan 7, "Asking the hosts"): the days and
+    """"Ask to host us" on a stop with a host: the days and
     the group come from the tour, the organisers tick what they help with and write a few
     lines. At an event where people just come, the tour only says it is coming."""
     from .visits import ask_host as send
@@ -590,3 +609,52 @@ def ask_host(request, slug, pk):
     return render(request, "tours/ask_host.html", {
         "tour": tour, "stop": stop, "form": form, "group": group, "people": people,
     })
+
+
+# ── Vehicles and what the tour still looks for ──────────────────────
+
+@login_required
+def needs(request, slug):
+    """The tour's vehicles and what it still looks for, and the skills the hosts on
+    the route look for that nobody on the tour has, each a click to add."""
+    tour = _editable(slug, request.user)
+    vehicles = VehicleFormSet(request.POST or None, request.FILES or None, instance=tour, prefix="vehicles")
+    need_rows = TourNeedFormSet(request.POST or None, instance=tour, prefix="needs")
+    if request.method == "POST" and vehicles.is_valid() and need_rows.is_valid():
+        with transaction.atomic():
+            vehicles.save()
+            need_rows.save(commit=False)
+            for need in need_rows.deleted_objects:
+                need.delete()
+            # Keep the needs in the order they were entered
+            kept = [f for f in need_rows.forms if f.has_changed() or f.instance.pk]
+            for order, need_form in enumerate(f for f in kept if f not in need_rows.deleted_forms):
+                need = need_form.save(commit=False)
+                need.tour = tour
+                need.order = order
+                need.save()
+                need_form.save_category(need)
+            tour.touch()
+        messages.success(request, _("Saved."))
+        return redirect(tour.url("needs"))
+    return render(request, "tours/needs.html", {
+        "tour": tour, "vehicles": vehicles, "formset": need_rows, "gaps": matching.gaps(tour),
+    })
+
+
+@login_required
+@require_POST
+def needs_add(request, slug):
+    """Add skills the hosts on the route look for to what the tour looks for."""
+    tour = _editable(slug, request.user)
+    gaps = {skill.pk: skill for skill, _labels in matching.gaps(tour)}
+    ids = request.POST.getlist("all") if request.GET.get("all") else request.POST.getlist("skill")
+    chosen = [gaps[pk] for pk in map(int, filter(str.isdigit, ids)) if pk in gaps]
+    for skill in chosen:
+        matching.add_need(tour, skill)
+    if chosen:
+        tour.touch()
+        messages.success(request, _("Added to what you look for: %(skills)s") % {
+            "skills": ", ".join(skill.get_name() for skill in chosen),
+        })
+    return redirect(tour.url("needs") + "#gaps")

@@ -5959,3 +5959,119 @@ msgstr "¿Escribir también sobre otra persona?"
 
 msgid "Back to tour"
 msgstr "Volver al tour"
+
+msgid "Where did you meet them?"
+msgstr "¿Dónde os conocisteis?"
+
+# tours: vehicles and what a tour still looks for
+msgid "What vehicle?"
+msgstr "¿Qué vehículo?"
+
+msgid "Drivers"
+msgstr "Conductores/as"
+
+msgid "Seats besides the driver"
+msgstr "Plazas además del conductor/a"
+
+msgid "Sleeping places"
+msgstr "Plazas para dormir"
+
+msgid "What fits in and on it, how comfy it is"
+msgstr "Qué cabe dentro y encima, y qué tan cómodo es"
+
+msgid "Still needs a driver"
+msgstr "Aún necesita conductor/a"
+
+msgid "Others may drive too"
+msgstr "Otras personas también pueden conducir"
+
+msgid "e.g. blue van"
+msgstr "p. ej. furgoneta azul"
+
+msgid "e.g. roof rack, about 1 m³; bench seats, a bed for two in the back"
+msgstr "p. ej. baca, aprox. 1 m³; asientos de banco, una cama para dos atrás"
+
+msgid "the start"
+msgstr "el principio"
+
+msgid "the end"
+msgstr "el final"
+
+msgid "Choose a stop after the first one."
+msgstr "Elige una parada después de la primera."
+
+msgid "Saved."
+msgstr "Guardado."
+
+msgid "Added to what you look for: %(skills)s"
+msgstr "Añadido a lo que buscáis: %(skills)s"
+
+msgid "The tour %(tour)s is looking for: %(title)s"
+msgstr "El tour %(tour)s todavía busca: %(title)s"
+
+msgid "your tour %(tour)s: %(title)s"
+msgstr "tu tour %(tour)s: %(title)s"
+
+msgid "Vehicles and needs"
+msgstr "Vehículos y necesidades"
+
+msgid "Needed on your route"
+msgstr "Se necesita en vuestra ruta"
+
+msgid "Your hosts look for these skills, and nobody on the tour has them yet. Look for someone who can come along."
+msgstr "Vuestros anfitriones buscan estas habilidades y nadie en el tour las tiene todavía. Buscad a alguien que pueda venir."
+
+msgid "Add to what we look for"
+msgstr "Añadir a lo que buscamos"
+
+msgid "Our vehicles"
+msgstr "Nuestros vehículos"
+
+msgid "The places on each part of the route come from the seats of the vehicles there, plus their drivers. Without a vehicle, the group size counts."
+msgstr "Las plazas en cada tramo salen de los asientos de los vehículos que van allí, más sus conductores. Sin vehículo cuenta el tamaño del grupo."
+
+msgid "Add a vehicle"
+msgstr "Añadir un vehículo"
+
+msgid "We're still looking for"
+msgstr "Todavía buscamos"
+
+msgid "One line per thing: a van, a driver, people with a skill. Skills from the list let us find people near your route who have them."
+msgstr "Una línea por cosa: una furgoneta, alguien que conduzca, personas con una habilidad. Con habilidades de la lista encontramos a personas cerca de vuestra ruta que las tienen."
+
+msgid "Only for part of the route: from / to"
+msgstr "Solo para una parte de la ruta: desde / hasta"
+
+msgid "Completes the team"
+msgstr "Completa el equipo"
+
+msgid "Works alongside"
+msgstr "Trabaja junto a otros"
+
+msgid "You could cover"
+msgstr "Esto podrías cubrir tú"
+
+msgid "What the tour still looks for. Tick what you can do or bring along."
+msgstr "Lo que el tour todavía busca. Marca lo que sabes hacer o puedes traer."
+
+msgid "%(count)s seat"
+msgid_plural "%(count)s seats"
+msgstr[0] "%(count)s plaza"
+msgstr[1] "%(count)s plazas"
+
+msgid "%(count)s sleeping place"
+msgid_plural "%(count)s sleeping places"
+msgstr[0] "%(count)s plaza para dormir"
+msgstr[1] "%(count)s plazas para dormir"
+
+msgid "Picture"
+msgstr "Imagen"
+
+msgid "The tour <a href=\"%(tour_url)s\" class=\"underline\">%(tour)s</a> is looking for this"
+msgstr "El tour <a href=\"%(tour_url)s\" class=\"underline\">%(tour)s</a> todavía busca esto"
+
+msgid "from your tour"
+msgstr "de tu tour"
+
+msgid "Start"
+msgstr "Inicio"

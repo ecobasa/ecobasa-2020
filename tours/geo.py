@@ -1,7 +1,7 @@
 """Tours on a map: the filters of the tours index, and a tour as GeoJSON.
 
 Every point here is a public one (Stop.public_place): a private community, and an event
-there, only as its rough place. So no payload gives a door away (plan 5.5, rule 1).
+there, only as its rough place. So no payload gives a door away.
 """
 from datetime import date
 
@@ -239,6 +239,7 @@ def tour_features(tour, user=None):
     feature carries what a popup tells of the tour; the organiser's name only for people
     logged in, as on the tour's page."""
     organiser = tour.organiser
+    shows_organiser = bool(organiser and user and user.is_authenticated)
     props = {
         "slug": tour.slug,
         "title": tour.title,
@@ -246,12 +247,14 @@ def tour_features(tour, user=None):
         "dates": render_to_string("tours/_tour_dates.html", {"tour": tour}).strip(),
         "state": tour_state(tour),
         "km": tour.distance_km,
-        "image": tour.image.url if tour.image else "",
+        "image": tour.header_image,
         "mode_icon": tour.travel_mode_icon,
         "mode": str(tour.get_travel_mode_display()),
         "description": Truncator(tour.description).chars(160),
         "learn": [skill.get_name() for skill in list(tour.learn_skills.all())[:4]],
-        "organiser": organiser.name if organiser and user and user.is_authenticated else "",
+        "organiser": organiser.name if shows_organiser else "",
+        "organiser_url": organiser.get_absolute_url() if shows_organiser else "",
+        "organiser_image": organiser.image.url if shows_organiser and organiser.image else "",
     }
     # How it goes on from each stop that is on the map to the next one
     on_map = [stop for stop in tour.stops.all() if stop.public_place()[1] is not None]

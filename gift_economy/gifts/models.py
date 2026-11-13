@@ -21,12 +21,22 @@ from .skills.models import Skill, SkillTaxonomy  # noqa: F401
 def public_spot():
     """Where a listing is, for sorting and filtering by place (as a flat geometry): its own
     place, else its community's or person's (Listing.place), only as the centre of its
-    cell unless it's public (users.places), so no search finds out more than the map shows."""
-    holder = Case(When(community__isnull=False, then="community__location"), default="owner__location")
-    spot = Cast(Coalesce("location", holder), models.GeometryField(srid=4326))
+    cell unless it's public (users.places), so no search finds out more than the map shows.
+    A tour's need is where the tour starts, as everyone may see it (Tour.start); a tour
+    idea without stops is about where its organiser lives, as on the tours map."""
+    geometry = models.GeometryField(srid=4326)
+    holder = Case(
+        When(community__isnull=False, then=Cast("community__location", geometry)),
+        When(tour__isnull=False, then=Coalesce(
+            Cast("tour__start", geometry), Cast("tour__organiser__location", geometry), output_field=geometry,
+        )),
+        default=Cast("owner__location", geometry), output_field=geometry,
+    )
+    spot = Coalesce(Cast("location", geometry), holder, output_field=geometry)
     public = (
         Q(location__isnull=False, location_public=True) | Q(location__isnull=False, public_good=True)
         | Q(location__isnull=True, community__location_public=True)
+        | Q(location__isnull=True, tour__start__isnull=False)
     )
     return Case(
         When(public, then=spot),
@@ -224,10 +234,15 @@ class ListingQuerySet(models.QuerySet):
         return self.filter(kind__in=Listing.THING_KINDS)
 
     def current(self):
-        """Not marked as covered, and not part of a event that is archived or over."""
+        """Not marked as covered, and not part of an event that is archived or over, nor
+        of a tour that is archived, over, a draft or not listed (a personal tour's needs
+        are suggested to nobody)."""
         today = timezone.localdate()
         return self.filter(covered_at=None).filter(
             Q(event=None) | Q(event__archived_at=None) & (Q(event__ends_on=None) | Q(event__ends_on__gte=today))
+        ).filter(
+            Q(tour=None) | Q(tour__archived_at=None, tour__published_at__isnull=False, tour__listed=True)
+            & (Q(tour__ends_on=None) | Q(tour__ends_on__gte=today))
         )
 
     def open(self):
@@ -245,8 +260,9 @@ class ListingQuerySet(models.QuerySet):
         return self.current().exclude(used_up_kinds | Q(type=Listing.TYPE_WISH, kind__in=Listing.NEED_KINDS), used_up)
 
     def managed_by(self, user):
-        """What a person answers for: their own, and their communities' (as ambassador)."""
-        return self.filter(Q(owner=user, community=None) | Q(community__owner=user))
+        """What a person answers for: their own, their communities' (as ambassador) and
+        their tours' needs (as organiser)."""
+        return self.filter(Q(owner=user, community=None) | Q(community__owner=user) | Q(tour__organiser=user))
 
     def to_lend(self):
         """Tools and vehicles to lend (they come back), as opposed to given away."""
@@ -262,7 +278,9 @@ class Listing(RandomIdMixin, models.Model):
     """Everything someone offers or wishes for: things (material, tools, anything else),
     skills, knowledge and helping hands. A person's, or a community's (managed by its
     ambassador). A community's wish can belong to one of its events: then it is a
-    need of the event, and is listed only while the event runs.
+    need of the event, and is listed only while the event runs. A wish can also be what a
+    tour still looks for (a need of the tour, managed by its organisers): it has neither
+    owner nor community, so no person's or community's lists show it.
 
     With a quantity ("200 kg", "3 people") a wish can be covered in parts, and an offer
     given away in parts: each exchange (Match) says how much of it it takes or brings
@@ -510,7 +528,12 @@ class Listing(RandomIdMixin, models.Model):
     )
     # Marked as covered (a wish) or given away (an offer) by its owner, however it was
     covered_at = models.DateTimeField(_("Covered"), null=True, blank=True)
-    # Order among a event's needs
+    # What a tour still looks for: a van, a second carpenter (only wishes)
+    tour = models.ForeignKey(
+        "tours.Tour", on_delete=models.CASCADE, null=True, blank=True, related_name="listings",
+        verbose_name=_("Tour"),
+    )
+    # Order among an event's or a tour's needs
     order = models.PositiveSmallIntegerField(default=0)
     matches = GenericRelation("matches.Match")
 
@@ -536,6 +559,8 @@ class Listing(RandomIdMixin, models.Model):
         return self.display_title
 
     def save(self, *args, **kwargs):
+        if self.tour_id:
+            self.owner, self.community_id, self.event_id = None, None, None
         if self.event_id:
             self.community_id = self.event.community_id
         if self.community_id:
@@ -634,12 +659,17 @@ class Listing(RandomIdMixin, models.Model):
     # ── Whose it is ─────────────────────────────────────────────────
     @property
     def holder(self):
-        """The person or community it belongs to."""
+        """The person, community or tour it belongs to."""
+        if self.tour_id:
+            return self.tour
         return self.community if self.community_id else self.owner
 
     @property
     def manager(self):
-        """The person who answers for it: its owner, or the community's ambassador."""
+        """The person who answers for it: its owner, the community's ambassador, or the
+        tour's organiser (matches are addressed to them)."""
+        if self.tour_id:
+            return self.tour.organiser
         return self.community.owner if self.community_id else self.owner
 
     def can_edit(self, user):
@@ -647,6 +677,9 @@ class Listing(RandomIdMixin, models.Model):
         return user.is_authenticated and (self.public_good or self.is_managed_by(user))
 
     def is_managed_by(self, user):
+        if self.tour_id:
+            # Every organiser of the tour
+            return self.tour.can_edit(user)
         return user.is_authenticated and (user.is_staff or user == self.manager)
 
     @property
@@ -654,6 +687,15 @@ class Listing(RandomIdMixin, models.Model):
         """(name, point) of where it is: its own place, else its person's or community's."""
         if self.location:
             return self.location_name, self.location
+        if self.tour_id:
+            # Where the tour starts, as everyone sees it (matching uses its whole route);
+            # a tour idea without stops: where its organiser lives (only roughly for
+            # others, place_is_public)
+            name, point = self.tour.public_start()
+            organiser = self.tour.organiser
+            if point is None and organiser is not None:
+                return organiser.location_name, organiser.location
+            return name, point
         holder = self.holder
         if holder is None:
             return "", None
@@ -666,12 +708,17 @@ class Listing(RandomIdMixin, models.Model):
     # ── Where it is, and who may know (users.places) ────────────────
     @property
     def place_seed(self):
+        if self.tour_id:
+            return self.tour.place_seed if self.tour.start is not None else self.tour.organiser_id
         return self.community.place_seed if self.community_id else self.owner_id
 
     @property
     def place_is_public(self):
         if self.location:
             return self.location_public or self.public_good
+        if self.tour_id:
+            # A tour's start is a place everyone may see already; its organiser's isn't
+            return self.tour.start is not None
         return self.community_id is not None and self.community.location_public
 
     @property
@@ -765,14 +812,25 @@ class Listing(RandomIdMixin, models.Model):
 
     @property
     def country(self):
+        if self.tour_id:
+            return self.countries[0] if self.countries else ""
         holder = self.holder
         return str(holder.country or "") if holder is not None else ""
+
+    @property
+    def countries(self):
+        """The country codes it is in: a tour's need, all the tour goes through."""
+        if self.tour_id:
+            return [country.code for country in self.tour.countries]
+        return [self.country] if self.country else []
 
     @property
     def holder_name(self):
         holder = self.holder
         if holder is None:
             return ""
+        if self.tour_id:
+            return holder.title
         return getattr(holder, "name", "") or getattr(holder, "username", "") or ""
 
     # ── How far it is covered ───────────────────────────────────────
@@ -843,7 +901,10 @@ class Listing(RandomIdMixin, models.Model):
 
     @property
     def is_current(self):
-        """Still listed: not done, and its event (if any) still runs."""
+        """Still listed: not done, its event (if any) still runs, and its tour (if any)
+        is published, listed and not over."""
+        if self.tour_id and not (self.tour.is_current and self.tour.is_published and self.tour.listed):
+            return False
         return not self.is_done and (self.event_id is None or self.event.is_current)
 
     @property
@@ -911,6 +972,10 @@ class Listing(RandomIdMixin, models.Model):
         holder = self.holder
         if holder is None:
             return "", None, None
+        if self.tour_id:
+            # Where the tour starts, as everyone may see it
+            name, point = self.place
+            return holder.title, name, point
         name, point = self.place
         if self.community_id:
             return holder.name, name, point
@@ -964,9 +1029,9 @@ def add_skill_offer(holder, skill):
 
 
 def wish_kind_for(holder):
-    """A person wants to learn a skill; a community looks for people with it."""
-    from communities.models import Community
-    return Listing.KIND_HANDS if isinstance(holder, Community) else Listing.KIND_SKILL
+    """A person wants to learn a skill; a community or a tour looks for people with it."""
+    from django.contrib.auth import get_user_model
+    return Listing.KIND_SKILL if isinstance(holder, get_user_model()) else Listing.KIND_HANDS
 
 
 def sync_skill_listings(holder, type, names):

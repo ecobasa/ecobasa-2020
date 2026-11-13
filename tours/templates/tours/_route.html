@@ -22,7 +22,7 @@
             {% if stop.event %}<a href="{{ stop.community.get_absolute_url }}" class="hover:underline">{{ stop.community.name }}</a>{% if item.place %} · {% endif %}{% endif %}{% if stop.community and item.place %}{{ item.place }}{% endif %}
             {% if stop.arrive_on or stop.leave_on %}<span class="ml-1"><i class="fa-regular fa-calendar mr-1"></i>{% include "tours/_stop_dates.html" %}</span>{% endif %}
           </div>
-          {# Where the host stands, for everyone (plan D18); the organisers ask from here #}
+          {# Where the host stands, for everyone; the organisers ask from here #}
           {% with status=stop.host_status %}{% if status %}{% with label=stop.host_status_label %}
             <div class="flex flex-wrap items-center gap-2 text-sm mt-1">
               <span class="{{ label.2 }} font-semibold"><i class="{{ label.1 }} mr-1"></i>{{ label.0 }}</span>

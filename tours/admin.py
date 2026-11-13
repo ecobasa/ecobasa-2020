@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Stop, Tour
+from .models import Stop, Tour, Vehicle
 
 
 class StopInline(admin.TabularInline):
@@ -8,6 +8,13 @@ class StopInline(admin.TabularInline):
     extra = 0
     fields = ("order", "event", "community", "name", "country", "arrive_on", "leave_on", "leave_at", "flexible")
     raw_id_fields = ("event", "community")
+
+
+class VehicleInline(admin.TabularInline):
+    model = Vehicle
+    extra = 0
+    fields = ("label", "image", "drivers", "seats", "sleeps", "note", "needs_driver", "from_stop", "to_stop")
+    raw_id_fields = ("drivers", "from_stop", "to_stop")
 
 
 @admin.register(Tour)
@@ -18,7 +25,7 @@ class TourAdmin(admin.ModelAdmin):
     raw_id_fields = ("organiser",)
     filter_horizontal = ("learn_skills",)
     readonly_fields = ("slug", "created_at", "route", "distance_km", "starts_on", "ends_on")
-    inlines = [StopInline]
+    inlines = [StopInline, VehicleInline]
 
     def save_related(self, request, form, formsets, change):
         super().save_related(request, form, formsets, change)

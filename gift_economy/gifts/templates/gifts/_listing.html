@@ -11,6 +11,8 @@
       <img class="sm:row-span-2 h-20 w-20 sm:h-32 sm:w-48 object-cover rounded" src="{{ listing.image.url }}" alt="" loading="lazy">
     {% elif photo %}
       <img class="sm:row-span-2 h-20 w-20 sm:h-32 sm:w-48 object-cover rounded" src="{{ photo.image.url }}" alt="" loading="lazy">
+    {% elif listing.tour_id and listing.tour.picture %}
+      <img class="sm:row-span-2 h-20 w-20 sm:h-32 sm:w-48 object-cover rounded" src="{{ listing.tour.picture }}" alt="" loading="lazy">
     {% elif listing.owner.image %}
       <img class="sm:row-span-2 h-20 w-20 sm:h-32 sm:w-48 object-cover rounded" src="{{ listing.owner.image.url }}" alt="" loading="lazy">
     {% else %}
@@ -41,6 +43,8 @@
     <div class="col-span-2 sm:col-span-1 sm:col-start-2 self-end pt-2 pr-24 text-sm sm:text-base">
       {% if listing.community_id %}
         <i class="fa fa-home mr-2"></i>{{ listing.community.name }}{% if listing.event_id %} · {{ listing.event.title }}{% endif %}
+      {% elif listing.tour_id %}
+        <i class="fa-solid fa-route mr-2"></i>{{ listing.tour.title }}
       {% else %}
         <i class="fa fa-user mr-2"></i>{{ listing.owner.name }}{% for community in listing.owner.member_communities %}{% if forloop.first %} · <i class="fa fa-home mx-1"></i>{% else %}, {% endif %}{{ community.name }}{% endfor %}
       {% endif %}

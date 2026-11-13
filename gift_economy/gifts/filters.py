@@ -65,15 +65,20 @@ class ListingFilter(django_filters.FilterSet):
             Q(owner__name__icontains=value) |
             Q(community__name__icontains=value) |
             Q(event__title__icontains=value) |
+            Q(tour__title__icontains=value) |
             skill_name_q(value)
         )
 
     def do_country(self, queryset, name, value):
-        """In a country: a community's by its country, a person's by theirs."""
+        """In a country: a community's by its country, a person's by theirs, a tour's need
+        if the tour goes through it (stored as "DE,NL": two letters only match a code)."""
         code = value.strip().upper()
         if not code:
             return queryset
-        return queryset.filter(Q(community__country=code) | Q(community=None, owner__country=code))
+        return queryset.filter(
+            Q(community__country=code) | Q(community=None, tour=None, owner__country=code)
+            | Q(tour__countries__contains=code)
+        )
 
     def do_location(self, queryset, name, value):
         try:

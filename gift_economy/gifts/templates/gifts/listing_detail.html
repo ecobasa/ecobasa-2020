@@ -68,11 +68,19 @@
           {% endblocktrans %}
           <span class="whitespace-nowrap">· <i class="fa-regular fa-calendar mx-1"></i>{% include "events/_event_dates.html" with event=listing.event %}</span>
         </p>
+      {% elif listing.tour %}
+        {# What a tour still looks for #}
+        <p class="mt-2 mb-2">
+          {% blocktrans trimmed with tour=listing.tour.title tour_url=listing.tour.get_absolute_url %}
+            The tour <a href="{{ tour_url }}" class="underline">{{ tour }}</a> is looking for this
+          {% endblocktrans %}
+          <span class="whitespace-nowrap">· <i class="fa-regular fa-calendar mx-1"></i>{% include "tours/_tour_dates.html" with tour=listing.tour %}</span>
+        </p>
       {% endif %}
       {% if listing.amount %}<div class="text-lg mb-1"><i class="fa-solid fa-scale-balanced mr-2 text-primary"></i>{{ listing.amount }}{% if listing.progress %} <span class="text-sm opacity-80">· {{ listing.progress }}</span>{% endif %}</div>{% endif %}
       <div class="my-1 flex flex-wrap items-center gap-1">
         {% if is_owner %}
-          <span class="pill bg-purple">{% if listing.community %}{% trans "from your community" %}{% else %}{% trans "from me" %}{% endif %}</span>
+          <span class="pill bg-purple">{% if listing.community %}{% trans "from your community" %}{% elif listing.tour %}{% trans "from your tour" %}{% else %}{% trans "from me" %}{% endif %}</span>
         {% endif %}
         {% if listing.kind != "other" %}<span class="pill {{ listing.colour }}"><i class="fa-solid {{ listing.kind_icon }} mr-1"></i>{{ listing.kind_label }}</span>{% endif %}
         {% if listing.thing %}<span class="pill bg-primary" title="{% trans 'Recognized as' %}"><i class="fa-solid fa-tag mr-1"></i>{{ listing.thing }}</span>{% endif %}
@@ -101,7 +109,12 @@
       {% endif %}
     </div>
 
-    {% if can_edit %}
+    {% if can_edit and listing.tour %}
+      {# A tour's needs are changed together, on the tour's page for them #}
+      <div class="mt-4 flex-shrink-0 flex md:mt-0 md:ml-4">
+        <a href="{% url 'tours:needs' listing.tour.slug %}" class="btn btn-lg"><i class="fa fa-edit mr-1"></i> {% trans "Edit" %}</a>
+      </div>
+    {% elif can_edit %}
       <a href="{% url 'gifts:delete' listing.pk %}" class="btn btn-lg btn-purple flex mx-5">
         <i class="fa fa-recycle mr-1"></i> {% trans "Delete" %}
       </a>
@@ -151,7 +164,14 @@
       {% if listing.is_offer %}{% trans "Offer from" %}{% else %}{% trans "Wish from" %}{% endif %}
     </h2>
     <div class="flex flex-col items-center gap-3 p-4 border rounded bg-primary bg-opacity-5">
-      {% if listing.community %}
+      {% if listing.tour %}
+        <a href="{{ holder.get_absolute_url }}" class="block">
+          {% if holder.picture %}<img src="{{ holder.picture }}" alt="" class="w-20 h-20 rounded-full object-cover mx-auto">
+          {% else %}<div class="w-20 h-20 rounded-full bg-purple flex items-center justify-center text-secondary mx-auto"><i class="fa-solid {{ holder.travel_mode_icon }} text-3xl"></i></div>{% endif %}
+        </a>
+        <a href="{{ holder.get_absolute_url }}" class="font-serif text-primary">{{ holder.title }}</a>
+        <div class="text-xs"><i class="fa-regular fa-calendar mr-1"></i>{% include "tours/_tour_dates.html" with tour=holder %}</div>
+      {% elif listing.community %}
         {% with photo=holder.photos.all|first %}
         <a href="{{ holder.get_absolute_url }}" class="block">
           {% if photo %}<img src="{{ photo.image.url }}" alt="" class="w-20 h-20 rounded-full object-cover mx-auto">
@@ -188,6 +208,14 @@
   {% endif %}{% endwith %}
 
   {# ── How to answer: a project's need and a community's skill wish have their own forms; a thing a project needs can also just be given (the request form below) ── #}
+  {% if join_url and not can_edit %}
+  {# Coming along and covering it; or, below, giving or lending it without travelling #}
+  <div class="mt-8">
+    <a class="btn btn-lg" href="{% if request.user.is_authenticated %}{{ join_url }}{% else %}{% url 'users:login' %}?next={{ join_url|urlencode }}{% endif %}">
+      <i class="fa-solid fa-user-plus mr-2"></i>{% trans "Ask to join" %}
+    </a>
+  </div>
+  {% endif %}
   {% if help_url and not can_edit %}
   <div class="mt-8">
     <a class="btn btn-lg" href="{% if request.user.is_authenticated %}{{ help_url }}{% else %}{% url 'users:login' %}?next={{ help_url|urlencode }}{% endif %}">

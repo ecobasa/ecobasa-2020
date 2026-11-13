@@ -1,5 +1,5 @@
-"""Tour visits: a tour's stay at a stop's host, asked once for the whole group (plan D4,
-package 4). The visit is an ordinary stay (`matches.create_stay`) with the stop attached
+"""Tour visits: a tour's stay at a stop's host, asked once for the whole group,
+not once per traveller. The visit is an ordinary stay (`matches.create_stay`) with the stop attached
 (`Stop.visit_match`): the host answers it like a volunteer stay, counts it in their
 calendar, and its group sees the place once it is accepted (`StayDetails.companions`)."""
 

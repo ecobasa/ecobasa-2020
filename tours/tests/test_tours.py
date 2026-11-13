@@ -240,7 +240,7 @@ def test_a_stop_needs_an_event_of_its_community(tour, organiser, farm, project):
     assert not tour.stops.exists()
 
 
-# ── Done when (docs/community-tours-plan.md, package 1) ──────────────
+# ── The whole flow ────────────────────────────────────────────────
 
 def test_plan_publish_and_read_a_tour(organiser, other, farm, project):
     today = timezone.localdate()

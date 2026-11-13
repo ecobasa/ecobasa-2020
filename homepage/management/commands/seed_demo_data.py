@@ -1249,7 +1249,7 @@ class Command(BaseCommand):
             costs_note="We share diesel and tolls by kilometre; nobody pays for an empty seat.",
             good_to_know="The van has a fridge for the cultures and no room for big suitcases.",
         )
-        tour(
+        bikes = tour(
             "By bike to the rocket stove", sam,
             stops=[
                 dict(community=barefoot, arrive_on=day(2), leave_on=day(3)),
@@ -1272,7 +1272,7 @@ class Command(BaseCommand):
                         "whenever the olives let us go.",
             travel_mode="hitchhiking", open_to_join=True, max_people=1,
         )
-        tour(
+        seeds = tour(
             "Seed swap tour through Portugal", ana,
             learn=["Beekeeping", "Herbal Medicine"],
             description="An idea: a summer from farm to farm with a box of seeds, swapping what grows "
@@ -1302,6 +1302,24 @@ class Command(BaseCommand):
         # Tour visits: the house project agreed, the fermentation weekend is asked
         self._seed_visit(jars, 1, "accepted", "We are a small group with a van full of jars. We'd cook for everyone one evening.")
         self._seed_visit(jars, 2, "pending", "We'd love to join the weekend as a group and help with setting up.")
+
+        # Vehicles and what the tours still look for (gifts.Listing.tour)
+        from tours.models import Vehicle
+        van, created = Vehicle.objects.get_or_create(tour=jars, label="Luna's van", defaults={
+            "seats": 2, "sleeps": 2, "note": "A fridge for the cultures, a roof box; three on the front bench, a bed for two in the back", "others_may_drive": True,
+        })
+        if created:
+            van.drivers.add(luna, sam)
+        self._seed_tour_need(jars, "Someone to share the driving", Listing.KIND_HANDS, quantity=1, unit="people")
+        self._seed_tour_need(bikes, "Carpentry", Listing.KIND_HANDS, skill="Carpentry", quantity=2, unit="people",
+                             description="For the cob bench around the stove")
+        self._seed_tour_need(seeds, "Van", Listing.KIND_VEHICLE, description="Or a car with a big boot")
+
+    def _seed_tour_need(self, tour, title, kind, skill=None, **fields):
+        Listing.objects.get_or_create(
+            tour=tour, type=Listing.TYPE_WISH, title=title,
+            defaults={"kind": kind, "skill": get_or_create_skill(skill)[0] if skill else None, **fields},
+        )
 
     def _seed_visit(self, tour, index, status, message):
         """The tour asks a stop's host to take the group (tours.visits.ask_host)."""

@@ -1,4 +1,4 @@
-"""Tour visits (package 4): a tour asks each host once for the whole group."""
+"""Tour visits: a tour asks each host once for the whole group."""
 
 from datetime import timedelta
 

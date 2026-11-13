@@ -1,4 +1,4 @@
-"""References about a tour: the whole group at a visit, with who was there (package 4)."""
+"""References about a tour: the whole group at a visit, with who was there."""
 
 from datetime import datetime, time, timedelta
 

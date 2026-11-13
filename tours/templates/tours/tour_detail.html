@@ -9,12 +9,12 @@
 {% endblock %}
 
 {% block content %}
-{% if tour.image %}
-  {# The tour's picture across the page, its title on it; a click shows it whole #}
+{% with header=tour.header_image %}{% if header %}
+  {# The tour's picture (else its first vehicle's) across the page, its title on it; a click shows it whole #}
   <div class="relative w-full" style="height: 340px;"
        x-data="{ fullscreen: false }"
        x-effect="document.body.classList.toggle('overflow-hidden', fullscreen)">
-    <div class="absolute inset-0 bg-center bg-cover" style="background-image: url('{{ tour.image.url }}');"></div>
+    <div class="absolute inset-0 bg-center bg-cover" style="background-image: url('{{ header }}');"></div>
     <button type="button" @click="fullscreen = true"
             class="absolute inset-0 cursor-zoom-in focus:outline-none bg-transparent"
             style="z-index: 2;" aria-label="{% trans 'View fullscreen' %}"></button>
@@ -26,11 +26,11 @@
     <div x-show="fullscreen" @click="fullscreen = false" @keydown.escape.window="fullscreen = false"
          class="fixed inset-0 bg-black bg-opacity-90" style="display:none; z-index: 60;">
       <button type="button" @click.stop="fullscreen = false" class="modal-close" aria-label="{% trans 'Close' %}">&times;</button>
-      <img src="{{ tour.image.url }}" alt="{{ tour.title }}" @click.stop
+      <img src="{{ header }}" alt="{{ tour.title }}" @click.stop
            class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 max-h-[90vh] max-w-[90vw] rounded-lg shadow-2xl object-contain">
     </div>
   </div>
-{% endif %}
+{% endif %}{% endwith %}
 <div class="container-page">
   <div class="mb-2 text-sm"><a href="{% url 'tours:list' %}" class="hover:underline">{% trans "Community-Tours" %}</a></div>
 
@@ -60,7 +60,7 @@
   <div class="grid grid-cols-1 sm:grid-cols-12 gap-6">
     <div class="sm:col-span-8">
       {% if tour.is_idea %}<span class="pill bg-yellow text-xs">{% trans "Idea" %}</span>{% endif %}
-      {% if not tour.image %}<h1 class="mb-1 mt-2">{{ tour.title }}</h1>{% endif %}
+      {% if not tour.header_image %}<h1 class="mb-1 mt-2">{{ tour.title }}</h1>{% endif %}
       <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm mb-6">
         <span><i class="fa-regular fa-calendar mr-1"></i>{% include "tours/_tour_dates.html" %}</span>
         <span><i class="fa-solid {{ tour.travel_mode_icon }} mr-1"></i>{{ tour.get_travel_mode_display }}</span>
@@ -72,6 +72,7 @@
         <div class="flex flex-wrap gap-2 mb-6">
           <a href="{% url 'tours:edit' tour.slug %}" class="btn"><i class="fa fa-edit mr-1"></i>{% trans "Edit" %}</a>
           <a href="{% url 'tours:plan' tour.slug %}" class="btn"><i class="fa-solid fa-route mr-1"></i>{% trans "Plan the route" %}</a>
+          <a href="{% url 'tours:needs' tour.slug %}" class="btn"><i class="fa-solid fa-van-shuttle mr-1"></i>{% trans "Vehicles and needs" %}</a>
           {% if tour.is_published and tour.is_current %}
             <form method="post" action="{% url 'tours:confirm' tour.slug %}">{% csrf_token %}
               <button type="submit" class="btn btn-purple" title="{% trans 'Say that this tour is still planned as it is' %}"><i class="fa fa-check mr-1"></i>{% trans "Still current" %}</button>
@@ -96,6 +97,38 @@
       {% else %}
         <p class="italic">{% trans "No stops yet: this tour is still an idea." %}</p>
         {% if can_edit %}<a href="{% url 'tours:plan' tour.slug %}" class="btn"><i class="fa fa-plus mr-1"></i>{% trans "Add stops" %}</a>{% endif %}
+      {% endif %}
+
+      {# What the tour still looks for, each with why someone who has it would say yes #}
+      {% if needs %}
+        <h2 id="needs">{% trans "We're still looking for" %}</h2>
+        <ul class="list-none m-0 p-0 space-y-2 mb-6">
+          {% for need, role in needs %}
+            <li id="need-{{ need.pk }}" class="flex flex-wrap items-center gap-3 p-3 rounded border bg-secondary bg-opacity-50 {% if need.is_done %}opacity-70{% endif %}">
+              <i class="fa-solid {{ need.kind_icon }} text-primary w-5 text-center"></i>
+              <div class="flex-1 min-w-0">
+                <a href="{{ need.get_absolute_url }}" class="font-semibold hover:underline {% if need.is_done %}line-through{% endif %}">{{ need.display_title }}</a>
+                {% if need.amount %}<span class="opacity-70"> · {{ need.amount }}</span>{% endif %}
+                {% if role == "completes" %}<span class="pill text-xs bg-purple ml-1">{% trans "Completes the team" %}</span>
+                {% elif role == "alongside" %}<span class="pill text-xs bg-green ml-1">{% trans "Works alongside" %}</span>{% endif %}
+                <span class="text-xs opacity-70 block">{{ need.kind_label }}
+                  {% if need.description %}· {{ need.description }}{% endif %}
+                  {% if need.status == 'covered' %}· {% trans "covered" %}
+                  {% elif need.status == 'promised' or need.progress %}·
+                    {% if need.progress %}{{ need.progress }},{% endif %}
+                    {% for offer in need.promises %}{% with person=offer.match.from_user %}{% if user.is_authenticated %}<a href="{{ person.get_absolute_url }}" class="underline hover:text-primary">{{ person.name|default:person.email }}</a>{% else %}{{ person.name }}{% endif %}{% if offer.amount and need.quantity %} ({{ offer.amount }}){% endif %}{% endwith %}{% if not forloop.last %}, {% endif %}{% endfor %}
+                  {% elif need.status == 'offered' %}· {% trans "someone offered this, waiting for an answer" %}{% endif %}
+                </span>
+              </div>
+              {% if join.state == "ask" and not need.is_done %}
+                <a href="{% url 'tours:join' tour.slug %}?need={{ need.pk }}" class="btn text-sm py-1 px-3 whitespace-nowrap"><i class="fa-solid fa-user-plus mr-1"></i>{% trans "Ask to join" %}</a>
+              {% elif join.state == "login" and not need.is_done %}
+                {% url 'tours:join' tour.slug as join_url %}
+                <a href="{% url 'users:login' %}?next={{ join_url|urlencode }}%3Fneed%3D{{ need.pk }}" class="btn text-sm py-1 px-3 whitespace-nowrap"><i class="fa-solid fa-user-plus mr-1"></i>{% trans "Ask to join" %}</a>
+              {% endif %}
+            </li>
+          {% endfor %}
+        </ul>
       {% endif %}
 
       {% with learn=tour.learn_skills.all %}
@@ -181,6 +214,35 @@
       {% endif %}
       {% if travellers %}
         {% include "tours/_join_box.html" %}
+      {% endif %}
+      {# What they travel in: what fits in and on it, how comfy it is #}
+      {% if vehicles %}
+        <div id="vehicles">
+          <h2 class="text-center">{% trans "Our vehicles" %}</h2>
+          <ul class="list-none m-0 p-0 space-y-4">
+            {% for vehicle in vehicles %}
+              <li class="m-0 border rounded-xl bg-secondary bg-opacity-60 overflow-hidden text-sm">
+                {% if vehicle.image %}
+                  <a href="{{ vehicle.image.url }}" target="_blank" rel="noopener"><img src="{{ vehicle.image.url }}" alt="{{ vehicle.label }}" class="w-full h-40 object-cover" loading="lazy"></a>
+                {% endif %}
+                <div class="p-4 space-y-1">
+                  <div class="font-serif font-bold text-lg"><i class="fa-solid fa-van-shuttle mr-2 text-primary"></i>{{ vehicle.label }}</div>
+                  <div>
+                    <i class="fa-solid fa-user-group mr-1"></i>{% blocktrans count count=vehicle.seats %}{{ count }} seat{% plural %}{{ count }} seats{% endblocktrans %}
+                    {% if vehicle.sleeps %}<span class="ml-3"><i class="fa-solid fa-bed mr-1"></i>{% blocktrans count count=vehicle.sleeps %}{{ count }} sleeping place{% plural %}{{ count }} sleeping places{% endblocktrans %}</span>{% endif %}
+                  </div>
+                  {% if vehicle.note %}<div><i class="fa-solid fa-suitcase mr-1"></i>{{ vehicle.note }}</div>{% endif %}
+                  {% with drivers=vehicle.drivers.all %}{% if drivers and user.is_authenticated %}
+                    <div><i class="fa-solid fa-id-card mr-1"></i>{% trans "Drivers" %}: {% for person in drivers %}<a href="{{ person.get_absolute_url }}" class="underline hover:text-primary">{{ person.name }}</a>{% if not forloop.last %}, {% endif %}{% endfor %}</div>
+                  {% endif %}{% endwith %}
+                  {% if vehicle.needs_driver %}<div class="text-red"><i class="fa-solid fa-circle-exclamation mr-1"></i>{% trans "Still needs a driver" %}</div>{% endif %}
+                  {% if vehicle.others_may_drive %}<div class="opacity-80">{% trans "Others may drive too" %}</div>{% endif %}
+                  {% if not vehicle.whole_route %}<div class="opacity-80"><i class="fa-solid fa-route mr-1"></i>{% if vehicle.from_stop %}{{ vehicle.from_stop.label }}{% else %}{% trans "the start" %}{% endif %} → {% if vehicle.to_stop %}{{ vehicle.to_stop.label }}{% else %}{% trans "the end" %}{% endif %}</div>{% endif %}
+                </div>
+              </li>
+            {% endfor %}
+          </ul>
+        </div>
       {% endif %}
     </aside>
   </div>

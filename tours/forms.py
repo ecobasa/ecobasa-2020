@@ -1,15 +1,19 @@
 import json
 
 from django import forms
+from django.contrib.auth import get_user_model
 from django.utils.formats import date_format
 from django.utils.translation import gettext_lazy as _
 from django_countries import countries as all_countries
 
 from communities.models import Community
+from events.forms import BaseNeedFormSet, NeedForm
 from events.models import Event
+from gift_economy.gifts import units
+from gift_economy.gifts.models import Listing
 from gift_economy.gifts.skills.models import get_or_create_skill
 
-from .models import Stop, Tour, Traveller
+from .models import Stop, Tour, Traveller, Vehicle
 
 
 def _style(fields):
@@ -206,8 +210,10 @@ class StopForm(forms.ModelForm):
 
 class JoinForm(forms.ModelForm):
     """Asking to come along for the whole route or part of it: where to get on and off,
-    how many people, and a few words to the organisers (only when asking, not when
-    changing the stretch later)."""
+    how many people, which of the tour's needs one covers, and a few words to the
+    organisers (only when asking, not when changing the stretch later). Each open need
+    gets a checkbox (need_<id>) and, if it has a quantity, an amount (quantity_<id>), as
+    when offering help with an event."""
 
     message = forms.CharField(
         label=_("A few words to the organisers"), widget=forms.Textarea(attrs={"rows": 4}),
@@ -218,10 +224,11 @@ class JoinForm(forms.ModelForm):
         model = Traveller
         fields = ["from_stop", "to_stop", "people", "ride_only"]
 
-    def __init__(self, tour, *args, with_message=True, **kwargs):
+    def __init__(self, tour, *args, with_message=True, preselected=(), **kwargs):
         super().__init__(*args, **kwargs)
         self.tour = tour
         self.stops = tour.ordered_stops()
+        self._add_needs(preselected)
         if len(self.stops) >= 2:
             for name, choices, default in (
                 ("from_stop", self.stops[:-1], self.stops[0]),
@@ -242,7 +249,44 @@ class JoinForm(forms.ModelForm):
         self.fields["people"].widget.attrs["min"] = 1
         if not with_message:
             del self.fields["message"]
-        _style(self.fields)
+        _style({name: field for name, field in self.fields.items() if not name.startswith(("need_", "quantity_"))})
+
+    def _add_needs(self, preselected):
+        match = self.instance.match if self.instance.pk else None
+        covering = {c.listing_id: c.quantity for c in match.contributions.all()} if match else {}
+        # What one covers already stays on the list, also once it is covered
+        self.needs = [need for need in self.tour.needs() if not need.is_done or need.pk in covering]
+        preselected = {str(pk) for pk in preselected}
+        for need in self.needs:
+            self.fields[f"need_{need.pk}"] = forms.BooleanField(
+                required=False, initial=need.pk in covering or str(need.pk) in preselected,
+                widget=forms.CheckboxInput(attrs={"class": "form-checkbox"}),
+            )
+            if need.quantity:
+                remaining = need.remaining or need.quantity
+                self.fields[f"quantity_{need.pk}"] = forms.IntegerField(
+                    required=False, min_value=1,
+                    initial=covering.get(need.pk) or (1 if need.unit == units.PEOPLE else remaining),
+                    widget=forms.NumberInput(attrs={"class": "form-input w-24", "min": "1"}),
+                )
+
+    def need_rows(self):
+        """(need, checkbox, amount field or None) for the template."""
+        return [
+            (need, self[f"need_{need.pk}"], self[f"quantity_{need.pk}"] if f"quantity_{need.pk}" in self.fields else None)
+            for need in self.needs
+        ]
+
+    def chosen_needs(self):
+        """[(need, quantity or None)] that were ticked."""
+        return [
+            (need, self.cleaned_data.get(f"quantity_{need.pk}"))
+            for need in self.needs if self.cleaned_data.get(f"need_{need.pk}")
+        ]
+
+    def stretch_fields(self):
+        """The fields other than the needs, in order, for the template."""
+        return [field for field in self if not field.name.startswith(("need_", "quantity_"))]
 
     def _stop_label(self, stop):
         number = next((i + 1 for i, s in enumerate(self.stops) if s.pk == stop.pk), "")
@@ -387,3 +431,63 @@ class HostForm(forms.Form):
         if stay_from and stay_to and stay_to < stay_from:
             self.add_error("stay_to", _("The stay can't end before it starts."))
         return cleaned
+
+
+# ── Vehicles and what the tour still looks for ──────────────────────
+
+class VehicleForm(forms.ModelForm):
+    """A vehicle the tour travels in, on the whole route or part of it. The driver is one
+    of the travellers; a listed vehicle one of theirs."""
+
+    class Meta:
+        model = Vehicle
+        fields = [
+            "label", "image", "drivers", "seats", "sleeps", "note", "needs_driver", "others_may_drive",
+            "from_stop", "to_stop",
+        ]
+        widgets = {"drivers": forms.CheckboxSelectMultiple(attrs={"class": "form-checkbox"})}
+
+    def __init__(self, *args, tour=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.tour = tour
+        travellers = [traveller.user for traveller in tour.counted_travellers()]
+        stops = tour.ordered_stops()
+        drivers = self.fields["drivers"]
+        drivers.queryset = get_user_model().objects.filter(pk__in=[user.pk for user in travellers])
+        drivers.label_from_instance = lambda user: user.name or user.email
+        self.fields["label"].widget.attrs["placeholder"] = _("e.g. blue van")
+        self.fields["note"].widget.attrs["placeholder"] = _("e.g. roof rack, about 1 m³; bench seats, a bed for two in the back")
+        if self.instance.pk is None and tour.organiser_id:
+            self.initial.setdefault("drivers", [tour.organiser_id])
+        if len(stops) >= 2:
+            for name, choices in (("from_stop", stops[:-1]), ("to_stop", stops[1:])):
+                field = self.fields[name]
+                field.queryset = Stop.objects.filter(pk__in=[stop.pk for stop in choices])
+                field.label_from_instance = lambda stop, stops=stops: f"{stops.index(stop) + 1}. {stop.label}"
+            self.fields["from_stop"].empty_label = _("the start")
+            self.fields["to_stop"].empty_label = _("the end")
+        else:
+            del self.fields["from_stop"], self.fields["to_stop"]
+        _style(self.fields)
+
+    def clean(self):
+        cleaned = super().clean()
+        start, end = cleaned.get("from_stop"), cleaned.get("to_stop")
+        if (start or end) and self.tour.stretch(start, end) is None:
+            self.add_error("to_stop", _("Choose a stop after the first one."))
+        return cleaned
+
+
+class BaseVehicleFormSet(forms.BaseInlineFormSet):
+    def get_form_kwargs(self, index):
+        return {**super().get_form_kwargs(index), "tour": self.instance}
+
+
+VehicleFormSet = forms.inlineformset_factory(
+    Tour, Vehicle, form=VehicleForm, formset=BaseVehicleFormSet, extra=0, can_delete=True,
+)
+
+# What the tour still looks for: the same rows as an event's needs
+TourNeedFormSet = forms.inlineformset_factory(
+    Tour, Listing, form=NeedForm, formset=BaseNeedFormSet, fk_name="tour", extra=0, can_delete=True,
+)

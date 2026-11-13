@@ -9,7 +9,7 @@ from gift_economy.matches.models import Match
 @receiver(post_save, sender=Community)
 def rebuild_routes_through(sender, instance, **kwargs):
     """A community's place or whether it is public changed: the routes of tours that stop
-    there (also at its events) go through its new public point (plan 5.5, rule 7)."""
+    there (also at its events) go through its new public point."""
     from .models import Tour
 
     for tour in Tour.objects.filter(stops__community=instance).distinct():
@@ -49,3 +49,16 @@ def match_changed(sender, instance, **kwargs):
 @receiver([post_save, post_delete], sender="tours.Stop")
 def route_or_travellers_changed(sender, instance, **kwargs):
     _sync_later(instance.tour_id)
+
+
+# ── A tour's needs are matched along its route ──────────────────────
+@receiver(post_save, sender="tours.Tour")
+def tour_saved(sender, instance, raw=False, **kwargs):
+    """Its route, dates or whether it is published or listed changed: what it looks for
+    is matched again (only where it is current, matching.side_of)."""
+    from gift_economy.matches.signals import schedule_match
+
+    if raw:
+        return
+    for need in instance.listings.filter(type="wish"):
+        schedule_match(need)

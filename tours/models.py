@@ -15,7 +15,7 @@ from communities.models import Community
 from events.models import Event
 from gift_economy.matches.matching import distance_km
 
-# Straight distance times this is about the way on roads (docs/community-tours-plan.md, D8)
+# Straight distance times this is about the way on roads (no routing service needed)
 ROAD_FACTOR = 1.3
 
 # The way from one stop to the next: not stored, leg i runs from stop i to stop i+1
@@ -114,6 +114,9 @@ class Tour(models.Model):
     # Chosen by hand while it has no stops
     countries = CountryField(_("Countries"), multiple=True, multiple_sort=False, blank=True)
     route = models.LineStringField(_("Route"), geography=True, null=True, blank=True)
+    # Where it starts, as everyone may see it (also with a single stop): where its needs
+    # are on the gifts map
+    start = models.PointField(_("Start"), geography=True, null=True, blank=True)
     distance_km = models.PositiveIntegerField(_("About how many km"), null=True, blank=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
@@ -166,10 +169,20 @@ class Tour(models.Model):
         return self.url()
 
     @property
-    def picture(self):
-        """Its picture, else the first photo of a community on its way (a URL, or "")."""
+    def header_image(self):
+        """Its picture, else its first vehicle's (a URL, or ""): the tour page's header
+        and the map's popovers."""
         if self.image:
             return self.image.url
+        vehicle = next((vehicle for vehicle in self.vehicles.all() if vehicle.image), None)
+        return vehicle.image.url if vehicle else ""
+
+    @property
+    def picture(self):
+        """Its picture or its first vehicle's, else the first photo of a community on its
+        way (a URL, or "")."""
+        if self.header_image:
+            return self.header_image
         for stop in self.stops.all():
             if stop.community_id:
                 photo = next(iter(stop.community.photos.all()), None)
@@ -235,13 +248,12 @@ class Tour(models.Model):
     def can_view(self, user):
         if self._can_view(user):
             return True
-        # The hosts it asked (5.5 rule 8)
+        # The hosts it asked
         return user.is_authenticated and self.stops.filter(visit_match__recipient=user).exists()
 
     def _can_view(self, user):
         """A draft only for its organisers. A personal tour that is not listed only for
-        its traveller and staff; the hosts it asks and the givers and receivers of its
-        deliveries come with those features (docs/community-tours-plan.md, 5.5 rule 8)."""
+        its traveller and staff; the hosts it asks may see it too (can_view)."""
         if self.can_edit(user):
             return True
         return self.is_published and self.listed
@@ -260,9 +272,17 @@ class Tour(models.Model):
             legs.append(Leg(index, start, end, km))
         return legs
 
+    def public_start(self):
+        """(name, point) where it starts, as everyone sees it; ("", None) without stops."""
+        for stop in self.stops.all():
+            name, point = stop.public_place()
+            if point is not None:
+                return name, point
+        return "", None
+
     # ── Who travels, and where there is room ────────────────────────
-    # docs/community-tours-plan.md, 5.4. Leg i runs from stop i to stop i+1; a traveller
-    # without a first or last stop is on from the start or until the end.
+    # Leg i runs from stop i to stop i+1; a traveller
+    # or vehicle without a first or last stop is on from the start or until the end.
     def counted_travellers(self):
         """The travellers who are on the tour: added directly, or asked and accepted."""
         return [t for t in self.travellers.select_related("user", "match") if t.is_counted]
@@ -278,21 +298,43 @@ class Tour(models.Model):
         last = index.get(getattr(to_stop, "pk", to_stop), len(stops) - 1) - 1
         return (first, last) if first <= last else None
 
+    def room(self, stops=None, vehicles=None):
+        """How many fit on each leg, in order: the seats of the vehicles on it plus one
+        per vehicle with drivers, at most `max_people`; with no vehicle there,
+        `max_people` (None: no limit). Without legs (an idea) one number."""
+        stops = self.ordered_stops() if stops is None else stops
+        vehicles = list(self.vehicles.all()) if vehicles is None else vehicles
+        n = max(len(stops) - 1, 1)
+        room = []
+        for i in range(n):
+            on = [v for v in vehicles if self._on_leg(v, i, stops, n)]
+            seats = sum(v.places for v in on) if on else None
+            if self.max_people is not None:
+                seats = self.max_people if seats is None else min(seats, self.max_people)
+            room.append(seats)
+        return room
+
+    def _on_leg(self, row, i, stops, n):
+        """Whether a traveller or vehicle (with from_stop and to_stop) is on leg i."""
+        first, last = self.stretch(row.from_stop_id, row.to_stop_id, stops) or (0, n - 1)
+        return first <= i <= last
+
     def free_places(self, stops=None, travellers=None, exclude=None):
-        """Free places on each leg, in order: `max_people` minus the people of the counted
+        """Free places on each leg, in order: its room minus the people of the counted
         travellers on it (None if there is no limit). Without legs (an idea) one number."""
         stops = self.ordered_stops() if stops is None else stops
         travellers = self.counted_travellers() if travellers is None else travellers
         n = max(len(stops) - 1, 1)
-        if self.max_people is None:
-            return [None] * n
-        free = [self.max_people] * n
+        free = self.room(stops)
+        if all(places is None for places in free):
+            return free
         for traveller in travellers:
             if exclude is not None and traveller.pk == exclude.pk:
                 continue
             first, last = self.stretch(traveller.from_stop_id, traveller.to_stop_id, stops) or (0, n - 1)
             for i in range(first, last + 1):
-                free[i] -= traveller.people
+                if free[i] is not None:
+                    free[i] -= traveller.people
         return free
 
     def free_on(self, from_stop=None, to_stop=None, stops=None, exclude=None):
@@ -300,8 +342,8 @@ class Tour(models.Model):
         stops = self.ordered_stops() if stops is None else stops
         free = self.free_places(stops=stops, exclude=exclude)
         first, last = self.stretch(from_stop, to_stop, stops) or (0, len(free) - 1)
-        on = free[first:last + 1]
-        return None if None in on else max(min(on), 0)
+        on = [places for places in free[first:last + 1] if places is not None]
+        return max(min(on), 0) if on else None
 
     def fits(self, from_stop, to_stop, people, exclude=None):
         """Whether `people` more fit on every leg between the two stops."""
@@ -319,6 +361,23 @@ class Tour(models.Model):
             and not t.ride_only
         ]
 
+    # ── What it still looks for (gifts.Listing.tour) ────────────────
+    def needs(self):
+        """Its needs, in the order they were entered."""
+        return self.listings.filter(type="wish").select_related("skill").prefetch_related(
+            "contributions__match__from_user",
+        ).order_by("order", "created_at")
+
+    def team_skill_ids(self):
+        """The skills the counted travellers offer."""
+        from gift_economy.gifts.models import Listing
+
+        people = [traveller.user_id for traveller in self.counted_travellers()]
+        return set(
+            Listing.objects.filter(owner__in=people, community=None, type=Listing.TYPE_OFFER, skill__isnull=False)
+            .exclude(available=False).values_list("skill_id", flat=True)
+        )
+
     # ── References about the whole group (gift_economy.references) ──
     # Hosts and others who met the group write about it, saying who of it was there.
     # References about single travellers stay on their profiles.
@@ -330,6 +389,19 @@ class Tour(models.Model):
     def get_reference_people(self):
         """Who can be named as having been there: everyone on the tour."""
         return [traveller.user for traveller in self.counted_travellers()]
+
+    def get_reference_visits(self):
+        """The stays someone writing about the group can say they met it at: the agreed
+        tour visits, as (match, "stop · community")."""
+        from gift_economy.matches.models import Match
+
+        visits = []
+        for stop in self.stops.filter(visit_match__status=Match.STATUS_ACCEPTED).select_related(
+            "visit_match", "event", "community",
+        ):
+            label = f"{stop.event.title} · {stop.community.name}" if stop.event_id else stop.community.name
+            visits.append((stop.visit_match, label))
+        return visits
 
     def can_be_referenced_by(self, user):
         """Not by its own travellers: they write about the hosts and about each other."""
@@ -406,6 +478,7 @@ class Tour(models.Model):
         stops = self.ordered_stops()
         points = [point for _name, point in (stop.public_place() for stop in stops) if point is not None]
         self.route = LineString([p.coords for p in points], srid=4326) if len(points) >= 2 else None
+        self.start = points[0] if points else None
         if len(points) >= 2:
             total = sum(distance_km(a, b) for a, b in zip(points, points[1:]))
             self.distance_km = round(total * ROAD_FACTOR)
@@ -424,7 +497,7 @@ class Tour(models.Model):
         if countries:
             self.countries = countries
         if save:
-            self.save(update_fields=["route", "distance_km", "starts_on", "ends_on", "countries"])
+            self.save(update_fields=["route", "start", "distance_km", "starts_on", "ends_on", "countries"])
 
 
 class Stop(models.Model):
@@ -455,7 +528,7 @@ class Stop(models.Model):
     note = models.TextField(_("What we plan here"), blank=True)
     # If the way on from here goes another way (a ferry, a train)
     onward_mode = models.CharField(_("Going on by"), max_length=20, choices=MODE_CHOICES, blank=True)
-    # The tour visit: the group's stay, asked of the host once (plan D4). Its status is
+    # The tour visit: the group's stay, asked of the host once for the whole group. Its status is
     # where the host stands
     visit_match = models.OneToOneField(
         "matches.Match", on_delete=models.SET_NULL, null=True, blank=True, related_name="tour_stop",
@@ -547,7 +620,7 @@ class Stop(models.Model):
 
     @property
     def host_status(self):
-        """Where the host stands (N24), "" without a host."""
+        """Where the host stands, "" without a host."""
         from gift_economy.matches.models import Match
 
         if not self.community_id or self.host.get_match_owner() is None:
@@ -674,7 +747,7 @@ class Traveller(models.Model):
 
     def pickup_place(self, viewer=None):
         """(name, point) of where they get on between stops: roughly until the request
-        is accepted, except to the one who asked (docs/community-tours-plan.md, 5.5 rule 4)."""
+        is accepted, except to the one who asked (as Match.places_shown)."""
         return self._place(self.pickup_name, self.pickup_point, viewer)
 
     def dropoff_place(self, viewer=None):
@@ -688,6 +761,52 @@ class Traveller(models.Model):
         if viewer == self.user or self.is_counted:
             return name, point
         return town(name), approximate(point, self.user_id)
+
+
+class Vehicle(models.Model):
+    """A vehicle the tour travels in: it gives the tour its places, on the whole route or
+    part of it. Optional: tours by bike, train, thumb or on foot are normal. Not a gift
+    listing: a vehicle offered in the gifts is given away or lent, and one borrowed for a
+    tour is not linked to its listing yet."""
+
+    tour = models.ForeignKey(Tour, on_delete=models.CASCADE, related_name="vehicles")
+    label = models.CharField(_("What vehicle?"), max_length=100)
+    image = models.ImageField(_("Picture"), upload_to="tours-vehicles", null=True, blank=True)
+    # Who may drive it; one of them drives at a time
+    drivers = models.ManyToManyField(
+        settings.AUTH_USER_MODEL, blank=True, related_name="+", verbose_name=_("Drivers"),
+    )
+    seats = models.PositiveSmallIntegerField(_("Seats besides the driver"), default=0)
+    sleeps = models.PositiveSmallIntegerField(_("Sleeping places"), null=True, blank=True)
+    # Free text on purpose, no volume maths
+    note = models.CharField(_("What fits in and on it, how comfy it is"), max_length=255, blank=True)
+    needs_driver = models.BooleanField(_("Still needs a driver"), default=False)
+    others_may_drive = models.BooleanField(_("Others may drive too"), default=False)
+    # Only for part of the route (None: from the start, until the end)
+    from_stop = models.ForeignKey(
+        Stop, on_delete=models.SET_NULL, null=True, blank=True, related_name="+", verbose_name=_("From"),
+    )
+    to_stop = models.ForeignKey(
+        Stop, on_delete=models.SET_NULL, null=True, blank=True, related_name="+", verbose_name=_("To"),
+    )
+
+    class Meta:
+        ordering = ["pk"]
+        verbose_name = _("Vehicle")
+        verbose_name_plural = _("Vehicles")
+
+    def __str__(self):
+        return self.label
+
+    @property
+    def places(self):
+        """How many people it takes: its seats and the driver's seat, if someone drives it
+        (the other drivers sit in the seats)."""
+        return self.seats + (1 if self.drivers.all() else 0)
+
+    @property
+    def whole_route(self):
+        return self.from_stop_id is None and self.to_stop_id is None
 
 
 def append_stop(stop):

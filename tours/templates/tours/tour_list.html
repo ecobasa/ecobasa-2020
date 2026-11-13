@@ -299,7 +299,19 @@ function tourPopup(props) {
       learn.append(pill);
     });
   }
-  if (props.organiser) add('div', 'mt-2 opacity-80', '{% trans "Organiser"|escapejs %}: ' + props.organiser);
+  if (props.organiser) {
+    // The organiser's name links to their profile, with their picture if they have one
+    const who = add('div', 'mt-2 flex items-center gap-1', '{% trans "Organiser"|escapejs %}: ');
+    const link = document.createElement('a');
+    link.href = props.organiser_url; link.className = 'inline-flex items-center gap-1 underline hover:text-primary';
+    if (props.organiser_image) {
+      const img = document.createElement('img');
+      img.src = props.organiser_image; img.alt = ''; img.className = 'w-5 h-5 rounded-full object-cover';
+      link.append(img);
+    }
+    link.append(props.organiser);
+    who.append(link);
+  }
   return el;
 }
 

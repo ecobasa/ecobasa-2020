@@ -675,6 +675,8 @@ class Suggestion(models.Model):
             return "fa-handshake-angle"
         if other.event_id and other.is_wish:
             return other.event.kind_icon
+        if other.tour_id:
+            return "fa-route"
         if other.kind == other.KIND_OTHER:
             return "fa-gift" if other.is_offer else "fa-heart"
         return other.kind_icon
@@ -692,6 +694,8 @@ class Suggestion(models.Model):
             return _("%(project)s at %(community)s needs: %(title)s") % {
                 "project": other.event.title, "community": other.community.name, "title": title,
             }
+        if other.tour_id:
+            return _("The tour %(tour)s is looking for: %(title)s") % {"tour": other.tour.title, "title": title}
         if other.community_id:
             if other.is_offer:
                 if other.kind == other.KIND_SKILL:
@@ -737,6 +741,13 @@ class Suggestion(models.Model):
                 community=format_html(link, event.community.get_absolute_url(), event.community.name),
                 title=title,
             )
+        if self.other_model == "listing" and other.tour_id:
+            title = f"{other.display_title} ({other.amount})" if other.amount else other.display_title
+            return format_html(
+                escape(_("The tour %(tour)s is looking for: %(title)s")).replace("%(tour)s", "{tour}")
+                .replace("%(title)s", "{title}"),
+                tour=format_html(link, other.tour.get_absolute_url(), other.tour.title), title=title,
+            )
         if self.other_model == "listing" and other.community_id and other.is_wish:
             # The community links to its profile; the button opens its volunteer form
             community = other.community
@@ -758,6 +769,8 @@ class Suggestion(models.Model):
             return str(own)
         if own.event_id:
             return own.event.texts["own_need"] % {"project": own.event.title, "title": own.display_title}
+        if own.tour_id:
+            return _("your tour %(tour)s: %(title)s") % {"tour": own.tour.title, "title": own.display_title}
         if own.is_offer and own.kind == own.KIND_SKILL:
             return _("your skill: %(skill)s") % {"skill": own.display_title}
         template = _("your offer: %(title)s") if own.is_offer else _("your wish: %(title)s")
@@ -780,13 +793,16 @@ class Suggestion(models.Model):
 
     @property
     def action_url(self):
-        """Where to act on it: the offer form for an event need, the volunteer form for a
-        community's wish for a skill, else the thing's page (where it can be asked for or
+        """Where to act on it: the offer form for an event need, the join page for a
+        tour's need, the volunteer form for a community's wish for a skill, else the thing's page (where it can be asked for or
         offered)."""
         other = self.other
         if self.other_model == "listing" and other is not None and other.is_wish:
             if other.event_id:
                 return f"{other.event.url('offer_help')}?need={other.pk}"
+            if other.tour_id:
+                # Joining the tour is how one helps with what it looks for
+                return f"{other.tour.url('join')}?need={other.pk}"
             if other.community_id and other.skill_id:
                 return f"{other.community.get_absolute_url()}?help={other.skill.slug}"
         return self.url

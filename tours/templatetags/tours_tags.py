@@ -32,7 +32,7 @@ def tours_of(context, person):
 
 @register.inclusion_tag("tours/_tour_visits.html", takes_context=True)
 def tour_visits_to(context, host):
-    """"Tour visits" (N25) on a community's or event's page: the tours its host agreed to
+    """"Tour visits" on a community's or event's page: the tours its host agreed to
     take (or that come to its open event), not over yet, as the viewer may see them. A
     community lists the visits to its events too."""
     from django.db.models import Q

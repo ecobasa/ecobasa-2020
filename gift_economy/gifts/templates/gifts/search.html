@@ -510,10 +510,16 @@
     const desc = esc(truncate(props.description, 150));
     if (desc) html += `<div class="text-sm text-brown mt-2">${desc}</div>`;
     if (props.event) html += `<div class="text-xs text-brown mt-1"><i class="fa-solid fa-calendar-day mr-1"></i>${esc(props.event)}</div>`;
+    if (props.tour) html += `<div class="text-xs text-brown mt-1"><i class="fa-solid fa-route mr-1"></i>${esc(props.tour)}</div>`;
     // A community's: its name, linked to its page
     if (props.community_name) html += `<div class="text-xs text-brown mt-1"><i class="fa fa-home mr-1"></i><a href="${esc(props.community_url)}" class="underline">${esc(props.community_name)}</a></div>`;
-    // A person's: their name, and below it the communities they are ambassador of
-    if (props.user_name) html += `<div class="text-xs mt-1"><i class="fa fa-user mr-1"></i>${esc(props.user_name)}</div>`;
+    // A person's: their name linking to their profile, with their picture if they have one, and below it the communities they are ambassador of
+    if (props.user_name) {
+      const who = props.user_image
+        ? `<img src="${esc(props.user_image)}" alt="" class="w-5 h-5 rounded-full object-cover">`
+        : '<i class="fa fa-user"></i>';
+      html += `<div class="text-xs mt-1 flex flex-wrap items-center gap-1"><a href="${esc(props.user_url)}" class="inline-flex items-center gap-1 underline hover:text-primary">${who}${esc(props.user_name)}</a></div>`;
+    }
     (props.member_of || []).forEach(([name, link]) => {
       html += `<div class="text-xs text-brown mt-0.5"><i class="fa fa-home mr-1"></i><a href="${esc(link)}" class="underline">${esc(name)}</a></div>`;
     });
