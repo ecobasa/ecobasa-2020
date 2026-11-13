@@ -90,45 +90,5 @@
 <script src="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.min.js"></script>
 {% include "users/_skill_tagify_js.html" %}
 {% include "_vocabulary_select_js.html" %}
-<script>
-document.addEventListener('alpine:init', () => {
-  Alpine.data('needRows', () => ({
-    init() {
-      if (!document.querySelectorAll('#need-rows [data-need-row]').length) this.add();
-      document.querySelectorAll('#need-rows [data-need-row]').forEach(row => this.suggest(row));
-      // A line's suggestions follow its kind
-      this.$el.addEventListener('change', (e) => {
-        if (e.target.matches('[data-need-row] select[name$="-kind"]')) this.suggest(e.target.closest('[data-need-row]'), true);
-      });
-    },
-    // Suggestions styled like the tag fields: skills for helping hands and knowledge (other
-    // words allowed: "what for"), vehicles, tools and materials only from their
-    // vocabulary, so they can be matched
-    suggest(row, changed) {
-      const kind = row.querySelector('select[name$="-kind"]').value;
-      // A name chosen from a vocabulary doesn't fit another kind: it goes
-      const listed = ['vehicle', 'tool', 'material'];
-      const clear = changed && (listed.includes(kind) || listed.includes(row.dataset.kind));
-      row.dataset.kind = kind;
-      const title = EcoSelect.detach(row.querySelector('[data-need-title]'), clear);
-      if (listed.includes(kind)) {
-        EcoSelect.attach(title, {
-          url: '{% url "gifts:api-things" %}?kind=' + kind, enforce: true, results: data => data.results || [],
-        });
-      } else if (['hands', 'knowledge'].includes(kind)) {
-        EcoSelect.attach(title, {
-          url: '{% url "skills:api_autocomplete" %}', enforce: false, results: data => (data.results || []).map(r => r.text),
-        });
-      }
-    },
-    add() {
-      const total = document.getElementById('id_needs-TOTAL_FORMS');
-      const html = document.getElementById('need-row-template').innerHTML.replace(/__prefix__/g, total.value);
-      document.getElementById('need-rows').insertAdjacentHTML('beforeend', html);
-      total.value = parseInt(total.value, 10) + 1;
-      this.$nextTick(() => this.suggest(document.querySelector('#need-rows [data-need-row]:last-child')));
-    },
-  }));
-});
-</script>
+{% include "events/_need_rows_js.html" %}
 {% endblock %}

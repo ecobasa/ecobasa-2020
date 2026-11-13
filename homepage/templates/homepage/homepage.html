@@ -21,6 +21,7 @@
     <div class="max-w-3xl mx-auto text-center mb-8">
       <p>{% trans "Communities, permaculture projects and farms – and everyone who wants to visit them, support them or start something of their own." %}</p>
       <p>{% trans "Share your surplus and close loops beyond your own land. Use your public community profile like your own website." %}</p>
+      <p><a href="{% url 'help:index' %}"><i class="fa-regular fa-circle-question mr-1"></i>{% trans "How does ecobasa work?" %}</a></p>
     </div>
     <div class="grid gap-6 md:grid-cols-3">
       <div class="feature-box feature-box-primary">
@@ -44,9 +45,9 @@
           <h2 class="mt-4">{% trans "Knowledge & helping out" %}</h2>
         </div>
         <ul class="feature-list">
-          <li><a href="{% url 'communities:list' %}">{% trans "Share skills: teach and learn by doing" %}</a></li>
+          <li><a href="{% url 'gifts:search' %}?kind=skill">{% trans "Share skills: teach and learn by doing" %}</a></li>
           <li><a href="{% url 'communities:list' %}">{% trans "Volunteer stays: help out and get food, a place to sleep and new experience" %}</a></li>
-          <li>{% trans "Organise and join Community-Tours" %} <span class="soon">{% trans "soon" %}</span></li>
+          <li>{% url 'tours:list' as tours_url %}{% url 'tours:ride' as ride_url %}{% blocktrans %}<a href="{{ tours_url }}">Organise and join Community-Tours</a>, or <a href="{{ ride_url }}">offer a ride</a>{% endblocktrans %}</li>
           <li><a href="{% url 'communities:list' %}">{% trans "Find inspiring places to visit and live in" %}</a></li>
           <li><a href="{% url 'communities:create' %}">{% trans "Start a new community with the people and resources you need" %}</a></li>
         </ul>
@@ -57,9 +58,10 @@
           <h2 class="mt-4">{% trans "Coming together" %}</h2>
         </div>
         <ul class="feature-list">
+          <li><a href="{% url 'events:list' %}">{% trans "Events: projects and open days to visit and help out at" %}</a></li>
           <li>{% trans "Gift circles, in person and online" %} <span class="soon">{% trans "soon" %}</span></li>
           <li>{% trans "Communities-Convergences" %} <span class="soon">{% trans "soon" %}</span></li>
-          <li>{% trans "Build trust through references" %}</li>
+          <li>{% if featured_references %}<a href="#success-stories">{% trans "Build trust through references" %}</a>{% else %}{% trans "Build trust through references" %}{% endif %}</li>
           <li>{% trans "Find like-minded people in your area" %}</li>
           <li>{% trans "Co-create a global gift-economy network" %}</li>
         </ul>

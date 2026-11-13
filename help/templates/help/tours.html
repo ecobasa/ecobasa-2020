@@ -1,0 +1,158 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block head_title %}{% trans "Help" %}: {% trans "Community-Tours" %} — ecobasa{% endblock %}
+
+{% block content %}
+{% url 'tours:list' as list_url %}{% url 'tours:create' as create_url %}{% url 'tours:ride' as ride_url %}{% url 'tours:mine' as mine_url %}{% url 'matches:list' as matches_url %}{% url 'events:list' as events_url %}{% url 'users:update' as settings_url %}
+<div class="container-page">
+  <a href="{% url 'help:index' %}" class="text-sm"><i class="fa fa-arrow-left mr-1"></i>{% trans "Help" %}</a>
+  <h1 class="mt-2 text-4xl sm:text-5xl hyphens-auto"><i class="fa-solid fa-route mr-2"></i>{% trans "Community-Tours" %}</h1>
+
+  <div class="lg:grid lg:grid-cols-4 lg:gap-10">
+    {# Contents, beside the text on wide screens #}
+    <nav class="mb-8 lg:mb-0" aria-label="{% trans 'Contents' %}">
+      <div class="lg:sticky lg:top-6 p-4 rounded-lg bg-secondary bg-opacity-75 text-sm">
+        <span class="block font-bold mb-2">{% trans "Contents" %}</span>
+        <ol class="m-0 space-y-1">
+          <li class="mb-0"><a class="text-yellow hover:text-purple" href="#what">{% trans "What is a Community-Tour?" %}</a></li>
+          <li class="mb-0"><a class="text-yellow hover:text-purple" href="#find">{% trans "Find a tour" %}</a></li>
+          <li class="mb-0"><a class="text-yellow hover:text-purple" href="#join">{% trans "Join a tour" %}</a></li>
+          <li class="mb-0"><a class="text-yellow hover:text-purple" href="#rides">{% trans "Rides" %}</a></li>
+          <li class="mb-0"><a class="text-yellow hover:text-purple" href="#plan">{% trans "Plan your own tour" %}</a></li>
+          <li class="mb-0"><a class="text-yellow hover:text-purple" href="#hosts">{% trans "Ask the hosts" %}</a></li>
+          <li class="mb-0"><a class="text-yellow hover:text-purple" href="#deliveries">{% trans "Gifts travel along" %}</a></li>
+          <li class="mb-0"><a class="text-yellow hover:text-purple" href="#suggestions">{% trans "Tours that find you" %}</a></li>
+          <li class="mb-0"><a class="text-yellow hover:text-purple" href="#for-hosts">{% trans "For community ambassadors: a tour comes to visit" %}</a></li>
+          <li class="mb-0"><a class="text-yellow hover:text-purple" href="#after">{% trans "On the road and afterwards" %}</a></li>
+          <li class="mb-0"><a class="text-yellow hover:text-purple" href="#privacy">{% trans "Privacy" %}</a></li>
+          <li class="mb-0 list-none mt-2"><a class="text-yellow hover:text-purple" href="{% url 'help:travelling_tips' %}"><i class="fa-solid fa-person-hiking mr-1"></i>{% trans "Travelling without money" %}</a></li>
+        </ol>
+      </div>
+    </nav>
+
+    <div class="lg:col-span-3 max-w-3xl min-w-0">
+      <section id="what" class="scroll-mt-6">
+        <h2 class="text-3xl sm:text-4xl hyphens-auto">{% trans "What is a Community-Tour?" %}</h2>
+        <p class="text-lg">{% trans "Many people travel between communities anyway: to visit, to learn and to help. A Community-Tour makes such a journey count for more." %}</p>
+        <p>{% trans "Projects, open days and gatherings are the places where people and things come together. A tour is the way between them: it stops at communities and events, the travellers help and learn there, and move on." %}</p>
+        <ul class="list-none p-0 mt-6 grid sm:grid-cols-2 gap-4">
+          <li class="p-4 rounded-lg bg-secondary bg-opacity-75">
+            <i class="fa-solid fa-people-arrows text-purple mr-1"></i><strong>{% trans "Rides" %}</strong><br>
+            {% trans "A tour has a route and free places. Others come along for all of it or just for one part." %}
+          </li>
+          <li class="p-4 rounded-lg bg-secondary bg-opacity-75">
+            <i class="fa-solid fa-people-group text-purple mr-1"></i><strong>{% trans "Travel company that fits" %}</strong><br>
+            {% trans "Not only the same destination: skills that complete each other, or a second pair of hands for the same job." %}
+          </li>
+          <li class="p-4 rounded-lg bg-secondary bg-opacity-75">
+            <i class="fa-solid fa-seedling text-purple mr-1"></i><strong>{% trans "Learning on the way" %}</strong><br>
+            {% trans "Say what you want to learn, and the planner finds communities and events where you can learn it while you help out for food and a bed." %}
+          </li>
+          <li class="p-4 rounded-lg bg-secondary bg-opacity-75">
+            <i class="fa-solid fa-truck-fast text-purple mr-1"></i><strong>{% trans "Gifts travel along" %}</strong><br>
+            {% trans "Offers at one stop that are wished for at a later one come along. That is how gifts cross distances nobody would drive for a bag of seeds." %}
+          </li>
+        </ul>
+        <p class="mt-4">{% trans "A tour doesn't have to be a group. You can plan one just for yourself, to learn things and to take gifts along." %}</p>
+      </section>
+
+      <section id="find" class="mt-12 scroll-mt-6">
+        <h2 class="text-3xl sm:text-4xl hyphens-auto">{% trans "Find a tour" %}</h2>
+        <p>{% blocktrans %}<a href="{{ list_url }}">Community-Tours</a> shows all tours on a map; the list is one click away. Tours with dates are solid lines, tour ideas dashed ones, rides purple. The search finds tours by title, by what they want to learn, by their stops and by the gifts of the hosts on the way.{% endblocktrans %}</p>
+        <p>{% trans "The filters narrow it down: when, what you want to learn, how they travel, children or animals welcome, free places, only rides. Logged in, you can also look for tours that fit your skills or pass near you." %}</p>
+        <p>{% trans "A tour idea has no dates or route yet. Often its organiser is still looking for a vehicle, a driver or company. Ask to join, or write to them: that is how ideas become tours." %}</p>
+      </section>
+
+      <section id="join" class="mt-12 scroll-mt-6">
+        <h2 class="text-3xl sm:text-4xl hyphens-auto">{% trans "Join a tour" %}</h2>
+        <ol>
+          <li>{% trans "On the tour's page, press “Ask to join” and choose where you get on and where you get off. The free places for that stretch are shown right away." %}</li>
+          <li>{% trans "Say how many you are, which of the things the tour is still looking for you could cover, and a few words about yourself. Tick “I only need the ride” if you won't stay at the stops." %}</li>
+          <li>{% trans "The organisers get your join request and accept it, decline it or write back. You find it under Matches; you can change your stretch until then." %}</li>
+          <li>{% trans "Accepted, you travel along: you see who else travels, where you meet, and for each leg a button to open the way in your maps app." %}</li>
+        </ol>
+        <p>{% blocktrans %}All your tours are in <a href="{{ mine_url }}">Your tours</a>. Plans change: you can leave a tour at any time, with a few words to the others. Organisers can also invite you; you join once you accept.{% endblocktrans %}</p>
+      </section>
+
+      <section id="rides" class="mt-12 scroll-mt-6">
+        <h2 class="text-3xl sm:text-4xl hyphens-auto">{% trans "Rides" %}</h2>
+        <p>{% blocktrans %}Driving somewhere anyway? <a href="{{ ride_url }}">Offer a ride</a>: from where, to where, which day and how many free seats. It is published at once. A ride is simply a tour with two stops, so people ask to join it the same way.{% endblocktrans %}</p>
+        <p>{% trans "Rides are suggested to people who are looking for one and want to go near where the ride ends around that day, and to people who would like a ride towards home after a stay." %}</p>
+      </section>
+
+      <a href="{% url 'help:travelling_tips' %}" class="flex items-center gap-3 mt-8 p-4 rounded-lg bg-secondary bg-opacity-75 hover:shadow transition">
+        <i class="fa-solid fa-person-hiking text-2xl text-primary"></i>
+        <span><strong>{% trans "Travelling without money" %}</strong><br><span class="text-brown text-sm">{% trans "Tips for hitchhiking, boats, places to sleep and food on the way." %}</span></span>
+      </a>
+
+      <section id="plan" class="mt-12 scroll-mt-6">
+        <h2 class="text-3xl sm:text-4xl hyphens-auto">{% trans "Plan your own tour" %}</h2>
+        <p>{% blocktrans %}Start with <a href="{{ create_url }}">Plan a tour</a>. Nothing has to be complete: you can save a draft and come back to it.{% endblocktrans %}</p>
+        <h3>{% trans "1. The basics" %}</h3>
+        <p>{% trans "A title, why you travel, what you want to learn and how you travel: van, car, bicycle, train, hitchhiking, on foot or by boat. Say whether you are looking for travellers and how many fit. If you travel alone, choose whether the tour is shown to everyone." %}</p>
+        <h3>{% trans "2. The route" %}</h3>
+        <p>{% trans "Add stops: a community, one of its events, or another place. Give them days and put them in order with the arrows, or let “Suggest an order” propose one." %}</p>
+        <p class="p-4 rounded-lg bg-secondary bg-opacity-75 text-sm"><i class="fa-regular fa-lightbulb text-primary mr-1"></i>{% trans "Pro tip: start with your final destination." %}</p>
+        <p>{% trans "“Recommended on the way” shows communities and events along your route, always with the reasons: you can learn there what you want to learn, they need what you can do, food and a bed are provided, there is room for your group, it is only a short detour, gifts could travel. “You can learn this on the way” lists the skills taught at your stops." %}</p>
+        <p class="p-4 rounded-lg bg-secondary bg-opacity-75 text-sm"><i class="fa-regular fa-lightbulb text-primary mr-1"></i>{% trans "Hosts usually gain most from help after about a week; shorter stays may require payment. Visit at least two communities, so gifts can travel between them. The more you have to offer, the more they are willing to offer you food and accommodation without charging money for it." %}</p>
+        <h3>{% trans "3. Vehicles and what you are still looking for" %}</h3>
+        <p>{% trans "Add your vehicles with seats, sleeping places and who may drive. The free places on each leg follow from them. Under “We're still looking for” you add what the tour still needs: a van, a driver, a carpenter. “Needed on your route” shows what your hosts need that nobody on the tour can do yet." %}</p>
+        <p>{% trans "What a tour looks for also appears among the gifts, so people can offer it, travelling along or not. A vehicle someone gives or lends for the tour becomes one of its vehicles." %}</p>
+        <h3>{% trans "4. Gather people" %}</h3>
+        <p>{% trans "Travelling together is not only more fun with the right people, you can also do so much more together. You can look for people with the right skill sets to build houses, ponds or food forests. A nice offer for a community and a nice learning opportunity for all involved. People can ask to join your tour once it is published, or you can invite people you find in the network." %}</p>
+        <h3>{% trans "5. Publish" %}</h3>
+        <p>{% trans "Only the tour organisers see the draft of a tour. Once published, the tour is on the map; without stops and days it is a tour idea. You can make fellow travellers organisers too, or hand the whole tour over to someone." %}</p>
+      </section>
+
+      <section id="hosts" class="mt-12 scroll-mt-6">
+        <h2 class="text-3xl sm:text-4xl hyphens-auto">{% trans "Ask the hosts" %}</h2>
+        <p>{% trans "On each stop at a community or event there is “Ask to host us”. The days and the size of your group are filled in. Tick the needs and wishes your group will take care of and what you'd like to learn there, and tell them who you are, what you bring and what you need: food, sleeping places." %}</p>
+        <p>{% trans "The ambassador accepts, declines or proposes other days. The route shows each stop's answer. When people join or leave, the host is told the new number. At an event where people just come, your visit counts at once because it doesn't need approval." %}</p>
+      </section>
+
+      <section id="deliveries" class="mt-12 scroll-mt-6">
+        <h2 class="text-3xl sm:text-4xl hyphens-auto">{% trans "Gifts travel along" %}</h2>
+        <p>{% trans "Once your route is set, the planner shows under “Could travel with you” what is offered at an earlier stop and wished for at a later one: tomato seeds from the first community for the garden at the third." %}</p>
+        <ol>
+          <li>{% trans "“I'll take it” asks the giver and the receiver, each with a message already written for you. “Not this” puts it aside." %}</li>
+          <li>{% trans "When both agree, it is on the packing list: what to pick up and what to hand over at each stop. The list prints well and works on a phone." %}</li>
+          <li>{% trans "On the road, mark it “Picked up” and later “Handed over”. Then the wish counts as fulfilled." %}</li>
+        </ol>
+      </section>
+
+      <section id="suggestions" class="mt-12 scroll-mt-6">
+        <h2 class="text-3xl sm:text-4xl hyphens-auto">{% trans "Tours that find you" %}</h2>
+        <p>{% blocktrans %}You don't have to search. Under <a href="{{ matches_url }}">Matches</a> and in the weekly email you get suggestions: a tour that goes where you are staying, passes near you or wants to learn what you want to learn; a ride towards home after a stay; someone from near you who is going to the same <a href="{{ events_url }}">event</a>, so you can go there together.{% endblocktrans %}</p>
+        <p>{% blocktrans %}Not travelling for a while? Pause travel suggestions for one, three or six months in your <a href="{{ settings_url }}#matches">settings</a>, or from the link in the email.{% endblocktrans %}</p>
+      </section>
+
+      <section id="for-hosts" class="mt-12 scroll-mt-6">
+        <h2 class="text-3xl sm:text-4xl hyphens-auto">{% trans "For community ambassadors: a tour comes to visit" %}</h2>
+        <p>{% trans "A tour visit reaches you like a volunteer stay, under Volunteer Visits: one request for the whole group, with each traveller's skills and what they will take care of. Your calendar counts the group against your room for guests, and your community or event page shows which tours are coming." %}</p>
+        <p>{% trans "Tours also bring what you wish for: when your community is a stop, things offered earlier on the route that fit your wishes can come along." %}</p>
+        <p class="p-4 rounded-lg bg-secondary bg-opacity-75 text-sm"><i class="fa-regular fa-lightbulb text-primary mr-1"></i>{% trans "That is why it is important to post wishes to your community profile." %}</p>
+      </section>
+
+      <section id="after" class="mt-12 scroll-mt-6">
+        <h2 class="text-3xl sm:text-4xl hyphens-auto">{% trans "On the road and afterwards" %}</h2>
+        <p>{% trans "Each stop on the tour's page tells its story as it happens: who joined, what was given, picked up and handed over. Under “Add experience” travellers, hosts and everyone they met write what they experienced, with the stop where it happened. Entries by people who didn't travel along wait until a traveller confirms them." %}</p>
+        <p>{% trans "When the tour is over, the page shows how it went: where it went, what you found and what travelled along. Write references for your hosts and fellow travellers; hosts write about the group." %}</p>
+        <p>{% trans "A tour is archived a week after its last day and stays as a record. A tour idea nobody has touched for half a year gets a reminder email; one click keeps it." %}</p>
+      </section>
+
+      <section id="privacy" class="mt-12 scroll-mt-6">
+        <h2 class="text-3xl sm:text-4xl hyphens-auto">{% trans "Privacy" %}</h2>
+        <ul>
+          <li>{% trans "The route only shows roughly where a private community is. Travellers see the exact place once the community has accepted the visit." %}</li>
+          <li>{% trans "Only people who are logged in see who travels." %}</li>
+          <li>{% trans "A tour that is not shown to everyone is only seen by its travellers, the hosts it asked and the people whose gifts it carries." %}</li>
+          <li>{% trans "For another place, choose a meeting point, not your home. And keep phone numbers out of descriptions: everything can be talked about in the messages." %}</li>
+        </ul>
+      </section>
+
+      <p class="mt-12">{% blocktrans %}Something missing or unclear? <a href="/contact">Write to us</a>, we are glad to hear it.{% endblocktrans %}</p>
+    </div>
+  </div>
+</div>
+{% endblock content %}

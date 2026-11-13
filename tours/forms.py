@@ -1,0 +1,619 @@
+import json
+
+from django import forms
+from django.contrib.auth import get_user_model
+from django.contrib.gis import forms as gis_forms
+from django.core.validators import MaxValueValidator
+from django.utils.formats import date_format
+from django.utils.translation import gettext_lazy as _
+from django_countries import countries as all_countries
+from django_countries.fields import CountryField
+
+from communities.models import Community
+from events.forms import BaseNeedFormSet, NeedForm
+from events.models import Event
+from gift_economy.gifts import units
+from gift_economy.gifts.models import Listing
+from gift_economy.gifts.skills.models import get_or_create_skill
+
+from .models import Stop, Tour, Traveller, Vehicle
+
+
+def _style(fields):
+    for field in fields.values():
+        widget = field.widget
+        if isinstance(widget, (forms.RadioSelect, forms.ClearableFileInput, forms.HiddenInput)):
+            continue
+        if isinstance(widget, forms.CheckboxInput):
+            widget.attrs["class"] = "form-checkbox"
+        elif isinstance(widget, forms.Textarea):
+            widget.attrs["class"] = "form-textarea w-full"
+        elif isinstance(widget, forms.Select):
+            widget.attrs["class"] = "form-select w-full"
+        else:
+            widget.attrs["class"] = "form-input w-full"
+
+
+class TourForm(forms.ModelForm):
+    """The basics of a tour: what it is about, how it travels, and whether it looks for
+    travellers. The route is planned on its own page."""
+
+    learn_skills = forms.CharField(
+        label=_("What we want to learn"), required=False,
+        widget=forms.TextInput(attrs={"data-skill-tags": _("Popular skills to explore")}),
+        help_text=_("Skills from the list. We use them to find communities and events where you can learn them."),
+    )
+    countries = forms.CharField(
+        label=_("Countries"), required=False, widget=forms.TextInput(attrs={"data-country-tags": ""}),
+        help_text=_("Where about you want to go. Once the tour has stops, they say it."),
+    )
+    field_order = [
+        "title", "image", "description", "learn_skills", "travel_mode", "countries", "open_to_join", "max_people",
+        "listed", "children_welcome", "animals_welcome", "costs_note", "good_to_know",
+    ]
+
+    class Meta:
+        model = Tour
+        fields = [
+            "title", "image", "description", "travel_mode", "open_to_join", "max_people", "listed",
+            "children_welcome", "animals_welcome", "costs_note", "good_to_know",
+        ]
+        widgets = {
+            "description": forms.Textarea(attrs={"rows": 5}),
+            "good_to_know": forms.Textarea(attrs={"rows": 3}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["title"].widget.attrs["placeholder"] = _("e.g. Permaculture tour through Portugal")
+        self.fields["description"].widget.attrs["placeholder"] = _(
+            "Why you travel, what you'd like to do on the way, who you'd like to meet."
+        )
+        self.fields["learn_skills"].widget.attrs["placeholder"] = _("e.g. Permaculture, Yoga")
+        self.fields["max_people"].widget.attrs["min"] = 1
+        tour = self.instance
+        if tour.pk:
+            self.initial["learn_skills"] = ", ".join(skill.get_name() for skill in tour.learn_skills.all())
+            # The stops say where it goes
+            if tour.stops.exists():
+                del self.fields["countries"]
+        if "countries" in self.fields:
+            chosen = [code for code in (c.code for c in tour.countries)] if tour.pk else []
+            self.initial["countries"] = ",".join(chosen)
+        _style(self.fields)
+
+    @staticmethod
+    def country_whitelist():
+        """The countries to choose from, for the tag field: name and code."""
+        return json.dumps([{"value": str(name), "code": code} for code, name in all_countries])
+
+    def clean_countries(self):
+        codes = [code.strip().upper() for code in self.cleaned_data.get("countries", "").split(",") if code.strip()]
+        unknown = [code for code in codes if code not in dict(all_countries)]
+        if unknown:
+            raise forms.ValidationError(_("Please choose countries from the list."))
+        return list(dict.fromkeys(codes))
+
+    def clean(self):
+        cleaned = super().clean()
+        if cleaned.get("open_to_join"):
+            # A tour that looks for travellers is always in the list
+            cleaned["listed"] = True
+        else:
+            cleaned["max_people"] = None
+        return cleaned
+
+    def save(self, commit=True):
+        tour = super().save(commit=False)
+        if "countries" in self.fields:
+            tour.countries = self.cleaned_data["countries"]
+        if commit:
+            tour.save()
+            self.save_learn_skills(tour)
+        return tour
+
+    def save_learn_skills(self, tour):
+        """The skills named, in any language, once the tour is saved."""
+        names = [n.strip() for n in self.cleaned_data.get("learn_skills", "").split(",") if n.strip()]
+        tour.learn_skills.set([get_or_create_skill(name)[0] for name in names])
+
+
+class StopForm(forms.ModelForm):
+    """One stop: at a community or one of its current events, or at another place (a
+    meeting point, a town, a gathering not on ecobasa). Never somebody's home."""
+
+    WHERE_COMMUNITY = "community"
+    WHERE_PLACE = "place"
+    where = forms.ChoiceField(
+        label=_("Where"), widget=forms.RadioSelect, initial=WHERE_COMMUNITY,
+        choices=[(WHERE_COMMUNITY, _("At a community")), (WHERE_PLACE, _("Another place"))],
+    )
+    community = forms.ModelChoiceField(Community.objects.all(), required=False, widget=forms.HiddenInput)
+    event = forms.ModelChoiceField(
+        Event.objects.none(), required=False, label=_("At one of its events?"),
+        empty_label=_("No, a stay at the community"),
+    )
+    # Another place's name, as the location picker writes it
+    location_name = forms.CharField(label=_("Place"), max_length=255, required=False)
+
+    class Meta:
+        model = Stop
+        fields = [
+            "community", "event", "location", "country", "arrive_on", "leave_on", "leave_at", "flexible", "note",
+            "onward_mode",
+        ]
+        widgets = {
+            "location": forms.HiddenInput,
+            "arrive_on": forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
+            "leave_on": forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
+            "leave_at": forms.TimeInput(attrs={"type": "time"}, format="%H:%M"),
+            "note": forms.Textarea(attrs={"rows": 2}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        stop = self.instance
+        self.fields["onward_mode"].label = _("Going on from here by")
+        self.fields["onward_mode"].choices = [("", _("As the tour travels"))] + list(Tour.MODE_CHOICES)
+        self.fields["note"].widget.attrs["placeholder"] = _("e.g. help with the harvest, a yoga week")
+        if stop.pk:
+            if stop.community_id:
+                self.initial["where"] = self.WHERE_COMMUNITY
+            else:
+                self.initial["where"] = self.WHERE_PLACE
+                self.initial["location_name"] = stop.name
+        # The events to choose from: the chosen community's current ones, and the stop's own
+        community = self._chosen_community()
+        events = Event.objects.none()
+        if community is not None:
+            events = Event.objects.filter(community=community).current()
+            if stop.event_id:
+                events = events | Event.objects.filter(pk=stop.event_id)
+        self.fields["event"].queryset = events
+        _style(self.fields)
+
+    def _chosen_community(self):
+        if self.is_bound:
+            pk = self.data.get(self.add_prefix("community"))
+            return Community.objects.filter(pk=pk).first() if pk and str(pk).isdigit() else None
+        return self.instance.community if self.instance.community_id else None
+
+    def chosen_community(self):
+        """The community picked so far, to show its name in the search field again."""
+        return self._chosen_community()
+
+    def clean(self):
+        cleaned = super().clean()
+        if cleaned.get("where") == self.WHERE_COMMUNITY:
+            if not cleaned.get("community"):
+                self.add_error("community", _("Please choose a community."))
+            event = cleaned.get("event")
+            if event and cleaned.get("community") and event.community_id != cleaned["community"].pk:
+                self.add_error("event", _("Please choose one of this community's events."))
+        else:
+            cleaned["community"] = cleaned["event"] = None
+            if not cleaned.get("location"):
+                self.add_error("location_name", _("Please choose the place on the map."))
+        arrive_on, leave_on = cleaned.get("arrive_on"), cleaned.get("leave_on")
+        if arrive_on and leave_on and leave_on < arrive_on:
+            self.add_error("leave_on", _("You can't leave before you arrive."))
+        return cleaned
+
+    def save(self, commit=True):
+        stop = super().save(commit=False)
+        if self.cleaned_data["where"] == self.WHERE_PLACE:
+            stop.community = stop.event = None
+            stop.name = self.cleaned_data.get("location_name", "")
+        else:
+            stop.location, stop.country, stop.name = None, None, ""
+        if commit:
+            stop.save()
+        return stop
+
+
+class JoinForm(forms.ModelForm):
+    """Asking to come along for the whole route or part of it: where to get on and off,
+    how many people, which of the tour's needs one covers, and a few words to the
+    organisers (only when asking, not when changing the stretch later). Each open need
+    gets a checkbox (need_<id>) and, if it has a quantity, an amount (quantity_<id>), as
+    when offering help with an event."""
+
+    message = forms.CharField(
+        label=_("A few words to the organisers"), widget=forms.Textarea(attrs={"rows": 4}),
+        help_text=_("Who you are, why you'd like to come along, what you could bring."),
+    )
+
+    class Meta:
+        model = Traveller
+        fields = ["from_stop", "to_stop", "people", "ride_only"]
+
+    def __init__(self, tour, *args, with_message=True, preselected=(), **kwargs):
+        super().__init__(*args, **kwargs)
+        self.tour = tour
+        self.stops = tour.ordered_stops()
+        self._add_needs(preselected)
+        _stretch_fields(self)
+        if not with_message:
+            del self.fields["message"]
+        _style({name: field for name, field in self.fields.items() if not name.startswith(("need_", "quantity_"))})
+
+    def _add_needs(self, preselected):
+        match = self.instance.match if self.instance.pk else None
+        covering = {c.listing_id: c.quantity for c in match.contributions.all()} if match else {}
+        # What one covers already stays on the list, also once it is covered
+        self.needs = [need for need in self.tour.needs() if not need.is_done or need.pk in covering]
+        preselected = {str(pk) for pk in preselected}
+        for need in self.needs:
+            self.fields[f"need_{need.pk}"] = forms.BooleanField(
+                required=False, initial=need.pk in covering or str(need.pk) in preselected,
+                widget=forms.CheckboxInput(attrs={"class": "form-checkbox"}),
+            )
+            if need.quantity:
+                remaining = need.remaining or need.quantity
+                self.fields[f"quantity_{need.pk}"] = forms.IntegerField(
+                    required=False, min_value=1,
+                    initial=covering.get(need.pk) or (1 if need.unit == units.PEOPLE else remaining),
+                    widget=forms.NumberInput(attrs={"class": "form-input w-24", "min": "1"}),
+                )
+
+    def need_rows(self):
+        """(need, checkbox, amount field or None) for the template."""
+        return [
+            (need, self[f"need_{need.pk}"], self[f"quantity_{need.pk}"] if f"quantity_{need.pk}" in self.fields else None)
+            for need in self.needs
+        ]
+
+    def chosen_needs(self):
+        """[(need, quantity or None)] that were ticked."""
+        return [
+            (need, self.cleaned_data.get(f"quantity_{need.pk}"))
+            for need in self.needs if self.cleaned_data.get(f"need_{need.pk}")
+        ]
+
+    def stretch_fields(self):
+        """The fields other than the needs, in order, for the template."""
+        return [field for field in self if not field.name.startswith(("need_", "quantity_"))]
+
+    def clean_people(self):
+        return _clean_people(self)
+
+    def clean(self):
+        return _clean_stretch(self, super().clean())
+
+
+def _stretch_fields(form):
+    """Where to get on and off (any stop before the last, any after the first) and how
+    many: the fields a join request and an invitation share. An idea without a route yet
+    is joined as a whole."""
+    stops = form.stops
+    if len(stops) >= 2:
+        def label(stop):
+            number = next((i + 1 for i, s in enumerate(stops) if s.pk == stop.pk), "")
+            day = stop.arrive_on or stop.leave_on
+            when = f", {date_format(day, 'j M')}" if day else ""
+            return f"{number}. {stop.label}{when}"
+
+        for name, choices, default in (("from_stop", stops[:-1], stops[0]), ("to_stop", stops[1:], stops[-1])):
+            field = form.fields[name]
+            field.queryset = Stop.objects.filter(pk__in=[stop.pk for stop in choices])
+            field.required = True
+            field.empty_label = None
+            field.label_from_instance = label
+            form.initial.setdefault(name, default.pk)
+        form.fields["from_stop"].label = _("Get on at")
+        form.fields["to_stop"].label = _("Get off at")
+    else:
+        del form.fields["from_stop"], form.fields["to_stop"]
+    form.fields["people"].min_value = 1
+    form.fields["people"].widget.attrs["min"] = 1
+
+
+def _clean_people(form):
+    people = form.cleaned_data["people"]
+    if not people:
+        raise forms.ValidationError(_("At least one."))
+    return people
+
+
+def _clean_stretch(form, cleaned):
+    """The stretch goes forward and there is room on it for that many."""
+    start, end = cleaned.get("from_stop"), cleaned.get("to_stop")
+    if start and end and form.tour.stretch(start, end, form.stops) is None:
+        form.add_error("to_stop", _("Choose a stop after the one you get on at."))
+        return cleaned
+    people = cleaned.get("people")
+    exclude = form.instance if form.instance.pk else None
+    if people and not form.tour.fits(start, end, people, exclude=exclude):
+        free = form.tour.free_on(start, end, form.stops, exclude=exclude)
+        raise forms.ValidationError(
+            _("There is no room for that many on this stretch: %(free)s free.") % {"free": free}
+        )
+    return cleaned
+
+
+class InviteForm(forms.ModelForm):
+    """An organiser invites someone to travel along: who (found by name), their stretch,
+    how many they are, and a few words. They count once they accept."""
+
+    user = forms.ModelChoiceField(
+        get_user_model().objects.filter(is_active=True), label=_("Who"), widget=forms.HiddenInput,
+        error_messages={"required": _("Please choose someone."), "invalid_choice": _("Please choose someone.")},
+    )
+    message = forms.CharField(
+        label=_("A few words to them"), widget=forms.Textarea(attrs={"rows": 4}),
+        help_text=_("Why you'd like them to come along."),
+    )
+
+    class Meta:
+        model = Traveller
+        fields = ["user", "from_stop", "to_stop", "people"]
+
+    def __init__(self, tour, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.tour = tour
+        self.stops = tour.ordered_stops()
+        _stretch_fields(self)
+        self.fields["people"].label = _("How many are they?")
+        self.fields["people"].help_text = _("They and whoever comes with them, children too.")
+        _style({name: field for name, field in self.fields.items() if name != "user"})
+
+    def chosen_user(self):
+        """The person picked so far (or come from their profile), to show their name."""
+        pk = self.data.get("user") if self.is_bound else self.initial.get("user")
+        return get_user_model().objects.filter(pk=pk).first() if pk and str(pk).isdigit() else None
+
+    def clean_user(self):
+        user = self.cleaned_data["user"]
+        on = self.tour.travellers.filter(user=user).select_related("match")
+        if any(t.match_id is None or not t.match.is_closed for t in on):
+            raise forms.ValidationError(_("They are on this tour already, or have been asked."))
+        return user
+
+    def clean_people(self):
+        return _clean_people(self)
+
+    def clean(self):
+        return _clean_stretch(self, super().clean())
+
+
+class PlaceForm(forms.Form):
+    """A meeting point on the map, as the location picker fills it in."""
+
+    location_name = forms.CharField(label=_("Place"), max_length=255, required=False)
+    location = gis_forms.PointField(widget=forms.HiddenInput, srid=4326, required=False)
+    country = CountryField(_("Country")).formfield(required=False)
+
+    def __init__(self, *args, label="", **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["location_name"].label = label
+        _style(self.fields)
+
+    def clean(self):
+        cleaned = super().clean()
+        # Said beside the name, where the picker shows its errors
+        if not cleaned.get("location") or not cleaned.get("location_name"):
+            self.add_error("location_name", _("Please choose the place on the map."))
+        return cleaned
+
+
+class RideForm(forms.Form):
+    """Offering a ride: the day and hour it sets off, how, how many fit, and the room
+    for things. The two meeting points are PlaceForms beside it."""
+
+    day = forms.DateField(label=_("Day"), widget=forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"))
+    leave_at = forms.TimeField(
+        label=_("Setting off at"), required=False, widget=forms.TimeInput(attrs={"type": "time"}, format="%H:%M"),
+    )
+    travel_mode = forms.ChoiceField(label=_("How we travel"), choices=Tour.MODE_CHOICES, initial=Tour.MODE_CAR)
+    seats = forms.IntegerField(label=_("Free seats"), min_value=1, initial=1)
+    room = forms.CharField(
+        label=_("Room for things"), max_length=255, required=False,
+        widget=forms.TextInput(attrs={"placeholder": _("e.g. a full boot, a roof rack")}),
+    )
+    description = forms.CharField(
+        label=_("A few words"), required=False, widget=forms.Textarea(attrs={"rows": 3}),
+        help_text=_("Where you can pick people up on the way, how you share costs."),
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["seats"].widget.attrs["min"] = 1
+        _style(self.fields)
+
+
+class HostForm(forms.Form):
+    """The organisers ask a stop's host to take the group (a tour visit): the days, what
+    the group would like to learn there, what it helps with, a few lines. How many come
+    follows from the travellers at that stop. As the volunteer form on a community's page:
+    at a community its events' needs and its wishes for things, at an event that event's
+    needs. Each need gets a checkbox (need_<id>) and, if it has a quantity, an amount
+    (quantity_<id>), as when offering help."""
+
+    learn = forms.MultipleChoiceField(
+        label=_("What we would like to learn here"), required=False, widget=forms.CheckboxSelectMultiple,
+    )
+
+    stay_from = forms.DateField(label=_("Arrival"), required=False, widget=forms.DateInput(attrs={"type": "date"}))
+    stay_to = forms.DateField(label=_("Departure"), required=False, widget=forms.DateInput(attrs={"type": "date"}))
+    message = forms.CharField(
+        label=_("Message"), widget=forms.Textarea(attrs={"rows": 5}),
+        help_text=_("Who you are as a group, what you would like to do and learn there, what you bring, and what you need: food (diet, allergies), where you would sleep."),
+    )
+
+    def __init__(self, stop, people, *args, open_event=False, **kwargs):
+        super().__init__(*args, **kwargs)
+        from gift_economy.gifts import units
+        from gift_economy.gifts.models import Listing
+
+        self.stop = stop
+        # (event or None, needs): an event's open needs, then the community's wishes
+        self.groups = []
+        if open_event:
+            # Just saying the tour comes: no needs to choose, a message is optional
+            self.fields["message"].required = False
+            self.fields["message"].help_text = ""
+        elif stop.event_id:
+            self.groups = [(stop.event, [need for need in stop.event.needs() if not need.is_done])]
+        else:
+            community = stop.community
+            for event in community.events.current().prefetch_related("listings__contributions__match"):
+                self.groups.append((event, [need for need in event.needs() if not need.is_done]))
+            self.groups.append((None, list(
+                Listing.objects.of(community).open()
+                .filter(type=Listing.TYPE_WISH, event=None, kind__in=Listing.THING_KINDS).order_by("-updated_at")
+            )))
+        self.groups = [(event, needs) for event, needs in self.groups if needs]
+        self.needs = [need for _event, needs in self.groups for need in needs]
+
+        # The tour's skills to learn, the ones taught here ticked
+        wanted = list(stop.tour.learn_skills.all())
+        if wanted and not open_event:
+            taught = self._taught()
+            self.fields["learn"].choices = [(str(skill.pk), skill.get_name()) for skill in wanted]
+            self.fields["learn"].widget.attrs["class"] = "form-checkbox"
+            self.initial.setdefault("learn", [str(skill.pk) for skill in wanted if skill.pk in taught])
+            self.taught = taught
+        else:
+            del self.fields["learn"]
+        self.initial.setdefault("stay_from", stop.arrive_on)
+        self.initial.setdefault("stay_to", stop.leave_on)
+        for need in self.needs:
+            self.fields[f"need_{need.pk}"] = forms.BooleanField(
+                required=False, widget=forms.CheckboxInput(attrs={"class": "form-checkbox"}),
+            )
+            if need.quantity:
+                remaining = need.remaining or need.quantity
+                self.fields[f"quantity_{need.pk}"] = forms.IntegerField(
+                    required=False, min_value=1,
+                    initial=min(people, remaining) if need.unit == units.PEOPLE else remaining,
+                    widget=forms.NumberInput(attrs={"class": "form-input w-24", "min": "1"}),
+                )
+        self.fields["message"].widget.attrs["class"] = "form-textarea w-full"
+        for name in ("stay_from", "stay_to"):
+            self.fields[name].widget.attrs["class"] = "form-input w-full"
+
+    def _taught(self):
+        """Ids of the skills one can learn at the stop: what its event or community offers
+        to teach (its events' too), and its members' skills."""
+        from gift_economy.gifts.models import Listing
+
+        stop = self.stop
+        offers = Listing.objects.open().filter(type=Listing.TYPE_OFFER, kind=Listing.KIND_SKILL)
+        if stop.event_id:
+            found = [offers.filter(event=stop.event)]
+        else:
+            found = [
+                Listing.objects.of(stop.community).filter(type=Listing.TYPE_OFFER, kind=Listing.KIND_SKILL),
+                offers.filter(owner__in=stop.community.members(), community=None),
+            ]
+        return {pk for queryset in found for pk in queryset.values_list("skill_id", flat=True) if pk}
+
+    def need_groups(self):
+        """[(event or None, [(need, checkbox, amount field or None)])] for the template."""
+        return [
+            (event, [
+                (need, self[f"need_{need.pk}"], self[f"quantity_{need.pk}"] if f"quantity_{need.pk}" in self.fields else None)
+                for need in needs
+            ])
+            for event, needs in self.groups
+        ]
+
+    def chosen_needs(self):
+        return [
+            (need, self.cleaned_data.get(f"quantity_{need.pk}"))
+            for need in self.needs if self.cleaned_data.get(f"need_{need.pk}")
+        ]
+
+    def chosen_skills(self):
+        """The names of the skills ticked to learn, comma separated (StayDetails.practice_skills)."""
+        if "learn" not in self.fields:
+            return ""
+        names = dict(self.fields["learn"].choices)
+        return ", ".join(names[pk] for pk in self.cleaned_data.get("learn", []))
+
+    def clean(self):
+        cleaned = super().clean()
+        stay_from, stay_to = cleaned.get("stay_from"), cleaned.get("stay_to")
+        if stay_from and stay_to and stay_to < stay_from:
+            self.add_error("stay_to", _("The stay can't end before it starts."))
+        return cleaned
+
+
+# ── Vehicles and what the tour still looks for ──────────────────────
+
+class VehicleForm(forms.ModelForm):
+    """A vehicle the tour travels in, on the whole route or part of it. The driver is one
+    of the travellers; a listed vehicle one of theirs."""
+
+    class Meta:
+        model = Vehicle
+        fields = [
+            "label", "image", "drivers", "seats", "sleeps", "note", "needs_driver", "others_may_drive",
+            "from_stop", "to_stop",
+        ]
+        widgets = {"drivers": forms.CheckboxSelectMultiple(attrs={"class": "form-checkbox"})}
+
+    def __init__(self, *args, tour=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.tour = tour
+        travellers = [traveller.user for traveller in tour.counted_travellers()]
+        stops = tour.ordered_stops()
+        drivers = self.fields["drivers"]
+        drivers.queryset = get_user_model().objects.filter(pk__in=[user.pk for user in travellers])
+        drivers.label_from_instance = lambda user: user.name or user.email
+        self.fields["label"].widget.attrs["placeholder"] = _("e.g. blue van")
+        self.fields["note"].widget.attrs["placeholder"] = _("e.g. roof rack, about 1 m³; bench seats, a bed for two in the back")
+        if self.instance.pk is None and tour.organiser_id:
+            self.initial.setdefault("drivers", [tour.organiser_id])
+        if len(stops) >= 2:
+            for name, choices in (("from_stop", stops[:-1]), ("to_stop", stops[1:])):
+                field = self.fields[name]
+                field.queryset = Stop.objects.filter(pk__in=[stop.pk for stop in choices])
+                field.label_from_instance = lambda stop, stops=stops: f"{stops.index(stop) + 1}. {stop.label}"
+            self.fields["from_stop"].empty_label = _("the start")
+            self.fields["to_stop"].empty_label = _("the end")
+        else:
+            del self.fields["from_stop"], self.fields["to_stop"]
+        _style(self.fields)
+
+    def clean(self):
+        cleaned = super().clean()
+        start, end = cleaned.get("from_stop"), cleaned.get("to_stop")
+        if (start or end) and self.tour.stretch(start, end) is None:
+            self.add_error("to_stop", _("Choose a stop after the first one."))
+        return cleaned
+
+
+class BaseVehicleFormSet(forms.BaseInlineFormSet):
+    def get_form_kwargs(self, index):
+        return {**super().get_form_kwargs(index), "tour": self.instance}
+
+
+VehicleFormSet = forms.inlineformset_factory(
+    Tour, Vehicle, form=VehicleForm, formset=BaseVehicleFormSet, extra=0, can_delete=True,
+)
+
+# What the tour still looks for: the same rows as an event's needs
+TourNeedFormSet = forms.inlineformset_factory(
+    Tour, Listing, form=NeedForm, formset=BaseNeedFormSet, fk_name="tour", extra=0, can_delete=True,
+)
+
+
+class DeliveryForm(forms.Form):
+    """"I'll take it": how much, in the wish's unit (at most what could travel), and a
+    message to the giver and one to the receiver, made ready to change."""
+
+    quantity = forms.IntegerField(label=_("How many / how much?"), min_value=1, required=False)
+    to_giver = forms.CharField(label=_("To the giver"), widget=forms.Textarea(attrs={"rows": 3}), required=False)
+    to_receiver = forms.CharField(label=_("To the receiver"), widget=forms.Textarea(attrs={"rows": 3}))
+
+    def __init__(self, *args, pair, ask_giver=True, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.pair = pair
+        if ask_giver:
+            self.fields["to_giver"].required = True
+        if pair.quantity:
+            self.fields["quantity"].validators.append(MaxValueValidator(pair.quantity))
+
+    def clean_quantity(self):
+        return self.cleaned_data.get("quantity") or self.pair.quantity

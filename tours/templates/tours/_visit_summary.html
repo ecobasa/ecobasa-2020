@@ -1,0 +1,19 @@
+{% load i18n %}
+{# On a tour visit's match page (gift_economy.matches includes the templates of what is attached to a match): the tour, and who comes with the skills they bring #}
+{% with stop=attachment %}
+  <div class="border rounded-xl bg-secondary bg-opacity-60 p-4 text-sm mb-4 space-y-2">
+    <div><i class="fa-solid fa-route text-primary mr-1"></i><strong>{% trans "Tour visit" %}:</strong>
+      <a href="{{ stop.tour.get_absolute_url }}" class="underline">{{ stop.tour.title }}</a>
+      <span class="opacity-70">· {% blocktrans with number=stop.order|add:1 %}stop {{ number }}{% endblocktrans %}</span>
+    </div>
+    <div><i class="fa-solid fa-user-group text-primary mr-1"></i><strong>{% trans "People coming" %}:</strong> {{ match.people }}</div>
+    <ul class="list-none p-0 m-0 space-y-1">
+      {% for person, skills in stop.visit_people %}
+        <li class="flex flex-wrap items-center gap-1">
+          <a href="{{ person.get_absolute_url }}" class="font-semibold hover:underline mr-1">{{ person.name }}</a>
+          {% for skill in skills %}<a href="{{ skill.get_absolute_url }}" class="pill bg-purple text-xs"><i class="fa-solid fa-graduation-cap mr-1"></i>{{ skill.display_title }}</a>{% endfor %}
+        </li>
+      {% endfor %}
+    </ul>
+  </div>
+{% endwith %}

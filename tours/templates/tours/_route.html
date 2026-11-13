@@ -1,0 +1,143 @@
+{% load i18n %}
+{# The route, one row per stop with the same places for the same things (the planner's recommendations use the same rows): the stop, its days, where its host stands, then notes and buttons, then what happened there (the tour page's timeline); between two stops the way. Places as everyone sees them. With `editing`: move, change and remove a stop #}
+<style>
+  /* Sized by the space the route has (the tour page's column, the planner's), not by the screen */
+  .route { container: route / inline-size; }
+  /* Narrow: number and stop, then days and host side by side, then notes and buttons */
+  .route-stop {
+    display: grid;
+    grid-template-columns: 2rem minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-areas: "num main main" ". when host" ". note note" ". tools tools";
+    column-gap: 0.75rem;
+    row-gap: 0.375rem;
+    padding: 0.75rem 0;
+  }
+  /* Wide: stop, days and host in columns; below, notes under the stop and the buttons under days and host */
+  @container route (min-width: 34rem) {
+    .route-stop {
+      grid-template-columns: 2rem minmax(0, 1fr) 10rem 9.5rem;
+      grid-template-areas: "num main when host" ". note tools tools";
+    }
+  }
+  .route-num { grid-area: num; }
+  .route-main { grid-area: main; min-width: 0; }
+  .route-when { grid-area: when; }
+  /* Everything on the right, aligned to the right */
+  .route-host { grid-area: host; text-align: right; }
+  .route-note { grid-area: note; min-width: 0; }
+  .route-tools { grid-area: tools; display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: flex-start; gap: 0.375rem; }
+  /* The way from number to number: a dashed line through the whole route, from the first
+     number's middle to the last one's, under the numbers */
+  .route-line > li { position: relative; }
+  .route-line > li::before { content: ""; position: absolute; left: calc(1rem - 1px); top: 0; bottom: 0; border-left: 2px dashed #da6137; }
+  .route-line > li:first-child::before { top: 1.75rem; }
+  .route-line > li:last-child::before { bottom: auto; height: 1.75rem; }
+  .route-line > li:only-child::before { display: none; }
+  .route-num > span { position: relative; z-index: 1; }
+  /* What the way to the next stop is, and what happened at a stop, beside the line */
+  .route-leg, .route-timeline { padding-left: 2.75rem; }
+</style>
+<ol class="route route-line list-none m-0 p-0">
+  {% for item in route %}
+    {% with stop=item.stop %}
+    <li class="m-0">
+      <div class="route-stop{% if not forloop.first %} border-t border-primary border-opacity-20{% endif %}">
+        <div class="route-num">
+          {% if route|length > 1 %}<span class="w-8 h-8 rounded-full bg-primary text-secondary font-bold flex items-center justify-center">{{ item.number }}</span>{% endif %}
+        </div>
+
+        {# What and where #}
+        <div class="route-main">
+          <div class="font-semibold leading-snug">
+            <i class="fa-solid {{ stop.icon }} mr-1 text-primary"></i>
+            {% if stop.event %}<a href="{{ stop.event.get_absolute_url }}" class="hover:underline">{{ stop.event.title }}</a>
+            {% elif stop.community %}<a href="{{ stop.community.get_absolute_url }}" class="hover:underline">{{ stop.community.name }}</a>
+            {% else %}{{ stop.name }}{% endif %}
+          </div>
+          <div class="text-sm opacity-80 mt-0.5">
+            {% if stop.event %}{{ stop.event.kind_label }} · <a href="{{ stop.community.get_absolute_url }}" class="hover:underline">{{ stop.community.name }}</a>{% if item.place %} · {% endif %}{% endif %}{% if stop.community and item.place %}{{ item.place }}{% endif %}
+          </div>
+        </div>
+
+        {# When #}
+        <div class="route-when text-sm font-semibold">
+          {% if stop.arrive_on or stop.leave_on %}
+            <i class="fa-regular fa-calendar mr-1"></i>{% include "tours/_stop_dates.html" %}
+          {% endif %}
+        </div>
+
+        {# Where the host stands, for everyone; the organisers ask from here #}
+        <div class="route-host text-sm">
+          {% with status=stop.host_status %}{% if status %}{% with label=stop.host_status_label %}
+            <div class="{{ label.2 }} font-semibold"><i class="{{ label.1 }} mr-1"></i>{{ label.0 }}</div>
+            {% if can_edit or editing %}
+              {% if stop.can_ask_host %}
+                <a href="{% url 'tours:ask_host' tour.slug stop.pk %}" class="btn btn-purple text-xs inline-block mt-1"><i class="fa-solid fa-paper-plane mr-1"></i>{% if stop.joins_open_event %}{% trans "We're coming" context "host status" %}{% else %}{% trans "Ask to host us" %}{% endif %}</a>
+              {% endif %}
+              {% if stop.visit_match and status != "not_asked" %}
+                <div><a href="{{ stop.visit_match.get_absolute_url }}" class="underline text-xs">{% trans "View conversation" %}</a></div>
+              {% endif %}
+            {% endif %}
+          {% endwith %}{% endif %}{% endwith %}
+        </div>
+
+        {# What the group plans here, and a clash with the stop before #}
+        {% if stop.note or item.clash %}
+          <div class="route-note text-sm">
+            {% if item.clash %}<div class="text-red"><i class="fa-solid fa-triangle-exclamation mr-1"></i>{% trans "Its days overlap with the stop before" %}</div>{% endif %}
+            {% if stop.note %}<p class="m-0 opacity-90">{{ stop.note|linebreaksbr }}</p>{% endif %}
+          </div>
+        {% endif %}
+
+        {% if item.directions or editing %}
+          <div class="route-tools text-sm">
+            {# The way there in a maps app or on a map website, for those who travel along. "Maps app on this phone" (geo:) only shows on Android (tour_detail.html) #}
+            {% if item.directions %}{% with links=item.directions %}
+              <div class="relative" x-data="{ open: false }" @click.outside="open = false" @keydown.escape="open = false">
+                <button type="button" @click="open = !open" class="btn btn-purple text-xs" :aria-expanded="open">
+                  <i class="fa-solid fa-share-from-square mr-1"></i>{% trans "Open in maps" %}<i class="fa-solid fa-caret-down ml-2"></i>
+                </button>
+                <div x-show="open" x-cloak class="absolute right-0 top-full mt-1 z-20 w-60 bg-secondary shadow-lg rounded border text-sm py-1">
+                  <a href="{{ links.geo }}" data-geo class="hidden px-3 py-2 hover:bg-primary hover:text-secondary"><i class="fa-solid fa-mobile-screen mr-2"></i>{% trans "Maps app on this phone" %}</a>
+                  <a href="{{ links.apple }}" target="_blank" rel="noopener" class="block px-3 py-2 hover:bg-primary hover:text-secondary"><i class="fa-brands fa-apple mr-2"></i>Apple Maps</a>
+                  <a href="{{ links.google }}" target="_blank" rel="noopener" class="block px-3 py-2 hover:bg-primary hover:text-secondary"><i class="fa-brands fa-google mr-2"></i>Google Maps</a>
+                  <a href="{{ links.osm }}" target="_blank" rel="noopener" class="block px-3 py-2 hover:bg-primary hover:text-secondary"><i class="fa-solid fa-map mr-2"></i>OpenStreetMap</a>
+                  <a href="{{ links.osmand }}" target="_blank" rel="noopener" class="block px-3 py-2 hover:bg-primary hover:text-secondary"><i class="fa-solid fa-compass mr-2"></i>OsmAnd</a>
+                  {% if links.approximate %}<p class="m-0 px-3 pt-2 pb-1 text-xs opacity-80 border-t">{% trans "(approximate place until the host has agreed)" %}</p>{% endif %}
+                </div>
+              </div>
+            {% endwith %}{% endif %}
+            {% if editing %}
+              {% if not forloop.first %}
+                <form method="post" action="{% url 'tours:stop_move' tour.slug stop.pk 'up' %}">{% csrf_token %}<button type="submit" class="btn btn-purple text-xs" title="{% trans 'Move up' %}" aria-label="{% trans 'Move up' %}"><i class="fa fa-arrow-up"></i></button></form>
+              {% endif %}
+              {% if not forloop.last %}
+                <form method="post" action="{% url 'tours:stop_move' tour.slug stop.pk 'down' %}">{% csrf_token %}<button type="submit" class="btn btn-purple text-xs" title="{% trans 'Move down' %}" aria-label="{% trans 'Move down' %}"><i class="fa fa-arrow-down"></i></button></form>
+              {% endif %}
+              <a href="{% url 'tours:stop_edit' tour.slug stop.pk %}" class="btn btn-purple text-xs" title="{% trans 'Change' %}" aria-label="{% trans 'Change' %}"><i class="fa fa-edit"></i></a>
+              <form method="post" action="{% url 'tours:stop_delete' tour.slug stop.pk %}" onsubmit="return confirm('{% trans "Remove this stop?" as question %}{{ question|escapejs }}')">{% csrf_token %}<button type="submit" class="btn btn-red text-xs" title="{% trans 'Remove' %}" aria-label="{% trans 'Remove' %}"><i class="fa fa-trash"></i></button></form>
+            {% endif %}
+          </div>
+        {% endif %}
+      </div>
+
+      {# What happened here, with when #}
+      {% if item.timeline %}
+        <div class="route-timeline pb-3 space-y-3">
+          {% for entry in item.timeline %}{% include "tours/_timeline_entry.html" %}{% endfor %}
+        </div>
+      {% endif %}
+
+      {# The way to the next stop #}
+      {% if item.leg %}
+        <div class="route-leg">
+          <div class="py-1.5 text-xs opacity-80">
+            <i class="fa-solid {{ item.leg_icon }} mr-1"></i>{{ item.leg_mode }}{% if item.leg.km is not None %} · {% blocktrans with km=item.leg.km %}about {{ km }} km{% endblocktrans %}{% endif %}
+            {% if item.free is not None %}· <span class="{% if item.free %}text-green{% else %}text-red{% endif %} font-semibold"><i class="fa-solid fa-user-group mx-1"></i>{% if item.free %}{% blocktrans count count=item.free %}{{ count }} place free{% plural %}{{ count }} places free{% endblocktrans %}{% else %}{% trans "Full" %}{% endif %}</span>{% endif %}
+          </div>
+        </div>
+      {% endif %}
+    </li>
+    {% endwith %}
+  {% endfor %}
+</ol>

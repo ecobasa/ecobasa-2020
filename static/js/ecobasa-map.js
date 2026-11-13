@@ -13,6 +13,9 @@
     return 'https://tiles.stadiamaps.com/tiles/' + tile + '/{z}/{x}/{y}.' + (ext || 'png') + suffix;
   }
 
+  // Place names in the page's language (<html lang>): Nominatim gives each place's own otherwise
+  var LANGUAGE = document.documentElement.lang || 'en';
+
   // Where the house number goes before the street ("10 Downing Street"), and where the
   // postcode follows the town ("London SW1A 2AA"); elsewhere "Hauptstraße 5, 14473 Potsdam"
   var NUMBER_FIRST  = ['au', 'ca', 'fr', 'gb', 'ie', 'il', 'in', 'lu', 'nz', 'us', 'za'];
@@ -62,6 +65,204 @@
         stroke: new ol.style.Stroke({ color: color, width: 2, lineDash: [6, 6] }),
       }));
       return feature;
+    },
+
+    // ── Tour routes ──────────────────────────────────────────────────
+
+    // Routes and their numbered stops from tours:api-routes (GeoJSON in lon/lat). Colour
+    // by what the tour is (its line: tour, ride or bicycle), style by state: upcoming
+    // solid, idea dashed, past faded; an arrow per leg shows the direction. A stop at a
+    // private place is drawn with an area around it once zoomed in, as for a community.
+    // Hovering a route lights it up and fades all others; options.onSelect(props,
+    // coordinate) is called on a click. Returns { layer, source, setData, highlight, fit }.
+    addRouteLayer(map, geojson, options) {
+      options = options || {};
+      const colors = { tour: '#da6137', ride: '#80143b', bicycle: '#4f5613' };
+      const source = new ol.source.Vector();
+      const format = new ol.format.GeoJSON();
+      let lit = null;
+      const pins = {};
+
+      // An arrow on each leg; with options.legModes, the leg's vehicle (a codepoint of
+      // the route's leg_modes) in its middle and the arrow further on, both above the
+      // line (zIndex)
+      const arrowStyles = function (line, color, legModes, zIndex) {
+        const coords = line.getCoordinates();
+        const styles = [];
+        const at = legModes ? 0.78 : 0.5;
+        for (let i = 0; i < coords.length - 1; i++) {
+          const a = coords[i], b = coords[i + 1];
+          const angle = Math.atan2(b[1] - a[1], b[0] - a[0]);
+          if (legModes && legModes[i]) {
+            styles.push(new ol.style.Style({
+              geometry: new ol.geom.Point([(a[0] + b[0]) / 2, (a[1] + b[1]) / 2]),
+              image: new ol.style.Circle({
+                radius: 13,
+                fill: new ol.style.Fill({ color: '#fcf3e5' }),
+                stroke: new ol.style.Stroke({ color: color, width: 2 }),
+              }),
+              text: new ol.style.Text({
+                text: String.fromCodePoint(legModes[i]), font: '900 13px "Font Awesome 6 Free"',
+                fill: new ol.style.Fill({ color: color }),
+              }),
+              zIndex: zIndex + 1,
+            }));
+          }
+          styles.push(new ol.style.Style({
+            geometry: new ol.geom.Point([a[0] + (b[0] - a[0]) * at, a[1] + (b[1] - a[1]) * at]),
+            image: new ol.style.RegularShape({
+              points: 3, radius: 7, rotation: Math.PI / 2 - angle, rotateWithView: true,
+              fill: new ol.style.Fill({ color: color }),
+              stroke: new ol.style.Stroke({ color: '#fcf3e5', width: 1 }),
+            }),
+            zIndex: zIndex,
+          }));
+        }
+        return styles;
+      };
+
+      // A gift taken along: a thin dashed brown arc from where it is picked up to where
+      // it is handed over, a small gift in its middle (solid once handed over). Only of
+      // the lit tour, unless options.deliveriesAlways (the tour's own page)
+      const deliveryStyle = function (feature) {
+        if (!options.deliveriesAlways && feature.get('slug') !== lit) return null;
+        const coords = feature.getGeometry().getCoordinates();
+        const middle = coords[Math.floor(coords.length / 2)];
+        const done = feature.get('state') === 'handed_over';
+        return [
+          new ol.style.Style({
+            stroke: new ol.style.Stroke({ color: '#452912', width: 1.5, lineDash: done ? undefined : [4, 4] }),
+            zIndex: 3,
+          }),
+          new ol.style.Style({
+            geometry: new ol.geom.Point(middle),
+            image: new ol.style.Circle({
+              radius: 8,
+              fill: new ol.style.Fill({ color: '#fcf3e5' }),
+              stroke: new ol.style.Stroke({ color: '#452912', width: 1.5 }),
+            }),
+            text: new ol.style.Text({
+              text: String.fromCodePoint(0xF06B), font: '900 8px "Font Awesome 6 Free"',
+              fill: new ol.style.Fill({ color: '#452912' }),
+            }),
+            zIndex: 4,
+          }),
+        ];
+      };
+
+      const style = function (feature, resolution) {
+        if (feature.get('kind') === 'delivery') return deliveryStyle(feature);
+        const state = feature.get('state');
+        const isLit = lit && feature.get('slug') === lit;
+        const isDim = lit && !isLit;
+        const color = colors[feature.get('line')] || colors.tour;
+        if (feature.get('kind') === 'route') {
+          const faded = isDim ? color + '33' : (state === 'past' && !isLit ? color + '80' : color);
+          return [new ol.style.Style({
+            stroke: new ol.style.Stroke({
+              color: faded,
+              width: isLit ? 6 : 4,
+              lineDash: state === 'idea' ? [10, 8] : undefined,
+            }),
+            zIndex: isLit ? 10 : 1,
+          })].concat(isDim ? [] : arrowStyles(feature.getGeometry(), color, options.legModes ? feature.get('leg_modes') : null, isLit ? 11 : 3));
+        }
+        // The stops of other tours than the lit one only faintly
+        if (isDim) {
+          return new ol.style.Style({
+            image: new ol.style.Circle({ radius: 5, fill: new ol.style.Fill({ color: color + '33' }) }),
+          });
+        }
+        const styles = [];
+        if (feature.get('rough') && resolution < 40) {
+          const center = feature.getGeometry().getCoordinates();
+          const lat = ol.proj.toLonLat(center)[1];
+          styles.push(new ol.style.Style({
+            geometry: new ol.geom.Circle(center, 1200 / Math.cos(lat * Math.PI / 180)),
+            fill: new ol.style.Fill({ color: color + '33' }),
+            stroke: new ol.style.Stroke({ color: color, width: 2, lineDash: [6, 6] }),
+          }));
+        }
+        if (feature.get('icon')) {
+          // A pin with what the stop is (community by type, event by kind, another place;
+          // a bus for an idea at its organiser's rough home), its number in a badge at its tip (not at the top
+          // right, where it would look like a cluster's count)
+          const pinKey = feature.get('icon') + feature.get('color');
+          if (!pins[pinKey]) pins[pinKey] = EcoMap.createLayeredIcon(feature.get('icon'), feature.get('color'));
+          styles.push(new ol.style.Style({
+            image: new ol.style.Icon({ img: pins[pinKey], imgSize: [80, 80], anchor: [0.5, 0.85], scale: isLit ? 0.8 : 0.65 }),
+            zIndex: isLit ? 12 : 5,
+          }));
+          // A single stop needs no number
+          if (feature.get('number') && feature.get('stop_count') !== 1) {
+            styles.push(new ol.style.Style({
+              image: new ol.style.Circle({
+                radius: isLit ? 9 : 8,
+                fill: new ol.style.Fill({ color: color }),
+                stroke: new ol.style.Stroke({ color: '#fcf3e5', width: 2 }),
+              }),
+              text: new ol.style.Text({
+                text: String(feature.get('number')), font: 'bold 10px Lato, sans-serif',
+                fill: new ol.style.Fill({ color: '#fcf3e5' }),
+              }),
+              zIndex: isLit ? 13 : 6,
+            }));
+          }
+          return styles;
+        }
+        styles.push(new ol.style.Style({
+          image: new ol.style.Circle({
+            radius: isLit ? 12 : 10,
+            fill: new ol.style.Fill({ color: color }),
+            stroke: new ol.style.Stroke({ color: '#fcf3e5', width: 2 }),
+          }),
+          text: new ol.style.Text({
+            text: String(feature.get('number')), font: 'bold 11px Lato, sans-serif',
+            fill: new ol.style.Fill({ color: '#fcf3e5' }),
+          }),
+          zIndex: isLit ? 12 : 5,
+        }));
+        return styles;
+      };
+
+      const layer = new ol.layer.Vector({ source: source, style: style, zIndex: 5 });
+      map.addLayer(layer);
+
+      const setData = function (data) {
+        source.clear();
+        source.addFeatures(format.readFeatures(data || { type: 'FeatureCollection', features: [] }, {
+          dataProjection: 'EPSG:4326', featureProjection: 'EPSG:3857',
+        }));
+      };
+      const highlight = function (slug) {
+        if (lit === slug) return;
+        lit = slug || null;
+        layer.changed();
+      };
+      const fit = function (padding) {
+        const extent = source.getExtent();
+        if (!source.getFeatures().length || !extent.every(isFinite)) return false;
+        map.getView().fit(extent, { padding: padding || [40, 40, 40, 40], maxZoom: 11 });
+        return true;
+      };
+
+      const featureAt = function (pixel) {
+        return map.forEachFeatureAtPixel(pixel, f => f, { layerFilter: l => l === layer, hitTolerance: 5 });
+      };
+      map.on('pointermove', function (e) {
+        if (e.dragging) return;
+        const feature = featureAt(e.pixel);
+        map.getTargetElement().style.cursor = feature ? 'pointer' : '';
+        if (options.hover !== false) highlight(feature ? feature.get('slug') : null);
+        if (options.onHover) options.onHover(feature ? feature.get('slug') : null);
+      });
+      map.on('singleclick', function (e) {
+        const feature = featureAt(e.pixel);
+        if (options.onSelect) options.onSelect(feature ? feature.getProperties() : null, e.coordinate);
+      });
+
+      setData(geojson);
+      return { layer, source, setData, highlight, fit };
     },
 
     // ── Base tile layers ─────────────────────────────────────────────
@@ -134,9 +335,19 @@
 
     // ── Geocoding ────────────────────────────────────────────────────
 
+    // Show a Nominatim result's area (its boundingbox: south, north, west, east), so a
+    // country fits on the screen and a village comes close. False without one.
+    fitPlace(map, boundingbox, done) {
+      const box = (boundingbox || []).map(parseFloat);
+      if (box.length !== 4 || !box.every(isFinite)) return false;
+      const extent = ol.proj.transformExtent([box[2], box[0], box[3], box[1]], 'EPSG:4326', 'EPSG:3857');
+      map.getView().fit(extent, { padding: [80, 80, 80, 80], maxZoom: 12, duration: 800, callback: done });
+      return true;
+    },
+
     async reverseGeocode(lon, lat) {
       try {
-        const r = await fetch('https://nominatim.openstreetmap.org/reverse?format=json&lat=' + lat + '&lon=' + lon + '&addressdetails=1');
+        const r = await fetch('https://nominatim.openstreetmap.org/reverse?format=json&lat=' + lat + '&lon=' + lon + '&addressdetails=1&accept-language=' + LANGUAGE);
         return await r.json();
       } catch (e) { return null; }
     },
@@ -277,7 +488,7 @@
           }
           this.loading = true;
           try {
-            const r = await fetch('https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&q=' + encodeURIComponent(term));
+            const r = await fetch('https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&accept-language=' + LANGUAGE + '&q=' + encodeURIComponent(term));
             const data = await r.json();
             this.results = data.slice(0, 5).map(function (res) {
               return Object.assign({}, res, { label: EcoMap.formatAddress(res) });

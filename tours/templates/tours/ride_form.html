@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block head_title %}{% trans "Offer a ride" %} — ecobasa{% endblock %}
+
+{% block extrahead %}
+{{ block.super }}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v7.2.2/ol.css">
+{% endblock %}
+
+{% block content %}
+<div class="container-form">
+  <div class="mb-2 text-sm"><a href="{% url 'tours:list' %}" class="hover:underline">{% trans "Community-Tours" %}</a></div>
+  <h1><i class="fa-solid fa-people-arrows mr-2 text-primary"></i>{% trans "Offer a ride" %}</h1>
+  <p>{% trans "From one meeting point to another on one day. Others ask to come along, and you answer them." %} {% include "help/_link.html" with page="help:tours" anchor="rides" %}</p>
+
+  <form method="post" class="border rounded-xl bg-secondary p-6 space-y-6">
+    {% csrf_token %}
+    <p class="text-xs">{% trans "Everyone sees these places as you enter them: choose a meeting point, not your home." %}</p>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+      {% include "maps/_location_picker.html" with form=start map_id="ride-from-map" set_point_fn="setRideFrom" map_height="h-56" %}
+      {% include "maps/_location_picker.html" with form=end map_id="ride-to-map" set_point_fn="setRideTo" map_height="h-56" %}
+    </div>
+    {{ form.non_field_errors }}
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      {% for field in form %}{% if field.name == "day" or field.name == "leave_at" or field.name == "travel_mode" %}
+        <div class="form-group">
+          <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+          {{ field }}
+          {% for error in field.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+        </div>
+      {% endif %}{% endfor %}
+    </div>
+    {% for field in form %}{% if field.name == "seats" or field.name == "room" or field.name == "description" %}
+      <div class="form-group">
+        <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {{ field }}
+        {% if field.help_text %}<p class="text-xs mt-1">{{ field.help_text }}</p>{% endif %}
+        {% for error in field.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+      </div>
+    {% endif %}{% endfor %}
+    <div class="flex justify-end gap-3 pt-2">
+      <a href="{% url 'tours:list' %}" class="btn btn-lg btn-purple">{% trans "Cancel" %}</a>
+      <button type="submit" class="btn btn-lg"><i class="fa-solid fa-paper-plane mr-2"></i>{% trans "Offer a ride" %}</button>
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+{% block javascript %}
+{{ block.super }}
+<script src="https://cdn.jsdelivr.net/npm/ol@v7.2.2/dist/ol.js"></script>
+<script>
+// One map per meeting point
+document.addEventListener('DOMContentLoaded', () => {
+  [['{{ start.prefix }}', 'ride-from-map', 'setRideFrom'], ['{{ end.prefix }}', 'ride-to-map', 'setRideTo']].forEach(([prefix, map, fn]) => {
+    const locationInput = document.getElementById('id_' + prefix + '-location');
+    EcoMap.initLocationPicker({
+      mapTarget: map,
+      locationInput: locationInput,
+      countryInput: document.getElementById('id_' + prefix + '-country'),
+      nameInput: document.getElementById('id_' + prefix + '-location_name'),
+      groupName: map + '-layer',
+      setPointFn: fn,
+      badge: 0xF3C5,  // fa-location-dot
+      existingWkt: locationInput ? locationInput.value : '',
+    });
+  });
+});
+</script>
+{% endblock %}

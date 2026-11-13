@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% load i18n site_tags %}
+{% load i18n site_tags tours_tags %}
 
 {% block head_title %}{{ event.title }} — {{ community.name }} — ecobasa{% endblock %}
 
@@ -48,9 +48,12 @@
         <div class="flex flex-wrap gap-2 mb-6">
           <a href="{% url 'events:edit' community.slug event.slug %}" class="btn"><i class="fa fa-edit mr-1"></i>{% trans "Edit" %}</a>
           {% if event.is_current %}
-            <form method="post" action="{% url 'events:confirm' community.slug event.slug %}">{% csrf_token %}
-              <button type="submit" class="btn btn-purple" title="{{ event.texts.confirm_title }}"><i class="fa fa-check mr-1"></i>{% trans "Still current" %}</button>
-            </form>
+            {# Only ongoing events are asked whether they are still current; dated ones end with their days #}
+            {% if event.is_ongoing %}
+              <form method="post" action="{% url 'events:confirm' community.slug event.slug %}">{% csrf_token %}
+                <button type="submit" class="btn btn-purple" title="{{ event.texts.confirm_title }}"><i class="fa fa-check mr-1"></i>{% trans "Still current" %}</button>
+              </form>
+            {% endif %}
             <form method="post" action="{% url 'events:archive' community.slug event.slug %}" onsubmit="return confirm('{{ event.texts.archive_question|escapejs }}')">{% csrf_token %}
               <button type="submit" class="btn btn-purple"><i class="fa-solid fa-box-archive mr-1"></i>{% trans "Archive" %}</button>
             </form>
@@ -80,7 +83,7 @@
               <li id="need-{{ need.pk }}" class="flex flex-wrap items-center gap-3 p-3 rounded border bg-secondary bg-opacity-50 {% if need.is_done %}opacity-70{% endif %}">
                 <i class="fa-solid {{ need.kind_icon }} text-primary w-5 text-center"></i>
                 <div class="flex-1 min-w-0">
-                  <span class="font-semibold {% if need.is_done %}line-through{% endif %}">{{ need.display_title }}</span>
+                  <a href="{{ need.get_absolute_url }}" class="font-semibold hover:underline {% if need.is_done %}line-through{% endif %}">{{ need.display_title }}</a>
                   {% if need.amount %}<span class="opacity-70"> · {{ need.amount }}</span>{% endif %}
                   <span class="text-xs opacity-70 block">{{ need.kind_label }}
                     {% if need.status == 'covered' %}· {% trans "covered" %}
@@ -130,6 +133,10 @@
         {% endif %}
       {% endif %}
 
+      {% go_together event %}
+      {% tour_visits_to event %}
+      {% deliveries_with event %}
+
       {% if can_edit and not event.is_open or offers %}
         <h2>{% trans "Offers" %}</h2>
         {% if offers %}
@@ -178,17 +185,13 @@
       {% endif %}
 
       <h2 {% if not event.provides_something and event.is_open %}class="mt-0"{% endif %}>{% trans "Community" %}</h2>
-      <a href="{{ community.get_absolute_url }}" class="font-serif font-bold text-lg hover:underline"><i class="fa-solid {{ community.get_type_icon }} mr-1"></i>{{ community.name }}</a>
+      {% include "communities/_community_card.html" %}
       {% if place %}<p class="text-sm mt-1"><i class="fa fa-map-marker mr-1"></i>{{ place }}</p>{% endif %}
       {% with manager=event.manager %}{% if manager %}
         <div class="text-center mt-6">
           <h3>{% trans "Gift-economy Ambassador" %}</h3>
           <a href="{{ manager.get_absolute_url }}" class="block mb-4">
-            {% if manager.image %}
-              <img src="{{ manager.image.url }}" class="rounded-full h-20 w-20 mx-auto mb-2 object-cover" alt="{{ manager.name }}">
-            {% else %}
-              <i class="fa fa-user text-6xl text-primary rounded-full border border-dashed border-primary p-10 mt-15"></i>
-            {% endif %}
+            {% include "_avatar.html" with who=manager large=True classes="mx-auto mb-2" %}
             <div class="font-serif font-bold text-xl">{{ manager.name|default:manager.email }}</div>
           </a>
           <div class="text-sm -mt-2">{% include "events/_freshness.html" with when=manager.last_active %}</div>

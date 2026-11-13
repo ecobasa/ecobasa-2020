@@ -1,0 +1,55 @@
+{% load i18n %}
+{# A tour in a list, laid out like a gift card: a picture filling its left side (the tour's, else of a community on its way), when and how far, the route by name, the countries, what it wants to learn and who organises it (for people logged in, as on its page) #}
+<article class="relative w-full flex items-stretch bg-secondary bg-opacity-50 rounded-md hover:shadow-lg transition-shadow {% if not tour.is_current %}opacity-60{% endif %}">
+  {% with picture=tour.picture %}{% if picture %}
+    <a href="{{ tour.get_absolute_url }}" class="flex-shrink-0 w-24 sm:w-48" tabindex="-1" aria-hidden="true">
+      <img class="w-full h-full object-cover rounded-l-md" src="{{ picture }}" alt="" loading="lazy">
+    </a>
+  {% endif %}{% endwith %}
+  <div class="flex-1 min-w-0 p-4 sm:p-5 flex flex-col">
+    {% with stops=tour.stops.all %}
+
+    <div class="min-w-0">
+      <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
+        <span class="pill {% if tour.is_idea %}bg-yellow{% else %}bg-primary{% endif %}"><i class="fa-solid {{ tour.travel_mode_icon }} mr-1"></i>{{ tour.get_travel_mode_display }}</span>
+        {% if tour.is_idea %}<span class="pill bg-yellow"><i class="fa-solid fa-lightbulb mr-1"></i>{% trans "Idea" %}</span>{% endif %}
+        {% if tour.is_ride %}<span class="pill bg-green"><i class="fa-solid fa-people-arrows mr-1"></i>{% trans "Ride" %}</span>{% endif %}
+        {% if not tour.is_published %}<span class="pill bg-brown">{% trans "Draft" %}</span>{% endif %}
+        {% if tour.is_published and not tour.listed %}<span class="pill bg-brown"><i class="fa-solid fa-eye-slash mr-1"></i>{% trans "Not in the list" %}</span>{% endif %}
+        {% if tour.archived_at %}<span class="pill bg-brown">{% trans "Archived" %}</span>{% endif %}
+        {% if tour.km is not None %}<span class="text-xs text-brown" title="{% trans 'Distance' %}"><i class="fa fa-map-marker-alt mr-1"></i>{{ tour.km }} km</span>{% endif %}
+        <span class="text-xs text-brown opacity-70 whitespace-nowrap sm:ml-auto"><i class="fa-regular fa-calendar mr-1"></i>{% include "tours/_tour_dates.html" %}</span>
+      </div>
+      <a href="{{ tour.get_absolute_url }}" class="block mt-1 font-serif sm:text-lg leading-snug hover:text-primary">{{ tour.title }}</a>
+      <div class="text-sm text-brown">
+        {% if stops %}
+          <div class="truncate">{% for stop in stops %}{{ stop.label }}{% if not forloop.last %} <span class="opacity-50">→</span> {% endif %}{% endfor %}</div>
+        {% endif %}
+        <div class="opacity-80">
+          {% if stops %}{% blocktrans count count=stops|length %}{{ count }} stop{% plural %}{{ count }} stops{% endblocktrans %}{% endif %}
+          {% if tour.distance_km %} · {% blocktrans with km=tour.distance_km %}about {{ km }} km{% endblocktrans %}{% endif %}
+          {% if tour.countries %}{% if stops or tour.distance_km %} · {% endif %}<i class="fa-solid fa-earth-europe mr-1"></i>{% for country in tour.countries %}{{ country.name }}{% if not forloop.last %}, {% endif %}{% endfor %}{% endif %}
+          {% if tour.children_welcome %}<span class="ml-2" title="{% trans 'Children welcome' %}"><i class="fa-solid fa-children"></i></span>{% endif %}
+          {% if tour.animals_welcome %}<span class="ml-1" title="{% trans 'Animals welcome' %}"><i class="fa-solid fa-paw"></i></span>{% endif %}
+        </div>
+      </div>
+      {% with skills=tour.learn_skills.all %}
+        {% if skills %}
+          <div class="flex flex-wrap gap-1 mt-2">
+            {% for skill in skills %}<span class="pill bg-purple"><i class="fa-solid fa-graduation-cap mr-1"></i>{{ skill.get_name }}</span>{% endfor %}
+          </div>
+        {% endif %}
+      {% endwith %}
+    </div>
+
+    {% if user.is_authenticated and tour.organiser %}
+      <div class="mt-auto pt-2 text-sm">
+        <a href="{{ tour.organiser.get_absolute_url }}" class="inline-flex items-center gap-2 hover:text-primary">
+          {% include "_avatar.html" with who=tour.organiser %}
+          <span>{{ tour.organiser.name }}</span>
+        </a>
+      </div>
+    {% endif %}
+    {% endwith %}
+  </div>
+</article>

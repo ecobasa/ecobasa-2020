@@ -403,6 +403,24 @@ class TestFeaturing:
         # The linked page (for members) has it in full
         assert "word59" in self._client(owner).get(owner.get_absolute_url()).content.decode()
 
+    def test_homepage_card_says_whose_skill_with_their_picture(self, requester, owner):
+        owner.image = SimpleUploadedFile("olga.jpg", _photo(size=(80, 80)), content_type="image/jpeg")
+        owner.save()
+        offer = skill_offer(owner, Skill.objects.create(name="Cob building"))
+        Reference.objects.create(author=requester, recipient=owner, subject=offer, text="Grateful!",
+                                 share_publicly=True, featured_at=timezone.now())
+        page = " ".join(Client().get("/", HTTP_ACCEPT_LANGUAGE="de").content.decode().split())
+        assert f'Rafa</a> über <a href="{offer.get_absolute_url()}"' in page
+        assert f'</a> von <a href="{owner.get_absolute_url()}" class="text-primary">Olga</a>' in page
+        assert owner.image.url in page
+
+    def test_homepage_shows_three_of_the_featured(self, requester, owner):
+        for i in range(5):
+            author = User.objects.create_user(email=f"author{i}@example.com", password="secret", username=f"author{i}")
+            Reference.objects.create(author=author, recipient=owner, subject=owner, text=f"Story {i}",
+                                     share_publicly=True, featured_at=timezone.now())
+        assert Client().get("/").content.decode().count('id="reference-') == 3
+
     def test_only_shared_references_can_be_featured(self, staff, shared):
         shared.share_publicly = False
         shared.save()

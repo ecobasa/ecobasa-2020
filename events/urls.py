@@ -19,7 +19,10 @@ community_patterns = [
 ]
 
 urlpatterns = [
-    # The dashboard's list of events around the place in one's profile
-    path("events/", views.nearby, name="nearby"),
+    # All current events, nearest first, and those one is going to
+    path("events/", views.event_list, name="list"),
+    path("events/suggest/", views.api_suggest, name="api-suggest"),
+    path("events/list/", views.api_list, name="api-list"),
+    path("events/markers/", views.api_markers, name="api-markers"),
     path("communities/<slug:community_slug>/events/", include(community_patterns)),
 ]

@@ -5,8 +5,10 @@ from django.contrib import messages as flash
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.core import signing
-from django.db.models import Count
+from django.contrib.contenttypes.models import ContentType
+from django.db.models import Count, Q
 from django.core.exceptions import PermissionDenied
+from django.db import transaction
 from django.http import Http404, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -32,6 +34,11 @@ _TYPES = {
 }
 _VOLUNTEER = {
     "title": _("Volunteer Visits"), "icon": "fa-solid fa-campground", "empty": _("No volunteer visits yet."),
+}
+# Asking to join a tour (the tours app is the target; matches doesn't import it)
+TOUR_APP_LABEL = "tours"
+_TOURS = {
+    "title": _("Join requests"), "icon": "fa-solid fa-route", "empty": _("No join requests yet."),
 }
 
 _OPEN = (Match.STATUS_PENDING, Match.STATUS_COUNTER)
@@ -70,6 +77,8 @@ def matches_list(request):
     kind = request.GET.get("type", "")
     if kind == "volunteer":
         return _volunteer_visits(request)
+    if kind == "tours":
+        return _join_requests(request)
     if kind not in _TYPES:
         kind = ""
     user = request.user
@@ -164,6 +173,48 @@ def _volunteer_visits(request):
     })
 
 
+def _join_requests(request):
+    """Requests to join a tour: received (as an organiser) and sent."""
+    user = request.user
+    tours = _with_details(Match.objects.filter(content_type__app_label=TOUR_APP_LABEL))
+    # Also those the user answers for the one they are addressed to (a tour's other organisers)
+    received = Q(recipient=user)
+    for content_type in ContentType.objects.filter(app_label=TOUR_APP_LABEL):
+        answered_by = getattr(content_type.model_class(), "matches_answered_by", None)
+        if answered_by is not None:
+            received |= answered_by(user)
+    boxes = {"received": tours.filter(received).distinct(), "sent": tours.filter(from_user=user)}
+    # Tours that fit them, first
+    suggestions = _suggestions_of(user).filter(kind=Suggestion.KIND_TOURS)
+    waiting = {
+        "suggestions": suggestions.filter(seen_at=None).count(),
+        "received": boxes["received"].filter(status=Match.STATUS_PENDING).count(), "sent": 0,
+    }
+    counts = {"suggestions": suggestions.count(), **{key: matches.count() for key, matches in boxes.items()}}
+    box = request.GET.get("box")
+    if box not in counts:
+        if waiting["received"]:
+            box = "received"
+        elif waiting["suggestions"] or not (counts["received"] or counts["sent"]):
+            box = "suggestions"
+        else:
+            box = "received" if counts["received"] and not counts["sent"] else "sent"
+    tabs = [
+        Choice(label, query_url(request, box=key, status=None), key == box, counts[key], waiting[key])
+        for key, label in (("suggestions", _("Suggestions")), ("received", _("Requests to you")), ("sent", _("Your requests")))
+    ]
+    context = {"request_type": "tours", "kind": _TOURS, "tabs": tabs, "box": box}
+    if box == "suggestions":
+        page = paginate(request, suggestions)
+        shown = _shown(page.object_list)
+        return render(request, "matches/matches_list.html", {
+            **context, "page": page, "suggestions": shown, "new_ids": _mark_seen(user, shown),
+        })
+    return render(request, "matches/matches_list.html", {
+        **context, **_requests(request, boxes[box]), "show_from": box == "received", "empty": _TOURS["empty"],
+    })
+
+
 # ── Match detail ────────────────────────────────────────────────────────────────
 
 def _parse_loan(data):
@@ -203,15 +254,19 @@ def match_detail(request, pk):
     if target is None:
         raise Http404
 
-    # Only the two sides act on a match; staff may open it too
-    is_party = request.user in (match.from_user, match.recipient)
+    # Only the two sides act on a match; staff may open it too. A target may let others
+    # answer for its owner (a tour's other organisers)
+    answers_for_owner = request.user.is_authenticated and getattr(
+        target, "can_answer_match", lambda user, match: False,
+    )(request.user, match)
+    is_party = request.user in (match.from_user, match.recipient) or answers_for_owner
     if not (is_party or request.user.is_staff):
         raise Http404
     if request.method == "POST" and not is_party:
         raise PermissionDenied
 
-    is_owner     = request.user == match.recipient
     is_requester = request.user == match.from_user
+    is_owner     = request.user == match.recipient or (answers_for_owner and not is_requester)
 
     thread = list(match.thread.select_related("sender").all())
     latest_status_msg  = None
@@ -236,8 +291,9 @@ def match_detail(request, pk):
     # declined or withdrawn; also after it was accepted, which the other side then answers.
     # Who just comes to an open event changes nothing here: they take it back and come
     # again with other days.
-    can_counter = (is_owner and match.status != Match.STATUS_WITHDRAWN) or (
-        is_requester and not match.is_closed and not match.is_coming
+    can_counter = getattr(target, "match_counter", True) and (
+        (is_owner and match.status != Match.STATUS_WITHDRAWN)
+        or (is_requester and not match.is_closed and not match.is_coming)
     )
     # The one who asked can take it back, also after it was accepted
     can_withdraw = is_requester and not match.is_closed
@@ -274,19 +330,26 @@ def match_detail(request, pk):
 
         if action in ("accept", "decline") and can_decide:
             new_status = {"accept": Match.STATUS_ACCEPTED, "decline": Match.STATUS_DECLINED}[action]
-            if new_status == Match.STATUS_ACCEPTED and match.is_loan:
-                # The agreed time is the loan's from now on; a tool is lent once at a time
-                starts_at, ends_at = match.loan_period()
-                if target.lends_out and not target.is_free(starts_at, ends_at, exclude_match=match):
-                    flash.error(request, _("It is already lent on some of these days. Propose other days instead."))
-                    return redirect(match.get_absolute_url())
-                match.loan.starts_at, match.loan.ends_at = starts_at, ends_at
-                match.loan.save()
-            body = request.POST.get("body", "").strip()
-            MatchMessage.objects.create(match=match, sender=request.user, body=body, status_to=new_status)
-            match.status       = new_status
-            match.responded_at = timezone.now()
-            match.save()
+            with transaction.atomic():
+                if new_status == Match.STATUS_ACCEPTED:
+                    # A target may refuse it now (a tour with no room left on the stretch)
+                    error = getattr(target, "match_accept_error", lambda match: "")(match)
+                    if error:
+                        flash.error(request, error)
+                        return redirect(match.get_absolute_url())
+                if new_status == Match.STATUS_ACCEPTED and match.is_loan:
+                    # The agreed time is the loan's from now on; a tool is lent once at a time
+                    starts_at, ends_at = match.loan_period()
+                    if target.lends_out and not target.is_free(starts_at, ends_at, exclude_match=match):
+                        flash.error(request, _("It is already lent on some of these days. Propose other days instead."))
+                        return redirect(match.get_absolute_url())
+                    match.loan.starts_at, match.loan.ends_at = starts_at, ends_at
+                    match.loan.save()
+                body = request.POST.get("body", "").strip()
+                MatchMessage.objects.create(match=match, sender=request.user, body=body, status_to=new_status)
+                match.status       = new_status
+                match.responded_at = timezone.now()
+                match.save()
             notify_match_response(match, actor=request.user, http_request=request, message=body)
             flash.success(request, _("Response sent."))
             return redirect(match.get_absolute_url())
@@ -352,10 +415,16 @@ def match_detail(request, pk):
             flash.success(request, _("Counter-proposal sent."))
             return redirect(match.get_absolute_url())
 
+    attached_verb = match.attached_verb
     return render(request, "matches/match_detail.html", {
         "match":                match,
-        # Volunteer visits have their own place in the sidebar and breadcrumb
-        "request_type":         "volunteer" if match.is_community_stay else "",
+        # Volunteer visits and join requests have their own place in the sidebar and breadcrumb
+        "request_type":         (
+            "volunteer" if match.is_community_stay
+            else "tours" if match.content_type.app_label == TOUR_APP_LABEL else ""
+        ),
+        # What the target shows about the match itself (a tour: the stretch and people)
+        "summary_template":     getattr(target, "get_match_summary_template", lambda: "")(),
         "target":               target,
         "is_owner":             is_owner,
         "is_requester":         is_requester,
@@ -366,6 +435,8 @@ def match_detail(request, pk):
         # Said to the one who asked, it isn't "your offer"
         "match_verb":           (
             _("is coming to") if match.is_coming
+            # What is attached to the match (a tour visit) may say it better
+            else attached_verb if attached_verb
             else target.get_match_verb(own=False) if is_requester and isinstance(target, Listing)
             else target.get_match_verb()
         ),
@@ -448,10 +519,16 @@ def email_action(request, token):
         return redirect(match.get_absolute_url())
 
     actor = match.recipient
-    match.status       = Match.STATUS_ACCEPTED if action == "accept" else Match.STATUS_DECLINED
-    match.responded_at = timezone.now()
-    match.save(update_fields=["status", "responded_at"])
-    MatchMessage.objects.create(match=match, sender=actor, body="", status_to=match.status)
+    with transaction.atomic():
+        # A target may refuse it now (a tour with no room left on the stretch)
+        error = getattr(target, "match_accept_error", lambda match: "")(match) if action == "accept" else ""
+        if error:
+            flash.error(request, error)
+            return redirect(match.get_absolute_url())
+        match.status       = Match.STATUS_ACCEPTED if action == "accept" else Match.STATUS_DECLINED
+        match.responded_at = timezone.now()
+        match.save(update_fields=["status", "responded_at"])
+        MatchMessage.objects.create(match=match, sender=actor, body="", status_to=match.status)
     notify_match_response(match, actor=actor, http_request=request)
 
     return render(request, "matches/email_action_done.html", {
@@ -465,7 +542,7 @@ def email_action(request, token):
 
 def _suggestions_of(user):
     return (
-        user.suggestions.filter(dismissed_at=None)
+        Suggestion.objects.shown_to(user)
         .select_related("own_type", "other_type", "other_user")
         .prefetch_related("own", "other")
     )
@@ -506,3 +583,20 @@ def suggestions_unsubscribe(request, token):
         "You won't get emails about suggestions any more. You can turn them on again in your profile."
     ))
     return redirect("homepage:homepage")
+
+
+def pause_tour_suggestions(request, token):
+    """From the weekly email, no login needed: pause tour suggestions for a while, or
+    turn them off until they turn them on again in their profile."""
+    try:
+        pk = read_suggestions_unsubscribe_token(token)
+    except signing.BadSignature:
+        return HttpResponseBadRequest("Invalid link.")
+    user = get_object_or_404(get_user_model(), pk=pk)
+    choices = [(key, label) for key, label in user.TOUR_PAUSE_CHOICES if key != "on"]
+    if request.method == "POST" and request.POST.get("pause") in dict(choices):
+        user.pause_tours(request.POST["pause"])
+        user.save(update_fields=["tours_paused_until"])
+        flash.success(request, _("Tour suggestions are paused. You can turn them on again in your profile."))
+        return redirect("homepage:homepage")
+    return render(request, "matches/pause_tours.html", {"choices": choices})

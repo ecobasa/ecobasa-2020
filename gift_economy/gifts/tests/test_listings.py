@@ -207,6 +207,43 @@ def test_a_projects_need_says_what_it_is_for(anna, ben):
 
 
 @pytest.mark.django_db
+def test_a_thing_a_project_needs_can_also_just_be_given(anna, ben):
+    community = Community.objects.create(name="Hof", owner=anna, location=GOERLITZ)
+    project = Event.objects.create(community=community, title="Rocket stove", starts_on=timezone.localdate())
+    clay = need(project, "Clay", kind=Listing.KIND_MATERIAL, community=community, quantity=200, unit="kg")
+    hands = need(project, "Masons", kind=Listing.KIND_HANDS, community=community)
+    with translation.override("en"):
+        page = _client(ben).get(clay.get_absolute_url()).content.decode()
+        # Coming to help, or just giving it
+        assert "Help with this" in page and "Offer to fulfill this wish" in page
+        # Helping hands come to the project: only the help form
+        page = _client(ben).get(hands.get_absolute_url()).content.decode()
+        assert "Help with this" in page and "Offer to fulfill this wish" not in page
+    given = _request(clay, ben, quantity=50)
+    assert given.recipient == anna and Contribution.objects.get(match=given).quantity == 50
+
+
+@pytest.mark.django_db
+def test_a_communitys_wish_shows_the_community_and_its_ambassador(anna, ben):
+    community = Community.objects.create(name="Hof", owner=anna, location=GOERLITZ, type="e")
+    clay = Listing.objects.create(community=community, type="wish", kind="material", title="Clay")
+    with translation.override("en"):
+        page = _client(ben).get(clay.get_absolute_url()).content.decode()
+        assert "Ecovillage</span>" in page and "Ambassador" in page and anna.get_absolute_url() in page
+        # Who answers for it only for people logged in
+        assert "Ambassador" not in Client().get(clay.get_absolute_url()).content.decode()
+
+
+@pytest.mark.django_db
+def test_a_projects_needs_link_to_their_gift_pages(anna, ben):
+    community = Community.objects.create(name="Hof", owner=anna, location=GOERLITZ)
+    project = Event.objects.create(community=community, title="Rocket stove", starts_on=timezone.localdate())
+    clay = need(project, "Clay", kind=Listing.KIND_MATERIAL, community=community)
+    page = _client(ben).get(project.get_absolute_url()).content.decode()
+    assert f'href="{clay.get_absolute_url()}"' in page
+
+
+@pytest.mark.django_db
 def test_the_kind_choices_have_their_icons_and_colours(anna):
     form = _client(anna).get(reverse("gifts:create")).context["form"]
     kinds = {radio.data["value"]: (icon, colour) for radio, icon, colour, _text in form.kind_radios()}

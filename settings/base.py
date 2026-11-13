@@ -87,6 +87,8 @@ LOCAL_APPS = [
     "gift_economy.matches",
     "gift_economy.references",
     "events",
+    "tours",
+    "help",
 ]
 
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
@@ -284,9 +286,22 @@ REFERENCE_MAILPIT_URL = env("REFERENCE_MAILPIT_URL", default="")
 
 # EVENTS
 # ------------------------------------------------------------------------------
-# An event nobody updated or confirmed for this many days is stale: its ambassador is
-# asked whether it is still current (archive_stale_events, daily, see crontab) ...
+# An ongoing event (no end date) nobody updated or confirmed for this many days, and
+# running that long, is stale: its ambassador is asked whether it is still current
+# (archive_stale_events, daily, see crontab). Events with an end date are left alone ...
 EVENT_STALE_DAYS = env.int("EVENT_STALE_DAYS", default=60)
 # ... and it is archived if nobody confirms it within this many days. Dated events are
 # archived the day after they end.
 EVENT_ARCHIVE_GRACE_DAYS = env.int("EVENT_ARCHIVE_GRACE_DAYS", default=14)
+
+# TOURS
+# ------------------------------------------------------------------------------
+# A tour is archived this many days after its last day (archive_stale_tours, daily, see
+# crontab): tours often go on a few days longer than planned
+TOUR_ARCHIVE_AFTER_DAYS = env.int("TOUR_ARCHIVE_AFTER_DAYS", default=7)
+# A published tour idea (no days yet) nobody updated or confirmed for this many days is
+# stale: its organisers are asked whether it is still current. Ideas can take half a year
+# to take off ...
+TOUR_IDEA_STALE_DAYS = env.int("TOUR_IDEA_STALE_DAYS", default=180)
+# ... and it is archived if nobody confirms it within this many days
+TOUR_IDEA_ARCHIVE_GRACE_DAYS = env.int("TOUR_IDEA_ARCHIVE_GRACE_DAYS", default=14)

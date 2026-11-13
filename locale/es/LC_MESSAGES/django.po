@@ -2732,13 +2732,13 @@ msgstr ""
 
 #: gift_economy/matches/templates/matches/email/suggestions.html:42
 #: gift_economy/matches/templates/matches/email/suggestions.txt:13
-msgid "Change distance or turn off"
-msgstr "Cambiar la distancia o desactivar"
+msgid "Change distance or search worldwide"
+msgstr "Cambiar la distancia o buscar en todo el mundo"
 
 #: gift_economy/matches/templates/matches/email/suggestions.html:42
 #: gift_economy/matches/templates/matches/email/suggestions.txt:14
-msgid "Unsubscribe"
-msgstr "Darse de baja"
+msgid "Turn off weekly email notifications"
+msgstr "Desactivar las notificaciones semanales por correo"
 
 #: gift_economy/matches/templates/matches/email_action_done.html:8
 msgid "Done — you said yes."
@@ -2826,7 +2826,7 @@ msgstr "Lo que tomas prestado este mes"
 #: gift_economy/matches/views.py:34 templates/_navbar.html:151
 #: templates/_navbar.html:265 templates/dashboard/base.html:55
 msgid "Volunteer Visits"
-msgstr "Visitas de voluntarios"
+msgstr "Estancias de voluntariado"
 
 #: gift_economy/matches/templates/matches/match_detail.html:37
 msgid "Match confirmed"
@@ -2936,7 +2936,7 @@ msgstr "No hay nada con este estado."
 
 #: gift_economy/matches/views.py:34
 msgid "No volunteer visits yet."
-msgstr "Todavía no hay visitas de voluntarios."
+msgstr "Todavía no hay estancias de voluntariado."
 
 #: gift_economy/matches/views.py:39
 msgctxt "match status"
@@ -3152,6 +3152,11 @@ msgstr "Seguir leyendo"
 msgctxt "reference subject"
 msgid "about"
 msgstr "sobre"
+
+#: gift_economy/references/templates/references/_featured_card.html
+msgctxt "whose gift"
+msgid "by"
+msgstr "de"
 
 #: gift_economy/references/templates/references/_guidelines.html:7
 msgid "How to write a reference"
@@ -3450,11 +3455,11 @@ msgstr "Historias de éxito"
 
 #: gift_economy/references/templates/references/featured.html:9
 msgid ""
-"Stories their authors agreed to share. Featured ones are shown on the "
-"homepage, newest first."
+"Stories their authors agreed to share. The homepage shows three of the "
+"featured ones, different ones on each visit."
 msgstr ""
-"Historias que sus autores aceptan compartir. Las destacadas aparecen en la "
-"página de inicio, las más nuevas primero."
+"Historias que sus autores aceptan compartir. La página de inicio muestra "
+"tres de las destacadas, distintas en cada visita."
 
 #: gift_economy/references/templates/references/featured.html:11
 msgid "On the homepage"
@@ -3673,9 +3678,6 @@ msgstr ""
 "Estancias en comunidad: echar una mano a cambio de comida, alojamiento y "
 "nuevas experiencias"
 
-#: homepage/templates/homepage/homepage.html:49
-msgid "Organise and join Community-Tours"
-msgstr "Organizar Community-Tours y unirte"
 
 #: homepage/templates/homepage/homepage.html:49
 #: homepage/templates/homepage/homepage.html:60
@@ -4973,3 +4975,2494 @@ msgstr "Has cerrado sesión."
 #: users/views.py:122
 msgid "Account created and logged in."
 msgstr "Cuenta creada y sesión iniciada."
+
+msgid "Events"
+msgstr "Eventos"
+
+msgid "Event"
+msgstr "Evento"
+
+msgid "Community event"
+msgstr "Evento comunitario"
+
+msgid "Community events"
+msgstr "Eventos comunitarios"
+
+msgid "Projects and events"
+msgstr "Proyectos y eventos"
+
+msgid "Something you want to realise with help: it needs hands, skills, materials or tools."
+msgstr "Algo que quieres hacer realidad con ayuda: necesita manos, habilidades, materiales o herramientas."
+
+msgid "Something you invite to: an open day, a workshop, a seminar, a festival."
+msgstr "Algo a lo que invitas: una jornada de puertas abiertas, un taller, un seminario, una fiesta."
+
+msgid "Invite to a community event"
+msgstr "Invitar a un evento comunitario"
+
+msgid "New community event"
+msgstr "Nuevo evento comunitario"
+
+msgid "Edit community event"
+msgstr "Editar el evento comunitario"
+
+msgid "e.g. Open day"
+msgstr "p. ej. Jornada de puertas abiertas"
+
+msgid "What happens, and who is it for?"
+msgstr "¿Qué pasa y para quién es?"
+
+msgid "Starts at"
+msgstr "Empieza a las"
+
+msgid "Ends at"
+msgstr "Termina a las"
+
+msgid "Leave empty if it is ongoing, without an end date."
+msgstr "Déjalo vacío si continúa sin fecha de fin."
+
+msgid "It can't end before it starts."
+msgstr "No puede terminar antes de empezar."
+
+msgid "Open event: people can just come"
+msgstr "Evento abierto: se puede venir sin más"
+
+msgid "Otherwise people ask first and you answer, like for a volunteer stay."
+msgstr "Si no, la gente pregunta primero y tú respondes, como en una estancia en comunidad."
+
+msgid "How people come"
+msgstr "Cómo se viene"
+
+msgid "How many are you?"
+msgstr "¿Cuántos sois?"
+
+msgid "Just come"
+msgstr "Entrada libre"
+
+msgid "Open event: just come"
+msgstr "Evento abierto: entrada libre"
+
+msgid "Who is coming"
+msgstr "Quién viene"
+
+msgid "I'm coming"
+msgstr "Voy"
+
+msgid "I can't come after all"
+msgstr "Al final no puedo ir"
+
+msgid "Log in to see who is coming."
+msgstr "Inicia sesión para ver quién viene."
+
+msgid "Great, you are on the list!"
+msgstr "¡Genial, estás en la lista!"
+
+msgid "You are off the list."
+msgstr "Ya no estás en la lista."
+
+msgid "Please check how many you are and the days."
+msgstr "Revisa cuántos sois y los días, por favor."
+
+msgid "Keep it short and current: what nobody updates is archived after a while."
+msgstr "Mantenlo breve y al día: lo que nadie actualiza se archiva al cabo de un tiempo."
+
+msgid "Events near you"
+msgstr "Eventos cerca de ti"
+
+msgid "Your profile has no place yet, so this shows events everywhere."
+msgstr "Tu perfil aún no tiene lugar, así que aquí ves eventos de todas partes."
+
+msgid "Everywhere"
+msgstr "En todas partes"
+
+#, python-format
+msgid "Within %(km)s km"
+msgstr "A menos de %(km)s km"
+
+#, python-format
+msgid "about %(km)s km"
+msgstr "unos %(km)s km"
+
+msgid "Add your place"
+msgstr "Añade tu lugar"
+
+msgid "Search events, skills, materials, places…"
+msgstr "Buscar eventos, habilidades, materiales, lugares…"
+
+msgid "No current events found."
+msgstr "No se han encontrado eventos actuales."
+
+msgid "No current events found near you."
+msgstr "No se han encontrado eventos actuales cerca de ti."
+
+msgid "No current or upcoming events."
+msgstr "No hay eventos actuales ni próximos."
+
+msgid "Ended and archived"
+msgstr "Terminados y archivados"
+
+msgid "Everything your current events need is covered or promised."
+msgstr "Todo lo que necesitan vuestros eventos actuales está cubierto o prometido."
+
+msgid "Comma-separated. People looking for these skills find your community through it."
+msgstr "Separadas por comas. Quien busque estas habilidades encontrará así vuestra comunidad."
+
+#, python-format
+msgid "<a href=\"%(community_url)s\" class=\"underline\">%(community)s</a> needs this for <a href=\"%(project_url)s\" class=\"underline\">%(project)s</a>"
+msgstr "<a href=\"%(community_url)s\" class=\"underline\">%(community)s</a> necesita esto para <a href=\"%(project_url)s\" class=\"underline\">%(project)s</a>"
+
+msgid "Stay details"
+msgstr "Detalles de la estancia"
+
+msgid "Is coming to"
+msgstr "Viene a"
+
+msgid "is coming to"
+msgstr "viene a"
+
+#, python-format
+msgid "%(count)s people"
+msgstr "%(count)s personas"
+
+#, python-format
+msgid "Your visit to %(title)s at %(name)s"
+msgstr "Tu visita a %(title)s en %(name)s"
+
+#, python-format
+msgid "%(name)s's visit to %(title)s"
+msgstr "Visita de %(name)s a %(title)s"
+
+msgid "The community event has been saved."
+msgstr "El evento comunitario se ha guardado."
+
+msgid "This community event is over."
+msgstr "Este evento comunitario ha terminado."
+
+msgid "This community event is over. Change its dates to bring it back."
+msgstr "Este evento comunitario ha terminado. Cambia las fechas para recuperarlo."
+
+msgid "This community event has been archived."
+msgstr "Este evento comunitario se ha archivado."
+
+msgid "The community event has been archived. You can bring it back at any time."
+msgstr "El evento comunitario se ha archivado. Puedes recuperarlo cuando quieras."
+
+msgid "Archive this community event? It will no longer be listed."
+msgstr "¿Archivar este evento comunitario? Ya no aparecerá en las listas."
+
+msgid "Thanks! The community event shows as up to date again."
+msgstr "¡Gracias! El evento comunitario vuelve a aparecer como vigente."
+
+msgid "Shows visitors that this community event is up to date"
+msgstr "Muestra a quien visita que este evento comunitario está al día"
+
+msgid "Nobody has updated this community event for a while. Is it still current? Otherwise it will be archived soon."
+msgstr "Nadie ha actualizado este evento comunitario desde hace tiempo. ¿Sigue vigente? Si no, se archivará pronto."
+
+msgid "This community event doesn't take offers at the moment."
+msgstr "Este evento comunitario no acepta ofertas en este momento."
+
+msgid "Support this community event"
+msgstr "Apoyar este evento comunitario"
+
+msgid "Join this community event"
+msgstr "Unirse a este evento comunitario"
+
+msgid "References from this community event"
+msgstr "Referencias de este evento comunitario"
+
+msgid "Community event need"
+msgstr "Necesidad del evento comunitario"
+
+#, python-format
+msgid "your community event %(project)s: %(title)s"
+msgstr "tu evento comunitario %(project)s: %(title)s"
+
+#, python-format
+msgid "%(actor)s offered to help with your community event: %(title)s"
+msgstr "%(actor)s ofreció ayuda con vuestro evento comunitario: %(title)s"
+
+#, python-format
+msgid "Is your community event “%(title)s” still current?"
+msgstr "¿Tu evento comunitario «%(title)s» sigue vigente?"
+
+msgid "Is your community event still current?"
+msgstr "¿Tu evento comunitario sigue vigente?"
+
+#, python-format
+msgid "nobody has updated the community event “%(title)s” of %(community)s for a while. Is it still current?"
+msgstr "nadie ha actualizado el evento comunitario «%(title)s» de %(community)s desde hace tiempo. ¿Sigue vigente?"
+
+msgid "Update the community event"
+msgstr "Actualizar el evento comunitario"
+
+msgid "Withdraw request"
+msgstr "Retirar la solicitud"
+
+msgid "Withdrawn"
+msgstr "Retirado"
+
+msgid "You withdrew this request"
+msgstr "Retiraste esta solicitud"
+
+msgid "Withdrawn by the one who asked"
+msgstr "Retirado por quien lo pidió"
+
+msgid "Withdraw your request?"
+msgstr "¿Retirar tu solicitud?"
+
+msgid "Withdraw your request? Please write a few words why in the message box, they were counting on you."
+msgstr "¿Retirar tu solicitud? Escribe unas palabras en el mensaje para decir por qué, contaban contigo."
+
+msgid "Your request has been withdrawn."
+msgstr "Tu solicitud se ha retirado."
+
+msgid "Please write a few words why, they were counting on you."
+msgstr "Escribe unas palabras para decir por qué, contaban contigo."
+
+#, python-format
+msgid "%(actor)s withdrew their request: %(title)s"
+msgstr "%(actor)s ha retirado su solicitud: %(title)s"
+
+#, python-format
+msgid "%(actor)s suggested other dates for their stay at: %(title)s"
+msgstr "%(actor)s ha propuesto otras fechas para su estancia en: %(title)s"
+
+#, python-format
+msgid "%(count)s person so far"
+msgid_plural "%(count)s people so far"
+msgstr[0] "%(count)s persona hasta ahora"
+msgstr[1] "%(count)s personas hasta ahora"
+
+#, python-format
+msgid "You are coming."
+msgid_plural "You are coming, %(count)s people."
+msgstr[0] "Vienes."
+msgstr[1] "Venís %(count)s personas."
+
+# tours (Community-Tours, package 1)
+
+msgid "Community-Tours"
+msgstr "Community-Tours"
+
+msgid "What we want to learn"
+msgstr "Lo que queremos aprender"
+
+msgid "Skills from the list. We use them to find communities and events where you can learn them."
+msgstr "Habilidades de la lista. Con ellas encontramos comunidades y eventos donde puedes aprenderlas."
+
+msgid "Countries"
+msgstr "Países"
+
+msgid "Where about you want to go. Once the tour has stops, they say it."
+msgstr "Más o menos adónde quieres ir. En cuanto el tour tenga paradas, lo dirán ellas."
+
+msgid "e.g. Permaculture tour through Portugal"
+msgstr "p. ej. Tour de permacultura por Portugal"
+
+msgid "Why you travel, what you'd like to do on the way, who you'd like to meet."
+msgstr "Por qué viajas, qué te gustaría hacer en el camino, a quién te gustaría conocer."
+
+msgid "e.g. Permaculture, Yoga"
+msgstr "p. ej. Permacultura, Yoga"
+
+msgid "Please choose countries from the list."
+msgstr "Elige países de la lista."
+
+msgid "Where"
+msgstr "Dónde"
+
+msgid "At a community"
+msgstr "En una comunidad"
+
+msgid "Another place"
+msgstr "Otro lugar"
+
+msgid "At one of its events?"
+msgstr "¿En uno de sus eventos?"
+
+msgid "No, a stay at the community"
+msgstr "No, una estancia en la comunidad"
+
+msgid "Place"
+msgstr "Lugar"
+
+msgid "Going on from here by"
+msgstr "Desde aquí seguimos en"
+
+msgid "As the tour travels"
+msgstr "Como viaja el tour"
+
+msgid "e.g. help with the harvest, a yoga week"
+msgstr "p. ej. ayudar con la cosecha, una semana de yoga"
+
+msgid "Please choose a community."
+msgstr "Elige una comunidad."
+
+msgid "Please choose one of this community's events."
+msgstr "Elige uno de los eventos de esta comunidad."
+
+msgid "Please choose the place on the map."
+msgstr "Elige el lugar en el mapa."
+
+msgid "You can't leave before you arrive."
+msgstr "No puedes irte antes de llegar."
+
+msgid "Van or bus"
+msgstr "Furgoneta o autobús"
+
+msgid "Car"
+msgstr "Coche"
+
+msgid "Bicycle"
+msgstr "Bicicleta"
+
+msgid "Train and bus"
+msgstr "Tren y autobús"
+
+msgid "Hitchhiking"
+msgstr "Autostop"
+
+msgid "On foot"
+msgstr "A pie"
+
+msgid "Boat"
+msgstr "Barco"
+
+msgid "Mixed"
+msgstr "Mixto"
+
+msgid "Organiser"
+msgstr "Organizador/a"
+
+msgid "How we travel"
+msgstr "Cómo viajamos"
+
+msgid "I'm looking for travellers"
+msgstr "Busco compañeros de viaje"
+
+msgid "How many people at most?"
+msgstr "¿Cuántas personas como máximo?"
+
+msgid "Including you."
+msgstr "Contándote a ti."
+
+msgid "Show this tour in the list and on the map"
+msgstr "Mostrar este tour en la lista y en el mapa"
+
+msgid "Children welcome"
+msgstr "Niños bienvenidos"
+
+msgid "Animals welcome"
+msgstr "Animales bienvenidos"
+
+msgid "Good to know"
+msgstr "Bueno saber"
+
+msgid "How we share costs"
+msgstr "Cómo compartimos los gastos"
+
+msgid "e.g. we share fuel, everyone brings food for the road"
+msgstr "p. ej. compartimos el combustible, cada quien trae comida para el camino"
+
+msgid "Published"
+msgstr "Publicado"
+
+msgid "Route"
+msgstr "Ruta"
+
+msgid "About how many km"
+msgstr "Aproximadamente cuántos km"
+
+msgid "Tour"
+msgstr "Tour"
+
+msgid "Arrive"
+msgstr "Llegada"
+
+msgid "Leave"
+msgstr "Salida"
+
+msgid "Setting off at"
+msgstr "Salida a las"
+
+msgid "Give or take a few days"
+msgstr "Unos días más o menos"
+
+msgid "What we plan here"
+msgstr "Lo que planeamos aquí"
+
+msgid "Going on by"
+msgstr "Seguimos en"
+
+msgid "Stop"
+msgstr "Parada"
+
+msgid "Stops"
+msgstr "Paradas"
+
+#, python-format
+msgid "(%(kind)s)"
+msgstr "(%(kind)s)"
+
+msgid "Move up"
+msgstr "Subir"
+
+msgid "Move down"
+msgstr "Bajar"
+
+msgid "Remove this stop?"
+msgstr "¿Quitar esta parada?"
+
+#, python-format
+msgid "setting off at %(time)s"
+msgstr "salida a las %(time)s"
+
+msgid "give or take a few days"
+msgstr "unos días más o menos"
+
+msgid "Name or place of the community…"
+msgstr "Nombre o lugar de la comunidad…"
+
+msgid "events"
+msgstr "eventos"
+
+msgid "Its current projects and community events."
+msgstr "Sus proyectos y eventos comunitarios actuales."
+
+msgid "A meeting point, a town, or a gathering that is not on ecobasa. Everyone sees this place as you enter it: choose a meeting point, not your home."
+msgstr "Un punto de encuentro, una ciudad o un encuentro que no está en ecobasa. Todos ven este lugar tal como lo introduces: elige un punto de encuentro, no tu casa."
+
+#, python-format
+msgid "%(count)s stop"
+msgid_plural "%(count)s stops"
+msgstr[0] "%(count)s parada"
+msgstr[1] "%(count)s paradas"
+
+msgid "Idea"
+msgstr "Idea"
+
+msgid "Draft"
+msgstr "Borrador"
+
+msgid "Not in the list"
+msgstr "No está en la lista"
+
+msgid "No dates yet"
+msgstr "Aún sin fechas"
+
+#, python-format
+msgid "Stop %(number)s"
+msgstr "Parada %(number)s"
+
+msgid "Add the stops in the order you travel. Days can come later: without them the tour is an idea."
+msgstr "Añade las paradas en el orden en que viajas. Los días pueden venir después: sin ellos, el tour es una idea."
+
+#, python-format
+msgid "Altogether about %(km)s km."
+msgstr "En total, unos %(km)s km."
+
+msgid "No stops yet."
+msgstr "Aún no hay paradas."
+
+msgid "Add a stop"
+msgstr "Añadir una parada"
+
+msgid "Add stop"
+msgstr "Añadir parada"
+
+msgid "See the tour"
+msgstr "Ver el tour"
+
+msgid "Publish"
+msgstr "Publicar"
+
+msgid "This is a draft: only you can see it."
+msgstr "Esto es un borrador: solo tú puedes verlo."
+
+msgid "This tour is over."
+msgstr "Este tour ha terminado."
+
+msgid "This tour has been archived."
+msgstr "Este tour se ha archivado."
+
+msgid "This tour is not in the list or on the map. Only you see it."
+msgstr "Este tour no está en la lista ni en el mapa. Solo tú lo ves."
+
+msgid "Plan the route"
+msgstr "Planear la ruta"
+
+msgid "Say that this tour is still planned as it is"
+msgstr "Decir que el tour sigue planeado así"
+
+msgid "Archive this tour? It will no longer be listed."
+msgstr "¿Archivar este tour? Ya no aparecerá en la lista."
+
+msgid "No stops yet: this tour is still an idea."
+msgstr "Aún no hay paradas: este tour sigue siendo una idea."
+
+msgid "Add stops"
+msgstr "Añadir paradas"
+
+#, python-format
+msgid "%(count)s person at most"
+msgid_plural "%(count)s people at most"
+msgstr[0] "%(count)s persona como máximo"
+msgstr[1] "%(count)s personas como máximo"
+
+msgid "Edit tour"
+msgstr "Editar tour"
+
+msgid "Plan a tour"
+msgstr "Planear un tour"
+
+msgid "First the basics. Next you add the stops: communities, their events, or other places."
+msgstr "Primero lo básico. Después añades las paradas: comunidades, sus eventos u otros lugares."
+
+msgid "Travel company"
+msgstr "Compañía de viaje"
+
+msgid "A tour of your own, to learn and to take gifts along. Nobody can ask to join."
+msgstr "Un tour para ti, para aprender y llevar regalos. Nadie puede pedir unirse."
+
+msgid "3 to 5 people fit into a community most easily."
+msgstr "De 3 a 5 personas encajan más fácilmente en una comunidad."
+
+msgid "Otherwise only you see it, and later the hosts you ask."
+msgstr "Si no, solo lo ves tú y, más adelante, quienes te acojan cuando les preguntes."
+
+msgid "Who is welcome"
+msgstr "Quién es bienvenido"
+
+msgid "Next: the route"
+msgstr "Siguiente: la ruta"
+
+msgid "Travel from community to community and from event to event: help, learn, and take gifts along. Join a tour for all of it or for part of the way."
+msgstr "Viaja de comunidad en comunidad y de evento en evento: ayuda, aprende y lleva regalos. Únete a un tour entero o a una parte del camino."
+
+msgid "Your tours that are not in the list"
+msgstr "Tus tours que no están en la lista"
+
+msgid "No tour ideas yet."
+msgstr "Aún no hay ideas de tour."
+
+msgid "No tours planned yet."
+msgstr "Aún no hay tours planeados."
+
+msgid "Tour ideas"
+msgstr "Ideas de tour"
+
+msgid "Your tour is saved as a draft. Now add its stops."
+msgstr "Tu tour se ha guardado como borrador. Ahora añade sus paradas."
+
+msgid "The tour has been saved."
+msgstr "El tour se ha guardado."
+
+msgid "The stop has been added."
+msgstr "La parada se ha añadido."
+
+msgid "The stop has been saved."
+msgstr "La parada se ha guardado."
+
+msgid "The stop has been removed."
+msgstr "La parada se ha quitado."
+
+msgid "Your tour is published. Others find it in the list of tours."
+msgstr "Tu tour está publicado. Otras personas lo encuentran en la lista de tours."
+
+msgid "Your tour is published. It is not in the list, as you chose."
+msgstr "Tu tour está publicado. Como elegiste, no está en la lista."
+
+msgid "The tour has been archived."
+msgstr "El tour se ha archivado."
+
+msgid "This tour is over. Change the days of its stops to bring it back."
+msgstr "Este tour ha terminado. Cambia los días de sus paradas para recuperarlo."
+
+msgid "Thanks, the tour is marked as current."
+msgstr "Gracias, el tour está marcado como actual."
+
+# tours (Community-Tours, package 2)
+
+msgid "No tours fit these filters."
+msgstr "Ningún tour coincide con estos filtros."
+
+msgid "Search a place…"
+msgstr "Buscar un lugar…"
+
+msgid "Distance"
+msgstr "Distancia"
+
+#, python-format
+msgid "within %(km)s km"
+msgstr "a menos de %(km)s km"
+
+msgid "When"
+msgstr "Cuándo"
+
+msgid "Learn: anything"
+msgstr "Aprender: cualquier cosa"
+
+msgid "Any way"
+msgstr "De cualquier forma"
+
+msgid "Reset"
+msgstr "Restablecer"
+
+msgid "about"
+msgstr "unos"
+
+msgid "Tour, skill, gift or place…"
+msgstr "Tour, habilidad, regalo o lugar…"
+
+msgid "Show tours near me"
+msgstr "Mostrar tours cerca de mí"
+
+msgid "Tours on the map"
+msgstr "Tours en el mapa"
+
+#: tours/templates/tours/tour_list.html
+msgid "Tour idea, organised from around"
+msgstr "Idea de tour, organizada desde cerca de"
+
+# tours: cards, who travels
+msgid "Skills we bring along"
+msgstr "Habilidades que traemos"
+
+msgid "Who travels"
+msgstr "Quién viaja"
+
+#, python-format
+msgid "<a href=\"%(url)s\" class=\"underline\">Log in</a> to see who travels and what they can."
+msgstr "<a href=\"%(url)s\" class=\"underline\">Inicia sesión</a> para ver quién viaja y qué sabe hacer."
+
+msgid "Show"
+msgstr "Mostrar"
+
+# tours: skills to learn at the stops
+msgid "You can learn this on the way"
+msgstr "Esto puedes aprender por el camino"
+
+msgid "Skills that your stops teach. Add them to what you want to learn, so people who want to learn the same find your tour."
+msgstr "Habilidades que enseñan tus paradas. Añádelas a lo que queréis aprender, para que te encuentre gente que quiere aprender lo mismo."
+
+msgid "Add all"
+msgstr "Añadir todas"
+
+#, python-format
+msgid "Added to what you want to learn: %(skills)s"
+msgstr "Añadido a lo que queréis aprender: %(skills)s"
+
+# tours: filter pills
+msgid "Only tours"
+msgstr "Solo tours"
+
+msgid "Only tour ideas"
+msgstr "Solo ideas de tour"
+
+msgid "Near a place"
+msgstr "Cerca de un lugar"
+
+# tours: joining a tour (package 3)
+msgid "Join requests"
+msgstr "Solicitudes para viajar"
+
+msgid "No join requests yet."
+msgstr "Todavía no hay solicitudes para viajar."
+
+msgid "Your tours"
+msgstr "Tus tours"
+
+msgid "A few words to the organisers"
+msgstr "Unas palabras a quienes organizan"
+
+msgid "Who you are, why you'd like to come along, what you could bring."
+msgstr "Quién eres, por qué te gustaría venir, qué podrías aportar."
+
+msgid "Get on at"
+msgstr "Subir en"
+
+msgid "Get off at"
+msgstr "Bajar en"
+
+msgid "At least one."
+msgstr "Al menos una persona."
+
+msgid "Choose a stop after the one you get on at."
+msgstr "Elige una parada después de la que subes."
+
+#, python-format
+msgid "There is no room for that many on this stretch: %(free)s free."
+msgstr "No hay sitio para tantas personas en este tramo: %(free)s libres."
+
+msgid "Join request"
+msgstr "Solicitud para viajar"
+
+msgid "asked to join"
+msgstr "quiere viajar en"
+
+#, python-format
+msgid "%(actor)s asked to join your tour: %(title)s"
+msgstr "%(actor)s quiere viajar en tu tour: %(title)s"
+
+msgid "There is no room left on this stretch any more."
+msgstr "Ya no queda sitio en este tramo."
+
+msgid "You and whoever comes with you, children too."
+msgstr "Tú y quien venga contigo, también niños."
+
+msgid "I only need the ride"
+msgstr "Solo necesito el viaje"
+
+msgid "Pick me up at"
+msgstr "Recógeme en"
+
+msgid "Drop me at"
+msgstr "Déjame en"
+
+msgid "Traveller"
+msgstr "Compañero/a de viaje"
+
+msgid "Travellers"
+msgstr "Compañeros de viaje"
+
+msgid "Ask to join"
+msgstr "Pedir viajar"
+
+msgid "For the whole route or part of it."
+msgstr "Para toda la ruta o una parte."
+
+msgid "Log in first, then choose where you get on and off."
+msgstr "Inicia sesión primero y luego elige dónde subes y bajas."
+
+msgid "Your join request is waiting for an answer."
+msgstr "Tu solicitud para viajar espera una respuesta."
+
+msgid "See your request"
+msgstr "Ver tu solicitud"
+
+msgid "Change it"
+msgstr "Cambiarla"
+
+msgid "You travel along."
+msgstr "Viajas con el grupo."
+
+msgid "Talk with the organisers"
+msgstr "Hablar con quienes organizan"
+
+msgid "Leave tour"
+msgstr "Dejar el tour"
+
+msgid "A few words why, the others were counting on you"
+msgstr "Unas palabras de por qué; los demás contaban contigo"
+
+msgid "No places free at the moment."
+msgstr "Ahora mismo no quedan plazas."
+
+msgid "Stretch"
+msgstr "Tramo"
+
+msgid "the whole route"
+msgstr "toda la ruta"
+
+msgid "People"
+msgstr "Personas"
+
+msgid "Only for the ride"
+msgstr "Solo para el viaje"
+
+msgid "Change where you get on and off"
+msgstr "Cambiar dónde subes y bajas"
+
+#, python-format
+msgid "%(count)s place free"
+msgid_plural "%(count)s places free"
+msgstr[0] "%(count)s plaza libre"
+msgstr[1] "%(count)s plazas libres"
+
+msgid "Full"
+msgstr "Completo"
+
+msgid "Change your join request"
+msgstr "Cambiar tu solicitud para viajar"
+
+#, python-format
+msgid "Choose where you get on and where you get off <strong>%(title)s</strong>. The organisers get your request and answer you."
+msgstr "Elige dónde subes y dónde bajas de <strong>%(title)s</strong>. Quienes organizan reciben tu solicitud y te responden."
+
+msgid "The route isn't planned yet: you ask to come along for the whole of it."
+msgstr "La ruta aún no está planeada: pides venir para todo el tour."
+
+msgid "You come along on the way, but not to the stays with the hosts in between."
+msgstr "Vienes en el camino, pero no a las estancias con los anfitriones de por medio."
+
+msgid "You travel along"
+msgstr "Viajas con el grupo"
+
+msgid "Asked to join"
+msgstr "Pediste viajar"
+
+msgid "No tours yet. Plan one, or ask to join one on the map."
+msgstr "Todavía no hay tours. Planea uno o pide viajar en uno del mapa."
+
+#, python-format
+msgid "and %(count)s more"
+msgid_plural "and %(count)s more"
+msgstr[0] "y %(count)s persona más"
+msgstr[1] "y %(count)s personas más"
+
+msgid "Remove from tour"
+msgstr "Quitar del tour"
+
+msgid "A few words to them why"
+msgstr "Unas palabras a esa persona de por qué"
+
+#, python-format
+msgid "%(count)s person travels"
+msgid_plural "%(count)s people travel"
+msgstr[0] "Viaja %(count)s persona"
+msgstr[1] "Viajan %(count)s personas"
+
+msgid "You are on this tour already."
+msgstr "Ya estás en este tour."
+
+msgid "This tour doesn't look for travellers."
+msgstr "Este tour no busca compañeros de viaje."
+
+msgid "Your join request has been sent to the organisers."
+msgstr "Tu solicitud para viajar se ha enviado a quienes organizan."
+
+#, python-format
+msgid "Changed the request: %(summary)s"
+msgstr "Solicitud cambiada: %(summary)s"
+
+msgid "Your join request has been changed."
+msgstr "Tu solicitud para viajar se ha cambiado."
+
+#, python-format
+msgid "%(n)s person"
+msgid_plural "%(n)s people"
+msgstr[0] "%(n)s persona"
+msgstr[1] "%(n)s personas"
+
+msgid "As an organiser you can't leave the tour yet."
+msgstr "Como organizador/a todavía no puedes dejar el tour."
+
+msgid "Please write a few words why, the others were counting on you."
+msgstr "Escribe unas palabras de por qué, por favor; los demás contaban contigo."
+
+msgid "You have left the tour."
+msgstr "Has dejado el tour."
+
+msgid "Please write a few words to them why."
+msgstr "Escribe a esa persona unas palabras de por qué, por favor."
+
+#, python-format
+msgid "%(name)s is no longer on the tour."
+msgstr "%(name)s ya no está en el tour."
+
+# tours: tour visits (package 4)
+msgid "Coming along"
+msgstr "Vienen también"
+
+msgid "Who you are as a group, what you would like to do and learn there, what you bring, and what you need: food (diet, allergies), where you would sleep."
+msgstr "Quiénes sois como grupo, qué os gustaría hacer y aprender allí, qué traéis y qué necesitáis: comida (dieta, alergias), dónde dormiríais."
+
+msgctxt "host status"
+msgid "Not asked yet"
+msgstr "Aún sin preguntar"
+
+msgctxt "host status"
+msgid "Asked"
+msgstr "Preguntado"
+
+msgctxt "host status"
+msgid "Agreed"
+msgstr "Aceptado"
+
+msgctxt "host status"
+msgid "Other days proposed"
+msgstr "Otros días propuestos"
+
+msgctxt "host status"
+msgid "Declined"
+msgstr "Rechazado"
+
+msgctxt "host status"
+msgid "We're coming"
+msgstr "Vamos"
+
+msgid "Tour visit"
+msgstr "Visita del tour"
+
+#, python-format
+msgid "%(tour)s · %(people)s"
+msgstr "%(tour)s · %(people)s"
+
+msgid "Ask to host us"
+msgstr "Pedir que nos acojan"
+
+msgid "Its days overlap with the stop before"
+msgstr "Sus días se solapan con la parada anterior"
+
+msgid "Tour visits"
+msgstr "Visitas de tours"
+
+#, python-format
+msgid "stop %(number)s"
+msgstr "parada %(number)s"
+
+msgid "People just come to this event. The tour goes on its list with your group; nobody has to answer."
+msgstr "A este evento la gente simplemente viene. El tour entra en la lista con vuestro grupo; nadie tiene que responder."
+
+#, python-format
+msgid "%(community)s gets one request for the whole group. If people get on or off later, the request follows them."
+msgstr "%(community)s recibe una sola solicitud para todo el grupo. Si más tarde alguien sube o baja, la solicitud se ajusta."
+
+msgid "We bring"
+msgstr "Traemos"
+
+msgid "This stop can't be asked to host you."
+msgstr "A esta parada no se le puede pedir que os acoja."
+
+msgid "The tour is on the event's list."
+msgstr "El tour está en la lista del evento."
+
+#, python-format
+msgid "Our group has changed: we are %(n)s person now."
+msgid_plural "Our group has changed: we are %(n)s people now."
+msgstr[0] "Nuestro grupo ha cambiado: ahora somos %(n)s persona."
+msgstr[1] "Nuestro grupo ha cambiado: ahora somos %(n)s personas."
+
+msgid "asked to host their tour at"
+msgstr "pidió que acojan su tour en"
+
+msgid "What we would like to learn here"
+msgstr "Lo que nos gustaría aprender aquí"
+
+msgid "From what your tour wants to learn. Ticked: what one can learn here."
+msgstr "De lo que vuestro tour quiere aprender. Marcado: lo que se puede aprender aquí."
+
+# tours: references about a tour
+msgid "Who was there"
+msgstr "Quién estuvo"
+
+msgid "Who is your story about?"
+msgstr "¿De quién trata tu historia?"
+
+msgid "The whole group"
+msgstr "Todo el grupo"
+
+msgid "Write about someone else too?"
+msgstr "¿Escribir también sobre otra persona?"
+
+msgid "Back to tour"
+msgstr "Volver al tour"
+
+msgid "Where did you meet them?"
+msgstr "¿Dónde os conocisteis?"
+
+# tours: vehicles and what a tour still looks for
+msgid "What vehicle?"
+msgstr "¿Qué vehículo?"
+
+msgid "Drivers"
+msgstr "Conductores/as"
+
+msgid "Seats besides the driver"
+msgstr "Plazas además del conductor/a"
+
+msgid "Sleeping places"
+msgstr "Plazas para dormir"
+
+msgid "What fits in and on it, how comfy it is"
+msgstr "Qué cabe dentro y encima, y qué tan cómodo es"
+
+msgid "Still needs a driver"
+msgstr "Aún necesita conductor/a"
+
+msgid "Others may drive too"
+msgstr "Otras personas también pueden conducir"
+
+msgid "e.g. blue van"
+msgstr "p. ej. furgoneta azul"
+
+msgid "e.g. roof rack, about 1 m³; bench seats, a bed for two in the back"
+msgstr "p. ej. baca, aprox. 1 m³; asientos de banco, una cama para dos atrás"
+
+msgid "the start"
+msgstr "el principio"
+
+msgid "the end"
+msgstr "el final"
+
+msgid "Choose a stop after the first one."
+msgstr "Elige una parada después de la primera."
+
+msgid "Saved."
+msgstr "Guardado."
+
+msgid "Added to what you look for: %(skills)s"
+msgstr "Añadido a lo que buscáis: %(skills)s"
+
+msgid "The tour %(tour)s is looking for: %(title)s"
+msgstr "El tour %(tour)s todavía busca: %(title)s"
+
+msgid "your tour %(tour)s: %(title)s"
+msgstr "tu tour %(tour)s: %(title)s"
+
+msgid "Vehicles and needs"
+msgstr "Vehículos y necesidades"
+
+msgid "Needed on your route"
+msgstr "Se necesita en vuestra ruta"
+
+msgid "Your hosts look for these skills, and nobody on the tour has them yet. Look for someone who can come along."
+msgstr "Vuestros anfitriones buscan estas habilidades y nadie en el tour las tiene todavía. Buscad a alguien que pueda venir."
+
+msgid "Add to what we look for"
+msgstr "Añadir a lo que buscamos"
+
+msgid "Our vehicles"
+msgstr "Nuestros vehículos"
+
+msgid "The places on each part of the route come from the seats of the vehicles there, plus their drivers. Without a vehicle, the group size counts."
+msgstr "Las plazas en cada tramo salen de los asientos de los vehículos que van allí, más sus conductores. Sin vehículo cuenta el tamaño del grupo."
+
+msgid "Add a vehicle"
+msgstr "Añadir un vehículo"
+
+msgid "We're still looking for"
+msgstr "Todavía buscamos"
+
+msgid "One line per thing: a van, a driver, people with a skill. Skills from the list let us find people near your route who have them."
+msgstr "Una línea por cosa: una furgoneta, alguien que conduzca, personas con una habilidad. Con habilidades de la lista encontramos a personas cerca de vuestra ruta que las tienen."
+
+msgid "Only for part of the route: from / to"
+msgstr "Solo para una parte de la ruta: desde / hasta"
+
+msgid "Completes the team"
+msgstr "Completa el equipo"
+
+msgid "Works alongside"
+msgstr "Trabaja junto a otros"
+
+msgid "You could cover"
+msgstr "Esto podrías cubrir tú"
+
+msgid "What the tour still looks for. Tick what you can do or bring along."
+msgstr "Lo que el tour todavía busca. Marca lo que sabes hacer o puedes traer."
+
+msgid "%(count)s seat"
+msgid_plural "%(count)s seats"
+msgstr[0] "%(count)s plaza"
+msgstr[1] "%(count)s plazas"
+
+msgid "%(count)s sleeping place"
+msgid_plural "%(count)s sleeping places"
+msgstr[0] "%(count)s plaza para dormir"
+msgstr[1] "%(count)s plazas para dormir"
+
+msgid "Picture"
+msgstr "Imagen"
+
+msgid "The tour <a href=\"%(tour_url)s\" class=\"underline\">%(tour)s</a> is looking for this"
+msgstr "El tour <a href=\"%(tour_url)s\" class=\"underline\">%(tour)s</a> todavía busca esto"
+
+msgid "from your tour"
+msgstr "de tu tour"
+
+msgid "Start"
+msgstr "Inicio"
+
+#, python-format
+msgid "Learn: %(what)s"
+msgstr "Aprender: %(what)s"
+
+#, python-format
+msgid "Needs: %(what)s"
+msgstr "Necesita: %(what)s"
+
+msgid "Fits your days"
+msgstr "Encaja con vuestros días"
+
+#, python-format
+msgid "Room for %(n)s"
+msgstr "Sitio para %(n)s"
+
+msgid "Little room then"
+msgstr "Poco sitio en esas fechas"
+
+msgid "On the way"
+msgstr "De camino"
+
+msgid "Gifts could travel"
+msgstr "Los regalos podrían viajar"
+
+msgid "Active lately"
+msgstr "Activo hace poco"
+
+msgid "Hosts usually gain from help after about a week."
+msgstr "Normalmente la ayuda les sirve a quienes acogen después de una semana más o menos."
+
+msgid "Visit at least two communities so gifts can travel."
+msgstr "Visita al menos dos comunidades para que los regalos puedan viajar."
+
+msgid "3 to 5 people fit into a community most easily; with experience, up to 10."
+msgstr "De 3 a 5 personas caben más fácilmente en una comunidad; con experiencia, hasta 10."
+
+msgid "Suggest an order"
+msgstr "Sugerir un orden"
+
+#, python-format
+msgid "About %(new)s km instead of %(old)s km. Stops with days keep their order among each other."
+msgstr "Unos %(new)s km en vez de %(old)s km. Las paradas con días mantienen su orden entre ellas."
+
+msgid "Use this order"
+msgstr "Usar este orden"
+
+msgid "We found no order with fewer kilometres. Stops with days keep their order among each other."
+msgstr "No encontramos ningún orden con menos kilómetros. Las paradas con días mantienen su orden entre ellas."
+
+msgid "Recommended on the way"
+msgstr "Recomendado de camino"
+
+#, python-format
+msgid "within %(km)s km of the route"
+msgstr "a menos de %(km)s km de la ruta"
+
+msgid "Add"
+msgstr "Añadir"
+
+msgid "Nothing found here yet. Try a wider area."
+msgstr "Aún no hay nada por aquí. Prueba con una zona más amplia."
+
+msgid "Add a first stop, or choose countries in the tour's basics, to see communities and events worth a visit."
+msgstr "Añade una primera parada o elige países en los datos básicos del tour para ver comunidades y eventos que vale la pena visitar."
+
+msgid "The stops are in the new order."
+msgstr "Las paradas están en el nuevo orden."
+
+
+msgid "(approximate place until the host has agreed)"
+msgstr "(lugar aproximado hasta que quienes acogen acepten)"
+
+#, python-format
+msgid "%(n)s reference"
+msgid_plural "%(n)s references"
+msgstr[0] "%(n)s referencia"
+msgstr[1] "%(n)s referencias"
+
+
+msgid "Maps app on this phone"
+msgstr "App de mapas de este móvil"
+
+msgid "Open in maps"
+msgstr "Abrir en mapas"
+
+#: tours/forms.py
+msgid "Who"
+msgstr "Quién"
+
+#: tours/forms.py
+msgid "Please choose someone."
+msgstr "Elige a alguien, por favor."
+
+#: tours/forms.py
+msgid "A few words to them"
+msgstr "Unas palabras para esa persona"
+
+#: tours/forms.py
+msgid "Why you'd like them to come along."
+msgstr "Por qué te gustaría que viniera."
+
+#: tours/forms.py
+msgid "How many are they?"
+msgstr "¿Cuántas personas son?"
+
+#: tours/forms.py
+msgid "They and whoever comes with them, children too."
+msgstr "Esa persona y quien venga con ella, también niños."
+
+#: tours/forms.py
+msgid "They are on this tour already, or have been asked."
+msgstr "Esa persona ya está en el tour o ya se le ha preguntado."
+
+#: tours/forms.py
+msgid "Day"
+msgstr "Día"
+
+#: tours/forms.py
+msgid "Free seats"
+msgstr "Plazas libres"
+
+#: tours/forms.py
+msgid "Room for things"
+msgstr "Espacio para cosas"
+
+#: tours/forms.py
+msgid "e.g. a full boot, a roof rack"
+msgstr "p. ej. un maletero entero, una baca"
+
+#: tours/forms.py
+msgid "A few words"
+msgstr "Unas palabras"
+
+#: tours/forms.py
+msgid "Where you can pick people up on the way, how you share costs."
+msgstr "Dónde puedes recoger a gente por el camino, cómo compartís los gastos."
+
+#: tours/models.py tours/templates/tours/mine.html
+msgid "Invitation"
+msgstr "Invitación"
+
+#: tours/models.py
+msgid "sent an invitation to travel along on"
+msgstr "envió una invitación para viajar en"
+
+#: tours/models.py
+#, python-format
+msgid "%(actor)s invited you to travel along: %(title)s"
+msgstr "%(actor)s te invitó a viajar: %(title)s"
+
+#: tours/templates/tours/_search_bar.html tours/templates/tours/tour_list.html
+msgid "Has free places"
+msgstr "Con plazas libres"
+
+#: tours/templates/tours/_search_bar.html tours/templates/tours/tour_list.html
+msgid "Only rides"
+msgstr "Solo viajes compartidos"
+
+#: tours/templates/tours/_tour_card.html tours/templates/tours/tour_detail.html
+msgid "Ride"
+msgstr "Viaje compartido"
+
+#: tours/templates/tours/invite.html tours/templates/tours/tour_detail.html
+msgid "Invite someone"
+msgstr "Invitar a alguien"
+
+#: tours/templates/tours/invite.html
+msgid "They get your invitation and travel along once they accept it."
+msgstr "Esa persona recibe tu invitación y viaja con vosotros en cuanto la acepte."
+
+#: tours/templates/tours/invite.html
+msgid "Their name…"
+msgstr "Su nombre…"
+
+#: tours/templates/tours/invite.html
+msgid "The route isn't planned yet: they come along for the whole of it."
+msgstr "La ruta aún no está planificada: esa persona viene para todo el recorrido."
+
+#: tours/templates/tours/mine.html tours/templates/tours/ride_form.html tours/templates/tours/tour_list.html
+msgid "Offer a ride"
+msgstr "Ofrecer un viaje compartido"
+
+#: tours/templates/tours/ride_form.html
+msgid "From one meeting point to another on one day. Others ask to come along, and you answer them."
+msgstr "De un punto de encuentro a otro en un día. Otras personas piden venir y tú les respondes."
+
+#: tours/templates/tours/ride_form.html
+msgid "Everyone sees these places as you enter them: choose a meeting point, not your home."
+msgstr "Todo el mundo ve estos lugares tal como los escribes: elige un punto de encuentro, no tu casa."
+
+#: tours/templates/tours/tour_detail.html
+msgid "Make organiser"
+msgstr "Hacer organizador/a"
+
+#: tours/templates/tours/tour_detail.html
+#, python-format
+msgid "Hand the tour over to %(name)s? Join requests and hosts then go to them; you stay an organiser."
+msgstr "¿Pasar el tour a %(name)s? Las solicitudes para viajar y los anfitriones irán a esa persona; tú sigues como organizador/a."
+
+#: tours/templates/tours/tour_detail.html
+msgid "Hand over the tour"
+msgstr "Pasar el tour"
+
+#: tours/templates/tours/tour_detail.html
+msgid "You're invited to travel along."
+msgstr "Estás invitado/a a viajar."
+
+#: tours/templates/tours/tour_detail.html
+msgid "See the invitation"
+msgstr "Ver la invitación"
+
+#: tours/views.py
+msgid "Hand the tour over to another organiser before you leave."
+msgstr "Pasa el tour a otro/a organizador/a antes de irte."
+
+#: tours/views.py
+#, python-format
+msgid "Your invitation has been sent to %(name)s."
+msgstr "Tu invitación se ha enviado a %(name)s."
+
+#: tours/views.py
+#, python-format
+msgid "%(actor)s made you an organiser of %(title)s"
+msgstr "%(actor)s te hizo organizador/a de %(title)s"
+
+#: tours/views.py
+#, python-format
+msgid "%(name)s is an organiser now."
+msgstr "%(name)s ahora es organizador/a."
+
+#: tours/views.py
+#, python-format
+msgid "%(actor)s handed the tour %(title)s over to you"
+msgstr "%(actor)s te pasó el tour %(title)s"
+
+#: tours/views.py
+#, python-format
+msgid "You handed the tour over to %(name)s."
+msgstr "Has pasado el tour a %(name)s."
+
+#: tours/views.py
+msgid "Your ride is published. Others find it in the list of tours."
+msgstr "Tu viaje compartido está publicado. Otras personas lo encuentran en la lista de tours."
+
+#: tours/templates/tours/_invite_to_tours.html
+msgid "Invite to join your tour"
+msgstr "Invitar a tu tour"
+
+#: tours/templates/tours/_search_bar.html:42
+#: tours/templates/tours/tour_list.html:94
+msgid "Rides"
+msgstr "Viajes compartidos"
+
+#: tours/models.py
+msgctxt "delivery status"
+msgid "Asked"
+msgstr "Preguntado"
+
+#: tours/models.py
+msgctxt "delivery status"
+msgid "Agreed"
+msgstr "Acordado"
+
+#: tours/models.py
+msgctxt "delivery status"
+msgid "On board"
+msgstr "A bordo"
+
+#: tours/models.py
+msgctxt "delivery status"
+msgid "Handed over"
+msgstr "Entregado"
+
+#: tours/models.py
+msgctxt "delivery status"
+msgid "Didn't work out"
+msgstr "No salió"
+
+#: tours/models.py
+msgctxt "delivery status"
+msgid "Not this"
+msgstr "Esto no"
+
+#: tours/models.py
+msgctxt "a gift taken along on a tour"
+msgid "Delivery"
+msgstr "Para llevar"
+
+#: tours/models.py
+msgid "Delivery"
+msgstr "Para llevar"
+
+#: tours/models.py
+msgid "Deliveries"
+msgstr "Regalos para llevar"
+
+#: tours/models.py
+msgid "Picked up"
+msgstr "Recogido"
+
+#: tours/models.py
+msgid "Handed over"
+msgstr "Entregado"
+
+#: tours/models.py
+#, python-format
+msgid "with %(name)s"
+msgstr "con %(name)s"
+
+#: tours/models.py
+msgid "would take your offer along on their tour"
+msgstr "llevaría tu oferta en su tour"
+
+#: tours/models.py
+msgid "would bring your wish along on their tour"
+msgstr "te traería tu deseo en su tour"
+
+#: tours/models.py
+#, python-format
+msgid "%(actor)s would take your offer along on their tour: %(title)s"
+msgstr "%(actor)s llevaría tu oferta en su tour: %(title)s"
+
+#: tours/models.py
+#, python-format
+msgid "%(actor)s would bring your wish along on their tour: %(title)s"
+msgstr "%(actor)s te traería tu deseo en su tour: %(title)s"
+
+#: tours/deliveries.py
+#, python-format
+msgid "Hello! I'm travelling with the tour %(tour)s and could take %(title)s along to %(where)s, where it is wished for."
+msgstr "¡Hola! Viajo con el tour %(tour)s y podría llevar %(title)s a %(where)s, donde lo desean."
+
+#: tours/deliveries.py
+#, python-format
+msgid "We are with you around %(day)s."
+msgstr "Estaremos con vosotros hacia el %(day)s."
+
+#: tours/deliveries.py
+#, python-format
+msgid "Hello! I'm travelling with the tour %(tour)s and could bring you %(title)s from %(origin)s."
+msgstr "¡Hola! Viajo con el tour %(tour)s y podría traerte %(title)s desde %(origin)s."
+
+#: tours/deliveries.py
+#, python-format
+msgid "Hello! I'm travelling with the tour %(tour)s and could bring you %(title)s."
+msgstr "¡Hola! Viajo con el tour %(tour)s y podría traerte %(title)s."
+
+#: tours/deliveries.py
+msgid "The other side can't take part, so this delivery doesn't work out. I'm taking my request back."
+msgstr "La otra parte no puede participar, así que esto no sale. Retiro mi solicitud."
+
+#: tours/forms.py
+msgid "To the giver"
+msgstr "A quien lo regala"
+
+#: tours/forms.py
+msgid "To the receiver"
+msgstr "A quien lo recibe"
+
+#: tours/views.py
+msgid "This can't travel with you any more."
+msgstr "Esto ya no puede viajar con vosotros."
+
+#: tours/views.py
+msgid "Please check how much you take along."
+msgstr "Revisa cuánto llevas, por favor."
+
+#: tours/views.py
+msgid "Asked. Once both sides agree, it is on your packing list."
+msgstr "Preguntado. Cuando ambas partes acepten, estará en tu lista de equipaje."
+
+#: tours/views.py
+msgid "Handed over. Thank you for bringing it!"
+msgstr "Entregado. ¡Gracias por traerlo!"
+
+#: tours/templates/tours/deliveries.html
+msgid "Could travel with you"
+msgstr "Podría viajar con vosotros"
+
+#: tours/templates/tours/deliveries.html
+msgid "Offered on your route and wished for further on. Take it along: the giver and the receiver are each asked, as for any gift."
+msgstr "Ofrecido en vuestra ruta y deseado más adelante. Llévalo: se pregunta a quien lo regala y a quien lo recibe, como con cualquier regalo."
+
+#: tours/templates/tours/deliveries.html
+msgid "Yours"
+msgstr "Tuyo"
+
+#: tours/templates/tours/deliveries.html
+#, python-format
+msgid "%(name)s wishes for: %(title)s"
+msgstr "%(name)s desea: %(title)s"
+
+#: tours/templates/tours/deliveries.html
+msgid "picked up on the way"
+msgstr "se recoge por el camino"
+
+#: tours/templates/tours/deliveries.html
+msgid "handed over on the way"
+msgstr "se entrega por el camino"
+
+#: tours/templates/tours/deliveries.html
+msgid "Not this"
+msgstr "Esto no"
+
+#: tours/templates/tours/deliveries.html
+msgid "I'll take it"
+msgstr "Lo llevo yo"
+
+#: tours/templates/tours/deliveries.html
+#, python-format
+msgid "To %(name)s, who gives it"
+msgstr "A %(name)s, que lo regala"
+
+#: tours/templates/tours/deliveries.html
+#, python-format
+msgid "To %(name)s, who wishes for it"
+msgstr "A %(name)s, que lo desea"
+
+#: tours/templates/tours/deliveries.html
+msgid "Someone else on the tour travels this stretch and could take it."
+msgstr "Otra persona del tour hace este tramo y podría llevarlo."
+
+#: tours/templates/tours/deliveries.html
+msgid "Nothing fits along your route at the moment. Offers at a stop are matched with wishes at the stops after it, and with what people near the route wish for."
+msgstr "Por ahora nada encaja en vuestra ruta. Las ofertas de una parada se comparan con los deseos de las paradas siguientes y con lo que desea la gente cerca de la ruta."
+
+#: tours/templates/tours/deliveries.html
+msgid "Waiting for answers"
+msgstr "Esperando respuesta"
+
+#: tours/templates/tours/deliveries.html
+msgid "Giver"
+msgstr "Quien regala"
+
+#: tours/templates/tours/deliveries.html
+msgid "Receiver"
+msgstr "Quien recibe"
+
+#: tours/templates/tours/deliveries.html
+#, python-format
+msgid "The other side said no. Take your request to %(name)s back too?"
+msgstr "La otra parte dijo que no. ¿Retirar también tu solicitud a %(name)s?"
+
+#: tours/templates/tours/deliveries.html
+msgid "Packing list"
+msgstr "Lista de equipaje"
+
+#: tours/templates/tours/deliveries.html
+msgid "Print"
+msgstr "Imprimir"
+
+#: tours/templates/tours/deliveries.html
+#, python-format
+msgid "On the way: %(place)s"
+msgstr "Por el camino: %(place)s"
+
+#: tours/templates/tours/deliveries.html
+msgid "Pick up"
+msgstr "Recoger"
+
+#: tours/templates/tours/deliveries.html
+msgid "Hand over"
+msgstr "Entregar"
+
+#: tours/templates/tours/deliveries.html
+#, python-format
+msgid "from %(name)s"
+msgstr "de %(name)s"
+
+#: tours/templates/tours/deliveries.html
+#, python-format
+msgid "for %(name)s"
+msgstr "para %(name)s"
+
+#: tours/templates/tours/deliveries.html
+msgid "after picking it up"
+msgstr "después de recogerlo"
+
+#: tours/templates/tours/deliveries.html
+msgid "Nothing to take along yet. Once a giver and a receiver both agree, the gift is on this list at the stop where you pick it up and the one where you hand it over."
+msgstr "Todavía nada que llevar. Cuando quien regala y quien recibe acepten, el regalo aparece aquí en la parada donde lo recoges y en la que lo entregas."
+
+#: tours/templates/tours/_delivery_row.html
+msgid "Brought by"
+msgstr "Lo trae"
+
+#: tours/templates/tours/tour_list.html:151
+msgid "Planned Tours"
+msgstr "Tours planificados"
+
+msgid "Goes where you stay"
+msgstr "Va a donde te alojas"
+
+msgid "Passes near you"
+msgstr "Pasa cerca de ti"
+
+msgid "Wants to learn the same"
+msgstr "Quiere aprender lo mismo"
+
+msgid "The tour %(tour)s goes to %(place)s around the days that you are also there"
+msgstr "El tour %(tour)s va a %(place)s en torno a los días en que tú también estás allí"
+
+msgid "The tour %(tour)s wants to learn %(skill)s too"
+msgstr "El tour %(tour)s también quiere aprender %(skill)s"
+
+msgid "The tour %(tour)s passes near you"
+msgstr "El tour %(tour)s pasa cerca de ti"
+
+msgid "your stay at %(place)s"
+msgstr "tu estancia en %(place)s"
+
+msgid "your wish to learn: %(skill)s"
+msgstr "tu deseo de aprender: %(skill)s"
+
+msgid "where you live"
+msgstr "donde vives"
+
+msgid "Tours for you"
+msgstr "Tours para ti"
+
+msgid "Tours going there around your days"
+msgstr "Tours que van allí cerca de tus fechas"
+
+msgid "Go there together"
+msgstr "Ir juntos"
+
+msgid "Fits my skills"
+msgstr "Encaja con mis habilidades"
+
+msgid "Passes near me"
+msgstr "Pasa cerca de mí"
+
+msgid "%(count)s other is coming in your days"
+msgid_plural "%(count)s others are coming in your days"
+msgstr[0] "%(count)s persona más viene en tus fechas"
+msgstr[1] "%(count)s personas más vienen en tus fechas"
+
+msgid "A stop has what you wish for"
+msgstr "Una parada tiene lo que deseas"
+
+msgid "A stop wishes for what you have"
+msgstr "Una parada desea lo que tienes"
+
+msgid "The tour %(tour)s goes to %(place)s, which offers: %(title)s"
+msgstr "El tour %(tour)s va a %(place)s, que ofrece: %(title)s"
+
+msgid "The tour %(tour)s goes to %(place)s, which is looking for: %(title)s"
+msgstr "El tour %(tour)s va a %(place)s, que busca: %(title)s"
+
+msgid "Give it along"
+msgstr "Dárselo al tour"
+
+msgid "The tour %(tour)s comes to you around %(date)s and passes through my country. I could give them my %(title)s to bring along."
+msgstr "El tour %(tour)s llegará a ustedes hacia el %(date)s y pasa por mi país. Podría darles %(title)s para que se lo lleven."
+
+msgid "The tour %(tour)s comes to you and passes through my country. I could give them my %(title)s to bring along."
+msgstr "El tour %(tour)s llegará a ustedes y pasa por mi país. Podría darles %(title)s para que se lo lleven."
+
+msgid "I'm staying at %(place)s from %(from)s and would like to travel there with you from %(stop)s."
+msgstr "Me alojo en %(place)s desde el %(from)s y me gustaría viajar allí con ustedes desde %(stop)s."
+
+msgid "I'm staying at %(place)s and would like to travel there with you from %(stop)s."
+msgstr "Me alojo en %(place)s y me gustaría viajar allí con ustedes desde %(stop)s."
+
+msgid "You pass near where I live; I'd like to come along from %(stop)s."
+msgstr "Pasan cerca de donde vivo; me gustaría unirme desde %(stop)s."
+
+msgid "I'd like to learn %(skill)s too and would love to learn it together."
+msgstr "Yo también quiero aprender %(skill)s y me encantaría aprenderlo juntos."
+
+msgid "%(place)s offers %(title)s, which I'm looking for; I'd like to travel there with you."
+msgstr "%(place)s ofrece %(title)s, que estoy buscando; me gustaría viajar allí con ustedes."
+
+msgid "Tour suggestions"
+msgstr "Sugerencias de tours"
+
+msgid "On"
+msgstr "Activadas"
+
+msgid "Pause for 1 month"
+msgstr "Pausar 1 mes"
+
+msgid "3 months"
+msgstr "3 meses"
+
+msgid "6 months"
+msgstr "6 meses"
+
+msgid "Off"
+msgstr "Desactivadas"
+
+msgid "Paused until %(date)s"
+msgstr "En pausa hasta el %(date)s"
+
+msgid "Tour suggestions paused until"
+msgstr "Sugerencias de tours en pausa hasta"
+
+msgid "Tour suggestions are paused. You can turn them on again in your profile."
+msgstr "Las sugerencias de tours están en pausa. Puedes volver a activarlas en tu perfil."
+
+msgid "Not travelling now? Pause tour suggestions"
+msgstr "¿No viajas ahora? Pausa las sugerencias de tours"
+
+msgid "A ride from %(from)s to %(to)s on %(date)s, near %(place)s where you are then"
+msgstr "Un viaje compartido de %(from)s a %(to)s el %(date)s, cerca de %(place)s, donde estarás entonces"
+
+msgid "Tours and rides for you"
+msgstr "Tours y viajes compartidos para ti"
+
+msgid "A ride towards your home"
+msgstr "Un viaje compartido hacia tu casa"
+
+msgid "Someone from near you comes too"
+msgstr "Alguien de cerca de ti también viene"
+
+msgid "A ride from %(from)s to %(to)s on %(date)s, towards your home after %(place)s"
+msgstr "Un viaje compartido de %(from)s a %(to)s el %(date)s, hacia tu casa después de %(place)s"
+
+msgid "%(name)s is also coming to %(place)s around the same days, from near you"
+msgstr "%(name)s también viene a %(place)s por los mismos días, desde cerca de ti"
+
+msgid "I'm staying at %(place)s and would like to ride back towards home with you."
+msgstr "Me alojo en %(place)s y me gustaría volver con ustedes hacia mi casa."
+
+msgid "%(count)s other from near you is coming in your days"
+msgid_plural "%(count)s others from near you are coming in your days"
+msgstr[0] "%(count)s persona más de cerca de ti viene en tus fechas"
+msgstr[1] "%(count)s personas más de cerca de ti vienen en tus fechas"
+
+#, python-format
+msgid "Is your tour idea “%(title)s” still current?"
+msgstr "¿Tu idea de tour «%(title)s» sigue vigente?"
+
+msgid "Is your tour idea still current?"
+msgstr "¿Tu idea de tour sigue vigente?"
+
+#, python-format
+msgid "nobody has updated the tour idea “%(title)s” for a while. Is it still current?"
+msgstr "hace tiempo que nadie actualiza la idea de tour «%(title)s». ¿Sigue vigente?"
+
+msgid "How the tour went"
+msgstr "Así fue el tour"
+
+msgid "Where it went"
+msgstr "Por dónde pasó"
+
+msgid "What we found"
+msgstr "Lo que encontramos"
+
+msgid "What travelled along"
+msgstr "Lo que viajó con nosotros"
+
+msgid "Write references"
+msgstr "Escribir referencias"
+
+#, python-format
+msgid "About %(name)s"
+msgstr "Sobre %(name)s"
+
+msgid "Archived tours"
+msgstr "Tours archivados"
+
+msgid "Travels this stretch and could take it:"
+msgstr "Viaja este tramo y podría llevarlo:"
+
+msgid "Going to"
+msgstr "Voy"
+
+msgid "Show events near me"
+msgstr "Mostrar eventos cerca de mí"
+
+msgid "You are not going to any current event yet."
+msgstr "Todavía no vas a ningún evento actual."
+
+msgid "Upcoming"
+msgstr "Próximos"
+
+msgid "Past"
+msgstr "Pasados"
+
+msgid "No past events found."
+msgstr "No se encontraron eventos pasados."
+
+msgid "Needs help with"
+msgstr "Necesita ayuda con"
+
+msgid "Still has room"
+msgstr "Aún hay sitio"
+
+#, python-format
+msgid "%(count)s event"
+msgid_plural "%(count)s events"
+msgstr[0] "%(count)s evento"
+msgstr[1] "%(count)s eventos"
+
+#: tours/templates/tours/_timeline_entry.html
+msgid "published the tour"
+msgstr "publicó el tour"
+
+#: tours/templates/tours/_timeline_entry.html
+#, python-format
+msgid "joined the tour until %(stop)s"
+msgstr "se unió al tour hasta %(stop)s"
+
+#: tours/templates/tours/_timeline_entry.html
+msgid "joined the tour"
+msgstr "se unió al tour"
+
+#: tours/templates/tours/_timeline_entry.html
+#, python-format
+msgid "gave %(gift)s to the tour"
+msgstr "regaló %(gift)s al tour"
+
+#: tours/templates/tours/_timeline_entry.html
+#, python-format
+msgid "lent %(gift)s to the tour"
+msgstr "prestó %(gift)s al tour"
+
+#: tours/templates/tours/_timeline_entry.html
+#, python-format
+msgid "came to help with %(gift)s"
+msgstr "vino a ayudar con %(gift)s"
+
+#: tours/templates/tours/_timeline_entry.html
+msgid "agreed to host the group"
+msgstr "aceptó acoger al grupo"
+
+#: tours/templates/tours/_timeline_entry.html
+#, python-format
+msgid "picked up %(gift)s"
+msgstr "recogió %(gift)s"
+
+#: tours/templates/tours/_timeline_entry.html
+#, python-format
+msgid "handed over %(gift)s to %(to)s"
+msgstr "entregó %(gift)s a %(to)s"
+
+#: gift_economy/references/forms.py
+msgid "Where was it?"
+msgstr "¿Dónde fue?"
+
+#: gift_economy/references/templates/references/_references.html
+msgid "Add experience"
+msgstr "Añadir experiencia"
+
+#: tours/templates/tours/_timeline_entry.html
+msgid "Confirm"
+msgstr "Confirmar"
+
+#: urls.py
+msgctxt "url"
+msgid "help/"
+msgstr ""
+
+#: help/templates/help
+msgid "Help"
+msgstr "Ayuda"
+
+#: help/templates/help
+msgid "How ecobasa works and how to use it."
+msgstr "Cómo funciona ecobasa y cómo usarlo."
+
+#: help/templates/help
+msgid "Travel from community to community, join a tour for part of the way, plan your own, and take gifts along."
+msgstr "Viaja de comunidad en comunidad, únete a un tour para una parte del camino, planea el tuyo y lleva regalos contigo."
+
+#: help/templates/help
+msgid "Something missing or unclear? <a href=\"/contact\">Write to us</a>, we are glad to hear it."
+msgstr "¿Falta algo o no está claro? <a href=\"/contact\">Escríbenos</a>, nos alegra saberlo."
+
+#: help/templates/help
+msgid "Contents"
+msgstr "Contenido"
+
+#: help/templates/help
+msgid "What is a Community-Tour?"
+msgstr "¿Qué es un Community-Tour?"
+
+#: help/templates/help
+msgid "Find a tour"
+msgstr "Encontrar un tour"
+
+#: help/templates/help
+msgid "Join a tour"
+msgstr "Unirse a un tour"
+
+#: help/templates/help
+msgid "Plan your own tour"
+msgstr "Planear tu propio tour"
+
+#: help/templates/help
+msgid "Ask the hosts"
+msgstr "Preguntar a los anfitriones"
+
+#: help/templates/help
+msgid "Gifts travel along"
+msgstr "Los regalos viajan con vosotros"
+
+#: help/templates/help
+msgid "Tours that find you"
+msgstr "Tours que te encuentran"
+
+
+#: help/templates/help
+msgid "On the road and afterwards"
+msgstr "En el camino y después"
+
+#: help/templates/help
+msgid "Privacy"
+msgstr "Privacidad"
+
+#: help/templates/help
+msgid "Many people travel between communities anyway: to visit, to learn and to help. A Community-Tour makes such a journey count for more."
+msgstr "Mucha gente viaja de todos modos entre comunidades: para visitarlas, aprender y ayudar. Un Community-Tour hace que ese viaje dé más de sí."
+
+#: help/templates/help
+msgid "Projects, open days and gatherings are the places where people and things come together. A tour is the way between them: it stops at communities and events, the travellers help and learn there, and move on."
+msgstr "Los proyectos, las jornadas de puertas abiertas y los encuentros son los lugares donde se juntan personas y cosas. Un tour es el camino entre ellos: para en comunidades y eventos, los viajeros ayudan y aprenden allí, y siguen adelante."
+
+#: help/templates/help
+msgid "A tour has a route and free places. Others come along for all of it or just for one part."
+msgstr "Un tour tiene una ruta y plazas libres. Otras personas viajan todo el camino o solo una parte."
+
+#: help/templates/help
+msgid "Travel company that fits"
+msgstr "Compañía de viaje que encaja"
+
+#: help/templates/help
+msgid "Not only the same destination: skills that complete each other, or a second pair of hands for the same job."
+msgstr "No solo el mismo destino: habilidades que se complementan, o un segundo par de manos para el mismo trabajo."
+
+#: help/templates/help
+msgid "Learning on the way"
+msgstr "Aprender por el camino"
+
+#: help/templates/help
+msgid "Say what you want to learn, and the planner finds communities and events where you can learn it while you help out for food and a bed."
+msgstr "Di lo que quieres aprender y el planificador encuentra comunidades y eventos donde puedes aprenderlo mientras ayudas a cambio de comida y cama."
+
+#: help/templates/help
+msgid "Offers at one stop that are wished for at a later one come along. That is how gifts cross distances nobody would drive for a bag of seeds."
+msgstr "Lo que se ofrece en una parada y se desea en una posterior viaja con vosotros. Así los regalos recorren distancias que nadie haría por una bolsa de semillas."
+
+#: help/templates/help
+msgid "A tour doesn't have to be a group. You can plan one just for yourself, to learn things and to take gifts along."
+msgstr "Un tour no tiene que ser un grupo. Puedes planear uno solo para ti, para aprender cosas y llevar regalos."
+
+#: help/templates/help
+msgid "The filters narrow it down: when, what you want to learn, how they travel, children or animals welcome, free places, only rides. Logged in, you can also look for tours that fit your skills or pass near you."
+msgstr "Los filtros acotan la búsqueda: cuándo, qué quieres aprender, cómo viajan, niños o animales bienvenidos, plazas libres, solo viajes compartidos. Con tu sesión iniciada también puedes buscar tours que encajan con tus habilidades o pasan cerca de ti."
+
+#: help/templates/help
+msgid "A tour idea has no dates or route yet. Often its organiser is still looking for a vehicle, a driver or company. Ask to join, or write to them: that is how ideas become tours."
+msgstr "Una idea de tour todavía no tiene fechas ni ruta. A menudo quien la organiza aún busca un vehículo, alguien que conduzca o compañía. Pide viajar o escríbele: así las ideas se convierten en tours."
+
+#: help/templates/help
+msgid "On the tour's page, press “Ask to join” and choose where you get on and where you get off. The free places for that stretch are shown right away."
+msgstr "En la página del tour, pulsa «Pedir viajar» y elige dónde subes y dónde bajas. Las plazas libres de ese tramo se muestran enseguida."
+
+#: help/templates/help
+msgid "Say how many you are, which of the things the tour is still looking for you could cover, and a few words about yourself. Tick “I only need the ride” if you won't stay at the stops."
+msgstr "Di cuántos sois, cuáles de las cosas que el tour todavía busca podrías aportar y unas palabras sobre ti. Marca «Solo necesito el viaje» si no te vas a quedar en las paradas."
+
+#: help/templates/help
+msgid "The organisers get your join request and accept it, decline it or write back. You find it under Matches; you can change your stretch until then."
+msgstr "Quienes organizan reciben tu solicitud para viajar y la aceptan, la rechazan o te responden. La encuentras en Matches; hasta entonces puedes cambiar tu tramo."
+
+#: help/templates/help
+msgid "Accepted, you travel along: you see who else travels, where you meet, and for each leg a button to open the way in your maps app."
+msgstr "Una vez aceptada, viajas con ellos: ves quién más viaja, dónde os encontráis y, en cada tramo, un botón para abrir el camino en tu app de mapas."
+
+
+#: help/templates/help
+msgid "1. The basics"
+msgstr "1. Lo básico"
+
+#: help/templates/help
+msgid "A title, why you travel, what you want to learn and how you travel: van, car, bicycle, train, hitchhiking, on foot or by boat. Say whether you are looking for travellers and how many fit. If you travel alone, choose whether the tour is shown to everyone."
+msgstr "Un título, por qué viajas, qué quieres aprender y cómo viajas: furgoneta, coche, bicicleta, tren, autostop, a pie o en barco. Di si buscas compañeros de viaje y cuántos caben. Si viajas sola o solo, elige si todo el mundo ve el tour."
+
+#: help/templates/help
+msgid "2. The route"
+msgstr "2. La ruta"
+
+#: help/templates/help
+msgid "Add stops: a community, one of its events, or another place. Give them days and put them in order with the arrows, or let “Suggest an order” propose one."
+msgstr "Añade paradas: una comunidad, uno de sus eventos u otro lugar. Ponles días y ordénalas con las flechas, o deja que «Sugerir un orden» te proponga uno."
+
+
+
+#: help/templates/help
+msgid "3. Vehicles and what you are still looking for"
+msgstr "3. Vehículos y lo que todavía buscáis"
+
+#: help/templates/help
+msgid "Add your vehicles with seats, sleeping places and who may drive. The free places on each leg follow from them. Under “We're still looking for” you add what the tour still needs: a van, a driver, a carpenter. “Needed on your route” shows what your hosts need that nobody on the tour can do yet."
+msgstr "Añade vuestros vehículos con asientos, plazas para dormir y quién puede conducir. De ahí salen las plazas libres de cada tramo. En «Todavía buscamos» añades lo que le falta al tour: una furgoneta, alguien que conduzca, una carpintera. «Se necesita en vuestra ruta» muestra lo que necesitan vuestros anfitriones y nadie del tour sabe hacer todavía."
+
+#: help/templates/help
+msgid "What a tour looks for also appears among the gifts, so people can offer it, travelling along or not. A vehicle someone gives or lends for the tour becomes one of its vehicles."
+msgstr "Lo que busca un tour también aparece entre los regalos, para que la gente pueda ofrecerlo, viaje o no. Un vehículo que alguien regala o presta al tour pasa a ser uno de sus vehículos."
+
+
+
+#: help/templates/help
+msgid "On each stop at a community or event there is “Ask to host us”. The days and the size of your group are filled in. Tick the needs and wishes your group will take care of and what you'd like to learn there, and tell them who you are, what you bring and what you need: food, sleeping places."
+msgstr "En cada parada en una comunidad o evento está «Pedir que nos acojan». Los días y el tamaño de vuestro grupo ya están rellenados. Marca las necesidades y deseos de los que se ocupará vuestro grupo y lo que os gustaría aprender allí, y contad quiénes sois, qué traéis y qué necesitáis: comida, sitio para dormir."
+
+
+#: help/templates/help
+msgid "Once your route is set, the planner shows under “Could travel with you” what is offered at an earlier stop and wished for at a later one: tomato seeds from the first community for the garden at the third."
+msgstr "Cuando vuestra ruta está lista, el planificador muestra en «Podría viajar con vosotros» lo que se ofrece en una parada anterior y se desea en una posterior: semillas de tomate de la primera comunidad para el huerto de la tercera."
+
+#: help/templates/help
+msgid "“I'll take it” asks the giver and the receiver, each with a message already written for you. “Not this” puts it aside."
+msgstr "«Lo llevo yo» pregunta a quien regala y a quien recibe, cada uno con un mensaje ya escrito. «Esto no» lo deja de lado."
+
+#: help/templates/help
+msgid "When both agree, it is on the packing list: what to pick up and what to hand over at each stop. The list prints well and works on a phone."
+msgstr "Cuando ambos están de acuerdo, está en la lista de equipaje: qué recoger y qué entregar en cada parada. La lista se imprime bien y funciona en el móvil."
+
+#: help/templates/help
+msgid "On the road, mark it “Picked up” and later “Handed over”. Then the wish counts as fulfilled."
+msgstr "En el camino, márcalo como «Recogido» y después como «Entregado». Entonces el deseo cuenta como cumplido."
+
+#: help/templates/help
+msgid "A tour visit reaches you like a volunteer stay, under Volunteer Visits: one request for the whole group, with each traveller's skills and what they will take care of. Your calendar counts the group against your room for guests, and your community or event page shows which tours are coming."
+msgstr "Una visita del tour te llega como una estancia en comunidad, en Estancias de voluntariado: una solicitud para todo el grupo, con las habilidades de cada viajero y de qué se ocuparán. Tu calendario cuenta el grupo frente a vuestro sitio para invitados, y la página de vuestra comunidad o evento muestra qué tours vienen."
+
+#: help/templates/help
+msgid "Tours also bring what you wish for: when your community is a stop, things offered earlier on the route that fit your wishes can come along."
+msgstr "Los tours también traen lo que deseáis: si vuestra comunidad es una parada, pueden venir cosas que se ofrecen antes en la ruta y encajan con vuestros deseos."
+
+#: help/templates/help
+msgid "Each stop on the tour's page tells its story as it happens: who joined, what was given, picked up and handed over. Under “Add experience” travellers, hosts and everyone they met write what they experienced, with the stop where it happened. Entries by people who didn't travel along wait until a traveller confirms them."
+msgstr "Cada parada en la página del tour cuenta su historia mientras sucede: quién se unió, qué se regaló, se recogió y se entregó. En «Añadir experiencia», viajeros, anfitriones y todas las personas que conocieron escriben lo que vivieron, con la parada donde fue. Las entradas de quienes no viajaron esperan a que alguien del tour las confirme."
+
+#: help/templates/help
+msgid "When the tour is over, the page shows how it went: where it went, what you found and what travelled along. Write references for your hosts and fellow travellers; hosts write about the group."
+msgstr "Cuando el tour termina, la página muestra cómo fue: por dónde pasó, lo que encontrasteis y lo que viajó con vosotros. Escribe referencias para tus anfitriones y compañeros de viaje; los anfitriones escriben sobre el grupo."
+
+#: help/templates/help
+msgid "A tour is archived a week after its last day and stays as a record. A tour idea nobody has touched for half a year gets a reminder email; one click keeps it."
+msgstr "Un tour se archiva una semana después de su último día y queda como recuerdo. Una idea de tour que nadie ha tocado en medio año recibe un correo recordatorio; un clic la mantiene."
+
+#: help/templates/help
+msgid "The route only shows roughly where a private community is. Travellers see the exact place once the community has accepted the visit."
+msgstr "La ruta solo muestra aproximadamente dónde está una comunidad privada. Los viajeros ven el lugar exacto cuando la comunidad ha aceptado la visita."
+
+#: help/templates/help
+msgid "Only people who are logged in see who travels."
+msgstr "Solo las personas con sesión iniciada ven quién viaja."
+
+#: help/templates/help
+msgid "A tour that is not shown to everyone is only seen by its travellers, the hosts it asked and the people whose gifts it carries."
+msgstr "Un tour que no se muestra a todo el mundo solo lo ven sus viajeros, los anfitriones a los que ha preguntado y las personas cuyos regalos lleva."
+
+#: help/templates/help
+msgid "For another place, choose a meeting point, not your home. And keep phone numbers out of descriptions: everything can be talked about in the messages."
+msgstr "Como otro lugar, elige un punto de encuentro, no tu casa. Y no pongas números de teléfono en las descripciones: todo se puede hablar en los mensajes."
+
+#: help/templates/help
+#, python-format
+msgid "<a href=\"%(list_url)s\">Community-Tours</a> shows all tours on a map; the list is one click away. Tours with dates are solid lines, tour ideas dashed ones, rides purple. The search finds tours by title, by what they want to learn, by their stops and by the gifts of the hosts on the way."
+msgstr "<a href=\"%(list_url)s\">Community-Tours</a> muestra todos los tours en un mapa; la lista está a un clic. Los tours con fechas son líneas continuas, las ideas de tour discontinuas y los viajes compartidos, moradas. La búsqueda encuentra tours por título, por lo que quieren aprender, por sus paradas y por los regalos de los anfitriones del camino."
+
+#: help/templates/help
+#, python-format
+msgid "All your tours are in <a href=\"%(mine_url)s\">Your tours</a>. Plans change: you can leave a tour at any time, with a few words to the others. Organisers can also invite you; you join once you accept."
+msgstr "Todos tus tours están en <a href=\"%(mine_url)s\">Tus tours</a>. Los planes cambian: puedes dejar un tour en cualquier momento, con unas palabras a los demás. Quienes organizan también pueden invitarte; te unes cuando aceptas."
+
+#: help/templates/help
+#, python-format
+msgid "Driving somewhere anyway? <a href=\"%(ride_url)s\">Offer a ride</a>: from where, to where, which day and how many free seats. It is published at once. A ride is simply a tour with two stops, so people ask to join it the same way."
+msgstr "¿Vas a ir a algún sitio de todos modos? <a href=\"%(ride_url)s\">Ofrece un viaje compartido</a>: desde dónde, hasta dónde, qué día y cuántas plazas libres. Se publica enseguida. Un viaje compartido es simplemente un tour con dos paradas, así que la gente pide viajar igual."
+
+#: help/templates/help
+#, python-format
+msgid "Start with <a href=\"%(create_url)s\">Plan a tour</a>. Nothing has to be complete: you can save a draft and come back to it."
+msgstr "Empieza con <a href=\"%(create_url)s\">Planear un tour</a>. Nada tiene que estar completo: puedes guardar un borrador y volver más tarde."
+
+#: help/templates/help
+#, python-format
+msgid "You don't have to search. Under <a href=\"%(matches_url)s\">Matches</a> and in the weekly email you get suggestions: a tour that goes where you are staying, passes near you or wants to learn what you want to learn; a ride towards home after a stay; someone from near you who is going to the same <a href=\"%(events_url)s\">event</a>, so you can go there together."
+msgstr "No tienes que buscar. En <a href=\"%(matches_url)s\">Matches</a> y en el correo semanal recibes sugerencias: un tour que va adonde estás, pasa cerca de ti o quiere aprender lo mismo que tú; un viaje hacia casa después de una estancia; alguien de cerca de ti que va al mismo <a href=\"%(events_url)s\">evento</a>, para que vayáis juntos."
+
+#: help/templates/help
+#, python-format
+msgid "Not travelling for a while? Pause travel suggestions for one, three or six months in your <a href=\"%(settings_url)s#matches\">settings</a>, or from the link in the email."
+msgstr "¿No vas a viajar durante un tiempo? Pausa las sugerencias de viaje durante uno, tres o seis meses en tus <a href=\"%(settings_url)s#matches\">ajustes</a>, o desde el enlace del correo."
+
+#: help/templates/help
+msgid "How does this work?"
+msgstr "¿Cómo funciona?"
+
+#: help/templates/help
+msgid "About"
+msgstr "Sobre nosotros"
+
+#: help/templates/help
+msgid "For community ambassadors: a tour comes to visit"
+msgstr "Para embajadores/as de comunidades: un tour viene de visita"
+
+#: help/templates/help
+msgid "Rides are suggested to people who are looking for one and want to go near where the ride ends around that day, and to people who would like a ride towards home after a stay."
+msgstr "Los viajes compartidos se sugieren a quienes buscan uno y quieren ir cerca del destino alrededor de ese día, y a quienes quieren volver hacia casa después de una estancia."
+
+#: help/templates/help
+msgid "Pro tip: start with your final destination."
+msgstr "Consejo: empieza por tu destino final."
+
+#: help/templates/help
+msgid "“Recommended on the way” shows communities and events along your route, always with the reasons: you can learn there what you want to learn, they need what you can do, food and a bed are provided, there is room for your group, it is only a short detour, gifts could travel. “You can learn this on the way” lists the skills taught at your stops."
+msgstr "«Recomendado de camino» muestra comunidades y eventos a lo largo de tu ruta, siempre con los motivos: allí puedes aprender lo que quieres, necesitan lo que sabes hacer, hay comida y cama, hay sitio para vuestro grupo, es solo un pequeño desvío, los regalos podrían viajar. «Esto puedes aprender por el camino» muestra las habilidades que se enseñan en tus paradas."
+
+#: help/templates/help
+msgid "Hosts usually gain most from help after about a week; shorter stays may require payment. Visit at least two communities, so gifts can travel between them. The more you have to offer, the more they are willing to offer you food and accommodation without charging money for it."
+msgstr "La ayuda suele servir más a quienes acogen a partir de una semana más o menos; las estancias más cortas pueden costar dinero. Visita al menos dos comunidades, para que los regalos puedan viajar entre ellas. Cuanto más tengas que ofrecer, más dispuestos estarán a darte comida y alojamiento sin cobrarte."
+
+#: help/templates/help
+msgid "4. Gather people"
+msgstr "4. Reunir gente"
+
+#: help/templates/help
+msgid "Travelling together is not only more fun with the right people, you can also do so much more together. You can look for people with the right skill sets to build houses, ponds or food forests. A nice offer for a community and a nice learning opportunity for all involved. People can ask to join your tour once it is published, or you can invite people you find in the network."
+msgstr "Viajar juntos no solo es más divertido con la gente adecuada, también podéis hacer mucho más juntos. Puedes buscar personas con las habilidades adecuadas para construir casas, estanques o bosques comestibles. Una buena oferta para una comunidad y una buena oportunidad de aprender para todos. Cuando tu tour esté publicado, la gente puede pedir viajar, o puedes invitar a personas que encuentres en la red."
+
+#: help/templates/help
+msgid "5. Publish"
+msgstr "5. Publicar"
+
+#: help/templates/help
+msgid "Only the tour organisers see the draft of a tour. Once published, the tour is on the map; without stops and days it is a tour idea. You can make fellow travellers organisers too, or hand the whole tour over to someone."
+msgstr "Solo quienes organizan el tour ven su borrador. Una vez publicado, el tour está en el mapa; sin paradas ni días es una idea de tour. También puedes hacer organizadores a tus compañeros de viaje o pasarle el tour entero a alguien."
+
+#: help/templates/help
+msgid "The ambassador accepts, declines or proposes other days. The route shows each stop's answer. When people join or leave, the host is told the new number. At an event where people just come, your visit counts at once because it doesn't need approval."
+msgstr "El embajador o la embajadora acepta, rechaza o propone otros días. La ruta muestra la respuesta de cada parada. Cuando alguien se une o se va, se informa a quien os acoge del nuevo número. En un evento al que se va sin más, vuestra visita cuenta enseguida porque no necesita aprobación."
+
+#: help/templates/help
+msgid "That is why it is important to post wishes to your community profile."
+msgstr "Por eso es importante publicar deseos en el perfil de vuestra comunidad."
+
+#: homepage/templates/homepage/homepage.html
+msgid "How does ecobasa work?"
+msgstr "¿Cómo funciona ecobasa?"
+
+#: homepage/templates/homepage/homepage.html
+msgid "Events: projects and open days to visit and help out at"
+msgstr "Eventos: proyectos y jornadas de puertas abiertas para visitar y echar una mano"
+
+#: homepage/templates/homepage/homepage.html
+#, python-format
+msgid "<a href=\"%(tours_url)s\">Organise and join Community-Tours</a>, or <a href=\"%(ride_url)s\">offer a ride</a>"
+msgstr "<a href=\"%(tours_url)s\">Organizar Community-Tours y unirte</a>, u <a href=\"%(ride_url)s\">ofrecer un viaje compartido</a>"
+
+#: help/templates/help/travelling_tips.html
+msgid "Travelling without money"
+msgstr "Viajar sin dinero"
+
+#: help/templates/help/travelling_tips.html
+msgid "Tips for hitchhiking, boats, places to sleep and food on the way."
+msgstr "Consejos para hacer autostop, barcos, sitios para dormir y comida por el camino."
+
+#: help/templates/help/travelling_tips.html
+msgid "Travelling tips"
+msgstr "Consejos de viaje"
+
+#: help/templates/help/travelling_tips.html
+msgid "Getting there"
+msgstr "Llegar"
+
+#: help/templates/help/travelling_tips.html
+msgid "Hitchhiking boats"
+msgstr "Autostop en barco"
+
+#: help/templates/help/travelling_tips.html
+msgid "A place to sleep"
+msgstr "Un sitio para dormir"
+
+#: help/templates/help/travelling_tips.html
+msgid "When you need some money"
+msgstr "Cuando necesitas algo de dinero"
+
+#: help/templates/help/travelling_tips.html
+msgid "ecobasa wants to make it easier to live in the gift economy, with less money or none at all. On the way from one community to the next you sometimes need a ride, a place to sleep or something to eat. Here are tricks and resources that get you there sustainably and almost without money."
+msgstr "ecobasa quiere facilitar vivir en la economía del regalo, con menos dinero o sin nada. En el camino de una comunidad a la siguiente a veces necesitas que te lleven, un sitio para dormir o algo de comer. Aquí tienes trucos y recursos para llegar de forma sostenible y casi sin dinero."
+
+#: help/templates/help/travelling_tips.html
+msgid "Rides and tours on ecobasa"
+msgstr "Viajes compartidos y tours en ecobasa"
+
+#: help/templates/help/travelling_tips.html
+msgid "The best way to get from one place to another. It is an art you mostly learn by doing. Hitchwiki helps to find good spots, especially to get out of big cities."
+msgstr "La mejor manera de ir de un sitio a otro. Es un arte que se aprende sobre todo haciéndolo. Hitchwiki ayuda a encontrar buenos sitios, sobre todo para salir de las grandes ciudades."
+
+#: help/templates/help/travelling_tips.html
+msgid "Cycling"
+msgstr "Bicicleta"
+
+#: help/templates/help/travelling_tips.html
+msgid "Warmshowers is a hospitality network for people travelling by bike. The Ecotopia Biketour is a cycling tour that has gone from project to project every summer for many years: join it, or let it inspire your own bike tour."
+msgstr "Warmshowers es una red de hospitalidad para quienes viajan en bici. La Ecotopia Biketour lleva muchos años yendo cada verano de proyecto en proyecto: únete o inspírate para tu propio viaje en bici."
+
+#: help/templates/help/travelling_tips.html
+msgid "Public transport"
+msgstr "Transporte público"
+
+
+#: help/templates/help/travelling_tips.html
+msgid "Go to the harbour and ask around. With some patience or luck you find a free place, or a boat looking for crew. You can choose where you want to go or when you want to go, but rarely both. Most people look both online and in person."
+msgstr "Ve al puerto y pregunta. Con algo de paciencia o suerte encuentras un sitio libre o un barco que busca tripulación. Puedes elegir adónde quieres ir o cuándo, pero rara vez las dos cosas. La mayoría busca por internet y en persona."
+
+#: help/templates/help/travelling_tips.html
+msgid "Hitchwiki: hitchhiking a boat"
+msgstr "Hitchwiki: autostop en barco"
+
+#: help/templates/help/travelling_tips.html
+msgid "in German"
+msgstr "en alemán"
+
+#: help/templates/help/travelling_tips.html
+msgid "Unpaid places exist, but sailing experience or other skills help. Read the skippers' profiles carefully and leave out those who are really looking for a relationship. Skippers plan far ahead, so start looking months before; some need crew right away, so be ready to go."
+msgstr "Hay plazas sin pagar, pero la experiencia en vela u otras habilidades ayudan. Lee bien los perfiles de los patrones y descarta a quienes en realidad buscan pareja. Los patrones planean con mucha antelación, así que empieza a buscar meses antes; algunos necesitan tripulación enseguida, así que está lista o listo para salir."
+
+#: help/templates/help/travelling_tips.html
+msgid "Where and when to find boats"
+msgstr "Dónde y cuándo encontrar barcos"
+
+#: help/templates/help/travelling_tips.html
+msgid "The easiest places to meet skippers who might take crew:"
+msgstr "Los sitios más fáciles para conocer patrones que quizá lleven tripulación:"
+
+#: help/templates/help/travelling_tips.html
+msgid "North Atlantic"
+msgstr "Atlántico Norte"
+
+#: help/templates/help/travelling_tips.html
+msgid "British and North European ports, Lisbon and Vilamoura (crossing the Bay of Biscay by the end of August); the Canary Islands (Las Palmas) and Madeira (Funchal) in November; Bermuda in November and from April to August; Fort Lauderdale, Florida, in November."
+msgstr "Puertos británicos y del norte de Europa, Lisboa y Vilamoura (cruzando el golfo de Vizcaya antes de finales de agosto); Canarias (Las Palmas) y Madeira (Funchal) en noviembre; Bermudas en noviembre y de abril a agosto; Fort Lauderdale, Florida, en noviembre."
+
+#: help/templates/help/travelling_tips.html
+msgid "Mediterranean"
+msgstr "Mediterráneo"
+
+#: help/templates/help/travelling_tips.html
+msgid "Gibraltar, Palma, Malta and many other ports, April to November. Few boats go from the Mediterranean into the Indian Ocean; more come the other way through the Suez Canal."
+msgstr "Gibraltar, Palma, Malta y muchos otros puertos, de abril a noviembre. Pocos barcos van del Mediterráneo al océano Índico; más vienen en sentido contrario por el canal de Suez."
+
+#: help/templates/help/travelling_tips.html
+msgid "Caribbean"
+msgstr "Caribe"
+
+#: help/templates/help/travelling_tips.html
+msgid "St Thomas (Virgin Islands) in November, Barbados and Grenada in November and December, the Panama Canal (Cristóbal and Balboa) in March and April."
+msgstr "St. Thomas (Islas Vírgenes) en noviembre, Barbados y Granada en noviembre y diciembre, el canal de Panamá (Cristóbal y Balboa) en marzo y abril."
+
+#: help/templates/help/travelling_tips.html
+msgid "South Atlantic"
+msgstr "Atlántico Sur"
+
+#: help/templates/help/travelling_tips.html
+msgid "Cape Town, South Africa, in January and February."
+msgstr "Ciudad del Cabo, Sudáfrica, en enero y febrero."
+
+#: help/templates/help/travelling_tips.html
+msgid "Indian Ocean"
+msgstr "Océano Índico"
+
+#: help/templates/help/travelling_tips.html
+msgid "Darwin, Australia, in July; Durban, South Africa, and Galle, Sri Lanka, in December."
+msgstr "Darwin, Australia, en julio; Durban, Sudáfrica, y Galle, Sri Lanka, en diciembre."
+
+#: help/templates/help/travelling_tips.html
+msgid "North Pacific"
+msgstr "Pacífico Norte"
+
+#: help/templates/help/travelling_tips.html
+msgid "Southern California from Santa Barbara to San Diego in October; Cabo San Lucas and La Paz, Mexico, around Christmas; Hawaii (Hilo, Lahaina) from May to September, Honolulu in August and September; Cebu, Philippines, in August and September; Hong Kong from December to April."
+msgstr "El sur de California, de Santa Bárbara a San Diego, en octubre; Cabo San Lucas y La Paz, México, en Navidad; Hawái (Hilo, Lahaina) de mayo a septiembre, Honolulu en agosto y septiembre; Cebú, Filipinas, en agosto y septiembre; Hong Kong de diciembre a abril."
+
+#: help/templates/help/travelling_tips.html
+msgid "South Pacific"
+msgstr "Pacífico Sur"
+
+#: help/templates/help/travelling_tips.html
+msgid "Tahiti from April to October, Fiji in September, the Bay of Islands in New Zealand in March."
+msgstr "Tahití de abril a octubre, Fiyi en septiembre, la Bahía de las Islas en Nueva Zelanda en marzo."
+
+#: help/templates/help/travelling_tips.html
+msgid "Before you go on board"
+msgstr "Antes de subir a bordo"
+
+#: help/templates/help/travelling_tips.html
+msgid "Network: spend time where sailors are, stay nearby for a month or more just before the season, and meet as many people as you can. Most places on boats are found by word of mouth."
+msgstr "Haz contactos: pasa tiempo donde están los navegantes, quédate cerca un mes o más justo antes de la temporada y conoce a toda la gente que puedas. La mayoría de los sitios en barcos se encuentran por el boca a boca."
+
+#: help/templates/help/travelling_tips.html
+msgid "You don't need experience, but bring what you have: cooking, first aid, repairs, music. Be fit, handy and positive."
+msgstr "No necesitas experiencia, pero aporta lo que tengas: cocinar, primeros auxilios, reparaciones, música. Está en forma, sé habilidoso y positivo."
+
+#: help/templates/help/travelling_tips.html
+msgid "Ask about money. Often you pay for your food and the skipper for the rest, but some also ask for harbour fees or fuel. Sometimes you can work in exchange, for example on maintenance."
+msgstr "Pregunta por el dinero. A menudo pagas tu comida y el patrón el resto, pero algunos también piden las tasas del puerto o el combustible. A veces puedes trabajar a cambio, por ejemplo en el mantenimiento."
+
+#: help/templates/help/travelling_tips.html
+msgid "Think about whether it is for you: rough weather, cold and wet night watches alone, little sleep and a small space with a few people. Much of the time the boat is in a harbour and you help with repairs. And yes: dolphins, sunsets and sustainable travel too."
+msgstr "Piensa si es para ti: mal tiempo, guardias nocturnas solo con frío y humedad, poco sueño y poco espacio con unas pocas personas. Gran parte del tiempo el barco está en puerto y ayudas con las reparaciones. Y sí: también delfines, puestas de sol y viajar de forma sostenible."
+
+#: help/templates/help/travelling_tips.html
+msgid "Other networks for staying with people:"
+msgstr "Otras redes para alojarte con gente:"
+
+#: help/templates/help/travelling_tips.html
+msgid "built by their communities, respectful of your privacy, and with many people who live alternatively"
+msgstr "creadas por sus comunidades, respetan tu privacidad y mucha gente allí vive de forma alternativa"
+
+#: help/templates/help/travelling_tips.html
+msgid "many hosts, but now a company; in big cities there are last-minute groups for the same night"
+msgstr "muchos anfitriones, pero ahora es una empresa; en las grandes ciudades hay grupos de última hora para la misma noche"
+
+#: help/templates/help/travelling_tips.html
+msgid "help on farms for food and a bed (WWOOF asks a small fee)"
+msgstr "ayudar en granjas a cambio de comida y cama (WWOOF cobra una pequeña cuota)"
+
+#: help/templates/help/travelling_tips.html
+msgid "Global Ecovillage Network"
+msgstr "Red Global de Ecoaldeas (GEN)"
+
+
+#: help/templates/help/travelling_tips.html
+msgid "Squats"
+msgstr "Okupas"
+
+#: help/templates/help/travelling_tips.html
+msgid "if you trust someone who gave you a ride, ask whether they know a place to sleep for free in their town. Never push: they might feel unsafe."
+msgstr "si confías en alguien que te ha llevado, pregúntale si conoce un sitio en su ciudad donde dormir gratis. Nunca insistas: podría sentirse inseguro."
+
+#: help/templates/help/travelling_tips.html
+msgid "Petrol stations"
+msgstr "Gasolineras"
+
+#: help/templates/help/travelling_tips.html
+msgid "on the motorway, one that is open all night is bright and noisy, but better than outside in winter."
+msgstr "en la autopista, una que abre toda la noche tiene luz y ruido, pero en invierno es mejor que dormir fuera."
+
+#: help/templates/help/travelling_tips.html
+msgid "Churches"
+msgstr "Iglesias"
+
+#: help/templates/help/travelling_tips.html
+msgid "in a village, when you really don't know where to go, ask the parish. Some still open their doors."
+msgstr "en un pueblo, cuando de verdad no sepas adónde ir, pregunta en la parroquia. Algunas todavía abren sus puertas."
+
+#: help/templates/help/travelling_tips.html
+msgid "Albergues in Spain"
+msgstr "Albergues en España"
+
+#: help/templates/help/travelling_tips.html
+msgid "public shelters where you can stay for free for a few nights, also in smaller towns. You need an ID. If you can't find one, the police can tell you where it is. Ask whether there is something similar in other countries."
+msgstr "albergues públicos donde puedes quedarte gratis unas noches, también en ciudades pequeñas. Necesitas un documento de identidad. Si no encuentras uno, la policía puede decirte dónde está. Pregunta si en otros países hay algo parecido."
+
+#: help/templates/help/travelling_tips.html
+msgid "collect food from shops, bakeries and events that would be thrown away. You sign up and learn how first."
+msgstr "recoger comida de tiendas, panaderías y eventos que se tiraría. Te registras y aprendes antes cómo se hace."
+
+#: help/templates/help/travelling_tips.html
+msgid "maps of fruit trees and other plants to harvest in towns and the countryside"
+msgstr "mapas de árboles frutales y otras plantas para cosechar en ciudades y en el campo"
+
+#: help/templates/help/travelling_tips.html
+msgid "Shops and bakeries"
+msgstr "Tiendas y panaderías"
+
+#: help/templates/help/travelling_tips.html
+msgid "around closing time, ask what they would throw away, and say that you travel without money. If they offer you something fresh instead, that doesn't save food: they will just make more for their customers."
+msgstr "hacia la hora de cierre, pregunta qué tirarían y di que viajas sin dinero. Si te ofrecen algo recién hecho, eso no salva comida: simplemente harán más para su clientela."
+
+#: help/templates/help/travelling_tips.html
+msgid "Markets"
+msgstr "Mercados"
+
+#: help/templates/help/travelling_tips.html
+msgid "when a market ends there is often fruit and vegetables left; sometimes in boxes on the ground, sometimes you have to ask."
+msgstr "cuando termina un mercado suele sobrar fruta y verdura; a veces en cajas en el suelo, a veces tienes que preguntar."
+
+#: help/templates/help/travelling_tips.html
+msgid "Restaurants and bars"
+msgstr "Restaurantes y bares"
+
+
+#: help/templates/help/travelling_tips.html
+msgid "Dumpster diving"
+msgstr "Rebuscar en contenedores"
+
+#: help/templates/help/travelling_tips.html
+msgid "Hosts and drivers"
+msgstr "Anfitriones y conductores"
+
+
+
+#: help/templates/help/travelling_tips.html
+msgid "Busking"
+msgstr "Arte callejero"
+
+#: help/templates/help/travelling_tips.html
+msgid "music, juggling, clowning, portraits, poems on request: find a place with many people and use your imagination. In many towns you need a permit, so check first."
+msgstr "música, malabares, clown, retratos, poemas por encargo: busca un sitio con mucha gente y usa tu imaginación. En muchas ciudades necesitas un permiso, así que infórmate antes."
+
+#: help/templates/help/travelling_tips.html
+msgid "Handicraft"
+msgstr "Artesanía"
+
+#: help/templates/help/travelling_tips.html
+msgid "sell what you make, like carvings or jewellery, to the people you meet."
+msgstr "vende lo que haces, como tallas o bisutería, a la gente que conoces."
+
+#: help/templates/help/travelling_tips.html
+msgid "Small jobs"
+msgstr "Pequeños trabajos"
+
+#: help/templates/help/travelling_tips.html
+msgid "ask shops or farms whether they need help for a few hours. You can't rely on it."
+msgstr "pregunta en tiendas o granjas si necesitan ayuda unas horas. No puedes contar con ello."
+
+#: help/templates/help/travelling_tips.html
+msgid "some offer you money. Whether you take it is up to you."
+msgstr "algunos te ofrecen dinero. Si lo aceptas es cosa tuya."
+
+#: help/templates/help/travelling_tips.html
+msgid "More ideas:"
+msgstr "Más ideas:"
+
+#: help/templates/help/travelling_tips.html
+#, python-format
+msgid "Look for <a href=\"%(tours_url)s\">Community-Tours and rides</a> going your way, or <a href=\"%(ride_url)s\">offer a ride</a> yourself. If you stay at a community, ecobasa suggests rides that end near it and rides back towards your home."
+msgstr "Busca <a href=\"%(tours_url)s\">Community-Tours y viajes compartidos</a> que vayan en tu dirección, u <a href=\"%(ride_url)s\">ofrece tú un viaje compartido</a>. Si te quedas en una comunidad, ecobasa te sugiere viajes que terminan cerca de ella y viajes de vuelta hacia tu casa."
+
+#: help/templates/help/travelling_tips.html
+#, python-format
+msgid "Travel as a guest, not as a tourist: stay at communities, project houses and farms, and help out. On ecobasa you can <a href=\"%(communities_url)s\">ask a community for a volunteer stay</a>; on a <a href=\"%(help_tours_url)s#hosts\">Community-Tour</a> you ask the hosts for the whole group. Every place has its own rules for guests, and some ask for money."
+msgstr "Viaja como invitado, no como turista: quédate en comunidades, casas de proyectos y granjas, y echa una mano. En ecobasa puedes <a href=\"%(communities_url)s\">pedir a una comunidad una estancia en comunidad</a>; en un <a href=\"%(help_tours_url)s#hosts\">Community-Tour</a> preguntáis a los anfitriones por todo el grupo. Cada lugar tiene sus propias normas para los invitados, y algunos piden dinero."
+
+#: help/templates/help/travelling_tips.html
+msgid "often open and welcoming, but they are not hostels for tourists. Go if you share their values and want to take part, ideally with a contact. Ask whether an eviction is expected, as you might lose your things. <a href=\"https://en.squat.net/\" target=\"_blank\" rel=\"noopener\">Squat.net</a>"
+msgstr "a menudo abiertas y acogedoras, pero no son albergues para turistas. Ve si compartes sus valores y quieres participar, mejor con un contacto. Pregunta si se espera un desalojo, porque podrías perder tus cosas. <a href=\"https://en.squat.net/\" target=\"_blank\" rel=\"noopener\">Squat.net</a>"
+
+#: help/templates/help/travelling_tips.html
+#, python-format
+msgid "On the <a href=\"%(gifts_url)s\">gifts map</a> you find food and harvests people share, and public goods like fruit trees free for everyone."
+msgstr "En el <a href=\"%(gifts_url)s\">mapa de regalos</a> encuentras comida y cosechas que la gente comparte, y bienes comunes como árboles frutales libres para todo el mundo."
+
+#: help/templates/help/travelling_tips.html
+msgid "behind supermarkets you often find good food. In some countries it is not allowed, so find out first. <a href=\"https://trashwiki.org/\" target=\"_blank\" rel=\"noopener\">Trashwiki</a> has places and how-tos."
+msgstr "detrás de los supermercados a menudo encuentras buena comida. En algunos países no está permitido, así que infórmate antes. <a href=\"https://trashwiki.org/\" target=\"_blank\" rel=\"noopener\">Trashwiki</a> tiene lugares y guías."
+
+#: help/templates/help/travelling_tips.html
+msgid "Do you know other tricks? <a href=\"/contact\">Write to us</a>, and we'll add them."
+msgstr "¿Conoces otros trucos? <a href=\"/contact\">Escríbenos</a> y los añadimos."
+
+#: help/templates/help/travelling_tips.html
+msgid "Hitchwiki: top tips"
+msgstr "Hitchwiki: los mejores consejos"
+
+#: help/templates/help/travelling_tips.html
+msgid "Hitchwiki: tips for women hitchhiking"
+msgstr "Hitchwiki: consejos para mujeres que hacen autostop"
+
+#: help/templates/help/travelling_tips.html
+msgid "Riding without a ticket is illegal and can have serious consequences. Instead, ask the bus driver or the train staff to take you along without one: then you are their guest, and that is completely legal. Tell them that you travel without money to spread the gift economy. Sometimes they are happy about an apple, a cookie, or a good story too."
+msgstr "Viajar sin billete es ilegal y puede tener consecuencias graves. Mejor pregunta al conductor del autobús o al personal del tren si te llevan sin billete: así eres su invitado, y eso es totalmente legal. Cuéntales que viajas sin dinero para difundir la economía del regalo. A veces también les alegra una manzana, una galleta o una buena historia."
+
+#: help/templates/help/travelling_tips.html
+msgid "In summer with a tent, look for a spot a little out of the way: people are more dangerous than animals, and even then very few of them are. A hammock is easier to carry and to set up, and allowed in many places as long as you are not trespassing. Or ask someone you met whether you may pitch your tent in their garden."
+msgstr "En verano con tienda, busca un sitio un poco apartado: las personas son más peligrosas que los animales, y aun así muy pocas lo son. Una hamaca es más fácil de llevar y de montar, y está permitida en muchos sitios mientras no entres en una propiedad ajena. O pregunta a alguien que hayas conocido si puedes montar la tienda en su jardín."
+
+#: help/templates/help/travelling_tips.html
+msgid "you can't count on it, but many will invite you to a meal or share what they have when you tell them that you travel without money."
+msgstr "no puedes contar con ello, pero mucha gente te invitará a comer o compartirá lo que lleva cuando le cuentes que viajas sin dinero."
+
+#: help/templates/help/travelling_tips.html
+msgid "Travelling like this, you need little money, but sometimes you do. Please don't take detours or risks that a little money could avoid! If you need to earn some money:"
+msgstr "Viajando así necesitas poco dinero, pero a veces sí lo necesitas. ¡No des rodeos ni corras riesgos que podrías evitar con un poco de dinero! Si necesitas ganar algo de dinero:"
+
+#: help/templates/help/travelling_tips.html
+msgid "ask kindly for what is left over at the end of the evening, or take what guests leave on their plates before the waiters clear the table, if you are sure nobody sees you…"
+msgstr "pide amablemente lo que sobra al final de la noche, o llévate lo que los clientes dejan en el plato antes de que los camareros recojan la mesa, si estás seguro de que nadie te ve…"
+
+#: templates/_navbar.html
+msgid "Home"
+msgstr "Inicio"

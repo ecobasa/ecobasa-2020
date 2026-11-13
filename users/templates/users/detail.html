@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% load i18n embed_video_tags static l10n references_tags %}
+{% load i18n embed_video_tags static l10n references_tags tours_tags %}
 
 {% block extrahead %}
 {{ block.super }}
@@ -58,6 +58,7 @@
 			{% endif %}
 			{% if request.user.is_authenticated and request.user.pk != user.pk %}
 				<a class="btn block mt-10" href="{% url 'postman:write_with_recipients' user.pk %}"><i class="fa fa-envelope mr-2"></i>{% trans "Message" %}</a>
+				{% invite_to_tours user %}
 			{% endif %}
 
 			<!-- Communities (the ones they own, until there is real membership) -->
@@ -65,26 +66,14 @@
 			<div class="mt-8">
 				<h2>{% trans "Communities" %}</h2>
 				<div class="space-y-4">
-					{% for community in communities %}
-						{% with community.photos.all|first as header_photo %}
-						<a href="{{ community.get_absolute_url }}" class="block overflow-hidden">
-							{% if header_photo %}
-								<img src="{{ header_photo.image.url }}" alt="" class="w-full h-32 object-cover" loading="lazy">
-							{% endif %}
-							<div class="flex items-center gap-3 p-3">
-								<i class="fa-solid {{ community.get_type_icon }} text-xl text-primary flex-shrink-0"></i>
-								<div class="min-w-0">
-									<div class="font-serif text-primary truncate">{{ community.name }}</div>
-									{% if community.type %}<div class="text-xs text-brown">{{ community.get_type_display }}</div>{% endif %}
-								</div>
-							</div>
-						</a>
-						{% endwith %}
-					{% endfor %}
+					{% for community in communities %}{% include "communities/_community_card.html" %}{% endfor %}
 				</div>
 			</div>
 			{% endif %}
 
+
+			<!-- Tours they organise or travel on -->
+			{% tours_of user %}
 
 			<!-- Location -->
 

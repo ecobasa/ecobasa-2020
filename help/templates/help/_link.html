@@ -1,0 +1,1 @@
+{% load i18n %}{# A small link from a feature to its part of a help page: with page="help:tours" anchor="join" #}<a href="{% url page %}{% if anchor %}#{{ anchor }}{% endif %}" class="whitespace-nowrap text-sm"><i class="fa-regular fa-circle-question mr-1"></i>{% trans "How does this work?" %}</a>

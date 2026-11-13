@@ -15,6 +15,19 @@
     {% endif %}
   </div>
   <p class="text-brown mb-6">{% trans "How was it? A few sentences are enough. Stories like yours show that the gift economy works." %}</p>
+  {% if choices %}
+    {# After a group's stay: about the whole group, or about one of its people #}
+    <div class="mb-6">
+      <p class="font-semibold text-sm mb-2">{% trans "Who is your story about?" %}</p>
+      <div class="flex flex-wrap gap-2">
+        {% for key, other in choices %}
+          <a href="?about={{ key }}" class="pill {% if key == about %}bg-primary{% else %}bg-purple opacity-80 hover:opacity-100{% endif %}">
+            {% if key == "group" %}<i class="fa-solid fa-people-group mr-1"></i>{% trans "The whole group" %}{% else %}<i class="fa fa-user mr-1"></i>{{ other.name|default:other.email }}{% endif %}
+          </a>
+        {% endfor %}
+      </div>
+    </div>
+  {% endif %}
 
   <div class="border rounded-xl bg-secondary p-4 sm:p-6">
     <form method="post" enctype="multipart/form-data" x-data="{ preview: '', impression: '{{ form.impression.value|default:'positive' }}' }">

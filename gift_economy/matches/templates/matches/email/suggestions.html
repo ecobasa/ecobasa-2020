@@ -1,19 +1,20 @@
-{% load i18n %}{% get_current_language as LANGUAGE_CODE %}
+{% load i18n site_tags %}{% get_current_language as LANGUAGE_CODE %}
 <!DOCTYPE html>
 <html lang="{{ LANGUAGE_CODE|default:'en' }}">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{{ headline }}</title>
+  {% include "email/_fonts.html" %}
 </head>
-<body style="margin:0;padding:0;background-color:#f5ede0;font-family:Georgia,serif;color:#452912;">
+<body style="margin:0;padding:0;background-color:#f5ede0;font-family:Arial,Helvetica,sans-serif;color:#452912;">
   <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f5ede0;padding:32px 0;">
     <tr>
       <td align="center">
         <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background-color:#fcf3e5;border-radius:8px;overflow:hidden;border:1px solid #d4b896;">
           <tr>
-            <td style="background-color:#da6137;padding:28px 32px;">
-              <p style="margin:0;font-size:24px;font-weight:bold;color:#fcf3e5;font-family:Georgia,serif;">ecobasa.org</p>
+            <td bgcolor="#e08361" style="background-color:#e08361;padding:24px 32px;">
+              <img class="wordmark" src="{% email_static "images/email-wordmark.png" %}" width="185" height="39" alt="ecobasa.org" style="display:block;border:0;font-size:26px;color:#fcf3e5;font-family:Georgia,serif;">
               <p style="margin:8px 0 0;font-size:14px;color:#fcf3e5;opacity:0.85;">{% trans "Suggestions for you" %}</p>
             </td>
           </tr>
@@ -31,15 +32,29 @@
                 </tr>
               </table>
               {% endfor %}
+              {% if tours %}
+              <p style="margin:24px 0 12px;font-size:16px;font-weight:bold;">{% if with_rides %}{% trans "Tours and rides for you" %}{% else %}{% trans "Tours for you" %}{% endif %}</p>
+              {% for s in tours %}
+              <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f5ede0;border-radius:6px;border:1px solid #d4b896;margin-bottom:12px;">
+                <tr>
+                  <td style="padding:14px 18px;">
+                    <p style="margin:0;font-size:15px;font-weight:bold;"><a href="{{ site_url }}{{ s.action_url }}" style="color:#da6137;text-decoration:none;">{{ s.text }}</a></p>
+                    <p style="margin:4px 0 0;font-size:13px;opacity:0.75;">{% blocktrans with own=s.own_text %}fits {{ own }}{% endblocktrans %}{% if s.distance_km is not None %} · {% blocktrans with km=s.distance_km %}{{ km }} km away{% endblocktrans %}{% endif %}</p>
+                  </td>
+                </tr>
+              </table>
+              {% endfor %}
+              <p style="margin:4px 0 0;font-size:13px;"><a href="{{ pause_tours_url }}" style="color:#452912;">{% trans "Not travelling now? Pause tour suggestions" %}</a></p>
+              {% endif %}
               <p style="margin:20px 0 0;text-align:center;">
-                <a href="{{ list_url }}" style="display:inline-block;background-color:#5A5527;color:#fcf3e5;text-decoration:none;font-size:14px;font-weight:bold;padding:10px 22px;border-radius:6px;font-family:Arial,sans-serif;">{% trans "All your suggestions" %}</a>
+                <a href="{{ list_url }}" style="display:inline-block;background-color:#80143b;color:#fcf3e5;text-decoration:none;font-size:14px;font-weight:bold;padding:10px 22px;border-radius:6px;font-family:Arial,sans-serif;">{% trans "All your suggestions" %}</a>
               </p>
             </td>
           </tr>
           <tr>
             <td style="background-color:#f5ede0;border-top:1px solid #d4b896;padding:16px 32px;text-align:center;">
               <p style="margin:0 0 6px;font-size:12px;opacity:0.7;">{% trans "You get this because you share wishes, offers or skills on ecobasa.org." %}</p>
-              <p style="margin:0;font-size:12px;opacity:0.7;"><a href="{{ settings_url }}" style="color:#452912;">{% trans "Change distance or turn off" %}</a> · <a href="{{ unsubscribe_url }}" style="color:#452912;">{% trans "Unsubscribe" %}</a></p>
+              <p style="margin:0;font-size:12px;opacity:0.7;"><a href="{{ settings_url }}" style="color:#452912;">{% trans "Change distance or search worldwide" %}</a> · <a href="{{ unsubscribe_url }}" style="color:#452912;">{% trans "Turn off weekly email notifications" %}</a></p>
             </td>
           </tr>
         </table>

@@ -1,0 +1,133 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block head_title %}{% trans "Travelling tips" %} — ecobasa{% endblock %}
+
+{% block content %}
+{% url 'tours:list' as tours_url %}{% url 'tours:ride' as ride_url %}{% url 'communities:list' as communities_url %}{% url 'gifts:search' as gifts_url %}{% url 'help:tours' as help_tours_url %}
+<div class="container-page">
+  <a href="{% url 'help:tours' %}" class="text-sm"><i class="fa fa-arrow-left mr-1"></i>{% trans "Community-Tours" %}</a>
+  <h1 class="mt-2 text-4xl sm:text-5xl hyphens-auto"><i class="fa-solid fa-person-hiking mr-2"></i>{% trans "Travelling without money" %}</h1>
+
+  <div class="lg:grid lg:grid-cols-4 lg:gap-10">
+    <nav class="mb-8 lg:mb-0" aria-label="{% trans 'Contents' %}">
+      <div class="lg:sticky lg:top-6 p-4 rounded-lg bg-secondary bg-opacity-75 text-sm">
+        <span class="block font-bold mb-2">{% trans "Contents" %}</span>
+        <ol class="m-0 space-y-1">
+          <li class="mb-0"><a class="text-yellow hover:text-purple" href="#moving">{% trans "Getting there" %}</a></li>
+          <li class="mb-0"><a class="text-yellow hover:text-purple" href="#sailing">{% trans "Hitchhiking boats" %}</a></li>
+          <li class="mb-0"><a class="text-yellow hover:text-purple" href="#sleeping">{% trans "A place to sleep" %}</a></li>
+          <li class="mb-0"><a class="text-yellow hover:text-purple" href="#food">{% trans "Food" %}</a></li>
+          <li class="mb-0"><a class="text-yellow hover:text-purple" href="#money">{% trans "When you need some money" %}</a></li>
+        </ol>
+      </div>
+    </nav>
+
+    <div class="lg:col-span-3 max-w-3xl min-w-0">
+      <p class="text-lg">{% trans "ecobasa wants to make it easier to live in the gift economy, with less money or none at all. On the way from one community to the next you sometimes need a ride, a place to sleep or something to eat. Here are tricks and resources that get you there sustainably and almost without money." %}</p>
+
+      <section id="moving" class="mt-12 scroll-mt-6">
+        <h2 class="text-3xl sm:text-4xl hyphens-auto">{% trans "Getting there" %}</h2>
+        <h3>{% trans "Rides and tours on ecobasa" %}</h3>
+        <p>{% blocktrans %}Look for <a href="{{ tours_url }}">Community-Tours and rides</a> going your way, or <a href="{{ ride_url }}">offer a ride</a> yourself. If you stay at a community, ecobasa suggests rides that end near it and rides back towards your home.{% endblocktrans %}</p>
+        <h3>{% trans "Hitchhiking" %}</h3>
+        <p>{% trans "The best way to get from one place to another. It is an art you mostly learn by doing. Hitchwiki helps to find good spots, especially to get out of big cities." %}</p>
+        <ul>
+          <li><a href="https://maps.hitchwiki.org/#map=5/51.000/10.000" target="_blank" rel="noopener">{% trans "Hitchwiki Map" %}</a></li>
+          <li><a href="https://hitchwiki.org/en/Top_tips" target="_blank" rel="noopener">{% trans "Hitchwiki: top tips" %}</a></li>
+          <li><a href="https://hitchwiki.org/en/Women_hitchhiking" target="_blank" rel="noopener">{% trans "Hitchwiki: tips for women hitchhiking" %}</a></li>
+        </ul>
+        <h3>{% trans "Cycling" %}</h3>
+        <p>{% trans "Warmshowers is a hospitality network for people travelling by bike. The Ecotopia Biketour is a cycling tour that has gone from project to project every summer for many years: join it, or let it inspire your own bike tour." %}</p>
+        <ul>
+          <li><a href="https://www.warmshowers.org/" target="_blank" rel="noopener">Warmshowers</a></li>
+          <li><a href="https://www.ecotopiabiketour.net/" target="_blank" rel="noopener">Ecotopia Biketour</a></li>
+        </ul>
+        <h3>{% trans "Public transport" %}</h3>
+        <p>{% trans "Riding without a ticket is illegal and can have serious consequences. Instead, ask the bus driver or the train staff to take you along without one: then you are their guest, and that is completely legal. Tell them that you travel without money to spread the gift economy. Sometimes they are happy about an apple, a cookie, or a good story too." %}</p>
+      </section>
+
+      <section id="sailing" class="mt-12 scroll-mt-6">
+        <h2 class="text-3xl sm:text-4xl hyphens-auto">{% trans "Hitchhiking boats" %}</h2>
+        <p>{% trans "Go to the harbour and ask around. With some patience or luck you find a free place, or a boat looking for crew. You can choose where you want to go or when you want to go, but rarely both. Most people look both online and in person." %}</p>
+        <ul>
+          <li><a href="https://hitchwiki.org/en/Hitchhiking_a_boat" target="_blank" rel="noopener">{% trans "Hitchwiki: hitchhiking a boat" %}</a></li>
+          <li><a href="https://www.handgegenkoje.de/" target="_blank" rel="noopener">Hand gegen Koje</a> ({% trans "in German" %})</li>
+          <li><a href="https://www.findacrew.net/" target="_blank" rel="noopener">Find a Crew</a>, <a href="https://www.crewbay.com/" target="_blank" rel="noopener">CrewBay</a>, <a href="https://www.crewseekers.net/" target="_blank" rel="noopener">Crewseekers</a></li>
+        </ul>
+        <p>{% trans "Unpaid places exist, but sailing experience or other skills help. Read the skippers' profiles carefully and leave out those who are really looking for a relationship. Skippers plan far ahead, so start looking months before; some need crew right away, so be ready to go." %}</p>
+
+        <h3>{% trans "Where and when to find boats" %}</h3>
+        <p>{% trans "The easiest places to meet skippers who might take crew:" %}</p>
+        <dl class="text-sm space-y-2">
+          <div><dt class="font-bold inline">{% trans "North Atlantic" %}:</dt> <dd class="inline">{% trans "British and North European ports, Lisbon and Vilamoura (crossing the Bay of Biscay by the end of August); the Canary Islands (Las Palmas) and Madeira (Funchal) in November; Bermuda in November and from April to August; Fort Lauderdale, Florida, in November." %}</dd></div>
+          <div><dt class="font-bold inline">{% trans "Mediterranean" %}:</dt> <dd class="inline">{% trans "Gibraltar, Palma, Malta and many other ports, April to November. Few boats go from the Mediterranean into the Indian Ocean; more come the other way through the Suez Canal." %}</dd></div>
+          <div><dt class="font-bold inline">{% trans "Caribbean" %}:</dt> <dd class="inline">{% trans "St Thomas (Virgin Islands) in November, Barbados and Grenada in November and December, the Panama Canal (Cristóbal and Balboa) in March and April." %}</dd></div>
+          <div><dt class="font-bold inline">{% trans "South Atlantic" %}:</dt> <dd class="inline">{% trans "Cape Town, South Africa, in January and February." %}</dd></div>
+          <div><dt class="font-bold inline">{% trans "Indian Ocean" %}:</dt> <dd class="inline">{% trans "Darwin, Australia, in July; Durban, South Africa, and Galle, Sri Lanka, in December." %}</dd></div>
+          <div><dt class="font-bold inline">{% trans "North Pacific" %}:</dt> <dd class="inline">{% trans "Southern California from Santa Barbara to San Diego in October; Cabo San Lucas and La Paz, Mexico, around Christmas; Hawaii (Hilo, Lahaina) from May to September, Honolulu in August and September; Cebu, Philippines, in August and September; Hong Kong from December to April." %}</dd></div>
+          <div><dt class="font-bold inline">{% trans "South Pacific" %}:</dt> <dd class="inline">{% trans "Tahiti from April to October, Fiji in September, the Bay of Islands in New Zealand in March." %}</dd></div>
+        </dl>
+
+        <h3>{% trans "Before you go on board" %}</h3>
+        <ul>
+          <li>{% trans "Network: spend time where sailors are, stay nearby for a month or more just before the season, and meet as many people as you can. Most places on boats are found by word of mouth." %}</li>
+          <li>{% trans "You don't need experience, but bring what you have: cooking, first aid, repairs, music. Be fit, handy and positive." %}</li>
+          <li>{% trans "Ask about money. Often you pay for your food and the skipper for the rest, but some also ask for harbour fees or fuel. Sometimes you can work in exchange, for example on maintenance." %}</li>
+          <li>{% trans "Think about whether it is for you: rough weather, cold and wet night watches alone, little sleep and a small space with a few people. Much of the time the boat is in a harbour and you help with repairs. And yes: dolphins, sunsets and sustainable travel too." %}</li>
+        </ul>
+      </section>
+
+      <section id="sleeping" class="mt-12 scroll-mt-6">
+        <h2 class="text-3xl sm:text-4xl hyphens-auto">{% trans "A place to sleep" %}</h2>
+        <p>{% blocktrans %}Travel as a guest, not as a tourist: stay at communities, project houses and farms, and help out. On ecobasa you can <a href="{{ communities_url }}">ask a community for a volunteer stay</a>; on a <a href="{{ help_tours_url }}#hosts">Community-Tour</a> you ask the hosts for the whole group. Every place has its own rules for guests, and some ask for money.{% endblocktrans %}</p>
+        <p>{% trans "Other networks for staying with people:" %}</p>
+        <ul>
+          <li><a href="https://www.bewelcome.org/" target="_blank" rel="noopener">BeWelcome</a>, <a href="https://www.trustroots.org/" target="_blank" rel="noopener">Trustroots</a>: {% trans "built by their communities, respectful of your privacy, and with many people who live alternatively" %}</li>
+          <li><a href="https://www.couchsurfing.com/" target="_blank" rel="noopener">Couchsurfing</a>: {% trans "many hosts, but now a company; in big cities there are last-minute groups for the same night" %}</li>
+          <li><a href="https://www.helpx.net/" target="_blank" rel="noopener">HelpX</a>, <a href="https://wwoof.net/" target="_blank" rel="noopener">WWOOF</a>: {% trans "help on farms for food and a bed (WWOOF asks a small fee)" %}</li>
+          <li><a href="https://ecovillage.org/" target="_blank" rel="noopener">{% trans "Global Ecovillage Network" %}</a></li>
+        </ul>
+        <p>{% trans "In summer with a tent, look for a spot a little out of the way: people are more dangerous than animals, and even then very few of them are. A hammock is easier to carry and to set up, and allowed in many places as long as you are not trespassing. Or ask someone you met whether you may pitch your tent in their garden." %}</p>
+        <dl class="space-y-2">
+          <div><dt class="font-bold inline">{% trans "Squats" %}:</dt> <dd class="inline">{% blocktrans %}often open and welcoming, but they are not hostels for tourists. Go if you share their values and want to take part, ideally with a contact. Ask whether an eviction is expected, as you might lose your things. <a href="https://en.squat.net/" target="_blank" rel="noopener">Squat.net</a>{% endblocktrans %}</dd></div>
+          <div><dt class="font-bold inline">{% trans "Drivers" %}:</dt> <dd class="inline">{% trans "if you trust someone who gave you a ride, ask whether they know a place to sleep for free in their town. Never push: they might feel unsafe." %}</dd></div>
+          <div><dt class="font-bold inline">{% trans "Petrol stations" %}:</dt> <dd class="inline">{% trans "on the motorway, one that is open all night is bright and noisy, but better than outside in winter." %}</dd></div>
+          <div><dt class="font-bold inline">{% trans "Churches" %}:</dt> <dd class="inline">{% trans "in a village, when you really don't know where to go, ask the parish. Some still open their doors." %}</dd></div>
+          <div><dt class="font-bold inline">{% trans "Albergues in Spain" %}:</dt> <dd class="inline">{% trans "public shelters where you can stay for free for a few nights, also in smaller towns. You need an ID. If you can't find one, the police can tell you where it is. Ask whether there is something similar in other countries." %}</dd></div>
+        </dl>
+      </section>
+
+      <section id="food" class="mt-12 scroll-mt-6">
+        <h2 class="text-3xl sm:text-4xl hyphens-auto">{% trans "Food" %}</h2>
+        <p>{% blocktrans %}On the <a href="{{ gifts_url }}">gifts map</a> you find food and harvests people share, and public goods like fruit trees free for everyone.{% endblocktrans %}</p>
+        <ul>
+          <li><a href="https://foodsharing.network/" target="_blank" rel="noopener">Foodsharing</a>: {% trans "collect food from shops, bakeries and events that would be thrown away. You sign up and learn how first." %}</li>
+          <li><a href="https://fallingfruit.org/" target="_blank" rel="noopener">Falling Fruit</a>, <a href="https://mundraub.org/" target="_blank" rel="noopener">Mundraub</a>: {% trans "maps of fruit trees and other plants to harvest in towns and the countryside" %}</li>
+        </ul>
+        <dl class="space-y-2">
+          <div><dt class="font-bold inline">{% trans "Shops and bakeries" %}:</dt> <dd class="inline">{% trans "around closing time, ask what they would throw away, and say that you travel without money. If they offer you something fresh instead, that doesn't save food: they will just make more for their customers." %}</dd></div>
+          <div><dt class="font-bold inline">{% trans "Markets" %}:</dt> <dd class="inline">{% trans "when a market ends there is often fruit and vegetables left; sometimes in boxes on the ground, sometimes you have to ask." %}</dd></div>
+          <div><dt class="font-bold inline">{% trans "Restaurants and bars" %}:</dt> <dd class="inline">{% trans "ask kindly for what is left over at the end of the evening, or take what guests leave on their plates before the waiters clear the table, if you are sure nobody sees you…" %}</dd></div>
+          <div><dt class="font-bold inline">{% trans "Dumpster diving" %}:</dt> <dd class="inline">{% blocktrans %}behind supermarkets you often find good food. In some countries it is not allowed, so find out first. <a href="https://trashwiki.org/" target="_blank" rel="noopener">Trashwiki</a> has places and how-tos.{% endblocktrans %}</dd></div>
+          <div><dt class="font-bold inline">{% trans "Hosts and drivers" %}:</dt> <dd class="inline">{% trans "you can't count on it, but many will invite you to a meal or share what they have when you tell them that you travel without money." %}</dd></div>
+        </dl>
+      </section>
+
+      <section id="money" class="mt-12 scroll-mt-6">
+        <h2 class="text-3xl sm:text-4xl hyphens-auto">{% trans "When you need some money" %}</h2>
+        <p>{% trans "Travelling like this, you need little money, but sometimes you do. Please don't take detours or risks that a little money could avoid! If you need to earn some money:" %}</p>
+        <dl class="space-y-2">
+          <div><dt class="font-bold inline">{% trans "Busking" %}:</dt> <dd class="inline">{% trans "music, juggling, clowning, portraits, poems on request: find a place with many people and use your imagination. In many towns you need a permit, so check first." %}</dd></div>
+          <div><dt class="font-bold inline">{% trans "Handicraft" %}:</dt> <dd class="inline">{% trans "sell what you make, like carvings or jewellery, to the people you meet." %}</dd></div>
+          <div><dt class="font-bold inline">{% trans "Small jobs" %}:</dt> <dd class="inline">{% trans "ask shops or farms whether they need help for a few hours. You can't rely on it." %}</dd></div>
+          <div><dt class="font-bold inline">{% trans "Drivers" %}:</dt> <dd class="inline">{% trans "some offer you money. Whether you take it is up to you." %}</dd></div>
+        </dl>
+        <p class="mt-4">{% trans "More ideas:" %} <a href="https://www.shareable.net/the-ultimate-guide-to-traveling-without-money/" target="_blank" rel="noopener">The Ultimate Guide to Traveling Without Money</a> (shareable.net)</p>
+      </section>
+
+      <p class="mt-12">{% blocktrans %}Do you know other tricks? <a href="/contact">Write to us</a>, and we'll add them.{% endblocktrans %}</p>
+    </div>
+  </div>
+</div>
+{% endblock content %}

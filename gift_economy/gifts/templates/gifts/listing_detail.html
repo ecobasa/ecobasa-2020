@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% load static i18n l10n references_tags %}
+{% load static i18n l10n references_tags tours_tags %}
 
 {% block extrahead %}
   {{ block.super }}
@@ -18,17 +18,15 @@
   <nav class="sm:hidden">
     <a href="{% url 'gifts:search' %}"
       class="flex items-center text-sm font-medium text-yellow hover:text-purple transition">
-      <svg class="flex-shrink-0 -ml-1 mr-1 h-5 w-5 text-yellow" viewBox="0 0 20 20" fill="currentColor">
-        <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd"/>
-      </svg>
+      <i class="fa-solid fa-chevron-left mr-2 text-yellow"></i>
       {% trans "Back" %}
     </a>
   </nav>
   <nav class="hidden sm:flex items-center text-sm font-medium gap-2">
     <a href="{% url 'gifts:search' %}" class="text-yellow hover:text-purple transition">{% trans "Gifts" %}</a>
-    <svg class="h-5 w-5 text-yellow" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/></svg>
+    <i class="fa-solid fa-chevron-right text-xs text-yellow"></i>
     <a href="{% url 'gifts:search' %}?type={{ listing.type }}" class="text-yellow hover:text-purple transition">{{ listing.get_type_display }}</a>
-    <svg class="h-5 w-5 text-yellow" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/></svg>
+    <i class="fa-solid fa-chevron-right text-xs text-yellow"></i>
     <span class="text-primary">{{ listing.display_title }}</span>
   </nav>
 
@@ -70,11 +68,19 @@
           {% endblocktrans %}
           <span class="whitespace-nowrap">· <i class="fa-regular fa-calendar mx-1"></i>{% include "events/_event_dates.html" with event=listing.event %}</span>
         </p>
+      {% elif listing.tour %}
+        {# What a tour still looks for #}
+        <p class="mt-2 mb-2">
+          {% blocktrans trimmed with tour=listing.tour.title tour_url=listing.tour.get_absolute_url %}
+            The tour <a href="{{ tour_url }}" class="underline">{{ tour }}</a> is looking for this
+          {% endblocktrans %}
+          <span class="whitespace-nowrap">· <i class="fa-regular fa-calendar mx-1"></i>{% include "tours/_tour_dates.html" with tour=listing.tour %}</span>
+        </p>
       {% endif %}
       {% if listing.amount %}<div class="text-lg mb-1"><i class="fa-solid fa-scale-balanced mr-2 text-primary"></i>{{ listing.amount }}{% if listing.progress %} <span class="text-sm opacity-80">· {{ listing.progress }}</span>{% endif %}</div>{% endif %}
       <div class="my-1 flex flex-wrap items-center gap-1">
         {% if is_owner %}
-          <span class="pill bg-purple">{% if listing.community %}{% trans "from your community" %}{% else %}{% trans "from me" %}{% endif %}</span>
+          <span class="pill bg-purple">{% if listing.community %}{% trans "from your community" %}{% elif listing.tour %}{% trans "from your tour" %}{% else %}{% trans "from me" %}{% endif %}</span>
         {% endif %}
         {% if listing.kind != "other" %}<span class="pill {{ listing.colour }}"><i class="fa-solid {{ listing.kind_icon }} mr-1"></i>{{ listing.kind_label }}</span>{% endif %}
         {% if listing.thing %}<span class="pill bg-primary" title="{% trans 'Recognized as' %}"><i class="fa-solid fa-tag mr-1"></i>{{ listing.thing }}</span>{% endif %}
@@ -103,7 +109,12 @@
       {% endif %}
     </div>
 
-    {% if can_edit %}
+    {% if can_edit and listing.tour %}
+      {# A tour's needs are changed together, on the tour's page for them #}
+      <div class="mt-4 flex-shrink-0 flex md:mt-0 md:ml-4">
+        <a href="{% url 'tours:needs' listing.tour.slug %}" class="btn btn-lg"><i class="fa fa-edit mr-1"></i> {% trans "Edit" %}</a>
+      </div>
+    {% elif can_edit %}
       <a href="{% url 'gifts:delete' listing.pk %}" class="btn btn-lg btn-purple flex mx-5">
         <i class="fa fa-recycle mr-1"></i> {% trans "Delete" %}
       </a>
@@ -146,6 +157,9 @@
   </div>
   {% endif %}
 
+  {# Taken along on a tour, from where to where (tours_tags) #}
+  {% deliveries_with listing %}
+
   {# ── Who it belongs to: a person, or a community (and its project) ── #}
   {% with holder=listing.holder %}{% if holder %}
   <div class="mt-8">
@@ -153,46 +167,49 @@
       {% if listing.is_offer %}{% trans "Offer from" %}{% else %}{% trans "Wish from" %}{% endif %}
     </h2>
     <div class="flex flex-col items-center gap-3 p-4 border rounded bg-primary bg-opacity-5">
-      {% if listing.community %}
-        {% with photo=holder.photos.all|first %}
-        <a href="{{ holder.get_absolute_url }}" class="block">
-          {% if photo %}<img src="{{ photo.image.url }}" alt="" class="w-20 h-20 rounded-full object-cover mx-auto">
-          {% else %}<div class="w-20 h-20 rounded-full bg-green flex items-center justify-center text-secondary mx-auto"><i class="fa-solid {{ holder.get_type_icon }} text-3xl"></i></div>{% endif %}
-        </a>
-        {% endwith %}
-        <a href="{{ holder.get_absolute_url }}" class="font-serif text-primary">{{ holder.name }}</a>
+      {% if listing.tour %}
+        {# What the tour is, who travels and where it goes (tours_tags) #}
+        {% tour_box holder %}
+      {% elif listing.community %}
+        <a href="{{ holder.get_absolute_url }}" class="block">{% include "_avatar.html" with who=holder large=True classes="mx-auto" %}</a>
+        <span class="pill bg-green"><i class="fa-solid {{ holder.get_type_icon }} mr-1"></i>{{ holder.get_type_display|default:_("Community") }}</span>
+        <a href="{{ holder.get_absolute_url }}" class="font-serif text-primary text-lg">{{ holder.name }}</a>
+        {% if request.user.is_authenticated and holder.owner %}
+          <div class="text-xs"><span class="opacity-70">{% trans "Ambassador" %}:</span> <a href="{{ holder.owner.get_absolute_url }}" class="underline">{{ holder.owner.name|default:holder.owner.username }}</a></div>
+        {% endif %}
         {% if listing.event %}
           <a href="{{ listing.event.get_absolute_url }}" class="text-sm underline"><i class="fa-solid {{ listing.event.kind_icon }} mr-1"></i>{{ listing.event.title }}</a>
           <div class="text-xs"><i class="fa-regular fa-calendar mr-1"></i>{% include "events/_event_dates.html" with event=listing.event %}</div>
         {% endif %}
       {% else %}
-        <a href="{{ holder.get_absolute_url }}" class="block">
-          {% if holder.image %}
-            <img src="{{ holder.image.url }}" alt="{{ holder.name|default:holder.username }}" class="w-20 h-20 rounded-full object-cover mx-auto">
-          {% else %}
-            <div class="w-20 h-20 rounded-full bg-primary flex items-center justify-center text-secondary mx-auto">
-              <i class="fa fa-user text-3xl"></i>
-            </div>
-          {% endif %}
-        </a>
+        <a href="{{ holder.get_absolute_url }}" class="block">{% include "_avatar.html" with who=holder large=True classes="mx-auto" %}</a>
         <a href="{{ holder.get_absolute_url }}" class="font-serif text-primary">{{ holder.name|default:holder.username }}</a>
         <div class="text-xs">{% include "events/_freshness.html" with when=holder.last_active %}</div>
       {% endif %}
-      {% if holder_place_name %}
+      {% if holder_place_name and not listing.tour %}
         <div class="text-sm"><i class="fa fa-map-marker mr-2"></i>{{ holder_place_name }}</div>
       {% endif %}
     </div>
   </div>
   {% endif %}{% endwith %}
 
-  {# ── How to answer: a project's need and a community's skill wish have their own forms ── #}
+  {# ── How to answer: a project's need and a community's skill wish have their own forms; a thing a project needs can also just be given (the request form below) ── #}
+  {% if join_url and not can_edit %}
+  {# Coming along and covering it; or, below, giving or lending it without travelling #}
+  <div class="mt-8">
+    <a class="btn btn-lg" href="{% if request.user.is_authenticated %}{{ join_url }}{% else %}{% url 'users:login' %}?next={{ join_url|urlencode }}{% endif %}">
+      <i class="fa-solid fa-user-plus mr-2"></i>{% trans "Ask to join" %}
+    </a>
+  </div>
+  {% endif %}
   {% if help_url and not can_edit %}
   <div class="mt-8">
     <a class="btn btn-lg" href="{% if request.user.is_authenticated %}{{ help_url }}{% else %}{% url 'users:login' %}?next={{ help_url|urlencode }}{% endif %}">
       {% if listing.is_offer %}<i class="fa-solid fa-graduation-cap mr-2"></i>{% trans "Learn it here" %}{% else %}<i class="fa-solid fa-hand-holding-heart mr-2"></i>{% trans "Help with this" %}{% endif %}
     </a>
   </div>
-  {% elif form %}
+  {% endif %}
+  {% if form %}
   <div class="mt-8">
     <h2 class="text-lg font-semibold mb-4">
       {% if listing.is_offer %}{% trans "Express Interest" %}{% else %}{% trans "Offer to fulfill this wish" %}{% endif %}
@@ -280,13 +297,7 @@
               {% elif req.status == 'counter' %}border-yellow bg-yellow bg-opacity-5
               {% elif req.status == 'withdrawn' %}border-brown border-opacity-40 opacity-70
               {% else %}border bg-secondary{% endif %}">
-            {% if req.from_user.image %}
-              <img src="{{ req.from_user.image.url }}" alt="" class="w-8 h-8 rounded-full object-cover flex-shrink-0">
-            {% else %}
-              <div class="w-8 h-8 rounded-full bg-primary bg-opacity-20 flex items-center justify-center flex-shrink-0">
-                <i class="fa fa-user text-xs text-primary"></i>
-              </div>
-            {% endif %}
+            {% include "_avatar.html" with who=req.from_user %}
             <div class="flex-1 min-w-0">
               <p class="text-sm font-semibold text-primary">{{ req.from_user.name|default:req.from_user.email }}</p>
               <p class="text-xs text-brown truncate">{{ req.message }}</p>
@@ -315,10 +326,11 @@
 
   {% references_for listing %}
 
-  {# ── Location map ── #}
-  {% if listing.point %}
+  {# ── Location map; a tour's need: the whole route, where one could meet the tour ── #}
+  {% if listing.tour %}{% tour_geojson listing.tour as route_geojson %}{% endif %}
+  {% if listing.point or route_geojson.features %}
   <div class="mt-10">
-    <h2 class="text-lg font-semibold mb-3">{% trans "Location" %}</h2>
+    <h2 class="text-lg font-semibold mb-3">{% if route_geojson.features %}{% trans "Route" %}{% else %}{% trans "Location" %}{% endif %}</h2>
     <div class="relative">
       <div id="listing-detail-map" class="w-full h-96 rounded shadow overflow-hidden"></div>
     </div>
@@ -332,7 +344,25 @@
 
 {% block javascript %}
   {{ block.super }}
-  {% if place.1 %}
+  {% if listing.tour %}{% tour_geojson listing.tour as route_geojson %}{% endif %}
+  {% if route_geojson.features %}
+  {{ route_geojson|json_script:"tour-route" }}
+  <script src="https://cdn.jsdelivr.net/npm/ol@v7.2.2/dist/ol.js"></script>
+  <script>
+  // A tour's need: the tour's route and its stops, at the places everyone may see
+  document.addEventListener('DOMContentLoaded', function () {
+    const mapEl = document.getElementById('listing-detail-map');
+    if (!mapEl) return;
+    const tiles = EcoMap.buildBaseLayers();
+    const map = new ol.Map({ target: mapEl, layers: tiles.all, view: new ol.View({ center: [0, 0], zoom: 2, maxZoom: 16 }) });
+    tiles.setBaseLayer('ecobasa');
+    const menu = EcoMap.buildLayerToggle(map, 'listing-detail-layer');
+    menu.querySelectorAll('input').forEach(r => r.addEventListener('change', e => { if (e.target.checked) tiles.setBaseLayer(e.target.value); }));
+    const routes = EcoMap.addRouteLayer(map, JSON.parse(document.getElementById('tour-route').textContent), { hover: false, legModes: true });
+    routes.fit([40, 40, 40, 40]);
+  });
+  </script>
+  {% elif place.1 %}
   <script src="https://cdn.jsdelivr.net/npm/ol@v7.2.2/dist/ol.js"></script>
   <script>
   /* ================================================================
@@ -352,7 +382,7 @@
       {% if place_is_exact %}
       const marker = new ol.Feature({ geometry: new ol.geom.Point(center) });
       // The kind of thing (material, tool), else a gift or a heart
-      marker.setStyle(EcoMap.makeIconStyle({{ listing.marker_glyph }}, '{% if listing.type == 'wish' %}#de7a08{% else %}#da6137{% endif %}'));
+      marker.setStyle(EcoMap.makeIconStyle({{ listing.marker_glyph }}, '{{ listing.marker_hex }}'));
       {% else %}
       // Only roughly where it is (users/places.py)
       const marker = EcoMap.makeRoughArea(LON, LAT, '{% if listing.type == 'wish' %}#de7a08{% else %}#da6137{% endif %}');

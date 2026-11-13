@@ -1,0 +1,15 @@
+{% load i18n %}
+{% if tours %}
+  <div class="flex flex-col gap-4">
+    {% for tour in tours %}
+      {% ifchanged tour.is_idea %}{% if tour.is_idea %}<h3 class="mt-4 mb-0 text-xl"><i class="fa-solid fa-lightbulb text-yellow mr-2"></i>{% trans "Tour ideas" %}</h3>{% endif %}{% endifchanged %}
+      <div data-tour="{{ tour.slug }}" class="rounded-xl transition-shadow">{% include "tours/_tour_card.html" %}</div>
+    {% endfor %}
+  </div>
+  <div hx-boost="true" hx-target="#tour-list" hx-swap="innerHTML" hx-push-url="false">{% include "tours/_pager.html" %}</div>
+{% else %}
+  <p class="italic">
+    {% if filters.active %}{% trans "No tours fit these filters." %}
+    {% else %}{% trans "No tours planned yet." %}{% endif %}
+  </p>
+{% endif %}

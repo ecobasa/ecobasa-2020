@@ -1,0 +1,52 @@
+{% load i18n %}
+<div data-vehicle-row class="p-3 rounded border bg-secondary bg-opacity-50 space-y-4" x-data="{ removed: false }" :class="removed && 'opacity-40'">
+  {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
+  {# Inputs side by side line up at the bottom, also when a label wraps #}
+  <div class="form-group">
+    <label class="form-label" for="{{ form.label.id_for_label }}">{{ form.label.label }}</label>
+    {{ form.label }}
+  </div>
+  {# A long file name of the current picture wraps instead of widening the page #}
+  <div class="form-group break-all [&_input[type=file]]:max-w-full">
+      <label class="form-label" for="{{ form.image.id_for_label }}">{{ form.image.label }}</label>
+      {{ form.image }}
+    </div>
+  {% for error in form.label.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+  <div class="grid grid-cols-2 gap-3 items-end">
+    <div class="form-group">
+      <label class="form-label" for="{{ form.seats.id_for_label }}">{{ form.seats.label }}</label>
+      {{ form.seats }}
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="{{ form.sleeps.id_for_label }}">{{ form.sleeps.label }}</label>
+      {{ form.sleeps }}
+    </div>
+  </div>
+  {% for error in form.seats.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+  <fieldset class="form-group">
+    <legend class="form-label">{{ form.drivers.label }}</legend>
+    <div class="flex flex-wrap gap-x-6 gap-y-1 text-sm">
+      {% for choice in form.drivers %}<label class="inline-flex items-center gap-2">{{ choice.tag }} {{ choice.choice_label }}</label>{% endfor %}
+    </div>
+  </fieldset>
+  <div class="flex flex-wrap gap-x-6 gap-y-2 text-sm">
+    <label class="inline-flex items-center gap-2">{{ form.needs_driver }} {{ form.needs_driver.label }}</label>
+    <label class="inline-flex items-center gap-2">{{ form.others_may_drive }} {{ form.others_may_drive.label }}</label>
+  </div>
+  <div class="form-group">
+    <label class="form-label" for="{{ form.note.id_for_label }}">{{ form.note.label }}</label>
+    {{ form.note }}
+  </div>
+  {% if form.from_stop %}
+    <fieldset class="grid grid-cols-2 gap-3">
+      <legend class="form-label">{% trans "Only for part of the route: from / to" %}</legend>
+      <div>{{ form.from_stop }}</div>
+      <div>{{ form.to_stop }}{% for error in form.to_stop.errors %}<p class="field-error">{{ error }}</p>{% endfor %}</div>
+    </fieldset>
+  {% endif %}
+  {% for error in form.non_field_errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+  <label class="flex items-center justify-end gap-1 text-sm cursor-pointer">
+    <input type="checkbox" name="{{ form.DELETE.html_name }}" class="hidden" x-model="removed" {% if form.DELETE.value %}checked{% endif %}>
+    <i class="fa fa-trash"></i><span>{% trans "Remove" %}</span>
+  </label>
+</div>

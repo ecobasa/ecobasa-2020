@@ -16,13 +16,17 @@
 
         <div class="pt-3"></div>
         <a href="{% url 'matches:list' %}"
-           class="flex items-center px-3 py-2 rounded {% if ns == 'matches' and request_type != 'volunteer' and u != 'calendar' and u != 'lending' and u != 'community_lending' %}bg-secondary text-primary font-semibold{% else %}text-secondary hover:bg-secondary hover:text-primary{% endif %}">
+           class="flex items-center px-3 py-2 rounded {% if ns == 'matches' and request_type != 'volunteer' and request_type != 'tours' and u != 'calendar' and u != 'lending' and u != 'community_lending' %}bg-secondary text-primary font-semibold{% else %}text-secondary hover:bg-secondary hover:text-primary{% endif %}">
           <i class="fa-solid fa-handshake mr-2"></i>{% trans "Matches" %}
           {% if new_suggestions_count %}<span class="ml-auto pill bg-purple text-secondary text-xs" title="{% trans 'New suggestions' %}">{{ new_suggestions_count }}</span>{% endif %}
         </a>
         <a href="{% url 'gifts:mine' %}"
            class="flex items-center px-3 py-2 rounded {% if ns == 'gifts' %}bg-secondary text-primary font-semibold{% else %}text-secondary hover:bg-secondary hover:text-primary{% endif %}">
           <i class="fa fa-gift mr-2"></i>{% trans "Your gifts and wishes" %}
+        </a>
+        <a href="{% url 'events:list' %}?going=1&amp;view=list"
+           class="flex items-center px-3 py-2 rounded text-secondary hover:bg-secondary hover:text-primary">
+          <i class="fa-solid fa-calendar-check mr-2"></i>{% trans "Going to" %}
         </a>
         {% if has_lending_calendar %}
         <a href="{% url 'matches:lending' %}"
@@ -50,10 +54,6 @@
 
         <div class="pt-4 pb-1 px-3 text-xs text-secondary opacity-60 uppercase tracking-wide">{% trans "Communities" %}</div>
 
-        <a href="{% url 'events:nearby' %}"
-          class="flex items-center px-3 py-2 rounded {% if request.resolver_match.namespace == 'events' and request.resolver_match.url_name == 'nearby' %}bg-secondary text-primary font-semibold{% else %}text-secondary hover:bg-secondary hover:text-primary{% endif %}">
-          <i class="fa-solid fa-calendar-day mr-2"></i>{% trans "Events near you" %}
-        </a>
         <a href="{% url 'matches:list' %}?type=volunteer"
           class="flex items-center px-3 py-2 rounded {% if request_type == 'volunteer' %}bg-secondary text-primary font-semibold{% else %}text-secondary hover:bg-secondary hover:text-primary{% endif %}">
           <i class="fa-solid fa-campground mr-2"></i>{% trans "Volunteer Visits" %}
@@ -77,9 +77,14 @@
       {% endif %}
         <div class="pt-4 pb-1 px-3 text-xs text-secondary opacity-60 uppercase tracking-wide">{% trans "Tours" %}</div>
 
-        <span class="block px-3 py-2 rounded text-secondary opacity-40 cursor-default text-sm">
-          <i class="fa-solid fa-route mr-2"></i>{% trans "Community-Tour Applications" %} <span class="text-xs opacity-60">({% trans "coming soon" %})</span>
-        </span>
+        <a href="{% url 'tours:mine' %}"
+          class="flex items-center px-3 py-2 rounded {% if request.resolver_match.namespace == 'tours' and request.resolver_match.url_name == 'mine' %}bg-secondary text-primary font-semibold{% else %}text-secondary hover:bg-secondary hover:text-primary{% endif %}">
+          <i class="fa-solid fa-route mr-2"></i>{% trans "Your tours" %}
+        </a>
+        <a href="{% url 'matches:list' %}?type=tours"
+          class="flex items-center px-3 py-2 rounded {% if request_type == 'tours' %}bg-secondary text-primary font-semibold{% else %}text-secondary hover:bg-secondary hover:text-primary{% endif %}">
+          <i class="fa-solid fa-user-plus mr-2"></i>{% trans "Join requests" %}
+        </a>
       </nav>
     </div>
   </aside>

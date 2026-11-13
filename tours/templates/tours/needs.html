@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block head_title %}{% trans "Vehicles and needs" %} — {{ tour.title }} — ecobasa{% endblock %}
+
+{% block content %}
+<div class="container-form">
+  {# Where this page is #}
+  <div class="mb-2 text-sm flex flex-wrap items-center gap-x-2 gap-y-1">
+    <a href="{% url 'tours:list' %}" class="hover:underline">{% trans "Community-Tours" %}</a>
+    <i class="fa-solid fa-chevron-right text-xs opacity-50" aria-hidden="true"></i>
+    <a href="{{ tour.get_absolute_url }}" class="hover:underline">{{ tour.title }}</a>
+    <i class="fa-solid fa-chevron-right text-xs opacity-50" aria-hidden="true"></i>
+    <span class="opacity-70">{% trans "Vehicles and needs" %}</span>
+  </div>
+  <h1><i class="fa-solid fa-van-shuttle mr-2 text-primary"></i>{% trans "Vehicles and needs" %}</h1>
+  <p>{% include "help/_link.html" with page="help:tours" anchor="plan" %}</p>
+
+  {# Skills the hosts on the route look for that nobody on the tour has: a click adds one #}
+  {% if gaps %}
+    <section id="gaps" class="border rounded-xl bg-secondary bg-opacity-60 p-6 mb-6">
+      <h2 class="mt-0">{% trans "Needed on your route" %}</h2>
+      <p class="text-sm">{% trans "Your hosts look for these skills, and nobody on the tour has them yet. Look for someone who can come along." %}</p>
+      <form method="post" action="{% url 'tours:needs_add' tour.slug %}" class="flex flex-wrap gap-2 items-center">
+        {% csrf_token %}
+        {% for skill, labels in gaps %}
+          <button type="submit" name="skill" value="{{ skill.pk }}" class="pill pill-lg bg-purple"
+                  title="{% trans 'Add to what we look for' %}">
+            <i class="fa fa-plus mr-1"></i>{{ skill.get_name }}
+            <span class="opacity-70 text-xs ml-1">· {{ labels|join:", " }}</span>
+          </button>
+        {% endfor %}
+        {% if gaps|length > 1 %}
+          {% for skill, labels in gaps %}<input type="hidden" name="all" value="{{ skill.pk }}">{% endfor %}
+          <button type="submit" formaction="{% url 'tours:needs_add' tour.slug %}?all=1" class="text-sm underline ml-2">{% trans "Add all" %}</button>
+        {% endif %}
+      </form>
+    </section>
+  {% endif %}
+
+  <form method="post" enctype="multipart/form-data" class="border rounded-xl bg-secondary p-6 space-y-4" x-data="needRows(true)">
+    {% csrf_token %}
+
+    <div x-data="{ add() {
+        const total = document.getElementById('id_vehicles-TOTAL_FORMS');
+        const html = document.getElementById('vehicle-row-template').innerHTML.replace(/__prefix__/g, total.value);
+        document.getElementById('vehicle-rows').insertAdjacentHTML('beforeend', html);
+        total.value = parseInt(total.value, 10) + 1;
+      } }">
+      <h2 class="mt-0">{% trans "Our vehicles" %}</h2>
+      <p class="text-xs">{% trans "The places on each part of the route come from the seats of the vehicles there, plus their drivers. Without a vehicle, the group size counts." %}</p>
+      {{ vehicles.management_form }}
+      {{ vehicles.non_form_errors }}
+      <div id="vehicle-rows" class="space-y-3 mb-3">
+        {% for form in vehicles %}{% include "tours/_vehicle_row.html" %}{% endfor %}
+      </div>
+      <template id="vehicle-row-template">{% include "tours/_vehicle_row.html" with form=vehicles.empty_form %}</template>
+      <button type="button" class="btn btn-purple" @click="add()"><i class="fa fa-plus mr-1"></i>{% trans "Add a vehicle" %}</button>
+    </div>
+
+    <h2>{% trans "We're still looking for" %}</h2>
+    <p class="text-xs">{% trans "One line per thing: a van, a driver, people with a skill. Skills from the list let us find people near your route who have them." %}</p>
+    {{ formset.management_form }}
+    {{ formset.non_form_errors }}
+    <div id="need-rows" class="space-y-2">
+      {% for need_form in formset %}
+        {% include "events/_need_row.html" with need_form=need_form %}
+      {% endfor %}
+    </div>
+    <template id="need-row-template">{% include "events/_need_row.html" with need_form=formset.empty_form %}</template>
+    <button type="button" class="btn btn-purple" @click="add()"><i class="fa fa-plus mr-1"></i>{% trans "Add a need" %}</button>
+
+    <div class="flex justify-between gap-3 pt-4">
+      <a href="{{ tour.get_absolute_url }}" class="btn btn-lg btn-purple"><i class="fa fa-chevron-left mr-2"></i>{% trans "Back to tour" %}</a>
+      <button type="submit" class="btn btn-lg"><i class="fa fa-save mr-2"></i>{% trans "Save" %}</button>
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+{% block javascript %}
+{{ block.super }}
+{% include "_vocabulary_select_js.html" %}
+{% include "events/_need_rows_js.html" %}
+{% endblock %}

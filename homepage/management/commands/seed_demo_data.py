@@ -25,6 +25,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.contrib.gis.geos import Point
 from django.core.files import File
 from django.core.management.base import BaseCommand
+from django.db.models import Q
 from django.utils import timezone
 
 from communities.models import Community, CommunityPhoto
@@ -38,6 +39,14 @@ from gift_economy.gifts.skills.models import Skill, get_or_create_skill
 from users.models import User
 
 DEMO_PASSWORD = "ecobasa123"
+
+# The country of a demo person or community, by its place (as the location picker sets
+# it; tours and the gifts' country filter go by it)
+COUNTRY_OF_PLACE = {
+    "Görlitz, Germany": "DE", "Bautzen, Germany": "DE", "Ariège, France": "FR", "Utrecht, Netherlands": "NL",
+    "Extremadura, Spain": "ES", "Alentejo, Portugal": "PT", "Puerto Viejo de Talamanca, Costa Rica": "CR",
+    "Bocas del Toro, Panama": "PA", "Copenhagen, Denmark": "DK", "Montpellier, France": "FR",
+}
 SEED_IMAGES_DIR = os.path.join(os.path.dirname(__file__), "seed_images")
 
 
@@ -97,6 +106,7 @@ class Command(BaseCommand):
         self._seed_projects(users, communities)
         self._seed_community_events(users, communities)
         self._seed_goods_around(users, communities)
+        self._seed_tours(users, communities)
 
         self.stdout.write(self.style.SUCCESS(
             "\nDone. Log in as any of these (password: %s):" % DEMO_PASSWORD
@@ -158,6 +168,27 @@ class Command(BaseCommand):
                 ecobasa_what="Sending moringa north to people who think a frost is a personality trait.",
                 location_name="Puerto Viejo de Talamanca, Costa Rica", point=(-82.7539, 9.6560),
             ),
+            dict(
+                email="nils@ecobasa.demo", name="Nils Haugen",
+                about="Sailed around half the world, then forgot which half. Restores old boats in a Caribbean boatyard.",
+                world="Lends his ketch to anyone who promises to talk to her nicely.",
+                ecobasa_what="Someone to sail 'Albatroz' back to Europe before her barnacles unionise.",
+                location_name="Bocas del Toro, Panama", point=(-82.2479, 9.3403),
+            ),
+            dict(
+                email="freja@ecobasa.demo", name="Freja Holm",
+                about="Spins yarn on the ferry, knits on the bus, unravels on Sundays.",
+                world="Runs a repair café where nothing leaves without a darned elbow.",
+                ecobasa_what="Wool that hasn't seen a factory, for jumpers that outlive me.",
+                location_name="Copenhagen, Denmark", point=(12.5683, 55.6761),
+            ),
+            dict(
+                email="jules@ecobasa.demo", name="Jules Arnaud",
+                about="Teaches maths, brews tea, loses to the cat at chess.",
+                world="Leaves jars of something fermented on the neighbours' doorsteps.",
+                ecobasa_what="A kombucha culture that survives a teacher's holidays.",
+                location_name="Montpellier, France", point=(3.8767, 43.6108),
+            ),
         ]
 
         users = {}
@@ -176,6 +207,11 @@ class Command(BaseCommand):
             if created:
                 user.set_password(DEMO_PASSWORD)
                 user.save()
+            # Also on older demo data
+            country = COUNTRY_OF_PLACE.get(spec["location_name"])
+            if country and not user.country:
+                user.country = country
+                user.save(update_fields=["country"])
             users[spec["email"]] = user
         return users
 
@@ -223,6 +259,15 @@ class Command(BaseCommand):
                 location_name="Extremadura, Spain", point=(-6.3372, 39.4750),
             ),
             dict(
+                name="Cacao Tierra Viva", owner="valeria@ecobasa.demo",
+                type=Community.COMMUNITY_TYPE_FARM, status=Community.COMMUNITY_STATUS_ESTABLISHED,
+                vision="Cacao under the shade of the old forest, and the forest staying old.",
+                description="Six families growing cacao, bananas and arguments about fermentation boxes, at the edge of the rainforest.",
+                accomodation="Hammocks on the drying deck. The howler monkeys are the alarm clock, at 4:30.",
+                inhabitants=17, children=6, max_guests=5,
+                location_name="Puerto Viejo de Talamanca, Costa Rica", point=(-82.7539, 9.6560),
+            ),
+            dict(
                 name="The Someday Ecovillage (Still Just a WhatsApp Group)", owner="ana@ecobasa.demo",
                 type=Community.COMMUNITY_TYPE_PROJECT, status=Community.COMMUNITY_STATUS_PLANNING,
                 vision="Land, community, purpose — we're 90% vision board, 10% actual plan.",
@@ -252,6 +297,10 @@ class Command(BaseCommand):
                 name=spec["name"], defaults=defaults,
             )
             # Also on older demo data
+            country = COUNTRY_OF_PLACE.get(spec["location_name"])
+            if country and not community.country:
+                community.country = country
+                community.save(update_fields=["country"])
             if community.location_public != spec.get("location_public", False):
                 community.location_public = spec.get("location_public", False)
                 community.save(update_fields=["location_public"])
@@ -535,7 +584,8 @@ class Command(BaseCommand):
 
     def _get_or_create_match(self, from_user, recipient, target, **defaults):
         ct = ContentType.objects.get_for_model(target)
-        match, created = Match.objects.get_or_create(
+        # A tour visit to the same host is another match (tours.Stop.visit_match)
+        match, created = Match.objects.filter(tour_stop__isnull=True).get_or_create(
             from_user=from_user, recipient=recipient,
             content_type=ct, object_id=str(target.pk),
             defaults=defaults,
@@ -911,18 +961,20 @@ class Command(BaseCommand):
             ReferenceSkill.STATUS_CONFIRMED, ReferenceSkill.STATUS_PENDING, ReferenceSkill.STATUS_DECLINED,
         )
 
+        # Shared ones show up for staff to pick from; the homepage takes a few of the featured
         specs = [
             # About a person — from the accepted sourdough match: gift name + a skill Ana
             # doesn't list yet, waiting for her to confirm it
-            dict(author=mireille, subject=ana, impression=P, age_days=3,
+            dict(author=mireille, subject=ana, impression=P, age_days=3, share=True, featured=True,
                  text="Her starter argued with mine for an hour, then they made the best loaf of my life.",
                  gift_names=["Sourdough starter (opinionated)"], skills=[("Bread Baking", PENDING)]),
             # About a person — a skill they have (confirmed) and one of their offers by name
-            dict(author=diego, subject=bjorn, impression=P, age_days=12,
-                 text="Built us a gate the goat can't open. The goat is furious. We are delighted.",
+            dict(author=diego, subject=bjorn, impression=P, age_days=12, share=True, featured=True,
+                 text="Built us a gate the goat can't open. The goat is furious. We are delighted.", photo="goat.jpg",
                  gift_names=["Slightly judgmental goat"], skills=[("Woodworking", CONFIRMED)]),
             # About a community — from the accepted volunteer stay; one tag declined
             dict(author=sam, subject=communities["Three Goats and a Dream Farm"], impression=P, age_days=8,
+                 share=True, featured=True,
                  text="Two weeks of mud walls and goat supervision. Came for solar, stayed for the cob.",
                  skills=[("Natural Building", CONFIRMED), ("Yoga", DECLINED)]),
             dict(author=mireille, subject=communities["Sonnenkraut Ecovillage"], impression=N, age_days=20,
@@ -931,11 +983,11 @@ class Command(BaseCommand):
             dict(author=bjorn, subject=Listing.objects.get(title="Zucchini", owner=luna),
                  match=Match.objects.filter(from_user=bjorn, content_type__model="listing", object_id__in=Listing.objects.filter(
                      title="Zucchini", owner=luna).values("pk")).first(),
-                 impression=N, age_days=6,
+                 impression=N, age_days=6, share=True,
                  text="Took three kilos. Fourteen more followed me home. I did not ask questions."),
             # About a user skill
             dict(author=luna, subject=Listing.objects.get(owner=diego, type="offer", skill__name="Natural Building"),
-                 impression=P, age_days=15,
+                 impression=P, age_days=15, share=True, featured=True,
                  text="Taught me to read a wall by knocking on it. The wall now knocks back. Highly recommended."),
             # About a community skill — the one negative
             dict(author=ana, subject=Listing.objects.get(
@@ -945,31 +997,44 @@ class Command(BaseCommand):
         ]
 
         for spec in specs:
-            subject = spec["subject"]
-            reference, created = Reference.objects.get_or_create(
-                author=spec["author"],
-                content_type=ContentType.objects.get_for_model(subject),
-                object_id=str(subject.pk),
-                defaults={
-                    "recipient": subject if isinstance(subject, User) else subject.get_match_owner(),
-                    "impression": spec["impression"],
-                    "text": spec["text"],
-                    "gift_names": spec.get("gift_names", []),
-                    "match": spec.get("match"),
-                },
-            )
-            if not created:
-                continue
-            Reference.objects.filter(pk=reference.pk).update(
-                created_at=timezone.now() - timedelta(days=spec["age_days"])
-            )
-            for skill_name, status in spec.get("skills", []):
-                skill, _created = Skill.objects.get_or_create(name=skill_name)
-                ReferenceSkill.objects.create(reference=reference, skill=skill, status=status)
-            notify_reference_created(reference)
-            Notification.objects.filter(reference=reference).update(
-                created_at=timezone.now() - timedelta(days=spec["age_days"])
-            )
+            self._seed_reference(created_at=timezone.now() - timedelta(days=spec.pop("age_days")), **spec)
+
+    def _seed_reference(self, author, subject, text, created_at, impression=Reference.IMPRESSION_POSITIVE,
+                        match=None, share=False, featured=False, photo=None, gift_names=(), skills=(), people=(),
+                        place=None, pending=False):
+        """A reference written at `created_at`, with its notification then. With a `place`
+        (a tour's stop) one of many in a guestbook, `pending` until confirmed."""
+        reference, created = Reference.objects.get_or_create(
+            author=author,
+            content_type=ContentType.objects.get_for_model(subject),
+            object_id=str(subject.pk),
+            place_type=ContentType.objects.get_for_model(place) if place else None,
+            place_id=str(place.pk) if place else "",
+            defaults={
+                "pending": pending,
+                "recipient": subject if isinstance(subject, User) else subject.get_match_owner(),
+                "impression": impression,
+                "text": text,
+                "gift_names": list(gift_names),
+                "match": match,
+                "share_publicly": share,
+            },
+        )
+        if not created:
+            return reference
+        Reference.objects.filter(pk=reference.pk).update(
+            created_at=created_at, featured_at=created_at if featured else None,
+        )
+        if photo:
+            _seed_image(reference.photo, photo)
+            reference.save(update_fields=["photo"])
+        for skill_name, status in skills:
+            skill, _created = Skill.objects.get_or_create(name=skill_name)
+            ReferenceSkill.objects.create(reference=reference, skill=skill, status=status)
+        reference.people.set(people)
+        notify_reference_created(reference)
+        Notification.objects.filter(reference=reference).update(created_at=created_at)
+        return reference
 
     # ── Projects ─────────────────────────────────────────────────────────
 
@@ -1168,4 +1233,537 @@ class Command(BaseCommand):
         )
         coming(ana, festival, 2)
         coming(mireille, festival, 1, days=(festival.starts_on + timedelta(days=1), festival.ends_on))
+
+    # ── Community-Tours ──────────────────────────────────────────────────
+
+    def _seed_tours(self, users, communities):
+        """Tours from event to event and community to community: a van that looks for
+        travellers, a bike ride to a building project, a tour idea with stops but no
+        dates, two ideas without stops (on the map about where their organisers live),
+        a personal tour that is in no list, and two rides (a car, a train)."""
+        from events.models import Event
+        from tours.models import Stop, Tour, append_stop
+
+        self.stdout.write("Seeding community tours…")
+        luna, bjorn, mireille = users["luna@ecobasa.demo"], users["bjorn@ecobasa.demo"], users["mireille@ecobasa.demo"]
+        diego, ana, sam = users["diego@ecobasa.demo"], users["ana@ecobasa.demo"], users["sam@ecobasa.demo"]
+        sonnenkraut, kombucha = communities["Sonnenkraut Ecovillage"], communities["Kombucha Commune"]
+        goats, barefoot = communities["Three Goats and a Dream Farm"], communities["Barefoot Bureaucracy House Project"]
+        today = timezone.localdate()
+
+        def day(n):
+            return today + timedelta(days=n)
+
+        def place(name, lon, lat, country):
+            return {"name": name, "location": Point(lon, lat, srid=4326), "country": country}
+
+        def tour(title, organiser, stops=(), learn=(), image=None, **fields):
+            obj, created = Tour.objects.get_or_create(
+                title=title, defaults={"organiser": organiser, "published_at": timezone.now(), **fields},
+            )
+            if not created:
+                obj.rebuild_route()  # also on older demo data
+                return obj
+            for name in learn:
+                obj.learn_skills.add(get_or_create_skill(name)[0])
+            for stop in stops:
+                append_stop(Stop(tour=obj, **stop))
+            if image:
+                _seed_image(obj.image, image)
+                obj.save(update_fields=["image"])
+            return obj
+
+        open_day = Event.objects.get(community=sonnenkraut, title__startswith="Open day")
+        seminar = Event.objects.get(community=kombucha, title="Fermentation weekend")
+        festival = Event.objects.get(community=goats, title="Olive harvest festival")
+        stove = Event.objects.get(community=sonnenkraut, title="Rocket stove for the community kitchen")
+
+        jars = tour(
+            "Jars, olives and a long way south", luna,
+            stops=[
+                dict(event=open_day, arrive_on=open_day.starts_on, leave_on=open_day.starts_on + timedelta(days=1),
+                     note="We leave the morning after the open day."),
+                dict(community=barefoot, arrive_on=day(15), leave_on=day(17), flexible=True,
+                     note="Two nights, if their couch still exists."),
+                dict(event=seminar, arrive_on=seminar.starts_on - timedelta(days=1), leave_on=seminar.ends_on + timedelta(days=1)),
+                dict(event=festival, arrive_on=festival.starts_on, leave_on=festival.ends_on, onward_mode="train"),
+            ],
+            learn=["Fermentation", "Natural Building"],
+            image="kombucha.jpg",
+            description="From the compost toilets of Görlitz to the olive trees of Extremadura, with a "
+                        "fermentation weekend in the Pyrenees on the way. Three seats in the van are free.",
+            travel_mode="van", open_to_join=True, max_people=3, children_welcome=True,
+            costs_note="We share diesel and tolls by kilometre; nobody pays for an empty seat.",
+            good_to_know="The van has a fridge for the cultures and no room for big suitcases.",
+        )
+        bikes = tour(
+            "By bike to the rocket stove", sam,
+            stops=[
+                dict(community=barefoot, arrive_on=day(2), leave_on=day(3)),
+                dict(place("Campsite on the Fulda, Kassel", 9.4797, 51.3127, "DE"), arrive_on=day(6), leave_on=day(7), flexible=True),
+                dict(place("Old mill hostel, Leipzig", 12.3731, 51.3397, "DE"), arrive_on=day(9), leave_on=day(10), flexible=True),
+                dict(event=stove, arrive_on=day(12), leave_on=day(22)),
+            ],
+            learn=["Natural Building", "Rocket Stove Building"],
+            image="cob_hut.jpg",
+            description="Utrecht to Görlitz on two wheels, to help build the rocket stove and cob bench "
+                        "at Sonnenkraut. About 80 km a day, slower uphill.",
+            travel_mode="bicycle", open_to_join=True, max_people=2, animals_welcome=True,
+            good_to_know="Bring your own tent and a spare inner tube.",
+        )
+        tour(
+            "Hitchhiking the Pyrenees, someday", diego,
+            stops=[dict(community=goats), dict(community=kombucha), dict(place("Mountain refuge, Andorra", 1.5218, 42.5063, "AD"))],
+            learn=["Fermentation", "Herbal Medicine"],
+            description="No dates yet: from our farm up to the Kombucha Commune and over the mountains, "
+                        "whenever the olives let us go.",
+            travel_mode="hitchhiking", open_to_join=True, max_people=1,
+        )
+        seeds = tour(
+            "Seed swap tour through Portugal", ana,
+            learn=["Beekeeping", "Herbal Medicine"],
+            description="An idea: a summer from farm to farm with a box of seeds, swapping what grows "
+                        "well in dry soil. Tell me where we should stop.",
+            travel_mode="car", open_to_join=True, max_people=2, children_welcome=True, animals_welcome=True,
+            countries=["PT", "ES"],
+        )
+        tour(
+            "Woodworking by train to the north", bjorn,
+            learn=["Woodworking", "Beekeeping"],
+            description="An idea: by train from community to community up to Scandinavia, carving spoons "
+                        "and learning how others build their houses.",
+            travel_mode="train", open_to_join=True, countries=["DK", "SE", "NO"],
+        )
+        tour(
+            "Visiting the Kombucha Commune", mireille,
+            stops=[dict(place("Lyon", 4.8357, 45.764, "FR"), arrive_on=day(30), leave_on=day(32)),
+                   dict(community=kombucha, arrive_on=day(33), leave_on=day(40))],
+            description="Back home via my sister's.",
+            travel_mode="train", open_to_join=False, listed=False,
+        )
+
+        # Who joins the van: Sam from the second stop on (accepted), Diego asks for the
+        # last part only (open)
+        self._seed_join(jars, sam, 1, 3, "accepted", "I can help with the jars, and I'd love to see the olives.")
+        self._seed_join(jars, diego, 2, 3, "pending", "Could you take me from the fermentation weekend down south?")
+        # Tour visits: the house project agreed, the fermentation weekend is asked
+        self._seed_visit(jars, 1, "accepted", "We are a small group with a van full of jars. We'd cook for everyone one evening.")
+        self._seed_visit(jars, 2, "pending", "We'd love to join the weekend as a group and help with setting up.")
+
+        # Vehicles and what the tours still look for (gifts.Listing.tour)
+        from tours.models import Vehicle
+        van, created = Vehicle.objects.get_or_create(tour=jars, label="Luna's van", defaults={
+            "seats": 2, "sleeps": 2, "note": "A fridge for the cultures, a roof box; three on the front bench, a bed for two in the back", "others_may_drive": True,
+        })
+        if created:
+            van.drivers.add(luna, sam)
+        self._seed_tour_need(jars, "Someone to share the driving", Listing.KIND_HANDS, quantity=1, unit="people")
+        self._seed_tour_need(bikes, "Carpentry", Listing.KIND_HANDS, skill="Carpentry", quantity=2, unit="people",
+                             description="For the cob bench around the stove")
+        self._seed_tour_need(seeds, "Van", Listing.KIND_VEHICLE, description="Or a car with a big boot")
+
+        # Rides: from one place to another on one day, like the ride form makes them
+        hamburg = tour(
+            "Hamburg → Copenhagen", bjorn,
+            stops=[dict(place("Hamburg", 9.9937, 53.5511, "DE"), leave_on=day(5), leave_at=datetime_time(8, 30)),
+                   dict(place("Copenhagen", 12.5683, 55.6761, "DK"), arrive_on=day(5))],
+            description="Up north to the woodworking week, back the Sunday after. Happy to stop for a swim on the way.",
+            travel_mode="car", open_to_join=True,
+        )
+        car, created = Vehicle.objects.get_or_create(tour=hamburg, label="Car", defaults={
+            "seats": 3, "note": "Room for a backpack each, the tools ride in the boot",
+        })
+        if created:
+            car.drivers.add(bjorn)
+        tour(
+            "Lyon → Montpellier", mireille,
+            stops=[dict(place("Lyon", 4.8357, 45.764, "FR"), leave_on=day(9), leave_at=datetime_time(10, 0)),
+                   dict(place("Montpellier", 3.8767, 43.6108, "FR"), arrive_on=day(9))],
+            description="Taking the train south with a basket of kombucha starters. Company welcome.",
+            travel_mode="train", open_to_join=True, max_people=3,
+            good_to_know="Bring your own lunch, I bring the tea.",
+        )
+        self._seed_boat_tour(users, communities, tour, place, day)
+        self._seed_gifts_along_tours(users, communities)
+
+    def _seed_gifts_along_tours(self, users, communities):
+        """Something for each tour with stops to take along: offered at or near one place on
+        its route and wished for at or near a later one (tours.deliveries)."""
+        bjorn, mireille = users["bjorn@ecobasa.demo"], users["mireille@ecobasa.demo"]
+        diego, ana = users["diego@ecobasa.demo"], users["ana@ecobasa.demo"]
+        freja, jules = users["freja@ecobasa.demo"], users["jules@ecobasa.demo"]
+        sonnenkraut, kombucha = communities["Sonnenkraut Ecovillage"], communities["Kombucha Commune"]
+        goats, barefoot = communities["Three Goats and a Dream Farm"], communities["Barefoot Bureaucracy House Project"]
+        cacao = communities["Cacao Tierra Viva"]
+        OFFER, WISH = Listing.TYPE_OFFER, Listing.TYPE_WISH
+        for holder, type, kind, title, fields in [
+            # Jars, olives and a long way south: honey from the open day to the
+            # fermentation weekend, a wheelbarrow from the house project to the farm
+            (sonnenkraut, OFFER, Listing.KIND_FOOD, "Honey", dict(quantity=6, unit="pieces", description="Six jars of linden honey from our bees.")),
+            (kombucha, WISH, Listing.KIND_FOOD, "Honey", dict(quantity=3, unit="pieces", description="To sweeten the next batch of mead.")),
+            (barefoot, OFFER, Listing.KIND_TOOL, "Wheelbarrow", dict(description="Sturdy, with a new tyre. We pave our yard now.")),
+            (goats, WISH, Listing.KIND_TOOL, "Wheelbarrow", dict(description="Ours lost its wheel and its will to live.")),
+            # By bike to the rocket stove: tomato seeds, light enough for a bike, for
+            # Sonnenkraut and for Björn, who lives by the route
+            (barefoot, OFFER, Listing.KIND_SEEDS_PLANTS, "Tomato", dict(quantity=6, unit="packets", plant_form=Listing.PLANT_FORM_SEEDS,
+                                                                       open_pollinated=True, description="Saved from our balcony tomatoes.")),
+            (sonnenkraut, WISH, Listing.KIND_SEEDS_PLANTS, "Tomato", dict(quantity=2, unit="packets", plant_form=Listing.PLANT_FORM_SEEDS)),
+            (bjorn, WISH, Listing.KIND_SEEDS_PLANTS, "Tomato", dict(quantity=1, unit="packets", plant_form=Listing.PLANT_FORM_SEEDS)),
+            # Hitchhiking the Pyrenees: olive oil from the farm up to the commune
+            (goats, OFFER, Listing.KIND_FOOD, "Olive oil", dict(quantity=10, unit="l", description="Last season's, pressed down the road.")),
+            (kombucha, WISH, Listing.KIND_FOOD, "Olive oil", dict(quantity=5, unit="l")),
+            # Visiting the Kombucha Commune: chestnuts found by the way, in the Cévennes
+            (diego, OFFER, Listing.KIND_FOOD, "Chestnuts", dict(
+                public_good=True, location=Point(3.2200, 44.3600, srid=4326), location_public=True,
+                location_name="Chestnut grove by the old road, Lozère",
+                description="Old trees by the road, nobody picks them. Bring a bag in October.")),
+            (kombucha, WISH, Listing.KIND_FOOD, "Chestnuts", dict(description="For chestnut flour and a winter of pancakes.")),
+            # The rides: Björn's goat wool to Freja in Copenhagen, Mireille's kombucha
+            # culture to Jules in Montpellier
+            (bjorn, OFFER, Listing.KIND_MATERIAL, "Wool", dict(quantity=3, unit="kg", description="Raw, from the goats. They didn't ask, they never do.")),
+            (freja, WISH, Listing.KIND_MATERIAL, "Wool", dict(quantity=2, unit="kg", description="Unwashed is fine, I like the smell.")),
+            (mireille, OFFER, Listing.KIND_FOOD, "Kombucha", dict(description="A SCOBY with a good temper, and a litre of starter tea.")),
+            (jules, WISH, Listing.KIND_FOOD, "Kombucha", dict()),
+            # Across the Atlantic: coffee from the cacao farm to Ana as well
+            (cacao, OFFER, Listing.KIND_FOOD, "Coffee", dict(quantity=5, unit="kg", description="Shade-grown beside the cacao, sun-dried.")),
+            (ana, WISH, Listing.KIND_FOOD, "Coffee", dict(quantity=2, unit="kg", description="For the long evenings of planning our village.")),
+        ]:
+            self._thing(holder, type, kind, title, **fields)
+
+    def _seed_boat_tour(self, users, communities, tour, place, day):
+        """Across the Atlantic by sail, a tour that is over, the way boat hitchhikers go:
+        Jules organises it from France, Nils lends Albatroz in Lisbon and sails the first
+        leg, Freja comes aboard as skipper in the Azores, Sam joins in Las Palmas while
+        they wait for the trade winds, and after Christmas in Grenada the crew stays a
+        month at Cacao Tierra Viva for the harvest (and its yoga). In spring they sail
+        home by the Azores with the cocoa beans, and make chocolate with Ana in Évora.
+        Each step has its day and hour, and the references written afterwards tell the
+        story at the stops (tours.timeline)."""
+        from gift_economy.matches.models import Contribution, Loan, Match, loan_span
+        from tours import deliveries
+        from tours.models import Delivery, Tour, vehicle_from_match
+        from tours.visits import ask_host
+
+        valeria, ana, nils = users["valeria@ecobasa.demo"], users["ana@ecobasa.demo"], users["nils@ecobasa.demo"]
+        freja, jules = users["freja@ecobasa.demo"], users["jules@ecobasa.demo"]
+        diego, sam = users["diego@ecobasa.demo"], users["sam@ecobasa.demo"]
+        cacao = communities["Cacao Tierra Viva"]
+        title = "Across the Atlantic by sail"
+        P, CONFIRMED = Reference.IMPRESSION_POSITIVE, ReferenceSkill.STATUS_CONFIRMED
+
+        def at(n, hour, minute):
+            return timezone.make_aware(datetime.combine(day(n), datetime_time(hour, minute)))
+
+        # Older demo data had Valeria organise it, the other way round
+        old = Tour.objects.filter(title=title).exclude(organiser=jules).first()
+        if old is not None:
+            self._remove_tour(old)
+
+        # Across in the trade winds from the Canaries in November, back by the Azores in May
+        days = [(-417, -411), (-403, -398), (-391, -356), (-336, -328), (-250, -219), (-189, -183), (-175, -173), (-172, -165)]
+        lisbon = ("Doca de Alcântara, Lisbon", -9.1724, 38.7030, "PT")
+        horta = ("Horta marina, Faial (Azores)", -28.6274, 38.5312, "PT")
+        atlantic = tour(
+            title, jules,
+            stops=[
+                dict(place(*lisbon), flexible=True, note="Nils hands Albatroz over and sails the first leg with us."),
+                dict(place(*horta), flexible=True, note="Freja comes aboard. We paint Albatroz on the harbour wall, like every crew does."),
+                dict(place("Las Palmas marina, Gran Canaria", -15.4183, 28.1300, "ES"), flexible=True,
+                     note="Waiting for the trade winds: provisioning, boat work, and finding a fourth for the crossing."),
+                dict(place("St. George's, Grenada", -61.7517, 12.0560, "GD"), flexible=True,
+                     note="Landfall after the crossing. Christmas in the islands, then slowly west."),
+                dict(community=cacao, note="A month of cacao harvest at the farm."),
+                dict(place(*horta), flexible=True, note="Freja goes home. Is our painting still there?"),
+                dict(place(*lisbon), flexible=True, onward_mode="train", note="Albatroz goes back to Nils."),
+                dict(place("Évora", -7.9097, 38.5714, "PT"), note="Roasting, grinding, tasting: chocolate at Ana's."),
+            ],
+            learn=["Sailing", "Yoga"],
+            image="albatroz_at_sea.jpg",
+            description="From Lisbon to a cacao farm in Talamanca and back under sail: down to the Canaries for the "
+                        "trade winds in November, across to Grenada for Christmas, a month of cacao harvest in Costa "
+                        "Rica, and home in spring by the Azores, with the beans for Ana's first chocolate.",
+            travel_mode="boat", open_to_join=True, max_people=4,
+            costs_note="Everyone pays their own food; harbour fees and diesel we share. Nobody pays for the wind.",
+            good_to_know="About three weeks at sea each way, and more than half the time in harbours doing boat work. "
+                         "Bring a head torch, seasickness tablets and something to play.",
+        )
+        for stop, (arrive, leave) in zip(atlantic.ordered_stops(), days):
+            if stop.arrive_on != day(arrive) or stop.leave_on != day(leave):
+                stop.arrive_on, stop.leave_on = day(arrive), day(leave)
+                stop.save(update_fields=["arrive_on", "leave_on"])
+        atlantic.rebuild_route()
+        Tour.objects.filter(pk=atlantic.pk).update(published_at=at(-517, 21, 14))
+        stops = atlantic.ordered_stops()
+
+        # What the people bring: Freja skippers, the farm teaches yoga, Ana makes chocolate
+        Listing.objects.get_or_create(
+            owner=freja, community=None, type=Listing.TYPE_OFFER, kind=Listing.KIND_SKILL,
+            skill=get_or_create_skill("Sailing")[0],
+            defaults={"level": Listing.LEVEL_EXPERT, "description": "Twenty years of night watches. I knit through the dull ones."},
+        )
+        yoga, _created = Listing.objects.get_or_create(
+            community=cacao, event=None, type=Listing.TYPE_OFFER, kind=Listing.KIND_SKILL,
+            skill=get_or_create_skill("Yoga")[0],
+            defaults={"description": "On the beach below the farm after the morning harvest, the sea counting the breaths."},
+        )
+        chocolate, _created = self._thing(ana, Listing.TYPE_OFFER, Listing.KIND_FOOD, "Chocolate",
+                                          description="Bean-to-bar, stone-ground in our (future) village kitchen.")
+
+        # The boat: Nils lends Albatroz in Lisbon, sails the first leg and gets her back there
+        self._seed_tour_need(atlantic, "Sailing boat", Listing.KIND_VEHICLE, lend=True,
+                             description="A boat for four that can cross the Atlantic and back, from Portugal")
+        boat, _created = self._thing(nils, Listing.TYPE_OFFER, Listing.KIND_VEHICLE, "Sailing boat", lend=True,
+                                     description="'Albatroz', a 12 m ketch with a new mainsail, ready for an ocean crossing.")
+        _seed_image(boat.image, "albatroz_at_sea.jpg")
+        boat.save()
+        need = Listing.objects.get(tour=atlantic, type=Listing.TYPE_WISH, title="Sailing boat")
+        lend = Match.objects.filter(contributions__listing=need, from_user=nils).first()
+        if lend is None:
+            lend = Match(
+                from_user=nils, recipient=jules, status=Match.STATUS_ACCEPTED,
+                message="Albatroz spends the summer in Lisbon. Take her across, she knows the way better than I "
+                        "do. I'll sail the first leg with you and fetch her when you're back.",
+            )
+            lend.target = need
+            lend.save()
+            Contribution.objects.bulk_create([Contribution(match=lend, listing=need), Contribution(match=lend, listing=boat)])
+        starts_at, ends_at = loan_span(day(-417), day(-173))
+        Loan.objects.update_or_create(match=lend, defaults={"starts_at": starts_at, "ends_at": ends_at})
+        Match.objects.filter(pk=lend.pk).update(created_at=at(-505, 23, 51), responded_at=at(-504, 7, 42))
+        # The tour's vehicle comes with the match; Freja and Nils may sail her too
+        vehicle = vehicle_from_match(lend)
+        vehicle.label, vehicle.sleeps = "Albatroz", 6
+        vehicle.note = "12 m ketch: two masts, six berths, a galley that stays level in a gale"
+        vehicle.save()
+        vehicle.drivers.add(jules, freja, nils)
+
+        # The crew: Diego all the way, Nils to the Azores, Freja from the Azores and back
+        # there, Sam from Las Palmas
+        for person, start, end, asked, accepted, message in [
+            (diego, 0, 7, at(-497, 19, 3), at(-496, 8, 15),
+             "I sing badly and fix pumps well. The goats can spare me for nine months."),
+            (nils, 0, 1, at(-503, 10, 20), at(-503, 10, 41),
+             "As promised: the first leg, to see her into good hands."),
+            (freja, 1, 5, at(-470, 6, 58), at(-468, 9, 30),
+             "Twenty years of sailing, skipper's licence, working the season at the boatyard in Horta. Count me in."),
+            (sam, 2, 7, at(-385, 23, 12), at(-384, 10, 5),
+             "We just met at the marina bar. Electrics, cooking, cheerful. Never been seasick (never been at sea)."),
+        ]:
+            self._seed_join(atlantic, person, start, end, Match.STATUS_ACCEPTED, message)
+            Match.objects.filter(traveller__tour=atlantic, traveller__user=person).update(created_at=asked, responded_at=accepted)
+
+        # The farm takes the group for a month, with its yoga
+        farm = stops[4]
+        if farm.visit_match_id is None:
+            ask_host(farm, jules, stay_from=farm.arrive_on, stay_to=farm.leave_on, contributions=[(yoga, None)],
+                     message="We're four sailors coming across with Albatroz. Could we help with the harvest for a "
+                             "month? And we'd love to join your yoga.")
+            farm.refresh_from_db()
+            visit = farm.visit_match
+            visit.status, visit.responded_at = Match.STATUS_ACCEPTED, timezone.now()
+            visit.save()
+        Match.objects.filter(pk=farm.visit_match_id).update(created_at=at(-360, 14, 26), responded_at=at(-358, 5, 50))
+        visit = Match.objects.get(pk=farm.visit_match_id)
+
+        # The cocoa beans travel along to Ana, and chocolate comes back
+        beans, _created = self._thing(cacao, Listing.TYPE_OFFER, Listing.KIND_FOOD, "Cocoa beans", quantity=30, unit="kg",
+                                      description="Fermented and sun-dried on our deck, this season's harvest.")
+        wish, _created = self._thing(ana, Listing.TYPE_WISH, Listing.KIND_FOOD, "Cocoa beans", quantity=10, unit="kg",
+                                     description="For a first try at bean-to-bar chocolate in our (future) village kitchen.")
+        delivery = Delivery.objects.filter(tour=atlantic, offer=beans).first()
+        if delivery is None:
+            pair = next((p for p in deliveries.delivery_suggestions(atlantic) if p.offer == beans), None)
+            if pair is not None:
+                delivery = deliveries.take(
+                    atlantic, pair, jules,
+                    to_giver="Valeria, could we take 10 kg of your beans home for Ana's chocolate?",
+                    to_receiver="Hola Ana! We sail home from Costa Rica in spring and could bring you 10 kg of cocoa "
+                                "beans. Shall we stay and help you make chocolate?",
+                )
+                Contribution.objects.get_or_create(match=delivery.handover_match, listing=chocolate)
+                deliveries.picked_up(delivery)
+                deliveries.handed_over(delivery)
+        handover = delivery.handover_match if delivery is not None else None
+        if delivery is not None:
+            Match.objects.filter(pk=delivery.pickup_match_id).update(
+                status=Match.STATUS_ACCEPTED, created_at=at(-300, 18, 40), responded_at=at(-299, 6, 12),
+                proposed_date=at(-220, 6, 30),
+            )
+            Match.objects.filter(pk=delivery.handover_match_id).update(
+                status=Match.STATUS_ACCEPTED, created_at=at(-300, 18, 44), responded_at=at(-297, 21, 3),
+                proposed_date=at(-171, 17, 20),
+            )
+            Delivery.objects.filter(pk=delivery.pk).update(picked_up_at=at(-220, 6, 30), delivered_at=at(-171, 17, 20))
+
+        # What they wrote afterwards, at the stops where it happened
+        joined = {t.user_id: t.match for t in atlantic.travellers.exclude(match=None).select_related("match")}
+        crew = [jules, diego, sam, freja]
+        for spec in [
+            # The farm, the group and the yoga, after the month at Cacao Tierra Viva
+            dict(author=valeria, subject=atlantic, match=visit, created_at=at(-214, 19, 5), photo="cacao_pod_open.jpg",
+                 people=crew,
+                 text="They came up the forest path at dusk with four duffel bags, a guitar with three strings and the "
+                      "smell of five months at sea. For a month they cut pods with us at sunrise, carried them out of the "
+                      "forest in baskets, turned the beans in the fermentation boxes every second day and learned to "
+                      "tell by the smell when they are ready. Diego sang to the cacao trees, Sam fixed our solar dryer, "
+                      "Freja mended every hammock on the deck, Jules wrote every bean count in a notebook. On the last "
+                      "night we opened the first pod of the new harvest together, and I told them what my grandmother "
+                      "told me: cacao is a gift you only keep by passing it on. They took ten kilos of it to Portugal."),
+            dict(author=jules, subject=cacao, match=visit, created_at=at(-211, 7, 48), photo="cocoa_beans_drying.jpg",
+                 text="I planned this tour for a year at my kitchen table in Montpellier, and nothing I planned came "
+                      "close to the farm. At 4:30 the howler monkeys woke us, at five we were in the forest with "
+                      "machetes and baskets. We learned to cut a pod without hurting the cushion where the next flowers "
+                      "grow, to scoop out the beans, to turn the fermentation boxes, to spread the beans on the deck and "
+                      "rake them twice a day in the sun. Six families, seventeen people, six children who beat us at "
+                      "every card game. A month went by like a week. If you ever get the chance to stay at Cacao "
+                      "Tierra Viva: go, and stay longer than you planned."),
+            dict(author=diego, subject=yoga, match=visit, created_at=at(-209, 6, 30), photo="yoga_sunset.jpg",
+                 text="I'm a shepherd, not a yogi: my downward dog looks like an upset goat. But every morning after "
+                      "the harvest the farm's people unrolled their mats on the beach below the farm, and after five "
+                      "months on a boat my back said yes before I did. They teach it slowly, with jokes, and the sea "
+                      "counts the breaths. By the end of the month I could touch my toes and hold the tree while a "
+                      "pelican watched. I still greet the sun every morning, now with goats."),
+            dict(author=sam, subject=cacao, match=visit, created_at=at(-207, 16, 2),
+                 text="Their solar dryer had a loose connection and a family of geckos living in the inverter. We fixed "
+                      "the one and found a new home for the others. In return I learned more about patience from a "
+                      "fermentation box than from any office I ever worked in. Warm, wise, funny people. The "
+                      "bureaucracy here is run by howler monkeys, and it works better than ours."),
+            # Freja got off at home in the Azores
+            dict(author=freja, subject=jules, match=joined.get(freja.pk), created_at=at(-180, 22, 10),
+                 photo="horta_marina_paintings.jpg",
+                 text="I was working the season at the boatyard in Horta when Jules wrote: a ketch, a crew of three, a "
+                      "cacao farm on the other side of the ocean, would I skipper? I said yes before I finished reading. "
+                      "In October we painted Albatroz on the harbour wall: a bird with a cocoa pod in its beak and four "
+                      "names. Seven months later we sailed back into the same harbour and found it still there, a bit "
+                      "faded, between a Swedish whale and a Brazilian sun. The most careful organiser I've sailed with: "
+                      "every watch list, food list and harbour fee was there before we needed it, and still there was "
+                      "time to look at the stars."),
+            dict(author=jules, subject=freja, match=joined.get(freja.pk), created_at=at(-178, 9, 12),
+                 skills=[("Sailing", CONFIRMED)],
+                 text="Our skipper, from the Azores to Grenada and back again. Freja reads the weather the way other "
+                      "people read the paper, reefed before every squall and knitted through the night watches until "
+                      "each of us had a hat. Seven thousand miles and never a raised voice, not even at the autopilot. "
+                      "If you want to cross an ocean, ask Freja, and bring wool."),
+            # Albatroz back in Lisbon
+            dict(author=jules, subject=boat, match=lend, created_at=at(-170, 11, 25), photo="albatroz_at_sea.jpg",
+                 text="Albatroz is twelve metres of old wood and good sense: two masts, a patched mainsail, a galley "
+                      "that stays level in a gale and a chart table that smells of everyone who sailed her before. She "
+                      "carried us across the Atlantic and back, more than eight thousand miles, with a hold full of cocoa "
+                      "beans on the way home. She leaks a little at the bow in heavy seas and likes to be talked to on "
+                      "night watch. We did both: bailed, and talked. Thank you, Albatroz."),
+            dict(author=nils, subject=jules, match=lend, created_at=at(-168, 18, 0), photo="lisbon_alcantara.jpg",
+                 gift_names=["Sailing boat"],
+                 text="I sailed the first leg to Horta with them, to see Albatroz into good hands. Jules had a list for "
+                      "everything, asked about everything and wrote my answers in a notebook that now lives in her chart "
+                      "table. Eight months later I stood on the pontoon in Alcântara at sunrise and watched them come "
+                      "in: the mainsail patched, the crew brown and thin and laughing, a jar of cocoa nibs for me in the "
+                      "cockpit. The first thing I asked was whether she had been happy. She was. Lend your boat to "
+                      "people like these."),
+            # The beans reached Ana in Évora and became chocolate, made together
+            dict(author=ana, subject=atlantic, match=handover, created_at=at(-163, 10, 45), people=[jules, diego, sam],
+                 gift_names=["Cocoa beans"],
+                 text="Ten kilos of cocoa beans came to the Alentejo by sail, without a drop of diesel, and the crew put "
+                      "them into my hands on the station platform in Évora, still smelling of the farm. Then they stayed "
+                      "a week and made chocolate with me. We roasted the beans in the neighbour's bread oven, cracked "
+                      "them and blew away the shells with a hairdryer in the yard, and ground them for two days in a "
+                      "borrowed stone grinder until the whole street smelled of it. Diego sang, Sam rewired the grinder "
+                      "twice, Jules wrote down every temperature. The first bars went to everyone who had a hand in "
+                      "it: the crew, the farm, Nils, Freja on the Azores. Our group chat finally agreed on something: "
+                      "we're doing this again."),
+            dict(author=jules, subject=ana, match=handover, created_at=at(-162, 20, 15), gift_names=["Cocoa beans"],
+                 text="Ana met us at the station with a handcart and a speech that had clearly been practised. The "
+                      "kitchen of a village that doesn't exist yet already feels like one: neighbours coming in to "
+                      "taste, children stealing nibs, everyone arguing about how dark is dark enough. Patient, generous, "
+                      "and the best chocolate teacher I could have wished for, for beans we had carried so far."),
+            dict(author=jules, subject=chocolate, match=handover, created_at=at(-161, 15, 30), photo="chocolate.jpg",
+                 text="Seventy percent, stone-ground, a little rough, tasting of smoke, salt and something I can only "
+                      "call the sea. The best chocolate I have ever eaten, and I know I'm not objective: I watched these "
+                      "beans ferment in Talamanca, carried them across the Atlantic and roasted them in a bread oven in "
+                      "Évora. Ana wraps each bar in a page of an old road map. Mine is the Azores."),
+            # Diego and Sam, at the end of the tour
+            dict(author=diego, subject=jules, match=joined.get(diego.pk), created_at=at(-160, 8, 0),
+                 text="Jules asked me along for my pump skills and kept me despite my singing. Nine months, two ocean "
+                      "crossings, one farm, one chocolate kitchen, and everything worked out because someone had thought "
+                      "of it first. From Évora I hitchhiked home to my goats, smelling of chocolate. They have forgiven me."),
+            dict(author=sam, subject=jules, match=joined.get(sam.pk), created_at=at(-158, 21, 40),
+                 text="I was in Las Palmas looking for any boat going west, sitting in the marina bar behind a sign that "
+                      "said \"electrics, cooking, cheerful\". Jules sat down and asked whether I'd ever been seasick. "
+                      "\"Not yet,\" I said. Three weeks later we saw Grenada. Thank you for taking a stranger from a bar "
+                      "across an ocean. The printer at home is still possessed, and I no longer mind."),
+        ]:
+            if spec["match"] is not None:
+                self._seed_reference(impression=P, share=True, **spec)
+
+        # The guestbook: the travellers' own entries, and people they met on the way
+        bjorn, luna = users["bjorn@ecobasa.demo"], users["luna@ecobasa.demo"]
+        for spec in [
+            dict(author=bjorn, place=stops[1], created_at=at(-400, 18, 22),
+                 text="I was on holiday in Horta, looking at the paintings on the harbour wall, when four people with "
+                      "paint pots asked me to hold the ladder. An hour later I was painting the cocoa pod in the "
+                      "albatross's beak. They're sailing to a cacao farm in Costa Rica. I'm going back to my goats in "
+                      "Bautzen. Not sure which of us is braver."),
+            dict(author=jules, place=stops[2], created_at=at(-370, 22, 5),
+                 text="Day 26 in Las Palmas. The marina is a village of a thousand boats, all waiting for the same "
+                      "wind. We scrubbed the hull, sewed the sail cover, bought 40 kg of rice and 200 eggs (each one "
+                      "turned every two days, Freja insists), and found Sam behind a cardboard sign in the marina bar. "
+                      "The trade winds are filling in. We leave on Saturday."),
+            dict(author=diego, place=stops[3], created_at=at(-335, 7, 10),
+                 text="Landfall. Twenty-one days of blue and then, at dawn, a green smudge that smelled of earth and "
+                      "flowers from ten miles away. We anchored in St. George's, swam around Albatroz three times and "
+                      "ate a whole pineapple each, standing in the water. Freja cried a little. So did I."),
+            dict(author=luna, place=stops[3], created_at=at(-330, 12, 40), pending=True,
+                 text="Met this crew at the fish market in St. George's, swapping eggs for nutmeg. Lovely people, "
+                      "terrible singer. Fair winds!"),
+        ]:
+            self._seed_reference(subject=atlantic, impression=P, share=not spec.get("pending"), **spec)
+
+    def _remove_tour(self, tour):
+        """A demo tour with everything that happened on it: its matches and references,
+        and what it covered given back."""
+        from gift_economy.matches.models import Match
+        from tours.timeline import tour_match_ids
+
+        ids = tour_match_ids(tour, tour.ordered_stops())
+        given = Listing.objects.filter(contributions__match__in=ids).exclude(covered_at=None)
+        Reference.objects.filter(
+            Q(match__in=ids) | Q(content_type=ContentType.objects.get_for_model(tour), object_id=str(tour.pk)),
+        ).delete()
+        given.update(covered_at=None)
+        Match.objects.filter(pk__in=ids).delete()
+        tour.delete()
+
+    def _seed_tour_need(self, tour, title, kind, skill=None, **fields):
+        Listing.objects.get_or_create(
+            tour=tour, type=Listing.TYPE_WISH, title=title,
+            defaults={"kind": kind, "skill": get_or_create_skill(skill)[0] if skill else None, **fields},
+        )
+
+    def _seed_visit(self, tour, index, status, message):
+        """The tour asks a stop's host to take the group (tours.visits.ask_host)."""
+        from gift_economy.matches.models import Match
+        from tours.visits import ask_host
+
+        stops = tour.ordered_stops()
+        if len(stops) <= index or stops[index].visit_match_id or not stops[index].can_ask_host:
+            return
+        stop = stops[index]
+        match = ask_host(stop, tour.organiser, message=message, stay_from=stop.arrive_on, stay_to=stop.leave_on)
+        if status == Match.STATUS_ACCEPTED and match.status != status:
+            match.status = status
+            match.responded_at = timezone.now()
+            match.save()
+
+    def _seed_join(self, tour, user, start, end, status, message):
+        from gift_economy.matches.models import Match
+        from tours.models import Traveller
+
+        stops = tour.ordered_stops()
+        if len(stops) <= end or tour.travellers.filter(user=user).exists():
+            return
+        match = Match(from_user=user, recipient=tour.organiser, message=message, status=status, location_type="")
+        match.target = tour
+        if status == Match.STATUS_ACCEPTED:
+            match.responded_at = timezone.now()
+        match.save()
+        Traveller.objects.create(tour=tour, user=user, match=match, from_stop=stops[start], to_stop=stops[end])
 

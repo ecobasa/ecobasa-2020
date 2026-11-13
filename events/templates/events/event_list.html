@@ -1,0 +1,438 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block head_title %}{% trans "Events" %} — ecobasa{% endblock %}
+
+{% block extrahead %}
+{{ block.super }}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v7.2.2/ol.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.css">
+<script>
+  // Words for the filter pills
+  const EVENT_LABELS = {
+    near: '{% trans "Current Location"|escapejs %}', from: '{% trans "From"|escapejs %}', until: '{% trans "Until"|escapejs %}',
+    upcoming: '{% trans "Upcoming"|escapejs %}', past: '{% trans "Past"|escapejs %}',
+    {% for flag, label, icon in flag_choices %}{{ flag }}: '{{ label|escapejs }}',{% endfor %}
+  };
+  const EVENT_FLAG_ICONS = { {% for flag, label, icon in flag_choices %}{{ flag }}: '{{ icon }}',{% endfor %} };
+  const EVENT_KINDS = { {% for value, label, icon in kind_choices %}'{{ value }}': ['{{ label|escapejs }}', '{{ icon }}'],{% endfor %} };
+  const EVENT_NEEDS = { {% for value, label in need_choices %}'{{ value }}': '{{ label|escapejs }}',{% endfor %} };
+  const EVENT_COUNTRIES = { {% for code, name in countries %}'{{ code }}': '{{ name|escapejs }}',{% endfor %} };
+  const EVENT_FLAGS = Object.keys(EVENT_FLAG_ICONS);
+
+  // What the map and the list show: one store, read by both, kept in the address
+  document.addEventListener('alpine:init', () => {
+    Alpine.store('eventMap', {
+      view: '{{ request.GET.view|escapejs }}' === 'list' ? 'list' : 'map',
+      q: '{{ filters.q|escapejs }}',
+      near: '{% if filters.near %}{{ request.GET.near|escapejs }}{% endif %}',
+      country: '{{ filters.country|escapejs }}',
+      when: '{{ filters.when }}',
+      kind: '{{ filters.kinds|join:"," }}',
+      needs: '{{ filters.needs|join:"," }}',
+      from: '{{ filters.since|date:"Y-m-d" }}',
+      until: '{{ filters.until|date:"Y-m-d" }}',
+      learn: '{{ filters.learn|join:","|escapejs }}',
+      room: {{ filters.room|yesno:'true,false' }}, open: {{ filters.open|yesno:'true,false' }},
+      food: {{ filters.food|yesno:'true,false' }}, bed: {{ filters.bed|yesno:'true,false' }},
+      fits: {{ filters.fits|yesno:'true,false' }}, going: {{ filters.going|yesno:'true,false' }},
+      loading: false,
+      count: 0,
+      get filterCount() {
+        return [this.when, this.kind, this.from || this.until, this.learn, this.needs].concat(EVENT_FLAGS.map(flag => this[flag])).filter(Boolean).length;
+      },
+      get anything() { return this.filterCount > 0 || !!this.q || !!this.near || !!this.country; },
+      // The filters in use, as small pills to take off one by one
+      get pills() {
+        const pills = [];
+        if (this.near) pills.push({ key: 'near', icon: 'fa-crosshairs', label: EVENT_LABELS.near });
+        if (this.country) pills.push({ key: 'country', icon: 'fa-earth-europe', label: EVENT_COUNTRIES[this.country] || this.country });
+        if (this.when) pills.push({ key: 'when', icon: this.when === 'past' ? 'fa-clock-rotate-left' : 'fa-forward', label: EVENT_LABELS[this.when] });
+        this.kind.split(',').filter(Boolean).forEach(kind => pills.push({ key: 'kind:' + kind, icon: EVENT_KINDS[kind][1], label: EVENT_KINDS[kind][0] }));
+        if (this.from) pills.push({ key: 'from', icon: 'fa-calendar', label: EVENT_LABELS.from + ' ' + this.from });
+        if (this.until) pills.push({ key: 'until', icon: 'fa-calendar', label: EVENT_LABELS.until + ' ' + this.until });
+        this.learn.split(',').filter(Boolean).forEach(name => pills.push({ key: 'learn:' + name, icon: 'fa-graduation-cap', label: name, skill: true }));
+        this.needs.split(',').filter(Boolean).forEach(kind => pills.push({ key: 'needs:' + kind, icon: 'fa-hand-holding-heart', label: EVENT_NEEDS[kind] }));
+        EVENT_FLAGS.forEach(flag => { if (this[flag]) pills.push({ key: flag, icon: EVENT_FLAG_ICONS[flag], label: EVENT_LABELS[flag] }); });
+        return pills;
+      },
+      // Lists kept comma-separated: kinds and what is needed
+      has(key, value) { return this[key].split(',').includes(value); },
+      toggle(key, value) {
+        const values = this[key].split(',').filter(Boolean);
+        this[key] = (values.includes(value) ? values.filter(v => v !== value) : values.concat([value])).join(',');
+        window.eventFiltersChanged();
+      },
+      setWhen(when) { this.when = this.when === when ? '' : when; window.eventFiltersChanged(); },
+      unset(key) {
+        const [name, value] = key.split(':');
+        if (name === 'learn') {
+          this.learn = this.learn.split(',').filter(n => n && n !== value).join(',');
+          document.querySelectorAll('[data-event-learn]').forEach(input => input.__tagify && input.__tagify.removeTags(value));
+        } else if (value) {
+          this[name] = this[name].split(',').filter(v => v && v !== value).join(',');
+        } else {
+          this[name] = EVENT_FLAGS.includes(name) ? false : '';
+        }
+        window.eventFiltersChanged();
+      },
+      params() {
+        const params = new URLSearchParams();
+        ['q', 'near', 'country', 'when', 'kind', 'needs', 'from', 'until', 'learn'].forEach(key => { if (this[key]) params.set(key, this[key]); });
+        EVENT_FLAGS.forEach(flag => { if (this[flag]) params.set(flag, '1'); });
+        return params;
+      },
+      // The filters behind the filter button; `all` also the search, the place and the country
+      clear(all) {
+        Object.assign(this, { when: '', kind: '', needs: '', from: '', until: '', learn: '' });
+        EVENT_FLAGS.forEach(flag => { this[flag] = false; });
+        if (all) Object.assign(this, { q: '', near: '', country: '' });
+        document.querySelectorAll('[data-event-learn]').forEach(input => input.__tagify && input.__tagify.removeAllTags());
+        window.eventFiltersChanged();
+      },
+      showMap() { this.view = 'map'; },
+      showList() { this.view = 'list'; window.eventListReload(); },
+    });
+  });
+
+  // Search suggestions: events, their hosts, skills, where they are, and places (the map
+  // moves there, the list sorts nearest first)
+  function eventSuggestions() {
+    return {
+      items: [], active: -1, open: false, _timer: null,
+      suggest(term) {
+        clearTimeout(this._timer);
+        if (!term || term.length < 2) return this.close();
+        this._timer = setTimeout(() => {
+          const store = Alpine.store('eventMap');
+          const events = fetch('{% url "events:api-suggest" %}?when=' + store.when + '&q=' + encodeURIComponent(term)).then(r => r.json()).catch(() => []);
+          const places = term.length < 3 ? Promise.resolve([]) : fetch('{% url "gifts:api-geocode" %}?q=' + encodeURIComponent(term))
+            .then(r => r.json())
+            .then(data => data.slice(0, 4).map(d => ({ value: EcoMap.formatAddress(d), type: 'place', lat: parseFloat(d.lat), lon: parseFloat(d.lon), bbox: d.boundingbox })))
+            .catch(() => []);
+          Promise.all([events, places]).then(([found, placeItems]) => {
+            this.items = found.slice(0, 6).concat(placeItems).slice(0, 10);
+            this.open = this.items.length > 0;
+            this.active = -1;
+          });
+        }, 350);
+      },
+      selectItem(item) {
+        const store = Alpine.store('eventMap');
+        this.close();
+        if (item.type === 'place') {
+          store.near = item.lat.toFixed(4) + ',' + item.lon.toFixed(4);
+          store.q = '';
+          window._eventMapPanTo(item.lon, item.lat, 8, item.bbox);
+          window.eventFiltersChanged();
+        } else {
+          store.q = item.value;
+          window.eventFiltersChanged(true);
+        }
+      },
+      moveDown() { if (this.open) this.active = Math.min(this.active + 1, this.items.length - 1); },
+      moveUp() { if (this.open) this.active = Math.max(this.active - 1, 0); },
+      choose() { if (this.active >= 0 && this.items[this.active]) this.selectItem(this.items[this.active]); else { this.close(); window.eventFiltersChanged(true); } },
+      close() { this.open = false; this.items = []; this.active = -1; clearTimeout(this._timer); },
+    };
+  }
+</script>
+{% endblock %}
+
+{% block content %}
+<div x-data>
+  <div class="relative w-full map-shell">
+    <div id="event-map" class="absolute inset-0 w-full h-full rounded shadow bg-secondary bg-opacity-50"></div>
+
+    {# View toggle, top centre #}
+    <div class="absolute top-4 left-1/2 -translate-x-1/2 z-10">
+      <div class="inline-flex overflow-hidden rounded-full shadow-lg border bg-primary bg-opacity-20 backdrop-blur border-red">
+        <button type="button" :class="$store.eventMap.view === 'map' ? 'bg-opacity-90 shadow-inner' : 'bg-opacity-40'"
+                class="btn-pill-select bg-primary transition-all" @click="$store.eventMap.showMap()">
+          <i class="fa fa-globe"></i><span>{% trans "Map" %}</span>
+        </button>
+        <button type="button" :class="$store.eventMap.view === 'list' ? 'bg-opacity-90 shadow-inner' : 'bg-opacity-40'"
+                class="btn-pill-select bg-primary transition-all" @click="$store.eventMap.showList()">
+          <i class="fa fa-list-alt"></i><span>{% trans "List" %}</span>
+        </button>
+      </div>
+    </div>
+
+    {# Left toolbar: search, filters, near me, the filters in use #}
+    <div class="absolute top-4 left-4 flex flex-col gap-3 z-10 w-full max-w-40 md:max-w-60 lg:max-w-xs xl:max-w-md">
+      <div class="bg-secondary bg-opacity-30 backdrop-blur rounded-lg shadow p-3 flex flex-col gap-2">
+        {% include "events/_search_bar.html" with row="flex-col lg:flex-row" %}
+        {% include "events/_filter_pills.html" %}
+        <div class="flex items-center justify-between text-brown text-sm">
+          <span x-text="$store.eventMap.count + ' {% trans "results on map"|escapejs %}'"></span>
+          <button type="button" x-cloak x-show="$store.eventMap.anything" class="underline opacity-70 hover:opacity-100" @click="$store.eventMap.clear(true)">{% trans "Clear all filters" %}</button>
+        </div>
+      </div>
+    </div>
+
+    <div x-show="$store.eventMap.loading" x-cloak class="absolute bottom-16 left-1/2 -translate-x-1/2 z-10 bg-primary text-secondary px-3 py-1 rounded-full shadow text-xs">
+      <i class="fa fa-spinner fa-spin mr-1"></i> {% trans "Loading…" %}
+    </div>
+  </div>
+
+  {# The list, in a modal over the map #}
+  <div x-show="$store.eventMap.view === 'list'" x-cloak class="modal-overlay flex"
+       @click.self="$store.eventMap.showMap()" @keydown.escape.window="$store.eventMap.showMap()">
+    <div class="modal-content" role="dialog" aria-modal="true">
+      <button type="button" class="modal-close" @click="$store.eventMap.showMap()">&times;</button>
+      {# The same search and filters as on the map, the country, the filters in use #}
+      <div class="space-y-3 mb-4">
+        {% include "events/_search_bar.html" with align="right-0" %}
+        {% if countries %}
+          <select class="form-select w-full rounded text-sm" x-model="$store.eventMap.country" @change="window.eventFiltersChanged()">
+            <option value="">{% trans "All countries" %}</option>
+            {% for code, name in countries %}<option value="{{ code }}">{{ name }}</option>{% endfor %}
+          </select>
+        {% endif %}
+        {% include "events/_filter_pills.html" %}
+        <div class="text-xs text-brown flex justify-end" x-cloak x-show="$store.eventMap.anything">
+          <button type="button" class="underline opacity-70 hover:opacity-100 whitespace-nowrap" @click="$store.eventMap.clear(true)">{% trans "Clear all filters" %}</button>
+        </div>
+      </div>
+      <div id="event-list" class="max-h-[60vh] overflow-y-auto">
+        <div class="text-center py-8 text-brown"><i class="fa fa-spinner fa-spin text-2xl"></i></div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block javascript %}
+{{ block.super }}
+<script src="https://cdn.jsdelivr.net/npm/ol@v7.2.2/dist/ol.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/ol-ext@4.0.6/dist/ol-ext.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.min.js"></script>
+{% include "users/_skill_tagify_js.html" %}
+<script>
+'use strict';
+const MARKERS_URL = '{% url "events:api-markers" %}';
+const LIST_URL = '{% url "events:api-list" %}';
+const PAGE_URL = '{% url "events:list" %}';
+let eventMap, eventMarkers;
+
+// The list in the modal, for the filters
+window.eventListReload = function () {
+  if (Alpine.store('eventMap').view !== 'list') return;
+  htmx.ajax('GET', LIST_URL + '?' + Alpine.store('eventMap').params().toString(), { target: '#event-list', swap: 'innerHTML' });
+};
+
+// The events in the visible area, for the filters; `fit` shows all that match instead.
+// `keepFan`: a reload after panning keeps an open fan; filter changes close it
+window.eventMapReload = function (fit, keepFan) {
+  const store = Alpine.store('eventMap');
+  const params = store.params();
+  if (!fit) {
+    const ext = ol.proj.transformExtent(eventMap.getView().calculateExtent(eventMap.getSize()), 'EPSG:3857', 'EPSG:4326');
+    if (ext.every(isFinite)) params.set('bbox', ext.map(v => v.toFixed(4)).join(','));
+  }
+  store.loading = true;
+  fetch(MARKERS_URL + '?' + params.toString()).then(r => r.json()).then(data => {
+    if (!keepFan) window._eventCloseClusters();
+    eventMarkers.clear();
+    eventMarkers.addFeatures(data.features.map(item => {
+      const feature = new ol.Feature(Object.assign({ geometry: new ol.geom.Point(ol.proj.fromLonLat(item.geometry.coordinates)) }, item.properties));
+      feature.setStyle(EcoMap.makeIconStyle(item.properties.glyph, item.properties.colour));
+      return feature;
+    }));
+    store.count = data.features.length;
+    if (fit && data.features.length) {
+      eventMap.getView().fit(eventMarkers.getExtent(), { padding: [80, 80, 80, 80], maxZoom: 10 });
+    }
+  }).finally(() => { store.loading = false; });
+};
+
+// Something changed: map, list and address follow. `fit` after a search: show what was found
+window.eventFiltersChanged = function (fit) {
+  const store = Alpine.store('eventMap');
+  const query = store.params().toString();
+  history.replaceState(null, '', PAGE_URL + (query ? '?' + query : ''));
+  window.eventMapReload(!!fit && !!store.q);
+  window.eventListReload();
+};
+
+// An event on the map: its picture, kind, dates, some of its description and its host,
+// what one can learn and what is needed
+function eventPopup(props) {
+  const el = document.createElement('div');
+  const add = function (parent, tag, className, text) {
+    const node = document.createElement(tag);
+    if (className) node.className = className;
+    if (text) node.textContent = text;
+    parent.append(node);
+    return node;
+  };
+  const pills = function (names, colour, icon) {
+    if (!names.length) return;
+    const row = add(el, 'div', 'mt-2 flex flex-wrap gap-1');
+    names.forEach(name => {
+      const pill = add(row, 'span', 'pill text-xs ' + colour);
+      add(pill, 'i', 'fa-solid ' + icon + ' mr-1');
+      pill.append(name);
+    });
+  };
+  const close = add(el, 'button', 'map-popup-close');
+  close.type = 'button';
+  close.setAttribute('aria-label', '{% trans "Close"|escapejs %}');
+  add(close, 'i', 'fa fa-times');
+  if (props.image) {
+    const link = add(el, 'a');
+    link.href = props.url;
+    const img = add(link, 'img', 'w-full h-24 object-cover rounded mb-2');
+    img.src = props.image; img.alt = '';
+  }
+  const kind = add(el, 'span', 'pill text-secondary text-xs');
+  kind.style.background = props.colour;
+  add(kind, 'i', 'fa-solid ' + props.kind_icon + ' mr-1');
+  kind.append(props.kind);
+  const title = add(el, 'h3', 'm-0 mt-1');
+  const a = add(title, 'a', 'hover:underline', props.title);
+  a.href = props.url;
+  const dates = add(el, 'div', 'mt-1');
+  add(dates, 'i', 'fa-regular fa-calendar mr-1');
+  dates.append(props.dates);
+  if (props.description) add(el, 'p', 'text-sm text-brown mt-2 mb-0', props.description);
+  // Rendered by the server from the avatar snippet, everything in it escaped there
+  add(el, 'div', 'mt-2').innerHTML = props.host;
+  pills(props.learn, 'bg-purple', 'fa-graduation-cap');
+  pills(props.needs, 'bg-yellow', 'fa-hand-holding-heart');
+  return el;
+}
+
+// Several events at one place (a community's): its first one's pin with a count badge,
+// fanned out on a click, as on the gifts
+const THEME_BROWN = '#452912';
+const THEME_SECONDARY = '#fcf3e5';
+const badgeStyles = new Map();
+function badgeStyle(count) {
+  if (!badgeStyles.has(count)) {
+    badgeStyles.set(count, new ol.style.Style({
+      image: new ol.style.Circle({
+        radius: 11, displacement: [20, 44],
+        fill: new ol.style.Fill({ color: 'rgba(252, 243, 229, 0.5)' }),
+        stroke: new ol.style.Stroke({ color: 'rgba(69, 41, 18, 0.5)', width: 1 }),
+      }),
+      text: new ol.style.Text({
+        text: String(count), font: 'bold 12px Lato, sans-serif', offsetX: 20, offsetY: -44,
+        fill: new ol.style.Fill({ color: THEME_BROWN }),
+      }),
+    }));
+  }
+  return badgeStyles.get(count);
+}
+const spiderLegStyle = new ol.style.Style({ stroke: new ol.style.Stroke({ color: 'rgba(69, 41, 18, 0.5)', width: 1.5, lineDash: [4, 4] }) });
+const spiderCenterStyle = new ol.style.Style({
+  image: new ol.style.Circle({ radius: 5, fill: new ol.style.Fill({ color: THEME_BROWN }), stroke: new ol.style.Stroke({ color: THEME_SECONDARY, width: 2 }) }),
+});
+// The centre of the fanned-out cluster, drawn as a dot; by coordinate, since a reload
+// replaces the cluster features
+let openCenter = null;
+function clusterStyle(cluster) {
+  const features = cluster.get('features');
+  if (openCenter && features.length > 1 && ol.coordinate.equals(cluster.getGeometry().getCoordinates(), openCenter)) return spiderCenterStyle;
+  const icon = features[0].getStyle();
+  return features.length > 1 ? [icon, badgeStyle(features.length)] : icon;
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+  const base = EcoMap.buildBaseLayers();
+  eventMarkers = new ol.source.Vector();
+  // Only events at the very same spot are clustered
+  const markersLayer = new ol.layer.Vector({ source: new ol.source.Cluster({ distance: 0, source: eventMarkers }), style: clusterStyle });
+  {% if home %}
+    // Around where one asked or the place in one's profile, as far as one looks for
+    // matches (map units grow away from the equator, hence over the cosine)
+    const home = ol.proj.fromLonLat([{{ home.x|stringformat:".4f" }}, {{ home.y|stringformat:".4f" }}]);
+    const reach = {{ radius|default:100 }} * 1000 / Math.cos({{ home.y|stringformat:".4f" }} * Math.PI / 180);
+    const view = new ol.View({ center: home, zoom: 8, maxZoom: 18 });
+  {% else %}
+    // Without a place: the whole world, as on the communities
+    const view = new ol.View({ center: ol.proj.fromLonLat([0, 20]), zoom: 2, maxZoom: 18 });
+  {% endif %}
+  eventMap = new ol.Map({ target: 'event-map', layers: base.all.concat([markersLayer]), view: view });
+  {% if home %}view.fit(ol.extent.buffer(ol.extent.boundingExtent([home]), reach), { size: eventMap.getSize(), padding: [40, 40, 40, 40] });{% endif %}
+  base.setBaseLayer('ecobasa');
+  const menu = EcoMap.buildLayerToggle(eventMap, 'event-layer', {
+    title: '{% trans "Map style"|escapejs %}', satellite: '{% trans "Satellite"|escapejs %}', osm: '{% trans "OpenStreetMap"|escapejs %}',
+  });
+  menu.querySelectorAll('input').forEach(r => r.addEventListener('change', e => { if (e.target.checked) base.setBaseLayer(e.target.value); }));
+
+  const popupEl = document.createElement('div');
+  popupEl.className = 'map-popup';
+  const popup = new ol.Overlay({ element: popupEl, positioning: 'bottom-center', offset: [0, -12], stopEvent: true, autoPan: { animation: { duration: 250 }, margin: 90 } });
+  eventMap.addOverlay(popup);
+  popupEl.addEventListener('click', e => { if (e.target.closest('.map-popup-close')) popup.setPosition(undefined); });
+  const popupOpen = () => popup.getPosition() !== undefined;
+  const markerAtPixel = pixel => !!eventMap.forEachFeatureAtPixel(pixel, f => !f.get('selectclusterlink'));
+
+  // A click on a cluster fans its events out (ol-ext); a click off the markers while a
+  // popup is open only closes the popup
+  const selectCluster = new ol.interaction.SelectCluster({
+    layers: [markersLayer],
+    condition(evt) {
+      if (!ol.events.condition.singleClick(evt)) return false;
+      if (popupOpen() && !markerAtPixel(evt.pixel)) { popup.setPosition(undefined); return false; }
+      return true;
+    },
+    pointRadius: 38, circleMaxObjects: 8, spiral: true, animate: true, animationDuration: 300,
+    featureStyle: () => spiderLegStyle,
+    style(f) {
+      const features = f.get('features');
+      if (f.get('selectclusterfeature') || features.length === 1) return features[0].getStyle();
+      return spiderCenterStyle;
+    },
+  });
+  eventMap.addInteraction(selectCluster);
+  const setOpenCluster = cluster => { openCenter = cluster ? cluster.getGeometry().getCoordinates() : null; markersLayer.changed(); };
+  window._eventCloseClusters = () => { selectCluster.clear(); setOpenCluster(null); };
+  eventMap.getView().on('change:resolution', () => setOpenCluster(null));
+  selectCluster.on('select', evt => {
+    const selected = evt.selected[0];
+    if (!selected) { setOpenCluster(null); return; }
+    if (selected.get('selectclusterfeature')) return;
+    const isStack = selected.get('features').length > 1;
+    setOpenCluster(isStack ? selected : null);
+    if (isStack) popup.setPosition(undefined);
+  });
+  // The popup opens on every click on a single event, also one already selected
+  eventMap.on('singleclick', evt => {
+    const hit = eventMap.forEachFeatureAtPixel(evt.pixel, f => f.get('selectclusterlink') ? null : f);
+    if (!hit) return;
+    const features = hit.get('features');
+    if (!hit.get('selectclusterfeature') && features.length > 1) return;
+    popupEl.replaceChildren(eventPopup(features[0].getProperties()));
+    popup.setPosition(evt.coordinate);
+  });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') { popup.setPosition(undefined); window._eventCloseClusters(); } });
+  eventMap.on('pointermove', e => { if (!e.dragging) eventMap.getTargetElement().style.cursor = eventMap.hasFeatureAtPixel(e.pixel) ? 'pointer' : ''; });
+  // A place: its whole area if it has one (a country fits on the screen), else around it
+  window._eventMapPanTo = (lon, lat, zoom, bbox) => EcoMap.fitPlace(eventMap, bbox)
+    || eventMap.getView().animate({ center: ol.proj.fromLonLat([lon, lat]), zoom: zoom || 8 });
+
+  // What you can learn here: skills from the list, any of them. The field is on the map
+  // and in the list; a change in one shows in the other
+  const learnInputs = document.querySelectorAll('[data-event-learn]');
+  learnInputs.forEach(learn => learn.addEventListener('change', () => {
+    const names = learn.value.split(',').map(s => s.trim().replace(/^"(.*)"$/, '$1')).filter(Boolean).join(',');
+    if (names === Alpine.store('eventMap').learn) return;
+    Alpine.store('eventMap').learn = names;
+    learnInputs.forEach(other => {
+      if (other === learn || !other.__tagify) return;
+      other.__tagify.removeAllTags();
+      if (names) other.__tagify.addTags(names.split(','));
+    });
+    window.eventFiltersChanged();
+  }));
+
+  window.eventMapReload(false);
+  window.eventListReload();
+  let timer;
+  eventMap.once('rendercomplete', () => eventMap.on('moveend', () => { clearTimeout(timer); timer = setTimeout(() => window.eventMapReload(false, true), 300); }));
+  window.addEventListener('resize', () => eventMap.updateSize());
+});
+</script>
+{% endblock %}

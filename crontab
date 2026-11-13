@@ -8,6 +8,9 @@
 # Archive ended and unconfirmed events, ask ambassadors about stale ones
 0 9 * * *    python manage.py archive_stale_events
 
+# Archive tours that are over and unconfirmed tour ideas, ask organisers about stale ideas
+5 9 * * *    python manage.py archive_stale_tours
+
 # Ask both sides of a past match for their story
 0 10 * * *   python manage.py send_reference_requests
 

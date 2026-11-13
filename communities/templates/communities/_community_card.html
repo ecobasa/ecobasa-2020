@@ -1,0 +1,15 @@
+{# A community as a card: its first photo across, its type icon, name and type #}
+{% with header_photo=community.photos.all|first %}
+<a href="{{ community.get_absolute_url }}" class="block overflow-hidden">
+	{% if header_photo %}
+		<img src="{{ header_photo.image.url }}" alt="" class="w-full h-32 object-cover" loading="lazy">
+	{% endif %}
+	<div class="flex items-center gap-3 p-3">
+		<i class="fa-solid {{ community.get_type_icon }} text-xl text-primary flex-shrink-0"></i>
+		<div class="min-w-0">
+			<div class="font-serif text-primary truncate">{{ community.name }}</div>
+			{% if community.type %}<div class="text-xs text-brown">{{ community.get_type_display }}</div>{% endif %}
+		</div>
+	</div>
+</a>
+{% endwith %}

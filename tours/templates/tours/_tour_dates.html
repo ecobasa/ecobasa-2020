@@ -1,0 +1,1 @@
+{% load i18n %}{% if tour.is_idea %}{% trans "No dates yet" %}{% elif tour.starts_on == tour.ends_on %}{{ tour.starts_on|date:"j M Y" }}{% else %}{{ tour.starts_on|date:"j M" }} – {{ tour.ends_on|date:"j M Y" }}{% endif %}

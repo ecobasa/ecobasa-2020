@@ -28,11 +28,24 @@
         </div>
       {% endif %}
     {% endwith %}
-    <footer class="text-xs text-brown mt-3">
-      <a href="{{ ref.author.get_absolute_url }}" class="font-semibold text-primary">{{ ref.author.name|default:ref.author.username }}</a>
+    {# Who wrote it, about whom: a gift or skill with whose it is #}
+    <footer class="text-xs text-brown mt-3 flex items-center gap-2">
+      <a href="{{ ref.author.get_absolute_url }}">{% include "_avatar.html" with who=ref.author %}</a>
+      <p class="m-0 min-w-0">
+        <a href="{{ ref.author.get_absolute_url }}" class="font-semibold text-primary">{{ ref.author.name|default:ref.author.username }}</a>
+        {% if ref.subject %}
+          {% translate "about" context "reference subject" %}
+          {% if ref.content_type.model == 'listing' %}
+            <a href="{{ ref.subject.get_absolute_url }}" class="text-primary">{{ ref.subject.get_match_display_name }}</a>
+            {% if ref.subject.holder %}{% translate "by" context "whose gift" %} <a href="{{ ref.subject.holder.get_absolute_url }}" class="text-primary">{{ ref.subject.holder_name }}</a>{% endif %}
+          {% else %}
+            <a href="{{ ref.subject.get_absolute_url }}" class="text-primary">{% if ref.content_type.model == 'user' %}{{ ref.subject.name|default:ref.subject.username }}{% else %}{{ ref.subject.get_match_display_name }}{% endif %}</a>
+          {% endif %}
+        {% endif %}
+      </p>
       {% if ref.subject %}
-        {% translate "about" context "reference subject" %}
-        <a href="{{ ref.subject.get_absolute_url }}" class="text-primary">{% if ref.content_type.model == 'user' %}{{ ref.subject.name|default:ref.subject.username }}{% else %}{{ ref.subject.get_match_display_name }}{% endif %}</a>
+        {% if ref.content_type.model == 'listing' %}{% if ref.subject.holder %}<a href="{{ ref.subject.holder.get_absolute_url }}" class="ml-auto">{% include "_avatar.html" with who=ref.subject.holder %}</a>{% endif %}
+        {% else %}<a href="{{ ref.subject.get_absolute_url }}" class="ml-auto">{% include "_avatar.html" with who=ref.subject %}</a>{% endif %}
       {% endif %}
     </footer>
   </div>

@@ -133,6 +133,10 @@ class Event(models.Model):
         return kinds.ICONS[self.kind]
 
     @property
+    def kind_colour(self):
+        return kinds.COLOURS[self.kind]
+
+    @property
     def texts(self):
         """The sentences that name its kind ("This project has ended.")."""
         return kinds.TEXTS[self.kind]

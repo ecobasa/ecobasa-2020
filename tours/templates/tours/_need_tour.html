@@ -1,0 +1,37 @@
+{% load i18n %}
+{# The tour on the gift page of something it looks for (tours_tags.tour_box): what it is, who travels, where it goes #}
+<div class="w-full space-y-3 text-sm">
+  <div class="text-center">
+    <span class="pill bg-purple"><i class="fa-solid fa-route mr-1"></i>{% trans "Tour" %}</span>
+  </div>
+  <a href="{{ tour.get_absolute_url }}" class="block">
+    {% if tour.picture %}<img src="{{ tour.picture }}" alt="" class="w-20 h-20 rounded-full object-cover mx-auto">
+    {% else %}<div class="w-20 h-20 rounded-full bg-purple flex items-center justify-center text-secondary mx-auto"><i class="fa-solid {{ tour.travel_mode_icon }} text-3xl"></i></div>{% endif %}
+  </a>
+  <div class="text-center">
+    <a href="{{ tour.get_absolute_url }}" class="font-serif text-primary text-base">{{ tour.title }}</a>
+    <div><i class="fa-solid {{ tour.travel_mode_icon }} mr-1"></i>{{ tour.get_travel_mode_display }}{% if not tour.is_idea %} · <i class="fa-regular fa-calendar mr-1"></i>{% include "tours/_tour_dates.html" %}{% endif %}</div>
+    {% if people %}
+      <div>
+        <i class="fa-solid fa-user-group mr-1"></i>{% blocktrans count count=people %}{{ count }} person travels{% plural %}{{ count }} people travel{% endblocktrans %}
+        {% if free is not None %} · <span class="{% if free %}text-green{% else %}text-red{% endif %} font-semibold">{% if free %}{% blocktrans count count=free %}{{ count }} place free{% plural %}{{ count }} places free{% endblocktrans %}{% else %}{% trans "Full" %}{% endif %}</span>{% endif %}
+      </div>
+    {% endif %}
+    {% if organiser %}
+      <div class="mt-1"><span class="opacity-70">{% trans "Organiser" %}:</span> <a href="{{ organiser.get_absolute_url }}" class="underline">{{ organiser.name|default:organiser.username }}</a></div>
+    {% endif %}
+  </div>
+  {% if stops %}
+    <ol class="list-none m-0 p-0 space-y-2 border-t border-primary border-opacity-20 pt-3">
+      {% for stop, place in stops %}
+        <li class="m-0 flex items-start gap-2">
+          <span class="flex-none w-5 h-5 rounded-full bg-primary text-secondary text-xs font-bold flex items-center justify-center">{{ forloop.counter }}</span>
+          <div class="min-w-0">
+            <div class="font-semibold leading-snug"><i class="fa-solid {{ stop.icon }} mr-1 text-primary"></i>{{ stop.label }}</div>
+            <div class="text-xs opacity-80">{% if place and place != stop.label %}{{ place }}{% endif %}{% if stop.arrive_on or stop.leave_on %}{% if place and place != stop.label %} · {% endif %}{% include "tours/_stop_dates.html" %}{% endif %}</div>
+          </div>
+        </li>
+      {% endfor %}
+    </ol>
+  {% endif %}
+</div>

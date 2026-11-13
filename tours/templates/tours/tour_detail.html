@@ -1,0 +1,412 @@
+{% extends 'base.html' %}
+{% load i18n references_tags %}
+
+{% block head_title %}{{ tour.title }} — {% trans "Community-Tours" %} — ecobasa{% endblock %}
+
+{% block extrahead %}
+{{ block.super }}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v7.2.2/ol.css">
+{% endblock %}
+
+{% block content %}
+{% with header=tour.header_image %}{% if header %}
+  {# The tour's picture (else its first vehicle's) across the page, its title on it; a click shows it whole #}
+  <div class="relative w-full" style="height: 340px;"
+       x-data="{ fullscreen: false }"
+       x-effect="document.body.classList.toggle('overflow-hidden', fullscreen)">
+    <div class="absolute inset-0 bg-center bg-cover" style="background-image: url('{{ header }}');"></div>
+    <button type="button" @click="fullscreen = true"
+            class="absolute inset-0 cursor-zoom-in focus:outline-none bg-transparent"
+            style="z-index: 2;" aria-label="{% trans 'View fullscreen' %}"></button>
+    <div class="absolute left-0 right-0 z-10" style="bottom: 100px; pointer-events: none;">
+      <div class="py-10 bg-black bg-opacity-40 text-center drop-shadow-md">
+        <h1 class="text-5xl text-secondary m-0 px-4">{{ tour.title }}</h1>
+      </div>
+    </div>
+    <div x-show="fullscreen" @click="fullscreen = false" @keydown.escape.window="fullscreen = false"
+         class="fixed inset-0 bg-black bg-opacity-90" style="display:none; z-index: 60;">
+      <button type="button" @click.stop="fullscreen = false" class="modal-close" aria-label="{% trans 'Close' %}">&times;</button>
+      <img src="{{ header }}" alt="{{ tour.title }}" @click.stop
+           class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 max-h-[90vh] max-w-[90vw] rounded-lg shadow-2xl object-contain">
+    </div>
+  </div>
+{% endif %}{% endwith %}
+<div class="container-page">
+  {# Where this page is #}
+  <div class="mb-2 text-sm flex flex-wrap items-center gap-x-2 gap-y-1">
+    <a href="{% url 'tours:list' %}" class="hover:underline">{% trans "Community-Tours" %}</a>
+    <i class="fa-solid fa-chevron-right text-xs opacity-50" aria-hidden="true"></i>
+    <span class="opacity-70">{{ tour.title }}</span>
+  </div>
+
+  {% if not tour.is_published %}
+    <div class="rounded-xl p-4 mb-6 border border-yellow bg-yellow bg-opacity-10 text-sm flex flex-wrap items-center gap-3">
+      <span><i class="fa-solid fa-pen-ruler mr-2"></i>{% trans "This is a draft: only you can see it." %}</span>
+      <form method="post" action="{% url 'tours:publish' tour.slug %}">{% csrf_token %}
+        <button type="submit" class="btn"><i class="fa-solid fa-paper-plane mr-1"></i>{% trans "Publish" %}</button>
+      </form>
+    </div>
+  {% elif tour.archived_at or tour.is_over %}
+    <div class="rounded-xl p-4 mb-6 border border-primary bg-primary bg-opacity-10 text-sm">
+      <i class="fa-solid fa-box-archive mr-2"></i>
+      {% if tour.is_over %}{% trans "This tour is over." %}{% else %}{% trans "This tour has been archived." %}{% endif %}
+      {% if can_edit and not tour.is_over %}
+        <form method="post" action="{% url 'tours:confirm' tour.slug %}" class="inline">{% csrf_token %}
+          <button type="submit" class="underline ml-1">{% trans "Bring it back" %}</button>
+        </form>
+      {% endif %}
+    </div>
+  {% elif can_edit and not tour.listed %}
+    <div class="rounded-xl p-4 mb-6 border border-primary bg-primary bg-opacity-10 text-sm">
+      <i class="fa-solid fa-eye-slash mr-2"></i>{% trans "This tour is not in the list or on the map. Only you see it." %}
+    </div>
+  {% endif %}
+
+  <div class="grid grid-cols-1 sm:grid-cols-12 gap-6">
+    <div class="sm:col-span-8">
+      {% if tour.is_idea %}<span class="pill bg-yellow text-xs">{% trans "Idea" %}</span>{% endif %}
+      {% if tour.is_ride %}<span class="pill bg-green text-xs"><i class="fa-solid fa-people-arrows mr-1"></i>{% trans "Ride" %}</span>{% endif %}
+      {% if not tour.header_image %}<h1 class="mb-1 mt-2">{{ tour.title }}</h1>{% endif %}
+      <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm mb-6">
+        <span><i class="fa-regular fa-calendar mr-1"></i>{% include "tours/_tour_dates.html" %}</span>
+        <span><i class="fa-solid {{ tour.travel_mode_icon }} mr-1"></i>{{ tour.get_travel_mode_display }}</span>
+        {% if tour.distance_km %}<span><i class="fa-solid fa-route mr-1"></i>{% blocktrans with km=tour.distance_km %}about {{ km }} km{% endblocktrans %}</span>{% endif %}
+        {% if tour.countries %}<span><i class="fa-solid fa-earth-europe mr-1"></i>{% for country in tour.countries %}{{ country.name }}{% if not forloop.last %}, {% endif %}{% endfor %}</span>{% endif %}
+      </div>
+
+      {% if can_edit %}
+        <div class="flex flex-wrap gap-2 mb-6">
+          <a href="{% url 'tours:edit' tour.slug %}" class="btn"><i class="fa fa-edit mr-1"></i>{% trans "Edit" %}</a>
+          <a href="{% url 'tours:plan' tour.slug %}" class="btn"><i class="fa-solid fa-route mr-1"></i>{% trans "Plan the route" %}</a>
+          <a href="{% url 'tours:needs' tour.slug %}" class="btn"><i class="fa-solid fa-van-shuttle mr-1"></i>{% trans "Vehicles and needs" %}</a>
+          {# Only tour ideas are asked whether they are still current; dated tours end with their days #}
+          {% if tour.is_published and tour.is_current and tour.is_idea %}
+            <form method="post" action="{% url 'tours:confirm' tour.slug %}">{% csrf_token %}
+              <button type="submit" class="btn btn-purple" title="{% trans 'Say that this tour is still planned as it is' %}"><i class="fa fa-check mr-1"></i>{% trans "Still current" %}</button>
+            </form>
+          {% endif %}
+          {% if not tour.archived_at %}
+            <form method="post" action="{% url 'tours:archive' tour.slug %}" onsubmit="return confirm('{% trans "Archive this tour? It will no longer be listed." as question %}{{ question|escapejs }}')">{% csrf_token %}
+              <button type="submit" class="btn btn-purple"><i class="fa-solid fa-box-archive mr-1"></i>{% trans "Archive" %}</button>
+            </form>
+          {% endif %}
+        </div>
+      {% endif %}
+
+      {% if wrap_up %}{% include "tours/_wrap_up.html" %}{% endif %}
+
+      {% if tour.description %}<p>{{ tour.description|linebreaksbr }}</p>{% endif %}
+
+      <h2>{% trans "Route" %}</h2>
+      {% if route %}
+        {% if geojson.features %}
+          <div class="relative h-80 rounded-xl shadow overflow-hidden mb-4"><div id="tour-route-map" class="absolute inset-0 bg-secondary bg-opacity-50"></div></div>
+        {% endif %}
+        {% include "tours/_route.html" %}
+      {% else %}
+        <p class="italic">{% trans "No stops yet: this tour is still an idea." %}</p>
+        {% if can_edit %}<a href="{% url 'tours:plan' tour.slug %}" class="btn"><i class="fa fa-plus mr-1"></i>{% trans "Add stops" %}</a>{% endif %}
+      {% endif %}
+
+      {# What hosts and others who met the group say about it: at the stops, if it has any #}
+      {% references_for tour at_stops=route %}
+
+      {# What the tour still looks for, each with why someone who has it would say yes #}
+      {% if needs %}
+        <h2 id="needs">{% trans "We're still looking for" %}</h2>
+        <ul class="list-none m-0 p-0 space-y-2 mb-6">
+          {% for need, role in needs %}
+            <li id="need-{{ need.pk }}" class="flex flex-wrap items-center gap-3 p-3 rounded border bg-secondary bg-opacity-50 {% if need.is_done %}opacity-70{% endif %}">
+              <i class="fa-solid {{ need.kind_icon }} text-primary w-5 text-center"></i>
+              <div class="flex-1 min-w-0">
+                <a href="{{ need.get_absolute_url }}" class="font-semibold hover:underline {% if need.is_done %}line-through{% endif %}">{{ need.display_title }}</a>
+                {% if need.amount %}<span class="opacity-70"> · {{ need.amount }}</span>{% endif %}
+                {% if role == "completes" %}<span class="pill text-xs bg-purple ml-1">{% trans "Completes the team" %}</span>
+                {% elif role == "alongside" %}<span class="pill text-xs bg-green ml-1">{% trans "Works alongside" %}</span>{% endif %}
+                <span class="text-xs opacity-70 block">{{ need.kind_label }}
+                  {% if need.description %}· {{ need.description }}{% endif %}
+                  {% if need.status == 'covered' %}· {% trans "covered" %}
+                  {% elif need.status == 'promised' or need.progress %}·
+                    {% if need.progress %}{{ need.progress }},{% endif %}
+                    {% for offer in need.promises %}{% with person=offer.match.from_user %}{% if user.is_authenticated %}<a href="{{ person.get_absolute_url }}" class="underline hover:text-primary">{{ person.name|default:person.email }}</a>{% else %}{{ person.name }}{% endif %}{% if offer.amount and need.quantity %} ({{ offer.amount }}){% endif %}{% endwith %}{% if not forloop.last %}, {% endif %}{% endfor %}
+                  {% elif need.status == 'offered' %}· {% trans "someone offered this, waiting for an answer" %}{% endif %}
+                </span>
+              </div>
+              {% if join.state == "ask" and not need.is_done %}
+                <a href="{% url 'tours:join' tour.slug %}?need={{ need.pk }}" class="btn text-sm py-1 px-3 whitespace-nowrap"><i class="fa-solid fa-user-plus mr-1"></i>{% trans "Ask to join" %}</a>
+              {% elif join.state == "login" and not need.is_done %}
+                {% url 'tours:join' tour.slug as join_url %}
+                <a href="{% url 'users:login' %}?next={{ join_url|urlencode }}%3Fneed%3D{{ need.pk }}" class="btn text-sm py-1 px-3 whitespace-nowrap"><i class="fa-solid fa-user-plus mr-1"></i>{% trans "Ask to join" %}</a>
+              {% endif %}
+            </li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+
+      {# Gifts that travel along: from where to where, and where each stands #}
+      {% if deliveries or could_travel %}
+        <h2 id="deliveries">{% trans "Deliveries" %}</h2>
+        {% if deliveries %}
+          <ul class="list-none m-0 p-0 space-y-2 mb-3">
+            {% for delivery in deliveries %}{% include "tours/_delivery_row.html" %}{% endfor %}
+          </ul>
+        {% endif %}
+      {% endif %}
+      {% if travelling and tour.is_current %}
+        <p class="mb-6">
+          <a href="{% if can_edit %}{% url 'tours:plan' tour.slug %}#could-travel{% else %}{% url 'tours:deliveries' tour.slug %}{% endif %}" class="btn btn-purple"><i class="fa-solid fa-box mr-1"></i>{% trans "Could travel with you" %}{% if could_travel %} ({{ could_travel }}){% endif %}</a>
+          {% if deliveries %}<a href="{% url 'tours:deliveries' tour.slug %}#packing" class="btn btn-purple ml-2"><i class="fa-solid fa-list-check mr-1"></i>{% trans "Packing list" %}</a>{% endif %}
+        </p>
+      {% endif %}
+
+      {% with learn=tour.learn_skills.all %}
+        {% if learn %}
+          <h2>{% trans "What we want to learn" %}</h2>
+          <div class="flex flex-wrap gap-2">
+            {% for skill in learn %}<span class="pill pill-lg bg-primary"><i class="fa-solid fa-graduation-cap mr-1"></i>{{ skill.get_name }}</span>{% endfor %}
+          </div>
+        {% endif %}
+      {% endwith %}
+
+      {# The travellers' skills in one list, each once; a skill links to its page with the level and how to learn it #}
+      {% if skills %}
+        <h2>{% trans "Skills we bring along" %}</h2>
+        <div class="flex flex-wrap gap-2">
+          {% for listing, people in skills %}
+            <a href="{{ listing.get_absolute_url }}" class="pill pill-lg bg-purple transition-opacity"
+               title="{% for person in people %}{{ person.name }}{% if not forloop.last %}, {% endif %}{% endfor %}">
+              {% include "gifts/_listing_icon.html" %}{{ listing.display_title }}
+              {% if listing.level %}<span class="opacity-70 text-xs ml-1">({{ listing.get_level_display }})</span>{% endif %}
+              <span class="opacity-70 text-xs ml-1">· {% for person in people %}{{ person.name }}{% if not forloop.last %}, {% endif %}{% endfor %}</span>
+            </a>
+          {% endfor %}
+        </div>
+      {% endif %}
+    </div>
+
+    <aside class="sm:col-span-4 space-y-[32px]">
+      <div class="border rounded-xl bg-secondary bg-opacity-60 p-4 text-sm space-y-2">
+        {% if tour.open_to_join %}
+          <div><i class="fa-solid fa-user-group mr-1"></i>{% trans "I'm looking for travellers" %}{% if tour.max_people %} · {% blocktrans count count=tour.max_people %}{{ count }} person at most{% plural %}{{ count }} people at most{% endblocktrans %}{% endif %}</div>
+        {% endif %}
+        {% if tour.children_welcome %}<div><i class="fa-solid fa-children mr-1"></i>{% trans "Children welcome" %}</div>{% endif %}
+        {% if tour.animals_welcome %}<div><i class="fa-solid fa-paw mr-1"></i>{% trans "Animals welcome" %}</div>{% endif %}
+        {% if tour.costs_note %}<div><span class="font-semibold">{% trans "How we share costs" %}:</span> {{ tour.costs_note }}</div>{% endif %}
+        {% if tour.good_to_know %}<div><span class="font-semibold">{% trans "Good to know" %}:</span><br>{{ tour.good_to_know|linebreaksbr }}</div>{% endif %}
+      </div>
+      {# Who travels, with their pictures, like a community's ambassador #}
+      {% if travellers %}
+        <div class="text-center" id="travellers">
+          <h2>{% trans "Who travels" %}</h2>
+          {# One person per line, also where two would fit side by side #}
+          <div class="flex flex-col items-center gap-y-10">
+            {% for traveller in travellers %}
+              {% with person=traveller.user %}
+              <div>
+                <a href="{{ person.get_absolute_url }}" class="block hover:text-primary">
+                  {% include "_avatar.html" with who=person large=True classes="mx-auto mb-2" %}
+                  <div class="font-serif font-bold text-xl">{{ person.name }}</div>
+                </a>
+                {% if traveller.is_organiser %}<div class="text-xs opacity-70">{% trans "Organiser" %}</div>{% endif %}
+                {% for community in person.communities.all %}
+                  <a href="{{ community.get_absolute_url }}" class="block text-sm text-primary hover:underline"><i class="fa-solid {{ community.get_type_icon }} mr-1"></i>{{ community.name }}</a>
+                {% endfor %}
+                {% if traveller.stretch %}<div class="text-xs"><i class="fa-solid fa-route mr-1"></i>{{ traveller.stretch }}</div>{% endif %}
+                {% if traveller.people > 1 %}<div class="text-xs">{% blocktrans count count=traveller.people|add:"-1" %}and {{ count }} more{% plural %}and {{ count }} more{% endblocktrans %}</div>{% endif %}
+                {% if traveller.ride_only %}<div class="text-xs opacity-70">{% trans "Only for the ride" %}</div>{% endif %}
+                <div class="text-sm">{% include "events/_freshness.html" with when=person.last_active %}</div>
+                {# Sharing the organiser role (handing the tour over is for the one the matches go to) and taking someone off: small buttons of one width, under the person #}
+                <div class="flex flex-col items-center gap-1 mt-2">
+                  {% if can_edit and not traveller.is_organiser %}
+                    <form method="post" action="{% url 'tours:make_organiser' tour.slug traveller.pk %}">{% csrf_token %}
+                      <button type="submit" class="btn btn-primary text-xs py-0.5 px-2 w-44 text-center"><i class="fa-solid fa-user-gear mr-1"></i>{% trans "Make organiser" %}</button>
+                    </form>
+                  {% elif can_hand_over and traveller.is_organiser and traveller.user_id != tour.organiser_id %}
+                    <form method="post" action="{% url 'tours:hand_over' tour.slug traveller.pk %}"
+                          onsubmit="return confirm('{% blocktrans with name=person.name|default:person.email asvar question %}Hand the tour over to {{ name }}? Join requests and hosts then go to them; you stay an organiser.{% endblocktrans %}{{ question|escapejs }}')">{% csrf_token %}
+                      <button type="submit" class="btn btn-primary text-xs py-0.5 px-2 w-44 text-center"><i class="fa-solid fa-handshake mr-1"></i>{% trans "Hand over the tour" %}</button>
+                    </form>
+                  {% endif %}
+                  {% if can_edit and traveller.match_id and traveller.user_id != tour.organiser_id and traveller.user_id != user.pk %}
+                    <details class="text-xs flex flex-col items-center">
+                      <summary class="btn btn-purple text-xs py-0.5 px-2 w-44 text-center cursor-pointer list-none [&::-webkit-details-marker]:hidden"><i class="fa-solid fa-user-minus mr-1"></i>{% trans "Remove from tour" %}</summary>
+                      <form method="post" action="{% url 'tours:remove' tour.slug traveller.pk %}" class="mt-1 space-y-1 w-48 max-w-full text-left">{% csrf_token %}
+                        <textarea name="body" rows="3" required class="form-textarea w-full text-sm" placeholder="{% trans 'A few words to them why' %}"></textarea>
+                        <button type="submit" class="btn btn-purple text-xs py-0.5 px-2 w-44 text-center"><i class="fa-solid fa-user-minus mr-1"></i>{% trans "Remove from tour" %}</button>
+                      </form>
+                    </details>
+                  {% endif %}
+                </div>
+              </div>
+              {% endwith %}
+            {% endfor %}
+            {# A line of its own under the people, with the same spacing #}
+            {% if can_edit and tour.open_to_join and tour.is_current %}
+              <div class="w-full">
+                <a href="{% url 'tours:invite' tour.slug %}" class="btn btn-purple inline-block"><i class="fa-solid fa-user-plus mr-1"></i>{% trans "Invite someone" %}</a>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      {% elif not user.is_authenticated %}
+        {% if traveller_count %}<p class="text-sm text-center"><i class="fa-solid fa-user-group mr-1"></i>{% blocktrans count count=traveller_count %}{{ count }} person travels{% plural %}{{ count }} people travel{% endblocktrans %}</p>{% endif %}
+        {% url 'users:login' as login_url %}
+        <p class="text-sm text-center">{% blocktrans with url=login_url|add:"?next="|add:request.path %}<a href="{{ url }}" class="underline">Log in</a> to see who travels and what they can.{% endblocktrans %}</p>
+      {% endif %}
+      {% if travellers %}
+        {# Coming along: the button and what it says, by `join.state` (tours.views._join_state) #}
+        {% if join.state %}
+          <div id="join" class="text-sm text-center space-y-4">
+            {% if join.state == "ask" %}
+              <a href="{% url 'tours:join' tour.slug %}" class="btn btn-lg w-full justify-center"><i class="fa-solid fa-user-plus mr-1"></i>{% trans "Ask to join" %}</a>
+              <p class="opacity-80">{% trans "For the whole route or part of it." %}</p>
+            {% elif join.state == "login" %}
+              {% url 'users:login' as login_url %}
+              <a href="{{ login_url }}?next={% url 'tours:join' tour.slug %}" class="btn btn-lg w-full justify-center"><i class="fa-solid fa-user-plus mr-1"></i>{% trans "Ask to join" %}</a>
+              <p class="m-0 opacity-80">{% trans "Log in first, then choose where you get on and off." %}</p>
+            {% elif join.state == "asked" %}
+              <p class="m-0"><i class="fa-regular fa-hourglass-half mr-1"></i>{% trans "Your join request is waiting for an answer." %}</p>
+              <div class="flex flex-wrap justify-center gap-2">
+                <a href="{{ join.match.get_absolute_url }}" class="btn">{% trans "See your request" %}</a>
+                <a href="{% url 'tours:join' tour.slug %}" class="btn btn-lg btn-purple">{% trans "Change it" %}</a>
+              </div>
+            {% elif join.state == "invited" %}
+              <p class="m-0"><i class="fa-solid fa-envelope-open-text mr-1"></i>{% trans "You're invited to travel along." %}</p>
+              <a href="{{ join.match.get_absolute_url }}" class="btn btn-lg w-full justify-center">{% trans "See the invitation" %}</a>
+            {% elif join.state == "on" %}
+              <p class="m-0 font-semibold text-green"><i class="fa-solid fa-check mr-1"></i>{% trans "You travel along." %}</p>
+              {% if join.traveller.match %}<a href="{{ join.traveller.match.get_absolute_url }}" class="underline">{% trans "Talk with the organisers" %}</a>{% endif %}
+            {% elif join.state == "full" %}
+              <p class="m-0"><i class="fa-solid fa-user-group mr-1"></i>{% trans "No places free at the moment." %}</p>
+            {% elif join.state == "organiser" %}
+              <a href="{% url 'matches:list' %}?type=tours" class="btn btn-lg w-full justify-center"><i class="fa-solid fa-envelope-open-text mr-1"></i>{% trans "Join requests" %}</a>
+            {% endif %}
+            {# A traveller, or an organiser other than the one the matches go to #}
+            {% if join.state == "on" or join.can_leave %}
+              <details class="text-left">
+                <summary class="cursor-pointer underline text-center">{% trans "Leave tour" %}</summary>
+                <form method="post" action="{% url 'tours:leave' tour.slug %}" class="mt-2 space-y-2">{% csrf_token %}
+                  <textarea name="body" rows="3" required class="form-textarea w-full text-sm" placeholder="{% trans 'A few words why, the others were counting on you' %}"></textarea>
+                  <button type="submit" class="btn btn-lg btn-purple">{% trans "Leave tour" %}</button>
+                </form>
+              </details>
+            {% endif %}
+          </div>
+        {% endif %}
+      {% endif %}
+      {# What they travel in: what fits in and on it, how comfy it is #}
+      {% if vehicles %}
+        <div id="vehicles">
+          <h2 class="text-center">{% trans "Our vehicles" %}</h2>
+          <ul class="list-none m-0 p-0 space-y-4">
+            {% for vehicle in vehicles %}
+              <li class="m-0 border rounded-xl bg-secondary bg-opacity-60 overflow-hidden text-sm">
+                {% if vehicle.image %}
+                  <a href="{{ vehicle.image.url }}" target="_blank" rel="noopener"><img src="{{ vehicle.image.url }}" alt="{{ vehicle.label }}" class="w-full h-40 object-cover" loading="lazy"></a>
+                {% endif %}
+                <div class="p-4 space-y-1">
+                  <div class="font-serif font-bold text-lg"><i class="fa-solid fa-van-shuttle mr-2 text-primary"></i>{{ vehicle.label }}</div>
+                  <div>
+                    <i class="fa-solid fa-user-group mr-1"></i>{% blocktrans count count=vehicle.seats %}{{ count }} seat{% plural %}{{ count }} seats{% endblocktrans %}
+                    {% if vehicle.sleeps %}<span class="ml-3"><i class="fa-solid fa-bed mr-1"></i>{% blocktrans count count=vehicle.sleeps %}{{ count }} sleeping place{% plural %}{{ count }} sleeping places{% endblocktrans %}</span>{% endif %}
+                  </div>
+                  {% if vehicle.note %}<div><i class="fa-solid fa-suitcase mr-1"></i>{{ vehicle.note }}</div>{% endif %}
+                  {% with drivers=vehicle.drivers.all %}{% if drivers and user.is_authenticated %}
+                    <div><i class="fa-solid fa-id-card mr-1"></i>{% trans "Drivers" %}: {% for person in drivers %}<a href="{{ person.get_absolute_url }}" class="underline hover:text-primary">{{ person.name }}</a>{% if not forloop.last %}, {% endif %}{% endfor %}</div>
+                  {% endif %}{% endwith %}
+                  {% if vehicle.needs_driver %}<div class="text-red"><i class="fa-solid fa-circle-exclamation mr-1"></i>{% trans "Still needs a driver" %}</div>{% endif %}
+                  {% if vehicle.others_may_drive %}<div class="opacity-80">{% trans "Others may drive too" %}</div>{% endif %}
+                  {% if not vehicle.whole_route %}<div class="opacity-80"><i class="fa-solid fa-route mr-1"></i>{% if vehicle.from_stop %}{{ vehicle.from_stop.label }}{% else %}{% trans "the start" %}{% endif %} → {% if vehicle.to_stop %}{{ vehicle.to_stop.label }}{% else %}{% trans "the end" %}{% endif %}</div>{% endif %}
+                </div>
+              </li>
+            {% endfor %}
+          </ul>
+        </div>
+      {% endif %}
+    </aside>
+  </div>
+</div>
+{% endblock %}
+
+{% block javascript %}
+{{ block.super }}
+<script>
+// geo: links only work on Android, where they let one choose any maps app
+if (/Android/.test(navigator.userAgent)) {
+  document.querySelectorAll('a[data-geo]').forEach(a => { a.classList.replace('hidden', 'block'); });
+}
+</script>
+{% if geojson.features %}
+{{ geojson|json_script:"tour-geojson" }}
+<script src="https://cdn.jsdelivr.net/npm/ol@v7.2.2/dist/ol.js"></script>
+<script>
+// The route, fitted to the map: its stops at the places everyone may see
+document.addEventListener('DOMContentLoaded', function () {
+  const base = EcoMap.buildBaseLayers();
+  const map = new ol.Map({ target: 'tour-route-map', layers: base.all, view: new ol.View({ center: [0, 0], zoom: 2, maxZoom: 16 }) });
+  base.setBaseLayer('ecobasa');
+  const menu = EcoMap.buildLayerToggle(map, 'tour-route-layer');
+  menu.querySelectorAll('input').forEach(r => r.addEventListener('change', e => { if (e.target.checked) base.setBaseLayer(e.target.value); }));
+  // A click on a stop: its name (linked to its community or event), where and when
+  const popupEl = document.createElement('div');
+  const popup = new ol.Overlay({ element: popupEl, positioning: 'bottom-center', offset: [0, -22], autoPan: { animation: { duration: 250 } } });
+  map.addOverlay(popup);
+  const stopPopup = function (props) {
+    const el = document.createElement('div');
+    el.className = 'map-popup';
+    el.innerHTML = '<button type="button" class="map-popup-close" aria-label="{% trans "Close"|escapejs %}">&times;</button>'
+      + '<h3 class="m-0 pr-6"></h3><div class="mt-1"></div><div class="mt-1"></div>';
+    el.querySelector('button').addEventListener('click', () => popup.setPosition(undefined));
+    if (props.stop_image) {
+      const img = document.createElement('img');
+      img.src = props.stop_image; img.alt = ''; img.className = 'w-full h-24 object-cover rounded mb-2';
+      if (props.link) {
+        const a = document.createElement('a');
+        a.href = props.link; a.append(img);
+        el.querySelector('h3').before(a);
+      } else {
+        el.querySelector('h3').before(img);
+      }
+    }
+    const title = el.querySelector('h3');
+    title.append(props.number + '. ');
+    if (props.link) {
+      const a = document.createElement('a');
+      a.href = props.link; a.className = 'hover:underline'; a.textContent = props.name;
+      title.append(a);
+    } else {
+      title.append(props.name);
+    }
+    const lines = el.querySelectorAll('div');
+    lines[0].textContent = props.place && props.place !== props.name ? props.place : '';
+    lines[1].innerHTML = props.stop_dates;  // rendered by tours/_stop_dates.html, escaped there
+    return el;
+  };
+  const routes = EcoMap.addRouteLayer(map, JSON.parse(document.getElementById('tour-geojson').textContent), {
+    hover: false, legModes: true, deliveriesAlways: true,
+    onSelect(props, coordinate) {
+      if (props && props.kind === 'delivery') {
+        // What travels along, from where to where, and where it stands
+        const el = document.createElement('div');
+        el.className = 'map-popup';
+        el.innerHTML = '<button type="button" class="map-popup-close" aria-label="{% trans "Close"|escapejs %}">&times;</button>'
+          + '<h3 class="m-0 pr-6"></h3><div class="mt-1"></div><div class="mt-1 text-sm"></div>';
+        el.querySelector('button').addEventListener('click', () => popup.setPosition(undefined));
+        el.querySelector('h3').textContent = props.name + (props.amount ? ' · ' + props.amount : '');
+        const lines = el.querySelectorAll('div');
+        lines[0].textContent = props.ends;
+        lines[1].textContent = props.status;
+        popupEl.replaceChildren(el);
+        popup.setPosition(coordinate);
+        return;
+      }
+      if (!props || props.kind !== 'stop') { popup.setPosition(undefined); return; }
+      popupEl.replaceChildren(stopPopup(props));
+      popup.setPosition(props.geometry.getCoordinates());  // above the pin, wherever it was clicked
+    },
+  });
+  routes.fit([40, 40, 40, 40]);
+});
+</script>
+{% endif %}
+{% endblock %}

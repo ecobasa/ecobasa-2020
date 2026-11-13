@@ -46,3 +46,12 @@ def freshness(value):
     if age <= timedelta(days=settings.EVENT_STALE_DAYS):
         return "recent"
     return "stale"
+
+
+@register.simple_tag
+def email_static(path):
+    """A static file as a full address, for emails: they are read outside the site (the
+    logo, as a PNG because mail programs don't show SVG; the fonts)."""
+    from django.templatetags.static import static
+
+    return settings.SITE_URL.rstrip("/") + static(path)

@@ -14,7 +14,9 @@ What fits, an offer and a wish:
   pipe can both be for building, but neither helps with the other.
 
 Where each side looks, by their owner's settings (reaches()):
-- with a place: within their distance (User.match_radius);
+- with a place: within their distance (User.match_radius); a tour's need has its route
+  as its place, so it is measured from the route's nearest point, and the organiser's
+  distance is how wide the tour looks around it;
 - with only a country: in that country;
 - with neither: anywhere, as with "search worldwide" (User.match_global).
 Nothing is suggested between things of the same person (or community), for skills that
@@ -36,9 +38,9 @@ from .models import Suggestion
 # each side's own settings decide
 MAX_RADIUS_KM = 2000
 
-# The places a listing can have: its own, its person's, its community's
-PLACES = ("location", "owner__location", "community__location")
-WORLDWIDE = ("owner__match_global", "community__owner__match_global")
+# The places a listing can have: its own, its person's, its community's, its tour's route
+PLACES = ("location", "owner__location", "community__location", "tour__route")
+WORLDWIDE = ("owner__match_global", "community__owner__match_global", "tour__organiser__match_global")
 
 
 @dataclass
@@ -50,6 +52,10 @@ class Side:
     point: object  # None if there is no place, only maybe a country
     country: str
     want: bool
+    # A tour's need: its route (a line through the places everyone may see), and all the
+    # countries it goes through
+    route: object = None
+    countries: tuple = ()
     skill_id: int | None = None
     title: str = ""
     kind: str = ""
@@ -60,6 +66,10 @@ class Side:
     def is_thing(self):
         return self.kind in Listing.THING_KINDS
 
+    @property
+    def all_countries(self):
+        return set(self.countries) or ({self.country} if self.country else set())
+
 
 def side_of(listing):
     """The Side for a listing, or None if it can't be matched (no one answers for it,
@@ -69,7 +79,9 @@ def side_of(listing):
     owner = listing.manager
     if owner is None or not listing.is_current or (listing.is_offer and listing.skill_id and not listing.available):
         return None
+    route = listing.tour.route if listing.tour_id else None
     return Side(listing, owner, listing.point, listing.country, want=listing.is_wish,
+                route=route, countries=tuple(listing.countries) if listing.tour_id else (),
                 skill_id=listing.skill_id, title=listing.display_title if not listing.skill_id else "", kind=listing.kind,
                 thing_id=listing.thing_id, climate=listing.climate)
 
@@ -83,8 +95,8 @@ def reaches(recipient, other, km):
         return True
     if recipient.point is not None:
         return km is not None and km <= (owner.match_radius or 0)
-    if recipient.country:
-        return other.country == recipient.country
+    if recipient.all_countries:
+        return bool(recipient.all_countries & other.all_countries)
     return True
 
 
@@ -100,13 +112,14 @@ def candidates(side):
     else:
         others = others.filter(skill=None, kind=side.kind)
     if side.point is not None and not side.owner.match_global:
-        near = Q(location=None, owner__location=None, community__location=None)
+        near = Q(**{name: None for name in PLACES})
+        where = side.route if side.route is not None else side.point
         for name in PLACES:
-            near |= Q(**{f"{name}__dwithin": (side.point, D(km=MAX_RADIUS_KM))})
+            near |= Q(**{f"{name}__dwithin": (where, D(km=MAX_RADIUS_KM))})
         for path in WORLDWIDE:
             near |= Q(**{path: True})
         others = others.filter(near)
-    return others.select_related("owner", "community__owner", "event__community", "skill").prefetch_related(
+    return others.select_related("owner", "community__owner", "event__community", "tour__organiser", "skill").prefetch_related(
         "contributions__match",
     )
 
@@ -161,6 +174,25 @@ def distance_km(p, q):
     return 6371 * 2 * math.asin(math.sqrt(h))
 
 
+def km_to_route(point, route):
+    """About how far a point is from the nearest point of a route: the nearest point is
+    found on the flat lon/lat line, then measured on the globe. Close enough for "within
+    50 km of the route"."""
+    nearest = route.interpolate(route.project(point))
+    return distance_km(point, nearest)
+
+
+def side_km(a, b):
+    """How far apart two sides are, a tour's need by its route; None if unknown."""
+    if a.point is None or b.point is None:
+        return None
+    if a.route is not None:
+        return km_to_route(b.point, a.route)
+    if b.route is not None:
+        return km_to_route(a.point, b.route)
+    return distance_km(a.point, b.point)
+
+
 def _suggest(recipient_side, other_side, reason, km):
     """Create the suggestion for recipient_side's owner, if new and where they look.
     Returns it if it was created."""
@@ -193,7 +225,7 @@ def match(obj, notify=True):
         reason = fit(side, other_side)
         if reason is None:
             continue
-        km = distance_km(side.point, other_side.point) if side.point and other_side.point else None
+        km = side_km(side, other_side)
         for recipient_side, shown in ((side, other_side), (other_side, side)):
             suggestion = _suggest(recipient_side, shown, reason, km)
             if suggestion:

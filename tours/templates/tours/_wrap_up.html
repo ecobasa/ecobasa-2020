@@ -1,0 +1,43 @@
+{% load i18n %}
+{# A tour that is over: where it went, what it found and what travelled along, and whom one can write references about #}
+<section id="wrap-up" class="border rounded-xl bg-secondary bg-opacity-60 p-4 mb-6 text-sm space-y-3">
+  <h2 class="mt-0 mb-1">{% trans "How the tour went" %}</h2>
+  {% if wrap_up.stops %}
+    <div>
+      <h3 class="font-semibold text-base m-0 mb-1">{% trans "Where it went" %}</h3>
+      <p class="m-0 leading-relaxed">
+        {% for stop in wrap_up.stops %}<span class="whitespace-nowrap">{% if stop.host_status == "agreed" %}<i class="fa-solid fa-circle-check text-green mr-1" title="{{ stop.host_status_label.0 }}"></i>{% endif %}{% if stop.host %}<a href="{{ stop.host.get_absolute_url }}" class="hover:underline">{{ stop.label }}</a>{% else %}{{ stop.label }}{% endif %}</span>{% if not forloop.last %} <span class="opacity-50">→</span> {% endif %}{% endfor %}
+      </p>
+    </div>
+  {% endif %}
+  {% if wrap_up.found %}
+    <div>
+      <h3 class="font-semibold text-base m-0 mb-1">{% trans "What we found" %}</h3>
+      <ul class="list-none m-0 p-0 space-y-1">
+        {% for need in wrap_up.found %}
+          <li class="m-0"><i class="fa-solid {{ need.kind_icon }} text-primary w-5 text-center mr-1"></i><a href="{{ need.get_absolute_url }}" class="hover:underline">{{ need.display_title }}</a>{% with promises=need.promises %}{% if promises and user.is_authenticated %} <span class="opacity-70">· {% for offer in promises %}{% with person=offer.match.from_user %}<a href="{{ person.get_absolute_url }}" class="underline hover:text-primary">{{ person.name|default:person.email }}</a>{% endwith %}{% if not forloop.last %}, {% endif %}{% endfor %}</span>{% endif %}{% endwith %}</li>
+        {% endfor %}
+      </ul>
+    </div>
+  {% endif %}
+  {% if wrap_up.delivered %}
+    <div>
+      <h3 class="font-semibold text-base m-0 mb-1">{% trans "What travelled along" %}</h3>
+      <ul class="list-none m-0 p-0 space-y-1">
+        {% for delivery in wrap_up.delivered %}{% with ends=delivery.ends %}
+          <li class="m-0"><i class="fa-solid fa-gift text-green w-5 text-center mr-1"></i><a href="{{ delivery.offer.get_absolute_url }}" class="hover:underline">{{ delivery.title }}</a>{% if delivery.amount %}<span class="opacity-70"> · {{ delivery.amount }}</span>{% endif %} <span class="opacity-70">· {{ ends.0 }} → {{ ends.1 }}</span></li>
+        {% endwith %}{% endfor %}
+      </ul>
+    </div>
+  {% endif %}
+  {% if wrap_up.references %}
+    <div>
+      <h3 class="font-semibold text-base m-0 mb-2">{% trans "Write references" %}</h3>
+      <div class="flex flex-wrap gap-2">
+        {% for name, url in wrap_up.references %}
+          <a href="{{ url }}" class="btn btn-purple text-sm py-1 px-3"><i class="fa fa-pencil mr-1"></i>{% blocktrans %}About {{ name }}{% endblocktrans %}</a>
+        {% endfor %}
+      </div>
+    </div>
+  {% endif %}
+</section>

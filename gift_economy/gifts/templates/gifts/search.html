@@ -7,6 +7,7 @@
   <script>
     const giftTypeLabels     = { {% for t in f.form.type %}'{{ t.data.value|escapejs }}': '{{ t.choice_label|escapejs }}',{% endfor %} };
     const giftKindLabels     = { {% for t in f.form.kind %}'{{ t.data.value|escapejs }}': '{{ t.choice_label|escapejs }}',{% endfor %} };
+    const giftCountryLabels = { {% for code, name in countries %}'{{ code }}': '{{ name|escapejs }}',{% endfor %} };
     const giftCategoryLabels = { {% for t in f.form.categories %}'{{ t.data.value|escapejs }}': '{{ t.choice_label|escapejs }}',{% endfor %} };
 
     document.addEventListener('alpine:init', function () {
@@ -17,13 +18,14 @@
         q:            '{{ f.form.search.data|default:""|escapejs }}',
         locationName: '{{ f.form.location_name.data|default:""|escapejs }}',
         location:     '{{ f.form.location.data|default:""|escapejs }}',
+        country:      '{{ f.form.country.data|default:""|escapejs }}',
         types:        [{% for v in f.form.type.value %}"{{ v|escapejs }}"{% if not forloop.last %}, {% endif %}{% endfor %}],
         kinds:        [{% for v in f.form.kind.value %}"{{ v|escapejs }}"{% if not forloop.last %}, {% endif %}{% endfor %}],
         categories:   [{% for v in f.form.categories.value %}"{{ v|escapejs }}"{% if not forloop.last %}, {% endif %}{% endfor %}],
         markerCount:  0,
 
         get filterCount() { return this.types.length + this.kinds.length + this.categories.length; },
-        get activeCount() { return this.filterCount + (this.q ? 1 : 0) + (this.location ? 1 : 0); },
+        get activeCount() { return this.filterCount + (this.q ? 1 : 0) + (this.location ? 1 : 0) + (this.country ? 1 : 0); },
 
         showMap()  { this.view = 'map'; },
         showList() { this.view = 'list'; },
@@ -54,6 +56,7 @@
           this.kinds = [];
           this.categories = [];
           this.q = '';
+          this.country = '';
           this.location = '';
           this.locationName = '';
           window._fmResetView && window._fmResetView();
@@ -122,7 +125,7 @@
                   seen.add(label);
                   perCountry[cc] = (perCountry[cc] || 0) + 1;
                   if (perCountry[cc] <= 2) {
-                    acc.push({ value: label, type: 'place', lon: parseFloat(d.lon), lat: parseFloat(d.lat), zoom: nominatimZoom(d) });
+                    acc.push({ value: label, type: 'place', lon: parseFloat(d.lon), lat: parseFloat(d.lat), zoom: nominatimZoom(d), bbox: d.boundingbox });
                   }
                 }
                 return acc;
@@ -143,7 +146,7 @@
             store.location     = item.lat + ',' + item.lon;
             store.locationName = item.value;
             store.q = '';
-            window._fmZoomTo && window._fmZoomTo(item.lat, item.lon, null, item.zoom);
+            window._fmZoomTo && window._fmZoomTo(item.lat, item.lon, item.bbox, item.zoom);
             store.reload();
           } else {
             store.q = item.value;
@@ -344,6 +347,14 @@
           </button>
         </div>
 
+        {# Country, as in the communities list #}
+        {% if countries %}
+          <select class="form-select w-full rounded text-sm" x-model="$store.fm.country" @change="$store.fm.reload()">
+            <option value="">{% trans "All countries" %}</option>
+            {% for code, name in countries %}<option value="{{ code }}">{{ name }}</option>{% endfor %}
+          </select>
+        {% endif %}
+
         {% include "gifts/_filter_pills.html" %}
 
         {# Result count (OOB-swapped by partial) + clear-all button #}
@@ -360,7 +371,7 @@
 
       {# HTMX list target #}
       <div id="gift-list-results"
-        class="max-h-[60vh] overflow-y-auto space-y-3"
+        class="max-h-[60vh] overflow-y-auto space-y-4"
         hx-get="{% url 'gifts:api-list' %}"
         hx-target="this"
         hx-swap="innerHTML"
@@ -379,6 +390,7 @@
     <input type="hidden" name="search"        :value="$store.fm.q">
     <input type="hidden" name="location_name" :value="$store.fm.locationName">
     <input type="hidden" name="location"      :value="$store.fm.location">
+    <input type="hidden" name="country"       :value="$store.fm.country">
     <template x-for="t in $store.fm.types" :key="t">
       <input type="hidden" name="type" :value="t">
     </template>
@@ -498,8 +510,19 @@
     const desc = esc(truncate(props.description, 150));
     if (desc) html += `<div class="text-sm text-brown mt-2">${desc}</div>`;
     if (props.event) html += `<div class="text-xs text-brown mt-1"><i class="fa-solid fa-calendar-day mr-1"></i>${esc(props.event)}</div>`;
-    if (props.community_name) html += `<div class="text-xs text-brown mt-1"><i class="fa fa-home mr-1"></i>${esc(props.community_name)}</div>`;
-    if (props.user_name) html += `<div class="text-xs mt-1"><i class="fa fa-user mr-1"></i>${esc(props.user_name)}${props.member_of ? ` · <i class="fa fa-home mx-1"></i>${esc(props.member_of)}` : ''}</div>`;
+    if (props.tour) html += `<div class="text-xs text-brown mt-1"><i class="fa-solid fa-route mr-1"></i>${esc(props.tour)}</div>`;
+    // A community's: its name, linked to its page
+    if (props.community_name) html += `<div class="text-xs text-brown mt-1"><i class="fa fa-home mr-1"></i><a href="${esc(props.community_url)}" class="underline">${esc(props.community_name)}</a></div>`;
+    // A person's: their name linking to their profile, with their picture if they have one, and below it the communities they are ambassador of
+    if (props.user_name) {
+      const who = props.user_image
+        ? `<img src="${esc(props.user_image)}" alt="" class="w-5 h-5 rounded-full object-cover">`
+        : '<i class="fa fa-user"></i>';
+      html += `<div class="text-xs mt-1 flex flex-wrap items-center gap-1"><a href="${esc(props.user_url)}" class="inline-flex items-center gap-1 underline hover:text-primary">${who}${esc(props.user_name)}</a></div>`;
+    }
+    (props.member_of || []).forEach(([name, link]) => {
+      html += `<div class="text-xs text-brown mt-0.5"><i class="fa fa-home mr-1"></i><a href="${esc(link)}" class="underline">${esc(name)}</a></div>`;
+    });
     if (url) html += `<a class="text-primary underline" href="${url}">{% trans "Open" %}</a>`;
     return html;
   }
@@ -515,6 +538,7 @@
     }
     if (store.q)        params.set('search', store.q);
     if (store.location) params.set('location', store.location);
+    if (store.country)  params.set('country', store.country);
     (store.types      || []).forEach(t => params.append('type', t));
     (store.kinds      || []).forEach(k => params.append('kind', k));
     (store.categories || []).forEach(c => params.append('categories', c));
@@ -684,13 +708,7 @@
     });
 
     window._fmZoomTo = function (lat, lon, bbox, zoom) {
-      if (bbox) {
-        var extent = ol.proj.transformExtent(
-          [parseFloat(bbox[2]), parseFloat(bbox[0]), parseFloat(bbox[3]), parseFloat(bbox[1])],
-          'EPSG:4326', 'EPSG:3857'
-        );
-        map.getView().fit(extent, { duration: 1000, padding: [50, 50, 50, 50] });
-      } else {
+      if (!EcoMap.fitPlace(map, bbox)) {
         map.getView().animate({ center: ol.proj.fromLonLat([parseFloat(lon), parseFloat(lat)]), zoom: zoom || 12, duration: 1000 });
       }
     };

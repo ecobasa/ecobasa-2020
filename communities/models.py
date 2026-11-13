@@ -159,7 +159,7 @@ class Community(UniqueSlugMixin, models.Model):
     def shows_place_to(self, user):
         """Whether `user` sees its exact place, address and phone number: everyone if
         it's public, else its members and those whose stay (also with one of its
-        events) was accepted."""
+        events) was accepted, with whoever came along on it (a tour visit's group)."""
         if self.location_public:
             return True
         if not user.is_authenticated:
@@ -172,7 +172,9 @@ class Community(UniqueSlugMixin, models.Model):
             content_type__app_label="events", content_type__model="event",
             object_id__in=[str(pk) for pk in self.events.values_list("pk", flat=True)],
         )
-        return Match.objects.filter(stays, from_user=user, status=Match.STATUS_ACCEPTED).exists()
+        # Who asked, and the companions of an accepted stay (a tour visit's group)
+        return Match.objects.filter(stays, Q(from_user=user) | Q(stay_details__companions=user),
+                                    status=Match.STATUS_ACCEPTED).exists()
 
     def rough_place(self):
         """(name, point) as everyone sees it (users.places), unless it's public."""

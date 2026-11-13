@@ -32,15 +32,7 @@
           <div class="flex-1">
             <div class="p-3 bg-primary bg-opacity-75 rounded flex items-start gap-4 items-center">
               <div class="flex-none flex flex-col items-center">
-                {% if m.sender and m.sender.image %}
-                  <a href="{{ m.sender.get_absolute_url }}">
-                    <img class="w-12 h-12 rounded-full object-cover" src="{{ m.sender.image.url }}" alt="{% if m.sender.name %}{{ m.sender.name }}{% elif m.sender.get_full_name %}{{ m.sender.get_full_name }}{% elif m.sender.get_username %}{{ m.sender.get_username }}{% else %}{{ m.sender.email }}{% endif %}">
-                  </a>
-                {% else %}
-                  <a href="{{ m.sender.get_absolute_url }}">
-                    <i class="fa fa-user text-2xl text-secondary rounded-full border border-dashed border-secondary p-3" title="{% if m.sender.name %}{{ m.sender.name }}{% elif m.sender.get_full_name %}{{ m.sender.get_full_name }}{% elif m.sender.get_username %}{{ m.sender.get_username }}{% else %}{{ m.sender.email }}{% endif %}"></i>
-                  </a>
-                {% endif %}
+                <a href="{{ m.sender.get_absolute_url }}">{% include "_avatar.html" with who=m.sender color="secondary" %}</a>
                 <div class="text-xs text-secondary mt-2 font-serif text-center">
                   {% if m.sender %}
                     <a href="{{ m.sender.get_absolute_url }}" class="text-secondary hover:underline">

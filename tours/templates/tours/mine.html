@@ -1,0 +1,70 @@
+{% extends 'dashboard/base.html' %}
+{% load i18n %}
+
+{% block head_title %}{% trans "Your tours" %} — ecobasa{% endblock %}
+
+{% block dashboard_content %}
+{# The tours you organise or travel on, and the ones you asked to join #}
+<section class="mb-8">
+  <div class="flex flex-wrap items-center gap-3 mb-4">
+    <h1 class="text-4xl font-semibold flex items-center gap-2 m-0"><i class="fa-solid fa-route text-primary"></i>{% trans "Your tours" %}</h1>
+    <a href="{% url 'tours:ride' %}" class="btn btn-purple ml-auto"><i class="fa-solid fa-people-arrows mr-1"></i>{% trans "Offer a ride" %}</a>
+    <a href="{% url 'tours:create' %}" class="btn"><i class="fa fa-plus mr-1"></i>{% trans "Plan a tour" %}</a>
+  </div>
+  {% if page.object_list %}
+    <ul class="list-none p-0 space-y-2">
+      {% for row in page %}
+        {% with tour=row.tour traveller=row.traveller %}
+          <li class="flex items-start gap-3 p-4 rounded bg-secondary bg-opacity-50 {% if not tour.is_current %}opacity-60{% endif %}">
+            <span class="flex-none w-14 h-14 rounded-lg {% if tour.is_idea %}bg-yellow{% else %}bg-primary{% endif %} flex items-center justify-center"><i class="fa-solid {{ tour.travel_mode_icon }} text-2xl text-secondary"></i></span>
+            <div class="flex-1 min-w-0">
+              <a href="{{ tour.get_absolute_url }}" class="font-serif text-lg hover:text-primary">{{ tour.title }}</a>
+              <div class="text-sm">
+                <i class="fa-regular fa-calendar mr-1"></i>{% include "tours/_tour_dates.html" %}
+                · <i class="fa-solid fa-route mr-1"></i>{{ row.stretch }}
+              </div>
+              {# What one can do with the tour from here #}
+              <div class="flex flex-wrap gap-1 mt-2">
+                {% if traveller.is_organiser %}
+                  {% if row.waiting %}<a href="{% url 'matches:list' %}?type=tours&box=received" class="btn text-xs py-0.5 px-2"><i class="fa-solid fa-envelope-open-text mr-1"></i>{% trans "Join requests" %} ({{ row.waiting }})</a>{% endif %}
+                  <a href="{% url 'tours:edit' tour.slug %}" class="btn btn-purple text-xs py-0.5 px-2"><i class="fa fa-edit mr-1"></i>{% trans "Edit" %}</a>
+                  <a href="{% url 'tours:plan' tour.slug %}" class="btn btn-purple text-xs py-0.5 px-2"><i class="fa-solid fa-route mr-1"></i>{% trans "Plan the route" %}</a>
+                  <a href="{% url 'tours:needs' tour.slug %}" class="btn btn-purple text-xs py-0.5 px-2"><i class="fa-solid fa-van-shuttle mr-1"></i>{% trans "Vehicles and needs" %}</a>
+                  {% if tour.open_to_join and tour.is_published and tour.is_current %}
+                    <a href="{% url 'tours:invite' tour.slug %}" class="btn btn-purple text-xs py-0.5 px-2"><i class="fa-solid fa-user-plus mr-1"></i>{% trans "Invite someone" %}</a>
+                  {% endif %}
+                  {% if not tour.is_published %}
+                    <form method="post" action="{% url 'tours:publish' tour.slug %}">{% csrf_token %}
+                      <button type="submit" class="btn text-xs py-0.5 px-2"><i class="fa-solid fa-paper-plane mr-1"></i>{% trans "Publish" %}</button>
+                    </form>
+                  {% endif %}
+                {% elif traveller.is_counted %}
+                  {% if traveller.match %}<a href="{{ traveller.match.get_absolute_url }}" class="btn btn-purple text-xs py-0.5 px-2"><i class="fa fa-comment mr-1"></i>{% trans "Talk with the organisers" %}</a>{% endif %}
+                  <a href="{{ tour.get_absolute_url }}#join" class="btn btn-purple text-xs py-0.5 px-2">{% trans "Leave tour" %}</a>
+                {% elif traveller.is_invitation %}
+                  <a href="{{ traveller.match.get_absolute_url }}" class="btn text-xs py-0.5 px-2">{% trans "See the invitation" %}</a>
+                {% else %}
+                  <a href="{{ traveller.match.get_absolute_url }}" class="btn btn-purple text-xs py-0.5 px-2">{% trans "See your request" %}</a>
+                  <a href="{% url 'tours:join' tour.slug %}" class="btn btn-purple text-xs py-0.5 px-2">{% trans "Change it" %}</a>
+                {% endif %}
+              </div>
+            </div>
+            <div class="flex-none flex flex-wrap gap-1 justify-end">
+              {% if traveller.is_organiser %}<span class="pill bg-primary">{% trans "Organiser" %}</span>
+              {% elif traveller.is_counted %}<span class="pill bg-green">{% trans "You travel along" %}</span>
+              {% elif traveller.is_invitation %}<a href="{{ traveller.match.get_absolute_url }}" class="pill bg-yellow">{% trans "Invitation" %}</a>
+              {% else %}<a href="{{ traveller.match.get_absolute_url }}" class="pill bg-yellow">{% trans "Asked to join" %}</a>{% endif %}
+              {% if not tour.is_published %}<span class="pill bg-brown">{% trans "Draft" %}</span>{% endif %}
+              {% if tour.archived_at %}<span class="pill bg-brown">{% trans "Archived" %}</span>{% endif %}
+            </div>
+          </li>
+        {% endwith %}
+      {% endfor %}
+    </ul>
+    {% include "dashboard/_pager.html" %}
+  {% else %}
+    <p class="italic">{% trans "No tours yet. Plan one, or ask to join one on the map." %}</p>
+    <a href="{% url 'tours:list' %}" class="btn btn-purple"><i class="fa-solid fa-map mr-1"></i>{% trans "Community-Tours" %}</a>
+  {% endif %}
+</section>
+{% endblock %}

@@ -1,0 +1,16 @@
+{% load i18n %}
+{# One gift taken along on a tour: what, from where to where, who brings it, where it stands. With `show_tour`, the tour too (on a gift's, community's or event's page) #}
+{% with ends=delivery.ends label=delivery.status_label %}
+<li class="m-0 flex flex-wrap items-center gap-3 p-3 rounded border bg-secondary bg-opacity-50">
+  <i class="fa-solid {{ delivery.offer.kind_icon }} text-primary w-5 text-center"></i>
+  <div class="flex-1 min-w-0">
+    <a href="{{ delivery.offer.get_absolute_url }}" class="font-semibold hover:underline">{{ delivery.title }}</a>{% if delivery.amount %}<span class="opacity-70"> · {{ delivery.amount }}</span>{% endif %}
+    {% if show_tour %}<span class="opacity-70"> · <i class="fa-solid {{ delivery.tour.travel_mode_icon }} mr-1"></i><a href="{{ delivery.tour.get_absolute_url }}" class="hover:underline">{{ delivery.tour.title }}</a></span>{% endif %}
+    <span class="text-xs opacity-80 block">
+      <i class="fa-solid fa-route mr-1"></i>{{ ends.0 }} → <a href="{{ delivery.wish.get_absolute_url }}" class="hover:underline">{{ ends.1 }}</a>
+      {% if user.is_authenticated %}· {% trans "Brought by" %} <a href="{{ delivery.bringer.get_absolute_url }}" class="underline hover:text-primary">{{ delivery.bringer.name|default:delivery.bringer.email }}</a>{% endif %}
+    </span>
+  </div>
+  <span class="text-sm {{ label.2 }} whitespace-nowrap"><i class="{{ label.1 }} mr-1"></i>{{ label.0 }}</span>
+</li>
+{% endwith %}

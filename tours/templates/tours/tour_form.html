@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block head_title %}{% if tour %}{% trans "Edit tour" %}{% else %}{% trans "Plan a tour" %}{% endif %} — ecobasa{% endblock %}
+
+{% block content %}
+<div class="container-form">
+  {# Where this page is #}
+  {% if tour %}
+  <div class="mb-2 text-sm flex flex-wrap items-center gap-x-2 gap-y-1">
+    <a href="{% url 'tours:list' %}" class="hover:underline">{% trans "Community-Tours" %}</a>
+    <i class="fa-solid fa-chevron-right text-xs opacity-50" aria-hidden="true"></i>
+    <a href="{{ tour.get_absolute_url }}" class="hover:underline">{{ tour.title }}</a>
+    <i class="fa-solid fa-chevron-right text-xs opacity-50" aria-hidden="true"></i>
+    <span class="opacity-70">{% trans "Edit" %}</span>
+  </div>
+  {% else %}
+  <div class="mb-2 text-sm flex flex-wrap items-center gap-x-2 gap-y-1">
+    <a href="{% url 'tours:list' %}" class="hover:underline">{% trans "Community-Tours" %}</a>
+    <i class="fa-solid fa-chevron-right text-xs opacity-50" aria-hidden="true"></i>
+    <span class="opacity-70">{% trans "Plan a tour" %}</span>
+  </div>
+  {% endif %}
+  <h1><i class="fa-solid fa-route mr-2 text-primary"></i>{% if tour %}{{ tour.title }}{% elif going_to %}{% trans "Go there together" %}{% else %}{% trans "Plan a tour" %}{% endif %}</h1>
+  {% if not tour %}<p class="text-sm">{% trans "First the basics. Next you add the stops: communities, their events, or other places." %} {% include "help/_link.html" with page="help:tours" anchor="plan" %}</p>{% endif %}
+
+  <form method="post" enctype="multipart/form-data" class="border rounded-xl bg-secondary p-6 space-y-4"
+        x-data="{ openToJoin: {{ form.open_to_join.value|yesno:'true,false' }} }">
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+    {% for field in form %}
+      {% if field.name == "open_to_join" %}
+        <fieldset class="form-group">
+          <legend class="form-label">{% trans "Travel company" %}</legend>
+          <label class="inline-flex items-center gap-2"><input type="checkbox" name="{{ field.html_name }}" id="{{ field.id_for_label }}" class="form-checkbox" x-model="openToJoin" {% if field.value %}checked{% endif %}> {{ field.label }}</label>
+          <p class="text-xs mt-1" x-show="!openToJoin" x-cloak>{% trans "A tour of your own, to learn and to take gifts along. Nobody can ask to join." %}</p>
+        </fieldset>
+      {% elif field.name == "max_people" %}
+        <div class="form-group" x-show="openToJoin" x-cloak>
+          <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+          {{ field }}
+          <p class="text-xs mt-1">{{ field.help_text }} {% trans "3 to 5 people fit into a community most easily." %}</p>
+          {% for error in field.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+        </div>
+      {% elif field.name == "listed" %}
+        <div class="form-group" x-show="!openToJoin" x-cloak>
+          <label class="inline-flex items-center gap-2">{{ field }} {{ field.label }}</label>
+          <p class="text-xs mt-1">{% trans "Otherwise only you see it, and later the hosts you ask." %}</p>
+        </div>
+      {% elif field.name == "children_welcome" %}
+        <fieldset class="form-group">
+          <legend class="form-label">{% trans "Who is welcome" %}</legend>
+          <label class="inline-flex items-center gap-2 mr-6">{{ form.children_welcome }} <i class="fa-solid fa-children"></i> {{ form.children_welcome.label }}</label>
+          <label class="inline-flex items-center gap-2">{{ form.animals_welcome }} <i class="fa-solid fa-paw"></i> {{ form.animals_welcome.label }}</label>
+        </fieldset>
+      {% elif field.name != "animals_welcome" %}
+        <div class="form-group">
+          <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+          {{ field }}
+          {% if field.help_text %}<p class="text-xs mt-1">{{ field.help_text }}</p>{% endif %}
+          {% for error in field.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+        </div>
+      {% endif %}
+    {% endfor %}
+
+    <div class="flex justify-end gap-3 pt-4">
+      <a href="{% if tour %}{{ tour.get_absolute_url }}{% else %}{% url 'tours:list' %}{% endif %}" class="btn btn-lg btn-purple">{% trans "Cancel" %}</a>
+      <button type="submit" class="btn btn-lg"><i class="fa fa-save mr-2"></i>{% if tour %}{% trans "Save" %}{% else %}{% trans "Next: the route" %}{% endif %}</button>
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+{% block css %}
+{{ block.super }}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.css">
+{% endblock %}
+
+{% block javascript %}
+{{ block.super }}
+<script src="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.min.js"></script>
+{% include "users/_skill_tagify_js.html" %}
+{% if form.countries %}
+{{ form.country_whitelist|json_script:"country-whitelist" }}
+<script>
+// Countries only from the list; the field keeps their codes
+document.addEventListener('DOMContentLoaded', function () {
+  const input = document.querySelector('[data-country-tags]');
+  if (!input) return;
+  const whitelist = JSON.parse(JSON.parse(document.getElementById('country-whitelist').textContent));
+  const chosen = input.value.split(',').filter(Boolean);
+  input.value = '';
+  const tagify = new Tagify(input, {
+    enforceWhitelist: true, editTags: false, whitelist: whitelist,
+    dropdown: { enabled: 1, maxItems: 10, closeOnSelect: true, searchKeys: ['value'], highlightFirst: true },
+    originalInputValueFormat: vals => vals.map(v => v.code).join(','),
+  });
+  tagify.addTags(whitelist.filter(c => chosen.includes(c.code)));
+});
+</script>
+{% endif %}
+{% endblock %}

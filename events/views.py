@@ -1,27 +1,32 @@
+import html
 from datetime import datetime, time
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.contrib.contenttypes.models import ContentType
 from django.core import signing
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
 from django.db.models import Prefetch, Q
-from django.http import HttpResponseBadRequest
+from django.http import HttpResponseBadRequest, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.template.loader import render_to_string
 from django.utils import timezone
+from django.utils.html import strip_tags
+from django.utils.text import Truncator
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_POST
 
 from communities.models import Community
-from dashboard_lists import Choice, paginate, query_url
+from dashboard_lists import paginate
 from gift_economy.matches.emails import notify_match_created
 from gift_economy.gifts.models import Listing
-from gift_economy.matches.matching import distance_km
-from gift_economy.matches.models import Contribution, Match, StayDetails
-from gift_economy.gifts.skills.models import skill_name_q
+from gift_economy.matches.models import Match, StayDetails, create_stay
+from gift_economy.gifts.skills.models import Skill, skill_name_q
 
 from . import kinds
-from .forms import ComingForm, EventForm, HelpOfferForm, NeedFormSet
+from .forms import ComingForm, EventForm, HelpOfferForm, NeedForm, NeedFormSet
+from .filters import EventFilters
 from .freshness import read_confirm_token
 from .models import Event
 
@@ -34,70 +39,118 @@ _LISTINGS = Prefetch(
 
 
 def _events():
-    return Event.objects.select_related("community", "community__owner").prefetch_related(_LISTINGS)
+    return Event.objects.select_related("community", "community__owner").prefetch_related(_LISTINGS, "community__photos")
 
 
 def _event(community_slug, slug, events=None):
     return get_object_or_404(_events() if events is None else events, community__slug=community_slug, slug=slug)
 
 
-@login_required
-def nearby(request):
-    """The current events around the place in one's profile, nearest first: within the
-    distance one looks for matches in, or everywhere. Filtered by a search and by kind.
-    Distances are to where everyone sees a community, so they give no private place away."""
+def event_list(request):
+    """Events on a map, the list in a modal, with a search and filters (EventFilters),
+    as on the communities. The map starts around where one asked (?near=) or the place in
+    one's profile."""
     user = request.user
-    events = _events().current()
-    q = (request.GET.get("q") or "").strip()
-    if q:
-        events = events.filter(
-            Q(title__icontains=q)
-            | Q(description__icontains=q)
-            | Q(community__name__icontains=q)
-            | Q(community__location_name__icontains=q)
-            | Q(listings__title__icontains=q)
-            | skill_name_q(q, "listings__skill__")
-        ).distinct()
-
-    everywhere = request.GET.get("where") == "everywhere" or user.location is None
-    found = []
-    for event in events:
-        point = event.place.rough_place()[1]
-        event.km = round(distance_km(user.location, point)) if user.location is not None and point is not None else None
-        if everywhere or (event.km is not None and event.km <= user.match_radius):
-            found.append(event)
-    # Nearest first; those without a place last, freshest first among equals
-    found.sort(key=lambda event: (event.km is None, event.km or 0, -event.updated_at.timestamp()))
-
-    kind = request.GET.get("kind", "")
-    kind_choices = [Choice(_("All"), query_url(request, kind=None), not kind, len(found))] + [
-        Choice(
-            kinds.TEXTS[value]["plural"], query_url(request, kind=value), kind == value,
-            sum(1 for event in found if event.kind == value), icon=kinds.ICONS[value],
-        )
-        for value, _label in kinds.CHOICES
-    ]
-    if kind in kinds.TEXTS:
-        found = [event for event in found if event.kind == kind]
-    wheres = []
-    if user.location is not None:
-        wheres = [
-            Choice(
-                _("Within %(km)s km") % {"km": user.match_radius}, query_url(request, where=None),
-                not everywhere, icon="fa-location-dot",
-            ),
-            Choice(_("Everywhere"), query_url(request, where="everywhere"), everywhere, icon="fa-earth-europe"),
-        ]
-    page = paginate(request, found)
-    return render(request, "events/nearby.html", {
-        "page": page,
-        "events": page.object_list,
-        "q": q,
-        "wheres": wheres,
-        "kinds": kind_choices,
-        "has_place": user.location is not None,
-        "everywhere": everywhere,
+    filters = EventFilters(request.GET, user)
+    home = filters.near or (user.location if user.is_authenticated else None)
+    return render(request, "events/event_list.html", {
+        "filters": filters,
+        "countries": _countries(filters),
+        "kind_choices": [(value, kinds.TEXTS[value]["plural"], kinds.ICONS[value]) for value, _label in kinds.CHOICES],
+        "need_choices": [(value, label) for value, label in NeedForm.KIND_CHOICES],
+        "flag_choices": _flag_choices(user),
+        "home": home,
+        "radius": user.match_radius if user.is_authenticated else None,
     })
+
+
+def _flag_choices(user):
+    """The filters one switches on: (name, label, icon)."""
+    flags = [
+        ("room", _("Still has room"), "fa-users"), ("open", _("Just come"), "fa-door-open"),
+        ("food", _("Food provided"), "fa-utensils"), ("bed", _("Bed provided"), "fa-bed"),
+    ]
+    if user.is_authenticated:
+        flags += [("fits", _("Fits my skills"), "fa-hands-helping"), ("going", _("Going to"), "fa-calendar-check")]
+    return flags
+
+
+def api_list(request):
+    """The list in the modal, for htmx: the events of the filters, nearest where one
+    asked (or the place in one's profile) first."""
+    user = request.user
+    filters = EventFilters(request.GET, user)
+    home = user.location if user.is_authenticated else None
+    events = filters.order(list(filters.apply(filters.base(_events()))), home)
+    page = paginate(request, events)
+    return render(request, "events/_results.html", {"page": page, "events": page.object_list, "filters": filters})
+
+
+def api_markers(request):
+    """GeoJSON of the events of the filters in the map's visible area (bbox), where
+    everyone sees them, with what their popup shows."""
+    filters = EventFilters(request.GET, request.user)
+    features = []
+    for event in filters.in_view(filters.apply(filters.base(_events()))):
+        glyph, colour = kinds.PINS.get(event.kind, kinds.PINS[kinds.COMMUNITY_EVENT])
+        features.append({
+            "type": "Feature",
+            "geometry": {"type": "Point", "coordinates": [event.point.x, event.point.y]},
+            "properties": {
+                "title": event.title,
+                "url": event.get_absolute_url(),
+                "kind": event.kind_label,
+                "kind_icon": event.kind_icon,
+                "glyph": glyph,
+                "colour": colour,
+                # As text: the popup sets it as such
+                "dates": " ".join(html.unescape(strip_tags(render_to_string("events/_event_dates.html", {"event": event}))).split()),
+                "description": Truncator(event.description).chars(150),
+                # Its host as on its card, with the avatar; where it is, the map shows
+                "host": render_to_string("events/_host.html", {"event": event, "without_place": True}),
+                "image": event.image.url if event.image else "",
+                "learn": [skill.display_title for skill in event.skills_to_learn()][:5],
+                "needs": [need.display_title for need in event.open_needs()][:5],
+                "open": event.is_open,
+                "food": event.food_provided,
+                "bed": event.bed_provided,
+            },
+        })
+    return JsonResponse({"type": "FeatureCollection", "features": features})
+
+
+def _countries(filters):
+    """The countries with events of the time asked for, by name: (code, name)."""
+    from django_countries import countries
+
+    codes = set(filters.base(Event.objects.all()).values_list("community__country", flat=True))
+    return sorted(((code, countries.name(code)) for code in codes if code and countries.name(code)), key=lambda pair: pair[1])
+
+
+def api_suggest(request):
+    """Suggestions for the search, from the events of the time asked for: their titles,
+    their hosts, the skills one can learn or is needed for, and where they are."""
+    q = (request.GET.get("q") or "").strip()
+    if len(q) < 2:
+        return JsonResponse([], safe=False)
+    events = EventFilters(request.GET).base(Event.objects.all())
+    suggestions, seen = [], set()
+
+    def add(value, kind):
+        if value and value.lower() not in seen and len(suggestions) < 10:
+            seen.add(value.lower())
+            suggestions.append({"value": value, "type": kind})
+
+    for title in events.filter(title__icontains=q).values_list("title", flat=True)[:4]:
+        add(title, "event")
+    for name in events.filter(community__name__icontains=q).values_list("community__name", flat=True).distinct()[:3]:
+        add(name, "community")
+    listings = Listing.objects.filter(event__in=events, skill__isnull=False)
+    for skill in Skill.objects.filter(skill_name_q(q, ""), listings__in=listings).distinct()[:4]:
+        add(skill.get_name(), "skill")
+    for name in events.filter(community__location_name__icontains=q).values_list("community__location_name", flat=True).distinct()[:3]:
+        add(name, "location")
+    return JsonResponse(suggestions, safe=False)
 
 
 def detail(request, community_slug, slug):
@@ -134,7 +187,6 @@ def _references(event):
     """References written after anything that was part of the event: help offered on
     it, coming to it, or a stay at its community that brought one of its needs. In both
     directions: guests about the community, the ambassador about the guests."""
-    from django.contrib.contenttypes.models import ContentType
     from gift_economy.references.models import Reference, ReferenceSkill, with_card_data
 
     matches = Match.objects.filter(
@@ -268,17 +320,12 @@ def offer_help(request, community_slug, slug):
     form = HelpOfferForm(event, request.POST or None, preselected=request.GET.getlist("need"))
     if request.method == "POST" and form.is_valid():
         with transaction.atomic():
-            match = Match(from_user=request.user, recipient=event.get_match_owner(), message=form.cleaned_data["message"])
-            match.target = event
-            match.save()
-            StayDetails.objects.create(
-                match=match,
-                volunteer_mode="wish",
+            match = create_stay(
+                request.user, event, message=form.cleaned_data["message"], volunteer_mode="wish",
                 stay_from=_day_start(form.cleaned_data["stay_from"]),
                 stay_to=_day_start(form.cleaned_data["stay_to"]),
+                contributions=form.chosen_needs(),
             )
-            for need, quantity in form.chosen_needs():
-                Contribution.objects.create(listing=need, match=match, quantity=quantity)
         notify_match_created(match, http_request=request)
         messages.success(request, _("Your offer has been sent to %(community)s!") % {"community": event.community.name})
         return redirect(match.get_absolute_url())

@@ -26,7 +26,7 @@ from users.models import User
 from users.places import approximate, town
 from gift_economy.gifts.skills.models import Skill, skill_name_q
 from gift_economy.matches.forms import MatchForm
-from gift_economy.matches.models import Contribution, Loan, Match
+from gift_economy.matches.models import Contribution, Loan, Match, Suggestion
 from gift_economy.matches.emails import notify_match_created
 from dashboard_lists import Choice, paginate, query_url
 
@@ -34,14 +34,28 @@ from dashboard_lists import Choice, paginate, query_url
 def search(request):
     """Show all listings with filter ability"""
     f = ListingFilter(request.GET, queryset=Listing.objects.none(), request=request)
+    return render(request, "gifts/search.html", {"f": f, "countries": _countries()})
 
-    return render(request, "gifts/search.html", {"f": f})
+
+def _countries():
+    """The countries with gifts, by name: (code, name). A community's gifts are in its
+    country, a person's in theirs, a tour's needs in all it goes through."""
+    from django_countries import countries
+
+    listings = Listing.objects.open()
+    codes = set(listings.exclude(community=None).values_list("community__country", flat=True))
+    codes |= set(listings.filter(community=None, tour=None).values_list("owner__country", flat=True))
+    for stored in listings.exclude(tour=None).values_list("tour__countries", flat=True):
+        # Stored as "DE,NL,FR"
+        codes.update((stored or "").split(","))
+    return sorted(((code, countries.name(code)) for code in codes if code and countries.name(code)), key=lambda pair: pair[1])
 
 
 def detail(request, pk):
     """An offer or a wish of any kind, with the request form. A event's need is helped
     with through the event's offer form; a community's wish for a skill through its
-    volunteer form."""
+    volunteer form. A tour's need with the request form too (someone gives or lends it)
+    and with joining the tour (someone comes along and covers it)."""
     listing = get_object_or_404(
         Listing.objects.select_related("owner", "community__owner", "event", "skill", "thing")
         .prefetch_related("categories", "contributions__match__from_user"),
@@ -58,15 +72,27 @@ def detail(request, pk):
     holder = listing.holder
     if listing.community_id:
         context["holder_place_name"] = holder.place_for(request.user)[0]
+    elif listing.tour_id:
+        tour = listing.tour
+        context["holder_place_name"] = listing.public_place[0]
+        if tour.open_to_join and tour.is_published and tour.is_current and not listing.is_done:
+            context["join_url"] = f"{tour.url('join')}?need={listing.pk}"
     elif holder is not None:
         context["holder_place_name"] = holder.location_name if can_edit else town(holder.location_name)
     help_url = _help_url(listing)
     context["help_url"] = help_url
 
     manager = listing.manager
+    # A thing a project needs can also just be given, by someone who doesn't come
+    givable = not help_url or (listing.event_id and listing.is_thing)
     # A public good is just there: nobody needs to ask for it
-    if request.user.is_authenticated and manager is not None and request.user != manager and not help_url and not listing.public_good:
-        form = MatchForm(request.POST or None, loan_of=listing if listing.lend else None)
+    if request.user.is_authenticated and manager is not None and request.user != manager and givable and not listing.public_good:
+        # From a tour's suggestion to give a thing along to this wish: a message ready
+        suggestion = _giving_along(request, listing)
+        form = MatchForm(
+            request.POST or None, loan_of=listing if listing.lend else None,
+            initial={"message": suggestion.message} if suggestion else None,
+        )
         if request.method == "POST" and form.is_valid():
             match = form.save(commit=False)
             match.from_user = request.user
@@ -275,10 +301,10 @@ def _apply_bbox(qs, bbox_param):
 def _filtered_listings(request, require_location=True):
     """What the map and list show: current listings, filtered (ListingFilter), each with
     its place. Offers and wishes of things, skills, knowledge and helping hands of people
-    and communities, and the needs of current events."""
+    and communities, and the needs of current events and tours."""
     base_qs = _with_spot(Listing.objects.open()).select_related(
-        "owner", "community", "event", "skill",
-    ).exclude(owner=None, community=None).exclude(type=Listing.TYPE_OFFER, skill__isnull=False, available=False)
+        "owner", "community", "event", "tour", "skill",
+    ).exclude(owner=None, community=None, tour=None).exclude(type=Listing.TYPE_OFFER, skill__isnull=False, available=False)
     if require_location:
         base_qs = base_qs.filter(spot__isnull=False)
     return ListingFilter(request.GET, queryset=base_qs, request=request).qs
@@ -291,14 +317,6 @@ def _public_name(user):
     if not user:
         return ""
     return user.name or user.username or ""
-
-
-def _marker_colour(listing):
-    if listing.event_id and listing.is_wish:
-        return "#5A5527"  # green: a event's need
-    if listing.is_skill:
-        return "#80143b"  # purple
-    return "#de7a08" if listing.is_wish else "#da6137"
 
 
 @require_GET
@@ -325,6 +343,8 @@ def gifts_markers(request):
         if photo is None and listing.community_id:
             first = listing.community.photos.first()
             photo = first.image.url if first and first.image else None
+        if photo is None and listing.tour_id:
+            photo = listing.tour.picture or None
         # Somewhere in its cell, unless it's public
         spot = listing.spot if listing.place_is_public else approximate(listing.spot, listing.place_seed)
         features.append({
@@ -337,16 +357,23 @@ def gifts_markers(request):
                 "image":          photo,
                 "listing_type":   listing.type,
                 "glyph":          listing.marker_glyph,
-                "color":          _marker_colour(listing),
+                "color":          listing.marker_hex,
                 "kind_icon":      listing.kind_icon if listing.kind != Listing.KIND_OTHER else "",
                 "amount":         listing.amount,
                 "type_display":   f"{listing.get_type_display()} · {listing.kind_label}" if listing.kind != Listing.KIND_OTHER else listing.get_type_display(),
                 "url":            listing.get_absolute_url(),
                 "event":        listing.event.title if listing.event_id else "",
                 "community_name": listing.community.name if listing.community_id else "",
+                "community_url":  listing.community.get_absolute_url() if listing.community_id else "",
+                "tour":           listing.tour.title if listing.tour_id else "",
                 # Who it is only for members: visitors sign up to find out and ask
-                "user_name":      "" if listing.community_id or not signed_in else _public_name(holder),
-                "member_of":      "" if listing.community_id or not holder or not signed_in else ", ".join(c.name for c in holder.member_communities()),
+                "user_name":      "" if listing.community_id or listing.tour_id or not signed_in else _public_name(holder),
+                "user_url":       "" if listing.community_id or listing.tour_id or not signed_in or not holder else holder.get_absolute_url(),
+                "user_image":     "" if listing.community_id or listing.tour_id or not signed_in or not holder or not holder.image else holder.image.url,
+                # The communities a person is ambassador of: [[name, url]]
+                "member_of":      [] if listing.community_id or listing.tour_id or not holder or not signed_in else [
+                    [c.name, c.get_absolute_url()] for c in holder.member_communities()
+                ],
             },
         })
     return JsonResponse({"type": "FeatureCollection", "features": features})
@@ -354,11 +381,15 @@ def gifts_markers(request):
 
 @require_GET
 def gifts_list_partial(request):
-    listings_queryset = _filtered_listings(request, require_location=False).prefetch_related("categories", "community__photos", "owner__communities")
+    listings_queryset = _filtered_listings(request, require_location=False).prefetch_related(
+        "categories", "community__photos", "owner__communities__photos",
+    )
     # Your own (and your communities') are nearest, so they would always come first; the
     # map still shows them
     if request.user.is_authenticated:
-        listings_queryset = listings_queryset.exclude(Q(owner=request.user) | Q(community__owner=request.user))
+        listings_queryset = listings_queryset.exclude(
+            Q(owner=request.user) | Q(community__owner=request.user) | Q(tour__organiser=request.user)
+        )
     if not request.GET.get("location"):
         listings_queryset = listings_queryset.order_by("-created_at")
 
@@ -379,13 +410,15 @@ def nominatim_proxy(request):
     q = request.GET.get("q", "").strip()
     if len(q) < 3:
         return JsonResponse([], safe=False)
-    cache_key = "nominatim:" + q.lower()
+    # Names in the page's language: Nominatim gives each place's own otherwise
+    language = request.LANGUAGE_CODE
+    cache_key = f"nominatim:{language}:{q.lower()}"
     cached = cache.get(cache_key)
     if cached is not None:
         return JsonResponse(cached, safe=False)
     try:
         url = "https://nominatim.openstreetmap.org/search?" + urllib.parse.urlencode({
-            "format": "json", "addressdetails": "1", "limit": "10", "q": q,
+            "format": "json", "addressdetails": "1", "limit": "10", "q": q, "accept-language": language,
         })
         req = urllib.request.Request(url, headers={"User-Agent": "ecobasa.org/1.0 geocoder"})
         with urllib.request.urlopen(req, timeout=5) as resp:
@@ -466,3 +499,15 @@ def gifts_suggest(request):
                 add(word.lower(), "text")
 
     return JsonResponse(suggestions[:8], safe=False)
+
+
+def _giving_along(request, listing):
+    """The viewer's suggestion (?suggestion=) to give a thing along with a tour to this wish."""
+    pk = request.GET.get("suggestion", "")
+    if not pk.isdigit() or not listing.is_wish:
+        return None
+    suggestion = Suggestion.objects.filter(
+        pk=pk, user=request.user, kind=Suggestion.KIND_TOURS, reason=Suggestion.REASON_WANTS,
+        detail_id=str(listing.pk),
+    ).first()
+    return suggestion

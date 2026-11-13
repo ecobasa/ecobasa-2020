@@ -88,7 +88,9 @@ class Notification(models.Model):
             return self.verb
 
         if self.tag == self.TAG_REQUESTED:
-            template = target.get_match_request_text()
+            # What is attached to the match (an invitation onto a tour) may say it better
+            attached = next((a for a in self.match.attachments() if hasattr(a, "get_match_request_text")), target)
+            template = attached.get_match_request_text()
         elif self.tag == self.TAG_ACCEPTED:
             # The requester can only accept/decline a counter-proposal from the owner.
             template = (_("%(actor)s accepted your counter-proposal for: %(title)s")
@@ -117,7 +119,9 @@ class Notification(models.Model):
 
     def _suggestion_text(self):
         """Counts what is new for them, so the one notification stays true."""
-        new = self.recipient.suggestions.filter(seen_at=None, dismissed_at=None).count()
+        from gift_economy.matches.models import Suggestion
+
+        new = Suggestion.objects.shown_to(self.recipient).filter(seen_at=None).count()
         if not new:
             return str(_("Suggestions near you: what fits your wishes, offers and skills."))
         return ngettext(

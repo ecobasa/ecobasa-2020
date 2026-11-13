@@ -1,5 +1,5 @@
 {% extends 'matches/base.html' %}
-{% load i18n l10n references_tags %}
+{% load i18n l10n references_tags tours_tags %}
 
 {% block head_title %}{% trans "Match" %} — ecobasa{% endblock %}
 
@@ -14,6 +14,8 @@
   <div class="mb-2 text-sm">
     {% if request_type == "volunteer" %}
       <a href="{% url 'matches:list' %}?type=volunteer" class="hover:underline">{% trans "Volunteer Visits" %}</a>
+    {% elif request_type == "tours" %}
+      <a href="{% url 'matches:list' %}?type=tours" class="hover:underline">{% trans "Join requests" %}</a>
     {% else %}
       <a href="{% url 'matches:list' %}" class="hover:underline">{% trans "Matches" %}</a>
     {% endif %}
@@ -130,13 +132,7 @@
   {# ── Original request card ─────────────────────────────────────── #}
   <div class="border rounded-xl bg-secondary p-6 mb-6">
     <div class="flex items-center gap-3 mb-4">
-      {% if match.from_user.image %}
-        <img src="{{ match.from_user.image.url }}" alt="" width="48" height="48" class="w-12 h-12 rounded-full object-cover">
-      {% else %}
-        <div class="w-12 h-12 rounded-full bg-primary bg-opacity-20 flex items-center justify-center">
-          <i class="fa fa-user text-primary"></i>
-        </div>
-      {% endif %}
+      {% include "_avatar.html" with who=match.from_user %}
       <div>
         <a href="{{ match.from_user.get_absolute_url }}" class="font-semibold text-primary hover:underline">
           {{ match.from_user.name|default:match.from_user.email }}
@@ -160,6 +156,9 @@
     </div>
 
     <div class="prose text-sm mb-4">{{ match.message|linebreaksbr }}</div>
+
+    {% if summary_template %}{% include summary_template %}{% endif %}
+    {% for attachment in match.attachments %}{% include attachment.match_attachment_template %}{% endfor %}
 
     {% if match.is_loan %}
       <div class="text-sm mb-2">
@@ -239,6 +238,7 @@
   </div>
 
   {% if person %}{% include "matches/_person.html" %}{% endif %}
+  {% if match.is_community_stay and not match.is_closed %}{% tours_going_there match %}{% endif %}
 
   {# ── Thread / history ─────────────────────────────────────────────── #}
   {% if thread %}
@@ -252,13 +252,7 @@
           {% endif %}">
 
           <div class="flex items-center gap-2 mb-3">
-            {% if msg.sender.image %}
-              <img src="{{ msg.sender.image.url }}" alt="" width="32" height="32" class="w-8 h-8 rounded-full object-cover">
-            {% else %}
-              <div class="w-8 h-8 rounded-full bg-primary bg-opacity-20 flex items-center justify-center">
-                <i class="fa fa-user text-xs text-primary"></i>
-              </div>
-            {% endif %}
+            {% include "_avatar.html" with who=msg.sender %}
             <a href="{{ msg.sender.get_absolute_url }}" class="font-semibold text-sm text-primary hover:underline">
               {{ msg.sender.name|default:msg.sender.email }}
             </a>

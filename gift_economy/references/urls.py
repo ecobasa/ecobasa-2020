@@ -7,6 +7,7 @@ app_name = "references"
 urlpatterns = [
     path("",                                       views.references_list, name="list"),
     path("<int:pk>/delete/",                       views.delete, name="delete"),
+    path("<int:pk>/confirm/<str:action>/",          views.confirm, name="confirm"),
     path("skill/<int:pk>/<str:action>/",           views.skill_tag, name="skill_tag"),
     path("request/<str:key>/",                     views.reference_request, name="request"),
     path("featured/",                              views.featured, name="featured"),

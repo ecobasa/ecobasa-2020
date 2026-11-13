@@ -1,0 +1,265 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block head_title %}{% trans "Route" %} — {{ tour.title }} — ecobasa{% endblock %}
+
+{% block extrahead %}
+{{ block.super }}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v7.2.2/ol.css">
+{% endblock %}
+
+{% block content %}
+<div class="container-page">
+  {# Where this page is #}
+  <div class="mb-2 text-sm flex flex-wrap items-center gap-x-2 gap-y-1">
+    <a href="{% url 'tours:list' %}" class="hover:underline">{% trans "Community-Tours" %}</a>
+    <i class="fa-solid fa-chevron-right text-xs opacity-50" aria-hidden="true"></i>
+    <a href="{{ tour.get_absolute_url }}" class="hover:underline">{{ tour.title }}</a>
+    <i class="fa-solid fa-chevron-right text-xs opacity-50" aria-hidden="true"></i>
+    <span class="opacity-70">{% trans "Route" %}</span>
+  </div>
+  <h1><i class="fa-solid fa-route mr-2 text-primary"></i>{% trans "Route" %}</h1>
+  <p class="text-sm">{% trans "Add the stops in the order you travel. Days can come later: without them the tour is an idea." %} {% include "help/_link.html" with page="help:tours" anchor="plan" %}</p>
+
+  {# The route and the recommended communities and events; a click on one tells why #}
+  <div class="relative h-80 lg:h-[32rem] rounded-xl shadow overflow-hidden mb-6">
+    <div id="planner-map" class="absolute inset-0 bg-secondary bg-opacity-50"></div>
+  </div>
+
+  {# The stops: the route, what is recommended on the way, and adding one by hand #}
+  <div class="space-y-6">
+    {# Swapped as a whole by htmx: each request renders this page, htmx takes #planner out of it #}
+    <div id="planner" class="space-y-6" hx-target="#planner" hx-select="#planner" hx-swap="outerHTML"
+         hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+      {# The route (rows and their styles in _route.html, shared with the tour page) #}
+      <section class="border rounded-xl bg-secondary bg-opacity-60 p-6">
+        {% include "tours/_route.html" with editing=True %}
+        {% if route %}
+          <div class="flex flex-wrap items-center justify-between gap-3 mt-2">
+            {% if tour.distance_km %}<p class="text-sm m-0">{% blocktrans with km=tour.distance_km %}Altogether about {{ km }} km.{% endblocktrans %}</p>{% endif %}
+            {% if route|length > 2 %}
+              <a href="{% url 'tours:plan' tour.slug %}?order=1&km={{ km }}" hx-get="{% url 'tours:plan' tour.slug %}?order=1&km={{ km }}"
+                 class="btn btn-purple text-sm"><i class="fa-solid fa-shuffle mr-1"></i>{% trans "Suggest an order" %}</a>
+            {% endif %}
+          </div>
+        {% else %}
+          <p class="italic m-0">{% trans "No stops yet." %}</p>
+        {% endif %}
+      </section>
+
+      {# "Suggest an order" #}
+      {% if order_asked %}
+        <section class="border-2 border-purple rounded-xl bg-secondary p-6">
+          {% if order %}
+            <h2 class="mt-0">{% trans "Suggest an order" %}</h2>
+            <ol class="text-sm space-y-1 mb-3">
+              {% for stop in order %}<li><i class="fa-solid {{ stop.icon }} mr-1 text-primary"></i>{{ stop.label }}{% if stop.arrive_on or stop.leave_on %} · {% include "tours/_stop_dates.html" %}{% endif %}</li>{% endfor %}
+            </ol>
+            <p class="text-sm">{% blocktrans with new=order_km old=current_km %}About {{ new }} km instead of {{ old }} km. Stops with days keep their order among each other.{% endblocktrans %}</p>
+            <div class="flex flex-wrap gap-3">
+              <form method="post" action="{% url 'tours:plan_order' tour.slug %}">{% csrf_token %}
+                <button type="submit" class="btn"><i class="fa-solid fa-check mr-1"></i>{% trans "Use this order" %}</button>
+              </form>
+              <a href="{% url 'tours:plan' tour.slug %}?km={{ km }}" hx-get="{% url 'tours:plan' tour.slug %}?km={{ km }}" class="btn btn-purple">{% trans "Cancel" %}</a>
+            </div>
+          {% else %}
+            <p class="m-0 text-sm">{% trans "We found no order with fewer kilometres. Stops with days keep their order among each other." %}</p>
+          {% endif %}
+        </section>
+      {% endif %}
+
+      {% if hints %}
+        <ul class="list-none m-0 p-0 text-sm space-y-1">
+          {% for hint in hints %}<li><i class="fa-regular fa-lightbulb mr-2 text-primary"></i>{{ hint }}</li>{% endfor %}
+        </ul>
+      {% endif %}
+
+      {# Recommended on the way: rows with the route's columns (_route.html), so days and km line up with the stops #}
+      <section id="recommended" class="border rounded-xl bg-secondary bg-opacity-60 p-6">
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
+          <h2 class="m-0">{% trans "Recommended on the way" %}</h2>
+          <form hx-get="{% url 'tours:plan' tour.slug %}" hx-trigger="change" method="get" action="{% url 'tours:plan' tour.slug %}">
+            <select name="km" class="form-select text-sm" aria-label="{% trans 'Distance' %}">
+              {% for choice in area_choices %}
+                <option value="{{ choice }}"{% if choice == km %} selected{% endif %}>{% blocktrans with km=choice %}within {{ km }} km of the route{% endblocktrans %}</option>
+              {% endfor %}
+            </select>
+            <noscript><button type="submit" class="btn btn-purple text-sm">{% trans "Show" %}</button></noscript>
+          </form>
+        </div>
+        {% if recommendations %}
+          <ol class="route list-none m-0 p-0">
+            {% for rec in recommendations %}
+              <li class="m-0">
+                <div class="route-stop{% if not forloop.first %} border-t border-primary border-opacity-20{% endif %}">
+                  {# A possible stop: its icon in a dashed circle where the stops have their number #}
+                  <div class="route-num">
+                    <span class="w-8 h-8 rounded-full border-2 border-dashed border-primary text-primary text-sm flex items-center justify-center"><i class="fa-solid {{ rec.icon }}"></i></span>
+                  </div>
+                  <div class="route-main">
+                    <div class="font-semibold leading-snug"><a href="{{ rec.host.get_absolute_url }}" class="hover:underline">{{ rec.name }}</a></div>
+                    <div class="text-sm opacity-80 mt-0.5">
+                      {% if rec.event %}{{ rec.event.kind_label }} · <a href="{{ rec.community.get_absolute_url }}" class="hover:underline">{{ rec.community.name }}</a>{% if rec.place %} · {% endif %}{% endif %}{{ rec.place }}
+                    </div>
+                  </div>
+                  <div class="route-when text-sm font-semibold">
+                    {% if rec.event %}<i class="fa-regular fa-calendar mr-1"></i>{% include "events/_event_dates.html" with event=rec.event %}{% endif %}
+                  </div>
+                  <div class="route-host text-sm opacity-80 whitespace-nowrap">{% if rec.extra_km is not None %}+{{ rec.extra_km }} km{% endif %}</div>
+                  <div class="route-note flex flex-wrap items-start content-start gap-1">
+                    {% for reason in rec.reasons %}
+                      <span class="pill {% if reason.key == 'little_room' %}bg-red{% else %}bg-green{% endif %} text-xs"><i class="fa-solid {{ reason.icon }} mr-1"></i>{{ reason.text }}</span>
+                    {% endfor %}
+                  </div>
+                  <div class="route-tools">
+                    <form method="post" action="{% url 'tours:plan_add' tour.slug %}" hx-post="{% url 'tours:plan_add' tour.slug %}">
+                      {% csrf_token %}
+                      <input type="hidden" name="position" value="{{ rec.position }}">
+                      <input type="hidden" name="km" value="{{ km }}">
+                      {% if rec.event %}<input type="hidden" name="event" value="{{ rec.event.pk }}">{% else %}<input type="hidden" name="community" value="{{ rec.community.pk }}">{% endif %}
+                      <button type="submit" class="btn text-sm"><i class="fa fa-plus mr-1"></i>{% trans "Add" %}</button>
+                    </form>
+                  </div>
+                </div>
+              </li>
+            {% endfor %}
+          </ol>
+        {% elif route or tour.countries %}
+          <p class="italic m-0 text-sm">{% trans "Nothing found here yet. Try a wider area." %}</p>
+        {% else %}
+          <p class="italic m-0 text-sm">{% trans "Add a first stop, or choose countries in the tour's basics, to see communities and events worth a visit." %}</p>
+        {% endif %}
+
+        {# Gifts offered on the route that are wished for further on #}
+        {% if route|length > 1 %}
+          <h3 id="could-travel" class="mt-8 mb-2">{% trans "Could travel with you" %}</h3>
+          {% include "tours/_could_travel.html" %}
+        {% endif %}
+      </section>
+
+      {# For the map, read again after each swap #}
+      {{ geojson|json_script:"planner-route" }}
+      {{ recommended_geojson|json_script:"planner-recommended" }}
+    </div>
+
+    <form method="post" class="border rounded-xl bg-secondary p-6 space-y-4">
+      {% csrf_token %}
+      <h2 class="mt-0">{% trans "Add a stop" %}</h2>
+      {% include "tours/_stop_fields.html" %}
+      <div class="flex justify-end gap-3 pt-2">
+        <button type="submit" class="btn btn-lg"><i class="fa fa-plus mr-2"></i>{% trans "Add stop" %}</button>
+      </div>
+    </form>
+
+    {# Skills one can learn at the stops: a click adds one to what the tour wants to learn #}
+    {% if learnable %}
+      <section id="learn" class="border rounded-xl bg-secondary bg-opacity-60 p-6">
+        <h2 class="mt-0">{% trans "You can learn this on the way" %}</h2>
+        <p class="text-sm">{% trans "Skills that your stops teach. Add them to what you want to learn, so people who want to learn the same find your tour." %}</p>
+        <form method="post" action="{% url 'tours:learn_add' tour.slug %}" class="flex flex-wrap gap-2 items-center">
+          {% csrf_token %}
+          {% for skill, labels in learnable %}
+            <button type="submit" name="skill" value="{{ skill.pk }}" class="pill pill-lg bg-purple"
+                    title="{% for label in labels %}{{ label }}{% if not forloop.last %}, {% endif %}{% endfor %}">
+              <i class="fa fa-plus mr-1"></i>{{ skill.get_name }}
+              <span class="opacity-70 text-xs ml-1">· {{ labels|join:", " }}</span>
+            </button>
+          {% endfor %}
+          {% if learnable|length > 1 %}
+            {% for skill, labels in learnable %}<input type="hidden" name="all" value="{{ skill.pk }}">{% endfor %}
+            <button type="submit" formaction="{% url 'tours:learn_add' tour.slug %}?all=1" class="text-sm underline ml-2">{% trans "Add all" %}</button>
+          {% endif %}
+        </form>
+      </section>
+    {% endif %}
+
+    <div class="flex flex-wrap justify-between gap-3">
+      <a href="{{ tour.get_absolute_url }}" class="btn btn-lg btn-purple"><i class="fa-solid fa-chevron-left mr-2"></i>{% trans "Back to tour" %}</a>
+      {% if not tour.is_published %}
+        <form method="post" action="{% url 'tours:publish' tour.slug %}">{% csrf_token %}
+          <button type="submit" class="btn btn-lg"><i class="fa-solid fa-paper-plane mr-2"></i>{% trans "Publish" %}</button>
+        </form>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block javascript %}
+{{ block.super }}
+<script>
+// The planner's map: the route, and the recommended communities and events as light
+// pins. Both are read again whenever htmx swaps the part under the map.
+document.addEventListener('DOMContentLoaded', function () {
+  const base = EcoMap.buildBaseLayers();
+  const map = new ol.Map({ target: 'planner-map', layers: base.all, view: new ol.View({ center: [1100000, 6600000], zoom: 4, maxZoom: 16 }) });
+  base.setBaseLayer('ecobasa');
+  const menu = EcoMap.buildLayerToggle(map, 'planner-layer');
+  menu.querySelectorAll('input').forEach(r => r.addEventListener('change', e => { if (e.target.checked) base.setBaseLayer(e.target.value); }));
+  const read = id => JSON.parse(document.getElementById(id).textContent);
+  const routes = EcoMap.addRouteLayer(map, read('planner-route'), { hover: false, legModes: true });
+
+  const format = new ol.format.GeoJSON();
+  const source = new ol.source.Vector();
+  const pins = {};
+  map.addLayer(new ol.layer.Vector({
+    source: source, zIndex: 4,
+    style: function (feature) {
+      const key = feature.get('icon') + feature.get('color');
+      if (!pins[key]) pins[key] = EcoMap.createLayeredIcon(feature.get('icon'), feature.get('color'));
+      return new ol.style.Style({ image: new ol.style.Icon({ img: pins[key], imgSize: [80, 80], anchor: [0.5, 0.85], scale: 0.5, opacity: 0.7 }) });
+    },
+  }));
+  const load = function () {
+    routes.setData(read('planner-route'));
+    source.clear();
+    source.addFeatures(format.readFeatures(read('planner-recommended'), { dataProjection: 'EPSG:4326', featureProjection: 'EPSG:3857' }));
+    const extent = ol.extent.createEmpty();
+    ol.extent.extend(extent, routes.source.getExtent());
+    ol.extent.extend(extent, source.getExtent());
+    if (extent.every(isFinite)) map.getView().fit(extent, { padding: [40, 40, 40, 40], maxZoom: 10 });
+  };
+  load();
+
+  // A click on a recommended one: why, how far, and adding it
+  const popupEl = document.createElement('div');
+  const popup = new ol.Overlay({ element: popupEl, positioning: 'bottom-center', offset: [0, -22], autoPan: { animation: { duration: 250 } } });
+  map.addOverlay(popup);
+  const csrf = '{{ csrf_token }}';
+  map.on('singleclick', function (e) {
+    const feature = map.forEachFeatureAtPixel(e.pixel, f => f, { hitTolerance: 5, layerFilter: l => l.getSource() === source });
+    if (!feature) { popup.setPosition(undefined); return; }
+    const props = feature.getProperties();
+    const el = document.createElement('div');
+    el.className = 'map-popup';
+    el.innerHTML = '<button type="button" class="map-popup-close" aria-label="{% trans "Close"|escapejs %}">&times;</button>'
+      + '<h3 class="m-0 pr-6"><a class="hover:underline"></a></h3><div class="mt-1 text-sm"></div><div class="flex flex-wrap gap-1 mt-2"></div>'
+      + '<form method="post" action="{% url "tours:plan_add" tour.slug %}" class="mt-2"><button type="submit" class="btn text-sm"><i class="fa fa-plus mr-1"></i>{% trans "Add"|escapejs %}</button></form>';
+    el.querySelector('button').addEventListener('click', () => popup.setPosition(undefined));
+    const link = el.querySelector('h3 a');
+    link.href = props.link; link.textContent = props.name;
+    el.querySelector('div').textContent = [props.community, props.place, props.extra_km !== null ? '+' + props.extra_km + ' km' : ''].filter(Boolean).join(' · ');
+    const pills = el.querySelectorAll('div')[1];
+    props.reasons.forEach(([key, text]) => {
+      const pill = document.createElement('span');
+      pill.className = 'pill text-xs ' + (key === 'little_room' ? 'bg-red' : 'bg-green'); pill.textContent = text;
+      pills.append(pill);
+    });
+    const form = el.querySelector('form');
+    Object.entries(Object.assign({ csrfmiddlewaretoken: csrf }, props.add)).forEach(([name, value]) => {
+      const input = document.createElement('input');
+      input.type = 'hidden'; input.name = name; input.value = value;
+      form.append(input);
+    });
+    popupEl.replaceChildren(el);
+    popup.setPosition(props.geometry.getCoordinates());
+  });
+
+  document.body.addEventListener('htmx:afterSwap', function (e) {
+    if (!document.getElementById('planner-route')) return;
+    popup.setPosition(undefined);
+    load();
+  });
+});
+</script>
+{% endblock %}

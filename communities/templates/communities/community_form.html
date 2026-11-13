@@ -10,9 +10,7 @@
 {% block content %}
 <div class="container-content">
   <a class="btn inline-flex items-center text-sm leading-5 font-medium mb-10" href="{% if community %}{{ community.get_absolute_url }}{% else %}{% url 'communities:list' %}{% endif %}">
-    <svg class="flex-shrink-0 -ml-1 mr-1 h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-      <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
-    </svg>
+    <i class="fa-solid fa-chevron-left mr-2"></i>
     {% trans "Back" %}
   </a>
   <h1>{% if community %}{% blocktrans with name=community.name %}Edit {{ name }}{% endblocktrans %}{% else %}{% trans "Add your community" %}{% endif %}</h1>
@@ -216,7 +214,7 @@
         e: { badge: 0xe537, color: '#b4502c' },  //  fa-people-roof  (ecovillage)
         c: { badge: 0xe3af, color: '#de7a08' },  //  fa-house-chimney (commune)
         h: { badge: 0xe3af, color: '#e34a26' },  //  fa-house-chimney (houseproject)
-        f: { badge: 0xf4d8, color: '#5A5527' },  //  fa-seedling      (permaculture)
+        f: { badge: 0xf4d8, color: '#4f5613' },  //  fa-seedling      (permaculture)
         p: { badge: 0xf6e3, color: '#ff7800' },  //  fa-hammer        (projects)
       };
 

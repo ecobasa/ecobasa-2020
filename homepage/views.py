@@ -2,14 +2,15 @@ from django.shortcuts import render
 
 from gift_economy.references.models import Reference, with_card_data
 
-HOMEPAGE_REFERENCES = 6
+HOMEPAGE_REFERENCES = 3
 
 
 def homepage(request):
-    # References staff featured (from those their authors agreed to share), newest first
+    # A different few each visit of the references staff featured (from those their
+    # authors agreed to share)
     featured = with_card_data(
-        Reference.objects.filter(share_publicly=True, featured_at__isnull=False)
-    ).order_by("-featured_at")[:HOMEPAGE_REFERENCES]
+        Reference.objects.filter(share_publicly=True, pending=False, featured_at__isnull=False)
+    ).order_by("?")[:HOMEPAGE_REFERENCES]
     return render(request, "homepage/homepage.html", {"featured_references": featured})
 
 def support(request):

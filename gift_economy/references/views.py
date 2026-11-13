@@ -13,7 +13,7 @@ from django.views.decorators.http import require_POST
 from dashboard_lists import Choice, paginate, query_url
 
 from .forms import ReferenceForm, form_context
-from .models import Reference, ReferenceSkill, is_referenceable, with_card_data, references_about, match_gift_names, match_reference_subject, match_skill_names, subject_owner
+from .models import Reference, ReferenceSkill, can_confirm_reference, can_write_about, is_referenceable, reference_places, match_gift_names, match_reference_group, match_reference_subject, match_skill_names, reference_choices, references_about, subject_owner, with_card_data
 from .notifications import notify_reference_created
 from .reference_requests import exchange_context, existing_reference, find_reference_request, subject_name
 
@@ -25,7 +25,9 @@ def _redirect_to(subject):
 @login_required
 @require_POST
 def save(request, content_type_id, object_id):
-    """Create the user's reference about a subject, or update it if they already wrote one."""
+    """Create the user's reference about a subject, or update it if they already wrote one.
+    On a subject with places (a tour's guestbook) each one is new, unless it says which of
+    theirs it changes."""
     content_type = get_object_or_404(ContentType, pk=content_type_id)
     if not is_referenceable(content_type):
         raise Http404
@@ -33,14 +35,16 @@ def save(request, content_type_id, object_id):
         subject = content_type.get_object_for_this_type(pk=object_id)
     except content_type.model_class().DoesNotExist:
         raise Http404
-    owner = subject_owner(subject)
-    if owner == request.user:
+    if not can_write_about(subject, request.user):
         raise PermissionDenied
 
-    existing = Reference.objects.filter(
-        author=request.user, content_type=content_type, object_id=str(subject.pk)
-    ).first()
-    form = ReferenceForm(request.POST, request.FILES, instance=existing, subject=subject)
+    own = Reference.objects.filter(author=request.user, content_type=content_type, object_id=str(subject.pk))
+    if reference_places(subject):
+        pk = request.POST.get("reference", "")
+        existing = own.filter(pk=pk).first() if pk.isdigit() else None
+    else:
+        existing = own.filter(place_id="").first()
+    form = ReferenceForm(request.POST, request.FILES, instance=existing, subject=subject, author=request.user)
     if form.is_valid():
         reference = form.save_reference(request.user, subject)
         if existing is None:
@@ -61,6 +65,22 @@ def delete(request, pk):
     reference.delete()
     messages.success(request, _("Your reference was removed."))
     return _redirect_to(subject)
+
+
+@login_required
+@require_POST
+def confirm(request, pk, action):
+    """Someone who may (a tour's traveller) confirms a waiting guestbook entry, or removes it."""
+    reference = get_object_or_404(Reference, pk=pk, pending=True)
+    subject = reference.subject
+    if action not in ("confirm", "remove") or subject is None or not can_confirm_reference(reference, request.user):
+        raise Http404
+    if action == "confirm":
+        reference.pending = False
+        reference.save(update_fields=["pending"])
+    else:
+        reference.delete()
+    return redirect(subject.get_absolute_url())
 
 
 @login_required
@@ -86,14 +106,19 @@ def skill_tag(request, pk, action):
 def _load(references, user, tab, holder=None):
     """Fetch references for the dashboard and mark how each card is shown. Within a
     group, cards about the group's holder itself (you, or the community) skip the
-    "about" line."""
-    references = list(with_card_data(references).order_by("-created_at"))
+    "about" line. Given references are headed by the person they were given to, not you."""
+    references = list(with_card_data(references).select_related("recipient").order_by("-created_at"))
     for reference in references:
         about_you = (reference.content_type.model, reference.object_id) == ("user", str(user.pk))
         about_holder = holder is not None and (reference.content_type_id, reference.object_id) == (
             ContentType.objects.get_for_model(holder).pk, str(holder.pk)
         )
         reference.about_other = not about_holder
+        if tab == "given" and reference.recipient is not None:
+            reference.person = reference.recipient
+            reference.about_other = (reference.content_type.model, reference.object_id) != (
+                "user", str(reference.recipient.pk)
+            )
         reference.about_you = about_you
         reference.visible_skill_tags = [
             t for t in reference.skill_tags.all() if t.status != ReferenceSkill.STATUS_DECLINED
@@ -147,10 +172,14 @@ def reference_request(request, key):
     if reference_request is None:
         return render(request, "references/request_expired.html", status=404)
     match, user = reference_request.match, reference_request.user
-    subject, gift, skill = match_reference_subject(match, user)
-    reference = existing_reference(reference_request)
+    # After a group's stay the host writes about the group or one of its people (?about=)
+    choices = reference_choices(match, user)
+    about = request.GET.get("about", "") if any(key == request.GET.get("about") for key, _s in choices) else ""
+    subject, gift, skill = match_reference_subject(match, user, about)
+    reference = existing_reference(reference_request, about)
+    _group, present = match_reference_group(match)
     if request.method == "POST":
-        form = ReferenceForm(request.POST, request.FILES, instance=reference, subject=subject, story=True)
+        form = ReferenceForm(request.POST, request.FILES, instance=reference, subject=subject, story=True, present=present)
         if form.is_valid():
             saved = form.save_reference(user, subject, match=match)
             reference_request.reference = saved
@@ -159,9 +188,12 @@ def reference_request(request, key):
                 notify_reference_created(saved, http_request=request)
             return render(request, "references/request_thanks.html", {
                 "subject": subject, "shared": saved.share_publicly,
+                # The host of a group may write about others of it too
+                "others": [(key, other) for key, other in choices if other != subject],
+                "reference_request": reference_request,
             })
     else:
-        form = ReferenceForm(instance=reference, subject=subject, story=True, initial={
+        form = ReferenceForm(instance=reference, subject=subject, story=True, present=present, initial={
             # From the email after a reply: "allow sharing" comes pre-ticked
             **({"share_publicly": True} if request.GET.get("share") else {}),
         })
@@ -177,6 +209,8 @@ def reference_request(request, key):
         "subject_name": subject_name(subject),
         **exchange_context(match, user),
         "reference_request": reference_request,
+        "choices": choices,
+        "about": about or (choices[0][0] if choices else ""),
     })
 
 
@@ -185,11 +219,11 @@ def featured(request):
     """Staff pick the references shown on the homepage, from those their authors agreed to
     share. Made to work on a phone."""
     if request.method == "POST":
-        reference = get_object_or_404(Reference, pk=request.POST.get("reference"), share_publicly=True)
+        reference = get_object_or_404(Reference, pk=request.POST.get("reference"), share_publicly=True, pending=False)
         reference.featured_at = timezone.now() if request.POST.get("action") == "feature" else None
         reference.save(update_fields=["featured_at"])
         return redirect(f"{request.path}#reference-{reference.pk}")
-    shared = with_card_data(Reference.objects.filter(share_publicly=True)).order_by("featured_at", "-created_at")
+    shared = with_card_data(Reference.objects.filter(share_publicly=True, pending=False)).order_by("featured_at", "-created_at")
     return render(request, "references/featured.html", {
         "featured": sorted((r for r in shared if r.featured_at), key=lambda r: r.featured_at, reverse=True),
         "candidates": [r for r in shared if not r.featured_at and r.impression == Reference.IMPRESSION_POSITIVE],

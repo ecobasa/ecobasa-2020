@@ -120,8 +120,12 @@ add `docker compose exec django` before the following commands for a docker setu
   `REFERENCE_IMAP_PASSWORD`, `REFERENCE_IMAP_FOLDER` (default `INBOX`): the mailbox for replies
 - `REFERENCE_REQUEST_DELAY_DAYS` (1), `REFERENCE_REQUEST_UNDATED_DELAY_DAYS` (7),
   `REFERENCE_REQUEST_MAX_AGE_DAYS` (30): when to ask for a reference, and how far back
-- `EVENT_STALE_DAYS` (60), `EVENT_ARCHIVE_GRACE_DAYS` (14): when an event nobody updated
-  gets an "Is this still current?" email, and when it is archived without an answer
+- `EVENT_STALE_DAYS` (60), `EVENT_ARCHIVE_GRACE_DAYS` (14): when an ongoing event (no end
+  date) nobody updated gets an "Is this still current?" email, and when it is archived
+  without an answer. Events with an end date are archived once it has passed
+- `TOUR_ARCHIVE_AFTER_DAYS` (7): how many days after its last day a tour is archived
+- `TOUR_IDEA_STALE_DAYS` (180), `TOUR_IDEA_ARCHIVE_GRACE_DAYS` (14): the same as for events,
+  for a tour idea (a tour without days yet)
 
 In development, replies are read from Mailpit instead of IMAP.
 
@@ -136,6 +140,7 @@ skips a job while its previous run is still going.
 | --- | --- |
 | every 5 minutes | `fetch_reference_replies` |
 | daily, 9:00 | `archive_stale_events` |
+| daily, 9:05 | `archive_stale_tours` |
 | daily, 10:00 | `send_reference_requests` |
 | Thursdays, 17:00 | `send_suggestion_emails` |
 

@@ -1,0 +1,124 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block head_title %}{% trans "Deliveries" %} — {{ tour.title }} — ecobasa{% endblock %}
+
+{% block extrahead %}
+{{ block.super }}
+<style>
+  /* Printed, the page is only the packing list */
+  @media print {
+    body * { visibility: hidden; }
+    #packing, #packing * { visibility: visible; }
+    #packing { position: absolute; left: 0; top: 0; width: 100%; border: 0; background: none; }
+    #packing .no-print { display: none !important; }
+    #packing .print-only { display: inline; }
+  }
+  .print-only { display: none; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-form">
+  {# Where this page is #}
+  <div class="mb-2 text-sm flex flex-wrap items-center gap-x-2 gap-y-1">
+    <a href="{% url 'tours:list' %}" class="hover:underline">{% trans "Community-Tours" %}</a>
+    <i class="fa-solid fa-chevron-right text-xs opacity-50" aria-hidden="true"></i>
+    <a href="{{ tour.get_absolute_url }}" class="hover:underline">{{ tour.title }}</a>
+    <i class="fa-solid fa-chevron-right text-xs opacity-50" aria-hidden="true"></i>
+    <span class="opacity-70">{% trans "Deliveries" %}</span>
+  </div>
+  <h1><i class="fa-solid fa-box mr-2 text-primary"></i>{% trans "Deliveries" %}</h1>
+  <p>{% include "help/_link.html" with page="help:tours" anchor="deliveries" %}</p>
+
+  {# Offers at or near one place on the route that fit wishes at or near a later one; organisers find them in the planner #}
+  {% if not can_plan %}
+    <section id="could-travel" class="border rounded-xl bg-secondary bg-opacity-60 p-6 mb-6">
+      <h2 class="mt-0">{% trans "Could travel with you" %}</h2>
+      {% url 'tours:deliveries' tour.slug as next %}
+      {% include "tours/_could_travel.html" %}
+    </section>
+  {% else %}
+    <p class="mb-6"><a href="{% url 'tours:plan' tour.slug %}#could-travel" class="btn btn-purple"><i class="fa-solid fa-box mr-1"></i>{% trans "Could travel with you" %}</a></p>
+  {% endif %}
+
+  {# Asked, and what didn't work out: where each side stands #}
+  {% if waiting %}
+    <section id="waiting" class="border rounded-xl bg-secondary bg-opacity-60 p-6 mb-6">
+      <h2 class="mt-0">{% trans "Waiting for answers" %}</h2>
+      <ul class="list-none m-0 p-0 space-y-3">
+        {% for delivery in waiting %}
+          <li class="m-0 space-y-1">
+            <ul class="list-none m-0 p-0">{% include "tours/_delivery_row.html" %}</ul>
+            <div class="text-xs flex flex-wrap gap-x-4 gap-y-1 pl-3">
+              {% if delivery.needs_pickup %}
+                <span>{% trans "Giver" %}: {% if delivery.pickup_match %}<a href="{{ delivery.pickup_match.get_absolute_url }}" class="underline">{{ delivery.pickup_match.get_status_display }}</a>{% else %}—{% endif %}</span>
+              {% endif %}
+              <span>{% trans "Receiver" %}: {% if delivery.handover_match %}<a href="{{ delivery.handover_match.get_absolute_url }}" class="underline">{{ delivery.handover_match.get_status_display }}</a>{% else %}—{% endif %}</span>
+            </div>
+            {% with left=delivery.open_match_left %}{% if left and left.from_user_id == user.pk %}
+              <form method="post" action="{% url 'tours:delivery_withdraw' tour.slug delivery.pk %}" class="pl-3 text-xs flex flex-wrap items-center gap-2">{% csrf_token %}
+                <span>{% blocktrans with name=left.recipient.name|default:left.recipient.email %}The other side said no. Take your request to {{ name }} back too?{% endblocktrans %}</span>
+                <button type="submit" class="btn btn-purple text-xs py-0.5 px-2">{% trans "Withdraw request" %}</button>
+              </form>
+            {% endif %}{% endwith %}
+          </li>
+        {% endfor %}
+      </ul>
+    </section>
+  {% endif %}
+
+  {# What to pick up and hand over where, once both sides agreed: printed, the page is only this #}
+  <section id="packing" class="border rounded-xl bg-secondary bg-opacity-60 p-6 mb-6">
+    <div class="flex flex-wrap items-center justify-between gap-2">
+      <h2 class="mt-0">{% trans "Packing list" %} <span class="font-normal text-base">· {{ tour.title }}</span></h2>
+      {% if packing %}<button type="button" onclick="window.print()" class="btn btn-purple text-sm no-print"><i class="fa-solid fa-print mr-1"></i>{% trans "Print" %}</button>{% endif %}
+    </div>
+    {% if packing %}
+      <ol class="list-none m-0 p-0 space-y-4">
+        {% for spot, number, items in packing %}
+          <li class="m-0">
+            <div class="font-semibold flex items-center gap-2">
+              {% if number %}<span class="w-7 h-7 rounded-full bg-primary text-secondary text-sm font-bold flex items-center justify-center">{{ number }}</span>{% else %}<i class="fa-solid fa-location-dot text-primary w-7 text-center"></i>{% endif %}
+              <span>{% if spot.stop %}{{ spot.label }}{% else %}{% blocktrans with place=spot.label %}On the way: {{ place }}{% endblocktrans %}{% endif %}</span>
+              {% if spot.day %}<span class="font-normal text-sm opacity-70">· {{ spot.day|date:"D j M" }}</span>{% endif %}
+            </div>
+            <ul class="list-none m-0 mt-1 p-0 pl-9 space-y-1 text-sm">
+              {% for what, delivery in items %}
+                <li class="m-0 flex flex-wrap items-center gap-2">
+                  <span class="flex-1 min-w-0">
+                    {% if what == "pick" %}<strong>{% trans "Pick up" %}:</strong>{% else %}<strong>{% trans "Hand over" %}:</strong>{% endif %}
+                    {{ delivery.title }}{% if delivery.amount %} {{ delivery.amount }}{% endif %}
+                    <span class="opacity-70">({% if what == "pick" %}{% blocktrans with name=delivery.offer.holder_name %}from {{ name }}{% endblocktrans %}{% else %}{% blocktrans with name=delivery.wish.holder_name %}for {{ name }}{% endblocktrans %}{% endif %} · {{ delivery.bringer.name|default:delivery.bringer.email }})</span>
+                  </span>
+                  {% if what == "pick" %}
+                    {% if delivery.picked_up_at %}<span class="text-green"><i class="fa-solid fa-check mr-1"></i>{% trans "Picked up" %}</span>
+                    {% elif delivery.can_pick_up and delivery.mine %}
+                      <form method="post" action="{% url 'tours:delivery_picked_up' tour.slug delivery.pk %}" class="no-print">{% csrf_token %}
+                        <button type="submit" class="btn text-xs py-0.5 px-2">{% trans "Picked up" %}</button>
+                      </form>
+                      <span class="print-only">☐</span>
+                    {% endif %}
+                  {% else %}
+                    {% if delivery.delivered_at %}<span class="text-green"><i class="fa-solid fa-check mr-1"></i>{% trans "Handed over" %}</span>
+                    {% elif delivery.can_hand_over and delivery.mine %}
+                      <form method="post" action="{% url 'tours:delivery_handed_over' tour.slug delivery.pk %}" class="no-print">{% csrf_token %}
+                        <button type="submit" class="btn text-xs py-0.5 px-2">{% trans "Handed over" %}</button>
+                      </form>
+                      <span class="print-only">☐</span>
+                    {% elif not delivery.can_hand_over %}<span class="text-xs opacity-70">{% trans "after picking it up" %}</span>{% endif %}
+                  {% endif %}
+                </li>
+              {% endfor %}
+            </ul>
+          </li>
+        {% endfor %}
+      </ol>
+    {% else %}
+      <p class="text-sm m-0">{% trans "Nothing to take along yet. Once a giver and a receiver both agree, the gift is on this list at the stop where you pick it up and the one where you hand it over." %}</p>
+    {% endif %}
+  </section>
+
+  <a href="{{ tour.get_absolute_url }}" class="btn btn-lg btn-purple"><i class="fa fa-chevron-left mr-2"></i>{% trans "Back to tour" %}</a>
+</div>
+{% endblock %}

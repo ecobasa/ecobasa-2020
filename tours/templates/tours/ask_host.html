@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block head_title %}{% trans "Ask to host us" %} — {{ tour.title }} — ecobasa{% endblock %}
+
+{% block content %}
+<div class="container-form">
+  {# Where this page is #}
+  <div class="mb-2 text-sm flex flex-wrap items-center gap-x-2 gap-y-1">
+    <a href="{% url 'tours:list' %}" class="hover:underline">{% trans "Community-Tours" %}</a>
+    <i class="fa-solid fa-chevron-right text-xs opacity-50" aria-hidden="true"></i>
+    <a href="{{ tour.get_absolute_url }}" class="hover:underline">{{ tour.title }}</a>
+    <i class="fa-solid fa-chevron-right text-xs opacity-50" aria-hidden="true"></i>
+    <a href="{% url 'tours:plan' tour.slug %}" class="hover:underline">{% trans "Route" %}</a>
+    <i class="fa-solid fa-chevron-right text-xs opacity-50" aria-hidden="true"></i>
+    <span class="opacity-70">{% if stop.joins_open_event %}{% trans "We're coming" context "host status" %}{% else %}{% trans "Ask to host us" %}{% endif %}</span>
+  </div>
+  <h1>{% if stop.joins_open_event %}{% trans "We're coming" context "host status" %}{% else %}{% trans "Ask to host us" %}{% endif %}</h1>
+  <p>
+    <i class="fa-solid {{ stop.icon }} mr-1 text-primary"></i><a href="{{ stop.host.get_absolute_url }}" class="font-semibold hover:underline">{{ stop.label }}</a>{% if stop.event %} · {{ stop.community.name }}{% endif %}
+  </p>
+  {% if stop.joins_open_event %}
+    <p class="text-sm">{% trans "People just come to this event. The tour goes on its list with your group; nobody has to answer." %}</p>
+  {% else %}
+    <p class="text-sm">{% blocktrans with community=stop.community.name %}{{ community }} gets one request for the whole group. If people get on or off later, the request follows them.{% endblocktrans %}</p>
+  {% endif %}
+
+  {# Who comes: the travellers at this stop #}
+  <div class="mb-4 text-sm">
+    <span class="font-semibold"><i class="fa-solid fa-user-group mr-1"></i>{% blocktrans count count=people %}{{ count }} person{% plural %}{{ count }} people{% endblocktrans %}:</span>
+    {% for traveller in group %}{{ traveller.user.name }}{% if traveller.people > 1 %} (+{{ traveller.people|add:"-1" }}){% endif %}{% if not forloop.last %}, {% endif %}{% endfor %}
+  </div>
+
+  <form method="post" class="border rounded-xl bg-secondary p-6 space-y-4">
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      {% for field in form %}{% if field.name == "stay_from" or field.name == "stay_to" %}
+        <div class="form-group">
+          <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+          {{ field }}
+          {% for error in field.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+        </div>
+      {% endif %}{% endfor %}
+    </div>
+    {% if form.learn %}
+      <fieldset class="form-group">
+        <legend class="form-label">{{ form.learn.label }}</legend>
+        <p class="text-xs mb-2">{% trans "From what your tour wants to learn. Ticked: what one can learn here." %}</p>
+        <div class="flex flex-wrap gap-x-4 gap-y-1">
+          {% for box in form.learn %}<label class="inline-flex items-center gap-2 cursor-pointer">{{ box.tag }} {{ box.choice_label }}</label>{% endfor %}
+        </div>
+      </fieldset>
+    {% endif %}
+    {% with groups=form.need_groups %}{% if groups %}
+      <fieldset class="form-group">
+        <legend class="form-label">{% trans "What can you help with?" %}</legend>
+        {% for event, rows in groups %}
+          <div class="mb-2">
+            {% if event and not stop.event %}
+              <div class="text-xs font-semibold"><i class="fa-solid {{ event.kind_icon }} mr-1"></i>{{ event.title }} <span class="font-normal opacity-70">{% include "events/_event_dates.html" %}</span></div>
+            {% elif not event %}
+              <div class="text-xs font-semibold mt-1">{% trans "Also wished for" %}</div>
+            {% endif %}
+            {% for need, checkbox, amount in rows %}
+              <div class="flex flex-wrap items-center gap-2 py-1">
+                <label class="flex items-center gap-2 cursor-pointer flex-1 min-w-0">
+                  {{ checkbox }}
+                  <i class="fa-solid {{ need.kind_icon }} text-primary"></i>
+                  <span>{{ need.display_title }}
+                    {% if need.amount %}<span class="text-xs opacity-70">· {% trans "needed" %}: {{ need.amount }}</span>{% endif %}
+                  </span>
+                </label>
+                {% if amount %}
+                  {% if need.unit == "people" %}
+                    <label class="flex items-center gap-1 text-sm">{% trans "People coming" %} {{ amount }}</label>
+                  {% else %}
+                    <label class="flex items-center gap-1 text-sm">{% trans "We bring" %} {{ amount }} {{ need.get_unit_display }}</label>
+                  {% endif %}
+                  {% for error in amount.errors %}<p class="field-error w-full">{{ error }}</p>{% endfor %}
+                {% endif %}
+              </div>
+            {% endfor %}
+          </div>
+        {% endfor %}
+      </fieldset>
+    {% endif %}{% endwith %}
+    {% with field=form.message %}
+      <div class="form-group">
+        <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {{ field }}
+        {% if field.help_text %}<p class="text-xs mt-1">{{ field.help_text }}</p>{% endif %}
+        {% for error in field.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+      </div>
+    {% endwith %}
+    <div class="flex justify-end gap-3 pt-4">
+      <a href="{{ tour.get_absolute_url }}" class="btn btn-lg btn-purple">{% trans "Cancel" %}</a>
+      <button type="submit" class="btn btn-lg"><i class="fa-solid fa-paper-plane mr-2"></i>{% if stop.joins_open_event %}{% trans "We're coming" context "host status" %}{% else %}{% trans "Ask to host us" %}{% endif %}</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

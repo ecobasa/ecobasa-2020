@@ -20,6 +20,8 @@
       </div>
       {% if match.is_coming %}
         <div class="text-xs opacity-60 mt-0.5">{% trans "Is coming to" %}</div>
+      {% elif match.attached_verb %}
+        <div class="text-xs opacity-60 mt-0.5">{{ match.attached_verb|capfirst }}</div>
       {% elif match.target.get_match_verb %}
         <div class="text-xs opacity-60 mt-0.5">{{ match.target.get_match_verb|capfirst }}</div>
       {% endif %}

@@ -1,0 +1,47 @@
+{% load i18n %}
+{# One thing that happened at a stop (tours.timeline): when, in a column of its own so the timeline reads down it, then a reference as its card, anything else as a line. Who did it leads, so each sentence starts with them in every language; visitors see no names #}
+<div class="grid gap-x-3" style="grid-template-columns: 4.75rem minmax(0, 1fr)">
+<time datetime="{{ entry.when|date:'c' }}" class="text-xs text-brown leading-tight pt-1">{{ entry.when|date:"SHORT_DATE_FORMAT" }}<br>{{ entry.when|date:"TIME_FORMAT" }}</time>
+{% if entry.kind == "reference" %}
+  <div class="min-w-0">
+    {# From someone the tour doesn't know yet: a traveller confirms it first #}
+    {% if entry.reference.pending %}
+      <div class="flex flex-wrap items-center gap-2 mb-1 text-xs text-purple">
+        <i class="fa-solid fa-hourglass-half"></i>{% trans "Waiting for confirmation" %}
+        {% if entry.reference.can_confirm_entry %}
+          <form method="post" action="{% url 'references:confirm' entry.reference.pk 'confirm' %}">{% csrf_token %}<button type="submit" class="btn btn-purple text-xs py-0.5 px-2"><i class="fa fa-check mr-1"></i>{% trans "Confirm" %}</button></form>
+          <form method="post" action="{% url 'references:confirm' entry.reference.pk 'remove' %}">{% csrf_token %}<button type="submit" class="btn btn-red text-xs py-0.5 px-2"><i class="fa fa-times mr-1"></i>{% trans "Remove" %}</button></form>
+        {% endif %}
+      </div>
+    {% endif %}
+    {% if entry.reference.author_id == user.pk %}
+      {% include "references/_reference_card.html" with ref=entry.reference dated_aside=True show_edit=True %}
+    {% else %}
+      {% include "references/_reference_card.html" with ref=entry.reference dated_aside=True %}
+    {% endif %}
+  </div>
+{% else %}
+  <div class="flex items-start gap-2 text-sm min-w-0">
+    <span class="w-6 h-6 flex-none rounded-full bg-secondary border border-primary border-opacity-40 text-primary flex items-center justify-center text-xs">
+      <i class="fa-solid {% if entry.kind == 'published' %}fa-flag{% elif entry.kind == 'joined' %}fa-user-plus{% elif entry.kind == 'lent' %}fa-handshake{% elif entry.kind == 'gave' %}fa-gift{% elif entry.kind == 'helped' %}fa-handshake-angle{% elif entry.kind == 'host_agreed' %}fa-circle-check{% elif entry.kind == 'picked_up' %}fa-box{% else %}fa-gift{% endif %}"></i>
+    </span>
+    <div class="min-w-0">
+      <p class="m-0 leading-snug">
+        {% if entry.person and user.is_authenticated %}<a href="{{ entry.person.get_absolute_url }}" class="font-semibold text-primary hover:underline">{{ entry.person.name|default:entry.person.email }}</a>{% endif %}
+        {% if entry.kind == "published" %}{% trans "published the tour" %}
+        {% elif entry.kind == "joined" %}{% if entry.to %}{% blocktrans with stop=entry.to.label %}joined the tour until {{ stop }}{% endblocktrans %}{% else %}{% trans "joined the tour" %}{% endif %}
+        {% elif entry.kind == "gave" %}{% blocktrans with gift=entry.listing.display_title %}gave {{ gift }} to the tour{% endblocktrans %}
+        {% elif entry.kind == "lent" %}{% blocktrans with gift=entry.listing.display_title %}lent {{ gift }} to the tour{% endblocktrans %}
+        {% elif entry.kind == "helped" %}{% blocktrans with gift=entry.listing.display_title %}came to help with {{ gift }}{% endblocktrans %}
+        {% elif entry.kind == "host_agreed" %}<a href="{{ entry.host.get_absolute_url }}" class="font-semibold text-primary hover:underline">{{ entry.stop.label }}</a> {% trans "agreed to host the group" %}
+        {% elif user.is_authenticated %}
+          {% if entry.kind == "picked_up" %}{% blocktrans with gift=entry.listing.display_title %}picked up {{ gift }}{% endblocktrans %}
+          {% else %}{% blocktrans with gift=entry.listing.display_title to=entry.to %}handed over {{ gift }} to {{ to }}{% endblocktrans %}{% endif %}
+        {% else %}
+          {% if entry.kind == "picked_up" %}{% trans "Picked up" %}{% else %}{% trans "Handed over" %}{% endif %}: {{ entry.listing.display_title }}
+        {% endif %}
+      </p>
+    </div>
+  </div>
+{% endif %}
+</div>

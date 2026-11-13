@@ -20,7 +20,43 @@ REFERENCEABLE_MODELS = {
 
 
 def is_referenceable(content_type):
-    return f"{content_type.app_label}.{content_type.model}" in REFERENCEABLE_MODELS
+    """One of the models above, or one that says so itself with `reference_subject = True`
+    (a tour: references about the whole group)."""
+    if f"{content_type.app_label}.{content_type.model}" in REFERENCEABLE_MODELS:
+        return True
+    model = content_type.model_class()
+    return bool(model and getattr(model, "reference_subject", False))
+
+
+def can_write_about(subject, user):
+    """Whether `user` may write a reference about `subject`: not about their own, unless
+    the subject says who may (a tour: everyone, its travellers too, as its guestbook)."""
+    if not user.is_authenticated:
+        return False
+    check = getattr(subject, "can_be_referenced_by", None)
+    return check(user) if check else subject_owner(subject) != user
+
+
+def reference_waits(subject, user):
+    """Whether what `user` writes in `subject`'s guestbook waits for confirmation: when the
+    subject doesn't know them (a tour: not one of its travellers, hosts or the people it
+    exchanged with). Keeps spam off it."""
+    trusts = getattr(subject, "trusts_reference_by", None)
+    return trusts is not None and not trusts(user)
+
+
+def can_confirm_reference(reference, user):
+    """Whether `user` confirms or removes a waiting entry (a tour: its travellers)."""
+    check = getattr(reference.subject, "can_confirm_references", None)
+    return bool(user.is_authenticated and check is not None and check(user))
+
+
+def reference_places(subject):
+    """Where on `subject` something can have happened, for a reference to say: a tour's
+    stops, as [(place, label, match)], `match` being a stay agreed there (or None). Empty
+    for subjects without places, which hold one reference per author."""
+    places = getattr(subject, "get_reference_places", None)
+    return list(places()) if places else []
 
 
 def subject_owner(subject):
@@ -91,12 +127,24 @@ class Reference(models.Model):
         "gifts.Skill", through="ReferenceSkill", related_name="+", blank=True
     )
     gift_names = models.JSONField(_("Gifts"), default=list, blank=True)
+    # On a reference about a group (a tour): who of it was there
+    people = models.ManyToManyField(
+        settings.AUTH_USER_MODEL, blank=True, related_name="references_present", verbose_name=_("Who was there"),
+    )
     # Asked for after a match (ReferenceRequest), maybe with a photo. Only references the
     # author agreed to share can be featured on the homepage by staff.
     match = models.ForeignKey(
         "matches.Match", on_delete=models.SET_NULL, null=True, blank=True, related_name="references",
     )
     photo = models.ImageField(_("Photo"), upload_to="reference-photos", null=True, blank=True)
+    # Where it happened, on a subject with places (a tour's stop, reference_places). With a
+    # place an author may write about the same subject again and again (a guestbook)
+    place_type = models.ForeignKey(ContentType, on_delete=models.CASCADE, null=True, blank=True, related_name="+")
+    place_id = models.CharField(max_length=255, blank=True)
+    place = GenericForeignKey("place_type", "place_id")
+    # In a guestbook, from someone its subject has had nothing to do with yet: shown to
+    # the author and to those who confirm it until one of them does (reference_waits)
+    pending = models.BooleanField(_("Waiting for confirmation"), default=False)
     share_publicly = models.BooleanField(_("ecobasa may show this story on its homepage"), default=False)
     featured_at = models.DateTimeField(_("Featured"), null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -108,7 +156,7 @@ class Reference(models.Model):
         verbose_name_plural = _("References")
         constraints = [
             models.UniqueConstraint(
-                fields=["author", "content_type", "object_id"],
+                fields=["author", "content_type", "object_id"], condition=Q(place_id=""),
                 name="one_reference_per_author_and_subject",
             ),
         ]
@@ -122,6 +170,18 @@ class Reference(models.Model):
         subject = self.subject
         return f"{subject.get_absolute_url()}#reference-{self.pk}" if subject is not None else ""
 
+    @property
+    def visited(self):
+        """Where a reference about a group (a tour) happened: the host of the stay it was
+        written after, an event or a community. None otherwise."""
+        subject = self.subject
+        if self.match is None or subject is None or not hasattr(subject, "get_reference_people"):
+            return None
+        # Not after a gift taken along: that was no stay
+        if self.match.content_type.model not in ("community", "event"):
+            return None
+        return self.match.target
+
     def confirmed_skill_tags(self):
         """Skills tagged on it that the person or community confirmed (uses a prefetch)."""
         return [tag for tag in self.skill_tags.all() if tag.status == ReferenceSkill.STATUS_CONFIRMED]
@@ -134,6 +194,8 @@ class Reference(models.Model):
             return self.match.kind
         model = self.content_type.model
         subject = self.subject
+        if subject is not None and hasattr(subject, "get_reference_kind"):
+            return subject.get_reference_kind()
         if model == "listing" and subject is not None:
             if subject.kind != subject.KIND_OTHER:
                 return subject.kind_label, subject.kind_icon, subject.colour
@@ -149,7 +211,8 @@ def with_card_data(references):
     """Everything a reference card shows, fetched up front: author, subject, skill tags,
     and the match it was written after (for its kind pill)."""
     return references.select_related("author", "content_type", "match__content_type").prefetch_related(
-        "subject", "match__target", Prefetch("skill_tags", queryset=ReferenceSkill.objects.select_related("skill")),
+        "subject", "match__target", "people",
+        Prefetch("skill_tags", queryset=ReferenceSkill.objects.select_related("skill")),
     )
 
 
@@ -191,17 +254,56 @@ class ReferenceSkill(models.Model):
         self.save(update_fields=["status"])
 
 
-def match_reference_subject(match, user):
+def on_asking_side(match, user):
+    """Whether `user` is the one who asked, or came along on their stay (a tour visit's
+    group): they all write about the host."""
+    if user == match.from_user:
+        return True
+    if user == match.recipient:
+        # The host, also if they travel with the group
+        return False
+    details = getattr(match, "stay_details", None)
+    return details is not None and user.pk is not None and details.companions.filter(pk=user.pk).exists()
+
+
+def match_reference_group(match):
+    """(group, who was there) when the match is a group's stay: what is attached to the
+    match says so (a tour visit: the tour and the people at that stop). (None, [])
+    otherwise."""
+    for attachment in match.attachments():
+        if hasattr(attachment, "get_reference_group"):
+            return attachment.get_reference_group(), attachment.get_reference_present(match)
+    return None, []
+
+
+def reference_choices(match, user):
+    """Whom the host can write about after a group's stay: [("group", the group), (user
+    id, person) for each one there]. Empty when there is no choice."""
+    group, present = match_reference_group(match)
+    if group is None or on_asking_side(match, user):
+        return []
+    return [("group", group)] + [(str(person.pk), person) for person in present if person != user]
+
+
+def match_reference_subject(match, user, about=""):
     """What `user` writes about after `match`, as (subject, gift name, skill name): the
-    requester writes about the community, the skill's holder (tagged with the skill) or
-    the owner; the owner writes about the requester. A gift's name is carried along, and
-    a skill that was learned or helped with is tagged.
+    requester (and who came along) writes about the community, the skill's holder (tagged
+    with the skill), the community whose gift it was or the owner; the owner writes about
+    the requester. After a group's
+    stay the host writes about the group, or about one of its people (`about`, see
+    reference_choices). A gift's name is carried along, and a skill that was learned or
+    helped with is tagged.
     None if the other side is gone."""
     target = match.target
     if target is None:
         return None
     model = match.content_type.model
-    is_requester = user == match.from_user
+    gift = target.get_match_display_name() if model == "listing" and target.is_thing else ""
+    choices = reference_choices(match, user)
+    if choices:
+        # A gift taken along on a tour keeps its name
+        return dict(choices).get(about, choices[0][1]), gift, ""
+    is_requester = on_asking_side(match, user)
     if model == "community" and is_requester:
         return target, "", ""
     if model == "event" and is_requester:
@@ -220,10 +322,13 @@ def match_reference_subject(match, user):
             if other is None:
                 return None
             return other, "", "" if is_requester or not target.skill_id else target.get_match_display_name()
+    if is_requester and model == "listing" and target.community_id:
+        # A community's gift: who asked for it, or brought it, writes about the community
+        return target.community, gift, ""
     other = match.recipient if is_requester else match.from_user
     if other is None:
         return None
-    return other, target.get_match_display_name() if model == "listing" and target.is_thing else "", ""
+    return other, gift, ""
 
 
 def _received(match, user, things):

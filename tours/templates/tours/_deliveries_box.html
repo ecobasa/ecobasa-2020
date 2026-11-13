@@ -1,0 +1,10 @@
+{% load i18n %}
+{# On a gift's, community's or event's page: gifts taken along on tours (tours.templatetags.tours_tags.deliveries_with) #}
+{% if deliveries %}
+<div class="mt-8">
+  <h2>{% trans "Deliveries" %}</h2>
+  <ul class="list-none p-0 m-0 space-y-2">
+    {% for delivery in deliveries %}{% include "tours/_delivery_row.html" with show_tour=True %}{% endfor %}
+  </ul>
+</div>
+{% endif %}

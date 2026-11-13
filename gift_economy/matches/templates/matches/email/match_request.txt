@@ -1,7 +1,8 @@
 {% load i18n %}{% blocktrans with name=recipient.name|default:recipient.email %}Hello {{ name }},{% endblocktrans %}
 
 {{ headline }}
-{% if match.is_loan %}
+{% if match.summary %}{{ match.summary }}
+{% endif %}{% if match.is_loan %}
 {% trans "Asked to borrow" %}:
 {{ match.loan.period }}
 {% endif %}{% with vd=match.volunteer_details %}{% if vd %}

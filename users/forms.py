@@ -166,6 +166,7 @@ class ProfileUpdateForm(forms.ModelForm):
         }
 
     clear_image = forms.BooleanField(required=False, label=_("Remove current photo"))
+    tour_suggestions = forms.ChoiceField(label=_("Tour suggestions"), required=False)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -197,6 +198,8 @@ class ProfileUpdateForm(forms.ModelForm):
         self.fields['match_radius'].widget.attrs.update({'class': 'form-input w-28', 'min': '5', 'max': '2000'})
         self.fields['match_radius'].required = False
         self.fields['match_global'].widget.attrs.update({'class': 'form-checkbox', 'x-model': 'worldwide'})
+        self.fields['tour_suggestions'].choices, self.fields['tour_suggestions'].initial = tour_pause_choices(instance)
+        self.fields['tour_suggestions'].widget.attrs.update({'class': 'form-select'})
         self.helper = FormHelper()
         self.helper.form_tag = False
         self.helper.layout = Layout(
@@ -217,6 +220,7 @@ class ProfileUpdateForm(forms.ModelForm):
         new_image = self.cleaned_data.get('image')
         if not new_image and self.cleaned_data.get('clear_image') and user.image:
             user.image = None
+        user.pause_tours(self.cleaned_data.get('tour_suggestions') or "keep")
         if commit:
             user.save()
             skills_val = self.cleaned_data.get('skills', '') or ''
@@ -226,3 +230,17 @@ class ProfileUpdateForm(forms.ModelForm):
             wish_val = self.cleaned_data.get('skill_wishes', '') or ''
             sync_skill_listings(user, Listing.TYPE_WISH, [s.strip() for s in wish_val.split(',') if s.strip()])
         return user
+
+
+def tour_pause_choices(user):
+    """(choices, initial) for pausing tour suggestions: while paused, the first choice
+    keeps the pause as it is."""
+    from django.utils.formats import date_format
+
+    choices = list(User.TOUR_PAUSE_CHOICES)
+    if user is None or not user.tours_paused:
+        return choices, "on"
+    if user.tours_off:
+        return choices, "off"
+    until = _("Paused until %(date)s") % {"date": date_format(user.tours_paused_until, "j F Y")}
+    return [("keep", until), *choices], "keep"

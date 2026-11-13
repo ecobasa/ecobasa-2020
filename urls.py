@@ -1,9 +1,11 @@
 from django.contrib import admin
-from django.urls import path, include
+from django.urls import path, include, re_path
+from django.utils.translation import pgettext_lazy
 from django.conf import settings
 from django.conf.urls.static import static
 from django.views import defaults as default_views
 
+from help import views as help_views
 from users import views as user_views
 
 
@@ -16,11 +18,15 @@ urlpatterns = [
     # Events live under their host: /communities/<community>/events/<event>/
     path("", include("events.urls", namespace="events")),
     path("communities/", include("communities.urls")),
+    path("community-tours/", include("tours.urls", namespace="tours")),
     path("skills/", include("gift_economy.gifts.skills.urls")),
     path("notifications/", include("notifications.urls")),
     path("messages/", include(("postman_urls", "postman"), namespace="postman")),
     path("matches/", include("gift_economy.matches.urls", namespace="matches")),
     path("references/", include("gift_economy.references.urls", namespace="references")),
+    # /help/ in English, /hilfe/ in German; the other spelling leads to the page's own
+    path(pgettext_lazy("url", "help/"), include("help.urls")),
+    re_path(r"^(?:help|hilfe)/(?P<rest>.*)$", help_views.other_language),
 ]
 
 if settings.DEBUG:

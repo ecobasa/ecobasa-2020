@@ -4,7 +4,7 @@ import pytest
 from django.contrib.gis.geos import Point
 from django.core import mail
 from django.test import Client
-from django.urls import reverse
+from django.urls import reverse, reverse_lazy
 from django.utils import timezone, translation
 
 from communities.models import Community
@@ -154,11 +154,10 @@ def test_skills_to_learn_are_listed_on_the_community(community, ambassador):
 
 
 @pytest.mark.django_db
-def test_nearby_list_finds_events_by_skill_to_learn(project, helper):
+def test_event_list_finds_events_by_skill_to_learn(project, helper):
     skill_offer(project.community, Skill.objects.create(name="Welding", slug="welding"), event=project)
-    content = _client(helper).get(reverse("events:nearby") + "?q=weld").content.decode()
-    assert "Rocket stove" in content
-    assert "Rocket stove" not in _client(helper).get(reverse("events:nearby") + "?q=pottery").content.decode()
+    assert _titles(_client(helper).get(_LIST, {"q": "weld"})) == ["Rocket stove"]
+    assert _titles(_client(helper).get(_LIST, {"q": "pottery"})) == []
 
 
 @pytest.mark.django_db
@@ -225,51 +224,171 @@ def test_editing_removes_needs_and_marks_the_project_fresh(project, ambassador):
 # ── Listing ───────────────────────────────────────────────────────────
 
 
+_LIST = reverse_lazy("events:api-list")
+_MARKERS = reverse_lazy("events:api-markers")
+
+
+def _titles(response):
+    return [event.title for event in response.context["events"]]
+
+
 @pytest.mark.django_db
-def test_nearby_list_is_for_logged_in_people_and_shows_current_events_only(community, project, helper):
-    assert Client().get(reverse("events:nearby")).status_code == 302
+def test_event_list_is_a_map_open_to_everyone_with_current_events_only(community, project, helper):
+    assert Client().get(reverse("events:list")).status_code == 200
     today = timezone.localdate()
     Event.objects.create(community=community, title="Ongoing garden")
     Event.objects.create(community=community, title="Old roof", ends_on=today - timedelta(days=1))
     Event.objects.create(community=community, title="Shelved", archived_at=timezone.now())
-    # Without a place in the profile it lists events everywhere
-    response = _client(helper).get(reverse("events:nearby"))
-    content = response.content.decode()
-    assert "Rocket stove" in content and "Ongoing garden" in content
-    assert "Old roof" not in content and "Shelved" not in content
-    assert response.context["wheres"] == [] and not response.context["has_place"]
+    # Without a place in one's profile: all of them, everywhere
+    assert set(_titles(_client(helper).get(_LIST))) == {"Rocket stove", "Ongoing garden"}
+    assert set(_titles(Client().get(_LIST))) == {"Rocket stove", "Ongoing garden"}
 
 
 @pytest.mark.django_db
-def test_nearby_list_is_nearest_first_within_the_distance_one_looks_in(community, project, ambassador, helper):
+def test_event_markers_are_where_everyone_sees_them_in_the_visible_area(community, project, ambassador):
+    Community.objects.filter(pk=community.pk).update(location=Point(13.4, 52.5), location_public=True, location_name="Sonnendorf")
+    far = Community.objects.create(name="Waldgarten", owner=ambassador, location=Point(2.35, 48.85), location_public=True)
+    Event.objects.create(community=far, title="Forest garden days")
+    features = Client().get(_MARKERS).json()["features"]
+    assert {f["properties"]["title"] for f in features} == {"Rocket stove", "Forest garden days"}
+    rocket = next(f for f in features if f["properties"]["title"] == "Rocket stove")
+    assert rocket["geometry"]["coordinates"] == [13.4, 52.5]
+    assert rocket["properties"]["needs"] == ["Masonry", "Clay"] and rocket["properties"]["colour"] == "#9b5506"
+    # Its host with the avatar, as on the cards
+    assert "Sonnenhof" in rocket["properties"]["host"] and community.get_absolute_url() in rocket["properties"]["host"]
+    # Where it is, the map shows
+    assert "Sonnendorf" not in rocket["properties"]["host"]
+    # The dates as text, for the popup
+    assert "<" not in rocket["properties"]["dates"] and " – " in rocket["properties"]["dates"]
+    features = Client().get(_MARKERS, {"bbox": "10,50,15,55"}).json()["features"]
+    assert [f["properties"]["title"] for f in features] == ["Rocket stove"]
+
+
+@pytest.mark.django_db
+def test_event_list_is_nearest_first(community, project, ambassador, helper):
     Community.objects.filter(pk=community.pk).update(location=Point(13.4, 52.5), location_public=True)
     far = Community.objects.create(name="Waldgarten", owner=ambassador, location=Point(2.35, 48.85), location_public=True)
     Event.objects.create(community=far, title="Forest garden days")
-    User.objects.filter(pk=helper.pk).update(location=Point(13.0, 52.4), match_radius=100)
-    client = _client(helper)
-    response = client.get(reverse("events:nearby"))
-    assert [event.title for event in response.context["events"]] == ["Rocket stove"]
-    assert response.context["events"][0].km < 50
-    response = client.get(reverse("events:nearby"), {"where": "everywhere"})
-    assert [event.title for event in response.context["events"]] == ["Rocket stove", "Forest garden days"]
+    # From the place in one's profile
+    User.objects.filter(pk=helper.pk).update(location=Point(13.0, 52.4))
+    response = _client(helper).get(_LIST)
+    assert _titles(response) == ["Rocket stove", "Forest garden days"] and response.context["events"][0].km < 50
+    # From where one is
+    response = Client().get(_LIST, {"near": "48.9,2.3"})
+    assert _titles(response) == ["Forest garden days", "Rocket stove"] and response.context["events"][0].km < 10
+    # Not a place: as without it
+    assert Client().get(_LIST, {"near": "here"}).context["events"][0].km is None
 
 
 @pytest.mark.django_db
-def test_nearby_list_filters_by_kind(community, project, helper):
+def test_event_list_filters_by_kinds(community, project):
     Event.objects.create(community=community, title="Open day", kind=Event.KIND_COMMUNITY_EVENT)
-    response = _client(helper).get(reverse("events:nearby"), {"kind": "community_event"})
-    assert [event.title for event in response.context["events"]] == ["Open day"]
-    with translation.override("en"):
-        assert [(str(c.label), c.count, c.active) for c in response.context["kinds"]] == [
-            ("All", 2, False), ("Projects", 1, False), ("Community events", 1, True),
-        ]
+    assert _titles(Client().get(_LIST, {"kind": "community_event"})) == ["Open day"]
+    assert len(_titles(Client().get(_LIST, {"kind": "community_event,project"}))) == 2
 
 
 @pytest.mark.django_db
-def test_there_is_no_menu_entry_and_no_global_list(project):
-    assert Client().get("/projects/").status_code == 404
+def test_going_to_lists_the_events_ones_coming_or_help_was_accepted(community, project, helper):
+    today = timezone.localdate()
+    open_day = Event.objects.create(community=community, title="Open day", starts_on=today + timedelta(days=2))
+    asked = Event.objects.create(community=community, title="Harvest", starts_on=today + timedelta(days=1))
+    over = Event.objects.create(community=community, title="Old roof", ends_on=today - timedelta(days=1))
+    for event in (project, open_day, over):
+        _offer(event, helper, status=Match.STATUS_ACCEPTED)
+    _offer(asked, helper)
+    # Not the ones still asked for or over, until one looks at the past
+    assert set(_titles(_client(helper).get(_LIST, {"going": "1"}))) == {"Open day", "Rocket stove"}
+    assert _titles(_client(helper).get(_LIST, {"going": "1", "when": "past"})) == ["Old roof"]
+    # Only logged in
+    assert len(_titles(Client().get(_LIST, {"going": "1"}))) == 3
+
+
+@pytest.mark.django_db
+def test_event_list_shows_upcoming_or_past_events(community, project):
+    today = timezone.localdate()
+    Event.objects.create(community=community, title="Running now", starts_on=today - timedelta(days=1))
+    Event.objects.create(community=community, title="Last summer", starts_on=today - timedelta(days=90), ends_on=today - timedelta(days=60))
+    Event.objects.create(community=community, title="Long ago", ends_on=today - timedelta(days=400), archived_at=timezone.now())
+    assert set(_titles(Client().get(_LIST))) == {"Rocket stove", "Running now"}
+    assert _titles(Client().get(_LIST, {"when": "upcoming"})) == ["Rocket stove"]
+    # The latest first, archived ones too once they are over
+    assert _titles(Client().get(_LIST, {"when": "past"})) == ["Last summer", "Long ago"]
+
+
+@pytest.mark.django_db
+def test_event_list_filters_by_country_dates_and_what_is_provided(community, project, ambassador):
+    today = timezone.localdate()
+    Community.objects.filter(pk=community.pk).update(country="DE")
+    elsewhere = Community.objects.create(name="Finca", owner=ambassador, country="ES")
+    Event.objects.create(community=elsewhere, title="Olive harvest", is_open=True, bed_provided=True,
+                         starts_on=today + timedelta(days=60), ends_on=today + timedelta(days=70))
+    assert _titles(Client().get(_LIST, {"country": "ES"})) == ["Olive harvest"]
+    assert [code for code, _name in Client().get(reverse("events:list")).context["countries"]] == ["DE", "ES"]
+    assert _titles(Client().get(_LIST, {"until": (today + timedelta(days=10)).isoformat()})) == ["Rocket stove"]
+    assert _titles(Client().get(_LIST, {"from": (today + timedelta(days=50)).isoformat()})) == ["Olive harvest"]
+    assert _titles(Client().get(_LIST, {"open": "1"})) == ["Olive harvest"]
+    assert _titles(Client().get(_LIST, {"bed": "1"})) == ["Olive harvest"]
+    assert _titles(Client().get(_LIST, {"food": "1", "open": "1"})) == []
+
+
+@pytest.mark.django_db
+def test_event_list_filters_by_skills_to_learn_and_fitting_ones_skills(community, project, helper):
+    welding = Skill.objects.create(name="Welding", slug="welding")
+    masonry = Skill.objects.create(name="Masonry", slug="masonry")
+    other = Event.objects.create(community=community, title="Open workshop")
+    skill_offer(community, welding, event=other)
+    assert _titles(Client().get(_LIST, {"learn": "Welding,"})) == ["Open workshop"]
+    # A need for a skill one offers, or a skill one wishes to learn
+    need(project, kind=Listing.KIND_HANDS, title="Walls", skill=masonry)
+    skill_offer(helper, masonry)
+    assert _titles(_client(helper).get(_LIST, {"fits": "1"})) == ["Rocket stove"]
+    skill_wish(helper, welding)
+    assert set(_titles(_client(helper).get(_LIST, {"fits": "1"}))) == {"Rocket stove", "Open workshop"}
+    # Only logged in
+    assert len(_titles(Client().get(_LIST, {"fits": "1"}))) == 2
+
+
+@pytest.mark.django_db
+def test_event_list_filters_by_what_is_still_needed(community, project):
+    Event.objects.create(community=community, title="Open day")
+    assert _titles(Client().get(_LIST, {"needs": "material"})) == ["Rocket stove"]
+    assert _titles(Client().get(_LIST, {"needs": "tool"})) == []
+    assert _titles(Client().get(_LIST, {"needs": "tool,hands"})) == ["Rocket stove"]
+
+
+@pytest.mark.django_db
+def test_event_list_filters_by_room_left(community, project, helper, ambassador):
+    today = timezone.localdate()
+    full = Event.objects.create(community=community, title="Small course", volunteers_wanted=1,
+                                starts_on=today + timedelta(days=1), ends_on=today + timedelta(days=2))
+    match = _offer(full, helper, status=Match.STATUS_ACCEPTED, stay=(_aware(today + timedelta(days=1)), _aware(today + timedelta(days=2))))
+    assert _titles(Client().get(_LIST, {"room": "1"})) == ["Rocket stove"]
+    # A day free again: room
+    StayDetails.objects.filter(match=match).update(stay_to=_aware(today + timedelta(days=1)))
+    assert set(_titles(Client().get(_LIST, {"room": "1"}))) == {"Rocket stove", "Small course"}
+    # Nobody to answer: none
+    Community.objects.filter(pk=community.pk).update(owner=None)
+    assert _titles(Client().get(_LIST, {"room": "1"})) == []
+
+
+@pytest.mark.django_db
+def test_event_search_suggests_events_hosts_skills_and_places(community, project):
+    Community.objects.filter(pk=community.pk).update(location_name="Sonnendorf")
+    skill_offer(community, Skill.objects.create(name="Sowing", slug="sowing"), event=project)
+    found = Client().get(reverse("events:api-suggest"), {"q": "so"}).json()
+    assert {"value": "Sonnenhof", "type": "community"} in found
+    assert {"value": "Sowing", "type": "skill"} in found
+    assert {"value": "Sonnendorf", "type": "location"} in found
+    assert Client().get(reverse("events:api-suggest"), {"q": "rocket"}).json() == [{"value": "Rocket stove", "type": "event"}]
+    assert Client().get(reverse("events:api-suggest"), {"q": "rocket", "when": "past"}).json() == []
+
+
+@pytest.mark.django_db
+def test_events_have_a_main_menu_entry_and_going_to_in_ones_menu(project, helper):
     content = Client().get(project.get_absolute_url()).content.decode()
-    assert f'href="{reverse("events:nearby")}"' not in content
+    going = f'{reverse("events:list")}?going=1&amp;view=list'
+    assert f'href="{reverse("events:list")}"' in content and going not in content
+    assert going in _client(helper).get(project.get_absolute_url()).content.decode()
 
 
 @pytest.mark.django_db
@@ -482,6 +601,17 @@ def test_stale_projects_are_asked_about_then_archived(community):
 
 
 @pytest.mark.django_db
+def test_events_with_their_days_ahead_are_left_alone(community):
+    today = timezone.localdate()
+    Event.objects.create(community=community, title="Harvest", starts_on=today + timedelta(days=90), ends_on=today + timedelta(days=92))
+    Event.objects.create(community=community, title="From spring on", starts_on=today + timedelta(days=30))
+    # Ongoing, but only since last week
+    Event.objects.create(community=community, title="Just started", starts_on=today - timedelta(days=7))
+    Event.objects.update(updated_at=timezone.now() - timedelta(days=200))
+    assert archive_stale_events() == (0, 0)
+
+
+@pytest.mark.django_db
 def test_one_click_confirms_and_brings_back(community):
     stale = Event.objects.create(
         community=community, title="Garden", archived_at=timezone.now(), stale_reminder_sent_at=timezone.now(),
@@ -507,7 +637,7 @@ def test_an_ended_project_is_not_brought_back_by_confirming(community, ambassado
 @pytest.mark.django_db
 def test_last_seen_is_kept_up_to_date(helper):
     assert helper.last_active is None
-    _client(helper).get(reverse("events:nearby"))
+    _client(helper).get(reverse("events:list"))
     helper.refresh_from_db()
     assert helper.last_seen is not None and helper.last_active == helper.last_seen
 
@@ -779,8 +909,8 @@ def test_just_coming_needs_no_answer_and_shows_in_the_calendar(community, open_d
     assert Match.objects.filter(from_user=helper).count() == 1
 
     # The page lists who comes; the calendar counts the people on that day
-    with translation.override("en"):
-        content = _client(ambassador).get(open_day.get_absolute_url()).content.decode()
+    User.objects.filter(pk=ambassador.pk).update(language="en")  # their saved language is German
+    content = _client(ambassador).get(open_day.get_absolute_url()).content.decode()
     assert "Who is coming" in content and "Hugo" in content and "3 people so far" in content
     response = _client(ambassador).get(
         reverse("matches:calendar", args=[community.slug]), {"month": open_day.starts_on.strftime("%Y-%m")},
@@ -837,7 +967,7 @@ def test_a_visit_to_an_open_event_is_what_references_are_about(open_day, helper,
 
 @pytest.mark.django_db
 def test_texts_say_the_kinds_word(community, open_day, project):
-    Event.objects.filter(pk=open_day.pk).update(updated_at=timezone.now() - timedelta(days=61))
+    Event.objects.filter(pk=open_day.pk).update(starts_on=None, ends_on=None, updated_at=timezone.now() - timedelta(days=61))
     mail.outbox.clear()
     assert archive_stale_events() == (0, 1)
     assert "Gemeinschafts-Event" in mail.outbox[0].subject or "community event" in mail.outbox[0].subject

@@ -19,7 +19,7 @@ from PIL import Image, ImageOps, UnidentifiedImageError
 
 from gift_economy.matches.models import Match
 
-from .models import Reference, ReferenceSkill, ReferenceRequest, match_gift_names, match_reference_subject, match_skill_names, subject_owner
+from .models import Reference, ReferenceSkill, ReferenceRequest, match_gift_names, match_reference_group, match_reference_subject, match_skill_names, subject_owner
 from .notifications import notify_reference_created
 
 # How long the link in a story email keeps working
@@ -53,7 +53,13 @@ def exchange_dates(match):
 
 def reference_due_at(match):
     """When to ask for the reference: after the stay ended or the agreed date, or a while
-    after acceptance if there was no date."""
+    after acceptance if there was no date. What is attached to the match may say when it
+    happened (a gift taken along on a tour: when it was handed over), and nothing is due
+    until it has."""
+    for attachment in match.attachments():
+        if hasattr(attachment, "happened_at"):
+            when = attachment.happened_at(match)
+            return when + timedelta(days=settings.REFERENCE_REQUEST_DELAY_DAYS) if when else None
     start, end = exchange_dates(match)
     if end or start:
         return (end or start) + timedelta(days=settings.REFERENCE_REQUEST_DELAY_DAYS)
@@ -110,7 +116,7 @@ def send_reference_requests(now=None):
     matches = (
         Match.objects.filter(status=Match.STATUS_ACCEPTED)
         .select_related("content_type", "from_user", "recipient")
-        .prefetch_related("target", "reference_requests", "references")
+        .prefetch_related("target", "reference_requests", "references", "stay_details__companions")
     )
     for match in matches:
         due = reference_due_at(match)
@@ -118,11 +124,15 @@ def send_reference_requests(now=None):
             continue
         asked = {r.user_id for r in match.reference_requests.all()}
         written = {r.author_id for r in match.references.all()}
-        for user in (match.from_user, match.recipient):
+        # Who came along on a stay (a tour visit's group) is asked too
+        details = getattr(match, "stay_details", None)
+        along = list(details.companions.all()) if details is not None else []
+        for user in (match.from_user, match.recipient, *along):
             if user is None or not user.email or user.pk in asked or user.pk in written:
                 continue
             if match_reference_subject(match, user) is None:
                 continue
+            asked.add(user.pk)
             reference_request = ReferenceRequest.objects.create(match=match, user=user)
             send_reference_request_email(reference_request)
             sent += 1
@@ -141,27 +151,29 @@ def find_reference_request(key):
     return reference_request
 
 
-def existing_reference(reference_request):
+def existing_reference(reference_request, about=""):
     """The reference the user already wrote about this match's subject, if any: the request
-    form edits it rather than adding a second one (one reference per subject)."""
-    subject, _gift, _skill = match_reference_subject(reference_request.match, reference_request.user)
+    form edits it rather than adding a second one (one reference per subject). `about`:
+    whom the host of a group's stay writes about (models.reference_choices)."""
+    subject, _gift, _skill = match_reference_subject(reference_request.match, reference_request.user, about)
     return Reference.objects.filter(
         author=reference_request.user,
         content_type=ContentType.objects.get_for_model(subject),
         object_id=str(subject.pk),
+        place_id="",
     ).first()
 
 
 def save_requested_reference(reference_request, *, text, impression=Reference.IMPRESSION_POSITIVE, photo=None,
-               share_publicly=None, http_request=None):
+               share_publicly=None, http_request=None, about=""):
     """Save the answer as the user's reference about the match's subject. `photo` is a
     ContentFile from shrink_photo(). `share_publicly` None keeps what was set before."""
     match, user = reference_request.match, reference_request.user
-    subject, gift, skill = match_reference_subject(match, user)
+    subject, gift, skill = match_reference_subject(match, user, about)
     holder = subject_owner(subject)
     if holder == user:
         return None
-    reference = existing_reference(reference_request) or Reference(author=user)
+    reference = existing_reference(reference_request, about) or Reference(author=user)
     created = reference.pk is None
     reference.subject = subject
     reference.recipient = holder
@@ -187,6 +199,11 @@ def save_requested_reference(reference_request, *, text, impression=Reference.IM
                 status = ReferenceSkill.STATUS_CONFIRMED if subject.has_skill(skill_obj) else ReferenceSkill.STATUS_PENDING
                 ReferenceSkill.objects.create(reference=reference, skill=skill_obj, status=status)
 
+    if created:
+        # About a group: everyone who was there, from the match
+        _group, present = match_reference_group(match)
+        if hasattr(subject, "get_reference_people") and present:
+            reference.people.set(present)
     reference_request.reference = reference
     reference_request.save(update_fields=["reference"])
     if created:

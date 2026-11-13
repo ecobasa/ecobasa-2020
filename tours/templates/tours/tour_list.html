@@ -1,0 +1,403 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block head_title %}{% trans "Community-Tours" %} — ecobasa{% endblock %}
+
+{% block extrahead %}
+{{ block.super }}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v7.2.2/ol.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.css">
+<script>
+  // What the map and the list show: one store, read by both, kept in the address
+  document.addEventListener('alpine:init', () => {
+    Alpine.store('tourMap', {
+      view: 'map',
+      show: '{{ filters.show|escapejs }}',
+      q: '{{ filters.q|escapejs }}',
+      from: '{{ request.GET.from|escapejs }}',
+      until: '{{ request.GET.until|escapejs }}',
+      learn: '{{ request.GET.learn|escapejs }}',
+      mode: '{{ filters.mode|escapejs }}',
+      children: {{ filters.children|yesno:'true,false' }},
+      animals: {{ filters.animals|yesno:'true,false' }},
+      free: {{ filters.free|yesno:'true,false' }},
+      fits: {{ filters.fits|yesno:'true,false' }},
+      passes: {{ filters.passes|yesno:'true,false' }},
+      // Archived tours too: on by default while no current tour is listed
+      archived: {{ filters.archived|yesno:'true,false' }},
+      archivedDefault: {{ filters.archived_default|yesno:'true,false' }},
+      near: '{{ request.GET.near|escapejs }}',
+      country: '{{ filters.country|escapejs }}',
+      loading: false,
+      count: 0,
+      get filterCount() {
+        return [this.show, this.from || this.until, this.learn, this.mode, this.children, this.animals, this.free, this.fits, this.passes, this.country, this.archived !== this.archivedDefault].filter(Boolean).length;
+      },
+      get anything() { return this.filterCount > 0 || !!this.q || !!this.near; },
+      // The filters in use, as small pills to take off one by one
+      get pills() {
+        const pills = [];
+        if (this.show) {
+          const kinds = this.show.split(',');
+          const label = kinds.length === 1 ? TOUR_LABELS['only_' + kinds[0]] : kinds.map(kind => TOUR_KINDS[kind]).join(' + ');
+          pills.push({ key: 'show', icon: kinds.length === 1 ? TOUR_KIND_ICONS[kinds[0]] : 'fa-eye', label: label });
+        }
+        if (this.near) pills.push({ key: 'near', icon: 'fa-map-marker-alt', label: TOUR_LABELS.near });
+        if (this.country) pills.push({ key: 'country', icon: 'fa-earth-europe', label: TOUR_COUNTRIES[this.country] || this.country });
+        if (this.from) pills.push({ key: 'from', icon: 'fa-calendar', label: TOUR_LABELS.from + ' ' + this.from });
+        if (this.until) pills.push({ key: 'until', icon: 'fa-calendar', label: TOUR_LABELS.until + ' ' + this.until });
+        this.learn.split(',').filter(Boolean).forEach(name => pills.push({ key: 'learn:' + name, icon: 'fa-graduation-cap', label: name }));
+        if (this.mode) pills.push({ key: 'mode', icon: 'fa-route', label: TOUR_MODES[this.mode] || this.mode });
+        if (this.children) pills.push({ key: 'children', icon: 'fa-children', label: TOUR_LABELS.children });
+        if (this.animals) pills.push({ key: 'animals', icon: 'fa-paw', label: TOUR_LABELS.animals });
+        if (this.free) pills.push({ key: 'free', icon: 'fa-user-plus', label: TOUR_LABELS.free });
+        if (this.fits) pills.push({ key: 'fits', icon: 'fa-hands-helping', label: TOUR_LABELS.fits });
+        if (this.passes) pills.push({ key: 'passes', icon: 'fa-house', label: TOUR_LABELS.passes });
+        if (this.archived && !this.archivedDefault) pills.push({ key: 'archived', icon: 'fa-box-archive', label: TOUR_LABELS.archived });
+        return pills;
+      },
+      unset(key) {
+        if (key.startsWith('learn:')) {
+          const name = key.slice(6);
+          this.learn = this.learn.split(',').filter(n => n && n !== name).join(',');
+          document.querySelectorAll('[data-tour-learn]').forEach(input => input.__tagify && input.__tagify.removeTags(name));
+        } else if (['children', 'animals', 'free', 'fits', 'passes', 'archived'].includes(key)) {
+          this[key] = false;
+        } else {
+          this[key] = '';
+        }
+        window.tourFiltersChanged();
+      },
+      params() {
+        const params = new URLSearchParams();
+        ['show', 'q', 'from', 'until', 'learn', 'mode', 'near', 'country'].forEach(key => { if (this[key]) params.set(key, this[key]); });
+        if (this.children) params.set('children', '1');
+        if (this.animals) params.set('animals', '1');
+        if (this.free) params.set('free', '1');
+        if (this.fits) params.set('fits', '1');
+        if (this.passes) params.set('passes', '1');
+        if (this.archived !== this.archivedDefault) params.set('archived', this.archived ? '1' : '0');
+        return params;
+      },
+      clear() {
+        Object.assign(this, { show: '', country: '', q: '', from: '', until: '', learn: '', mode: '', children: false, animals: false, free: false, fits: false, passes: false, near: '', archived: this.archivedDefault });
+        document.querySelectorAll('[data-tour-learn]').forEach(input => input.__tagify && input.__tagify.removeAllTags());
+        window.tourFiltersChanged();
+      },
+      // Tours with dates, tour ideas and rides: all shown (empty), or some of them (never none)
+      shows(kind) { return !this.show || this.show.split(',').includes(kind); },
+      toggleShow(kind) {
+        const kinds = Object.keys(TOUR_KINDS).filter(each => this.shows(each) !== (each === kind));
+        if (!kinds.length) return;
+        this.show = kinds.length === Object.keys(TOUR_KINDS).length ? '' : kinds.join(',');
+        window.tourFiltersChanged();
+      },
+      showMap() { this.view = 'map'; },
+      showList() { this.view = 'list'; window.tourListReload(); },
+    });
+  });
+
+  // Words for the filter pills
+  const TOUR_LABELS = {
+    only_tours: '{% trans "Only tours"|escapejs %}', only_ideas: '{% trans "Only tour ideas"|escapejs %}', only_rides: '{% trans "Only rides"|escapejs %}',
+    near: '{% trans "Near a place"|escapejs %}', from: '{% trans "From"|escapejs %}', until: '{% trans "Until"|escapejs %}',
+    children: '{% trans "Children welcome"|escapejs %}', animals: '{% trans "Animals welcome"|escapejs %}',
+    free: '{% trans "Has free places"|escapejs %}',
+    fits: '{% trans "Fits my skills"|escapejs %}', passes: '{% trans "Passes near me"|escapejs %}',
+    archived: '{% trans "Archived tours"|escapejs %}',
+  };
+  const TOUR_KINDS = { tours: '{% trans "Tours"|escapejs %}', ideas: '{% trans "Tour ideas"|escapejs %}', rides: '{% trans "Rides"|escapejs %}' };
+  const TOUR_KIND_ICONS = { tours: 'fa-route', ideas: 'fa-lightbulb', rides: 'fa-people-arrows' };
+  const TOUR_MODES = { {% for value, label in mode_choices %}'{{ value }}': '{{ label|escapejs }}',{% endfor %} };
+  const TOUR_COUNTRIES = { {% for code, name in countries %}'{{ code }}': '{{ name|escapejs }}',{% endfor %} };
+
+  // Search suggestions: tours, skills, stops, and places (to move the map there)
+  function tourSuggestions() {
+    return {
+      items: [], active: -1, open: false, _timer: null,
+      suggest(term) {
+        clearTimeout(this._timer);
+        if (!term || term.length < 2) return this.close();
+        this._timer = setTimeout(() => {
+          const tours = fetch('{% url "tours:api-suggest" %}?q=' + encodeURIComponent(term)).then(r => r.json()).catch(() => []);
+          const places = fetch('https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=4&accept-language={{ LANGUAGE_CODE }}&q=' + encodeURIComponent(term))
+            .then(r => r.json())
+            .then(data => data.map(d => ({ value: EcoMap.formatAddress(d), type: 'place', lon: parseFloat(d.lon), lat: parseFloat(d.lat), bbox: d.boundingbox })))
+            .catch(() => []);
+          Promise.all([tours, places]).then(([found, placeItems]) => {
+            this.items = found.slice(0, 6).concat(placeItems).slice(0, 10);
+            this.open = this.items.length > 0;
+            this.active = -1;
+          });
+        }, 350);
+      },
+      selectItem(item) {
+        const store = Alpine.store('tourMap');
+        if (item.type === 'place') {
+          // A place moves the map there and sorts the list nearest first
+          store.near = item.lat + ',' + item.lon;
+          store.q = '';
+          window._tourMapPanTo && window._tourMapPanTo(item.lon, item.lat, 7, item.bbox);
+        } else {
+          store.q = item.value;
+        }
+        this.close();
+        window.tourFiltersChanged();
+      },
+      moveDown() { if (this.open) this.active = Math.min(this.active + 1, this.items.length - 1); },
+      moveUp() { if (this.open) this.active = Math.max(this.active - 1, 0); },
+      choose() { if (this.active >= 0 && this.items[this.active]) this.selectItem(this.items[this.active]); else { this.close(); window.tourFiltersChanged(true); } },
+      close() { this.open = false; this.items = []; this.active = -1; clearTimeout(this._timer); },
+    };
+  }
+</script>
+{% endblock %}
+
+{% block content %}
+<div x-data>
+  <div class="relative w-full map-shell">
+    <div id="tour-map" class="absolute inset-0 w-full h-full rounded shadow bg-secondary bg-opacity-50"></div>
+
+    {# What the line colours mean (EcoMap.addRouteLayer) #}
+    <div x-show="$store.tourMap.view === 'map'" class="absolute bottom-4 right-4 z-10 flex flex-col gap-1 px-3 py-2 rounded-md bg-secondary bg-opacity-30 backdrop-blur shadow text-xs text-brown">
+      <span class="flex items-center gap-2"><span class="inline-block w-5 h-1 rounded-full bg-primary"></span>{% trans "Tours" %}</span>
+      <span class="flex items-center gap-2"><svg class="w-5 h-1 text-primary" viewBox="0 0 20 4" aria-hidden="true"><line x1="2" y1="2" x2="20" y2="2" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-dasharray="4 7"/></svg>{% trans "Planned Tours" %}</span>
+      <span class="flex items-center gap-2"><span class="inline-block w-5 h-1 rounded-full bg-purple"></span>{% trans "Rides" %}</span>
+      <span class="flex items-center gap-2"><span class="inline-block w-5 h-1 rounded-full bg-green"></span>{% trans "Bicycle" %}</span>
+    </div>
+
+    {# View toggle, top centre #}
+    <div class="absolute top-4 left-1/2 -translate-x-1/2 z-10">
+      <div class="inline-flex overflow-hidden rounded-full shadow-lg border bg-primary bg-opacity-20 backdrop-blur border-red">
+        <button type="button" :class="$store.tourMap.view === 'map' ? 'bg-opacity-90 shadow-inner' : 'bg-opacity-40'"
+                class="btn-pill-select bg-primary transition-all" @click="$store.tourMap.showMap()">
+          <i class="fa fa-globe"></i><span>{% trans "Map" %}</span>
+        </button>
+        <button type="button" :class="$store.tourMap.view === 'list' ? 'bg-opacity-90 shadow-inner' : 'bg-opacity-40'"
+                class="btn-pill-select bg-primary transition-all" @click="$store.tourMap.showList()">
+          <i class="fa fa-list-alt"></i><span>{% trans "List" %}</span>
+        </button>
+      </div>
+    </div>
+
+    {# Left toolbar: search, filters, near me; then planning a tour #}
+    <div class="absolute top-4 left-4 flex flex-col gap-3 z-10 w-full max-w-40 md:max-w-60 lg:max-w-xs xl:max-w-md">
+      <div class="bg-secondary bg-opacity-30 backdrop-blur rounded-lg shadow p-3 flex flex-col gap-2">
+        {% include "tours/_search_bar.html" with row="flex-col lg:flex-row" %}
+        {% include "tours/_filter_pills.html" %}
+
+        <div class="flex items-center justify-between text-brown text-sm">
+          <span x-text="'{% trans "Tours on the map"|escapejs %}: ' + $store.tourMap.count"></span>
+          <button type="button" x-cloak x-show="$store.tourMap.anything" class="underline opacity-70 hover:opacity-100" @click="$store.tourMap.clear()">{% trans "Clear filters" %}</button>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap gap-2">
+        <a href="{% url 'tours:create' %}" class="btn shadow self-start text-sm"><i class="fa fa-plus mr-1"></i> {% trans "Plan a tour" %}</a>
+        <a href="{% url 'tours:ride' %}" class="btn shadow self-start text-sm"><i class="fa-solid fa-people-arrows mr-1"></i> {% trans "Offer a ride" %}</a>
+        {% if own %}
+          <button type="button" class="btn btn-purple shadow self-start text-sm" @click="$store.tourMap.showList()">
+            <i class="fa-solid fa-eye-slash mr-1"></i>{% trans "Your tours that are not in the list" %} ({{ own|length }})
+          </button>
+        {% endif %}
+      </div>
+    </div>
+
+    <div x-show="$store.tourMap.loading" x-cloak class="absolute bottom-16 left-1/2 -translate-x-1/2 z-10 bg-primary text-secondary px-3 py-1 rounded-full shadow text-xs">
+      <i class="fa fa-spinner fa-spin mr-1"></i> {% trans "Loading…" %}
+    </div>
+  </div>
+
+  {# The list, in a modal over the map #}
+  <div x-show="$store.tourMap.view === 'list'" x-cloak class="modal-overlay flex"
+       @click.self="$store.tourMap.showMap()" @keydown.escape.window="$store.tourMap.showMap()">
+    <div class="modal-content" role="dialog" aria-modal="true">
+      <button type="button" class="modal-close" @click="$store.tourMap.showMap()">&times;</button>
+      {# The same search and filters as on the map, the country, the filters in use #}
+      <div class="space-y-3 mb-4">
+        {% include "tours/_search_bar.html" with align="right-0" %}
+        {% if countries %}
+          <select class="form-select w-full rounded text-sm" x-model="$store.tourMap.country" @change="window.tourFiltersChanged()">
+            <option value="">{% trans "All countries" %}</option>
+            {% for code, name in countries %}<option value="{{ code }}">{{ name }}</option>{% endfor %}
+          </select>
+        {% endif %}
+        {% include "tours/_filter_pills.html" %}
+        <div class="text-xs text-brown flex justify-end" x-cloak x-show="$store.tourMap.anything">
+          <button type="button" class="underline opacity-70 hover:opacity-100 whitespace-nowrap" @click="$store.tourMap.clear()">{% trans "Clear filters" %}</button>
+        </div>
+      </div>
+      {# One scrolling list, as high as the gifts' and communities': what tours are, your own tours that are in no list, then the tours #}
+      <div id="tour-list-scroll" class="max-h-[60vh] overflow-y-auto space-y-3">
+        <p class="text-sm m-0"><i class="fa-solid fa-route text-primary mr-1"></i>{% trans "Travel from community to community and from event to event: help, learn, and take gifts along. Join a tour for all of it or for part of the way." %} {% include "help/_link.html" with page="help:tours" anchor="what" %}</p>
+        {% if own %}
+          <details class="border rounded-xl bg-secondary bg-opacity-60 p-3" open>
+            <summary class="cursor-pointer font-semibold text-sm">{% trans "Your tours that are not in the list" %} <span class="opacity-60">{{ own|length }}</span></summary>
+            <div class="flex flex-col gap-3 mt-3">{% for tour in own %}{% include "tours/_tour_card.html" %}{% endfor %}</div>
+          </details>
+        {% endif %}
+        <div id="tour-list">
+          <div class="text-center py-8 text-brown"><i class="fa fa-spinner fa-spin text-2xl"></i></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block javascript %}
+{{ block.super }}
+<script src="https://cdn.jsdelivr.net/npm/ol@v7.2.2/dist/ol.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.min.js"></script>
+{% include "users/_skill_tagify_js.html" %}
+<script>
+'use strict';
+const ROUTES_URL = '{% url "tours:api-routes" %}';
+const LIST_URL = '{% url "tours:api-list" %}';
+const PAGE_URL = '{% url "tours:list" %}';
+let tourMap, tourRoutes;
+
+// The list in the modal, for the filters
+window.tourListReload = function () {
+  if (Alpine.store('tourMap').view !== 'list') return;
+  htmx.ajax('GET', LIST_URL + '?' + Alpine.store('tourMap').params().toString(), { target: '#tour-list', swap: 'innerHTML' });
+};
+
+// The routes in the visible area, for the filters; `fit` shows all that match instead
+window.tourMapReload = function (fit) {
+  const store = Alpine.store('tourMap');
+  const params = store.params();
+  if (!fit) {
+    const ext = ol.proj.transformExtent(tourMap.getView().calculateExtent(tourMap.getSize()), 'EPSG:3857', 'EPSG:4326');
+    if (ext.every(isFinite)) params.set('bbox', ext.map(v => v.toFixed(4)).join(','));
+  }
+  store.loading = true;
+  fetch(ROUTES_URL + '?' + params.toString()).then(r => r.json()).then(data => {
+    tourRoutes.setData(data);
+    store.count = new Set(data.features.map(f => f.properties.slug)).size;
+    if (fit) tourRoutes.fit([80, 80, 80, 80]);
+  }).finally(() => { store.loading = false; });
+};
+
+// Something changed: map, list and address follow. `fit` after a search: show what was found
+window.tourFiltersChanged = function (fit) {
+  const query = Alpine.store('tourMap').params().toString();
+  history.replaceState(null, '', PAGE_URL + (query ? '?' + query : ''));
+  window.tourMapReload(!!fit && !!Alpine.store('tourMap').q);
+  window.tourListReload();
+};
+
+// A tour on the map: picture, title, how it travels, where (the stop clicked) and when,
+// some of its description, what it wants to learn and who organises it
+function tourPopup(props) {
+  const km = props.km ? ' · {% trans "about"|escapejs %} ' + props.km + ' km' : '';
+  const el = document.createElement('div');
+  el.className = 'map-popup';
+  const add = function (tag, className, text) {
+    const node = document.createElement(tag);
+    if (className) node.className = className;
+    if (text) node.textContent = text;
+    el.append(node);
+    return node;
+  };
+  if (props.image) {
+    const link = add('a');
+    link.href = props.url;
+    const img = document.createElement('img');
+    img.src = props.image; img.alt = ''; img.className = 'w-full h-24 object-cover rounded mb-2';
+    link.append(img);
+  }
+  const title = add('h3', 'm-0');
+  const a = document.createElement('a');
+  a.href = props.url; a.className = 'hover:underline'; a.textContent = props.title;
+  title.append(a);
+  const mode = add('div', 'mt-1');
+  const icon = document.createElement('i');
+  icon.className = 'fa-solid ' + props.mode_icon + ' mr-1';
+  mode.append(icon, props.mode);
+  let where = '';
+  if (props.kind === 'stop') where = props.number + '. ' + props.name + ' · ';
+  else if (props.kind === 'home') where = '{% trans "Tour idea, organised from around"|escapejs %} ' + (props.place || '') + ' · ';
+  add('div', 'mt-1', where + props.dates + km);
+  if (props.description) add('p', 'mt-2 mb-0 line-clamp-3', props.description);
+  if (props.learn && props.learn.length) {
+    const learn = add('div', 'mt-2 flex flex-wrap gap-1');
+    props.learn.forEach(function (name) {
+      const pill = document.createElement('span');
+      pill.className = 'pill bg-primary';
+      pill.innerHTML = '<i class="fa-solid fa-graduation-cap mr-1"></i>';
+      pill.append(name);
+      learn.append(pill);
+    });
+  }
+  if (props.organiser) {
+    // The organiser's name links to their profile, with their picture if they have one
+    const who = add('div', 'mt-2 flex items-center gap-1', '{% trans "Organiser"|escapejs %}: ');
+    const link = document.createElement('a');
+    link.href = props.organiser_url; link.className = 'inline-flex items-center gap-1 underline hover:text-primary';
+    if (props.organiser_image) {
+      const img = document.createElement('img');
+      img.src = props.organiser_image; img.alt = ''; img.className = 'w-5 h-5 rounded-full object-cover';
+      link.append(img);
+    }
+    link.append(props.organiser);
+    who.append(link);
+  }
+  return el;
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+  const base = EcoMap.buildBaseLayers();
+  tourMap = new ol.Map({
+    target: 'tour-map', layers: base.all,
+    view: new ol.View({ center: ol.proj.fromLonLat([10, 48]), zoom: 4, maxZoom: 18 }),
+  });
+  base.setBaseLayer('ecobasa');
+  const menu = EcoMap.buildLayerToggle(tourMap, 'tour-layer', {
+    title: '{% trans "Map style"|escapejs %}', satellite: '{% trans "Satellite"|escapejs %}', osm: '{% trans "OpenStreetMap"|escapejs %}',
+  });
+  menu.querySelectorAll('input').forEach(r => r.addEventListener('change', e => { if (e.target.checked) base.setBaseLayer(e.target.value); }));
+
+  const popupEl = document.createElement('div');
+  const popup = new ol.Overlay({ element: popupEl, positioning: 'bottom-center', offset: [0, -8], autoPan: { animation: { duration: 250 }, margin: 90 } });
+  tourMap.addOverlay(popup);
+  tourRoutes = EcoMap.addRouteLayer(tourMap, null, {
+    // How each leg travels, as on a tour's page
+    legModes: true,
+    onSelect(props, coordinate) {
+      if (!props) { popup.setPosition(undefined); return; }
+      popupEl.replaceChildren(tourPopup(props));
+      popup.setPosition(coordinate);
+    },
+  });
+  // A place: its whole area if it has one (a country fits on the screen), else around it
+  window._tourMapPanTo = (lon, lat, zoom, bbox) => EcoMap.fitPlace(tourMap, bbox)
+    || tourMap.getView().animate({ center: ol.proj.fromLonLat([lon, lat]), zoom: zoom || 7 });
+
+  // What we want to learn: skills from the list, any of them. The field is on the map
+  // and in the list; a change in one shows in the other
+  const learnInputs = document.querySelectorAll('[data-tour-learn]');
+  learnInputs.forEach(learn => learn.addEventListener('change', () => {
+    const names = learn.value.split(',').map(s => s.trim()).filter(Boolean).join(',');
+    if (names === Alpine.store('tourMap').learn) return;
+    Alpine.store('tourMap').learn = names;
+    learnInputs.forEach(other => {
+      if (other === learn || !other.__tagify) return;
+      other.__tagify.removeAllTags();
+      if (names) other.__tagify.addTags(names.split(','));
+    });
+    window.tourFiltersChanged();
+  }));
+
+  const store = Alpine.store('tourMap');
+  window.tourMapReload(!store.near);
+  if (store.near) {
+    const [lat, lon] = store.near.split(',').map(parseFloat);
+    window._tourMapPanTo(lon, lat, 7);
+  }
+  let timer;
+  tourMap.once('rendercomplete', () => tourMap.on('moveend', () => { clearTimeout(timer); timer = setTimeout(() => window.tourMapReload(false), 300); }));
+  window.addEventListener('resize', () => tourMap.updateSize());
+});
+</script>
+{% endblock %}
