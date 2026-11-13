@@ -2833,7 +2833,7 @@ msgstr "Du leihst diesen Monat aus"
 #: gift_economy/matches/views.py:34 templates/_navbar.html:151
 #: templates/_navbar.html:265 templates/dashboard/base.html:55
 msgid "Volunteer Visits"
-msgstr "Besuche von Freiwilligen"
+msgstr "Freiwilligen Aufenthalte"
 
 #: gift_economy/matches/templates/matches/match_detail.html:37
 msgid "Match confirmed"
@@ -2943,7 +2943,7 @@ msgstr "Hier ist nichts mit diesem Status."
 
 #: gift_economy/matches/views.py:34
 msgid "No volunteer visits yet."
-msgstr "Noch keine Besuche von Freiwilligen."
+msgstr "Noch keine Freiwilligen Aufenthalte."
 
 #: gift_economy/matches/views.py:39
 msgctxt "match status"

@@ -2826,7 +2826,7 @@ msgstr "Lo que tomas prestado este mes"
 #: gift_economy/matches/views.py:34 templates/_navbar.html:151
 #: templates/_navbar.html:265 templates/dashboard/base.html:55
 msgid "Volunteer Visits"
-msgstr "Visitas de voluntarios"
+msgstr "Estancias de voluntariado"
 
 #: gift_economy/matches/templates/matches/match_detail.html:37
 msgid "Match confirmed"
@@ -2936,7 +2936,7 @@ msgstr "No hay nada con este estado."
 
 #: gift_economy/matches/views.py:34
 msgid "No volunteer visits yet."
-msgstr "Todavía no hay visitas de voluntarios."
+msgstr "Todavía no hay estancias de voluntariado."
 
 #: gift_economy/matches/views.py:39
 msgctxt "match status"
