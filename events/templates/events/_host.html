@@ -1,0 +1,8 @@
+{% load i18n %}{# Who hosts an event: the community's avatar and name, linked to its page; where it is roughly (not `without_place`) and how far #}
+<div class="text-sm flex items-center gap-2 min-w-0">
+  <a href="{{ event.community.get_absolute_url }}" class="inline-flex items-center gap-2 min-w-0 hover:text-primary">
+    {% include "_avatar.html" with who=event.community %}<span class="truncate">{{ event.community.name }}</span>
+  </a>
+  {% if not without_place %}{% with place=event.place.rough_place %}{% if place.0 %}<span class="opacity-70 truncate">· {{ place.0 }}</span>{% endif %}{% endwith %}{% endif %}
+  {% if event.km is not None %}<span class="opacity-70 whitespace-nowrap">· {% blocktrans with km=event.km %}about {{ km }} km{% endblocktrans %}</span>{% endif %}
+</div>

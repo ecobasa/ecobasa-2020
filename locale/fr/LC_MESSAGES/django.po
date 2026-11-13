@@ -6777,3 +6777,33 @@ msgstr "Tours archivés"
 
 msgid "Travels this stretch and could take it:"
 msgstr "Fait ce trajet et pourrait l'emporter :"
+
+msgid "Going to"
+msgstr "J'y vais"
+
+msgid "Show events near me"
+msgstr "Montrer les événements près de moi"
+
+msgid "You are not going to any current event yet."
+msgstr "Tu ne vas encore à aucun événement en cours."
+
+msgid "Upcoming"
+msgstr "À venir"
+
+msgid "Past"
+msgstr "Passés"
+
+msgid "No past events found."
+msgstr "Aucun événement passé trouvé."
+
+msgid "Needs help with"
+msgstr "A besoin d'aide pour"
+
+msgid "Still has room"
+msgstr "Reste de la place"
+
+#, python-format
+msgid "%(count)s event"
+msgid_plural "%(count)s events"
+msgstr[0] "%(count)s événement"
+msgstr[1] "%(count)s événements"

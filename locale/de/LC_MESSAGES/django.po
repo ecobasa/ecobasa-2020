@@ -6768,3 +6768,33 @@ msgstr "Archivierte Touren"
 
 msgid "Travels this stretch and could take it:"
 msgstr "Fährt diese Strecke und könnte es mitnehmen:"
+
+msgid "Going to"
+msgstr "Ich bin dabei"
+
+msgid "Show events near me"
+msgstr "Events in meiner Nähe zeigen"
+
+msgid "You are not going to any current event yet."
+msgstr "Du bist noch bei keinem aktuellen Event dabei."
+
+msgid "Upcoming"
+msgstr "Demnächst"
+
+msgid "Past"
+msgstr "Vergangen"
+
+msgid "No past events found."
+msgstr "Keine vergangenen Events gefunden."
+
+msgid "Needs help with"
+msgstr "Braucht Hilfe bei"
+
+msgid "Still has room"
+msgstr "Hat noch Platz"
+
+#, python-format
+msgid "%(count)s event"
+msgid_plural "%(count)s events"
+msgstr[0] "%(count)s Event"
+msgstr[1] "%(count)s Events"

@@ -25,13 +25,17 @@
             <i class="fa fa-home mr-2"></i>
             {% trans "Communities" %}
           </a>
+          <a href="{% url "gifts:search" %}" class="{% if namespace == "gifts" %}text-brown{% endif %} ml-8 inline-flex items-center px-1 pt-1 border-b-2 border-transparent leading-5 focus:outline-none focus:text-brown transition duration-150 ease-in-out">
+            <i class="fa fa-recycle mr-2"></i>
+            {% trans "Gifts" %}
+          </a>
           <a href="{% url "tours:list" %}" class="{% if namespace == "tours" %}text-brown{% endif %} ml-8 whitespace-nowrap inline-flex items-center px-1 pt-1 border-b-2 border-transparent leading-5 focus:outline-none focus:text-brown transition duration-150 ease-in-out">
             <i class="fa-solid fa-route mr-2"></i>
             {% trans "Community-Tours" %}
           </a>
-          <a href="{% url "gifts:search" %}" class="{% if namespace == "gifts" %}text-brown{% endif %} ml-8 inline-flex items-center px-1 pt-1 border-b-2 border-transparent leading-5 focus:outline-none focus:text-brown transition duration-150 ease-in-out">
-            <i class="fa fa-recycle mr-2"></i>
-            {% trans "Gifts" %}
+          <a href="{% url "events:list" %}" class="{% if namespace == "events" %}text-brown{% endif %} ml-8 inline-flex items-center px-1 pt-1 border-b-2 border-transparent leading-5 focus:outline-none focus:text-brown transition duration-150 ease-in-out">
+            <i class="fa-solid fa-calendar-day mr-2"></i>
+            {% trans "Events" %}
           </a>
           <a href="{% url "homepage:support" %}" class="{% if request.path == "/support/" %}text-brown{% endif %} ml-8 inline-flex items-center px-1 pt-1 border-b-2 border-transparent leading-5 focus:outline-none focus:text-brown transition duration-150 ease-in-out">
             <i class="fa fa-heart mr-2"></i>
@@ -146,6 +150,9 @@
                 <a href="{% url 'tours:mine' %}" class="dropdown-link">
                   <i class="fa-solid fa-route mr-2"></i>{% trans "Your tours" %}
                 </a>
+                <a href="{% url 'events:list' %}?going=1&amp;view=list" class="dropdown-link">
+                  <i class="fa-solid fa-calendar-check mr-2"></i>{% trans "Going to" %}
+                </a>
                 <a href="{% url 'gifts:mine' %}" class="dropdown-link">
                   <span class="flex items-center"><i class="fa-solid fa-gift mr-2"></i>{% trans "Your gifts and wishes" %}</span>
                 </a>
@@ -229,6 +236,7 @@
       <a href="{% url "gifts:search" %}" class="mt-1 block pl-3 pr-4 py-2 border-l-4 border-transparent {% if namespace == "gifts" %}border-brown text-brown focus:text-brown focus:border-brown{% else %}text-secondary hover:text-primary hover:bg-secondary hover:border-brown focus:text-brown focus:bg-secondary focus:border-brown{% endif %} text-base focus:outline-none"><i class="fa fa-recycle mr-2"></i>{% trans "Gifts" %}</a>
       <a href="{% url "communities:list" %}" class="mt-1 block pl-3 pr-4 py-2 border-l-4 border-transparent {% if namespace == "communities" %}border-brown text-brown focus:text-brown focus:border-brown{% else %}text-secondary hover:text-primary hover:bg-secondary hover:border-brown focus:text-brown focus:bg-secondary focus:border-brown{% endif %} text-base focus:outline-none"><i class="fa fa-home mr-2"></i>{% trans "Communities" %}</a>
       <a href="{% url "tours:list" %}" class="mt-1 block pl-3 pr-4 py-2 border-l-4 border-transparent {% if namespace == "tours" %}border-brown text-brown focus:text-brown focus:border-brown{% else %}text-secondary hover:text-primary hover:bg-secondary hover:border-brown focus:text-brown focus:bg-secondary focus:border-brown{% endif %} text-base focus:outline-none"><i class="fa-solid fa-route mr-2"></i>{% trans "Community-Tours" %}</a>
+      <a href="{% url "events:list" %}" class="mt-1 block pl-3 pr-4 py-2 border-l-4 border-transparent {% if namespace == "events" %}border-brown text-brown focus:text-brown focus:border-brown{% else %}text-secondary hover:text-primary hover:bg-secondary hover:border-brown focus:text-brown focus:bg-secondary focus:border-brown{% endif %} text-base focus:outline-none"><i class="fa-solid fa-calendar-day mr-2"></i>{% trans "Events" %}</a>
       <a href="{% url "homepage:support" %}" class="mt-1 block pl-3 pr-4 py-2 border-l-4 border-transparent {% if request.path == "/support/" %}border-brown text-brown focus:text-brown focus:border-brown{% else %}text-secondary hover:text-primary hover:bg-secondary hover:border-brown focus:text-brown focus:bg-secondary focus:border-brown{% endif %} text-base focus:outline-none"><i class="fa fa-recycle mr-2"></i>{% trans "Support" %}</a>
     </div>
 
@@ -253,6 +261,7 @@
           <a href="{% url 'matches:list' %}" class="mt-1 flex items-center px-4 py-2 text-base text-secondary hover:text-primary hover:bg-secondary focus:text-primary focus:bg-secondary" role="menuitem"><i class="fa-solid fa-handshake mr-2"></i>{% trans "Matches" %}{% if new_suggestions_count %}<span class="ml-auto pill bg-purple text-secondary text-xs">{{ new_suggestions_count }}</span>{% endif %}</a>
           <a href="{% url 'matches:list' %}?type=volunteer" class="mt-1 block px-4 py-2 text-base text-secondary hover:text-primary hover:bg-secondary focus:text-primary focus:bg-secondary" role="menuitem"><i class="fa-solid fa-campground mr-2"></i>{% trans "Volunteer Visits" %}</a>
           <a href="{% url 'tours:mine' %}" class="mt-1 block px-4 py-2 text-base text-secondary hover:text-primary hover:bg-secondary focus:text-primary focus:bg-secondary" role="menuitem"><i class="fa-solid fa-route mr-2"></i>{% trans "Your tours" %}</a>
+          <a href="{% url 'events:list' %}?going=1&amp;view=list" class="mt-1 block px-4 py-2 text-base text-secondary hover:text-primary hover:bg-secondary focus:text-primary focus:bg-secondary" role="menuitem"><i class="fa-solid fa-calendar-check mr-2"></i>{% trans "Going to" %}</a>
           <a href="{% url 'references:list' %}" class="mt-1 flex items-center px-4 py-2 text-base text-secondary hover:text-primary hover:bg-secondary focus:text-primary focus:bg-secondary" role="menuitem"><i class="fa fa-comments mr-2"></i>{% trans "References" %}{% if pending_reference_skills %}<span class="ml-auto pill bg-purple text-secondary text-xs">{{ pending_reference_skills }}</span>{% endif %}</a>
           {% if owned_communities %}
             <div class="border-t border-gray-200 mt-2 pt-2">

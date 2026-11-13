@@ -1,0 +1,90 @@
+{% load i18n %}
+{# The search row of the events, on the map and in the list: a search with suggestions, the filters, near me. All bound to $store.eventMap #}
+<div class="flex {{ row|default:'flex-row' }} gap-2 items-stretch">
+  <div class="relative flex-1 min-w-0" x-data="eventSuggestions()">
+    <div class="absolute inset-y-0 left-3 flex items-center text-primary opacity-80 pointer-events-none"><i class="fa fa-search"></i></div>
+    <input class="form-input icon-input w-full" type="text" autocomplete="off"
+           placeholder="{% trans 'Search events, skills, materials, places…' %}"
+           :value="$store.eventMap.q"
+           @input="$store.eventMap.q = $el.value; suggest($el.value); clearTimeout(window._eventInputTimer); window._eventInputTimer = setTimeout(() => window.eventFiltersChanged(true), 600)"
+           @keydown.arrow-down.prevent="moveDown()" @keydown.arrow-up.prevent="moveUp()"
+           @keydown.enter.prevent="choose()" @keydown.escape="close()" @blur="setTimeout(() => close(), 200)">
+    <ul x-show="open" x-cloak class="suggestions-dropdown">
+      <template x-for="(item, i) in items" :key="i">
+        <li :class="i === active ? 'bg-primary text-secondary' : ''" class="px-3 py-1 cursor-pointer flex items-center justify-between gap-2"
+            @mousedown.prevent="selectItem(item)">
+          <span x-text="item.value" class="truncate"></span>
+          <i x-show="item.type === 'event'" class="fa-solid fa-calendar-day text-xs opacity-50 flex-shrink-0"></i>
+          <i x-show="item.type === 'community'" class="fa fa-home text-xs opacity-50 flex-shrink-0"></i>
+          <i x-show="item.type === 'skill'" class="fa fa-graduation-cap text-xs opacity-50 flex-shrink-0"></i>
+          <i x-show="item.type === 'place' || item.type === 'location'" class="fa fa-map-marker-alt text-xs opacity-50 flex-shrink-0"></i>
+        </li>
+      </template>
+    </ul>
+  </div>
+
+  <div class="flex gap-2 flex-shrink-0">
+    {# Filter popover: every change shows at once on the map and in the list #}
+    <div class="relative" x-data="{ filterOpen: false }">
+      <button type="button" @click="filterOpen = !filterOpen"
+              :class="$store.eventMap.filterCount > 0 ? 'ring-2 ring-offset-1 ring-primary' : ''"
+              class="btn h-full px-3 flex items-center gap-1 text-sm" title="{% trans 'Filters' %}">
+        <i class="fa fa-sliders-h"></i>
+        <span x-show="$store.eventMap.filterCount > 0" x-text="$store.eventMap.filterCount" class="text-xs font-bold leading-none"></span>
+      </button>
+      <div x-show="filterOpen" x-cloak @click.outside="if (!$event.target.closest('.tagify__dropdown')) filterOpen = false" @keydown.escape.window="filterOpen = false"
+           class="absolute {{ align|default:'left-0' }} top-full mt-2 w-72 bg-primary text-secondary rounded-lg shadow-xl border border-red p-4 z-30 space-y-4 max-h-[80vh] overflow-y-auto">
+        <div>
+          <div class="text-xs font-bold uppercase tracking-wider opacity-70 mb-2">{% trans "Show" %}</div>
+          <div class="space-y-1">
+            {% for value, label, icon in kind_choices %}
+              <label class="flex items-center gap-2 cursor-pointer text-sm hover:bg-secondary hover:bg-opacity-10 rounded px-1 py-0.5">
+                <input type="checkbox" class="form-checkbox light h-4 w-4 flex-shrink-0" :checked="$store.eventMap.has('kind', '{{ value }}')" @change="$store.eventMap.toggle('kind', '{{ value }}')">
+                <i class="fa-solid {{ icon }} w-4 text-center"></i><span>{{ label }}</span>
+              </label>
+            {% endfor %}
+          </div>
+        </div>
+        <div>
+          <div class="text-xs font-bold uppercase tracking-wider opacity-70 mb-2">{% trans "When" %}</div>
+          <div class="flex flex-wrap gap-1 mb-2">
+            <button type="button" class="pill" :class="$store.eventMap.when === 'upcoming' ? 'bg-secondary !text-primary' : 'border border-secondary'" @click="$store.eventMap.setWhen('upcoming')"><i class="fa-solid fa-forward mr-1"></i>{% trans "Upcoming" %}</button>
+            <button type="button" class="pill" :class="$store.eventMap.when === 'past' ? 'bg-secondary !text-primary' : 'border border-secondary'" @click="$store.eventMap.setWhen('past')"><i class="fa-solid fa-clock-rotate-left mr-1"></i>{% trans "Past" %}</button>
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <label class="text-xs">{% trans "From" %}<input type="date" class="form-input w-full text-brown" x-model="$store.eventMap.from" @change="window.eventFiltersChanged()"></label>
+            <label class="text-xs">{% trans "Until" %}<input type="date" class="form-input w-full text-brown" x-model="$store.eventMap.until" @change="window.eventFiltersChanged()"></label>
+          </div>
+        </div>
+        <div>
+          <div class="text-xs font-bold uppercase tracking-wider opacity-70 mb-2">{% trans "What you can learn here" %}</div>
+          <input data-event-learn class="form-input w-full text-brown" value="{{ filters.learn|join:', ' }}"
+                 data-skill-tags="{% trans 'Popular skills to explore' %}" placeholder="{% trans 'e.g. Permaculture, Yoga' %}">
+        </div>
+        <div>
+          <div class="text-xs font-bold uppercase tracking-wider opacity-70 mb-2">{% trans "Needs help with" %}</div>
+          <div class="flex flex-wrap gap-1">
+            {% for value, label in need_choices %}
+              <button type="button" class="pill" :class="$store.eventMap.has('needs', '{{ value }}') ? 'bg-secondary !text-primary' : 'border border-secondary'" @click="$store.eventMap.toggle('needs', '{{ value }}')">{{ label }}</button>
+            {% endfor %}
+          </div>
+        </div>
+        <div class="space-y-1">
+          {% for flag, label, icon in flag_choices %}
+            <label class="flex items-center gap-2 cursor-pointer text-sm hover:bg-secondary hover:bg-opacity-10 rounded px-1 py-0.5">
+              <input type="checkbox" class="form-checkbox light h-4 w-4 flex-shrink-0" x-model="$store.eventMap.{{ flag }}" @change="window.eventFiltersChanged()">
+              <i class="fa-solid {{ icon }} w-4 text-center"></i><span>{{ label }}</span>
+            </label>
+          {% endfor %}
+        </div>
+        <button type="button" x-show="$store.eventMap.filterCount > 0" class="text-xs underline opacity-70 hover:opacity-100" @click="$store.eventMap.clear(false)">{% trans "Clear filters" %}</button>
+      </div>
+    </div>
+
+    {# Near me: the map moves there, the list sorts nearest first #}
+    <button type="button" class="btn px-3" :class="$store.eventMap.near ? 'ring-2 ring-offset-1 ring-primary' : ''" title="{% trans 'Show events near me' %}"
+            @click="if (!navigator.geolocation) return; navigator.geolocation.getCurrentPosition(pos => { $store.eventMap.near = pos.coords.latitude.toFixed(4) + ',' + pos.coords.longitude.toFixed(4); window._eventMapPanTo(pos.coords.longitude, pos.coords.latitude, 8); window.eventFiltersChanged(); });">
+      <i class="fa fa-crosshairs"></i>
+    </button>
+  </div>
+</div>
