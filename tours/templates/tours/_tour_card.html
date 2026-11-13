@@ -1,17 +1,13 @@
 {% load i18n %}
-{# A tour in a list, laid out like a gift card: a picture beside it (the tour's, else of a community on its way, else how it travels), when and how far, the route by name, the countries, what it wants to learn and who organises it (for people logged in, as on its page) #}
-<article class="relative w-full flex items-stretch bg-secondary bg-opacity-50 p-4 sm:p-5 rounded-md hover:shadow-lg transition-shadow {% if not tour.is_current %}opacity-60{% endif %}">
-  <div class="grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 sm:gap-x-6 w-full">
-    {% with stops=tour.stops.all %}
-    <a href="{{ tour.get_absolute_url }}" class="sm:row-span-2 block" tabindex="-1" aria-hidden="true">
-      {% with picture=tour.picture %}
-        {% if picture %}
-          <img class="h-20 w-20 sm:h-32 sm:w-48 object-cover rounded" src="{{ picture }}" alt="" loading="lazy">
-        {% else %}
-          <div class="h-20 w-20 sm:h-32 sm:w-48 rounded flex items-center justify-center {% if tour.is_idea %}bg-yellow{% else %}bg-primary{% endif %}"><i class="fa-solid {{ tour.travel_mode_icon }} text-3xl text-secondary"></i></div>
-        {% endif %}
-      {% endwith %}
+{# A tour in a list, laid out like a gift card: a picture filling its left side (the tour's, else of a community on its way), when and how far, the route by name, the countries, what it wants to learn and who organises it (for people logged in, as on its page) #}
+<article class="relative w-full flex items-stretch bg-secondary bg-opacity-50 rounded-md hover:shadow-lg transition-shadow {% if not tour.is_current %}opacity-60{% endif %}">
+  {% with picture=tour.picture %}{% if picture %}
+    <a href="{{ tour.get_absolute_url }}" class="flex-shrink-0 w-24 sm:w-48" tabindex="-1" aria-hidden="true">
+      <img class="w-full h-full object-cover rounded-l-md" src="{{ picture }}" alt="" loading="lazy">
     </a>
+  {% endif %}{% endwith %}
+  <div class="flex-1 min-w-0 p-4 sm:p-5 flex flex-col">
+    {% with stops=tour.stops.all %}
 
     <div class="min-w-0">
       <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
@@ -47,7 +43,7 @@
     </div>
 
     {% if user.is_authenticated and tour.organiser %}
-      <div class="col-span-2 sm:col-span-1 sm:col-start-2 self-end pt-2 text-sm">
+      <div class="mt-auto pt-2 text-sm">
         <a href="{{ tour.organiser.get_absolute_url }}" class="inline-flex items-center gap-2 hover:text-primary">
           {% include "_avatar.html" with who=tour.organiser %}
           <span>{{ tour.organiser.name }}</span>
