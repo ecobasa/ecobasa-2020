@@ -5008,3 +5008,267 @@ msgstr "Tu as été déconnecté·e."
 #: users/views.py:122
 msgid "Account created and logged in."
 msgstr "Compte créé et connecté."
+
+msgid "Events"
+msgstr "Événements"
+
+msgid "Event"
+msgstr "Événement"
+
+msgid "Community event"
+msgstr "Événement communautaire"
+
+msgid "Community events"
+msgstr "Événements communautaires"
+
+msgid "Projects and events"
+msgstr "Projets et événements"
+
+msgid "Something you want to realise with help: it needs hands, skills, materials or tools."
+msgstr "Quelque chose que tu veux réaliser avec de l'aide : il faut des mains, des compétences, du matériel ou des outils."
+
+msgid "Something you invite to: an open day, a workshop, a seminar, a festival."
+msgstr "Quelque chose à quoi tu invites : une journée portes ouvertes, un atelier, un séminaire, une fête."
+
+msgid "Invite to a community event"
+msgstr "Inviter à un événement communautaire"
+
+msgid "New community event"
+msgstr "Nouvel événement communautaire"
+
+msgid "Edit community event"
+msgstr "Modifier l'événement communautaire"
+
+msgid "e.g. Open day"
+msgstr "p. ex. Journée portes ouvertes"
+
+msgid "What happens, and who is it for?"
+msgstr "Que se passe-t-il, et pour qui ?"
+
+msgid "Starts at"
+msgstr "Commence à"
+
+msgid "Ends at"
+msgstr "Se termine à"
+
+msgid "Leave empty if it is ongoing, without an end date."
+msgstr "Laisse vide si c'est en cours, sans date de fin."
+
+msgid "It can't end before it starts."
+msgstr "Ça ne peut pas se terminer avant de commencer."
+
+msgid "Open event: people can just come"
+msgstr "Événement ouvert : on peut venir librement"
+
+msgid "Otherwise people ask first and you answer, like for a volunteer stay."
+msgstr "Sinon, les gens demandent d'abord et tu réponds, comme pour un séjour en communauté."
+
+msgid "How people come"
+msgstr "Comment on vient"
+
+msgid "How many are you?"
+msgstr "Combien êtes-vous ?"
+
+msgid "Just come"
+msgstr "Entrée libre"
+
+msgid "Open event: just come"
+msgstr "Événement ouvert : entrée libre"
+
+msgid "Who is coming"
+msgstr "Qui vient"
+
+msgid "I'm coming"
+msgstr "Je viens"
+
+msgid "I can't come after all"
+msgstr "Finalement, je ne peux pas venir"
+
+msgid "Log in to see who is coming."
+msgstr "Connecte-toi pour voir qui vient."
+
+msgid "Great, you are on the list!"
+msgstr "Super, tu es sur la liste !"
+
+msgid "You are off the list."
+msgstr "Tu n'es plus sur la liste."
+
+msgid "Please check how many you are and the days."
+msgstr "Vérifie combien vous êtes et les jours, s'il te plaît."
+
+msgid "Keep it short and current: what nobody updates is archived after a while."
+msgstr "Reste bref et à jour : ce que personne ne met à jour est archivé au bout d'un moment."
+
+msgid "Events near you"
+msgstr "Événements près de chez toi"
+
+msgid "Your profile has no place yet, so this shows events everywhere."
+msgstr "Ton profil n'a pas encore de lieu, alors tu vois ici des événements de partout."
+
+msgid "Everywhere"
+msgstr "Partout"
+
+#, python-format
+msgid "Within %(km)s km"
+msgstr "Dans un rayon de %(km)s km"
+
+#, python-format
+msgid "about %(km)s km"
+msgstr "environ %(km)s km"
+
+msgid "Add your place"
+msgstr "Ajoute ton lieu"
+
+msgid "Search events, skills, materials, places…"
+msgstr "Chercher des événements, compétences, matériaux, lieux…"
+
+msgid "No current events found."
+msgstr "Aucun événement en cours trouvé."
+
+msgid "No current events found near you."
+msgstr "Aucun événement en cours trouvé près de chez toi."
+
+msgid "No current or upcoming events."
+msgstr "Aucun événement en cours ou à venir."
+
+msgid "Ended and archived"
+msgstr "Terminés et archivés"
+
+msgid "Everything your current events need is covered or promised."
+msgstr "Tout ce dont vos événements actuels ont besoin est couvert ou promis."
+
+msgid "Comma-separated. People looking for these skills find your community through it."
+msgstr "Séparées par des virgules. Les personnes qui cherchent ces compétences trouvent ainsi votre communauté."
+
+#, python-format
+msgid "<a href=\"%(community_url)s\" class=\"underline\">%(community)s</a> needs this for <a href=\"%(project_url)s\" class=\"underline\">%(project)s</a>"
+msgstr "<a href=\"%(community_url)s\" class=\"underline\">%(community)s</a> en a besoin pour <a href=\"%(project_url)s\" class=\"underline\">%(project)s</a>"
+
+msgid "Stay details"
+msgstr "Détails du séjour"
+
+msgid "Is coming to"
+msgstr "Vient à"
+
+msgid "is coming to"
+msgstr "vient à"
+
+#, python-format
+msgid "%(count)s people"
+msgstr "%(count)s personnes"
+
+#, python-format
+msgid "Your visit to %(title)s at %(name)s"
+msgstr "Ta visite à %(title)s chez %(name)s"
+
+#, python-format
+msgid "%(name)s's visit to %(title)s"
+msgstr "Visite de %(name)s à %(title)s"
+
+msgid "The community event has been saved."
+msgstr "L'événement communautaire a été enregistré."
+
+msgid "This community event is over."
+msgstr "Cet événement communautaire est terminé."
+
+msgid "This community event is over. Change its dates to bring it back."
+msgstr "Cet événement communautaire est terminé. Change ses dates pour le faire revenir."
+
+msgid "This community event has been archived."
+msgstr "Cet événement communautaire a été archivé."
+
+msgid "The community event has been archived. You can bring it back at any time."
+msgstr "L'événement communautaire a été archivé. Tu peux le faire revenir à tout moment."
+
+msgid "Archive this community event? It will no longer be listed."
+msgstr "Archiver cet événement communautaire ? Il ne sera plus affiché."
+
+msgid "Thanks! The community event shows as up to date again."
+msgstr "Merci ! L'événement communautaire apparaît de nouveau comme à jour."
+
+msgid "Shows visitors that this community event is up to date"
+msgstr "Montre aux visiteur·euses que cet événement communautaire est à jour"
+
+msgid "Nobody has updated this community event for a while. Is it still current? Otherwise it will be archived soon."
+msgstr "Personne n'a mis à jour cet événement communautaire depuis un moment. Est-il toujours d'actualité ? Sinon, il sera bientôt archivé."
+
+msgid "This community event doesn't take offers at the moment."
+msgstr "Cet événement communautaire n'accepte pas d'offres pour le moment."
+
+msgid "Support this community event"
+msgstr "Soutenir cet événement communautaire"
+
+msgid "Join this community event"
+msgstr "Rejoindre cet événement communautaire"
+
+msgid "References from this community event"
+msgstr "Références de cet événement communautaire"
+
+msgid "Community event need"
+msgstr "Besoin de l'événement communautaire"
+
+#, python-format
+msgid "your community event %(project)s: %(title)s"
+msgstr "ton événement communautaire %(project)s : %(title)s"
+
+#, python-format
+msgid "%(actor)s offered to help with your community event: %(title)s"
+msgstr "%(actor)s a proposé de l'aide pour votre événement communautaire : %(title)s"
+
+#, python-format
+msgid "Is your community event “%(title)s” still current?"
+msgstr "Ton événement communautaire « %(title)s » est-il toujours d'actualité ?"
+
+msgid "Is your community event still current?"
+msgstr "Ton événement communautaire est-il toujours d'actualité ?"
+
+#, python-format
+msgid "nobody has updated the community event “%(title)s” of %(community)s for a while. Is it still current?"
+msgstr "personne n'a mis à jour l'événement communautaire « %(title)s » de %(community)s depuis un moment. Est-il toujours d'actualité ?"
+
+msgid "Update the community event"
+msgstr "Mettre à jour l'événement communautaire"
+
+msgid "Withdraw request"
+msgstr "Retirer la demande"
+
+msgid "Withdrawn"
+msgstr "Retiré"
+
+msgid "You withdrew this request"
+msgstr "Tu as retiré cette demande"
+
+msgid "Withdrawn by the one who asked"
+msgstr "Retiré par la personne qui l'a demandé"
+
+msgid "Withdraw your request?"
+msgstr "Retirer ta demande ?"
+
+msgid "Withdraw your request? Please write a few words why in the message box, they were counting on you."
+msgstr "Retirer ta demande ? Écris quelques mots dans le message pour dire pourquoi, on comptait sur toi."
+
+msgid "Your request has been withdrawn."
+msgstr "Ta demande a été retirée."
+
+msgid "Please write a few words why, they were counting on you."
+msgstr "Écris quelques mots pour dire pourquoi, on comptait sur toi."
+
+#, python-format
+msgid "%(actor)s withdrew their request: %(title)s"
+msgstr "%(actor)s a retiré sa demande : %(title)s"
+
+#, python-format
+msgid "%(actor)s suggested other dates for their stay at: %(title)s"
+msgstr "%(actor)s a proposé d'autres dates pour son séjour à : %(title)s"
+
+#, python-format
+msgid "%(count)s person so far"
+msgid_plural "%(count)s people so far"
+msgstr[0] "%(count)s personne pour l'instant"
+msgstr[1] "%(count)s personnes pour l'instant"
+
+#, python-format
+msgid "You are coming."
+msgid_plural "You are coming, %(count)s people."
+msgstr[0] "Tu viens."
+msgstr[1] "Vous venez à %(count)s."

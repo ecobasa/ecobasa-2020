@@ -779,8 +779,8 @@ def test_just_coming_needs_no_answer_and_shows_in_the_calendar(community, open_d
     assert Match.objects.filter(from_user=helper).count() == 1
 
     # The page lists who comes; the calendar counts the people on that day
-    with translation.override("en"):
-        content = _client(ambassador).get(open_day.get_absolute_url()).content.decode()
+    User.objects.filter(pk=ambassador.pk).update(language="en")  # their saved language is German
+    content = _client(ambassador).get(open_day.get_absolute_url()).content.decode()
     assert "Who is coming" in content and "Hugo" in content and "3 people so far" in content
     response = _client(ambassador).get(
         reverse("matches:calendar", args=[community.slug]), {"month": open_day.starts_on.strftime("%Y-%m")},
