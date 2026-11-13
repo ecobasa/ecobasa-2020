@@ -17,6 +17,18 @@ ICONS = {
     COMMUNITY_EVENT: "fa-people-group",
 }
 
+# Its colour, from the manual's yellow: a project's brighter (+30K), a community event's
+# dark (+60K, as their needs on the gifts map). A pill's class and, for a map's canvas,
+# the icon's code point in it
+COLOURS = {
+    PROJECT: "bg-yellow-30k",
+    COMMUNITY_EVENT: "bg-yellow-60k",
+}
+PINS = {
+    PROJECT: (0xF85E, "#9b5506"),  # person-digging
+    COMMUNITY_EVENT: (0xE533, "#593103"),  # people-group
+}
+
 # What the form of a new event of this kind starts with
 DEFAULTS = {
     PROJECT: {"is_open": False},

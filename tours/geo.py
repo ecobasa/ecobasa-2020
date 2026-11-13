@@ -10,6 +10,7 @@ from django.db.models import Count, Q
 from django.template.loader import render_to_string
 from django.utils.text import Truncator
 
+from events import kinds as event_kinds
 from gift_economy.matches.matching import distance_km
 from users.places import approximate, town
 
@@ -27,10 +28,6 @@ COMMUNITY_PINS = {
     "p": (0xF6E3, "#ff7800"),  # Place for Projects: hammer
 }
 COMMUNITY_PIN = (0xF015, "#da6137")  # house
-EVENT_PINS = {
-    "project": (0xF85E, "#593103"),  # dark yellow, person-digging
-    "community_event": (0xE533, "#593103"),  # dark yellow, people-group
-}
 # The travel modes' icons (Tour.MODE_ICONS) as codepoints, for the map's canvas
 MODE_CODEPOINTS = {
     "van": 0xF5B6,  # van-shuttle
@@ -51,7 +48,7 @@ IDEA_PIN = (0xF207, "#80143b")  # purple, bus
 
 def host_pin(community, event=None):
     if event is not None:
-        return EVENT_PINS.get(event.kind, EVENT_PINS["community_event"])
+        return event_kinds.PINS.get(event.kind, event_kinds.PINS[event_kinds.COMMUNITY_EVENT])
     return COMMUNITY_PINS.get(community.type, COMMUNITY_PIN)
 
 

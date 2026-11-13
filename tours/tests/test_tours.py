@@ -424,7 +424,7 @@ def test_stops_have_a_pin_by_what_they_are(organiser, farm, village, project):
               {"name": "Station square, Leipzig", "location": Point(12.38, 51.34, srid=4326)})
     pins = {f["properties"]["number"]: (f["properties"]["icon"], f["properties"]["color"])
             for f in routes() if f["properties"]["kind"] == "stop"}
-    assert pins == {1: (0xF4D8, "#4f5613"), 2: (0xF85E, "#593103"), 3: (0xF3C5, "#da6137")}
+    assert pins == {1: (0xF4D8, "#4f5613"), 2: (0xF85E, "#9b5506"), 3: (0xF3C5, "#da6137")}
 
 
 def test_an_idea_without_stops_shows_about_where_its_organiser_lives(organiser, other):
