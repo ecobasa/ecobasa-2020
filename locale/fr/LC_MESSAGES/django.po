@@ -3701,9 +3701,6 @@ msgstr ""
 "Séjours en communauté : donner un coup de main, en échange du repas, d'un "
 "toit et de nouvelles expériences"
 
-#: homepage/templates/homepage/homepage.html:49
-msgid "Organise and join Community-Tours"
-msgstr "Organiser des Community-Tours et y participer"
 
 #: homepage/templates/homepage/homepage.html:49
 #: homepage/templates/homepage/homepage.html:60
@@ -7155,3 +7152,16 @@ msgstr "L'ambassadeur·rice accepte, refuse ou propose d'autres jours. L'itinér
 #: help/templates/help
 msgid "That is why it is important to post wishes to your community profile."
 msgstr "C'est pourquoi il est important de publier des souhaits sur le profil de votre communauté."
+
+#: homepage/templates/homepage/homepage.html
+msgid "How does ecobasa work?"
+msgstr "Comment fonctionne ecobasa ?"
+
+#: homepage/templates/homepage/homepage.html
+msgid "Events: projects and open days to visit and help out at"
+msgstr "Événements : des projets et des journées portes ouvertes à visiter et où donner un coup de main"
+
+#: homepage/templates/homepage/homepage.html
+#, python-format
+msgid "<a href=\"%(tours_url)s\">Organise and join Community-Tours</a>, or <a href=\"%(ride_url)s\">offer a ride</a>"
+msgstr "<a href=\"%(tours_url)s\">Organiser des Community-Tours et y participer</a>, ou <a href=\"%(ride_url)s\">proposer un covoiturage</a>"
