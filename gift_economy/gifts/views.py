@@ -346,9 +346,13 @@ def gifts_markers(request):
                 "url":            listing.get_absolute_url(),
                 "event":        listing.event.title if listing.event_id else "",
                 "community_name": listing.community.name if listing.community_id else "",
+                "community_url":  listing.community.get_absolute_url() if listing.community_id else "",
                 # Who it is only for members: visitors sign up to find out and ask
                 "user_name":      "" if listing.community_id or not signed_in else _public_name(holder),
-                "member_of":      "" if listing.community_id or not holder or not signed_in else ", ".join(c.name for c in holder.member_communities()),
+                # The communities a person is ambassador of: [[name, url]]
+                "member_of":      [] if listing.community_id or not holder or not signed_in else [
+                    [c.name, c.get_absolute_url()] for c in holder.member_communities()
+                ],
             },
         })
     return JsonResponse({"type": "FeatureCollection", "features": features})

@@ -281,14 +281,25 @@ def test_a_persons_gifts_name_their_community(user, user_client, listing):
     here = Point(14.9857, 51.1642, srid=4326)
     user.name, user.location = "Max", here
     user.save()
-    Community.objects.create(name="Hof Sonnenschein", owner=user, location=here)
+    hof = Community.objects.create(name="Hof Sonnenschein", owner=user, location=here)
 
     assert "Hof Sonnenschein" in Client().get(reverse("gifts:api-list")).content.decode()
     props = user_client.get(reverse("gifts:api-markers")).json()["features"][0]["properties"]
-    assert props["user_name"] == "Max" and props["member_of"] == "Hof Sonnenschein"
+    assert props["user_name"] == "Max" and props["member_of"] == [["Hof Sonnenschein", hof.get_absolute_url()]]
     # Who it is only for members
     props = Client().get(reverse("gifts:api-markers")).json()["features"][0]["properties"]
-    assert props["user_name"] == "" and props["member_of"] == ""
+    assert props["user_name"] == "" and props["member_of"] == []
+
+
+@pytest.mark.django_db
+def test_a_communitys_gift_links_to_the_community_on_the_map(user, user_client):
+    from django.contrib.gis.geos import Point
+    from communities.models import Community
+    hof = Community.objects.create(name="Hof", owner=user, location=Point(14.9857, 51.1642, srid=4326))
+    Listing.objects.create(community=hof, type="wish", kind="material", title="Clay")
+    props = Client().get(reverse("gifts:api-markers")).json()["features"][0]["properties"]
+    assert props["community_name"] == "Hof" and props["community_url"] == hof.get_absolute_url()
+    assert props["user_name"] == "" and props["member_of"] == []
 
 
 @pytest.mark.django_db
