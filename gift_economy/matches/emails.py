@@ -56,18 +56,22 @@ def _other_party(match, user):
 
 
 def notify_match_created(match, http_request=None):
-    """In-app notification (+ email, if a request is available) to the recipient."""
+    """In-app notification (+ email, if a request is available) to the recipient and
+    whoever answers with them."""
     from notifications.models import Notification
 
     if match.recipient is None:
         return
-    notification = _notify(match, match.recipient, match.from_user, Notification.TAG_REQUESTED)
-
-    if http_request:
-        _send_email(notification, "matches/email/match_request", http_request, {
-            "accept_url":  _action_url(http_request, match.pk, "accept"),
-            "decline_url": _action_url(http_request, match.pk, "decline"),
-        })
+    # A target may have others who answer with the recipient (a tour's other organisers)
+    answerers = getattr(match.target, "get_match_answerers", lambda match: [])(match)
+    others = [user for user in answerers if user.pk not in (match.recipient_id, match.from_user_id)]
+    for recipient in [match.recipient, *others]:
+        notification = _notify(match, recipient, match.from_user, Notification.TAG_REQUESTED)
+        if http_request:
+            _send_email(notification, "matches/email/match_request", http_request, {
+                "accept_url":  _action_url(http_request, match.pk, "accept"),
+                "decline_url": _action_url(http_request, match.pk, "decline"),
+            })
 
 
 def notify_match_response(match, actor, http_request=None, message="", counter=None):

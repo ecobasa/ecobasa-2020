@@ -6,7 +6,7 @@ there, only as its rough place. So no payload gives a door away.
 from datetime import date
 
 from django.contrib.gis.geos import Point, Polygon
-from django.db.models import Q
+from django.db.models import Count, Q
 from django.template.loader import render_to_string
 from django.utils.text import Truncator
 
@@ -139,7 +139,7 @@ def search_q(q):
 class TourFilters:
     """The filters of the tours index, read from the query string: tours with dates or
     tour ideas only (show), a search, when (from, until), what it wants to learn (skill names, any of them), how it travels, children
-    or animals welcome, and the map's visible area. `near` (lat,lon) only sorts the
+    or animals welcome, with free places, only rides, and the map's visible area. `near` (lat,lon) only sorts the
     list, nearest first."""
 
     def __init__(self, params, user=None):
@@ -153,6 +153,8 @@ class TourFilters:
         self.mode = params.get("mode") or ""
         self.children = params.get("children") == "1"
         self.animals = params.get("animals") == "1"
+        self.free = params.get("free") == "1"
+        self.rides = params.get("rides") == "1"
         country = (params.get("country") or "").strip().upper()
         self.country = country if len(country) == 2 and country.isalpha() else ""
         self.near = _point(params.get("near"))
@@ -160,7 +162,10 @@ class TourFilters:
 
     @property
     def active(self):
-        return bool(self.show or self.country or self.q or self.since or self.until or self.learn or self.mode or self.children or self.animals)
+        return bool(
+            self.show or self.country or self.q or self.since or self.until or self.learn or self.mode
+            or self.children or self.animals or self.free or self.rides
+        )
 
     def apply(self, tours):
         """Narrow a queryset of tours. Tour ideas have no dates: the dates leave them be."""
@@ -190,6 +195,21 @@ class TourFilters:
             tours = tours.filter(children_welcome=True)
         if self.animals:
             tours = tours.filter(animals_welcome=True)
+        if self.rides:
+            # Two stops, neither with a host (Tour.is_ride)
+            from .models import Tour
+
+            rides = Tour.objects.filter(open_to_join=True).annotate(
+                stop_count=Count("stops", distinct=True),
+                hosted=Count("stops", filter=Q(stops__community__isnull=False), distinct=True),
+            ).filter(stop_count=2, hosted=0)
+            tours = tours.filter(pk__in=rides.values("pk"))
+        if self.free:
+            # Room left on at least one leg (or no limit); worked out per tour
+            candidates = tours.filter(open_to_join=True).distinct().prefetch_related("stops", "vehicles__drivers")
+            tours = tours.filter(pk__in=[
+                tour.pk for tour in candidates if any(places is None or places > 0 for places in tour.free_places())
+            ])
         return tours.distinct()
 
     def by_distance(self, tours):

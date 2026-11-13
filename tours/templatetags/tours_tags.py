@@ -30,6 +30,25 @@ def tours_of(context, person):
     return {"tours": tours, "user": viewer}
 
 
+@register.inclusion_tag("tours/_invite_to_tours.html", takes_context=True)
+def invite_to_tours(context, person):
+    """On someone's profile: the viewer's tours they could be invited to (published,
+    current, looking for travellers, and they aren't on it or asked yet)."""
+    viewer = context["request"].user
+    if not viewer.is_authenticated or viewer.pk == person.pk:
+        return {"tours": []}
+    organised = (
+        Tour.objects.published().current().filter(open_to_join=True)
+        .filter(pk__in=Traveller.objects.counted().filter(user=viewer, is_organiser=True).values("tour_id"))
+        .distinct()
+    )
+    taken = {
+        traveller.tour_id for traveller in Traveller.objects.filter(user=person, tour__in=organised).select_related("match")
+        if traveller.match_id is None or not traveller.match.is_closed
+    }
+    return {"tours": [tour for tour in organised if tour.pk not in taken], "person": person}
+
+
 @register.inclusion_tag("tours/_tour_visits.html", takes_context=True)
 def tour_visits_to(context, host):
     """"Tour visits" on a community's or event's page: the tours its host agreed to

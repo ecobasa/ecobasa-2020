@@ -1,12 +1,12 @@
 {% load i18n %}
-{# On a join request's match page: the stretch, how many, and room left there (gift_economy.matches calls Tour.get_match_summary_template) #}
+{# On the match page of a join request or an invitation: the stretch and how many (Traveller is attached to the match) #}
 {% with traveller=match.traveller %}
   <div class="text-sm mb-4 space-y-1">
     <div><i class="fa-solid fa-route text-primary mr-1"></i><strong>{% trans "Stretch" %}:</strong>
       {% with ends=traveller.ends %}{% if traveller.whole_route or not ends.0 %}{% trans "the whole route" %}{% else %}{{ ends.0.label }} → {{ ends.1.label }}{% if ends.0.arrive_on or ends.1.leave_on %} <span class="opacity-70">({{ ends.0.arrive_on|default:ends.0.leave_on|date:"j M" }} – {{ ends.1.leave_on|default:ends.1.arrive_on|date:"j M" }})</span>{% endif %}{% endif %}{% endwith %}
     </div>
     <div><i class="fa-solid fa-user-group text-primary mr-1"></i><strong>{% trans "People" %}:</strong> {{ traveller.people }}{% if traveller.ride_only %} · {% trans "Only for the ride" %}{% endif %}</div>
-    {% if is_requester and not match.is_closed and match.status != "accepted" %}
+    {% if is_requester and not traveller.is_invitation and not match.is_closed and match.status != "accepted" %}
       <a href="{% url 'tours:join' target.slug %}" class="underline">{% trans "Change where you get on and off" %}</a>
     {% endif %}
   </div>

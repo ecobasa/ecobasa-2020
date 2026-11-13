@@ -2,9 +2,11 @@ import json
 
 from django import forms
 from django.contrib.auth import get_user_model
+from django.contrib.gis import forms as gis_forms
 from django.utils.formats import date_format
 from django.utils.translation import gettext_lazy as _
 from django_countries import countries as all_countries
+from django_countries.fields import CountryField
 
 from communities.models import Community
 from events.forms import BaseNeedFormSet, NeedForm
@@ -229,24 +231,7 @@ class JoinForm(forms.ModelForm):
         self.tour = tour
         self.stops = tour.ordered_stops()
         self._add_needs(preselected)
-        if len(self.stops) >= 2:
-            for name, choices, default in (
-                ("from_stop", self.stops[:-1], self.stops[0]),
-                ("to_stop", self.stops[1:], self.stops[-1]),
-            ):
-                field = self.fields[name]
-                field.queryset = Stop.objects.filter(pk__in=[stop.pk for stop in choices])
-                field.required = True
-                field.empty_label = None
-                field.label_from_instance = self._stop_label
-                self.initial.setdefault(name, default.pk)
-            self.fields["from_stop"].label = _("Get on at")
-            self.fields["to_stop"].label = _("Get off at")
-        else:
-            # An idea without a route yet: along for the whole of it
-            del self.fields["from_stop"], self.fields["to_stop"]
-        self.fields["people"].min_value = 1
-        self.fields["people"].widget.attrs["min"] = 1
+        _stretch_fields(self)
         if not with_message:
             del self.fields["message"]
         _style({name: field for name, field in self.fields.items() if not name.startswith(("need_", "quantity_"))})
@@ -288,31 +273,151 @@ class JoinForm(forms.ModelForm):
         """The fields other than the needs, in order, for the template."""
         return [field for field in self if not field.name.startswith(("need_", "quantity_"))]
 
-    def _stop_label(self, stop):
-        number = next((i + 1 for i, s in enumerate(self.stops) if s.pk == stop.pk), "")
-        day = stop.arrive_on or stop.leave_on
-        when = f", {date_format(day, 'j M')}" if day else ""
-        return f"{number}. {stop.label}{when}"
+    def clean_people(self):
+        return _clean_people(self)
+
+    def clean(self):
+        return _clean_stretch(self, super().clean())
+
+
+def _stretch_fields(form):
+    """Where to get on and off (any stop before the last, any after the first) and how
+    many: the fields a join request and an invitation share. An idea without a route yet
+    is joined as a whole."""
+    stops = form.stops
+    if len(stops) >= 2:
+        def label(stop):
+            number = next((i + 1 for i, s in enumerate(stops) if s.pk == stop.pk), "")
+            day = stop.arrive_on or stop.leave_on
+            when = f", {date_format(day, 'j M')}" if day else ""
+            return f"{number}. {stop.label}{when}"
+
+        for name, choices, default in (("from_stop", stops[:-1], stops[0]), ("to_stop", stops[1:], stops[-1])):
+            field = form.fields[name]
+            field.queryset = Stop.objects.filter(pk__in=[stop.pk for stop in choices])
+            field.required = True
+            field.empty_label = None
+            field.label_from_instance = label
+            form.initial.setdefault(name, default.pk)
+        form.fields["from_stop"].label = _("Get on at")
+        form.fields["to_stop"].label = _("Get off at")
+    else:
+        del form.fields["from_stop"], form.fields["to_stop"]
+    form.fields["people"].min_value = 1
+    form.fields["people"].widget.attrs["min"] = 1
+
+
+def _clean_people(form):
+    people = form.cleaned_data["people"]
+    if not people:
+        raise forms.ValidationError(_("At least one."))
+    return people
+
+
+def _clean_stretch(form, cleaned):
+    """The stretch goes forward and there is room on it for that many."""
+    start, end = cleaned.get("from_stop"), cleaned.get("to_stop")
+    if start and end and form.tour.stretch(start, end, form.stops) is None:
+        form.add_error("to_stop", _("Choose a stop after the one you get on at."))
+        return cleaned
+    people = cleaned.get("people")
+    exclude = form.instance if form.instance.pk else None
+    if people and not form.tour.fits(start, end, people, exclude=exclude):
+        free = form.tour.free_on(start, end, form.stops, exclude=exclude)
+        raise forms.ValidationError(
+            _("There is no room for that many on this stretch: %(free)s free.") % {"free": free}
+        )
+    return cleaned
+
+
+class InviteForm(forms.ModelForm):
+    """An organiser invites someone to travel along: who (found by name), their stretch,
+    how many they are, and a few words. They count once they accept."""
+
+    user = forms.ModelChoiceField(
+        get_user_model().objects.filter(is_active=True), label=_("Who"), widget=forms.HiddenInput,
+        error_messages={"required": _("Please choose someone."), "invalid_choice": _("Please choose someone.")},
+    )
+    message = forms.CharField(
+        label=_("A few words to them"), widget=forms.Textarea(attrs={"rows": 4}),
+        help_text=_("Why you'd like them to come along."),
+    )
+
+    class Meta:
+        model = Traveller
+        fields = ["user", "from_stop", "to_stop", "people"]
+
+    def __init__(self, tour, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.tour = tour
+        self.stops = tour.ordered_stops()
+        _stretch_fields(self)
+        self.fields["people"].label = _("How many are they?")
+        self.fields["people"].help_text = _("They and whoever comes with them, children too.")
+        _style({name: field for name, field in self.fields.items() if name != "user"})
+
+    def chosen_user(self):
+        """The person picked so far (or come from their profile), to show their name."""
+        pk = self.data.get("user") if self.is_bound else self.initial.get("user")
+        return get_user_model().objects.filter(pk=pk).first() if pk and str(pk).isdigit() else None
+
+    def clean_user(self):
+        user = self.cleaned_data["user"]
+        on = self.tour.travellers.filter(user=user).select_related("match")
+        if any(t.match_id is None or not t.match.is_closed for t in on):
+            raise forms.ValidationError(_("They are on this tour already, or have been asked."))
+        return user
 
     def clean_people(self):
-        people = self.cleaned_data["people"]
-        if not people:
-            raise forms.ValidationError(_("At least one."))
-        return people
+        return _clean_people(self)
+
+    def clean(self):
+        return _clean_stretch(self, super().clean())
+
+
+class PlaceForm(forms.Form):
+    """A meeting point on the map, as the location picker fills it in."""
+
+    location_name = forms.CharField(label=_("Place"), max_length=255, required=False)
+    location = gis_forms.PointField(widget=forms.HiddenInput, srid=4326, required=False)
+    country = CountryField(_("Country")).formfield(required=False)
+
+    def __init__(self, *args, label="", **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["location_name"].label = label
+        _style(self.fields)
 
     def clean(self):
         cleaned = super().clean()
-        start, end = cleaned.get("from_stop"), cleaned.get("to_stop")
-        if start and end and self.tour.stretch(start, end, self.stops) is None:
-            self.add_error("to_stop", _("Choose a stop after the one you get on at."))
-            return cleaned
-        people = cleaned.get("people")
-        if people and not self.tour.fits(start, end, people, exclude=self.instance if self.instance.pk else None):
-            free = self.tour.free_on(start, end, self.stops, exclude=self.instance if self.instance.pk else None)
-            raise forms.ValidationError(
-                _("There is no room for that many on this stretch: %(free)s free.") % {"free": free}
-            )
+        # Said beside the name, where the picker shows its errors
+        if not cleaned.get("location") or not cleaned.get("location_name"):
+            self.add_error("location_name", _("Please choose the place on the map."))
         return cleaned
+
+
+class RideForm(forms.Form):
+    """Offering a ride: the day and hour it sets off, how, how many fit, and the room
+    for things. The two meeting points are PlaceForms beside it."""
+
+    day = forms.DateField(label=_("Day"), widget=forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"))
+    leave_at = forms.TimeField(
+        label=_("Setting off at"), required=False, widget=forms.TimeInput(attrs={"type": "time"}, format="%H:%M"),
+    )
+    travel_mode = forms.ChoiceField(label=_("How we travel"), choices=Tour.MODE_CHOICES, initial=Tour.MODE_CAR)
+    seats = forms.IntegerField(label=_("Free seats"), min_value=1, initial=1)
+    room = forms.CharField(
+        label=_("Room for things"), max_length=255, required=False,
+        widget=forms.TextInput(attrs={"placeholder": _("e.g. a full boot, a roof rack")}),
+    )
+    description = forms.CharField(
+        label=_("A few words"), required=False, widget=forms.Textarea(attrs={"rows": 3}),
+        help_text=_("Where you can pick people up on the way, how you share costs."),
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["seats"].widget.attrs["min"] = 1
+        _style(self.fields)
 
 
 class HostForm(forms.Form):

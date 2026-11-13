@@ -20,12 +20,14 @@
       mode: '{{ filters.mode|escapejs }}',
       children: {{ filters.children|yesno:'true,false' }},
       animals: {{ filters.animals|yesno:'true,false' }},
+      free: {{ filters.free|yesno:'true,false' }},
+      rides: {{ filters.rides|yesno:'true,false' }},
       near: '{{ request.GET.near|escapejs }}',
       country: '{{ filters.country|escapejs }}',
       loading: false,
       count: 0,
       get filterCount() {
-        return [this.show, this.from || this.until, this.learn, this.mode, this.children, this.animals, this.country].filter(Boolean).length;
+        return [this.show, this.from || this.until, this.learn, this.mode, this.children, this.animals, this.free, this.rides, this.country].filter(Boolean).length;
       },
       get anything() { return this.filterCount > 0 || !!this.q || !!this.near; },
       // The filters in use, as small pills to take off one by one
@@ -40,6 +42,8 @@
         if (this.mode) pills.push({ key: 'mode', icon: 'fa-route', label: TOUR_MODES[this.mode] || this.mode });
         if (this.children) pills.push({ key: 'children', icon: 'fa-children', label: TOUR_LABELS.children });
         if (this.animals) pills.push({ key: 'animals', icon: 'fa-paw', label: TOUR_LABELS.animals });
+        if (this.free) pills.push({ key: 'free', icon: 'fa-user-plus', label: TOUR_LABELS.free });
+        if (this.rides) pills.push({ key: 'rides', icon: 'fa-people-arrows', label: TOUR_LABELS.rides });
         return pills;
       },
       unset(key) {
@@ -47,7 +51,7 @@
           const name = key.slice(6);
           this.learn = this.learn.split(',').filter(n => n && n !== name).join(',');
           document.querySelectorAll('[data-tour-learn]').forEach(input => input.__tagify && input.__tagify.removeTags(name));
-        } else if (key === 'children' || key === 'animals') {
+        } else if (['children', 'animals', 'free', 'rides'].includes(key)) {
           this[key] = false;
         } else {
           this[key] = '';
@@ -59,10 +63,12 @@
         ['show', 'q', 'from', 'until', 'learn', 'mode', 'near', 'country'].forEach(key => { if (this[key]) params.set(key, this[key]); });
         if (this.children) params.set('children', '1');
         if (this.animals) params.set('animals', '1');
+        if (this.free) params.set('free', '1');
+        if (this.rides) params.set('rides', '1');
         return params;
       },
       clear() {
-        Object.assign(this, { show: '', country: '', q: '', from: '', until: '', learn: '', mode: '', children: false, animals: false, near: '' });
+        Object.assign(this, { show: '', country: '', q: '', from: '', until: '', learn: '', mode: '', children: false, animals: false, free: false, rides: false, near: '' });
         document.querySelectorAll('[data-tour-learn]').forEach(input => input.__tagify && input.__tagify.removeAllTags());
         window.tourFiltersChanged();
       },
@@ -85,6 +91,7 @@
     tours: '{% trans "Only tours"|escapejs %}', ideas: '{% trans "Only tour ideas"|escapejs %}',
     near: '{% trans "Near a place"|escapejs %}', from: '{% trans "From"|escapejs %}', until: '{% trans "Until"|escapejs %}',
     children: '{% trans "Children welcome"|escapejs %}', animals: '{% trans "Animals welcome"|escapejs %}',
+    free: '{% trans "Has free places"|escapejs %}', rides: '{% trans "Only rides"|escapejs %}',
   };
   const TOUR_MODES = { {% for value, label in mode_choices %}'{{ value }}': '{{ label|escapejs }}',{% endfor %} };
   const TOUR_COUNTRIES = { {% for code, name in countries %}'{{ code }}': '{{ name|escapejs }}',{% endfor %} };
@@ -164,6 +171,7 @@
 
       <div class="flex flex-wrap gap-2">
         <a href="{% url 'tours:create' %}" class="btn shadow self-start text-sm"><i class="fa fa-plus mr-1"></i> {% trans "Plan a tour" %}</a>
+        <a href="{% url 'tours:ride' %}" class="btn shadow self-start text-sm"><i class="fa-solid fa-people-arrows mr-1"></i> {% trans "Offer a ride" %}</a>
         {% if own %}
           <button type="button" class="btn btn-purple shadow self-start text-sm" @click="$store.tourMap.showList()">
             <i class="fa-solid fa-eye-slash mr-1"></i>{% trans "Your tours that are not in the list" %} ({{ own|length }})

@@ -78,7 +78,7 @@ class Tour(models.Model):
     }
 
     # Not usable as a slug: they are paths beside a tour's page
-    RESERVED_SLUGS = ("new", "api", "mine")
+    RESERVED_SLUGS = ("new", "api", "mine", "offer-a-ride")
 
     slug = models.SlugField(_("Slug"), max_length=255, unique=True, blank=True)
     title = models.CharField(_("Title"), max_length=255)
@@ -145,12 +145,15 @@ class Tour(models.Model):
         if self.open_to_join:
             self.listed = True
         super().save(*args, **kwargs)
-        # The organiser travels too, on the whole route
+        # The organiser travels too: on the whole route, or on the stretch they joined for
         update_fields = kwargs.get("update_fields")
         if self.organiser_id and (update_fields is None or "organiser" in update_fields):
-            Traveller.objects.update_or_create(
-                tour=self, user_id=self.organiser_id, match=None, defaults={"is_organiser": True},
-            )
+            own = next((t for t in self.travellers.filter(user_id=self.organiser_id).select_related("match") if t.is_counted), None)
+            if own is None:
+                Traveller.objects.create(tour=self, user_id=self.organiser_id, is_organiser=True)
+            elif not own.is_organiser:
+                own.is_organiser = True
+                own.save(update_fields=["is_organiser"])
 
     def _free_slug(self):
         base = slugify(self.title)[:240] or "tour"
@@ -193,6 +196,12 @@ class Tour(models.Model):
     @property
     def travel_mode_icon(self):
         return self.MODE_ICONS.get(self.travel_mode, "fa-route")
+
+    @property
+    def is_ride(self):
+        """Just a lift from A to B: two stops, neither with a host, looking for travellers."""
+        stops = list(self.stops.all())
+        return self.open_to_join and len(stops) == 2 and not any(stop.community_id for stop in stops)
 
     # ── When ────────────────────────────────────────────────────────
     @property
@@ -243,7 +252,42 @@ class Tour(models.Model):
             return False
         if user.pk == self.organiser_id:
             return True
-        return self.travellers.filter(user=user, is_organiser=True).exists()
+        return self.travellers.counted().filter(user=user, is_organiser=True).exists()
+
+    def organisers(self):
+        """Everyone who organises it: the one matches are addressed to first."""
+        users = [t.user for t in self.travellers.counted().filter(is_organiser=True).select_related("user")]
+        return sorted(users, key=lambda user: user.pk != self.organiser_id)
+
+    def make_organiser(self, traveller):
+        """Share the role with a traveller on the tour."""
+        traveller.is_organiser = True
+        traveller.save(update_fields=["is_organiser"])
+
+    def hand_over(self, traveller):
+        """Make another organiser the one matches are addressed to. The open join
+        requests, invitations and tour visits move to them; the one before stays an
+        organiser."""
+        from gift_economy.matches.models import Match
+
+        before = self.organiser
+        with transaction.atomic():
+            self.make_organiser(traveller)
+            self.organiser = traveller.user
+            self.save(update_fields=["organiser"])
+            if before is None:
+                return
+            open_ = [Match.STATUS_PENDING, Match.STATUS_COUNTER, Match.STATUS_ACCEPTED]
+            # Not their own join request, which stays with the one before
+            ours = self.matches.filter(status__in=open_).exclude(from_user=traveller.user).exclude(recipient=traveller.user)
+            # Join requests come to the organiser, invitations come from them
+            ours.filter(recipient=before, traveller__user=models.F("from_user")).update(recipient=traveller.user)
+            ours.filter(from_user=before, traveller__user=models.F("recipient")).update(from_user=traveller.user)
+            Match.objects.filter(tour_stop__tour=self, from_user=before, status__in=open_).update(from_user=traveller.user)
+        # Who is a companion on each visit follows from who asked
+        from .visits import sync_visits
+
+        sync_visits(self)
 
     def can_view(self, user):
         if self._can_view(user):
@@ -284,7 +328,8 @@ class Tour(models.Model):
     # Leg i runs from stop i to stop i+1; a traveller
     # or vehicle without a first or last stop is on from the start or until the end.
     def counted_travellers(self):
-        """The travellers who are on the tour: added directly, or asked and accepted."""
+        """The travellers who are on the tour: the organiser, or asked or invited and
+        accepted."""
         return [t for t in self.travellers.select_related("user", "match") if t.is_counted]
 
     def stretch(self, from_stop, to_stop, stops=None):
@@ -439,25 +484,32 @@ class Tour(models.Model):
         return _("%(actor)s asked to join your tour: %(title)s")
 
     def get_match_summary(self, match):
-        """The stretch and how many, for the match emails."""
         traveller = getattr(match, "traveller", None)
-        if traveller is None:
-            return ""
-        from django.utils.translation import ngettext
-
-        start, end = traveller.ends()
-        stretch = f"{start.label} → {end.label}" if start and end and not traveller.whole_route else str(_("the whole route"))
-        people = ngettext("%(n)s person", "%(n)s people", traveller.people) % {"n": traveller.people}
-        return f"{stretch} · {people}"
-
-    def get_match_summary_template(self):
-        return "tours/_match_summary.html"
+        return traveller.get_match_summary(match) if traveller is not None else ""
 
     # The stretch is changed on the join page, not with a counter-proposal
     match_counter = False
 
-    def can_answer_match(self, user):
-        return self.is_organiser(user)
+    def can_answer_match(self, user, match):
+        """Every organiser answers a join request. An invitation only the one invited."""
+        traveller = getattr(match, "traveller", None)
+        return traveller is not None and not traveller.is_invitation and self.is_organiser(user)
+
+    def get_match_answerers(self, match):
+        """Who else is told of a new join request: the other organisers."""
+        return self.organisers() if self.can_answer_match(match.recipient, match) else []
+
+    @classmethod
+    def matches_answered_by(cls, user):
+        """The join requests `user` answers as one of the organisers (a Q on Match)."""
+        from django.contrib.contenttypes.models import ContentType
+
+        organised = Traveller.objects.counted().filter(user=user, is_organiser=True).values_list("tour_id", flat=True)
+        return models.Q(
+            content_type=ContentType.objects.get_for_model(cls),
+            object_id__in=[str(pk) for pk in organised],
+            traveller__user=models.F("from_user"),
+        )
 
     def match_accept_error(self, match):
         """Why a join request can't be accepted (no room left on its stretch), or "".
@@ -693,10 +745,19 @@ class Stop(models.Model):
         }
 
 
+class TravellerQuerySet(models.QuerySet):
+    def counted(self):
+        """Those on the tour: without a match (the organiser), or accepted."""
+        from gift_economy.matches.models import Match
+
+        return self.filter(models.Q(match=None) | models.Q(match__status=Match.STATUS_ACCEPTED))
+
+
 class Traveller(models.Model):
     """Someone on a tour from one stop to another, both included (None: from the start,
-    until the end). The organiser is a traveller too. Counts once their join request is
-    accepted, or at once if an organiser added them (no match)."""
+    until the end). The organiser is a traveller too. Others come through a match with
+    the tour as target: a join request they made, or an invitation an organiser sent
+    them. They count once it is accepted."""
 
     tour = models.ForeignKey(Tour, on_delete=models.CASCADE, related_name="travellers")
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="tour_travels")
@@ -720,6 +781,8 @@ class Traveller(models.Model):
     is_organiser = models.BooleanField(_("Organiser"), default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
+    objects = TravellerQuerySet.as_manager()
+
     class Meta:
         ordering = ["-is_organiser", "created_at", "pk"]
         verbose_name = _("Traveller")
@@ -733,6 +796,36 @@ class Traveller(models.Model):
         from gift_economy.matches.models import Match
 
         return self.match_id is None or self.match.status == Match.STATUS_ACCEPTED
+
+    @property
+    def is_invitation(self):
+        """An organiser invited them, rather than they asked to join."""
+        return self.match_id is not None and self.match.recipient_id == self.user_id
+
+    # ── As what a join request or invitation is attached to (gift_economy.matches) ──
+    match_attachment_template = "tours/_match_summary.html"
+
+    def get_match_kind(self):
+        if self.is_invitation:
+            return _("Invitation"), "fa-envelope-open-text", "bg-purple"
+        return self.tour.get_match_kind()
+
+    def get_match_verb(self):
+        if self.is_invitation:
+            return _("sent an invitation to travel along on")
+        return self.tour.get_match_verb()
+
+    def get_match_request_text(self):
+        if self.is_invitation:
+            return _("%(actor)s invited you to travel along: %(title)s")
+        return self.tour.get_match_request_text()
+
+    def get_match_summary(self, match):
+        """The stretch and how many, for the match emails."""
+        start, end = self.ends()
+        stretch = f"{start.label} → {end.label}" if start and end and not self.whole_route else str(_("the whole route"))
+        people = ngettext("%(n)s person", "%(n)s people", self.people) % {"n": self.people}
+        return f"{stretch} · {people}"
 
     def ends(self, stops=None):
         """(first stop, last stop) of the stretch, filled in from the route."""

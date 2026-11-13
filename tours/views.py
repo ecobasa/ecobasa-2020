@@ -1,8 +1,12 @@
+from collections import Counter
+
 from django.contrib import messages
+from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
-from django.db.models import prefetch_related_objects, Q
+from django.contrib.contenttypes.models import ContentType
+from django.db.models import F, prefetch_related_objects, Q
 from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
@@ -23,9 +27,11 @@ from gift_economy.matches.emails import notify_match_created, notify_match_messa
 from gift_economy.matches.models import Contribution, Match, MatchMessage
 
 from . import matching
-from .forms import HostForm, JoinForm, StopForm, TourForm, TourNeedFormSet, VehicleFormSet
+from .forms import (
+    HostForm, InviteForm, JoinForm, PlaceForm, RideForm, StopForm, TourForm, TourNeedFormSet, VehicleFormSet,
+)
 from .geo import MAX_TOURS, TourFilters, feature_collection, recommendation_features
-from .models import Stop, Tour, Traveller, append_stop, insert_stop, move_stop, remove_stop, set_order
+from .models import Stop, Tour, Traveller, Vehicle, append_stop, insert_stop, move_stop, remove_stop, set_order
 from .recommend import AREA_CHOICES, DEFAULT_AREA_KM, hints, km_of, recommend_stops, suggest_order
 
 _STOPS = ("stops__event__community", "stops__community__photos", "learn_skills", "vehicles__drivers")
@@ -115,21 +121,23 @@ def api_routes(request):
 
 def _join_state(tour, user):
     """What the join button says: "login", "on" (travels along; "organiser" if one),
-    "asked" (an open request, with `match`), "full", "ask", or "" where the tour
-    doesn't look for travellers."""
+    "asked" (an open request, with `match`), "invited" (an open invitation, with
+    `match`), "full", "ask", or "" where the tour doesn't look for travellers."""
+    # An organiser other than the one the matches go to may leave
+    organiser = {"state": "organiser", "can_leave": user.is_authenticated and user.pk != tour.organiser_id}
     if not (tour.open_to_join and tour.is_published and tour.is_current):
         if user.is_authenticated and tour.is_organiser(user):
-            return {"state": "organiser"}
+            return organiser
         return {"state": ""}
     if not user.is_authenticated:
         return {"state": "login"}
     if tour.is_organiser(user):
-        return {"state": "organiser"}
+        return organiser
     own = _own_request(tour, user)
     if own is not None:
         if own.is_counted:
             return {"state": "on", "traveller": own}
-        return {"state": "asked", "traveller": own, "match": own.match}
+        return {"state": "invited" if own.is_invitation else "asked", "traveller": own, "match": own.match}
     free = tour.free_places()
     if all(places is not None and places <= 0 for places in free):
         return {"state": "full"}
@@ -175,11 +183,14 @@ def tour_detail(request, slug):
     needs = [(need, matching.role(need, team)) for need in tour.needs()]
     # The way to each stop in a maps app, only for those who travel along
     on_tour = any(traveller.user_id == request.user.pk for traveller in travellers)
+    # Only the one matches go to hands the tour over (staff too)
+    can_hand_over = request.user.is_authenticated and (request.user.pk == tour.organiser_id or request.user.is_staff)
     return render(request, "tours/tour_detail.html", {
         "needs": needs,
         "vehicles": tour.vehicles.all(),
         "tour": tour,
         "can_edit": can_edit,
+        "can_hand_over": can_hand_over,
         "travellers": travellers,
         # Logged out, one sees how many travel, not who
         "traveller_count": sum(t.people for t in counted),
@@ -574,6 +585,8 @@ def join(request, slug):
     if own is not None and own.is_counted:
         messages.info(request, _("You are on this tour already."))
         return redirect(tour.get_absolute_url())
+    if own is not None and own.is_invitation:
+        return redirect(own.match.get_absolute_url())
     if own is None and not (tour.open_to_join and tour.is_published and tour.is_current and tour.organiser):
         messages.error(request, _("This tour doesn't look for travellers."))
         return redirect(tour.get_absolute_url())
@@ -634,14 +647,14 @@ def _stretch_text(traveller):
 @login_required
 @require_POST
 def leave(request, slug):
-    """A traveller leaves the tour, with a few words to the organisers. An organiser
-    can't: someone else has to take over first."""
+    """A traveller leaves the tour, with a few words to the organisers. The organiser
+    the matches go to hands the tour over first, so it is never without one."""
     tour = _tour(slug, request.user)
     own = _own_request(tour, request.user)
     if own is None or not own.is_counted:
         return redirect(tour.get_absolute_url())
-    if own.is_organiser or tour.organiser_id == request.user.pk:
-        messages.error(request, _("As an organiser you can't leave the tour yet."))
+    if tour.organiser_id == request.user.pk:
+        messages.error(request, _("Hand the tour over to another organiser before you leave."))
         return redirect(tour.get_absolute_url())
     body = request.POST.get("body", "").strip()
     if not body:
@@ -658,7 +671,7 @@ def remove(request, slug, pk):
     """An organiser takes someone off the tour, always with a few words to them."""
     tour = _editable(slug, request.user)
     traveller = get_object_or_404(tour.travellers.select_related("match", "user"), pk=pk)
-    if traveller.is_organiser or traveller.user_id == tour.organiser_id:
+    if traveller.user_id == tour.organiser_id or traveller.match_id is None:
         raise PermissionDenied
     body = request.POST.get("body", "").strip()
     if not body:
@@ -678,11 +691,162 @@ def _end(traveller, request, status, body):
         traveller.delete()
         return
     with transaction.atomic():
+        if traveller.is_organiser:
+            traveller.is_organiser = False
+            traveller.save(update_fields=["is_organiser"])
         MatchMessage.objects.create(match=match, sender=request.user, body=body, status_to=status)
         match.status = status
         match.responded_at = timezone.now()
         match.save()
     notify_match_response(match, actor=request.user, http_request=request, message=body)
+
+
+# ── Inviting, and sharing the organiser role ────────────────────────
+
+@login_required
+def invite(request, slug):
+    """An organiser invites someone to travel along: a match from them to the one
+    invited, with the tour as target, and the traveller it would make. They count once
+    they accept."""
+    tour = _editable(slug, request.user)
+    form = InviteForm(
+        tour, request.POST or None, instance=Traveller(tour=tour), initial={"user": request.GET.get("user", "")},
+    )
+    if request.method == "POST" and form.is_valid():
+        with transaction.atomic():
+            match = Match(
+                from_user=request.user, recipient=form.cleaned_data["user"], message=form.cleaned_data["message"],
+                location_type="",
+            )
+            match.target = tour
+            match.save()
+            traveller = form.save(commit=False)
+            traveller.match = match
+            traveller.save()
+        notify_match_created(match, http_request=request)
+        messages.success(request, _("Your invitation has been sent to %(name)s.") % {"name": _name(traveller.user)})
+        return redirect(f"{tour.get_absolute_url()}#travellers")
+    return render(request, "tours/invite.html", {
+        "tour": tour, "form": form, "chosen": form.chosen_user(), "stops": tour.ordered_stops(),
+    })
+
+
+@login_required
+def api_people(request):
+    """People whose name matches `q`, to invite onto a tour (organisers only): their
+    name, picture and town."""
+    tour = _editable(request.GET.get("tour", ""), request.user)
+    q = (request.GET.get("q") or "").strip()
+    if len(q) < 2:
+        return JsonResponse({"results": []})
+    from users.places import town
+
+    on = [t.user_id for t in tour.travellers.select_related("match") if t.match_id is None or not t.match.is_closed]
+    people = get_user_model().objects.filter(is_active=True, name__icontains=q).exclude(pk__in=on).order_by("name")[:8]
+    return JsonResponse({"results": [
+        {"id": person.pk, "name": person.name, "image": person.image.url if person.image else "",
+         "place": town(person.location_name) or ""}
+        for person in people
+    ]})
+
+
+def _name(user):
+    return user.name or user.email
+
+
+def _tell(user, actor, text, link):
+    """An in-app notification without a match, in the reader's language."""
+    from django.conf import settings
+    from django.utils import translation
+
+    from notifications.models import Notification
+
+    with translation.override(user.language or settings.LANGUAGE_CODE):
+        verb = str(text())
+    Notification.objects.create(recipient=user, actor=actor, verb=verb[:255], link=link)
+
+
+@login_required
+@require_POST
+def make_organiser(request, slug, pk):
+    """Share the organiser role with someone on the tour."""
+    tour = _editable(slug, request.user)
+    traveller = get_object_or_404(tour.travellers.select_related("match", "user"), pk=pk)
+    if not traveller.is_counted or traveller.is_organiser:
+        return redirect(f"{tour.get_absolute_url()}#travellers")
+    tour.make_organiser(traveller)
+    _tell(traveller.user, request.user, lambda: _("%(actor)s made you an organiser of %(title)s") % {
+        "actor": _name(request.user), "title": tour.title,
+    }, tour.get_absolute_url())
+    messages.success(request, _("%(name)s is an organiser now.") % {"name": _name(traveller.user)})
+    return redirect(f"{tour.get_absolute_url()}#travellers")
+
+
+@login_required
+@require_POST
+def hand_over(request, slug, pk):
+    """The organiser the matches go to hands the tour over to another organiser."""
+    tour = _editable(slug, request.user)
+    if not (request.user.pk == tour.organiser_id or request.user.is_staff):
+        raise PermissionDenied
+    traveller = get_object_or_404(tour.travellers.select_related("match", "user"), pk=pk)
+    if not traveller.is_counted or traveller.user_id == tour.organiser_id:
+        return redirect(f"{tour.get_absolute_url()}#travellers")
+    tour.hand_over(traveller)
+    _tell(traveller.user, request.user, lambda: _("%(actor)s handed the tour %(title)s over to you") % {
+        "actor": _name(request.user), "title": tour.title,
+    }, tour.get_absolute_url())
+    messages.success(request, _("You handed the tour over to %(name)s.") % {"name": _name(traveller.user)})
+    return redirect(f"{tour.get_absolute_url()}#travellers")
+
+
+# ── Offering a ride ─────────────────────────────────────────────────
+
+@login_required
+def ride(request):
+    """Offer a ride: a tour from one meeting point to another on one day, published at
+    once. The seats and the room for things are a vehicle the one offering drives; on a
+    way without one (a train, on foot) the seats are how many come along."""
+    from users.places import town
+
+    data = request.POST or None
+    form = RideForm(data)
+    start = PlaceForm(data, prefix="from", label=_("From"))
+    end = PlaceForm(data, prefix="to", label=_("To"))
+    if request.method == "POST" and all([form.is_valid(), start.is_valid(), end.is_valid()]):
+        ride = form.cleaned_data
+        a, b = start.cleaned_data, end.cleaned_data
+        with transaction.atomic():
+            tour = Tour(
+                title=f"{_short(town(a['location_name']))} → {_short(town(b['location_name']))}",
+                description=ride["description"], travel_mode=ride["travel_mode"], organiser=request.user,
+                open_to_join=True, published_at=timezone.now(),
+            )
+            driven = ride["travel_mode"] in (Tour.MODE_CAR, Tour.MODE_VAN)
+            if not driven:
+                tour.max_people = ride["seats"] + 1
+            tour.save()
+            for place, extra in ((a, {"leave_on": ride["day"], "leave_at": ride["leave_at"]}), (b, {"arrive_on": ride["day"]})):
+                append_stop(Stop(
+                    tour=tour, name=place["location_name"], location=place["location"], country=place["country"] or None,
+                    **extra,
+                ))
+            if driven:
+                vehicle = Vehicle.objects.create(
+                    tour=tour, label=tour.get_travel_mode_display(), seats=ride["seats"], note=ride["room"],
+                )
+                vehicle.drivers.add(request.user)
+            elif ride["room"]:
+                tour.good_to_know = ride["room"]
+                tour.save(update_fields=["good_to_know"])
+        messages.success(request, _("Your ride is published. Others find it in the list of tours."))
+        return redirect(tour.get_absolute_url())
+    return render(request, "tours/ride_form.html", {"form": form, "start": start, "end": end})
+
+
+def _short(place):
+    """The first part of a place's name: "Kassel" of "Kassel, Hessen, Deutschland"."""
+    return (place or "").split(",")[0].strip() or "?"
 
 
 @login_required
@@ -701,6 +865,16 @@ def mine(request):
         seen.add(traveller.tour_id)
         rows.append({"tour": traveller.tour, "traveller": traveller, "stretch": _stretch_text(traveller)})
     page = paginate(request, rows)
+    # What each card offers: an organiser sees the join requests waiting on their tours
+    organised = [row["tour"].pk for row in page.object_list if row["traveller"].is_organiser]
+    waiting = Counter(
+        Match.objects.filter(
+            content_type=ContentType.objects.get_for_model(Tour), object_id__in=[str(pk) for pk in organised],
+            status=Match.STATUS_PENDING, traveller__user=F("from_user"),
+        ).values_list("object_id", flat=True)
+    )
+    for row in page.object_list:
+        row["waiting"] = waiting.get(str(row["tour"].pk), 0)
     return render(request, "tours/mine.html", {"page": page})
 
 

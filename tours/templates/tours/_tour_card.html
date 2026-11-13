@@ -17,6 +17,7 @@
       <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
         <span class="pill {% if tour.is_idea %}bg-yellow{% else %}bg-primary{% endif %}"><i class="fa-solid {{ tour.travel_mode_icon }} mr-1"></i>{{ tour.get_travel_mode_display }}</span>
         {% if tour.is_idea %}<span class="pill bg-yellow"><i class="fa-solid fa-lightbulb mr-1"></i>{% trans "Idea" %}</span>{% endif %}
+        {% if tour.is_ride %}<span class="pill bg-green"><i class="fa-solid fa-people-arrows mr-1"></i>{% trans "Ride" %}</span>{% endif %}
         {% if not tour.is_published %}<span class="pill bg-brown">{% trans "Draft" %}</span>{% endif %}
         {% if tour.is_published and not tour.listed %}<span class="pill bg-brown"><i class="fa-solid fa-eye-slash mr-1"></i>{% trans "Not in the list" %}</span>{% endif %}
         {% if tour.archived_at %}<span class="pill bg-brown">{% trans "Archived" %}</span>{% endif %}

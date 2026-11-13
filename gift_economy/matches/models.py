@@ -158,6 +158,12 @@ class Match(models.Model):
                 return get(self)
         return ""
 
+    @property
+    def attached_verb(self):
+        """What is attached to the match (a tour visit, an invitation onto a tour) may
+        say better what happened; None if nothing does."""
+        return next((a.get_match_verb() for a in self.attachments() if hasattr(a, "get_match_verb")), None)
+
     def attachments(self):
         """What other apps attach to this match one to one and want shown with it: their
         models say so with `match_attachment_template` (tours.Stop for a tour visit). The

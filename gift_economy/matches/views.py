@@ -5,7 +5,8 @@ from django.contrib import messages as flash
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.core import signing
-from django.db.models import Count
+from django.contrib.contenttypes.models import ContentType
+from django.db.models import Count, Q
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
 from django.http import Http404, HttpResponseBadRequest
@@ -176,7 +177,13 @@ def _join_requests(request):
     """Requests to join a tour: received (as an organiser) and sent."""
     user = request.user
     tours = _with_details(Match.objects.filter(content_type__app_label=TOUR_APP_LABEL))
-    boxes = {"received": tours.filter(recipient=user), "sent": tours.filter(from_user=user)}
+    # Also those the user answers for the one they are addressed to (a tour's other organisers)
+    received = Q(recipient=user)
+    for content_type in ContentType.objects.filter(app_label=TOUR_APP_LABEL):
+        answered_by = getattr(content_type.model_class(), "matches_answered_by", None)
+        if answered_by is not None:
+            received |= answered_by(user)
+    boxes = {"received": tours.filter(received).distinct(), "sent": tours.filter(from_user=user)}
     waiting = {"received": boxes["received"].filter(status=Match.STATUS_PENDING).count(), "sent": 0}
     counts = {key: matches.count() for key, matches in boxes.items()}
     box = request.GET.get("box")
@@ -233,7 +240,9 @@ def match_detail(request, pk):
 
     # Only the two sides act on a match; staff may open it too. A target may let others
     # answer for its owner (a tour's other organisers)
-    answers_for_owner = request.user.is_authenticated and getattr(target, "can_answer_match", lambda user: False)(request.user)
+    answers_for_owner = request.user.is_authenticated and getattr(
+        target, "can_answer_match", lambda user, match: False,
+    )(request.user, match)
     is_party = request.user in (match.from_user, match.recipient) or answers_for_owner
     if not (is_party or request.user.is_staff):
         raise Http404
@@ -390,7 +399,7 @@ def match_detail(request, pk):
             flash.success(request, _("Counter-proposal sent."))
             return redirect(match.get_absolute_url())
 
-    attached_verb = next((a.get_match_verb() for a in match.attachments() if hasattr(a, "get_match_verb")), None)
+    attached_verb = match.attached_verb
     return render(request, "matches/match_detail.html", {
         "match":                match,
         # Volunteer visits and join requests have their own place in the sidebar and breadcrumb

@@ -3,10 +3,10 @@
 <div x-data="EcoMap.locationDropdown('{{ set_point_fn }}')" class="relative space-y-2">
   <div class="relative">
     {% if not no_label %}
-    <label class="form-label" for="id_location_name">{{ form.location_name.label }}</label>
+    <label class="form-label" for="{{ form.location_name.id_for_label }}">{{ form.location_name.label }}</label>
     {% endif %}
     <div class="relative">
-      <input type="text" name="location_name" id="id_location_name"
+      <input type="text" name="{{ form.location_name.html_name }}" id="{{ form.location_name.id_for_label }}"
         value="{{ form.location_name.value|default_if_none:'' }}"
         class="form-input {% if locate_fn %}pr-10{% endif %}"
         @input.debounce="onInput($el.value)"
@@ -43,7 +43,7 @@
   <p class="text-xs text-brown">{% trans "Click the map or drag the pin to set your exact location." %}</p>
 
   <div class="mt-2">
-    <label class="form-label" for="id_country">{{ form.country.label }}</label>
+    <label class="form-label" for="{{ form.country.id_for_label }}">{{ form.country.label }}</label>
     {{ form.country }}
     <p class="text-xs text-brown mt-1">{% trans "Auto-filled from map — you can also set it manually." %}</p>
     {% for error in form.country.errors %}<p class="field-error">{{ error }}</p>{% endfor %}

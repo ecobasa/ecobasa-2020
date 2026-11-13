@@ -65,6 +65,7 @@
   <div class="grid grid-cols-1 sm:grid-cols-12 gap-6">
     <div class="sm:col-span-8">
       {% if tour.is_idea %}<span class="pill bg-yellow text-xs">{% trans "Idea" %}</span>{% endif %}
+      {% if tour.is_ride %}<span class="pill bg-green text-xs"><i class="fa-solid fa-people-arrows mr-1"></i>{% trans "Ride" %}</span>{% endif %}
       {% if not tour.header_image %}<h1 class="mb-1 mt-2">{{ tour.title }}</h1>{% endif %}
       <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm mb-6">
         <span><i class="fa-regular fa-calendar mr-1"></i>{% include "tours/_tour_dates.html" %}</span>
@@ -178,7 +179,7 @@
       {% if travellers %}
         <div class="text-center" id="travellers">
           <h2>{% trans "Who travels" %}</h2>
-          <div class="flex flex-wrap justify-center gap-6">
+          <div class="flex flex-wrap justify-center gap-x-10 gap-y-10">
             {% for traveller in travellers %}
               {% with person=traveller.user %}
               <div>
@@ -198,18 +199,37 @@
                 {% if traveller.people > 1 %}<div class="text-xs">{% blocktrans count count=traveller.people|add:"-1" %}and {{ count }} more{% plural %}and {{ count }} more{% endblocktrans %}</div>{% endif %}
                 {% if traveller.ride_only %}<div class="text-xs opacity-70">{% trans "Only for the ride" %}</div>{% endif %}
                 <div class="text-sm">{% include "events/_freshness.html" with when=person.last_active %}</div>
-                {% if can_edit and not traveller.is_organiser %}
-                  <details class="text-xs mt-1 text-left">
-                    <summary class="cursor-pointer underline text-center">{% trans "Remove from tour" %}</summary>
-                    <form method="post" action="{% url 'tours:remove' tour.slug traveller.pk %}" class="mt-1 space-y-1">{% csrf_token %}
-                      <textarea name="body" rows="3" required class="form-textarea w-full text-sm" placeholder="{% trans 'A few words to them why' %}"></textarea>
-                      <button type="submit" class="btn btn-purple text-xs">{% trans "Remove from tour" %}</button>
+                {# Sharing the organiser role (handing the tour over is for the one the matches go to) and taking someone off: small buttons of one width, under the person #}
+                <div class="flex flex-col items-center gap-1 mt-2">
+                  {% if can_edit and not traveller.is_organiser %}
+                    <form method="post" action="{% url 'tours:make_organiser' tour.slug traveller.pk %}">{% csrf_token %}
+                      <button type="submit" class="btn btn-purple text-xs py-0.5 px-2 w-36 text-center">{% trans "Make organiser" %}</button>
                     </form>
-                  </details>
-                {% endif %}
+                  {% elif can_hand_over and traveller.is_organiser and traveller.user_id != tour.organiser_id %}
+                    <form method="post" action="{% url 'tours:hand_over' tour.slug traveller.pk %}"
+                          onsubmit="return confirm('{% blocktrans with name=person.name|default:person.email asvar question %}Hand the tour over to {{ name }}? Join requests and hosts then go to them; you stay an organiser.{% endblocktrans %}{{ question|escapejs }}')">{% csrf_token %}
+                      <button type="submit" class="btn btn-purple text-xs py-0.5 px-2 w-36 text-center">{% trans "Hand over the tour" %}</button>
+                    </form>
+                  {% endif %}
+                  {% if can_edit and traveller.match_id and traveller.user_id != tour.organiser_id and traveller.user_id != user.pk %}
+                    <details class="text-xs flex flex-col items-center">
+                      <summary class="btn btn-purple text-xs py-0.5 px-2 w-36 text-center cursor-pointer list-none [&::-webkit-details-marker]:hidden">{% trans "Remove from tour" %}</summary>
+                      <form method="post" action="{% url 'tours:remove' tour.slug traveller.pk %}" class="mt-1 space-y-1 w-48 text-left">{% csrf_token %}
+                        <textarea name="body" rows="3" required class="form-textarea w-full text-sm" placeholder="{% trans 'A few words to them why' %}"></textarea>
+                        <button type="submit" class="btn btn-purple text-xs py-0.5 px-2 w-36 text-center">{% trans "Remove from tour" %}</button>
+                      </form>
+                    </details>
+                  {% endif %}
+                </div>
               </div>
               {% endwith %}
             {% endfor %}
+            {# A line of its own under the people, with the same spacing #}
+            {% if can_edit and tour.open_to_join and tour.is_current %}
+              <div class="w-full">
+                <a href="{% url 'tours:invite' tour.slug %}" class="btn btn-purple inline-block"><i class="fa-solid fa-user-plus mr-1"></i>{% trans "Invite someone" %}</a>
+              </div>
+            {% endif %}
           </div>
         </div>
       {% elif not user.is_authenticated %}
@@ -234,9 +254,19 @@
                 <a href="{{ join.match.get_absolute_url }}" class="btn">{% trans "See your request" %}</a>
                 <a href="{% url 'tours:join' tour.slug %}" class="btn btn-lg btn-purple">{% trans "Change it" %}</a>
               </div>
+            {% elif join.state == "invited" %}
+              <p class="m-0"><i class="fa-solid fa-envelope-open-text mr-1"></i>{% trans "You're invited to travel along." %}</p>
+              <a href="{{ join.match.get_absolute_url }}" class="btn btn-lg w-full justify-center">{% trans "See the invitation" %}</a>
             {% elif join.state == "on" %}
               <p class="m-0 font-semibold text-green"><i class="fa-solid fa-check mr-1"></i>{% trans "You travel along." %}</p>
               {% if join.traveller.match %}<a href="{{ join.traveller.match.get_absolute_url }}" class="underline">{% trans "Talk with the organisers" %}</a>{% endif %}
+            {% elif join.state == "full" %}
+              <p class="m-0"><i class="fa-solid fa-user-group mr-1"></i>{% trans "No places free at the moment." %}</p>
+            {% elif join.state == "organiser" %}
+              <a href="{% url 'matches:list' %}?type=tours" class="btn btn-lg w-full justify-center"><i class="fa-solid fa-envelope-open-text mr-1"></i>{% trans "Join requests" %}</a>
+            {% endif %}
+            {# A traveller, or an organiser other than the one the matches go to #}
+            {% if join.state == "on" or join.can_leave %}
               <details class="text-left">
                 <summary class="cursor-pointer underline text-center">{% trans "Leave tour" %}</summary>
                 <form method="post" action="{% url 'tours:leave' tour.slug %}" class="mt-2 space-y-2">{% csrf_token %}
@@ -244,10 +274,6 @@
                   <button type="submit" class="btn btn-lg btn-purple">{% trans "Leave tour" %}</button>
                 </form>
               </details>
-            {% elif join.state == "full" %}
-              <p class="m-0"><i class="fa-solid fa-user-group mr-1"></i>{% trans "No places free at the moment." %}</p>
-            {% elif join.state == "organiser" %}
-              <a href="{% url 'matches:list' %}?type=tours" class="btn btn-lg w-full justify-center"><i class="fa-solid fa-user-plus mr-1"></i>{% trans "Join requests" %}</a>
             {% endif %}
           </div>
         {% endif %}

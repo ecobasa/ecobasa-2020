@@ -6157,3 +6157,166 @@ msgstr "App de mapas de este móvil"
 
 msgid "Open in maps"
 msgstr "Abrir en mapas"
+
+#: tours/forms.py
+msgid "Who"
+msgstr "Quién"
+
+#: tours/forms.py
+msgid "Please choose someone."
+msgstr "Elige a alguien, por favor."
+
+#: tours/forms.py
+msgid "A few words to them"
+msgstr "Unas palabras para esa persona"
+
+#: tours/forms.py
+msgid "Why you'd like them to come along."
+msgstr "Por qué te gustaría que viniera."
+
+#: tours/forms.py
+msgid "How many are they?"
+msgstr "¿Cuántas personas son?"
+
+#: tours/forms.py
+msgid "They and whoever comes with them, children too."
+msgstr "Esa persona y quien venga con ella, también niños."
+
+#: tours/forms.py
+msgid "They are on this tour already, or have been asked."
+msgstr "Esa persona ya está en el tour o ya se le ha preguntado."
+
+#: tours/forms.py
+msgid "Day"
+msgstr "Día"
+
+#: tours/forms.py
+msgid "Free seats"
+msgstr "Plazas libres"
+
+#: tours/forms.py
+msgid "Room for things"
+msgstr "Espacio para cosas"
+
+#: tours/forms.py
+msgid "e.g. a full boot, a roof rack"
+msgstr "p. ej. un maletero entero, una baca"
+
+#: tours/forms.py
+msgid "A few words"
+msgstr "Unas palabras"
+
+#: tours/forms.py
+msgid "Where you can pick people up on the way, how you share costs."
+msgstr "Dónde puedes recoger a gente por el camino, cómo compartís los gastos."
+
+#: tours/models.py tours/templates/tours/mine.html
+msgid "Invitation"
+msgstr "Invitación"
+
+#: tours/models.py
+msgid "sent an invitation to travel along on"
+msgstr "envió una invitación para viajar en"
+
+#: tours/models.py
+#, python-format
+msgid "%(actor)s invited you to travel along: %(title)s"
+msgstr "%(actor)s te invitó a viajar: %(title)s"
+
+#: tours/templates/tours/_search_bar.html tours/templates/tours/tour_list.html
+msgid "Has free places"
+msgstr "Con plazas libres"
+
+#: tours/templates/tours/_search_bar.html tours/templates/tours/tour_list.html
+msgid "Only rides"
+msgstr "Solo viajes compartidos"
+
+#: tours/templates/tours/_tour_card.html tours/templates/tours/tour_detail.html
+msgid "Ride"
+msgstr "Viaje compartido"
+
+#: tours/templates/tours/invite.html tours/templates/tours/tour_detail.html
+msgid "Invite someone"
+msgstr "Invitar a alguien"
+
+#: tours/templates/tours/invite.html
+msgid "They get your invitation and travel along once they accept it."
+msgstr "Esa persona recibe tu invitación y viaja con vosotros en cuanto la acepte."
+
+#: tours/templates/tours/invite.html
+msgid "Their name…"
+msgstr "Su nombre…"
+
+#: tours/templates/tours/invite.html
+msgid "The route isn't planned yet: they come along for the whole of it."
+msgstr "La ruta aún no está planificada: esa persona viene para todo el recorrido."
+
+#: tours/templates/tours/mine.html tours/templates/tours/ride_form.html tours/templates/tours/tour_list.html
+msgid "Offer a ride"
+msgstr "Ofrecer un viaje compartido"
+
+#: tours/templates/tours/ride_form.html
+msgid "From one meeting point to another on one day. Others ask to come along, and you answer them."
+msgstr "De un punto de encuentro a otro en un día. Otras personas piden venir y tú les respondes."
+
+#: tours/templates/tours/ride_form.html
+msgid "Everyone sees these places as you enter them: choose a meeting point, not your home."
+msgstr "Todo el mundo ve estos lugares tal como los escribes: elige un punto de encuentro, no tu casa."
+
+#: tours/templates/tours/tour_detail.html
+msgid "Make organiser"
+msgstr "Hacer organizador/a"
+
+#: tours/templates/tours/tour_detail.html
+#, python-format
+msgid "Hand the tour over to %(name)s? Join requests and hosts then go to them; you stay an organiser."
+msgstr "¿Pasar el tour a %(name)s? Las solicitudes para viajar y los anfitriones irán a esa persona; tú sigues como organizador/a."
+
+#: tours/templates/tours/tour_detail.html
+msgid "Hand over the tour"
+msgstr "Pasar el tour"
+
+#: tours/templates/tours/tour_detail.html
+msgid "You're invited to travel along."
+msgstr "Estás invitado/a a viajar."
+
+#: tours/templates/tours/tour_detail.html
+msgid "See the invitation"
+msgstr "Ver la invitación"
+
+#: tours/views.py
+msgid "Hand the tour over to another organiser before you leave."
+msgstr "Pasa el tour a otro/a organizador/a antes de irte."
+
+#: tours/views.py
+#, python-format
+msgid "Your invitation has been sent to %(name)s."
+msgstr "Tu invitación se ha enviado a %(name)s."
+
+#: tours/views.py
+#, python-format
+msgid "%(actor)s made you an organiser of %(title)s"
+msgstr "%(actor)s te hizo organizador/a de %(title)s"
+
+#: tours/views.py
+#, python-format
+msgid "%(name)s is an organiser now."
+msgstr "%(name)s ahora es organizador/a."
+
+#: tours/views.py
+#, python-format
+msgid "%(actor)s handed the tour %(title)s over to you"
+msgstr "%(actor)s te pasó el tour %(title)s"
+
+#: tours/views.py
+#, python-format
+msgid "You handed the tour over to %(name)s."
+msgstr "Has pasado el tour a %(name)s."
+
+#: tours/views.py
+msgid "Your ride is published. Others find it in the list of tours."
+msgstr "Tu viaje compartido está publicado. Otras personas lo encuentran en la lista de tours."
+
+#: tours/templates/tours/_invite_to_tours.html
+msgid "Invite to join your tour"
+msgstr "Invitar a tu tour"
