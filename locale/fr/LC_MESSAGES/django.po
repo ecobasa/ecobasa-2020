@@ -7165,3 +7165,335 @@ msgstr "Événements : des projets et des journées portes ouvertes à visiter e
 #, python-format
 msgid "<a href=\"%(tours_url)s\">Organise and join Community-Tours</a>, or <a href=\"%(ride_url)s\">offer a ride</a>"
 msgstr "<a href=\"%(tours_url)s\">Organiser des Community-Tours et y participer</a>, ou <a href=\"%(ride_url)s\">proposer un covoiturage</a>"
+
+#: help/templates/help/travelling_tips.html
+msgid "Travelling without money"
+msgstr "Voyager sans argent"
+
+#: help/templates/help/travelling_tips.html
+msgid "Tips for hitchhiking, boats, places to sleep and food on the way."
+msgstr "Des conseils pour l'auto-stop, les bateaux, les endroits pour dormir et la nourriture en route."
+
+#: help/templates/help/travelling_tips.html
+msgid "Travelling tips"
+msgstr "Conseils de voyage"
+
+#: help/templates/help/travelling_tips.html
+msgid "Getting there"
+msgstr "Se déplacer"
+
+#: help/templates/help/travelling_tips.html
+msgid "Hitchhiking boats"
+msgstr "Bateau-stop"
+
+#: help/templates/help/travelling_tips.html
+msgid "A place to sleep"
+msgstr "Un endroit pour dormir"
+
+#: help/templates/help/travelling_tips.html
+msgid "When you need some money"
+msgstr "Quand tu as besoin d'un peu d'argent"
+
+#: help/templates/help/travelling_tips.html
+msgid "ecobasa wants to make it easier to live in the gift economy, with less money or none at all. On the way from one community to the next you sometimes need a ride, a place to sleep or something to eat. Here are tricks and resources that get you there sustainably and almost without money."
+msgstr "ecobasa veut faciliter la vie dans l'économie du don, avec moins d'argent ou sans argent du tout. En chemin d'une communauté à l'autre, tu as parfois besoin d'un trajet, d'un endroit pour dormir ou de quelque chose à manger. Voici des astuces et des ressources pour y arriver de façon durable et presque sans argent."
+
+#: help/templates/help/travelling_tips.html
+msgid "Rides and tours on ecobasa"
+msgstr "Covoiturages et tours sur ecobasa"
+
+#: help/templates/help/travelling_tips.html
+msgid "The best way to get from one place to another. It is an art you mostly learn by doing. Hitchwiki helps to find good spots, especially to get out of big cities."
+msgstr "La meilleure façon d'aller d'un endroit à un autre. C'est un art qui s'apprend surtout en le pratiquant. Hitchwiki aide à trouver de bons spots, surtout pour sortir des grandes villes."
+
+#: help/templates/help/travelling_tips.html
+msgid "Cycling"
+msgstr "Vélo"
+
+#: help/templates/help/travelling_tips.html
+msgid "Warmshowers is a hospitality network for people travelling by bike. The Ecotopia Biketour is a cycling tour that has gone from project to project every summer for many years: join it, or let it inspire your own bike tour."
+msgstr "Warmshowers est un réseau d'hospitalité pour les personnes qui voyagent à vélo. L'Ecotopia Biketour va de projet en projet chaque été depuis de nombreuses années : rejoins-la, ou inspire-toi pour ton propre tour à vélo."
+
+#: help/templates/help/travelling_tips.html
+msgid "Public transport"
+msgstr "Transports en commun"
+
+
+#: help/templates/help/travelling_tips.html
+msgid "Go to the harbour and ask around. With some patience or luck you find a free place, or a boat looking for crew. You can choose where you want to go or when you want to go, but rarely both. Most people look both online and in person."
+msgstr "Va au port et renseigne-toi. Avec un peu de patience ou de chance, tu trouves une place libre ou un bateau qui cherche un équipage. Tu peux choisir où tu veux aller ou quand tu veux partir, mais rarement les deux. La plupart des gens cherchent en ligne et sur place."
+
+#: help/templates/help/travelling_tips.html
+msgid "Hitchwiki: hitchhiking a boat"
+msgstr "Hitchwiki : bateau-stop"
+
+#: help/templates/help/travelling_tips.html
+msgid "in German"
+msgstr "en allemand"
+
+#: help/templates/help/travelling_tips.html
+msgid "Unpaid places exist, but sailing experience or other skills help. Read the skippers' profiles carefully and leave out those who are really looking for a relationship. Skippers plan far ahead, so start looking months before; some need crew right away, so be ready to go."
+msgstr "Il existe des places non payantes, mais l'expérience de la voile ou d'autres compétences aident. Lis attentivement les profils des skippers et écarte ceux qui cherchent en fait une relation. Les skippers planifient longtemps à l'avance, alors commence à chercher des mois avant ; certains ont besoin d'un équipage tout de suite, alors sois prêt·e à partir."
+
+#: help/templates/help/travelling_tips.html
+msgid "Where and when to find boats"
+msgstr "Où et quand trouver des bateaux"
+
+#: help/templates/help/travelling_tips.html
+msgid "The easiest places to meet skippers who might take crew:"
+msgstr "Les endroits les plus faciles pour rencontrer des skippers qui pourraient prendre un équipage :"
+
+#: help/templates/help/travelling_tips.html
+msgid "North Atlantic"
+msgstr "Atlantique Nord"
+
+#: help/templates/help/travelling_tips.html
+msgid "British and North European ports, Lisbon and Vilamoura (crossing the Bay of Biscay by the end of August); the Canary Islands (Las Palmas) and Madeira (Funchal) in November; Bermuda in November and from April to August; Fort Lauderdale, Florida, in November."
+msgstr "Les ports britanniques et d'Europe du Nord, Lisbonne et Vilamoura (en traversant le golfe de Gascogne avant fin août) ; les Canaries (Las Palmas) et Madère (Funchal) en novembre ; les Bermudes en novembre et d'avril à août ; Fort Lauderdale, en Floride, en novembre."
+
+#: help/templates/help/travelling_tips.html
+msgid "Mediterranean"
+msgstr "Méditerranée"
+
+#: help/templates/help/travelling_tips.html
+msgid "Gibraltar, Palma, Malta and many other ports, April to November. Few boats go from the Mediterranean into the Indian Ocean; more come the other way through the Suez Canal."
+msgstr "Gibraltar, Palma, Malte et beaucoup d'autres ports, d'avril à novembre. Peu de bateaux vont de la Méditerranée vers l'océan Indien ; davantage viennent dans l'autre sens par le canal de Suez."
+
+#: help/templates/help/travelling_tips.html
+msgid "Caribbean"
+msgstr "Caraïbes"
+
+#: help/templates/help/travelling_tips.html
+msgid "St Thomas (Virgin Islands) in November, Barbados and Grenada in November and December, the Panama Canal (Cristóbal and Balboa) in March and April."
+msgstr "Saint-Thomas (îles Vierges) en novembre, la Barbade et la Grenade en novembre et décembre, le canal de Panama (Cristóbal et Balboa) en mars et avril."
+
+#: help/templates/help/travelling_tips.html
+msgid "South Atlantic"
+msgstr "Atlantique Sud"
+
+#: help/templates/help/travelling_tips.html
+msgid "Cape Town, South Africa, in January and February."
+msgstr "Le Cap, en Afrique du Sud, en janvier et février."
+
+#: help/templates/help/travelling_tips.html
+msgid "Indian Ocean"
+msgstr "Océan Indien"
+
+#: help/templates/help/travelling_tips.html
+msgid "Darwin, Australia, in July; Durban, South Africa, and Galle, Sri Lanka, in December."
+msgstr "Darwin, en Australie, en juillet ; Durban, en Afrique du Sud, et Galle, au Sri Lanka, en décembre."
+
+#: help/templates/help/travelling_tips.html
+msgid "North Pacific"
+msgstr "Pacifique Nord"
+
+#: help/templates/help/travelling_tips.html
+msgid "Southern California from Santa Barbara to San Diego in October; Cabo San Lucas and La Paz, Mexico, around Christmas; Hawaii (Hilo, Lahaina) from May to September, Honolulu in August and September; Cebu, Philippines, in August and September; Hong Kong from December to April."
+msgstr "Le sud de la Californie, de Santa Barbara à San Diego, en octobre ; Cabo San Lucas et La Paz, au Mexique, vers Noël ; Hawaï (Hilo, Lahaina) de mai à septembre, Honolulu en août et septembre ; Cebu, aux Philippines, en août et septembre ; Hong Kong de décembre à avril."
+
+#: help/templates/help/travelling_tips.html
+msgid "South Pacific"
+msgstr "Pacifique Sud"
+
+#: help/templates/help/travelling_tips.html
+msgid "Tahiti from April to October, Fiji in September, the Bay of Islands in New Zealand in March."
+msgstr "Tahiti d'avril à octobre, les Fidji en septembre, la baie des Îles en Nouvelle-Zélande en mars."
+
+#: help/templates/help/travelling_tips.html
+msgid "Before you go on board"
+msgstr "Avant de monter à bord"
+
+#: help/templates/help/travelling_tips.html
+msgid "Network: spend time where sailors are, stay nearby for a month or more just before the season, and meet as many people as you can. Most places on boats are found by word of mouth."
+msgstr "Fais du réseau : passe du temps là où sont les marins, reste dans le coin un mois ou plus juste avant la saison et rencontre autant de monde que possible. La plupart des places sur les bateaux se trouvent par le bouche-à-oreille."
+
+#: help/templates/help/travelling_tips.html
+msgid "You don't need experience, but bring what you have: cooking, first aid, repairs, music. Be fit, handy and positive."
+msgstr "Tu n'as pas besoin d'expérience, mais apporte ce que tu as : cuisine, premiers secours, réparations, musique. Sois en forme, débrouillard·e et positif·ve."
+
+#: help/templates/help/travelling_tips.html
+msgid "Ask about money. Often you pay for your food and the skipper for the rest, but some also ask for harbour fees or fuel. Sometimes you can work in exchange, for example on maintenance."
+msgstr "Parle d'argent. Souvent, tu paies ta nourriture et le skipper le reste, mais certains demandent aussi les frais de port ou le carburant. Parfois, tu peux travailler en échange, par exemple à l'entretien."
+
+#: help/templates/help/travelling_tips.html
+msgid "Think about whether it is for you: rough weather, cold and wet night watches alone, little sleep and a small space with a few people. Much of the time the boat is in a harbour and you help with repairs. And yes: dolphins, sunsets and sustainable travel too."
+msgstr "Demande-toi si c'est pour toi : mauvais temps, quarts de nuit seul·e dans le froid et l'humidité, peu de sommeil et peu d'espace avec quelques personnes. Souvent, le bateau est au port et tu aides aux réparations. Et oui : des dauphins, des couchers de soleil et un voyage durable aussi."
+
+#: help/templates/help/travelling_tips.html
+msgid "Other networks for staying with people:"
+msgstr "D'autres réseaux pour loger chez des gens :"
+
+#: help/templates/help/travelling_tips.html
+msgid "built by their communities, respectful of your privacy, and with many people who live alternatively"
+msgstr "construits par leurs communautés, respectueux de ta vie privée, avec beaucoup de gens qui vivent autrement"
+
+#: help/templates/help/travelling_tips.html
+msgid "many hosts, but now a company; in big cities there are last-minute groups for the same night"
+msgstr "beaucoup d'hôtes, mais c'est devenu une entreprise ; dans les grandes villes, il existe des groupes de dernière minute pour la nuit même"
+
+#: help/templates/help/travelling_tips.html
+msgid "help on farms for food and a bed (WWOOF asks a small fee)"
+msgstr "aider dans des fermes contre le gîte et le couvert (WWOOF demande une petite cotisation)"
+
+#: help/templates/help/travelling_tips.html
+msgid "Global Ecovillage Network"
+msgstr "Réseau mondial des écovillages (GEN)"
+
+
+#: help/templates/help/travelling_tips.html
+msgid "Squats"
+msgstr "Squats"
+
+#: help/templates/help/travelling_tips.html
+msgid "if you trust someone who gave you a ride, ask whether they know a place to sleep for free in their town. Never push: they might feel unsafe."
+msgstr "si tu fais confiance à quelqu'un qui t'a pris en stop, demande-lui s'il connaît un endroit dans sa ville où dormir gratuitement. N'insiste jamais : la personne pourrait ne pas se sentir en sécurité."
+
+#: help/templates/help/travelling_tips.html
+msgid "Petrol stations"
+msgstr "Stations-service"
+
+#: help/templates/help/travelling_tips.html
+msgid "on the motorway, one that is open all night is bright and noisy, but better than outside in winter."
+msgstr "sur l'autoroute, une station ouverte toute la nuit est lumineuse et bruyante, mais vaut mieux que dehors en hiver."
+
+#: help/templates/help/travelling_tips.html
+msgid "Churches"
+msgstr "Églises"
+
+#: help/templates/help/travelling_tips.html
+msgid "in a village, when you really don't know where to go, ask the parish. Some still open their doors."
+msgstr "dans un village, quand tu ne sais vraiment pas où aller, demande à la paroisse. Certaines ouvrent encore leurs portes."
+
+#: help/templates/help/travelling_tips.html
+msgid "Albergues in Spain"
+msgstr "Albergues en Espagne"
+
+#: help/templates/help/travelling_tips.html
+msgid "public shelters where you can stay for free for a few nights, also in smaller towns. You need an ID. If you can't find one, the police can tell you where it is. Ask whether there is something similar in other countries."
+msgstr "des hébergements publics où tu peux rester gratuitement quelques nuits, aussi dans de petites villes. Il te faut une pièce d'identité. Si tu n'en trouves pas, la police peut te dire où c'est. Demande s'il existe quelque chose de semblable dans d'autres pays."
+
+#: help/templates/help/travelling_tips.html
+msgid "collect food from shops, bakeries and events that would be thrown away. You sign up and learn how first."
+msgstr "récupérer la nourriture des magasins, boulangeries et événements qui serait jetée. Tu t'inscris et tu apprends d'abord comment faire."
+
+#: help/templates/help/travelling_tips.html
+msgid "maps of fruit trees and other plants to harvest in towns and the countryside"
+msgstr "des cartes d'arbres fruitiers et d'autres plantes à récolter en ville et à la campagne"
+
+#: help/templates/help/travelling_tips.html
+msgid "Shops and bakeries"
+msgstr "Magasins et boulangeries"
+
+#: help/templates/help/travelling_tips.html
+msgid "around closing time, ask what they would throw away, and say that you travel without money. If they offer you something fresh instead, that doesn't save food: they will just make more for their customers."
+msgstr "vers l'heure de fermeture, demande ce qu'ils jetteraient et dis que tu voyages sans argent. S'ils t'offrent plutôt quelque chose de frais, ça ne sauve pas de nourriture : ils en feront simplement plus pour leurs clients."
+
+#: help/templates/help/travelling_tips.html
+msgid "Markets"
+msgstr "Marchés"
+
+#: help/templates/help/travelling_tips.html
+msgid "when a market ends there is often fruit and vegetables left; sometimes in boxes on the ground, sometimes you have to ask."
+msgstr "à la fin d'un marché, il reste souvent des fruits et légumes ; parfois dans des cagettes par terre, parfois il faut demander."
+
+#: help/templates/help/travelling_tips.html
+msgid "Restaurants and bars"
+msgstr "Restaurants et bars"
+
+
+#: help/templates/help/travelling_tips.html
+msgid "Dumpster diving"
+msgstr "Récup' dans les poubelles"
+
+#: help/templates/help/travelling_tips.html
+msgid "Hosts and drivers"
+msgstr "Hôtes et conducteurs"
+
+
+
+#: help/templates/help/travelling_tips.html
+msgid "Busking"
+msgstr "Spectacles de rue"
+
+#: help/templates/help/travelling_tips.html
+msgid "music, juggling, clowning, portraits, poems on request: find a place with many people and use your imagination. In many towns you need a permit, so check first."
+msgstr "musique, jonglage, clown, portraits, poèmes sur demande : trouve un endroit avec beaucoup de monde et sois inventif·ve. Dans beaucoup de villes il faut une autorisation, alors renseigne-toi avant."
+
+#: help/templates/help/travelling_tips.html
+msgid "Handicraft"
+msgstr "Artisanat"
+
+#: help/templates/help/travelling_tips.html
+msgid "sell what you make, like carvings or jewellery, to the people you meet."
+msgstr "vends ce que tu fabriques, comme des sculptures en bois ou des bijoux, aux gens que tu rencontres."
+
+#: help/templates/help/travelling_tips.html
+msgid "Small jobs"
+msgstr "Petits boulots"
+
+#: help/templates/help/travelling_tips.html
+msgid "ask shops or farms whether they need help for a few hours. You can't rely on it."
+msgstr "demande dans des magasins ou des fermes s'ils ont besoin d'aide pour quelques heures. Tu ne peux pas compter dessus."
+
+#: help/templates/help/travelling_tips.html
+msgid "some offer you money. Whether you take it is up to you."
+msgstr "certains te proposent de l'argent. À toi de voir si tu l'acceptes."
+
+#: help/templates/help/travelling_tips.html
+msgid "More ideas:"
+msgstr "Plus d'idées :"
+
+#: help/templates/help/travelling_tips.html
+#, python-format
+msgid "Look for <a href=\"%(tours_url)s\">Community-Tours and rides</a> going your way, or <a href=\"%(ride_url)s\">offer a ride</a> yourself. If you stay at a community, ecobasa suggests rides that end near it and rides back towards your home."
+msgstr "Cherche des <a href=\"%(tours_url)s\">Community-Tours et covoiturages</a> qui vont dans ta direction, ou <a href=\"%(ride_url)s\">propose toi-même un covoiturage</a>. Si tu séjournes dans une communauté, ecobasa te suggère des covoiturages qui arrivent près d'elle et d'autres pour rentrer vers chez toi."
+
+#: help/templates/help/travelling_tips.html
+#, python-format
+msgid "Travel as a guest, not as a tourist: stay at communities, project houses and farms, and help out. On ecobasa you can <a href=\"%(communities_url)s\">ask a community for a volunteer stay</a>; on a <a href=\"%(help_tours_url)s#hosts\">Community-Tour</a> you ask the hosts for the whole group. Every place has its own rules for guests, and some ask for money."
+msgstr "Voyage en invité·e, pas en touriste : séjourne dans des communautés, des maisons de projets et des fermes, et donne un coup de main. Sur ecobasa, tu peux <a href=\"%(communities_url)s\">demander un séjour en communauté</a> ; lors d'un <a href=\"%(help_tours_url)s#hosts\">Community-Tour</a>, vous demandez aux hôtes pour tout le groupe. Chaque lieu a ses propres règles pour les invités, et certains demandent de l'argent."
+
+#: help/templates/help/travelling_tips.html
+msgid "often open and welcoming, but they are not hostels for tourists. Go if you share their values and want to take part, ideally with a contact. Ask whether an eviction is expected, as you might lose your things. <a href=\"https://en.squat.net/\" target=\"_blank\" rel=\"noopener\">Squat.net</a>"
+msgstr "souvent ouverts et accueillants, mais ce ne sont pas des auberges pour touristes. Vas-y si tu partages leurs valeurs et veux participer, idéalement avec un contact. Demande si une expulsion est prévue, car tu pourrais perdre tes affaires. <a href=\"https://en.squat.net/\" target=\"_blank\" rel=\"noopener\">Squat.net</a>"
+
+#: help/templates/help/travelling_tips.html
+#, python-format
+msgid "On the <a href=\"%(gifts_url)s\">gifts map</a> you find food and harvests people share, and public goods like fruit trees free for everyone."
+msgstr "Sur la <a href=\"%(gifts_url)s\">carte des dons</a>, tu trouves de la nourriture et des récoltes que les gens partagent, et des biens communs comme des arbres fruitiers libres pour tout le monde."
+
+#: help/templates/help/travelling_tips.html
+msgid "behind supermarkets you often find good food. In some countries it is not allowed, so find out first. <a href=\"https://trashwiki.org/\" target=\"_blank\" rel=\"noopener\">Trashwiki</a> has places and how-tos."
+msgstr "derrière les supermarchés, tu trouves souvent de la bonne nourriture. Dans certains pays c'est interdit, alors renseigne-toi avant. <a href=\"https://trashwiki.org/\" target=\"_blank\" rel=\"noopener\">Trashwiki</a> a des lieux et des guides."
+
+#: help/templates/help/travelling_tips.html
+msgid "Do you know other tricks? <a href=\"/contact\">Write to us</a>, and we'll add them."
+msgstr "Tu connais d'autres astuces ? <a href=\"/contact\">Écris-nous</a>, et nous les ajouterons."
+
+#: help/templates/help/travelling_tips.html
+msgid "Hitchwiki: top tips"
+msgstr "Hitchwiki : les meilleurs conseils"
+
+#: help/templates/help/travelling_tips.html
+msgid "Hitchwiki: tips for women hitchhiking"
+msgstr "Hitchwiki : conseils pour les femmes qui font du stop"
+
+#: help/templates/help/travelling_tips.html
+msgid "Riding without a ticket is illegal and can have serious consequences. Instead, ask the bus driver or the train staff to take you along without one: then you are their guest, and that is completely legal. Tell them that you travel without money to spread the gift economy. Sometimes they are happy about an apple, a cookie, or a good story too."
+msgstr "Voyager sans billet est illégal et peut avoir de graves conséquences. Demande plutôt au chauffeur du bus ou au personnel du train de te prendre sans billet : tu es alors leur invité·e, et c'est tout à fait légal. Raconte que tu voyages sans argent pour faire connaître l'économie du don. Parfois, une pomme, un biscuit ou une bonne histoire leur font aussi plaisir."
+
+#: help/templates/help/travelling_tips.html
+msgid "In summer with a tent, look for a spot a little out of the way: people are more dangerous than animals, and even then very few of them are. A hammock is easier to carry and to set up, and allowed in many places as long as you are not trespassing. Or ask someone you met whether you may pitch your tent in their garden."
+msgstr "En été avec une tente, cherche un endroit un peu à l'écart : les humains sont plus dangereux que les animaux, et même alors, très peu le sont. Un hamac est plus facile à porter et à installer, et il est autorisé à beaucoup d'endroits tant que tu n'entres pas sur une propriété privée. Ou demande à quelqu'un que tu as rencontré si tu peux planter ta tente dans son jardin."
+
+#: help/templates/help/travelling_tips.html
+msgid "you can't count on it, but many will invite you to a meal or share what they have when you tell them that you travel without money."
+msgstr "tu ne peux pas compter dessus, mais beaucoup t'inviteront à manger ou partageront ce qu'ils ont quand tu leur dis que tu voyages sans argent."
+
+#: help/templates/help/travelling_tips.html
+msgid "Travelling like this, you need little money, but sometimes you do. Please don't take detours or risks that a little money could avoid! If you need to earn some money:"
+msgstr "En voyageant ainsi, tu as besoin de peu d'argent, mais parfois si. Ne fais pas de détours et ne prends pas de risques qu'un peu d'argent pourrait éviter ! Si tu as besoin de gagner un peu d'argent :"
+
+#: help/templates/help/travelling_tips.html
+msgid "ask kindly for what is left over at the end of the evening, or take what guests leave on their plates before the waiters clear the table, if you are sure nobody sees you…"
+msgstr "demande gentiment ce qui reste en fin de soirée, ou prends ce que les clients laissent dans leur assiette avant que les serveurs ne débarrassent, si tu es sûr·e que personne ne te voit…"

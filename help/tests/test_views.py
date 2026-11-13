@@ -32,3 +32,11 @@ def test_the_menu_and_the_tour_pages_lead_to_help(client):
     assert 'href="/help/"' in client.get("/", HTTP_ACCEPT_LANGUAGE="en").content.decode()
     tours = client.get("/community-tours/", HTTP_ACCEPT_LANGUAGE="en").content.decode()
     assert 'href="/help/community-tours/#what"' in tours
+
+
+@pytest.mark.django_db
+def test_the_travelling_tips_are_linked_from_the_tours_help(client):
+    page = client.get("/help/community-tours/", HTTP_ACCEPT_LANGUAGE="en").content.decode()
+    assert 'href="/help/community-tours/travelling-tips/"' in page
+    tips = client.get("/help/community-tours/travelling-tips/", HTTP_ACCEPT_LANGUAGE="en")
+    assert tips.status_code == 200 and 'id="sailing"' in tips.content.decode()

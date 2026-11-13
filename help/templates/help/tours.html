@@ -26,6 +26,7 @@
           <li class="mb-0"><a class="text-yellow hover:text-purple" href="#for-hosts">{% trans "For community ambassadors: a tour comes to visit" %}</a></li>
           <li class="mb-0"><a class="text-yellow hover:text-purple" href="#after">{% trans "On the road and afterwards" %}</a></li>
           <li class="mb-0"><a class="text-yellow hover:text-purple" href="#privacy">{% trans "Privacy" %}</a></li>
+          <li class="mb-0 list-none mt-2"><a class="text-yellow hover:text-purple" href="{% url 'help:travelling_tips' %}"><i class="fa-solid fa-person-hiking mr-1"></i>{% trans "Travelling without money" %}</a></li>
         </ol>
       </div>
     </nav>
@@ -79,6 +80,11 @@
         <p>{% blocktrans %}Driving somewhere anyway? <a href="{{ ride_url }}">Offer a ride</a>: from where, to where, which day and how many free seats. It is published at once. A ride is simply a tour with two stops, so people ask to join it the same way.{% endblocktrans %}</p>
         <p>{% trans "Rides are suggested to people who are looking for one and want to go near where the ride ends around that day, and to people who would like a ride towards home after a stay." %}</p>
       </section>
+
+      <a href="{% url 'help:travelling_tips' %}" class="flex items-center gap-3 mt-8 p-4 rounded-lg bg-secondary bg-opacity-75 hover:shadow transition">
+        <i class="fa-solid fa-person-hiking text-2xl text-primary"></i>
+        <span><strong>{% trans "Travelling without money" %}</strong><br><span class="text-brown text-sm">{% trans "Tips for hitchhiking, boats, places to sleep and food on the way." %}</span></span>
+      </a>
 
       <section id="plan" class="mt-12 scroll-mt-6">
         <h2 class="text-3xl sm:text-4xl hyphens-auto">{% trans "Plan your own tour" %}</h2>

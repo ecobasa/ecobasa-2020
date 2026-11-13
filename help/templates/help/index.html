@@ -18,6 +18,15 @@
         </span>
       </a>
     </li>
+    <li>
+      <a href="{% url 'help:travelling_tips' %}" class="flex items-start gap-4 p-6 rounded-2xl bg-secondary bg-opacity-75 shadow hover:shadow-lg transition">
+        <span class="flex-none w-14 h-14 rounded-lg bg-purple flex items-center justify-center"><i class="fa-solid fa-person-hiking text-2xl text-secondary"></i></span>
+        <span class="flex-1 min-w-0">
+          <span class="block font-serif text-2xl text-primary">{% trans "Travelling without money" %}</span>
+          <span class="block text-brown">{% trans "Tips for hitchhiking, boats, places to sleep and food on the way." %}</span>
+        </span>
+      </a>
+    </li>
   </ul>
 
   <p class="mt-8">{% blocktrans %}Something missing or unclear? <a href="/contact">Write to us</a>, we are glad to hear it.{% endblocktrans %}</p>

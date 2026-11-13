@@ -10,6 +10,10 @@ def tours(request):
     return render(request, "help/tours.html")
 
 
+def travelling_tips(request):
+    return render(request, "help/travelling_tips.html")
+
+
 def other_language(request, rest):
     """/help/ and /hilfe/ are the same pages: the spelling of another language leads to
     the one of the page's language (a shared link, or the language switched)."""
