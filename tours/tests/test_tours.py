@@ -314,6 +314,16 @@ def test_a_tour_with_one_stop_is_found_by_its_stop(organiser, village):
     assert routes(bbox="0,40,1,41") == []
 
 
+def test_each_route_says_what_line_it_is(organiser, farm, village):
+    bordeaux = {"name": "Bordeaux", "location": Point(-0.57, 44.84, srid=4326)}
+    toulouse = {"name": "Toulouse", "location": Point(1.44, 43.6, srid=4326)}
+    tour = published(organiser, "East", {"community": farm}, {"community": village})
+    ride = published(organiser, "Lift", bordeaux, toulouse, travel_mode=Tour.MODE_BICYCLE)
+    bike = published(organiser, "Pedal", {"community": farm}, {"community": village}, travel_mode=Tour.MODE_BICYCLE)
+    lines = {f["properties"]["slug"]: f["properties"]["line"] for f in routes() if f["properties"]["kind"] == "route"}
+    assert lines == {tour.slug: "tour", ride.slug: "ride", bike.slug: "bicycle"}
+
+
 def test_no_exact_private_place_in_any_payload(organiser, farm, village):
     tour = published(organiser, "East", {"community": farm}, {"community": village})
     payload = Client().get(reverse("tours:api-routes")).content.decode()

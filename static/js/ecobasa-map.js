@@ -66,22 +66,24 @@
 
     // ── Tour routes ──────────────────────────────────────────────────
 
-    // Routes and their numbered stops from tours:api-routes (GeoJSON in lon/lat). Lines by
-    // state: upcoming solid, idea dashed, past faded; an arrow per leg shows the
-    // direction. A stop at a private place is drawn with an area around it once zoomed
-    // in, as for a community. Hovering a route lights it up; options.onSelect(props,
+    // Routes and their numbered stops from tours:api-routes (GeoJSON in lon/lat). Colour
+    // by what the tour is (its line: tour, ride or bicycle), style by state: upcoming
+    // solid, idea dashed, past faded; an arrow per leg shows the direction. A stop at a
+    // private place is drawn with an area around it once zoomed in, as for a community.
+    // Hovering a route lights it up and fades all others; options.onSelect(props,
     // coordinate) is called on a click. Returns { layer, source, setData, highlight, fit }.
     addRouteLayer(map, geojson, options) {
       options = options || {};
-      const colors = { upcoming: '#da6137', idea: '#de7a08', past: '#452912', lit: '#80143b' };
+      const colors = { tour: '#da6137', ride: '#80143b', bicycle: '#5A5527' };
       const source = new ol.source.Vector();
       const format = new ol.format.GeoJSON();
       let lit = null;
       const pins = {};
 
       // An arrow on each leg; with options.legModes, the leg's vehicle (a codepoint of
-      // the route's leg_modes) in its middle and the arrow further on
-      const arrowStyles = function (line, color, legModes) {
+      // the route's leg_modes) in its middle and the arrow further on, both above the
+      // line (zIndex)
+      const arrowStyles = function (line, color, legModes, zIndex) {
         const coords = line.getCoordinates();
         const styles = [];
         const at = legModes ? 0.78 : 0.5;
@@ -100,7 +102,7 @@
                 text: String.fromCodePoint(legModes[i]), font: '900 13px "Font Awesome 6 Free"',
                 fill: new ol.style.Fill({ color: color }),
               }),
-              zIndex: 4,
+              zIndex: zIndex + 1,
             }));
           }
           styles.push(new ol.style.Style({
@@ -110,6 +112,7 @@
               fill: new ol.style.Fill({ color: color }),
               stroke: new ol.style.Stroke({ color: '#fcf3e5', width: 1 }),
             }),
+            zIndex: zIndex,
           }));
         }
         return styles;
@@ -118,16 +121,24 @@
       const style = function (feature, resolution) {
         const state = feature.get('state');
         const isLit = lit && feature.get('slug') === lit;
-        const color = isLit ? colors.lit : (colors[state] || colors.upcoming);
+        const isDim = lit && !isLit;
+        const color = colors[feature.get('line')] || colors.tour;
         if (feature.get('kind') === 'route') {
+          const faded = isDim ? color + '33' : (state === 'past' && !isLit ? color + '80' : color);
           return [new ol.style.Style({
             stroke: new ol.style.Stroke({
-              color: state === 'past' && !isLit ? color + '80' : color,
+              color: faded,
               width: isLit ? 6 : 4,
               lineDash: state === 'idea' ? [10, 8] : undefined,
             }),
             zIndex: isLit ? 10 : 1,
-          })].concat(arrowStyles(feature.getGeometry(), color, options.legModes ? feature.get('leg_modes') : null));
+          })].concat(isDim ? [] : arrowStyles(feature.getGeometry(), color, options.legModes ? feature.get('leg_modes') : null, isLit ? 11 : 3));
+        }
+        // The stops of other tours than the lit one only faintly
+        if (isDim) {
+          return new ol.style.Style({
+            image: new ol.style.Circle({ radius: 5, fill: new ol.style.Fill({ color: color + '33' }) }),
+          });
         }
         const styles = [];
         if (feature.get('rough') && resolution < 40) {

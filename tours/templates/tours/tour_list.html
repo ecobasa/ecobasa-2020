@@ -145,6 +145,13 @@
   <div class="relative w-full map-shell">
     <div id="tour-map" class="absolute inset-0 w-full h-full rounded shadow bg-secondary bg-opacity-50"></div>
 
+    {# What the line colours mean (EcoMap.addRouteLayer) #}
+    <div x-show="$store.tourMap.view === 'map'" class="absolute bottom-4 left-4 z-10 flex flex-col gap-1 px-3 py-2 rounded-md bg-secondary bg-opacity-90 shadow text-xs text-brown">
+      <span class="flex items-center gap-2"><span class="inline-block w-5 h-1 rounded-full bg-primary"></span>{% trans "Tours" %}</span>
+      <span class="flex items-center gap-2"><span class="inline-block w-5 h-1 rounded-full bg-purple"></span>{% trans "Rides" %}</span>
+      <span class="flex items-center gap-2"><span class="inline-block w-5 h-1 rounded-full bg-green"></span>{% trans "Bicycle" %}</span>
+    </div>
+
     {# View toggle, top centre #}
     <div class="absolute top-4 left-1/2 -translate-x-1/2 z-10">
       <div class="inline-flex overflow-hidden rounded-full shadow-lg border bg-primary bg-opacity-20 backdrop-blur border-red">

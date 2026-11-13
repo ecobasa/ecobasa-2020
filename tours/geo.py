@@ -264,6 +264,15 @@ def tour_state(tour):
     return "upcoming"
 
 
+def tour_line(tour):
+    """What a tour's line is coloured by on the map: a ride, else a bicycle tour, else a tour."""
+    if tour.is_ride:
+        return "ride"
+    if tour.travel_mode == tour.MODE_BICYCLE:
+        return "bicycle"
+    return "tour"
+
+
 def tour_features(tour, user=None):
     """The tour as GeoJSON features: its route line (with each leg's travel mode) and its
     numbered stops, at the places everyone may see, each stop with its pin (icon, color);
@@ -278,6 +287,7 @@ def tour_features(tour, user=None):
         "url": tour.get_absolute_url(),
         "dates": render_to_string("tours/_tour_dates.html", {"tour": tour}).strip(),
         "state": tour_state(tour),
+        "line": tour_line(tour),
         "km": tour.distance_km,
         "image": tour.header_image,
         "mode_icon": tour.travel_mode_icon,
