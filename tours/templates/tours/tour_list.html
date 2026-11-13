@@ -146,8 +146,9 @@
     <div id="tour-map" class="absolute inset-0 w-full h-full rounded shadow bg-secondary bg-opacity-50"></div>
 
     {# What the line colours mean (EcoMap.addRouteLayer) #}
-    <div x-show="$store.tourMap.view === 'map'" class="absolute bottom-4 left-4 z-10 flex flex-col gap-1 px-3 py-2 rounded-md bg-secondary bg-opacity-90 shadow text-xs text-brown">
+    <div x-show="$store.tourMap.view === 'map'" class="absolute bottom-4 right-4 z-10 flex flex-col gap-1 px-3 py-2 rounded-md bg-secondary bg-opacity-30 backdrop-blur shadow text-xs text-brown">
       <span class="flex items-center gap-2"><span class="inline-block w-5 h-1 rounded-full bg-primary"></span>{% trans "Tours" %}</span>
+      <span class="flex items-center gap-2"><svg class="w-5 h-1 text-primary" viewBox="0 0 20 4" aria-hidden="true"><line x1="2" y1="2" x2="20" y2="2" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-dasharray="4 7"/></svg>{% trans "Planned Tours" %}</span>
       <span class="flex items-center gap-2"><span class="inline-block w-5 h-1 rounded-full bg-purple"></span>{% trans "Rides" %}</span>
       <span class="flex items-center gap-2"><span class="inline-block w-5 h-1 rounded-full bg-green"></span>{% trans "Bicycle" %}</span>
     </div>

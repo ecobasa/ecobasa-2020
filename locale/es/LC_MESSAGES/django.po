@@ -6558,3 +6558,7 @@ msgstr "Todavía nada que llevar. Cuando quien regala y quien recibe acepten, el
 #: tours/templates/tours/_delivery_row.html
 msgid "Brought by"
 msgstr "Lo trae"
+
+#: tours/templates/tours/tour_list.html:151
+msgid "Planned Tours"
+msgstr "Tours planificados"

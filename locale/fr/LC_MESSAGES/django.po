@@ -6593,3 +6593,7 @@ msgstr "Rien à emporter pour l'instant. Dès que qui donne et qui reçoit accep
 #: tours/templates/tours/_delivery_row.html
 msgid "Brought by"
 msgstr "Apporté par"
+
+#: tours/templates/tours/tour_list.html:151
+msgid "Planned Tours"
+msgstr "Tours planifiés"

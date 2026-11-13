@@ -6584,3 +6584,7 @@ msgstr "Noch nichts zum Mitnehmen. Sobald die schenkende und die empfangende Sei
 #: tours/templates/tours/_delivery_row.html
 msgid "Brought by"
 msgstr "Überbringer*in:"
+
+#: tours/templates/tours/tour_list.html:151
+msgid "Planned Tours"
+msgstr "Geplante Touren"
