@@ -1,12 +1,13 @@
-{% load i18n %}{% get_current_language as LANGUAGE_CODE %}
+{% load i18n site_tags %}{% get_current_language as LANGUAGE_CODE %}
 <!DOCTYPE html>
 <html lang="{{ LANGUAGE_CODE|default:'en' }}">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{{ headline }}</title>
+  {% include "email/_fonts.html" %}
 </head>
-<body style="margin:0;padding:0;background-color:#f5ede0;font-family:Georgia,serif;color:#452912;">
+<body style="margin:0;padding:0;background-color:#f5ede0;font-family:Arial,Helvetica,sans-serif;color:#452912;">
   <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f5ede0;padding:32px 0;">
     <tr>
       <td align="center">
@@ -14,8 +15,8 @@
 
           {# Header #}
           <tr>
-            <td style="background-color:#da6137;padding:28px 32px;">
-              <p style="margin:0;font-size:24px;font-weight:bold;color:#fcf3e5;font-family:Georgia,serif;">ecobasa.org</p>
+            <td bgcolor="#e08361" style="background-color:#e08361;padding:24px 32px;">
+              <img class="wordmark" src="{% email_static "images/email-wordmark.png" %}" width="185" height="39" alt="ecobasa.org" style="display:block;border:0;font-size:26px;color:#fcf3e5;font-family:Georgia,serif;">
               <p style="margin:8px 0 0;font-size:14px;color:#fcf3e5;opacity:0.85;">{% trans "Share your story" %}</p>
             </td>
           </tr>
