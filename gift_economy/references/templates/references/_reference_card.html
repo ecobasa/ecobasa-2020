@@ -1,13 +1,14 @@
 {% load i18n %}
-{# One reference: author, what kind of exchange it was about (pill), impression, its subject, text, skill tags and gift names #}
+{# One reference: author (or, on your given references, who it was given to), its subject as the main tag (else the kind of exchange), the kind, impression, text, skill tags and gift names #}
 <article id="reference-{{ ref.pk }}" class="scroll-mt-24 target:ring-2 target:ring-primary border rounded-lg p-4
   {% if ref.impression == 'positive' %}border-green bg-green bg-opacity-5
   {% elif ref.impression == 'negative' %}border-red bg-red bg-opacity-30
   {% else %}border-brown bg-secondary bg-opacity-5{% endif %}">
+  {% with person=ref.person|default:ref.author %}
   <header class="flex items-center gap-3 mb-2">
-    <a href="{{ ref.author.get_absolute_url }}" class="flex-shrink-0">
-      {% if ref.author.image %}
-        <img src="{{ ref.author.image.url }}" alt="" class="w-8 h-8 rounded-full object-cover">
+    <a href="{{ person.get_absolute_url }}" class="flex-shrink-0">
+      {% if person.image %}
+        <img src="{{ person.image.url }}" alt="" class="w-8 h-8 rounded-full object-cover">
       {% else %}
         <div class="w-8 h-8 rounded-full bg-primary bg-opacity-20 flex items-center justify-center">
           <i class="fa fa-user text-xs text-primary"></i>
@@ -16,26 +17,27 @@
     </a>
     <div class="flex-1 min-w-0">
       <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
-        <a href="{{ ref.author.get_absolute_url }}" class="text-sm font-semibold text-primary">{{ ref.author.name|default:ref.author.username }}</a>
-        {% include "_kind_pill.html" with kind=ref.kind %}
-      </div>
-      <div class="text-xs text-brown">{{ ref.get_impression_display }} · {{ ref.created_at|date:"SHORT_DATE_FORMAT" }}</div>
-      {% if ref.about_other and ref.subject %}
-        <div class="text-xs text-brown">
-          {% translate "about" context "reference subject" %}
-          {# Same icons as the profile: skills, offers, wishes #}
-          <a href="{{ ref.subject.get_absolute_url }}" class="text-primary"><i class="mr-1
+        <a href="{{ person.get_absolute_url }}" class="text-sm font-semibold text-primary">{{ person.name|default:person.username }}</a>
+        {% if ref.about_other and ref.subject %}
+          {# What it's about, as the main tag. Same icons as the profile: skills, offers, wishes #}
+          <a href="{{ ref.subject.get_absolute_url }}" class="pill text-xs flex-none {{ ref.kind.2 }}" title="{% translate 'about' context 'reference subject' %}"><i class="mr-1
             {% if ref.content_type.model == 'listing' %}{% if ref.subject.kind != 'other' %}fa-solid {{ ref.subject.kind_icon }}{% elif ref.subject.type == 'wish' %}fa-solid fa-hand-holding-heart{% else %}fa fa-gift{% endif %}
             {% elif ref.content_type.model == 'user' %}fa fa-user
             {% elif ref.content_type.model == 'community' %}fa-solid {{ ref.subject.get_type_icon }}
             {% else %}fa {{ ref.subject.get_match_icon }}{% endif %}"></i>{% if ref.content_type.model == 'user' %}{{ ref.subject.name|default:ref.subject.username }}{% else %}{{ ref.subject.get_match_display_name }}{% endif %}</a>
-        </div>
-      {% endif %}
+        {% else %}
+          {% include "_kind_pill.html" with kind=ref.kind %}
+        {% endif %}
+      </div>
+      <div class="text-xs text-brown">
+        {% if ref.about_other and ref.subject %}<i class="fa-solid {{ ref.kind.1 }} mr-1"></i>{{ ref.kind.0 }} · {% endif %}{{ ref.get_impression_display }} · {{ ref.created_at|date:"SHORT_DATE_FORMAT" }}
+      </div>
     </div>
     {% if show_edit and ref.subject %}
       <a href="{{ ref.subject.get_absolute_url }}?edit_reference=1#references" class="text-xs text-primary flex-shrink-0"><i class="fa fa-pencil mr-1"></i>{% trans "Edit" %}</a>
     {% endif %}
   </header>
+  {% endwith %}
   <p class="text-sm m-0">{{ ref.text|linebreaksbr }}</p>
   {% if ref.photo %}<img src="{{ ref.photo.url }}" alt="" loading="lazy" class="mt-3 rounded-lg max-h-64 object-cover">{% endif %}
   {% if ref.visible_skill_tags or ref.gift_names %}

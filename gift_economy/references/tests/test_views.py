@@ -305,6 +305,12 @@ class TestDashboard:
         assert "Lovely host." in _client_for(author).get(reverse("references:list") + "?type=given").content.decode()
         assert "Lovely host." not in _client_for(author).get(reverse("references:list")).content.decode()
 
+    def test_given_cards_are_headed_by_who_it_was_given_to(self, author, owner):
+        Reference(author=author, recipient=owner, subject=owner, text="Lovely host.").save()
+        given = _client_for(author).get(reverse("references:list") + "?type=given").content.decode()
+        assert 'class="text-sm font-semibold text-primary">Owner</a>' in given
+        assert 'class="text-sm font-semibold text-primary">Ann</a>' not in given
+
     def test_pending_skills_are_listed_and_counted(self, author, owner):
         _client_for(author).post(_save_url(owner), {"impression": "positive", "text": "Great.", "skill_names": "Beekeeping"})
         content = _client_for(owner).get(reverse("references:list")).content.decode()

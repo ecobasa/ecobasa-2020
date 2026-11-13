@@ -86,14 +86,19 @@ def skill_tag(request, pk, action):
 def _load(references, user, tab, holder=None):
     """Fetch references for the dashboard and mark how each card is shown. Within a
     group, cards about the group's holder itself (you, or the community) skip the
-    "about" line."""
-    references = list(with_card_data(references).order_by("-created_at"))
+    "about" line. Given references are headed by the person they were given to, not you."""
+    references = list(with_card_data(references).select_related("recipient").order_by("-created_at"))
     for reference in references:
         about_you = (reference.content_type.model, reference.object_id) == ("user", str(user.pk))
         about_holder = holder is not None and (reference.content_type_id, reference.object_id) == (
             ContentType.objects.get_for_model(holder).pk, str(holder.pk)
         )
         reference.about_other = not about_holder
+        if tab == "given" and reference.recipient is not None:
+            reference.person = reference.recipient
+            reference.about_other = (reference.content_type.model, reference.object_id) != (
+                "user", str(reference.recipient.pk)
+            )
         reference.about_you = about_you
         reference.visible_skill_tags = [
             t for t in reference.skill_tags.all() if t.status != ReferenceSkill.STATUS_DECLINED
