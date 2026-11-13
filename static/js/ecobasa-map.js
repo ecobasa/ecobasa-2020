@@ -335,6 +335,16 @@
 
     // ── Geocoding ────────────────────────────────────────────────────
 
+    // Show a Nominatim result's area (its boundingbox: south, north, west, east), so a
+    // country fits on the screen and a village comes close. False without one.
+    fitPlace(map, boundingbox, done) {
+      const box = (boundingbox || []).map(parseFloat);
+      if (box.length !== 4 || !box.every(isFinite)) return false;
+      const extent = ol.proj.transformExtent([box[2], box[0], box[3], box[1]], 'EPSG:4326', 'EPSG:3857');
+      map.getView().fit(extent, { padding: [80, 80, 80, 80], maxZoom: 12, duration: 800, callback: done });
+      return true;
+    },
+
     async reverseGeocode(lon, lat) {
       try {
         const r = await fetch('https://nominatim.openstreetmap.org/reverse?format=json&lat=' + lat + '&lon=' + lon + '&addressdetails=1&accept-language=' + LANGUAGE);

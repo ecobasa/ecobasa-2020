@@ -66,7 +66,7 @@
                     seen.add(label);
                     perCountry[cc] = (perCountry[cc] || 0) + 1;
                     if (perCountry[cc] <= 2) {
-                      acc.push({ value: label, type: 'place', lon: parseFloat(d.lon), lat: parseFloat(d.lat), zoom: nominatimZoom(d) });
+                      acc.push({ value: label, type: 'place', lon: parseFloat(d.lon), lat: parseFloat(d.lat), zoom: nominatimZoom(d), bbox: d.boundingbox });
                     }
                   }
                   return acc;
@@ -92,7 +92,7 @@
             if (context === 'modal') {
               this.$nextTick(() => htmx.trigger(document.getElementById('modal-search-q'), 'list:reload'));
             }
-            window._communityMapPanTo && window._communityMapPanTo(item.lon, item.lat, item.zoom);
+            window._communityMapPanTo && window._communityMapPanTo(item.lon, item.lat, item.zoom, item.bbox);
           } else {
             Alpine.store('communityMap').q = item.value;
             this.$refs.searchInput.value = item.value;
@@ -739,11 +739,11 @@ function initCommunityMap() {
     );
   };
 
-  window._communityMapPanTo = function (lon, lat, zoom) {
-    communityOlMap.getView().animate(
-      { center: ol.proj.fromLonLat([lon, lat]), zoom: zoom || 7 },
-      function () { window._communityMapReload(); }
-    );
+  // A place: its whole area if it has one (a country fits on the screen), else around it
+  window._communityMapPanTo = function (lon, lat, zoom, bbox) {
+    const reload = function () { window._communityMapReload(); };
+    if (EcoMap.fitPlace(communityOlMap, bbox, reload)) return;
+    communityOlMap.getView().animate({ center: ol.proj.fromLonLat([lon, lat]), zoom: zoom || 7 }, reload);
   };
 
   window._communityMapReload = function (fitToResults) {

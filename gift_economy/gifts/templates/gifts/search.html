@@ -125,7 +125,7 @@
                   seen.add(label);
                   perCountry[cc] = (perCountry[cc] || 0) + 1;
                   if (perCountry[cc] <= 2) {
-                    acc.push({ value: label, type: 'place', lon: parseFloat(d.lon), lat: parseFloat(d.lat), zoom: nominatimZoom(d) });
+                    acc.push({ value: label, type: 'place', lon: parseFloat(d.lon), lat: parseFloat(d.lat), zoom: nominatimZoom(d), bbox: d.boundingbox });
                   }
                 }
                 return acc;
@@ -146,7 +146,7 @@
             store.location     = item.lat + ',' + item.lon;
             store.locationName = item.value;
             store.q = '';
-            window._fmZoomTo && window._fmZoomTo(item.lat, item.lon, null, item.zoom);
+            window._fmZoomTo && window._fmZoomTo(item.lat, item.lon, item.bbox, item.zoom);
             store.reload();
           } else {
             store.q = item.value;
@@ -708,13 +708,7 @@
     });
 
     window._fmZoomTo = function (lat, lon, bbox, zoom) {
-      if (bbox) {
-        var extent = ol.proj.transformExtent(
-          [parseFloat(bbox[2]), parseFloat(bbox[0]), parseFloat(bbox[3]), parseFloat(bbox[1])],
-          'EPSG:4326', 'EPSG:3857'
-        );
-        map.getView().fit(extent, { duration: 1000, padding: [50, 50, 50, 50] });
-      } else {
+      if (!EcoMap.fitPlace(map, bbox)) {
         map.getView().animate({ center: ol.proj.fromLonLat([parseFloat(lon), parseFloat(lat)]), zoom: zoom || 12, duration: 1000 });
       }
     };
