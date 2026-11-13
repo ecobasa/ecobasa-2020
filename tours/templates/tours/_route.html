@@ -5,7 +5,7 @@
     {% with stop=item.stop %}
     <li class="m-0">
       <div class="flex items-start gap-3">
-        <span class="flex-none w-8 h-8 rounded-full bg-primary text-secondary font-bold flex items-center justify-center">{{ item.number }}</span>
+        {% if route|length > 1 %}<span class="flex-none w-8 h-8 rounded-full bg-primary text-secondary font-bold flex items-center justify-center">{{ item.number }}</span>{% endif %}
         <div class="flex-1 min-w-0 pb-2">
           <div class="font-semibold">
             <i class="fa-solid {{ stop.icon }} mr-1 text-primary"></i>

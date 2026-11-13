@@ -263,7 +263,8 @@ def tour_features(tour, user=None):
             "geometry": {"type": "LineString", "coordinates": [list(c) for c in tour.route.coords]},
             "properties": {**props, "kind": "route", "leg_modes": leg_modes},
         })
-    for number, stop in enumerate(tour.stops.all(), start=1):
+    stops = list(tour.stops.all())
+    for number, stop in enumerate(stops, start=1):
         name, point = stop.public_place()
         if point is None:
             continue
@@ -281,7 +282,7 @@ def tour_features(tour, user=None):
             "type": "Feature",
             "geometry": {"type": "Point", "coordinates": [point.x, point.y]},
             "properties": {
-                **props, "kind": "stop", "number": number, "name": label, "place": name or "",
+                **props, "kind": "stop", "number": number, "stop_count": len(stops), "name": label, "place": name or "",
                 "icon": icon, "color": color, "link": link, "stop_image": stop_image(stop),
                 "stop_dates": render_to_string("tours/_stop_dates.html", {"stop": stop}).strip(),
                 # Shown as an area, not a pin, so it doesn't look like an address

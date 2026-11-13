@@ -141,23 +141,24 @@
         }
         if (feature.get('icon')) {
           // A pin with what the stop is (community by type, event by kind, another place;
-          // a bus for an idea at its organiser's rough home), its number in a badge on it
+          // a bus for an idea at its organiser's rough home), its number in a badge at its tip (not at the top
+          // right, where it would look like a cluster's count)
           const pinKey = feature.get('icon') + feature.get('color');
           if (!pins[pinKey]) pins[pinKey] = EcoMap.createLayeredIcon(feature.get('icon'), feature.get('color'));
           styles.push(new ol.style.Style({
             image: new ol.style.Icon({ img: pins[pinKey], imgSize: [80, 80], anchor: [0.5, 0.85], scale: isLit ? 0.8 : 0.65 }),
             zIndex: isLit ? 12 : 5,
           }));
-          if (feature.get('number')) {
+          // A single stop needs no number
+          if (feature.get('number') && feature.get('stop_count') !== 1) {
             styles.push(new ol.style.Style({
               image: new ol.style.Circle({
-                radius: 8, displacement: [isLit ? 17 : 14, isLit ? 50 : 41],
+                radius: isLit ? 9 : 8,
                 fill: new ol.style.Fill({ color: color }),
                 stroke: new ol.style.Stroke({ color: '#fcf3e5', width: 2 }),
               }),
               text: new ol.style.Text({
                 text: String(feature.get('number')), font: 'bold 10px Lato, sans-serif',
-                offsetX: isLit ? 17 : 14, offsetY: isLit ? -50 : -41,
                 fill: new ol.style.Fill({ color: '#fcf3e5' }),
               }),
               zIndex: isLit ? 13 : 6,
