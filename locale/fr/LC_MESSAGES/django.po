@@ -3472,11 +3472,11 @@ msgstr "Belles histoires"
 
 #: gift_economy/references/templates/references/featured.html:9
 msgid ""
-"Stories their authors agreed to share. Featured ones are shown on the "
-"homepage, newest first."
+"Stories their authors agreed to share. The homepage shows three of the "
+"featured ones, different ones on each visit."
 msgstr ""
-"Histoires que leurs auteur·ices acceptent de partager. Celles mises en avant "
-"apparaissent sur la page d'accueil, les plus récentes d'abord."
+"Histoires que leurs auteur·ices acceptent de partager. La page d'accueil "
+"en montre trois parmi celles mises en avant, différentes à chaque visite."
 
 #: gift_economy/references/templates/references/featured.html:11
 msgid "On the homepage"

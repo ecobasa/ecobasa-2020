@@ -38,3 +38,8 @@ def test_demo_data_names_things_as_the_form_would_and_spreads_them_over_the_map(
     for tour in Tour.objects.all():
         if tour.stops.count() > 1:
             assert delivery_suggestions(tour), tour.title
+    # More success stories than the homepage shows at once, all of them positive and shared
+    from gift_economy.references.models import Reference
+    featured = Reference.objects.filter(featured_at__isnull=False)
+    assert featured.count() == 4
+    assert all(r.share_publicly and r.impression == Reference.IMPRESSION_POSITIVE for r in featured)

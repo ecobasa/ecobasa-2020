@@ -3450,11 +3450,11 @@ msgstr "Historias de éxito"
 
 #: gift_economy/references/templates/references/featured.html:9
 msgid ""
-"Stories their authors agreed to share. Featured ones are shown on the "
-"homepage, newest first."
+"Stories their authors agreed to share. The homepage shows three of the "
+"featured ones, different ones on each visit."
 msgstr ""
-"Historias que sus autores aceptan compartir. Las destacadas aparecen en la "
-"página de inicio, las más nuevas primero."
+"Historias que sus autores aceptan compartir. La página de inicio muestra "
+"tres de las destacadas, distintas en cada visita."
 
 #: gift_economy/references/templates/references/featured.html:11
 msgid "On the homepage"

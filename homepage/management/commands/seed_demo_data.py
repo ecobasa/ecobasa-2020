@@ -960,18 +960,20 @@ class Command(BaseCommand):
             ReferenceSkill.STATUS_CONFIRMED, ReferenceSkill.STATUS_PENDING, ReferenceSkill.STATUS_DECLINED,
         )
 
+        # Shared ones show up for staff to pick from; the homepage takes a few of the featured
         specs = [
             # About a person — from the accepted sourdough match: gift name + a skill Ana
             # doesn't list yet, waiting for her to confirm it
-            dict(author=mireille, subject=ana, impression=P, age_days=3,
+            dict(author=mireille, subject=ana, impression=P, age_days=3, share=True, featured=True,
                  text="Her starter argued with mine for an hour, then they made the best loaf of my life.",
                  gift_names=["Sourdough starter (opinionated)"], skills=[("Bread Baking", PENDING)]),
             # About a person — a skill they have (confirmed) and one of their offers by name
-            dict(author=diego, subject=bjorn, impression=P, age_days=12,
+            dict(author=diego, subject=bjorn, impression=P, age_days=12, share=True, featured=True,
                  text="Built us a gate the goat can't open. The goat is furious. We are delighted.",
                  gift_names=["Slightly judgmental goat"], skills=[("Woodworking", CONFIRMED)]),
             # About a community — from the accepted volunteer stay; one tag declined
             dict(author=sam, subject=communities["Three Goats and a Dream Farm"], impression=P, age_days=8,
+                 share=True, featured=True,
                  text="Two weeks of mud walls and goat supervision. Came for solar, stayed for the cob.",
                  skills=[("Natural Building", CONFIRMED), ("Yoga", DECLINED)]),
             dict(author=mireille, subject=communities["Sonnenkraut Ecovillage"], impression=N, age_days=20,
@@ -980,11 +982,11 @@ class Command(BaseCommand):
             dict(author=bjorn, subject=Listing.objects.get(title="Zucchini", owner=luna),
                  match=Match.objects.filter(from_user=bjorn, content_type__model="listing", object_id__in=Listing.objects.filter(
                      title="Zucchini", owner=luna).values("pk")).first(),
-                 impression=N, age_days=6,
+                 impression=N, age_days=6, share=True,
                  text="Took three kilos. Fourteen more followed me home. I did not ask questions."),
             # About a user skill
             dict(author=luna, subject=Listing.objects.get(owner=diego, type="offer", skill__name="Natural Building"),
-                 impression=P, age_days=15,
+                 impression=P, age_days=15, share=True, featured=True,
                  text="Taught me to read a wall by knocking on it. The wall now knocks back. Highly recommended."),
             # About a community skill — the one negative
             dict(author=ana, subject=Listing.objects.get(
@@ -1005,12 +1007,14 @@ class Command(BaseCommand):
                     "text": spec["text"],
                     "gift_names": spec.get("gift_names", []),
                     "match": spec.get("match"),
+                    "share_publicly": spec.get("share", False),
                 },
             )
             if not created:
                 continue
+            created_at = timezone.now() - timedelta(days=spec["age_days"])
             Reference.objects.filter(pk=reference.pk).update(
-                created_at=timezone.now() - timedelta(days=spec["age_days"])
+                created_at=created_at, featured_at=created_at if spec.get("featured") else None,
             )
             for skill_name, status in spec.get("skills", []):
                 skill, _created = Skill.objects.get_or_create(name=skill_name)

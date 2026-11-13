@@ -403,6 +403,13 @@ class TestFeaturing:
         # The linked page (for members) has it in full
         assert "word59" in self._client(owner).get(owner.get_absolute_url()).content.decode()
 
+    def test_homepage_shows_three_of_the_featured(self, requester, owner):
+        for i in range(5):
+            author = User.objects.create_user(email=f"author{i}@example.com", password="secret", username=f"author{i}")
+            Reference.objects.create(author=author, recipient=owner, subject=owner, text=f"Story {i}",
+                                     share_publicly=True, featured_at=timezone.now())
+        assert Client().get("/").content.decode().count('id="reference-') == 3
+
     def test_only_shared_references_can_be_featured(self, staff, shared):
         shared.share_publicly = False
         shared.save()
