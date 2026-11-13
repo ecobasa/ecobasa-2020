@@ -34,8 +34,18 @@ from dashboard_lists import Choice, paginate, query_url
 def search(request):
     """Show all listings with filter ability"""
     f = ListingFilter(request.GET, queryset=Listing.objects.none(), request=request)
+    return render(request, "gifts/search.html", {"f": f, "countries": _countries()})
 
-    return render(request, "gifts/search.html", {"f": f})
+
+def _countries():
+    """The countries with gifts, by name: (code, name). A community's gifts are in its
+    country, a person's in theirs."""
+    from django_countries import countries
+
+    listings = Listing.objects.open()
+    codes = set(listings.exclude(community=None).values_list("community__country", flat=True))
+    codes |= set(listings.filter(community=None).values_list("owner__country", flat=True))
+    return sorted(((code, countries.name(code)) for code in codes if code and countries.name(code)), key=lambda pair: pair[1])
 
 
 def detail(request, pk):

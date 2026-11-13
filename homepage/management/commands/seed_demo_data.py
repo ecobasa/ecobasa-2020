@@ -39,9 +39,11 @@ from users.models import User
 
 DEMO_PASSWORD = "ecobasa123"
 
-# The country of a demo community, by its place (tours take their countries from it)
+# The country of a demo person or community, by its place (as the location picker sets
+# it; tours and the gifts' country filter go by it)
 COUNTRY_OF_PLACE = {
-    "Görlitz, Germany": "DE", "Ariège, France": "FR", "Utrecht, Netherlands": "NL", "Extremadura, Spain": "ES",
+    "Görlitz, Germany": "DE", "Bautzen, Germany": "DE", "Ariège, France": "FR", "Utrecht, Netherlands": "NL",
+    "Extremadura, Spain": "ES", "Alentejo, Portugal": "PT", "Puerto Viejo de Talamanca, Costa Rica": "CR",
 }
 SEED_IMAGES_DIR = os.path.join(os.path.dirname(__file__), "seed_images")
 
@@ -182,6 +184,11 @@ class Command(BaseCommand):
             if created:
                 user.set_password(DEMO_PASSWORD)
                 user.save()
+            # Also on older demo data
+            country = COUNTRY_OF_PLACE.get(spec["location_name"])
+            if country and not user.country:
+                user.country = country
+                user.save(update_fields=["country"])
             users[spec["email"]] = user
         return users
 

@@ -41,6 +41,7 @@ class ListingFilter(django_filters.FilterSet):
     categories = django_filters.ModelMultipleChoiceFilter(
         queryset=ListingCategory.objects.all(), widget=forms.CheckboxSelectMultiple
     )
+    country = django_filters.CharFilter(label=_("Country"), method="do_country")
     location = django_filters.CharFilter(label=_("Location"), method="do_location")
     location_name = django_filters.CharFilter(
         label=_("Location"), method="do_location_name"
@@ -66,6 +67,13 @@ class ListingFilter(django_filters.FilterSet):
             Q(event__title__icontains=value) |
             skill_name_q(value)
         )
+
+    def do_country(self, queryset, name, value):
+        """In a country: a community's by its country, a person's by theirs."""
+        code = value.strip().upper()
+        if not code:
+            return queryset
+        return queryset.filter(Q(community__country=code) | Q(community=None, owner__country=code))
 
     def do_location(self, queryset, name, value):
         try:

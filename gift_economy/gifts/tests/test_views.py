@@ -477,3 +477,25 @@ def test_knowledge_and_helping_hands_ask_what_for(user_client):
     content = user_client.get(reverse("gifts:create")).content.decode()
     assert "What for?" in content and "e.g. building the roof truss" in content
     assert content.count('name="title"') == 1
+
+
+@pytest.mark.django_db
+def test_filter_by_country(user):
+    from django.contrib.gis.geos import Point
+    from communities.models import Community
+    here = Point(14.9857, 51.1642, srid=4326)
+    there = Point(-6.3372, 39.4750, srid=4326)
+    german = User.objects.create_user(email="de@example.com", password="x", location=here, country="DE")
+    farm = Community.objects.create(name="Finca", location=there, country="ES")
+    Listing.objects.create(type="offer", title="Apples", owner=german)
+    Listing.objects.create(type="offer", title="Olives", community=farm)
+
+    def titles(country):
+        features = Client().get(reverse("gifts:api-markers"), {"country": country}).json()["features"]
+        return {f["properties"]["title"] for f in features}
+
+    assert titles("ES") == {"Olives"}       # a community's by its country
+    assert titles("de") == {"Apples"}       # a person's by theirs
+    assert titles("") == {"Apples", "Olives"}
+    page = Client().get(reverse("gifts:search")).content.decode()
+    assert '<option value="DE">' in page and '<option value="ES">' in page
