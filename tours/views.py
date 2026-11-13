@@ -59,7 +59,7 @@ def _editable(slug, user):
 
 def _results(request):
     """The tours of the index for the filters in the query string: tours with dates by
-    when they start, then tour ideas, the freshest first (`show` keeps to one of them).
+    when they start, then tour ideas, the freshest first (`show` keeps to some of them, rides among them).
     Page links point at the list partial, which the page swaps in."""
     filters = TourFilters(request.GET, request.user)
     tours = list(filters.apply(_tours().listed().current()))

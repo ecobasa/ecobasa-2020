@@ -6355,3 +6355,8 @@ msgstr "Ton covoiturage est publié. D'autres le trouvent dans la liste des tour
 #: tours/templates/tours/_invite_to_tours.html
 msgid "Invite to join your tour"
 msgstr "Inviter à ton tour"
+
+#: tours/templates/tours/_search_bar.html:42
+#: tours/templates/tours/tour_list.html:94
+msgid "Rides"
+msgstr "Covoiturages"

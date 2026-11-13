@@ -6346,3 +6346,8 @@ msgstr "Deine Mitfahrgelegenheit ist veröffentlicht. Andere finden sie in der L
 #: tours/templates/tours/_invite_to_tours.html
 msgid "Invite to join your tour"
 msgstr "Zu deiner Tour einladen"
+
+#: tours/templates/tours/_search_bar.html:42
+#: tours/templates/tours/tour_list.html:94
+msgid "Rides"
+msgstr "Mitfahrgelegenheiten"

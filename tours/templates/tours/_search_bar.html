@@ -39,6 +39,7 @@
           <div class="space-y-1">
             <label class="flex items-center gap-2 cursor-pointer text-sm"><input type="checkbox" class="form-checkbox light h-4 w-4" :checked="$store.tourMap.shows('tours')" @change="$store.tourMap.toggleShow('tours'); $el.checked = $store.tourMap.shows('tours')"><i class="fa-solid fa-route"></i>{% trans "Tours" %}</label>
             <label class="flex items-center gap-2 cursor-pointer text-sm"><input type="checkbox" class="form-checkbox light h-4 w-4" :checked="$store.tourMap.shows('ideas')" @change="$store.tourMap.toggleShow('ideas'); $el.checked = $store.tourMap.shows('ideas')"><i class="fa-solid fa-lightbulb"></i>{% trans "Tour ideas" %}</label>
+            <label class="flex items-center gap-2 cursor-pointer text-sm"><input type="checkbox" class="form-checkbox light h-4 w-4" :checked="$store.tourMap.shows('rides')" @change="$store.tourMap.toggleShow('rides'); $el.checked = $store.tourMap.shows('rides')"><i class="fa-solid fa-people-arrows"></i>{% trans "Rides" %}</label>
           </div>
         </div>
         <div>
@@ -64,7 +65,6 @@
           <label class="flex items-center gap-2 cursor-pointer text-sm"><input type="checkbox" class="form-checkbox light h-4 w-4" x-model="$store.tourMap.children" @change="window.tourFiltersChanged()"><i class="fa-solid fa-children"></i>{% trans "Children welcome" %}</label>
           <label class="flex items-center gap-2 cursor-pointer text-sm"><input type="checkbox" class="form-checkbox light h-4 w-4" x-model="$store.tourMap.animals" @change="window.tourFiltersChanged()"><i class="fa-solid fa-paw"></i>{% trans "Animals welcome" %}</label>
           <label class="flex items-center gap-2 cursor-pointer text-sm"><input type="checkbox" class="form-checkbox light h-4 w-4" x-model="$store.tourMap.free" @change="window.tourFiltersChanged()"><i class="fa-solid fa-user-plus"></i>{% trans "Has free places" %}</label>
-          <label class="flex items-center gap-2 cursor-pointer text-sm"><input type="checkbox" class="form-checkbox light h-4 w-4" x-model="$store.tourMap.rides" @change="window.tourFiltersChanged()"><i class="fa-solid fa-people-arrows"></i>{% trans "Only rides" %}</label>
         </div>
         <button type="button" x-show="$store.tourMap.filterCount > 0" class="text-xs underline opacity-70 hover:opacity-100" @click="$store.tourMap.clear()">{% trans "Clear filters" %}</button>
       </div>

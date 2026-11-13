@@ -137,14 +137,18 @@ def search_q(q):
 
 
 class TourFilters:
-    """The filters of the tours index, read from the query string: tours with dates or
-    tour ideas only (show), a search, when (from, until), what it wants to learn (skill names, any of them), how it travels, children
-    or animals welcome, with free places, only rides, and the map's visible area. `near` (lat,lon) only sorts the
+    """The filters of the tours index, read from the query string: which of tours with dates, tour ideas and
+    rides to show (show, comma-separated; all of them when empty), a search, when (from, until), what it wants to learn (skill names, any of them), how it travels, children
+    or animals welcome, with free places, and the map's visible area. `near` (lat,lon) only sorts the
     list, nearest first."""
+
+    KINDS = ("tours", "ideas", "rides")
 
     def __init__(self, params, user=None):
         self.user = user
-        self.show = params.get("show") if params.get("show") in ("tours", "ideas") else ""
+        kinds = (params.get("show") or "").split(",")
+        kinds = [kind for kind in self.KINDS if kind in kinds]
+        self.show = ",".join(kinds) if 0 < len(kinds) < len(self.KINDS) else ""
         self.q = (params.get("q") or "").strip()
         self.since = _day(params.get("from"))
         self.until = _day(params.get("until"))
@@ -154,7 +158,6 @@ class TourFilters:
         self.children = params.get("children") == "1"
         self.animals = params.get("animals") == "1"
         self.free = params.get("free") == "1"
-        self.rides = params.get("rides") == "1"
         country = (params.get("country") or "").strip().upper()
         self.country = country if len(country) == 2 and country.isalpha() else ""
         self.near = _point(params.get("near"))
@@ -164,17 +167,31 @@ class TourFilters:
     def active(self):
         return bool(
             self.show or self.country or self.q or self.since or self.until or self.learn or self.mode
-            or self.children or self.animals or self.free or self.rides
+            or self.children or self.animals or self.free
         )
 
     def apply(self, tours):
         """Narrow a queryset of tours. Tour ideas have no dates: the dates leave them be."""
         from gift_economy.gifts.skills.models import skill_name_q
 
-        if self.show == "tours":
-            tours = tours.exclude(starts_on=None, ends_on=None)
-        elif self.show == "ideas":
-            tours = tours.filter(starts_on=None, ends_on=None)
+        if self.show:
+            # Each tour is one of them: a ride (Tour.is_ride), else a tour with dates, else a tour idea
+            from .models import Tour
+
+            kinds = self.show.split(",")
+            rides = Q(pk__in=Tour.objects.filter(open_to_join=True).annotate(
+                stop_count=Count("stops", distinct=True),
+                hosted=Count("stops", filter=Q(stops__community__isnull=False), distinct=True),
+            ).filter(stop_count=2, hosted=0).values("pk"))
+            undated = Q(starts_on=None, ends_on=None)
+            wanted = Q(pk__in=[])
+            if "rides" in kinds:
+                wanted |= rides
+            if "tours" in kinds:
+                wanted |= ~rides & ~undated
+            if "ideas" in kinds:
+                wanted |= ~rides & undated
+            tours = tours.filter(wanted)
         if self.country:
             # Stored as "DE,NL,FR"
             tours = tours.filter(countries__regex=rf"(^|,){self.country}(,|$)")
@@ -195,15 +212,6 @@ class TourFilters:
             tours = tours.filter(children_welcome=True)
         if self.animals:
             tours = tours.filter(animals_welcome=True)
-        if self.rides:
-            # Two stops, neither with a host (Tour.is_ride)
-            from .models import Tour
-
-            rides = Tour.objects.filter(open_to_join=True).annotate(
-                stop_count=Count("stops", distinct=True),
-                hosted=Count("stops", filter=Q(stops__community__isnull=False), distinct=True),
-            ).filter(stop_count=2, hosted=0)
-            tours = tours.filter(pk__in=rides.values("pk"))
         if self.free:
             # Room left on at least one leg (or no limit); worked out per tour
             candidates = tours.filter(open_to_join=True).distinct().prefetch_related("stops", "vehicles__drivers")

@@ -1193,7 +1193,7 @@ class Command(BaseCommand):
         """Tours from event to event and community to community: a van that looks for
         travellers, a bike ride to a building project, a tour idea with stops but no
         dates, two ideas without stops (on the map about where their organisers live),
-        and a personal tour that is in no list."""
+        a personal tour that is in no list, and two rides (a car, a train)."""
         from events.models import Event
         from tours.models import Stop, Tour, append_stop
 
@@ -1314,6 +1314,28 @@ class Command(BaseCommand):
         self._seed_tour_need(bikes, "Carpentry", Listing.KIND_HANDS, skill="Carpentry", quantity=2, unit="people",
                              description="For the cob bench around the stove")
         self._seed_tour_need(seeds, "Van", Listing.KIND_VEHICLE, description="Or a car with a big boot")
+
+        # Rides: from one place to another on one day, like the ride form makes them
+        hamburg = tour(
+            "Hamburg → Copenhagen", bjorn,
+            stops=[dict(place("Hamburg", 9.9937, 53.5511, "DE"), leave_on=day(5), leave_at=datetime_time(8, 30)),
+                   dict(place("Copenhagen", 12.5683, 55.6761, "DK"), arrive_on=day(5))],
+            description="Up north to the woodworking week, back the Sunday after. Happy to stop for a swim on the way.",
+            travel_mode="car", open_to_join=True,
+        )
+        car, created = Vehicle.objects.get_or_create(tour=hamburg, label="Car", defaults={
+            "seats": 3, "note": "Room for a backpack each, the tools ride in the boot",
+        })
+        if created:
+            car.drivers.add(bjorn)
+        tour(
+            "Lyon → Montpellier", mireille,
+            stops=[dict(place("Lyon", 4.8357, 45.764, "FR"), leave_on=day(9), leave_at=datetime_time(10, 0)),
+                   dict(place("Montpellier", 3.8767, 43.6108, "FR"), arrive_on=day(9))],
+            description="Taking the train south with a basket of kombucha starters. Company welcome.",
+            travel_mode="train", open_to_join=True, max_people=3,
+            good_to_know="Bring your own lunch, I bring the tea.",
+        )
 
     def _seed_tour_need(self, tour, title, kind, skill=None, **fields):
         Listing.objects.get_or_create(

@@ -225,12 +225,16 @@ def test_a_ride_needs_both_places(organiser):
     assert "Please choose the place on the map." in response.content.decode()
 
 
-def test_filters_only_rides_and_free_places(organiser, other, four_stops):
+def test_filters_rides_and_free_places(organiser, other, four_stops):
     login(organiser).post(reverse("tours:ride"), ride_data(seats=1))
     ride = Tour.objects.get(vehicles__isnull=False)
     url = reverse("tours:api-list")
-    rides = login(other).get(url + "?rides=1").content.decode()
+    rides = login(other).get(url + "?show=rides").content.decode()
     assert ride.title in rides and four_stops.title not in rides
+    ideas = login(other).get(url + "?show=ideas").content.decode()
+    assert ride.title not in ideas and four_stops.title in ideas
+    both = login(other).get(url + "?show=ideas,rides").content.decode()
+    assert ride.title in both and four_stops.title in both
 
     _, traveller = ask(other, ride, *ride.ordered_stops())
     accept(traveller.match, organiser)

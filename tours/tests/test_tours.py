@@ -347,7 +347,8 @@ def test_filters_narrow_map_and_list(organiser, farm, village):
 
 def test_near_a_place_sorts_the_list(organiser, farm, village):
     west = published(organiser, "West", {"name": "Bordeaux", "location": Point(-0.57, 44.84, srid=4326)},
-                     {"name": "Toulouse", "location": Point(1.44, 43.6, srid=4326)}, starts_on=None)
+                     {"name": "Toulouse", "location": Point(1.44, 43.6, srid=4326)},
+                     {"name": "Montpellier", "location": Point(3.88, 43.61, srid=4326)}, starts_on=None)
     east = published(organiser, "East", {"community": farm}, {"community": village})
     # Both are tour ideas (no dates); near Dresden, East comes first, near Bordeaux, West
     html = Client().get(reverse("tours:api-list"), {"show": "ideas", "near": "51.05,13.74"}).content.decode()

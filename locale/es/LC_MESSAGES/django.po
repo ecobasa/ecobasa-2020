@@ -6320,3 +6320,8 @@ msgstr "Tu viaje compartido está publicado. Otras personas lo encuentran en la 
 #: tours/templates/tours/_invite_to_tours.html
 msgid "Invite to join your tour"
 msgstr "Invitar a tu tour"
+
+#: tours/templates/tours/_search_bar.html:42
+#: tours/templates/tours/tour_list.html:94
+msgid "Rides"
+msgstr "Viajes compartidos"
