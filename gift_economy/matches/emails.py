@@ -51,7 +51,8 @@ def _notify(match, recipient, actor, tag):
 
 
 def _other_party(match, user):
-    return match.from_user if user == match.recipient else match.recipient
+    # Someone who answers for the recipient (a tour's other organisers) is on their side
+    return match.recipient if user == match.from_user else match.from_user
 
 
 def notify_match_created(match, http_request=None):

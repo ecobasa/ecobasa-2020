@@ -1,0 +1,23 @@
+{% load i18n %}
+{# In a profile's sidebar, under the communities: the tours they organise or travel on (tours.templatetags.tours_tags.tours_of) #}
+{% if tours %}
+<div class="mt-8">
+  <h2>{% trans "Community-Tours" %}</h2>
+  <div class="space-y-4">
+    {% for tour in tours %}
+      <a href="{{ tour.get_absolute_url }}" class="block overflow-hidden {% if not tour.is_current %}opacity-60{% endif %}">
+        {% with picture=tour.picture %}
+          {% if picture %}<img src="{{ picture }}" alt="" class="w-full h-32 object-cover" loading="lazy">{% endif %}
+        {% endwith %}
+        <div class="flex items-center gap-3 p-3">
+          <i class="fa-solid {{ tour.travel_mode_icon }} text-xl text-primary flex-shrink-0"></i>
+          <div class="min-w-0">
+            <div class="font-serif text-primary truncate">{{ tour.title }}</div>
+            <div class="text-xs text-brown">{% if tour.is_idea %}{% trans "Idea" %}{% else %}{% include "tours/_tour_dates.html" %}{% endif %}</div>
+          </div>
+        </div>
+      </a>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}

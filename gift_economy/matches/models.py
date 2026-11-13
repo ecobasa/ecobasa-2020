@@ -146,6 +146,14 @@ class Match(models.Model):
         return details.people if details is not None else 1
 
     @property
+    def summary(self):
+        """A line the target gives about this match (a tour: the stretch and how many),
+        for the emails; "" if it has none."""
+        target = self.target
+        get = getattr(target, "get_match_summary", None)
+        return get(self) if get else ""
+
+    @property
     def is_closed(self):
         return self.status in self.CLOSED_STATUSES
 

@@ -14,6 +14,8 @@
   <div class="mb-2 text-sm">
     {% if request_type == "volunteer" %}
       <a href="{% url 'matches:list' %}?type=volunteer" class="hover:underline">{% trans "Volunteer Visits" %}</a>
+    {% elif request_type == "tours" %}
+      <a href="{% url 'matches:list' %}?type=tours" class="hover:underline">{% trans "Join requests" %}</a>
     {% else %}
       <a href="{% url 'matches:list' %}" class="hover:underline">{% trans "Matches" %}</a>
     {% endif %}
@@ -160,6 +162,8 @@
     </div>
 
     <div class="prose text-sm mb-4">{{ match.message|linebreaksbr }}</div>
+
+    {% if summary_template %}{% include summary_template %}{% endif %}
 
     {% if match.is_loan %}
       <div class="text-sm mb-2">

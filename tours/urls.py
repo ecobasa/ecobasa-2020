@@ -11,6 +11,7 @@ urlpatterns = [
     path("api/routes/", views.api_routes, name="api-routes"),
     path("api/list/", views.api_list, name="api-list"),
     path("api/suggest/", views.api_suggest, name="api-suggest"),
+    path("mine/", views.mine, name="mine"),
     path("<slug:slug>/", views.tour_detail, name="detail"),
     path("<slug:slug>/edit/", views.edit, name="edit"),
     path("<slug:slug>/plan/", views.plan, name="plan"),
@@ -21,4 +22,7 @@ urlpatterns = [
     path("<slug:slug>/publish/", views.publish, name="publish"),
     path("<slug:slug>/archive/", views.archive, name="archive"),
     path("<slug:slug>/confirm/", views.confirm, name="confirm"),
+    path("<slug:slug>/join/", views.join, name="join"),
+    path("<slug:slug>/leave/", views.leave, name="leave"),
+    path("<slug:slug>/travellers/<int:pk>/remove/", views.remove, name="remove"),
 ]

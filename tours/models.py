@@ -1,6 +1,7 @@
 from collections import namedtuple
 
 from django.conf import settings
+from django.contrib.contenttypes.fields import GenericRelation
 from django.contrib.gis.db import models
 from django.contrib.gis.geos import LineString
 from django.db import transaction
@@ -77,7 +78,7 @@ class Tour(models.Model):
     }
 
     # Not usable as a slug: they are paths beside a tour's page
-    RESERVED_SLUGS = ("new", "api")
+    RESERVED_SLUGS = ("new", "api", "mine")
 
     slug = models.SlugField(_("Slug"), max_length=255, unique=True, blank=True)
     title = models.CharField(_("Title"), max_length=255)
@@ -122,6 +123,9 @@ class Tour(models.Model):
     stale_reminder_sent_at = models.DateTimeField(null=True, blank=True)
     archived_at = models.DateTimeField(_("Archived"), null=True, blank=True)
 
+    # The join requests (a Match each, with its Traveller)
+    matches = GenericRelation("matches.Match")
+
     objects = TourQuerySet.as_manager()
 
     class Meta:
@@ -138,6 +142,12 @@ class Tour(models.Model):
         if self.open_to_join:
             self.listed = True
         super().save(*args, **kwargs)
+        # The organiser travels too, on the whole route
+        update_fields = kwargs.get("update_fields")
+        if self.organiser_id and (update_fields is None or "organiser" in update_fields):
+            Traveller.objects.update_or_create(
+                tour=self, user_id=self.organiser_id, match=None, defaults={"is_organiser": True},
+            )
 
     def _free_slug(self):
         base = slugify(self.title)[:240] or "tour"
@@ -212,7 +222,15 @@ class Tour(models.Model):
 
     # ── Who may do what ─────────────────────────────────────────────
     def can_edit(self, user):
-        return user.is_authenticated and (user.is_staff or user == self.organiser)
+        return user.is_authenticated and (user.is_staff or self.is_organiser(user))
+
+    def is_organiser(self, user):
+        """The organiser matches are addressed to, or one they shared the role with."""
+        if not user.is_authenticated:
+            return False
+        if user.pk == self.organiser_id:
+            return True
+        return self.travellers.filter(user=user, is_organiser=True).exists()
 
     def can_view(self, user):
         """A draft only for its organisers. A personal tour that is not listed only for
@@ -235,6 +253,129 @@ class Tour(models.Model):
             km = round(distance_km(a, b) * ROAD_FACTOR) if a is not None and b is not None else None
             legs.append(Leg(index, start, end, km))
         return legs
+
+    # ── Who travels, and where there is room ────────────────────────
+    # docs/community-tours-plan.md, 5.4. Leg i runs from stop i to stop i+1; a traveller
+    # without a first or last stop is on from the start or until the end.
+    def counted_travellers(self):
+        """The travellers who are on the tour: added directly, or asked and accepted."""
+        return [t for t in self.travellers.select_related("user", "match") if t.is_counted]
+
+    def stretch(self, from_stop, to_stop, stops=None):
+        """(first, last) leg index between two stops (stops or pks; None for the start
+        or the end). None if there is no leg in between."""
+        stops = self.ordered_stops() if stops is None else stops
+        if len(stops) < 2:
+            return None
+        index = {stop.pk: i for i, stop in enumerate(stops)}
+        first = index.get(getattr(from_stop, "pk", from_stop), 0)
+        last = index.get(getattr(to_stop, "pk", to_stop), len(stops) - 1) - 1
+        return (first, last) if first <= last else None
+
+    def free_places(self, stops=None, travellers=None, exclude=None):
+        """Free places on each leg, in order: `max_people` minus the people of the counted
+        travellers on it (None if there is no limit). Without legs (an idea) one number."""
+        stops = self.ordered_stops() if stops is None else stops
+        travellers = self.counted_travellers() if travellers is None else travellers
+        n = max(len(stops) - 1, 1)
+        if self.max_people is None:
+            return [None] * n
+        free = [self.max_people] * n
+        for traveller in travellers:
+            if exclude is not None and traveller.pk == exclude.pk:
+                continue
+            first, last = self.stretch(traveller.from_stop_id, traveller.to_stop_id, stops) or (0, n - 1)
+            for i in range(first, last + 1):
+                free[i] -= traveller.people
+        return free
+
+    def free_on(self, from_stop=None, to_stop=None, stops=None, exclude=None):
+        """The fewest free places on the legs between two stops (None: no limit)."""
+        stops = self.ordered_stops() if stops is None else stops
+        free = self.free_places(stops=stops, exclude=exclude)
+        first, last = self.stretch(from_stop, to_stop, stops) or (0, len(free) - 1)
+        on = free[first:last + 1]
+        return None if None in on else max(min(on), 0)
+
+    def fits(self, from_stop, to_stop, people, exclude=None):
+        """Whether `people` more fit on every leg between the two stops."""
+        free = self.free_on(from_stop, to_stop, exclude=exclude)
+        return free is None or free >= people
+
+    def present_at(self, stop):
+        """The counted travellers at a stop's stay (not who only rides past it)."""
+        stops = self.ordered_stops()
+        index = {s.pk: i for i, s in enumerate(stops)}
+        at = index[stop.pk]
+        return [
+            t for t in self.counted_travellers()
+            if index.get(t.from_stop_id, 0) <= at <= index.get(t.to_stop_id, len(stops) - 1)
+            and not t.ride_only
+        ]
+
+    # ── As what a join request is about (gift_economy.matches) ──────
+    def get_match_owner(self):
+        return self.organiser
+
+    def get_match_display_name(self):
+        return self.title
+
+    def get_match_location(self):
+        first = next(iter(self.stops.all()), None)
+        name, point = first.public_place() if first else ("", None)
+        return self.title, name, point
+
+    # The route only goes through places everyone may see (rebuild_route)
+    place_is_public = True
+
+    @property
+    def place_seed(self):
+        return self.pk
+
+    def get_match_icon(self):
+        return self.travel_mode_icon
+
+    def get_match_kind(self):
+        return _("Join request"), "fa-route", "bg-purple"
+
+    def get_match_verb(self, own=True):
+        return _("asked to join")
+
+    def get_match_request_text(self):
+        return _("%(actor)s asked to join your tour: %(title)s")
+
+    def get_match_summary(self, match):
+        """The stretch and how many, for the match emails."""
+        traveller = getattr(match, "traveller", None)
+        if traveller is None:
+            return ""
+        from django.utils.translation import ngettext
+
+        start, end = traveller.ends()
+        stretch = f"{start.label} → {end.label}" if start and end and not traveller.whole_route else str(_("the whole route"))
+        people = ngettext("%(n)s person", "%(n)s people", traveller.people) % {"n": traveller.people}
+        return f"{stretch} · {people}"
+
+    def get_match_summary_template(self):
+        return "tours/_match_summary.html"
+
+    # The stretch is changed on the join page, not with a counter-proposal
+    match_counter = False
+
+    def can_answer_match(self, user):
+        return self.is_organiser(user)
+
+    def match_accept_error(self, match):
+        """Why a join request can't be accepted (no room left on its stretch), or "".
+        Called inside the transaction that accepts it; locks the tour, so two requests
+        can't take the last place."""
+        Tour.objects.select_for_update().filter(pk=self.pk).first()
+        traveller = getattr(match, "traveller", None)
+        if traveller is None:
+            return ""
+        if not self.fits(traveller.from_stop_id, traveller.to_stop_id, traveller.people, exclude=traveller):
+            return _("There is no room left on this stretch any more.")
+        return ""
 
     def rebuild_route(self, save=True):
         """Dates, countries, route line and distance from the stops. The line goes
@@ -355,6 +496,76 @@ class Stop(models.Model):
         if self.community_id:
             return self.community.place_for(user)
         return self.name, self.location
+
+
+class Traveller(models.Model):
+    """Someone on a tour from one stop to another, both included (None: from the start,
+    until the end). The organiser is a traveller too. Counts once their join request is
+    accepted, or at once if an organiser added them (no match)."""
+
+    tour = models.ForeignKey(Tour, on_delete=models.CASCADE, related_name="travellers")
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="tour_travels")
+    match = models.OneToOneField(
+        "matches.Match", on_delete=models.CASCADE, null=True, blank=True, related_name="traveller",
+    )
+    from_stop = models.ForeignKey(
+        Stop, on_delete=models.SET_NULL, null=True, blank=True, related_name="+", verbose_name=_("From"),
+    )
+    to_stop = models.ForeignKey(
+        Stop, on_delete=models.SET_NULL, null=True, blank=True, related_name="+", verbose_name=_("To"),
+    )
+    people = models.PositiveSmallIntegerField(
+        _("How many are you?"), default=1, help_text=_("You and whoever comes with you, children too."),
+    )
+    ride_only = models.BooleanField(_("I only need the ride"), default=False)
+    pickup_name = models.CharField(_("Pick me up at"), max_length=255, blank=True)
+    pickup_point = models.PointField(null=True, blank=True, geography=True)
+    dropoff_name = models.CharField(_("Drop me at"), max_length=255, blank=True)
+    dropoff_point = models.PointField(null=True, blank=True, geography=True)
+    is_organiser = models.BooleanField(_("Organiser"), default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-is_organiser", "created_at", "pk"]
+        verbose_name = _("Traveller")
+        verbose_name_plural = _("Travellers")
+
+    def __str__(self):
+        return f"{self.user} on {self.tour}"
+
+    @property
+    def is_counted(self):
+        from gift_economy.matches.models import Match
+
+        return self.match_id is None or self.match.status == Match.STATUS_ACCEPTED
+
+    def ends(self, stops=None):
+        """(first stop, last stop) of the stretch, filled in from the route."""
+        stops = self.tour.ordered_stops() if stops is None else stops
+        start = self.from_stop or (stops[0] if stops else None)
+        end = self.to_stop or (stops[-1] if stops else None)
+        return start, end
+
+    @property
+    def whole_route(self):
+        return self.from_stop_id is None and self.to_stop_id is None
+
+    def pickup_place(self, viewer=None):
+        """(name, point) of where they get on between stops: roughly until the request
+        is accepted, except to the one who asked (docs/community-tours-plan.md, 5.5 rule 4)."""
+        return self._place(self.pickup_name, self.pickup_point, viewer)
+
+    def dropoff_place(self, viewer=None):
+        return self._place(self.dropoff_name, self.dropoff_point, viewer)
+
+    def _place(self, name, point, viewer):
+        from users.places import approximate, town
+
+        if not name and point is None:
+            return "", None
+        if viewer == self.user or self.is_counted:
+            return name, point
+        return town(name), approximate(point, self.user_id)
 
 
 def append_stop(stop):

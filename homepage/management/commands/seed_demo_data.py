@@ -1230,7 +1230,7 @@ class Command(BaseCommand):
         festival = Event.objects.get(community=goats, title="Olive harvest festival")
         stove = Event.objects.get(community=sonnenkraut, title="Rocket stove for the community kitchen")
 
-        tour(
+        jars = tour(
             "Jars, olives and a long way south", luna,
             stops=[
                 dict(event=open_day, arrive_on=open_day.starts_on, leave_on=open_day.starts_on + timedelta(days=1),
@@ -1293,4 +1293,23 @@ class Command(BaseCommand):
             description="Back home via my sister's.",
             travel_mode="train", open_to_join=False, listed=False,
         )
+
+        # Who joins the van: Sam from the second stop on (accepted), Diego asks for the
+        # last part only (open)
+        self._seed_join(jars, sam, 1, 3, "accepted", "I can help with the jars, and I'd love to see the olives.")
+        self._seed_join(jars, diego, 2, 3, "pending", "Could you take me from the fermentation weekend down south?")
+
+    def _seed_join(self, tour, user, start, end, status, message):
+        from gift_economy.matches.models import Match
+        from tours.models import Traveller
+
+        stops = tour.ordered_stops()
+        if len(stops) <= end or tour.travellers.filter(user=user).exists():
+            return
+        match = Match(from_user=user, recipient=tour.organiser, message=message, status=status, location_type="")
+        match.target = tour
+        if status == Match.STATUS_ACCEPTED:
+            match.responded_at = timezone.now()
+        match.save()
+        Traveller.objects.create(tour=tour, user=user, match=match, from_stop=stops[start], to_stop=stops[end])
 

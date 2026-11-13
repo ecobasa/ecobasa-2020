@@ -2,7 +2,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
-from django.db.models import Q
+from django.db.models import prefetch_related_objects, Q
 from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
@@ -18,9 +18,12 @@ from events.models import Event
 from gift_economy.gifts.models import Listing
 from gift_economy.gifts.skills.models import Skill, skill_name_q
 
-from .forms import StopForm, TourForm
+from gift_economy.matches.emails import notify_match_created, notify_match_message, notify_match_response
+from gift_economy.matches.models import Match, MatchMessage
+
+from .forms import JoinForm, StopForm, TourForm
 from .geo import MAX_TOURS, TourFilters, feature_collection
-from .models import Stop, Tour, append_stop, move_stop, remove_stop
+from .models import Stop, Tour, Traveller, append_stop, move_stop, remove_stop
 
 _STOPS = ("stops__event__community", "stops__community__photos", "learn_skills")
 
@@ -107,9 +110,35 @@ def api_routes(request):
     return JsonResponse(feature_collection(tours[:MAX_TOURS], request.user))
 
 
-def _travellers(tour):
-    """Who travels: the organiser, so far (the travellers who join come with joining a tour)."""
-    return [tour.organiser] if tour.organiser else []
+def _join_state(tour, user):
+    """What the join button says: "login", "on" (travels along; "organiser" if one),
+    "asked" (an open request, with `match`), "full", "ask", or "" where the tour
+    doesn't look for travellers."""
+    if not (tour.open_to_join and tour.is_published and tour.is_current):
+        if user.is_authenticated and tour.is_organiser(user):
+            return {"state": "organiser"}
+        return {"state": ""}
+    if not user.is_authenticated:
+        return {"state": "login"}
+    if tour.is_organiser(user):
+        return {"state": "organiser"}
+    own = _own_request(tour, user)
+    if own is not None:
+        if own.is_counted:
+            return {"state": "on", "traveller": own}
+        return {"state": "asked", "traveller": own, "match": own.match}
+    free = tour.free_places()
+    if all(places is not None and places <= 0 for places in free):
+        return {"state": "full"}
+    return {"state": "ask"}
+
+
+def _own_request(tour, user):
+    """The user's traveller row on the tour that is still on: added, accepted or asked."""
+    for traveller in tour.travellers.filter(user=user).select_related("match"):
+        if traveller.match_id is None or not traveller.match.is_closed:
+            return traveller
+    return None
 
 
 def _skills(people):
@@ -132,21 +161,33 @@ def tour_detail(request, slug):
     if tour.archived_at and not can_edit:
         messages.info(request, _("This tour has been archived."))
     # Who travels, and what they can, only for people logged in (as a person's profile)
-    travellers = _travellers(tour) if request.user.is_authenticated else []
+    counted = tour.counted_travellers()
+    travellers = counted if request.user.is_authenticated else []
+    stops = tour.ordered_stops()
+    for traveller in travellers:
+        traveller.stretch = "" if traveller.whole_route else _stretch_text(traveller)
+    # The communities they are ambassador of, shown with them
+    prefetch_related_objects([traveller.user for traveller in travellers], "communities")
     return render(request, "tours/tour_detail.html", {
         "tour": tour,
         "can_edit": can_edit,
         "travellers": travellers,
-        "skills": _skills(travellers),
+        # Logged out, one sees how many travel, not who (5.5 rule 5)
+        "traveller_count": sum(t.people for t in counted),
+        "stops": stops,
+        "join": _join_state(tour, request.user),
+        "skills": _skills([traveller.user for traveller in travellers]),
         "route": _route(tour),
         "geojson": feature_collection([tour], request.user),
     })
 
 
 def _route(tour):
-    """The stops in order, each with the place everyone may see and the leg after it."""
+    """The stops in order, each with the place everyone may see and the leg after it
+    (with its free places, on a tour that looks for travellers and has a limit)."""
     stops = tour.ordered_stops()
     legs = tour.legs(stops)
+    free = tour.free_places(stops=stops) if tour.open_to_join and tour.max_people else [None] * len(legs)
     route = []
     for index, stop in enumerate(stops):
         name, _point = stop.public_place()
@@ -159,6 +200,7 @@ def _route(tour):
             "leg": leg,
             "leg_mode": dict(Tour.MODE_CHOICES)[mode] if leg else None,
             "leg_icon": Tour.MODE_ICONS.get(mode) if leg else None,
+            "free": max(free[index], 0) if leg and free[index] is not None else None,
         })
     return route
 
@@ -382,3 +424,133 @@ def api_suggest(request):
         add(name, "location")
     return JsonResponse(suggestions, safe=False)
 
+
+
+# ── Joining ─────────────────────────────────────────────────────────
+
+@login_required
+def join(request, slug):
+    """Ask to join a tour for the whole route or part of it: a match with the tour as
+    target (answered by its organisers) and the traveller it would make. While it is
+    open, the same page changes the stretch and the number of people."""
+    tour = _tour(slug, request.user)
+    if tour.is_organiser(request.user):
+        return redirect(tour.get_absolute_url())
+    own = _own_request(tour, request.user)
+    if own is not None and own.is_counted:
+        messages.info(request, _("You are on this tour already."))
+        return redirect(tour.get_absolute_url())
+    if own is None and not (tour.open_to_join and tour.is_published and tour.is_current and tour.organiser):
+        messages.error(request, _("This tour doesn't look for travellers."))
+        return redirect(tour.get_absolute_url())
+
+    form = JoinForm(tour, request.POST or None, instance=own or Traveller(tour=tour, user=request.user), with_message=own is None)
+    if request.method == "POST" and form.is_valid():
+        if own is None:
+            with transaction.atomic():
+                # No meeting place to agree on: the stretch says where (_match_summary.html)
+                match = Match(
+                    from_user=request.user, recipient=tour.get_match_owner(), message=form.cleaned_data["message"],
+                    location_type="",
+                )
+                match.target = tour
+                match.save()
+                traveller = form.save(commit=False)
+                traveller.match = match
+                traveller.save()
+            notify_match_created(match, http_request=request)
+            messages.success(request, _("Your join request has been sent to the organisers."))
+        else:
+            traveller = form.save()
+            match = traveller.match
+            body = _("Changed the request: %(summary)s") % {"summary": tour.get_match_summary(match)}
+            MatchMessage.objects.create(match=match, sender=request.user, body=body)
+            notify_match_message(match, sender=request.user, message=body, http_request=request)
+            messages.success(request, _("Your join request has been changed."))
+        return redirect(match.get_absolute_url())
+
+    return render(request, "tours/join.html", {
+        "tour": tour, "form": form, "own": own,
+        "free": tour.free_places() if tour.max_people else None,
+        "stops": tour.ordered_stops(),
+    })
+
+
+def _stretch_text(traveller):
+    start, end = traveller.ends()
+    if traveller.whole_route or not (start and end):
+        return str(_("the whole route"))
+    return f"{start.label} → {end.label}"
+
+
+@login_required
+@require_POST
+def leave(request, slug):
+    """A traveller leaves the tour, with a few words to the organisers. An organiser
+    can't: someone else has to take over first."""
+    tour = _tour(slug, request.user)
+    own = _own_request(tour, request.user)
+    if own is None or not own.is_counted:
+        return redirect(tour.get_absolute_url())
+    if own.is_organiser or tour.organiser_id == request.user.pk:
+        messages.error(request, _("As an organiser you can't leave the tour yet."))
+        return redirect(tour.get_absolute_url())
+    body = request.POST.get("body", "").strip()
+    if not body:
+        messages.error(request, _("Please write a few words why, the others were counting on you."))
+        return redirect(f"{tour.get_absolute_url()}#join")
+    _end(own, request, Match.STATUS_WITHDRAWN, body)
+    messages.success(request, _("You have left the tour."))
+    return redirect(tour.get_absolute_url())
+
+
+@login_required
+@require_POST
+def remove(request, slug, pk):
+    """An organiser takes someone off the tour (N16), always with a few words to them."""
+    tour = _editable(slug, request.user)
+    traveller = get_object_or_404(tour.travellers.select_related("match", "user"), pk=pk)
+    if traveller.is_organiser or traveller.user_id == tour.organiser_id:
+        raise PermissionDenied
+    body = request.POST.get("body", "").strip()
+    if not body:
+        messages.error(request, _("Please write a few words to them why."))
+        return redirect(f"{tour.get_absolute_url()}#travellers")
+    _end(traveller, request, Match.STATUS_DECLINED, body)
+    messages.success(request, _("%(name)s is no longer on the tour.") % {"name": traveller.user.name or traveller.user.email})
+    return redirect(f"{tour.get_absolute_url()}#travellers")
+
+
+def _end(traveller, request, status, body):
+    """Take a traveller off the tour: their join request is withdrawn (they left) or
+    declined (an organiser took them off), with the words to the other side. Someone
+    added without a request is just removed."""
+    match = traveller.match
+    if match is None:
+        traveller.delete()
+        return
+    with transaction.atomic():
+        MatchMessage.objects.create(match=match, sender=request.user, body=body, status_to=status)
+        match.status = status
+        match.responded_at = timezone.now()
+        match.save()
+    notify_match_response(match, actor=request.user, http_request=request, message=body)
+
+
+@login_required
+def mine(request):
+    """The tours one organises or travels on, and one's open join requests."""
+    rows = []
+    seen = set()
+    for traveller in (
+        Traveller.objects.filter(user=request.user)
+        .select_related("tour", "match", "from_stop", "to_stop")
+        .prefetch_related("tour__stops__event__community", "tour__stops__community")
+        .order_by("-tour__updated_at")
+    ):
+        if traveller.tour_id in seen or (traveller.match_id and traveller.match.is_closed):
+            continue
+        seen.add(traveller.tour_id)
+        rows.append({"tour": traveller.tour, "traveller": traveller, "stretch": _stretch_text(traveller)})
+    page = paginate(request, rows)
+    return render(request, "tours/mine.html", {"page": page})

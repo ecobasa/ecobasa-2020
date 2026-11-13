@@ -40,6 +40,7 @@
       {% if item.leg %}
         <div class="ml-4 border-l-2 border-dashed border-primary pl-6 py-2 text-sm opacity-80">
           <i class="fa-solid {{ item.leg_icon }} mr-1"></i>{{ item.leg_mode }}{% if item.leg.km is not None %} · {% blocktrans with km=item.leg.km %}about {{ km }} km{% endblocktrans %}{% endif %}
+          {% if item.free is not None %}· <span class="{% if item.free %}text-green{% else %}text-red{% endif %} font-semibold"><i class="fa-solid fa-user-group mx-1"></i>{% if item.free %}{% blocktrans count count=item.free %}{{ count }} place free{% plural %}{{ count }} places free{% endblocktrans %}{% else %}{% trans "Full" %}{% endif %}</span>{% endif %}
         </div>
       {% endif %}
     </li>

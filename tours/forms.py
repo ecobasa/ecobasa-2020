@@ -1,6 +1,7 @@
 import json
 
 from django import forms
+from django.utils.formats import date_format
 from django.utils.translation import gettext_lazy as _
 from django_countries import countries as all_countries
 
@@ -8,7 +9,7 @@ from communities.models import Community
 from events.models import Event
 from gift_economy.gifts.skills.models import get_or_create_skill
 
-from .models import Stop, Tour
+from .models import Stop, Tour, Traveller
 
 
 def _style(fields):
@@ -201,3 +202,70 @@ class StopForm(forms.ModelForm):
         if commit:
             stop.save()
         return stop
+
+
+class JoinForm(forms.ModelForm):
+    """Asking to come along for the whole route or part of it: where to get on and off,
+    how many people, and a few words to the organisers (only when asking, not when
+    changing the stretch later)."""
+
+    message = forms.CharField(
+        label=_("A few words to the organisers"), widget=forms.Textarea(attrs={"rows": 4}),
+        help_text=_("Who you are, why you'd like to come along, what you could bring."),
+    )
+
+    class Meta:
+        model = Traveller
+        fields = ["from_stop", "to_stop", "people", "ride_only"]
+
+    def __init__(self, tour, *args, with_message=True, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.tour = tour
+        self.stops = tour.ordered_stops()
+        if len(self.stops) >= 2:
+            for name, choices, default in (
+                ("from_stop", self.stops[:-1], self.stops[0]),
+                ("to_stop", self.stops[1:], self.stops[-1]),
+            ):
+                field = self.fields[name]
+                field.queryset = Stop.objects.filter(pk__in=[stop.pk for stop in choices])
+                field.required = True
+                field.empty_label = None
+                field.label_from_instance = self._stop_label
+                self.initial.setdefault(name, default.pk)
+            self.fields["from_stop"].label = _("Get on at")
+            self.fields["to_stop"].label = _("Get off at")
+        else:
+            # An idea without a route yet: along for the whole of it
+            del self.fields["from_stop"], self.fields["to_stop"]
+        self.fields["people"].min_value = 1
+        self.fields["people"].widget.attrs["min"] = 1
+        if not with_message:
+            del self.fields["message"]
+        _style(self.fields)
+
+    def _stop_label(self, stop):
+        number = next((i + 1 for i, s in enumerate(self.stops) if s.pk == stop.pk), "")
+        day = stop.arrive_on or stop.leave_on
+        when = f", {date_format(day, 'j M')}" if day else ""
+        return f"{number}. {stop.label}{when}"
+
+    def clean_people(self):
+        people = self.cleaned_data["people"]
+        if not people:
+            raise forms.ValidationError(_("At least one."))
+        return people
+
+    def clean(self):
+        cleaned = super().clean()
+        start, end = cleaned.get("from_stop"), cleaned.get("to_stop")
+        if start and end and self.tour.stretch(start, end, self.stops) is None:
+            self.add_error("to_stop", _("Choose a stop after the one you get on at."))
+            return cleaned
+        people = cleaned.get("people")
+        if people and not self.tour.fits(start, end, people, exclude=self.instance if self.instance.pk else None):
+            free = self.tour.free_on(start, end, self.stops, exclude=self.instance if self.instance.pk else None)
+            raise forms.ValidationError(
+                _("There is no room for that many on this stretch: %(free)s free.") % {"free": free}
+            )
+        return cleaned

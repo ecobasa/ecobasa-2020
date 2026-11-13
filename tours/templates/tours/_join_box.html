@@ -1,0 +1,34 @@
+{% load i18n %}
+{# Coming along: the button and what it says, by `join.state` (tours.views._join_state) #}
+{% if join.state %}
+  <div id="join" class="text-sm text-center space-y-4">
+    {% if join.state == "ask" %}
+      <a href="{% url 'tours:join' tour.slug %}" class="btn btn-lg w-full justify-center"><i class="fa-solid fa-user-plus mr-1"></i>{% trans "Ask to join" %}</a>
+      <p class="opacity-80">{% trans "For the whole route or part of it." %}</p>
+    {% elif join.state == "login" %}
+      {% url 'users:login' as login_url %}
+      <a href="{{ login_url }}?next={% url 'tours:join' tour.slug %}" class="btn btn-lg w-full justify-center"><i class="fa-solid fa-user-plus mr-1"></i>{% trans "Ask to join" %}</a>
+      <p class="m-0 opacity-80">{% trans "Log in first, then choose where you get on and off." %}</p>
+    {% elif join.state == "asked" %}
+      <p class="m-0"><i class="fa-regular fa-hourglass-half mr-1"></i>{% trans "Your join request is waiting for an answer." %}</p>
+      <div class="flex flex-wrap justify-center gap-2">
+        <a href="{{ join.match.get_absolute_url }}" class="btn">{% trans "See your request" %}</a>
+        <a href="{% url 'tours:join' tour.slug %}" class="btn btn-lg btn-purple">{% trans "Change it" %}</a>
+      </div>
+    {% elif join.state == "on" %}
+      <p class="m-0 font-semibold text-green"><i class="fa-solid fa-check mr-1"></i>{% trans "You travel along." %}</p>
+      {% if join.traveller.match %}<a href="{{ join.traveller.match.get_absolute_url }}" class="underline">{% trans "Talk with the organisers" %}</a>{% endif %}
+      <details class="text-left">
+        <summary class="cursor-pointer underline text-center">{% trans "Leave tour" %}</summary>
+        <form method="post" action="{% url 'tours:leave' tour.slug %}" class="mt-2 space-y-2">{% csrf_token %}
+          <textarea name="body" rows="3" required class="form-textarea w-full text-sm" placeholder="{% trans 'A few words why, the others were counting on you' %}"></textarea>
+          <button type="submit" class="btn btn-lg btn-purple">{% trans "Leave tour" %}</button>
+        </form>
+      </details>
+    {% elif join.state == "full" %}
+      <p class="m-0"><i class="fa-solid fa-user-group mr-1"></i>{% trans "No places free at the moment." %}</p>
+    {% elif join.state == "organiser" %}
+      <a href="{% url 'matches:list' %}?type=tours" class="btn btn-lg w-full justify-center"><i class="fa-solid fa-user-plus mr-1"></i>{% trans "Join requests" %}</a>
+    {% endif %}
+  </div>
+{% endif %}

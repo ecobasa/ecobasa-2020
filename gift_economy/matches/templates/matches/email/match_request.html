@@ -27,6 +27,7 @@
                 {% if recipient.name %}{% blocktrans with name=recipient.name %}Hello {{ name }},{% endblocktrans %}{% else %}{% blocktrans with name=recipient.email %}Hello {{ name }},{% endblocktrans %}{% endif %}
               </p>
               <p style="margin:0 0 24px;font-size:15px;line-height:1.6;">{{ headline }}</p>
+              {% if match.summary %}<p style="margin:0 0 24px;font-size:15px;line-height:1.6;">{{ match.summary }}</p>{% endif %}
 
               {% with vd=match.stay_details %}
               {% if vd and vd.stay_from or vd and vd.stay_to or vd.practice_skills or vd.sender_skills or match.message %}

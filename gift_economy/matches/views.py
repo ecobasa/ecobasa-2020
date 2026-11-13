@@ -7,6 +7,7 @@ from django.contrib.auth.decorators import login_required
 from django.core import signing
 from django.db.models import Count
 from django.core.exceptions import PermissionDenied
+from django.db import transaction
 from django.http import Http404, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -32,6 +33,11 @@ _TYPES = {
 }
 _VOLUNTEER = {
     "title": _("Volunteer Visits"), "icon": "fa-solid fa-campground", "empty": _("No volunteer visits yet."),
+}
+# Asking to join a tour (the tours app is the target; matches doesn't import it)
+TOUR_APP_LABEL = "tours"
+_TOURS = {
+    "title": _("Join requests"), "icon": "fa-solid fa-route", "empty": _("No join requests yet."),
 }
 
 _OPEN = (Match.STATUS_PENDING, Match.STATUS_COUNTER)
@@ -70,6 +76,8 @@ def matches_list(request):
     kind = request.GET.get("type", "")
     if kind == "volunteer":
         return _volunteer_visits(request)
+    if kind == "tours":
+        return _join_requests(request)
     if kind not in _TYPES:
         kind = ""
     user = request.user
@@ -164,6 +172,26 @@ def _volunteer_visits(request):
     })
 
 
+def _join_requests(request):
+    """Requests to join a tour: received (as an organiser) and sent."""
+    user = request.user
+    tours = _with_details(Match.objects.filter(content_type__app_label=TOUR_APP_LABEL))
+    boxes = {"received": tours.filter(recipient=user), "sent": tours.filter(from_user=user)}
+    waiting = {"received": boxes["received"].filter(status=Match.STATUS_PENDING).count(), "sent": 0}
+    counts = {key: matches.count() for key, matches in boxes.items()}
+    box = request.GET.get("box")
+    if box not in boxes:
+        box = "received" if waiting["received"] or (counts["received"] and not counts["sent"]) else "sent"
+    tabs = [
+        Choice(label, query_url(request, box=key, status=None), key == box, counts[key], waiting[key])
+        for key, label in (("received", _("Requests to you")), ("sent", _("Your requests")))
+    ]
+    return render(request, "matches/matches_list.html", {
+        "request_type": "tours", "kind": _TOURS, "tabs": tabs, "box": box,
+        **_requests(request, boxes[box]), "show_from": box == "received", "empty": _TOURS["empty"],
+    })
+
+
 # ── Match detail ────────────────────────────────────────────────────────────────
 
 def _parse_loan(data):
@@ -203,15 +231,17 @@ def match_detail(request, pk):
     if target is None:
         raise Http404
 
-    # Only the two sides act on a match; staff may open it too
-    is_party = request.user in (match.from_user, match.recipient)
+    # Only the two sides act on a match; staff may open it too. A target may let others
+    # answer for its owner (a tour's other organisers)
+    answers_for_owner = request.user.is_authenticated and getattr(target, "can_answer_match", lambda user: False)(request.user)
+    is_party = request.user in (match.from_user, match.recipient) or answers_for_owner
     if not (is_party or request.user.is_staff):
         raise Http404
     if request.method == "POST" and not is_party:
         raise PermissionDenied
 
-    is_owner     = request.user == match.recipient
     is_requester = request.user == match.from_user
+    is_owner     = request.user == match.recipient or (answers_for_owner and not is_requester)
 
     thread = list(match.thread.select_related("sender").all())
     latest_status_msg  = None
@@ -236,8 +266,9 @@ def match_detail(request, pk):
     # declined or withdrawn; also after it was accepted, which the other side then answers.
     # Who just comes to an open event changes nothing here: they take it back and come
     # again with other days.
-    can_counter = (is_owner and match.status != Match.STATUS_WITHDRAWN) or (
-        is_requester and not match.is_closed and not match.is_coming
+    can_counter = getattr(target, "match_counter", True) and (
+        (is_owner and match.status != Match.STATUS_WITHDRAWN)
+        or (is_requester and not match.is_closed and not match.is_coming)
     )
     # The one who asked can take it back, also after it was accepted
     can_withdraw = is_requester and not match.is_closed
@@ -274,19 +305,26 @@ def match_detail(request, pk):
 
         if action in ("accept", "decline") and can_decide:
             new_status = {"accept": Match.STATUS_ACCEPTED, "decline": Match.STATUS_DECLINED}[action]
-            if new_status == Match.STATUS_ACCEPTED and match.is_loan:
-                # The agreed time is the loan's from now on; a tool is lent once at a time
-                starts_at, ends_at = match.loan_period()
-                if target.lends_out and not target.is_free(starts_at, ends_at, exclude_match=match):
-                    flash.error(request, _("It is already lent on some of these days. Propose other days instead."))
-                    return redirect(match.get_absolute_url())
-                match.loan.starts_at, match.loan.ends_at = starts_at, ends_at
-                match.loan.save()
-            body = request.POST.get("body", "").strip()
-            MatchMessage.objects.create(match=match, sender=request.user, body=body, status_to=new_status)
-            match.status       = new_status
-            match.responded_at = timezone.now()
-            match.save()
+            with transaction.atomic():
+                if new_status == Match.STATUS_ACCEPTED:
+                    # A target may refuse it now (a tour with no room left on the stretch)
+                    error = getattr(target, "match_accept_error", lambda match: "")(match)
+                    if error:
+                        flash.error(request, error)
+                        return redirect(match.get_absolute_url())
+                if new_status == Match.STATUS_ACCEPTED and match.is_loan:
+                    # The agreed time is the loan's from now on; a tool is lent once at a time
+                    starts_at, ends_at = match.loan_period()
+                    if target.lends_out and not target.is_free(starts_at, ends_at, exclude_match=match):
+                        flash.error(request, _("It is already lent on some of these days. Propose other days instead."))
+                        return redirect(match.get_absolute_url())
+                    match.loan.starts_at, match.loan.ends_at = starts_at, ends_at
+                    match.loan.save()
+                body = request.POST.get("body", "").strip()
+                MatchMessage.objects.create(match=match, sender=request.user, body=body, status_to=new_status)
+                match.status       = new_status
+                match.responded_at = timezone.now()
+                match.save()
             notify_match_response(match, actor=request.user, http_request=request, message=body)
             flash.success(request, _("Response sent."))
             return redirect(match.get_absolute_url())
@@ -354,8 +392,13 @@ def match_detail(request, pk):
 
     return render(request, "matches/match_detail.html", {
         "match":                match,
-        # Volunteer visits have their own place in the sidebar and breadcrumb
-        "request_type":         "volunteer" if match.is_community_stay else "",
+        # Volunteer visits and join requests have their own place in the sidebar and breadcrumb
+        "request_type":         (
+            "volunteer" if match.is_community_stay
+            else "tours" if match.content_type.app_label == TOUR_APP_LABEL else ""
+        ),
+        # What the target shows about the match itself (a tour: the stretch and people)
+        "summary_template":     getattr(target, "get_match_summary_template", lambda: "")(),
         "target":               target,
         "is_owner":             is_owner,
         "is_requester":         is_requester,
@@ -448,10 +491,16 @@ def email_action(request, token):
         return redirect(match.get_absolute_url())
 
     actor = match.recipient
-    match.status       = Match.STATUS_ACCEPTED if action == "accept" else Match.STATUS_DECLINED
-    match.responded_at = timezone.now()
-    match.save(update_fields=["status", "responded_at"])
-    MatchMessage.objects.create(match=match, sender=actor, body="", status_to=match.status)
+    with transaction.atomic():
+        # A target may refuse it now (a tour with no room left on the stretch)
+        error = getattr(target, "match_accept_error", lambda match: "")(match) if action == "accept" else ""
+        if error:
+            flash.error(request, error)
+            return redirect(match.get_absolute_url())
+        match.status       = Match.STATUS_ACCEPTED if action == "accept" else Match.STATUS_DECLINED
+        match.responded_at = timezone.now()
+        match.save(update_fields=["status", "responded_at"])
+        MatchMessage.objects.create(match=match, sender=actor, body="", status_to=match.status)
     notify_match_response(match, actor=actor, http_request=request)
 
     return render(request, "matches/email_action_done.html", {

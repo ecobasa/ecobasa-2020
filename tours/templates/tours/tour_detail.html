@@ -123,32 +123,7 @@
       {% endif %}
     </div>
 
-    <aside class="sm:col-span-4 space-y-4">
-      {# Who travels, with their pictures, like a community's ambassador #}
-      {% if travellers %}
-        <div class="text-center">
-          <h3>{% trans "Who travels" %}</h3>
-          <div class="flex flex-wrap justify-center gap-6">
-            {% for person in travellers %}
-              <div>
-                <a href="{{ person.get_absolute_url }}" class="block hover:text-primary">
-                  {% if person.image %}
-                    <img src="{{ person.image.url }}" class="rounded-full h-20 w-20 mx-auto mb-2 object-cover" alt="{{ person.name }}">
-                  {% else %}
-                    <span class="rounded-full h-20 w-20 mx-auto mb-2 border border-dashed border-primary flex items-center justify-center"><i class="fa fa-user text-3xl text-primary"></i></span>
-                  {% endif %}
-                  <div class="font-serif font-bold text-xl">{{ person.name }}</div>
-                </a>
-                {% if person == tour.organiser %}<div class="text-xs opacity-70">{% trans "Organiser" %}</div>{% endif %}
-                <div class="text-sm">{% include "events/_freshness.html" with when=person.last_active %}</div>
-              </div>
-            {% endfor %}
-          </div>
-        </div>
-      {% elif not user.is_authenticated %}
-        {% url 'users:login' as login_url %}
-        <p class="text-sm text-center">{% blocktrans with url=login_url|add:"?next="|add:request.path %}<a href="{{ url }}" class="underline">Log in</a> to see who travels and what they can.{% endblocktrans %}</p>
-      {% endif %}
+    <aside class="sm:col-span-4 space-y-[32px]">
       <div class="border rounded-xl bg-secondary bg-opacity-60 p-4 text-sm space-y-2">
         {% if tour.open_to_join %}
           <div><i class="fa-solid fa-user-group mr-1"></i>{% trans "I'm looking for travellers" %}{% if tour.max_people %} · {% blocktrans count count=tour.max_people %}{{ count }} person at most{% plural %}{{ count }} people at most{% endblocktrans %}{% endif %}</div>
@@ -158,6 +133,52 @@
         {% if tour.costs_note %}<div><span class="font-semibold">{% trans "How we share costs" %}:</span> {{ tour.costs_note }}</div>{% endif %}
         {% if tour.good_to_know %}<div><span class="font-semibold">{% trans "Good to know" %}:</span><br>{{ tour.good_to_know|linebreaksbr }}</div>{% endif %}
       </div>
+      {# Who travels, with their pictures, like a community's ambassador #}
+      {% if travellers %}
+        <div class="text-center" id="travellers">
+          <h2>{% trans "Who travels" %}</h2>
+          <div class="flex flex-wrap justify-center gap-6">
+            {% for traveller in travellers %}
+              {% with person=traveller.user %}
+              <div>
+                <a href="{{ person.get_absolute_url }}" class="block hover:text-primary">
+                  {% if person.image %}
+                    <img src="{{ person.image.url }}" class="rounded-full h-20 w-20 mx-auto mb-2 object-cover" alt="{{ person.name }}">
+                  {% else %}
+                    <span class="rounded-full h-20 w-20 mx-auto mb-2 border border-dashed border-primary flex items-center justify-center"><i class="fa fa-user text-3xl text-primary"></i></span>
+                  {% endif %}
+                  <div class="font-serif font-bold text-xl">{{ person.name }}</div>
+                </a>
+                {% if traveller.is_organiser %}<div class="text-xs opacity-70">{% trans "Organiser" %}</div>{% endif %}
+                {% for community in person.communities.all %}
+                  <a href="{{ community.get_absolute_url }}" class="block text-sm text-primary hover:underline"><i class="fa-solid {{ community.get_type_icon }} mr-1"></i>{{ community.name }}</a>
+                {% endfor %}
+                {% if traveller.stretch %}<div class="text-xs"><i class="fa-solid fa-route mr-1"></i>{{ traveller.stretch }}</div>{% endif %}
+                {% if traveller.people > 1 %}<div class="text-xs">{% blocktrans count count=traveller.people|add:"-1" %}and {{ count }} more{% plural %}and {{ count }} more{% endblocktrans %}</div>{% endif %}
+                {% if traveller.ride_only %}<div class="text-xs opacity-70">{% trans "Only for the ride" %}</div>{% endif %}
+                <div class="text-sm">{% include "events/_freshness.html" with when=person.last_active %}</div>
+                {% if can_edit and not traveller.is_organiser %}
+                  <details class="text-xs mt-1 text-left">
+                    <summary class="cursor-pointer underline text-center">{% trans "Remove from tour" %}</summary>
+                    <form method="post" action="{% url 'tours:remove' tour.slug traveller.pk %}" class="mt-1 space-y-1">{% csrf_token %}
+                      <textarea name="body" rows="3" required class="form-textarea w-full text-sm" placeholder="{% trans 'A few words to them why' %}"></textarea>
+                      <button type="submit" class="btn btn-purple text-xs">{% trans "Remove from tour" %}</button>
+                    </form>
+                  </details>
+                {% endif %}
+              </div>
+              {% endwith %}
+            {% endfor %}
+          </div>
+        </div>
+      {% elif not user.is_authenticated %}
+        {% if traveller_count %}<p class="text-sm text-center"><i class="fa-solid fa-user-group mr-1"></i>{% blocktrans count count=traveller_count %}{{ count }} person travels{% plural %}{{ count }} people travel{% endblocktrans %}</p>{% endif %}
+        {% url 'users:login' as login_url %}
+        <p class="text-sm text-center">{% blocktrans with url=login_url|add:"?next="|add:request.path %}<a href="{{ url }}" class="underline">Log in</a> to see who travels and what they can.{% endblocktrans %}</p>
+      {% endif %}
+      {% if travellers %}
+        {% include "tours/_join_box.html" %}
+      {% endif %}
     </aside>
   </div>
 </div>

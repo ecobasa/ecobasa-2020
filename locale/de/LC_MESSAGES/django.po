@@ -5689,3 +5689,201 @@ msgstr "Nur Tour-Ideen"
 
 msgid "Near a place"
 msgstr "In der Nähe eines Ortes"
+
+# tours: joining a tour (package 3)
+msgid "Join requests"
+msgstr "Mitreise-Anfragen"
+
+msgid "No join requests yet."
+msgstr "Noch keine Mitreise-Anfragen."
+
+msgid "Your tours"
+msgstr "Deine Touren"
+
+msgid "A few words to the organisers"
+msgstr "Ein paar Worte an die Organisator*innen"
+
+msgid "Who you are, why you'd like to come along, what you could bring."
+msgstr "Wer du bist, warum du gern mitkommen möchtest, was du mitbringen könntest."
+
+msgid "Get on at"
+msgstr "Einsteigen bei"
+
+msgid "Get off at"
+msgstr "Aussteigen bei"
+
+msgid "At least one."
+msgstr "Mindestens eine Person."
+
+msgid "Choose a stop after the one you get on at."
+msgstr "Wähle eine Station nach der, an der du einsteigst."
+
+#, python-format
+msgid "There is no room for that many on this stretch: %(free)s free."
+msgstr "Auf diesem Abschnitt ist nicht so viel Platz: %(free)s frei."
+
+msgid "Join request"
+msgstr "Mitreise-Anfrage"
+
+msgid "asked to join"
+msgstr "möchte mitreisen bei"
+
+#, python-format
+msgid "%(actor)s asked to join your tour: %(title)s"
+msgstr "%(actor)s möchte bei deiner Tour mitreisen: %(title)s"
+
+msgid "There is no room left on this stretch any more."
+msgstr "Auf diesem Abschnitt ist kein Platz mehr frei."
+
+msgid "You and whoever comes with you, children too."
+msgstr "Du und alle, die mit dir kommen, auch Kinder."
+
+msgid "I only need the ride"
+msgstr "Ich brauche nur die Mitfahrt"
+
+msgid "Pick me up at"
+msgstr "Hol mich ab in"
+
+msgid "Drop me at"
+msgstr "Lass mich raus in"
+
+msgid "Traveller"
+msgstr "Mitreisende*r"
+
+msgid "Travellers"
+msgstr "Mitreisende"
+
+msgid "Ask to join"
+msgstr "Mitreisen anfragen"
+
+msgid "For the whole route or part of it."
+msgstr "Für die ganze Strecke oder einen Teil."
+
+msgid "Log in first, then choose where you get on and off."
+msgstr "Melde dich zuerst an, dann wähle, wo du ein- und aussteigst."
+
+msgid "Your join request is waiting for an answer."
+msgstr "Deine Mitreise-Anfrage wartet auf eine Antwort."
+
+msgid "See your request"
+msgstr "Zu deiner Anfrage"
+
+msgid "Change it"
+msgstr "Ändern"
+
+msgid "You travel along."
+msgstr "Du reist mit."
+
+msgid "Talk with the organisers"
+msgstr "Mit den Organisator*innen schreiben"
+
+msgid "Leave tour"
+msgstr "Tour verlassen"
+
+msgid "A few words why, the others were counting on you"
+msgstr "Ein paar Worte, warum – die anderen haben mit dir gerechnet"
+
+msgid "No places free at the moment."
+msgstr "Gerade sind keine Plätze frei."
+
+msgid "Stretch"
+msgstr "Abschnitt"
+
+msgid "the whole route"
+msgstr "die ganze Strecke"
+
+msgid "People"
+msgstr "Personen"
+
+msgid "Only for the ride"
+msgstr "Nur zum Mitfahren"
+
+msgid "Change where you get on and off"
+msgstr "Ein- und Ausstieg ändern"
+
+#, python-format
+msgid "%(count)s place free"
+msgid_plural "%(count)s places free"
+msgstr[0] "%(count)s Platz frei"
+msgstr[1] "%(count)s Plätze frei"
+
+msgid "Full"
+msgstr "Voll"
+
+msgid "Change your join request"
+msgstr "Deine Mitreise-Anfrage ändern"
+
+#, python-format
+msgid "Choose where you get on and where you get off <strong>%(title)s</strong>. The organisers get your request and answer you."
+msgstr "Wähle, wo du bei <strong>%(title)s</strong> einsteigst und wo du aussteigst. Die Organisator*innen bekommen deine Anfrage und antworten dir."
+
+msgid "The route isn't planned yet: you ask to come along for the whole of it."
+msgstr "Die Strecke ist noch nicht geplant: Du fragst für die ganze Tour an."
+
+msgid "You come along on the way, but not to the stays with the hosts in between."
+msgstr "Du fährst unterwegs mit, aber nicht zu den Aufenthalten bei den Gastgeber*innen dazwischen."
+
+msgid "You travel along"
+msgstr "Du reist mit"
+
+msgid "Asked to join"
+msgstr "Mitreisen angefragt"
+
+msgid "No tours yet. Plan one, or ask to join one on the map."
+msgstr "Noch keine Touren. Plane eine oder frag auf der Karte an, bei einer mitzureisen."
+
+#, python-format
+msgid "and %(count)s more"
+msgid_plural "and %(count)s more"
+msgstr[0] "und %(count)s weitere Person"
+msgstr[1] "und %(count)s weitere Personen"
+
+msgid "Remove from tour"
+msgstr "Aus der Tour nehmen"
+
+msgid "A few words to them why"
+msgstr "Ein paar Worte an die Person, warum"
+
+#, python-format
+msgid "%(count)s person travels"
+msgid_plural "%(count)s people travel"
+msgstr[0] "%(count)s Person reist mit"
+msgstr[1] "%(count)s Personen reisen mit"
+
+msgid "You are on this tour already."
+msgstr "Du bist schon bei dieser Tour dabei."
+
+msgid "This tour doesn't look for travellers."
+msgstr "Diese Tour sucht keine Mitreisenden."
+
+msgid "Your join request has been sent to the organisers."
+msgstr "Deine Mitreise-Anfrage ist an die Organisator*innen gegangen."
+
+#, python-format
+msgid "Changed the request: %(summary)s"
+msgstr "Anfrage geändert: %(summary)s"
+
+msgid "Your join request has been changed."
+msgstr "Deine Mitreise-Anfrage ist geändert."
+
+#, python-format
+msgid "%(n)s person"
+msgid_plural "%(n)s people"
+msgstr[0] "%(n)s Person"
+msgstr[1] "%(n)s Personen"
+
+msgid "As an organiser you can't leave the tour yet."
+msgstr "Als Organisator*in kannst du die Tour noch nicht verlassen."
+
+msgid "Please write a few words why, the others were counting on you."
+msgstr "Bitte schreib ein paar Worte, warum – die anderen haben mit dir gerechnet."
+
+msgid "You have left the tour."
+msgstr "Du hast die Tour verlassen."
+
+msgid "Please write a few words to them why."
+msgstr "Bitte schreib der Person ein paar Worte, warum."
+
+#, python-format
+msgid "%(name)s is no longer on the tour."
+msgstr "%(name)s ist nicht mehr bei der Tour dabei."
