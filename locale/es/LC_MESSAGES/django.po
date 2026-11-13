@@ -6772,3 +6772,57 @@ msgid "%(count)s event"
 msgid_plural "%(count)s events"
 msgstr[0] "%(count)s evento"
 msgstr[1] "%(count)s eventos"
+
+#: tours/templates/tours/_timeline_entry.html
+msgid "published the tour"
+msgstr "publicó el tour"
+
+#: tours/templates/tours/_timeline_entry.html
+#, python-format
+msgid "joined the tour until %(stop)s"
+msgstr "se unió al tour hasta %(stop)s"
+
+#: tours/templates/tours/_timeline_entry.html
+msgid "joined the tour"
+msgstr "se unió al tour"
+
+#: tours/templates/tours/_timeline_entry.html
+#, python-format
+msgid "gave %(gift)s to the tour"
+msgstr "regaló %(gift)s al tour"
+
+#: tours/templates/tours/_timeline_entry.html
+#, python-format
+msgid "lent %(gift)s to the tour"
+msgstr "prestó %(gift)s al tour"
+
+#: tours/templates/tours/_timeline_entry.html
+#, python-format
+msgid "came to help with %(gift)s"
+msgstr "vino a ayudar con %(gift)s"
+
+#: tours/templates/tours/_timeline_entry.html
+msgid "agreed to host the group"
+msgstr "aceptó acoger al grupo"
+
+#: tours/templates/tours/_timeline_entry.html
+#, python-format
+msgid "picked up %(gift)s"
+msgstr "recogió %(gift)s"
+
+#: tours/templates/tours/_timeline_entry.html
+#, python-format
+msgid "handed over %(gift)s to %(to)s"
+msgstr "entregó %(gift)s a %(to)s"
+
+#: gift_economy/references/forms.py
+msgid "Where was it?"
+msgstr "¿Dónde fue?"
+
+#: gift_economy/references/templates/references/_references.html
+msgid "Add experience"
+msgstr "Añadir experiencia"
+
+#: tours/templates/tours/_timeline_entry.html
+msgid "Confirm"
+msgstr "Confirmar"

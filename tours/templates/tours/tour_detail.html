@@ -108,6 +108,9 @@
         {% if can_edit %}<a href="{% url 'tours:plan' tour.slug %}" class="btn"><i class="fa fa-plus mr-1"></i>{% trans "Add stops" %}</a>{% endif %}
       {% endif %}
 
+      {# What hosts and others who met the group say about it: at the stops, if it has any #}
+      {% references_for tour at_stops=route %}
+
       {# What the tour still looks for, each with why someone who has it would say yes #}
       {% if needs %}
         <h2 id="needs">{% trans "We're still looking for" %}</h2>
@@ -179,9 +182,6 @@
           {% endfor %}
         </div>
       {% endif %}
-
-      {# What hosts and others who met the group say about it #}
-      {% references_for tour %}
     </div>
 
     <aside class="sm:col-span-4 space-y-[32px]">
@@ -198,7 +198,8 @@
       {% if travellers %}
         <div class="text-center" id="travellers">
           <h2>{% trans "Who travels" %}</h2>
-          <div class="flex flex-wrap justify-center gap-x-10 gap-y-10">
+          {# One person per line, also where two would fit side by side #}
+          <div class="flex flex-col items-center gap-y-10">
             {% for traveller in travellers %}
               {% with person=traveller.user %}
               <div>

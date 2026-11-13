@@ -24,14 +24,23 @@ def test_demo_data_names_things_as_the_form_would_and_spreads_them_over_the_map(
     window = Listing.objects.get(title="Wooden window")
     assert window.thing.slug == "wooden-window" and [c.slug for c in window.categories.all()] == ["building-renovation"]
     assert Listing.objects.get(title="Lamp").thing.kind == "material"
-    # Cocoa from the cacao farm sails to Portugal, where Ana agreed to receive it
+    # A tour that is over: cocoa from the cacao farm sailed to Portugal and was handed to Ana
     from tours.models import Delivery
     delivery = Delivery.objects.get(tour__title="Across the Atlantic by sail")
-    assert (delivery.offer.title, delivery.wish.owner.email, delivery.status) == ("Cocoa beans", "ana@ecobasa.demo", Delivery.STATUS_AGREED)
-    # The boat it looked for is lent by Nils, who doesn't sail along
-    need = Listing.objects.get(tour=delivery.tour, title="Sailing boat")
-    assert need.status == Listing.STATUS_PROMISED and need.promised_by()[0].email == "nils@ecobasa.demo"
-    assert not delivery.tour.travellers.filter(user__email="nils@ecobasa.demo").exists()
+    atlantic = delivery.tour
+    assert atlantic.is_over and atlantic.organiser.email == "jules@ecobasa.demo"
+    assert (delivery.offer.title, delivery.wish.owner.email, delivery.status) == ("Cocoa beans", "ana@ecobasa.demo", Delivery.STATUS_HANDED_OVER)
+    # The boat it looked for is Nils's, who sailed the first leg: the tour's vehicle
+    need = Listing.objects.get(tour=atlantic, title="Sailing boat")
+    assert need.promised_by()[0].email == "nils@ecobasa.demo"
+    assert [(v.label, v.listing.owner.email) for v in atlantic.vehicles.all()] == [("Albatroz", "nils@ecobasa.demo")]
+    # What they wrote afterwards is told at the stops where it happened
+    from django.contrib.auth.models import AnonymousUser
+    from tours.timeline import timeline_by_stop
+    stops = atlantic.ordered_stops()
+    told = [{e["reference"].author.email for e in entries if e["kind"] == "reference"} for entries in timeline_by_stop(atlantic, stops, AnonymousUser())]
+    assert told[4] == {"valeria@ecobasa.demo", "jules@ecobasa.demo", "diego@ecobasa.demo", "sam@ecobasa.demo"}
+    assert told[6] == {"jules@ecobasa.demo", "nils@ecobasa.demo"} and "ana@ecobasa.demo" in told[7]
     # Every tour with a route has something to take along
     from tours.deliveries import delivery_suggestions
     from tours.models import Tour

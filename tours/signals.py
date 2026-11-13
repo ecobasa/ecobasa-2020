@@ -41,7 +41,11 @@ def _sync_later(tour_id):
 
 @receiver(post_save, sender=Match)
 def match_changed(sender, instance, **kwargs):
+    from .models import vehicle_from_match
     from .visits import follow_agreed_days
+
+    # After the transaction: its contributions are saved with it
+    transaction.on_commit(lambda: vehicle_from_match(instance))
 
     traveller = getattr(instance, "traveller", None)
     if traveller is not None:

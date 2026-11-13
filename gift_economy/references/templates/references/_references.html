@@ -1,8 +1,10 @@
 {% load i18n %}
 <section id="references" class="mt-10" x-data="{ shown: '' }">
-  <h2>{% trans "References" %}</h2>
+  {# On a page that tells its references elsewhere (a tour's, at its stops) only the form, inviting entries #}
+  <h2>{% if at_stops %}{% trans "Add experience" %}{% else %}{% trans "References" %}{% endif %}</h2>
 
-  {% if references %}
+  {% if at_stops %}
+  {% elif references %}
     {# The counts filter the list: one impression at a time, clicking it again shows all #}
     <div class="flex flex-wrap items-center gap-2 mb-4 text-xs">
       {% if counts.positive %}{% include "references/_impression_filter.html" with impression="positive" colour="bg-green" icon="fa-face-smile" count=counts.positive %}{% endif %}
@@ -29,10 +31,11 @@
   {% if form %}
     <div class="border rounded-xl bg-secondary p-6" x-data="{ open: {{ open_form|yesno:'true,false' }}, impression: '{{ form.impression.value|default:'positive' }}', preview: '' }">
       <button type="button" class="btn" x-show="!open" @click="open = true">
-        <i class="fa fa-pencil mr-2"></i>{% if own_reference %}{% trans "Edit your reference" %}{% else %}{% trans "Write a reference" %}{% endif %}
+        <i class="fa fa-pencil mr-2"></i>{% if at_stops %}{% trans "Share your story" %}{% elif own_reference %}{% trans "Edit your reference" %}{% else %}{% trans "Write a reference" %}{% endif %}
       </button>
       <form x-show="open" x-cloak method="post" enctype="multipart/form-data" action="{% url 'references:save' content_type.pk subject.pk %}">
         {% csrf_token %}
+        {% if at_stops and own_reference %}<input type="hidden" name="reference" value="{{ own_reference.pk }}">{% endif %}
         {% include "references/_reference_form_fields.html" %}
         <div class="flex flex-wrap gap-2">
           <button type="submit" class="btn"><i class="fa fa-check mr-2"></i>{% trans "Save reference" %}</button>
@@ -49,7 +52,7 @@
     {% include "references/_reference_skills_js.html" %}
   {% elif not request.user.is_authenticated %}
     <a class="btn" href="{% url 'users:login' %}?next={{ request.path }}%23references">
-      <i class="fa fa-pencil mr-2"></i>{% trans "Log in to write a reference" %}
+      <i class="fa fa-pencil mr-2"></i>{% if at_stops %}{% trans "Share your story" %}{% else %}{% trans "Log in to write a reference" %}{% endif %}
     </a>
   {% endif %}
 </section>

@@ -29,12 +29,34 @@ def is_referenceable(content_type):
 
 
 def can_write_about(subject, user):
-    """Whether `user` may write a reference about `subject`: not about their own, and
-    not where the subject says no (a tour: not by its own travellers)."""
-    if not user.is_authenticated or subject_owner(subject) == user:
+    """Whether `user` may write a reference about `subject`: not about their own, unless
+    the subject says who may (a tour: everyone, its travellers too, as its guestbook)."""
+    if not user.is_authenticated:
         return False
     check = getattr(subject, "can_be_referenced_by", None)
-    return check(user) if check else True
+    return check(user) if check else subject_owner(subject) != user
+
+
+def reference_waits(subject, user):
+    """Whether what `user` writes in `subject`'s guestbook waits for confirmation: when the
+    subject doesn't know them (a tour: not one of its travellers, hosts or the people it
+    exchanged with). Keeps spam off it."""
+    trusts = getattr(subject, "trusts_reference_by", None)
+    return trusts is not None and not trusts(user)
+
+
+def can_confirm_reference(reference, user):
+    """Whether `user` confirms or removes a waiting entry (a tour: its travellers)."""
+    check = getattr(reference.subject, "can_confirm_references", None)
+    return bool(user.is_authenticated and check is not None and check(user))
+
+
+def reference_places(subject):
+    """Where on `subject` something can have happened, for a reference to say: a tour's
+    stops, as [(place, label, match)], `match` being a stay agreed there (or None). Empty
+    for subjects without places, which hold one reference per author."""
+    places = getattr(subject, "get_reference_places", None)
+    return list(places()) if places else []
 
 
 def subject_owner(subject):
@@ -115,6 +137,14 @@ class Reference(models.Model):
         "matches.Match", on_delete=models.SET_NULL, null=True, blank=True, related_name="references",
     )
     photo = models.ImageField(_("Photo"), upload_to="reference-photos", null=True, blank=True)
+    # Where it happened, on a subject with places (a tour's stop, reference_places). With a
+    # place an author may write about the same subject again and again (a guestbook)
+    place_type = models.ForeignKey(ContentType, on_delete=models.CASCADE, null=True, blank=True, related_name="+")
+    place_id = models.CharField(max_length=255, blank=True)
+    place = GenericForeignKey("place_type", "place_id")
+    # In a guestbook, from someone its subject has had nothing to do with yet: shown to
+    # the author and to those who confirm it until one of them does (reference_waits)
+    pending = models.BooleanField(_("Waiting for confirmation"), default=False)
     share_publicly = models.BooleanField(_("ecobasa may show this story on its homepage"), default=False)
     featured_at = models.DateTimeField(_("Featured"), null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -126,7 +156,7 @@ class Reference(models.Model):
         verbose_name_plural = _("References")
         constraints = [
             models.UniqueConstraint(
-                fields=["author", "content_type", "object_id"],
+                fields=["author", "content_type", "object_id"], condition=Q(place_id=""),
                 name="one_reference_per_author_and_subject",
             ),
         ]
@@ -146,6 +176,9 @@ class Reference(models.Model):
         written after, an event or a community. None otherwise."""
         subject = self.subject
         if self.match is None or subject is None or not hasattr(subject, "get_reference_people"):
+            return None
+        # Not after a gift taken along: that was no stay
+        if self.match.content_type.model not in ("community", "event"):
             return None
         return self.match.target
 

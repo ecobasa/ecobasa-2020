@@ -1,25 +1,27 @@
 {% load i18n %}
 {# The fields of a reference, on its subject's page and on the page from the email after a match. #}
 {# Needs an Alpine scope with `impression` and `preview`, a multipart form, and forms.form_context(). #}
-<div class="form-group mb-4">
-  <label class="form-label">{{ form.impression.label }}</label>
-  <div class="flex flex-wrap gap-4" @change="impression = $event.target.value">
-    {% for radio in form.impression %}
-      <label class="flex items-center gap-2 text-sm text-brown cursor-pointer">{{ radio.tag }} {{ radio.choice_label }}</label>
-    {% endfor %}
+{% if form.impression %}
+  <div class="form-group mb-4">
+    <label class="form-label">{{ form.impression.label }}</label>
+    <div class="flex flex-wrap gap-4" @change="impression = $event.target.value">
+      {% for radio in form.impression %}
+        <label class="flex items-center gap-2 text-sm text-brown cursor-pointer">{{ radio.tag }} {{ radio.choice_label }}</label>
+      {% endfor %}
+    </div>
   </div>
-</div>
+{% endif %}
 {% include "references/_guidelines.html" %}
 <div class="form-group mb-4">
   <label class="form-label" for="{{ form.text.id_for_label }}">{{ form.text.label }}</label>
   {{ form.text }}
   {% for e in form.text.errors %}<p class="field-error">{{ e }}</p>{% endfor %}
 </div>
-{% if form.visit %}
+{% if form.place %}
   <div class="form-group mb-4">
-    <label class="form-label" for="{{ form.visit.id_for_label }}">{{ form.visit.label }}</label>
-    <select name="visit" id="{{ form.visit.id_for_label }}" class="form-select w-full">
-      {% for value, label in form.visit.field.choices %}<option value="{{ value }}"{% if value|stringformat:"s" == form.visit.value|stringformat:"s" %} selected{% endif %}>{{ label }}</option>{% endfor %}
+    <label class="form-label" for="{{ form.place.id_for_label }}">{{ form.place.label }}</label>
+    <select name="place" id="{{ form.place.id_for_label }}" class="form-select w-full">
+      {% for value, label in form.place.field.choices %}<option value="{{ value }}"{% if value|stringformat:"s" == form.place.value|stringformat:"s" %} selected{% endif %}>{{ label }}</option>{% endfor %}
     </select>
   </div>
 {% endif %}

@@ -35,6 +35,7 @@ from .forms import (
 from .geo import MAX_TOURS, TourFilters, delivery_features, feature_collection, recommendation_features
 from .models import Delivery, Stop, Tour, Traveller, Vehicle, append_stop, insert_stop, move_stop, remove_stop, set_order
 from .recommend import AREA_CHOICES, DEFAULT_AREA_KM, hints, km_of, recommend_stops, suggest_order
+from .timeline import timeline_by_stop
 
 _STOPS = ("stops__event__community", "stops__community__photos", "learn_skills", "vehicles__drivers")
 
@@ -224,7 +225,7 @@ def tour_detail(request, slug):
         "stops": stops,
         "join": _join_state(tour, request.user),
         "skills": _skills([traveller.user for traveller in travellers]),
-        "route": _route(tour, viewer=request.user if on_tour else None),
+        "route": _with_timeline(_route(tour, viewer=request.user if on_tour else None), tour, stops, request.user),
         "geojson": _with_deliveries(feature_collection([tour], request.user), tour, gifts),
     })
 
@@ -252,6 +253,13 @@ def _wrap_up(tour, user, stops, needs, gifts, travellers):
         "delivered": [d for d in gifts if d.status == Delivery.STATUS_HANDED_OVER],
         "references": references,
     }
+
+
+def _with_timeline(route, tour, stops, user):
+    """Each stop with what happened there (timeline.timeline_by_stop)."""
+    for item, entries in zip(route, timeline_by_stop(tour, stops, user)):
+        item["timeline"] = entries
+    return route
 
 
 def _with_deliveries(geojson, tour, gifts):

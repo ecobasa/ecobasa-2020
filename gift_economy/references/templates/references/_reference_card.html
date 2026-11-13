@@ -1,5 +1,5 @@
 {% load i18n %}
-{# One reference: author (or, on your given references, who it was given to), its subject as the main tag (else the kind of exchange), the kind, impression, text, skill tags and gift names #}
+{# One reference: author (or, on your given references, who it was given to), its subject as the main tag (else the kind of exchange), the kind, impression, text, skill tags and gift names. `dated_aside`: its date stands beside it (a tour's timeline) #}
 <article id="reference-{{ ref.pk }}" class="scroll-mt-24 target:ring-2 target:ring-primary border rounded-lg p-4
   {% if ref.impression == 'positive' %}border-green bg-green bg-opacity-5
   {% elif ref.impression == 'negative' %}border-red bg-red bg-opacity-30
@@ -12,7 +12,8 @@
         <a href="{{ person.get_absolute_url }}" class="text-sm font-semibold text-primary">{{ person.name|default:person.username }}</a>
         {% if ref.about_other and ref.subject %}
           {# What it's about, as the main tag. Same icons as the profile: skills, offers, wishes #}
-          <a href="{{ ref.subject.get_absolute_url }}" class="pill text-xs flex-none {{ ref.kind.2 }}" title="{% translate 'about' context 'reference subject' %}"><i class="mr-1
+          <span class="text-xs text-brown">{% translate "about" context "reference subject" %}</span>
+          <a href="{{ ref.subject.get_absolute_url }}" class="pill text-xs flex-none {{ ref.kind.2 }}"><i class="mr-1
             {% if ref.content_type.model == 'listing' %}{% if ref.subject.kind != 'other' %}fa-solid {{ ref.subject.kind_icon }}{% elif ref.subject.type == 'wish' %}fa-solid fa-hand-holding-heart{% else %}fa fa-gift{% endif %}
             {% elif ref.content_type.model == 'user' %}fa fa-user
             {% elif ref.content_type.model == 'community' %}fa-solid {{ ref.subject.get_type_icon }}
@@ -22,11 +23,11 @@
         {% endif %}
       </div>
       <div class="text-xs text-brown">
-        {% if ref.about_other and ref.subject %}<i class="fa-solid {{ ref.kind.1 }} mr-1"></i>{{ ref.kind.0 }} · {% endif %}{{ ref.get_impression_display }} · {{ ref.created_at|date:"SHORT_DATE_FORMAT" }}
+        {% if ref.about_other and ref.subject %}<i class="fa-solid {{ ref.kind.1 }} mr-1"></i>{{ ref.kind.0 }} · {% endif %}{{ ref.get_impression_display }}{% if not dated_aside %} · {{ ref.created_at|date:"SHORT_DATE_FORMAT" }}{% endif %}
       </div>
     </div>
     {% if show_edit and ref.subject %}
-      <a href="{{ ref.subject.get_absolute_url }}?edit_reference=1#references" class="text-xs text-primary flex-shrink-0"><i class="fa fa-pencil mr-1"></i>{% trans "Edit" %}</a>
+      <a href="{{ ref.subject.get_absolute_url }}?edit_reference={{ ref.pk }}#references" class="text-xs text-primary flex-shrink-0"><i class="fa fa-pencil mr-1"></i>{% trans "Edit" %}</a>
     {% endif %}
   </header>
   {% endwith %}

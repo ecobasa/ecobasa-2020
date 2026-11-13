@@ -1,5 +1,5 @@
 {% load i18n %}
-{# The route, one row per stop with the same places for the same things (the planner's recommendations use the same rows): the stop, its days, where its host stands, then notes and buttons; between two stops the way. Places as everyone sees them. With `editing`: move, change and remove a stop #}
+{# The route, one row per stop with the same places for the same things (the planner's recommendations use the same rows): the stop, its days, where its host stands, then notes and buttons, then what happened there (the tour page's timeline); between two stops the way. Places as everyone sees them. With `editing`: move, change and remove a stop #}
 <style>
   /* Sized by the space the route has (the tour page's column, the planner's), not by the screen */
   .route { container: route / inline-size; }
@@ -34,8 +34,8 @@
   .route-line > li:last-child::before { bottom: auto; height: 1.75rem; }
   .route-line > li:only-child::before { display: none; }
   .route-num > span { position: relative; z-index: 1; }
-  /* What the way to the next stop is, beside the line */
-  .route-leg { padding-left: 2.75rem; }
+  /* What the way to the next stop is, and what happened at a stop, beside the line */
+  .route-leg, .route-timeline { padding-left: 2.75rem; }
 </style>
 <ol class="route route-line list-none m-0 p-0">
   {% for item in route %}
@@ -120,6 +120,13 @@
           </div>
         {% endif %}
       </div>
+
+      {# What happened here, with when #}
+      {% if item.timeline %}
+        <div class="route-timeline pb-3 space-y-3">
+          {% for entry in item.timeline %}{% include "tours/_timeline_entry.html" %}{% endfor %}
+        </div>
+      {% endif %}
 
       {# The way to the next stop #}
       {% if item.leg %}

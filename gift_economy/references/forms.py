@@ -4,7 +4,7 @@ from django.utils.translation import gettext_lazy as _
 from gift_economy.gifts.models import Listing
 from gift_economy.gifts.skills.models import get_or_create_skill
 
-from .models import Reference, ReferenceSkill, subject_owner
+from .models import Reference, ReferenceSkill, reference_places, reference_waits, subject_owner
 
 
 class ReferenceForm(forms.ModelForm):
@@ -28,9 +28,13 @@ class ReferenceForm(forms.ModelForm):
             }),
         }
 
-    def __init__(self, *args, subject=None, story=False, present=(), **kwargs):
+    def __init__(self, *args, subject=None, story=False, present=(), author=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.story = story
+        # Someone telling their own journey (a tour's traveller) gives no impression
+        within = getattr(subject, "writes_from_within", None)
+        if author is not None and within is not None and within(author):
+            del self.fields["impression"]
         # About a group (a tour): who of it was there, everyone from the match ticked
         group = getattr(subject, "get_reference_people", None)
         if group is not None:
@@ -44,16 +48,15 @@ class ReferenceForm(forms.ModelForm):
                 self.fields["people"].initial = [str(pk) for pk in self.instance.people.values_list("pk", flat=True)]
             else:
                 self.fields["people"].initial = [str(person.pk) for person in present]
-        # Written on the group's page: at which of its stays (a request's story knows it)
-        visits = getattr(subject, "get_reference_visits", None)
-        if visits is not None and not story:
-            self.visits = {str(match.pk): match for match, _label in visits()}
-            if self.visits:
-                self.fields["visit"] = forms.ChoiceField(
-                    label=_("Where did you meet them?"), required=False,
-                    choices=[("", "—")] + [(str(match.pk), label) for match, label in visits()],
-                    initial=str(self.instance.match_id or ""),
-                )
+        # Written on the group's page: at which of its stops (a request's story knows it)
+        places = reference_places(subject) if not story else []
+        if places:
+            self.places = {str(place.pk): place for place, _label, _visit in places}
+            now = subject.reference_place_now() if hasattr(subject, "reference_place_now") else None
+            self.fields["place"] = forms.ChoiceField(
+                label=_("Where was it?"), choices=[(str(place.pk), label) for place, label, _visit in places],
+                initial=self.instance.place_id or (str(now.pk) if now is not None else None),
+            )
         if story:
             self.fields["text"].label = _("Your story")
             self.fields["text"].widget.attrs.update(rows=6, placeholder=_("What happened? What are you grateful for?"))
@@ -79,6 +82,7 @@ class ReferenceForm(forms.ModelForm):
 
     def save_reference(self, author, subject, match=None):
         """Save it as `author`'s reference about `subject`, with photo and tags."""
+        self.instance_was_new = self.instance.pk is None
         reference = self.save(commit=False)
         reference.author = author
         reference.recipient = subject_owner(subject)
@@ -90,9 +94,12 @@ class ReferenceForm(forms.ModelForm):
             reference.photo.save(photo.name, photo, save=False)
         reference.save()
         self.save_tags(reference, holder=subject)
-        if "visit" in self.fields:
-            reference.match = self.visits.get(self.cleaned_data.get("visit") or "")
-            reference.save(update_fields=["match"])
+        if "place" in self.fields:
+            reference.place = self.places[self.cleaned_data["place"]]
+            # Someone the subject doesn't know yet waits to be confirmed, once
+            if self.instance_was_new and reference_waits(subject, author):
+                reference.pending = True
+            reference.save(update_fields=["place_type", "place_id", "pending"])
         if "people" in self.fields:
             reference.people.set([self.group_people[pk] for pk in self.cleaned_data.get("people", []) if pk in self.group_people])
         return reference

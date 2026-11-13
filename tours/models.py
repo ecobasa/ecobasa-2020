@@ -1,4 +1,5 @@
 from collections import namedtuple
+from datetime import datetime, time
 
 from django.conf import settings
 from django.contrib.contenttypes.fields import GenericRelation
@@ -428,8 +429,9 @@ class Tour(models.Model):
         )
 
     # ── References about the whole group (gift_economy.references) ──
-    # Hosts and others who met the group write about it, saying who of it was there.
-    # References about single travellers stay on their profiles.
+    # Its guestbook: hosts and others who met the group write about it, saying where and
+    # who of it was there, and the travellers tell their journey stop by stop, as often
+    # as they like. References about single travellers stay on their profiles.
     reference_subject = True
 
     def get_reference_kind(self):
@@ -439,22 +441,50 @@ class Tour(models.Model):
         """Who can be named as having been there: everyone on the tour."""
         return [traveller.user for traveller in self.counted_travellers()]
 
-    def get_reference_visits(self):
-        """The stays someone writing about the group can say they met it at: the agreed
-        tour visits, as (match, "stop · community")."""
+    def get_reference_places(self):
+        """Its stops, as (stop, "number. stop", the tour visit agreed there or None)."""
         from gift_economy.matches.models import Match
 
-        visits = []
-        for stop in self.stops.filter(visit_match__status=Match.STATUS_ACCEPTED).select_related(
-            "visit_match", "event", "community",
-        ):
-            label = f"{stop.event.title} · {stop.community.name}" if stop.event_id else stop.community.name
-            visits.append((stop.visit_match, label))
-        return visits
+        places = []
+        for index, stop in enumerate(self.stops.select_related("visit_match", "event", "community")):
+            visit = stop.visit_match if stop.visit_match_id and stop.visit_match.status == Match.STATUS_ACCEPTED else None
+            places.append((stop, f"{index + 1}. {stop.label}", visit))
+        return places
+
+    def reference_place_now(self):
+        """The stop a new entry is most likely about: where the tour is (or was last)."""
+        from .timeline import stop_on
+
+        stops = self.ordered_stops()
+        return stop_on(timezone.localdate(), stops) if stops else None
 
     def can_be_referenced_by(self, user):
-        """Not by its own travellers: they write about the hosts and about each other."""
-        return not any(traveller.user_id == user.pk for traveller in self.counted_travellers())
+        """Everyone, its travellers and organisers too."""
+        return True
+
+    def trusts_reference_by(self, user):
+        """Who writes in its guestbook right away: its travellers, the hosts of its stops
+        and everyone it exchanged with (the matches of tours.timeline). Anyone else's
+        entry waits until a traveller confirms it."""
+        from gift_economy.matches.models import Match
+
+        from .timeline import tour_match_ids
+
+        if self.writes_from_within(user):
+            return True
+        stops = self.ordered_stops()
+        if any(stop.host is not None and stop.host.get_match_owner() == user for stop in stops):
+            return True
+        return Match.objects.filter(pk__in=tour_match_ids(self, stops)).filter(
+            models.Q(from_user=user) | models.Q(recipient=user),
+        ).exists()
+
+    def can_confirm_references(self, user):
+        return self.writes_from_within(user)
+
+    def writes_from_within(self, user):
+        """Its travellers tell their own journey: no impression to give."""
+        return any(traveller.user_id == user.pk for traveller in self.counted_travellers())
 
     # ── As a suggestion to someone (gift_economy.matches.Suggestion) ─
     def get_suggestion_url(self, suggestion):
@@ -859,6 +889,14 @@ class Traveller(models.Model):
         people = ngettext("%(n)s person", "%(n)s people", self.people) % {"n": self.people}
         return f"{stretch} · {people}"
 
+    # After their stretch they and the organiser write about each other
+    def happened_at(self, match):
+        """The day they got off, None while their stretch has no day: the reference
+        requests wait for it."""
+        _start, end = self.ends()
+        day = end and (end.leave_on or end.arrive_on)
+        return timezone.make_aware(datetime.combine(day, time.min)) if day else None
+
     def ends(self, stops=None):
         """(first stop, last stop) of the stretch, filled in from the route."""
         stops = self.tour.ordered_stops() if stops is None else stops
@@ -890,11 +928,14 @@ class Traveller(models.Model):
 
 class Vehicle(models.Model):
     """A vehicle the tour travels in: it gives the tour its places, on the whole route or
-    part of it. Optional: tours by bike, train, thumb or on foot are normal. Not a gift
-    listing: a vehicle offered in the gifts is given away or lent, and one borrowed for a
-    tour is not linked to its listing yet."""
+    part of it. Optional: tours by bike, train, thumb or on foot are normal. One someone
+    lends or gives the tour for its vehicle need comes with the match (`listing`:
+    their offer, else the need; vehicle_from_match)."""
 
     tour = models.ForeignKey(Tour, on_delete=models.CASCADE, related_name="vehicles")
+    listing = models.ForeignKey(
+        "gifts.Listing", on_delete=models.SET_NULL, null=True, blank=True, related_name="+",
+    )
     label = models.CharField(_("What vehicle?"), max_length=100)
     image = models.ImageField(_("Picture"), upload_to="tours-vehicles", null=True, blank=True)
     # Who may drive it; one of them drives at a time
@@ -932,6 +973,39 @@ class Vehicle(models.Model):
     @property
     def whole_route(self):
         return self.from_stop_id is None and self.to_stop_id is None
+
+
+def vehicle_from_match(match):
+    """A match that covers a tour's vehicle need brings the tour its vehicle once it is
+    accepted, and takes it away again if it is called off. Named after the offer it
+    brings, else the need. Its seats fill the tour up to `max_people` (else the people on
+    it), the organiser at the wheel; the organisers can change that."""
+    from gift_economy.gifts.models import Listing
+
+    listings = [c.listing for c in match.contributions.select_related("listing__tour")]
+    needs = [l for l in listings if l.tour_id and l.is_wish and l.kind == Listing.KIND_VEHICLE]
+    if not needs:
+        return None
+    need = needs[0]
+    tour = need.tour
+    vehicle_listing = next((l for l in listings if l.is_offer and l.kind == Listing.KIND_VEHICLE), need)
+    if match.status != match.STATUS_ACCEPTED:
+        # Called off, and no other accepted match brings it
+        others = vehicle_listing.contributions.filter(match__status=match.STATUS_ACCEPTED).exclude(match=match)
+        if match.is_closed and not others.exists():
+            tour.vehicles.filter(listing=vehicle_listing).delete()
+        return None
+    vehicle = tour.vehicles.filter(listing=vehicle_listing).first()
+    if vehicle is not None:
+        return vehicle
+    people = tour.max_people or sum(t.people for t in tour.counted_travellers()) or 1
+    vehicle = Vehicle.objects.create(
+        tour=tour, listing=vehicle_listing, label=vehicle_listing.display_title[:100],
+        note=vehicle_listing.description[:255], seats=max(people - 1, 0), image=vehicle_listing.image or None,
+    )
+    if tour.organiser_id:
+        vehicle.drivers.add(tour.organiser)
+    return vehicle
 
 
 def append_stop(stop):

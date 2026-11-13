@@ -160,6 +160,7 @@ def existing_reference(reference_request, about=""):
         author=reference_request.user,
         content_type=ContentType.objects.get_for_model(subject),
         object_id=str(subject.pk),
+        place_id="",
     ).first()
 
 
