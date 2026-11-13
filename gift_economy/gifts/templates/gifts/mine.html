@@ -24,7 +24,7 @@
             {% if listing.image %}
               <img src="{{ listing.image.url }}" alt="" class="w-14 h-14 rounded-lg object-cover">
             {% else %}
-              <span class="w-14 h-14 rounded-lg {{ listing.colour }} bg-opacity-10 flex items-center justify-center"><i class="fa-solid {{ listing.kind_icon }} text-2xl {% if listing.is_skill %}text-purple{% else %}text-primary{% endif %}"></i></span>
+              <span class="w-14 h-14 rounded-lg {{ listing.colour }} bg-opacity-10 flex items-center justify-center"><i class="fa-solid {{ listing.kind_icon }} text-2xl {{ listing.text_colour }}"></i></span>
             {% endif %}
           </a>
           <div class="flex-1 min-w-0">

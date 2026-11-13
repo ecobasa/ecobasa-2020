@@ -1,6 +1,6 @@
 {% load i18n %}{# An offer or wish as a card in the list: a thing, a skill, knowledge, helping hands or a project's need #}
 <a href="{% url "gifts:detail" listing.pk %}" class="relative w-full max-w-4xl group flex items-stretch justify-between my-5 sm:my-10 md:mb-20 bg-secondary bg-opacity-50 p-5 rounded-md hover:text-primary hover:shadow-lg">
-  <div class="text-xs absolute bottom-0 right-0 rounded-full p-2 text-secondary {% if listing.event_id and listing.is_wish %}bg-green{% elif listing.is_skill %}bg-purple{% elif listing.is_offer %}bg-primary{% else %}bg-yellow{% endif %}">
+  <div class="text-xs absolute bottom-0 right-0 rounded-full p-2 text-secondary {{ listing.marker_colour }}">
     {% if listing.event_id and listing.is_wish %}<i class="fa-solid {{ listing.event.kind_icon }} mr-1"></i>{{ listing.event.texts.need }}
     {% else %}<i class="fa-solid {% if listing.kind != 'other' %}{{ listing.kind_icon }}{% elif listing.is_offer %}fa-gift{% else %}fa-heart{% endif %} mr-1"></i>{{ listing.get_type_display }}{% endif %}
   </div>

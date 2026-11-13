@@ -357,7 +357,7 @@
       {% if place_is_exact %}
       const marker = new ol.Feature({ geometry: new ol.geom.Point(center) });
       // The kind of thing (material, tool), else a gift or a heart
-      marker.setStyle(EcoMap.makeIconStyle({{ listing.marker_glyph }}, '{% if listing.type == 'wish' %}#de7a08{% else %}#da6137{% endif %}'));
+      marker.setStyle(EcoMap.makeIconStyle({{ listing.marker_glyph }}, '{{ listing.marker_hex }}'));
       {% else %}
       // Only roughly where it is (users/places.py)
       const marker = EcoMap.makeRoughArea(LON, LAT, '{% if listing.type == 'wish' %}#de7a08{% else %}#da6137{% endif %}');

@@ -295,14 +295,6 @@ def _public_name(user):
     return user.name or user.username or ""
 
 
-def _marker_colour(listing):
-    if listing.event_id and listing.is_wish:
-        return "#5A5527"  # green: a event's need
-    if listing.is_skill:
-        return "#80143b"  # purple
-    return "#de7a08" if listing.is_wish else "#da6137"
-
-
 @require_GET
 def gifts_markers(request):
     """
@@ -339,7 +331,7 @@ def gifts_markers(request):
                 "image":          photo,
                 "listing_type":   listing.type,
                 "glyph":          listing.marker_glyph,
-                "color":          _marker_colour(listing),
+                "color":          listing.marker_hex,
                 "kind_icon":      listing.kind_icon if listing.kind != Listing.KIND_OTHER else "",
                 "amount":         listing.amount,
                 "type_display":   f"{listing.get_type_display()} · {listing.kind_label}" if listing.kind != Listing.KIND_OTHER else listing.get_type_display(),

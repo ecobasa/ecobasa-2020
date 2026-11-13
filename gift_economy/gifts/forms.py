@@ -92,14 +92,11 @@ class ListingForm(forms.ModelForm):
         if self.instance.pk and self.instance.skill_id:
             self.initial["skill_name"] = self.instance.skill.get_name()
 
-    # The text colour going with a pill colour, for an icon on a light background
-    TEXT_COLOURS = {"bg-primary": "text-primary", "bg-purple": "text-purple", "bg-yellow": "text-yellow"}
-
     def _radios(self, name, icons, colours):
         """(radio, icon, pill colour, text colour) for each choice of a radio field."""
         return [
             (radio, icons.get(radio.data["value"], ""), colours.get(radio.data["value"], "bg-primary"),
-             self.TEXT_COLOURS.get(colours.get(radio.data["value"], "bg-primary"), "text-primary"))
+             Listing.TEXT_COLOURS.get(colours.get(radio.data["value"], "bg-primary"), "text-primary"))
             for radio in self[name]
         ]
 

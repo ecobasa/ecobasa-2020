@@ -117,7 +117,8 @@ class Match(models.Model):
     @property
     def kind(self):
         """What the match is about, as a pill: (label, icon, colour). Skills, knowledge and
-        helping hands purple, things in the primary colour (by their kind), stays green."""
+        helping hands purple, seeds and plants green, other things in the primary colour
+        (by their kind), stays green."""
         model = self.content_type.model
         if model == "listing":
             listing = self.target
