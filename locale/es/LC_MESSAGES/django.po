@@ -5582,3 +5582,60 @@ msgstr "Este tour ha terminado. Cambia los días de sus paradas para recuperarlo
 
 msgid "Thanks, the tour is marked as current."
 msgstr "Gracias, el tour está marcado como actual."
+
+# tours (Community-Tours, package 2)
+
+msgid "No tours fit these filters."
+msgstr "Ningún tour coincide con estos filtros."
+
+msgid "Search a place…"
+msgstr "Buscar un lugar…"
+
+msgid "Distance"
+msgstr "Distancia"
+
+#, python-format
+msgid "within %(km)s km"
+msgstr "a menos de %(km)s km"
+
+msgid "When"
+msgstr "Cuándo"
+
+msgid "Learn: anything"
+msgstr "Aprender: cualquier cosa"
+
+msgid "Any way"
+msgstr "De cualquier forma"
+
+msgid "Reset"
+msgstr "Restablecer"
+
+msgid "about"
+msgstr "unos"
+
+msgid "Tour, skill, gift or place…"
+msgstr "Tour, habilidad, regalo o lugar…"
+
+msgid "Show tours near me"
+msgstr "Mostrar tours cerca de mí"
+
+msgid "Tours on the map"
+msgstr "Tours en el mapa"
+
+#: tours/templates/tours/tour_list.html
+msgid "Tour idea, organised from around"
+msgstr "Idea de tour, organizada desde cerca de"
+
+# tours: cards, who travels
+msgid "Skills we bring along"
+msgstr "Habilidades que traemos"
+
+msgid "Who travels"
+msgstr "Quién viaja"
+
+#, python-format
+msgid "<a href=\"%(url)s\" class=\"underline\">Log in</a> to see who travels and what they can."
+msgstr "<a href=\"%(url)s\" class=\"underline\">Inicia sesión</a> para ver quién viaja y qué sabe hacer."
+
+msgid "Show"
+msgstr "Mostrar"

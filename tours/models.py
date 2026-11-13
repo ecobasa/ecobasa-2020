@@ -156,6 +156,18 @@ class Tour(models.Model):
         return self.url()
 
     @property
+    def picture(self):
+        """Its picture, else the first photo of a community on its way (a URL, or "")."""
+        if self.image:
+            return self.image.url
+        for stop in self.stops.all():
+            if stop.community_id:
+                photo = next(iter(stop.community.photos.all()), None)
+                if photo and photo.image:
+                    return photo.image.url
+        return ""
+
+    @property
     def travel_mode_icon(self):
         return self.MODE_ICONS.get(self.travel_mode, "fa-route")
 

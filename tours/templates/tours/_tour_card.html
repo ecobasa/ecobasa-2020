@@ -1,38 +1,62 @@
 {% load i18n %}
-{# A tour in a list: when, how far, the route by name, what it wants to learn #}
-<article class="border rounded-xl bg-secondary bg-opacity-60 p-4 flex flex-col gap-2 {% if not tour.is_current %}opacity-60{% endif %}">
-  {% if tour.image %}<a href="{{ tour.get_absolute_url }}"><img src="{{ tour.image.url }}" alt="" class="w-full h-36 object-cover rounded-lg"></a>{% endif %}
-  <div class="flex items-start gap-3">
-    <i class="fa-solid {{ tour.travel_mode_icon }} text-2xl text-primary opacity-70 mt-1" title="{{ tour.get_travel_mode_display }}"></i>
-    <div class="flex-1 min-w-0">
-      <a href="{{ tour.get_absolute_url }}" class="font-serif font-bold text-lg leading-snug hover:underline">{{ tour.title }}</a>
-      <div class="text-sm opacity-80">
-        <i class="fa-regular fa-calendar mr-1"></i>{% include "tours/_tour_dates.html" %}
-        {% with count=tour.stops.all|length %}{% if count %} · {% blocktrans count count=count %}{{ count }} stop{% plural %}{{ count }} stops{% endblocktrans %}{% endif %}{% endwith %}
-        {% if tour.distance_km %} · {% blocktrans with km=tour.distance_km %}about {{ km }} km{% endblocktrans %}{% endif %}
+{# A tour in a list, laid out like a gift card: a picture beside it (the tour's, else of a community on its way, else how it travels), when and how far, the route by name, the countries, what it wants to learn and who organises it (for people logged in, as on its page) #}
+<article class="relative w-full flex items-stretch bg-secondary bg-opacity-50 p-4 sm:p-5 rounded-md hover:shadow-lg transition-shadow {% if not tour.is_current %}opacity-60{% endif %}">
+  <div class="grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 sm:gap-x-6 w-full">
+    {% with stops=tour.stops.all %}
+    <a href="{{ tour.get_absolute_url }}" class="sm:row-span-2 block" tabindex="-1" aria-hidden="true">
+      {% with picture=tour.picture %}
+        {% if picture %}
+          <img class="h-20 w-20 sm:h-32 sm:w-48 object-cover rounded" src="{{ picture }}" alt="" loading="lazy">
+        {% else %}
+          <div class="h-20 w-20 sm:h-32 sm:w-48 rounded flex items-center justify-center {% if tour.is_idea %}bg-yellow{% else %}bg-primary{% endif %}"><i class="fa-solid {{ tour.travel_mode_icon }} text-3xl text-secondary"></i></div>
+        {% endif %}
+      {% endwith %}
+    </a>
+
+    <div class="min-w-0">
+      <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
+        <span class="pill {% if tour.is_idea %}bg-yellow{% else %}bg-primary{% endif %}"><i class="fa-solid {{ tour.travel_mode_icon }} mr-1"></i>{{ tour.get_travel_mode_display }}</span>
+        {% if tour.is_idea %}<span class="pill bg-yellow"><i class="fa-solid fa-lightbulb mr-1"></i>{% trans "Idea" %}</span>{% endif %}
+        {% if not tour.is_published %}<span class="pill bg-brown">{% trans "Draft" %}</span>{% endif %}
+        {% if tour.is_published and not tour.listed %}<span class="pill bg-brown"><i class="fa-solid fa-eye-slash mr-1"></i>{% trans "Not in the list" %}</span>{% endif %}
+        {% if tour.archived_at %}<span class="pill bg-brown">{% trans "Archived" %}</span>{% endif %}
+        {% if tour.km is not None %}<span class="text-xs text-brown" title="{% trans 'Distance' %}"><i class="fa fa-map-marker-alt mr-1"></i>{{ tour.km }} km</span>{% endif %}
+        <span class="text-xs text-brown opacity-70 whitespace-nowrap sm:ml-auto"><i class="fa-regular fa-calendar mr-1"></i>{% include "tours/_tour_dates.html" %}</span>
       </div>
-      {% with stops=tour.stops.all %}
+      <a href="{{ tour.get_absolute_url }}" class="block mt-1 font-serif sm:text-lg leading-snug hover:text-primary">{{ tour.title }}</a>
+      <div class="text-sm text-brown">
         {% if stops %}
-          <div class="text-sm truncate">{% for stop in stops %}{{ stop.label }}{% if not forloop.last %} <span class="opacity-50">→</span> {% endif %}{% endfor %}</div>
-        {% elif tour.countries %}
-          <div class="text-sm">{% for country in tour.countries %}{{ country.name }}{% if not forloop.last %}, {% endif %}{% endfor %}</div>
+          <div class="truncate">{% for stop in stops %}{{ stop.label }}{% if not forloop.last %} <span class="opacity-50">→</span> {% endif %}{% endfor %}</div>
+        {% endif %}
+        <div class="opacity-80">
+          {% if stops %}{% blocktrans count count=stops|length %}{{ count }} stop{% plural %}{{ count }} stops{% endblocktrans %}{% endif %}
+          {% if tour.distance_km %} · {% blocktrans with km=tour.distance_km %}about {{ km }} km{% endblocktrans %}{% endif %}
+          {% if tour.countries %}{% if stops or tour.distance_km %} · {% endif %}<i class="fa-solid fa-earth-europe mr-1"></i>{% for country in tour.countries %}{{ country.name }}{% if not forloop.last %}, {% endif %}{% endfor %}{% endif %}
+          {% if tour.children_welcome %}<span class="ml-2" title="{% trans 'Children welcome' %}"><i class="fa-solid fa-children"></i></span>{% endif %}
+          {% if tour.animals_welcome %}<span class="ml-1" title="{% trans 'Animals welcome' %}"><i class="fa-solid fa-paw"></i></span>{% endif %}
+        </div>
+      </div>
+      {% with skills=tour.learn_skills.all %}
+        {% if skills %}
+          <div class="flex flex-wrap gap-1 mt-2">
+            {% for skill in skills %}<span class="pill bg-purple"><i class="fa-solid fa-graduation-cap mr-1"></i>{{ skill.get_name }}</span>{% endfor %}
+          </div>
         {% endif %}
       {% endwith %}
     </div>
-  </div>
-  {% with skills=tour.learn_skills.all %}
-    {% if skills %}
-      <div class="flex flex-wrap gap-1">
-        {% for skill in skills %}<span class="pill bg-primary bg-opacity-20 text-xs"><i class="fa-solid fa-graduation-cap mr-1"></i>{{ skill.get_name }}</span>{% endfor %}
+
+    {% if user.is_authenticated and tour.organiser %}
+      <div class="col-span-2 sm:col-span-1 sm:col-start-2 self-end pt-2 text-sm">
+        <a href="{{ tour.organiser.get_absolute_url }}" class="inline-flex items-center gap-2 hover:text-primary">
+          {% if tour.organiser.image %}
+            <img src="{{ tour.organiser.image.url }}" alt="" class="h-7 w-7 rounded-full object-cover">
+          {% else %}
+            <span class="h-7 w-7 rounded-full border border-dashed border-primary flex items-center justify-center"><i class="fa fa-user text-xs text-primary"></i></span>
+          {% endif %}
+          <span>{{ tour.organiser.name }}</span>
+        </a>
       </div>
     {% endif %}
-  {% endwith %}
-  <div class="text-xs mt-auto flex flex-wrap items-center gap-2">
-    {% if tour.is_idea %}<span class="pill bg-yellow text-xs">{% trans "Idea" %}</span>{% endif %}
-    {% if not tour.is_published %}<span class="pill bg-primary bg-opacity-20 text-xs">{% trans "Draft" %}</span>{% endif %}
-    {% if tour.is_published and not tour.listed %}<span class="pill bg-primary bg-opacity-20 text-xs"><i class="fa-solid fa-eye-slash mr-1"></i>{% trans "Not in the list" %}</span>{% endif %}
-    {% if tour.children_welcome %}<span title="{% trans 'Children welcome' %}"><i class="fa-solid fa-children"></i></span>{% endif %}
-    {% if tour.animals_welcome %}<span title="{% trans 'Animals welcome' %}"><i class="fa-solid fa-paw"></i></span>{% endif %}
-    {% if tour.archived_at %}<span class="pill bg-primary bg-opacity-20 text-xs">{% trans "Archived" %}</span>{% endif %}
+    {% endwith %}
   </div>
 </article>

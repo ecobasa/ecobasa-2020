@@ -5614,3 +5614,54 @@ msgstr "Diese Tour ist vorbei. Ändere die Tage ihrer Stationen, um sie zurückz
 
 msgid "Thanks, the tour is marked as current."
 msgstr "Danke, die Tour ist als aktuell markiert."
+
+# tours (Community-Tours, package 2)
+#: templates/tours/_results.html:12
+msgid "No tours fit these filters."
+msgstr "Keine Touren passen zu diesen Filtern."
+
+#: templates/tours/_tour_card.html:23
+msgid "Distance"
+msgstr "Entfernung"
+
+#: templates/tours/tour_list.html:160
+msgid "When"
+msgstr "Wann"
+
+#: templates/tours/tour_list.html:174
+msgid "Any way"
+msgstr "Egal wie"
+
+#: templates/tours/tour_list.html:286
+msgid "about"
+msgstr "etwa"
+
+#: templates/tours/tour_list.html:122
+msgid "Tour, skill, gift or place…"
+msgstr "Tour, Fähigkeit, Geschenk oder Ort…"
+
+#: templates/tours/tour_list.html:187
+msgid "Show tours near me"
+msgstr "Touren in meiner Nähe zeigen"
+
+#: templates/tours/tour_list.html:195
+msgid "Tours on the map"
+msgstr "Touren auf der Karte"
+
+#: templates/tours/tour_list.html:313
+msgid "Tour idea, organised from around"
+msgstr "Tour-Idee, geplant von hier aus:"
+
+# tours: cards, who travels
+msgid "Skills we bring along"
+msgstr "Fähigkeiten, die wir mitbringen"
+
+msgid "Who travels"
+msgstr "Wer reist mit"
+
+#, python-format
+msgid "<a href=\"%(url)s\" class=\"underline\">Log in</a> to see who travels and what they can."
+msgstr "<a href=\"%(url)s\" class=\"underline\">Melde dich an</a>, um zu sehen, wer mitreist und was sie können."
+
+msgid "Show"
+msgstr "Zeigen"

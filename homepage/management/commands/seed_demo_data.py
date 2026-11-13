@@ -38,6 +38,11 @@ from gift_economy.gifts.skills.models import Skill, get_or_create_skill
 from users.models import User
 
 DEMO_PASSWORD = "ecobasa123"
+
+# The country of a demo community, by its place (tours take their countries from it)
+COUNTRY_OF_PLACE = {
+    "Görlitz, Germany": "DE", "Ariège, France": "FR", "Utrecht, Netherlands": "NL", "Extremadura, Spain": "ES",
+}
 SEED_IMAGES_DIR = os.path.join(os.path.dirname(__file__), "seed_images")
 
 
@@ -97,6 +102,7 @@ class Command(BaseCommand):
         self._seed_projects(users, communities)
         self._seed_community_events(users, communities)
         self._seed_goods_around(users, communities)
+        self._seed_tours(users, communities)
 
         self.stdout.write(self.style.SUCCESS(
             "\nDone. Log in as any of these (password: %s):" % DEMO_PASSWORD
@@ -252,6 +258,10 @@ class Command(BaseCommand):
                 name=spec["name"], defaults=defaults,
             )
             # Also on older demo data
+            country = COUNTRY_OF_PLACE.get(spec["location_name"])
+            if country and not community.country:
+                community.country = country
+                community.save(update_fields=["country"])
             if community.location_public != spec.get("location_public", False):
                 community.location_public = spec.get("location_public", False)
                 community.save(update_fields=["location_public"])
@@ -1168,4 +1178,112 @@ class Command(BaseCommand):
         )
         coming(ana, festival, 2)
         coming(mireille, festival, 1, days=(festival.starts_on + timedelta(days=1), festival.ends_on))
+
+    # ── Community-Tours ──────────────────────────────────────────────────
+
+    def _seed_tours(self, users, communities):
+        """Tours from event to event and community to community: a van that looks for
+        travellers, a bike ride to a building project, a tour idea with stops but no
+        dates, two ideas without stops (on the map about where their organisers live),
+        and a personal tour that is in no list."""
+        from events.models import Event
+        from tours.models import Stop, Tour, append_stop
+
+        self.stdout.write("Seeding community tours…")
+        luna, bjorn, mireille = users["luna@ecobasa.demo"], users["bjorn@ecobasa.demo"], users["mireille@ecobasa.demo"]
+        diego, ana, sam = users["diego@ecobasa.demo"], users["ana@ecobasa.demo"], users["sam@ecobasa.demo"]
+        sonnenkraut, kombucha = communities["Sonnenkraut Ecovillage"], communities["Kombucha Commune"]
+        goats, barefoot = communities["Three Goats and a Dream Farm"], communities["Barefoot Bureaucracy House Project"]
+        today = timezone.localdate()
+
+        def day(n):
+            return today + timedelta(days=n)
+
+        def place(name, lon, lat, country):
+            return {"name": name, "location": Point(lon, lat, srid=4326), "country": country}
+
+        def tour(title, organiser, stops=(), learn=(), image=None, **fields):
+            obj, created = Tour.objects.get_or_create(
+                title=title, defaults={"organiser": organiser, "published_at": timezone.now(), **fields},
+            )
+            if not created:
+                obj.rebuild_route()  # also on older demo data
+                return obj
+            for name in learn:
+                obj.learn_skills.add(get_or_create_skill(name)[0])
+            for stop in stops:
+                append_stop(Stop(tour=obj, **stop))
+            if image:
+                _seed_image(obj.image, image)
+                obj.save(update_fields=["image"])
+            return obj
+
+        open_day = Event.objects.get(community=sonnenkraut, title__startswith="Open day")
+        seminar = Event.objects.get(community=kombucha, title="Fermentation weekend")
+        festival = Event.objects.get(community=goats, title="Olive harvest festival")
+        stove = Event.objects.get(community=sonnenkraut, title="Rocket stove for the community kitchen")
+
+        tour(
+            "Jars, olives and a long way south", luna,
+            stops=[
+                dict(event=open_day, arrive_on=open_day.starts_on, leave_on=open_day.starts_on + timedelta(days=1),
+                     note="We leave the morning after the open day."),
+                dict(community=barefoot, arrive_on=day(15), leave_on=day(17), flexible=True,
+                     note="Two nights, if their couch still exists."),
+                dict(event=seminar, arrive_on=seminar.starts_on - timedelta(days=1), leave_on=seminar.ends_on + timedelta(days=1)),
+                dict(event=festival, arrive_on=festival.starts_on, leave_on=festival.ends_on, onward_mode="train"),
+            ],
+            learn=["Fermentation", "Natural Building"],
+            image="kombucha.jpg",
+            description="From the compost toilets of Görlitz to the olive trees of Extremadura, with a "
+                        "fermentation weekend in the Pyrenees on the way. Three seats in the van are free.",
+            travel_mode="van", open_to_join=True, max_people=3, children_welcome=True,
+            costs_note="We share diesel and tolls by kilometre; nobody pays for an empty seat.",
+            good_to_know="The van has a fridge for the cultures and no room for big suitcases.",
+        )
+        tour(
+            "By bike to the rocket stove", sam,
+            stops=[
+                dict(community=barefoot, arrive_on=day(2), leave_on=day(3)),
+                dict(place("Campsite on the Fulda, Kassel", 9.4797, 51.3127, "DE"), arrive_on=day(6), leave_on=day(7), flexible=True),
+                dict(place("Old mill hostel, Leipzig", 12.3731, 51.3397, "DE"), arrive_on=day(9), leave_on=day(10), flexible=True),
+                dict(event=stove, arrive_on=day(12), leave_on=day(22)),
+            ],
+            learn=["Natural Building", "Rocket Stove Building"],
+            image="cob_hut.jpg",
+            description="Utrecht to Görlitz on two wheels, to help build the rocket stove and cob bench "
+                        "at Sonnenkraut. About 80 km a day, slower uphill.",
+            travel_mode="bicycle", open_to_join=True, max_people=2, animals_welcome=True,
+            good_to_know="Bring your own tent and a spare inner tube.",
+        )
+        tour(
+            "Hitchhiking the Pyrenees, someday", diego,
+            stops=[dict(community=goats), dict(community=kombucha), dict(place("Mountain refuge, Andorra", 1.5218, 42.5063, "AD"))],
+            learn=["Fermentation", "Herbal Medicine"],
+            description="No dates yet: from our farm up to the Kombucha Commune and over the mountains, "
+                        "whenever the olives let us go.",
+            travel_mode="hitchhiking", open_to_join=True, max_people=1,
+        )
+        tour(
+            "Seed swap tour through Portugal", ana,
+            learn=["Beekeeping", "Herbal Medicine"],
+            description="An idea: a summer from farm to farm with a box of seeds, swapping what grows "
+                        "well in dry soil. Tell me where we should stop.",
+            travel_mode="car", open_to_join=True, max_people=2, children_welcome=True, animals_welcome=True,
+            countries=["PT", "ES"],
+        )
+        tour(
+            "Woodworking by train to the north", bjorn,
+            learn=["Woodworking", "Beekeeping"],
+            description="An idea: by train from community to community up to Scandinavia, carving spoons "
+                        "and learning how others build their houses.",
+            travel_mode="train", open_to_join=True, countries=["DK", "SE", "NO"],
+        )
+        tour(
+            "Visiting the Kombucha Commune", mireille,
+            stops=[dict(place("Lyon", 4.8357, 45.764, "FR"), arrive_on=day(30), leave_on=day(32)),
+                   dict(community=kombucha, arrive_on=day(33), leave_on=day(40))],
+            description="Back home via my sister's.",
+            travel_mode="train", open_to_join=False, listed=False,
+        )
 

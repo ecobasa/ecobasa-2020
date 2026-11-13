@@ -1,0 +1,77 @@
+{% load i18n %}
+{# The search row of the tours index, on the map and in the list: a search with suggestions, the filters, near me. All bound to $store.tourMap #}
+<div class="flex {{ row|default:'flex-row' }} gap-2 items-stretch">
+  <div class="relative flex-1" x-data="tourSuggestions()">
+    <div class="absolute inset-y-0 left-3 flex items-center text-primary opacity-80 pointer-events-none"><i class="fa fa-search"></i></div>
+    <input class="form-input icon-input w-full" type="text" autocomplete="off"
+           placeholder="{% trans 'Tour, skill, gift or place…' %}"
+           :value="$store.tourMap.q"
+           @input="$store.tourMap.q = $el.value; suggest($el.value); clearTimeout(window._tourInputTimer); window._tourInputTimer = setTimeout(() => window.tourFiltersChanged(), 600)"
+           @keydown.arrow-down.prevent="moveDown()" @keydown.arrow-up.prevent="moveUp()"
+           @keydown.enter.prevent="choose()" @keydown.escape="close()" @blur="setTimeout(() => close(), 200)">
+    <ul x-show="open" x-cloak class="suggestions-dropdown">
+      <template x-for="(item, i) in items" :key="i">
+        <li :class="i === active ? 'bg-primary text-secondary' : ''" class="px-3 py-1 cursor-pointer flex items-center justify-between gap-2"
+            @mousedown.prevent="selectItem(item)">
+          <span x-text="item.value" class="truncate"></span>
+          <i x-show="item.type === 'name'" class="fa-solid fa-route text-xs opacity-50 flex-shrink-0"></i>
+          <i x-show="item.type === 'place' || item.type === 'location'" class="fa fa-map-marker-alt text-xs opacity-50 flex-shrink-0"></i>
+          <i x-show="item.type === 'skill'" class="fa fa-graduation-cap text-xs opacity-50 flex-shrink-0"></i>
+          <i x-show="item.type === 'event'" class="fa-solid fa-calendar-day text-xs opacity-50 flex-shrink-0"></i>
+        </li>
+      </template>
+    </ul>
+  </div>
+
+  <div class="flex gap-2 flex-shrink-0">
+    {# Filter popover #}
+    <div class="relative" x-data="{ filterOpen: false }">
+      <button type="button" @click="filterOpen = !filterOpen"
+              :class="$store.tourMap.filterCount > 0 ? 'ring-2 ring-offset-1 ring-primary' : ''"
+              class="btn h-full px-3 flex items-center gap-1 text-sm" title="{% trans 'Filters' %}">
+        <i class="fa fa-sliders-h"></i>
+        <span x-show="$store.tourMap.filterCount > 0" x-text="$store.tourMap.filterCount" class="text-xs font-bold leading-none"></span>
+      </button>
+      <div x-show="filterOpen" x-cloak @click.outside="if (!$event.target.closest('.tagify__dropdown')) filterOpen = false" @keydown.escape.window="filterOpen = false"
+           class="absolute {{ align|default:"left-0" }} top-full mt-2 w-72 bg-primary text-secondary rounded-lg shadow-xl border border-red p-4 z-30 space-y-4">
+        <div>
+          <div class="text-xs font-bold uppercase tracking-wider opacity-70 mb-2">{% trans "Show" %}</div>
+          <div class="flex flex-wrap gap-2">
+            <button type="button" class="pill pill-lg transition-opacity" :class="$store.tourMap.shows('tours') ? 'bg-brown' : 'bg-brown opacity-50'" @click="$store.tourMap.toggleShow('tours')" :aria-pressed="$store.tourMap.shows('tours')"><i class="fa-solid fa-route mr-1"></i>{% trans "Tours" %}</button>
+            <button type="button" class="pill pill-lg transition-opacity" :class="$store.tourMap.shows('ideas') ? 'bg-brown' : 'bg-brown opacity-50'" @click="$store.tourMap.toggleShow('ideas')" :aria-pressed="$store.tourMap.shows('ideas')"><i class="fa-solid fa-lightbulb mr-1"></i>{% trans "Tour ideas" %}</button>
+          </div>
+        </div>
+        <div>
+          <div class="text-xs font-bold uppercase tracking-wider opacity-70 mb-2">{% trans "When" %}</div>
+          <div class="grid grid-cols-2 gap-2">
+            <label class="text-xs">{% trans "From" %}<input type="date" class="form-input w-full text-brown" x-model="$store.tourMap.from" @change="window.tourFiltersChanged()"></label>
+            <label class="text-xs">{% trans "Until" %}<input type="date" class="form-input w-full text-brown" x-model="$store.tourMap.until" @change="window.tourFiltersChanged()"></label>
+          </div>
+        </div>
+        <div>
+          <div class="text-xs font-bold uppercase tracking-wider opacity-70 mb-2">{% trans "What we want to learn" %}</div>
+          <input data-tour-learn class="form-input w-full text-brown" value="{{ request.GET.learn }}"
+                 data-skill-tags="{% trans 'Popular skills to explore' %}" placeholder="{% trans 'e.g. Permaculture, Yoga' %}">
+        </div>
+        <div>
+          <div class="text-xs font-bold uppercase tracking-wider opacity-70 mb-2">{% trans "How we travel" %}</div>
+          <select class="form-select w-full text-brown" x-model="$store.tourMap.mode" @change="window.tourFiltersChanged()">
+            <option value="">{% trans "Any way" %}</option>
+            {% for value, label in mode_choices %}<option value="{{ value }}">{{ label }}</option>{% endfor %}
+          </select>
+        </div>
+        <div class="space-y-1">
+          <label class="flex items-center gap-2 cursor-pointer text-sm"><input type="checkbox" class="form-checkbox light h-4 w-4" x-model="$store.tourMap.children" @change="window.tourFiltersChanged()"><i class="fa-solid fa-children"></i>{% trans "Children welcome" %}</label>
+          <label class="flex items-center gap-2 cursor-pointer text-sm"><input type="checkbox" class="form-checkbox light h-4 w-4" x-model="$store.tourMap.animals" @change="window.tourFiltersChanged()"><i class="fa-solid fa-paw"></i>{% trans "Animals welcome" %}</label>
+        </div>
+        <button type="button" x-show="$store.tourMap.filterCount > 0" class="text-xs underline opacity-70 hover:opacity-100" @click="$store.tourMap.clear()">{% trans "Clear filters" %}</button>
+      </div>
+    </div>
+
+    {# Near me: the map moves there, the list sorts nearest first #}
+    <button type="button" class="btn px-3" :class="$store.tourMap.near ? 'ring-2 ring-offset-1 ring-primary' : ''" title="{% trans 'Show tours near me' %}"
+            @click="if (!navigator.geolocation) return; navigator.geolocation.getCurrentPosition(pos => { $store.tourMap.near = pos.coords.latitude + ',' + pos.coords.longitude; window._tourMapPanTo(pos.coords.longitude, pos.coords.latitude, 7); window.tourFiltersChanged(); });">
+      <i class="fa fa-crosshairs"></i>
+    </button>
+  </div>
+</div>

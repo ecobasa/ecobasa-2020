@@ -691,9 +691,40 @@ function initCommunityMap() {
   communityOlMap.addOverlay(overlay);
 
   communityOlMap.on('singleclick', e => {
-    const feature = communityOlMap.forEachFeatureAtPixel(e.pixel, f => f);
+    const feature = communityOlMap.forEachFeatureAtPixel(e.pixel, f => f, { layerFilter: l => l === markersLayer });
     if (feature) { popupEl.innerHTML = buildCommunityPopupHTML(feature); overlay.setPosition(e.coordinate); }
-    else          { overlay.setPosition(undefined); }
+    else if (!tourRoutes || !tourRoutes.layer.getVisible()) { overlay.setPosition(undefined); }
+  });
+
+  // Layer switch "Tours": the routes of current tours in the visible area
+  let tourRoutes = null;
+  const reloadTours = function () {
+    if (!tourRoutes || !tourRoutes.layer.getVisible()) return;
+    const ext = ol.proj.transformExtent(communityOlMap.getView().calculateExtent(communityOlMap.getSize()), 'EPSG:3857', 'EPSG:4326');
+    if (!ext.every(isFinite)) return;
+    fetch('{% url "tours:api-routes" %}?bbox=' + ext.map(v => v.toFixed(4)).join(','))
+      .then(r => r.json()).then(data => tourRoutes.setData(data));
+  };
+  const toursSwitch = document.createElement('label');
+  toursSwitch.className = 'absolute top-16 right-2.5 flex items-center gap-2 px-3 py-2 rounded-md bg-primary bg-opacity-80 text-secondary text-sm font-bold shadow-lg border border-red backdrop-blur cursor-pointer';
+  toursSwitch.innerHTML = '<input type="checkbox" class="form-checkbox"><i class="fa-solid fa-route"></i><span>{% trans "Tours"|escapejs %}</span>';
+  communityOlMap.getViewport().appendChild(toursSwitch);
+  toursSwitch.querySelector('input').addEventListener('change', function (e) {
+    if (!tourRoutes) {
+      tourRoutes = EcoMap.addRouteLayer(communityOlMap, null, {
+        onSelect(props, coordinate) {
+          if (!props) return;
+          const km = props.km ? ' · {% trans "about"|escapejs %} ' + props.km + ' km' : '';
+          popupEl.innerHTML = '<div class="map-popup"><h3 class="m-0"><a></a></h3><div class="mt-1"></div></div>';
+          popupEl.querySelector('a').href = props.url;
+          popupEl.querySelector('a').textContent = props.title;
+          popupEl.querySelector('.mt-1').textContent = props.dates + km;
+          overlay.setPosition(coordinate);
+        },
+      });
+    }
+    tourRoutes.layer.setVisible(e.target.checked);
+    reloadTours();
   });
 
   window._communityMapSetLayer = function (mode) {
@@ -769,7 +800,7 @@ function initCommunityMap() {
   let fetchTimer;
   communityOlMap.on('moveend', () => {
     clearTimeout(fetchTimer);
-    fetchTimer = setTimeout(() => window._communityMapReload(), 300);
+    fetchTimer = setTimeout(() => { window._communityMapReload(); reloadTours(); }, 300);
   });
 
   window.addEventListener('resize', () => communityOlMap.updateSize());

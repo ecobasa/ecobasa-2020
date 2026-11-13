@@ -10,13 +10,13 @@
 
 {% block content %}
 <div class="container-form">
-  <div class="mb-2 text-sm"><a href="{{ tour.get_absolute_url }}" class="hover:underline">{{ tour.title }}</a> <span class="mx-1">/</span> <a href="{% url 'tours:stops' tour.slug %}" class="hover:underline">{% trans "Route" %}</a></div>
+  <div class="mb-2 text-sm"><a href="{{ tour.get_absolute_url }}" class="hover:underline">{{ tour.title }}</a> <span class="mx-1">/</span> <a href="{% url 'tours:plan' tour.slug %}" class="hover:underline">{% trans "Route" %}</a></div>
   <h1>{% blocktrans with number=stop.order|add:1 %}Stop {{ number }}{% endblocktrans %}: {{ stop.label }}</h1>
   <form method="post" class="border rounded-xl bg-secondary p-6 space-y-4">
     {% csrf_token %}
     {% include "tours/_stop_fields.html" %}
     <div class="flex justify-end gap-3 pt-2">
-      <a href="{% url 'tours:stops' tour.slug %}" class="btn btn-lg btn-purple">{% trans "Cancel" %}</a>
+      <a href="{% url 'tours:plan' tour.slug %}" class="btn btn-lg btn-purple">{% trans "Cancel" %}</a>
       <button type="submit" class="btn btn-lg"><i class="fa fa-save mr-2"></i>{% trans "Save" %}</button>
     </div>
   </form>
