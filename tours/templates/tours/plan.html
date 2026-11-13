@@ -19,7 +19,7 @@
     <span class="opacity-70">{% trans "Route" %}</span>
   </div>
   <h1><i class="fa-solid fa-route mr-2 text-primary"></i>{% trans "Route" %}</h1>
-  <p class="text-sm">{% trans "Add the stops in the order you travel. Days can come later: without them the tour is an idea." %}</p>
+  <p class="text-sm">{% trans "Add the stops in the order you travel. Days can come later: without them the tour is an idea." %} {% include "help/_link.html" with page="help:tours" anchor="plan" %}</p>
 
   {# The route and the recommended communities and events; a click on one tells why #}
   <div class="relative h-80 lg:h-[32rem] rounded-xl shadow overflow-hidden mb-6">

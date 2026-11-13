@@ -29,6 +29,7 @@
     <span class="opacity-70">{% trans "Deliveries" %}</span>
   </div>
   <h1><i class="fa-solid fa-box mr-2 text-primary"></i>{% trans "Deliveries" %}</h1>
+  <p>{% include "help/_link.html" with page="help:tours" anchor="deliveries" %}</p>
 
   {# Offers at or near one place on the route that fit wishes at or near a later one; organisers find them in the planner #}
   {% if not can_plan %}

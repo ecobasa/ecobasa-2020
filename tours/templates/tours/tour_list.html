@@ -229,7 +229,7 @@
       </div>
       {# One scrolling list, as high as the gifts' and communities': what tours are, your own tours that are in no list, then the tours #}
       <div id="tour-list-scroll" class="max-h-[60vh] overflow-y-auto space-y-3">
-        <p class="text-sm m-0"><i class="fa-solid fa-route text-primary mr-1"></i>{% trans "Travel from community to community and from event to event: help, learn, and take gifts along. Join a tour for all of it or for part of the way." %}</p>
+        <p class="text-sm m-0"><i class="fa-solid fa-route text-primary mr-1"></i>{% trans "Travel from community to community and from event to event: help, learn, and take gifts along. Join a tour for all of it or for part of the way." %} {% include "help/_link.html" with page="help:tours" anchor="what" %}</p>
         {% if own %}
           <details class="border rounded-xl bg-secondary bg-opacity-60 p-3" open>
             <summary class="cursor-pointer font-semibold text-sm">{% trans "Your tours that are not in the list" %} <span class="opacity-60">{{ own|length }}</span></summary>

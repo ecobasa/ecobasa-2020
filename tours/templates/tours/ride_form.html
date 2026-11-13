@@ -12,7 +12,7 @@
 <div class="container-form">
   <div class="mb-2 text-sm"><a href="{% url 'tours:list' %}" class="hover:underline">{% trans "Community-Tours" %}</a></div>
   <h1><i class="fa-solid fa-people-arrows mr-2 text-primary"></i>{% trans "Offer a ride" %}</h1>
-  <p>{% trans "From one meeting point to another on one day. Others ask to come along, and you answer them." %}</p>
+  <p>{% trans "From one meeting point to another on one day. Others ask to come along, and you answer them." %} {% include "help/_link.html" with page="help:tours" anchor="rides" %}</p>
 
   <form method="post" class="border rounded-xl bg-secondary p-6 space-y-6">
     {% csrf_token %}

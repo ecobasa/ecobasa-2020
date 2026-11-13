@@ -14,7 +14,7 @@
     <span class="opacity-70">{% if own %}{% trans "Change your join request" %}{% else %}{% trans "Ask to join" %}{% endif %}</span>
   </div>
   <h1>{% if own %}{% trans "Change your join request" %}{% else %}{% trans "Ask to join" %}{% endif %}</h1>
-  <p>{% blocktrans with title=tour.title %}Choose where you get on and where you get off <strong>{{ title }}</strong>. The organisers get your request and answer you.{% endblocktrans %}</p>
+  <p>{% blocktrans with title=tour.title %}Choose where you get on and where you get off <strong>{{ title }}</strong>. The organisers get your request and answer you.{% endblocktrans %} {% include "help/_link.html" with page="help:tours" anchor="join" %}</p>
 
   {% if free and stops|length > 1 %}
     {# Free places on each leg, so one sees at once where there is room #}

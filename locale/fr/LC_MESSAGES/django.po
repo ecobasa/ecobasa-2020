@@ -6861,3 +6861,297 @@ msgstr "Ajouter une expérience"
 #: tours/templates/tours/_timeline_entry.html
 msgid "Confirm"
 msgstr "Confirmer"
+
+#: urls.py
+msgctxt "url"
+msgid "help/"
+msgstr ""
+
+#: help/templates/help
+msgid "Help"
+msgstr "Aide"
+
+#: help/templates/help
+msgid "How ecobasa works and how to use it."
+msgstr "Comment fonctionne ecobasa et comment l'utiliser."
+
+#: help/templates/help
+msgid "Travel from community to community, join a tour for part of the way, plan your own, and take gifts along."
+msgstr "Voyage de communauté en communauté, rejoins un tour pour une partie du chemin, planifie le tien et emporte des dons."
+
+#: help/templates/help
+msgid "Something missing or unclear? <a href=\"/contact\">Write to us</a>, we are glad to hear it."
+msgstr "Il manque quelque chose ou ce n'est pas clair ? <a href=\"/contact\">Écris-nous</a>, ça nous fait plaisir."
+
+#: help/templates/help
+msgid "Contents"
+msgstr "Sommaire"
+
+#: help/templates/help
+msgid "What is a Community-Tour?"
+msgstr "Qu'est-ce qu'un Community-Tour ?"
+
+#: help/templates/help
+msgid "Find a tour"
+msgstr "Trouver un tour"
+
+#: help/templates/help
+msgid "Join a tour"
+msgstr "Rejoindre un tour"
+
+#: help/templates/help
+msgid "Plan your own tour"
+msgstr "Planifier ton propre tour"
+
+#: help/templates/help
+msgid "Ask the hosts"
+msgstr "Demander aux hôtes"
+
+#: help/templates/help
+msgid "Gifts travel along"
+msgstr "Les dons voyagent avec vous"
+
+#: help/templates/help
+msgid "Tours that find you"
+msgstr "Des tours qui te trouvent"
+
+
+#: help/templates/help
+msgid "On the road and afterwards"
+msgstr "En route et après"
+
+#: help/templates/help
+msgid "Privacy"
+msgstr "Vie privée"
+
+#: help/templates/help
+msgid "Many people travel between communities anyway: to visit, to learn and to help. A Community-Tour makes such a journey count for more."
+msgstr "Beaucoup de gens voyagent de toute façon entre les communautés : pour les visiter, apprendre et aider. Un Community-Tour donne plus de sens à ce voyage."
+
+#: help/templates/help
+msgid "Projects, open days and gatherings are the places where people and things come together. A tour is the way between them: it stops at communities and events, the travellers help and learn there, and move on."
+msgstr "Les projets, les journées portes ouvertes et les rencontres sont les lieux où se rassemblent les gens et les choses. Un tour est le chemin entre eux : il s'arrête dans des communautés et des événements, les voyageur·ses y aident et y apprennent, puis repartent."
+
+#: help/templates/help
+msgid "A tour has a route and free places. Others come along for all of it or just for one part."
+msgstr "Un tour a un itinéraire et des places libres. D'autres viennent pour tout le trajet ou seulement une partie."
+
+#: help/templates/help
+msgid "Travel company that fits"
+msgstr "Des compagnons de voyage qui vont ensemble"
+
+#: help/templates/help
+msgid "Not only the same destination: skills that complete each other, or a second pair of hands for the same job."
+msgstr "Pas seulement la même destination : des compétences qui se complètent, ou une deuxième paire de mains pour le même travail."
+
+#: help/templates/help
+msgid "Learning on the way"
+msgstr "Apprendre en route"
+
+#: help/templates/help
+msgid "Say what you want to learn, and the planner finds communities and events where you can learn it while you help out for food and a bed."
+msgstr "Dis ce que tu veux apprendre, et le planificateur trouve des communautés et des événements où tu peux l'apprendre en donnant un coup de main contre le gîte et le couvert."
+
+#: help/templates/help
+msgid "Offers at one stop that are wished for at a later one come along. That is how gifts cross distances nobody would drive for a bag of seeds."
+msgstr "Ce qui est offert à une étape et souhaité à une étape suivante voyage avec vous. C'est ainsi que les dons franchissent des distances que personne ne ferait pour un sachet de graines."
+
+#: help/templates/help
+msgid "A tour doesn't have to be a group. You can plan one just for yourself, to learn things and to take gifts along."
+msgstr "Un tour n'a pas besoin d'être un groupe. Tu peux en planifier un rien que pour toi, pour apprendre des choses et emporter des dons."
+
+#: help/templates/help
+msgid "The filters narrow it down: when, what you want to learn, how they travel, children or animals welcome, free places, only rides. Logged in, you can also look for tours that fit your skills or pass near you."
+msgstr "Les filtres affinent la recherche : quand, ce que tu veux apprendre, comment on voyage, enfants ou animaux bienvenus, places libres, seulement les covoiturages. Connecté·e, tu peux aussi chercher des tours qui correspondent à tes compétences ou qui passent près de chez toi."
+
+#: help/templates/help
+msgid "A tour idea has no dates or route yet. Often its organiser is still looking for a vehicle, a driver or company. Ask to join, or write to them: that is how ideas become tours."
+msgstr "Une idée de tour n'a pas encore de dates ni d'itinéraire. Souvent, la personne qui l'organise cherche encore un véhicule, quelqu'un pour conduire ou de la compagnie. Demande à voyager ou écris-lui : c'est ainsi que les idées deviennent des tours."
+
+#: help/templates/help
+msgid "On the tour's page, press “Ask to join” and choose where you get on and where you get off. The free places for that stretch are shown right away."
+msgstr "Sur la page du tour, clique sur « Demander à voyager » et choisis où tu montes et où tu descends. Les places libres sur ce tronçon s'affichent tout de suite."
+
+#: help/templates/help
+msgid "Say how many you are, which of the things the tour is still looking for you could cover, and a few words about yourself. Tick “I only need the ride” if you won't stay at the stops."
+msgstr "Dis combien vous êtes, ce que tu pourrais apporter parmi ce que le tour cherche encore, et quelques mots sur toi. Coche « J'ai seulement besoin du trajet » si tu ne restes pas aux étapes."
+
+#: help/templates/help
+msgid "The organisers get your join request and accept it, decline it or write back. You find it under Matches; you can change your stretch until then."
+msgstr "Les organisateur·rices reçoivent ta demande pour voyager et l'acceptent, la refusent ou te répondent. Tu la trouves dans Matchs ; d'ici là, tu peux encore changer ton tronçon."
+
+#: help/templates/help
+msgid "Accepted, you travel along: you see who else travels, where you meet, and for each leg a button to open the way in your maps app."
+msgstr "Une fois acceptée, tu voyages avec eux : tu vois qui d'autre voyage, où vous vous retrouvez, et pour chaque tronçon un bouton qui ouvre le chemin dans ton appli de cartes."
+
+
+#: help/templates/help
+msgid "1. The basics"
+msgstr "1. L'essentiel"
+
+#: help/templates/help
+msgid "A title, why you travel, what you want to learn and how you travel: van, car, bicycle, train, hitchhiking, on foot or by boat. Say whether you are looking for travellers and how many fit. If you travel alone, choose whether the tour is shown to everyone."
+msgstr "Un titre, pourquoi tu voyages, ce que tu veux apprendre et comment tu voyages : van, voiture, vélo, train, auto-stop, à pied ou en bateau. Dis si tu cherches des compagnons de voyage et combien il y a de place. Si tu voyages seul·e, choisis si tout le monde voit le tour."
+
+#: help/templates/help
+msgid "2. The route"
+msgstr "2. L'itinéraire"
+
+#: help/templates/help
+msgid "Add stops: a community, one of its events, or another place. Give them days and put them in order with the arrows, or let “Suggest an order” propose one."
+msgstr "Ajoute des étapes : une communauté, l'un de ses événements ou un autre lieu. Donne-leur des jours et mets-les dans l'ordre avec les flèches, ou laisse « Proposer un ordre » en proposer un."
+
+
+
+#: help/templates/help
+msgid "3. Vehicles and what you are still looking for"
+msgstr "3. Les véhicules et ce que vous cherchez encore"
+
+#: help/templates/help
+msgid "Add your vehicles with seats, sleeping places and who may drive. The free places on each leg follow from them. Under “We're still looking for” you add what the tour still needs: a van, a driver, a carpenter. “Needed on your route” shows what your hosts need that nobody on the tour can do yet."
+msgstr "Ajoute vos véhicules avec les sièges, les couchages et qui peut conduire. Les places libres sur chaque tronçon en découlent. Sous « Nous cherchons encore », tu ajoutes ce qui manque encore au tour : un van, quelqu'un pour conduire, un·e menuisier·e. « Recherché sur votre itinéraire » montre ce dont vos hôtes ont besoin et que personne sur le tour ne sait encore faire."
+
+#: help/templates/help
+msgid "What a tour looks for also appears among the gifts, so people can offer it, travelling along or not. A vehicle someone gives or lends for the tour becomes one of its vehicles."
+msgstr "Ce qu'un tour cherche apparaît aussi parmi les dons, pour que d'autres puissent le proposer, qu'ils voyagent ou non. Un véhicule que quelqu'un donne ou prête au tour devient l'un de ses véhicules."
+
+
+
+#: help/templates/help
+msgid "On each stop at a community or event there is “Ask to host us”. The days and the size of your group are filled in. Tick the needs and wishes your group will take care of and what you'd like to learn there, and tell them who you are, what you bring and what you need: food, sleeping places."
+msgstr "À chaque étape dans une communauté ou un événement, il y a « Demander à nous accueillir ». Les jours et la taille de votre groupe sont déjà remplis. Coche les besoins et les souhaits dont votre groupe s'occupera et ce que vous aimeriez y apprendre, et racontez qui vous êtes, ce que vous apportez et ce dont vous avez besoin : nourriture, couchages."
+
+
+#: help/templates/help
+msgid "Once your route is set, the planner shows under “Could travel with you” what is offered at an earlier stop and wished for at a later one: tomato seeds from the first community for the garden at the third."
+msgstr "Une fois votre itinéraire fixé, le planificateur montre sous « Pourrait voyager avec vous » ce qui est offert à une étape précédente et souhaité à une suivante : des graines de tomates de la première communauté pour le jardin de la troisième."
+
+#: help/templates/help
+msgid "“I'll take it” asks the giver and the receiver, each with a message already written for you. “Not this” puts it aside."
+msgstr "« Je l'emporte » demande à la personne qui donne et à celle qui reçoit, chacune avec un message déjà écrit pour toi. « Pas ça » le met de côté."
+
+#: help/templates/help
+msgid "When both agree, it is on the packing list: what to pick up and what to hand over at each stop. The list prints well and works on a phone."
+msgstr "Quand les deux sont d'accord, c'est sur la liste de bagages : ce qu'il faut récupérer et remettre à chaque étape. La liste s'imprime bien et fonctionne sur un téléphone."
+
+#: help/templates/help
+msgid "On the road, mark it “Picked up” and later “Handed over”. Then the wish counts as fulfilled."
+msgstr "En route, marque-le « Récupéré » puis « Remis ». Le souhait compte alors comme exaucé."
+
+#: help/templates/help
+msgid "A tour visit reaches you like a volunteer stay, under Volunteer Visits: one request for the whole group, with each traveller's skills and what they will take care of. Your calendar counts the group against your room for guests, and your community or event page shows which tours are coming."
+msgstr "Une visite du tour t'arrive comme un séjour en communauté, dans Séjours de bénévolat : une seule demande pour tout le groupe, avec les compétences de chaque voyageur·se et ce dont ils s'occuperont. Ton calendrier compte le groupe par rapport à votre place pour les invité·es, et la page de votre communauté ou événement montre quels tours arrivent."
+
+#: help/templates/help
+msgid "Tours also bring what you wish for: when your community is a stop, things offered earlier on the route that fit your wishes can come along."
+msgstr "Les tours apportent aussi ce que vous souhaitez : si votre communauté est une étape, des choses offertes plus tôt sur l'itinéraire qui correspondent à vos souhaits peuvent venir avec eux."
+
+#: help/templates/help
+msgid "Each stop on the tour's page tells its story as it happens: who joined, what was given, picked up and handed over. Under “Add experience” travellers, hosts and everyone they met write what they experienced, with the stop where it happened. Entries by people who didn't travel along wait until a traveller confirms them."
+msgstr "Chaque étape sur la page du tour raconte son histoire au fur et à mesure : qui a rejoint le tour, ce qui a été donné, récupéré et remis. Sous « Ajouter une expérience », les voyageur·ses, les hôtes et toutes les personnes rencontrées écrivent ce qu'elles ont vécu, avec l'étape où c'était. Les contributions de personnes qui n'ont pas voyagé attendent qu'un·e voyageur·se les confirme."
+
+#: help/templates/help
+msgid "When the tour is over, the page shows how it went: where it went, what you found and what travelled along. Write references for your hosts and fellow travellers; hosts write about the group."
+msgstr "Quand le tour est terminé, la page montre comment il s'est passé : par où il est passé, ce que vous avez trouvé et ce qui a voyagé avec vous. Écris des références pour tes hôtes et tes compagnons de voyage ; les hôtes écrivent sur le groupe."
+
+#: help/templates/help
+msgid "A tour is archived a week after its last day and stays as a record. A tour idea nobody has touched for half a year gets a reminder email; one click keeps it."
+msgstr "Un tour est archivé une semaine après son dernier jour et reste comme souvenir. Une idée de tour que personne n'a touchée depuis six mois reçoit un e-mail de rappel ; un clic suffit pour la garder."
+
+#: help/templates/help
+msgid "The route only shows roughly where a private community is. Travellers see the exact place once the community has accepted the visit."
+msgstr "L'itinéraire ne montre qu'approximativement où se trouve une communauté privée. Les voyageur·ses voient le lieu exact dès que la communauté a accepté la visite."
+
+#: help/templates/help
+msgid "Only people who are logged in see who travels."
+msgstr "Seules les personnes connectées voient qui voyage."
+
+#: help/templates/help
+msgid "A tour that is not shown to everyone is only seen by its travellers, the hosts it asked and the people whose gifts it carries."
+msgstr "Un tour qui n'est pas montré à tout le monde n'est vu que par ses voyageur·ses, les hôtes à qui il a demandé et les personnes dont il transporte les dons."
+
+#: help/templates/help
+msgid "For another place, choose a meeting point, not your home. And keep phone numbers out of descriptions: everything can be talked about in the messages."
+msgstr "Pour un autre lieu, choisis un point de rendez-vous, pas ton domicile. Et ne mets pas de numéros de téléphone dans les descriptions : tout peut se dire dans les messages."
+
+#: help/templates/help
+#, python-format
+msgid "<a href=\"%(list_url)s\">Community-Tours</a> shows all tours on a map; the list is one click away. Tours with dates are solid lines, tour ideas dashed ones, rides purple. The search finds tours by title, by what they want to learn, by their stops and by the gifts of the hosts on the way."
+msgstr "<a href=\"%(list_url)s\">Community-Tours</a> montre tous les tours sur une carte ; la liste est à un clic. Les tours avec des dates sont des lignes continues, les idées de tour des pointillés, les covoiturages en violet. La recherche trouve les tours par titre, par ce qu'ils veulent apprendre, par leurs étapes et par les dons des hôtes sur le chemin."
+
+#: help/templates/help
+#, python-format
+msgid "All your tours are in <a href=\"%(mine_url)s\">Your tours</a>. Plans change: you can leave a tour at any time, with a few words to the others. Organisers can also invite you; you join once you accept."
+msgstr "Tous tes tours sont dans <a href=\"%(mine_url)s\">Tes tours</a>. Les projets changent : tu peux quitter un tour à tout moment, avec quelques mots aux autres. Les organisateur·rices peuvent aussi t'inviter ; tu le rejoins dès que tu acceptes."
+
+#: help/templates/help
+#, python-format
+msgid "Driving somewhere anyway? <a href=\"%(ride_url)s\">Offer a ride</a>: from where, to where, which day and how many free seats. It is published at once. A ride is simply a tour with two stops, so people ask to join it the same way."
+msgstr "Tu pars quelque part de toute façon ? <a href=\"%(ride_url)s\">Propose un covoiturage</a> : d'où, vers où, quel jour et combien de places libres. Il est publié tout de suite. Un covoiturage est simplement un tour à deux étapes, donc on demande à voyager de la même façon."
+
+#: help/templates/help
+#, python-format
+msgid "Start with <a href=\"%(create_url)s\">Plan a tour</a>. Nothing has to be complete: you can save a draft and come back to it."
+msgstr "Commence par <a href=\"%(create_url)s\">Planifier un tour</a>. Rien ne doit être complet : tu peux enregistrer un brouillon et y revenir plus tard."
+
+#: help/templates/help
+#, python-format
+msgid "You don't have to search. Under <a href=\"%(matches_url)s\">Matches</a> and in the weekly email you get suggestions: a tour that goes where you are staying, passes near you or wants to learn what you want to learn; a ride towards home after a stay; someone from near you who is going to the same <a href=\"%(events_url)s\">event</a>, so you can go there together."
+msgstr "Tu n'as pas besoin de chercher. Dans <a href=\"%(matches_url)s\">Matchs</a> et dans l'e-mail hebdomadaire, tu reçois des suggestions : un tour qui va là où tu séjournes, qui passe près de chez toi ou qui veut apprendre la même chose que toi ; un covoiturage vers chez toi après un séjour ; quelqu'un de près de chez toi qui va au même <a href=\"%(events_url)s\">événement</a>, pour y aller ensemble."
+
+#: help/templates/help
+#, python-format
+msgid "Not travelling for a while? Pause travel suggestions for one, three or six months in your <a href=\"%(settings_url)s#matches\">settings</a>, or from the link in the email."
+msgstr "Tu ne voyages pas pendant un moment ? Mets en pause les suggestions de voyage pour un, trois ou six mois dans tes <a href=\"%(settings_url)s#matches\">paramètres</a>, ou depuis le lien dans l'e-mail."
+
+#: help/templates/help
+msgid "How does this work?"
+msgstr "Comment ça marche ?"
+
+#: help/templates/help
+msgid "About"
+msgstr "À propos"
+
+#: help/templates/help
+msgid "For community ambassadors: a tour comes to visit"
+msgstr "Pour les ambassadeur·rices de communautés : un tour vient en visite"
+
+#: help/templates/help
+msgid "Rides are suggested to people who are looking for one and want to go near where the ride ends around that day, and to people who would like a ride towards home after a stay."
+msgstr "Les covoiturages sont proposés aux personnes qui en cherchent un et veulent aller près de l'arrivée vers ce jour-là, et à celles qui aimeraient rentrer vers chez elles après un séjour."
+
+#: help/templates/help
+msgid "Pro tip: start with your final destination."
+msgstr "Astuce : commence par ta destination finale."
+
+#: help/templates/help
+msgid "“Recommended on the way” shows communities and events along your route, always with the reasons: you can learn there what you want to learn, they need what you can do, food and a bed are provided, there is room for your group, it is only a short detour, gifts could travel. “You can learn this on the way” lists the skills taught at your stops."
+msgstr "« Recommandé sur le chemin » montre des communautés et des événements le long de ton itinéraire, toujours avec les raisons : tu peux y apprendre ce que tu veux, ils ont besoin de ce que tu sais faire, le gîte et le couvert sont offerts, il y a de la place pour votre groupe, ce n'est qu'un petit détour, des dons pourraient voyager. « Ce que tu peux apprendre en route » montre les compétences enseignées à tes étapes."
+
+#: help/templates/help
+msgid "Hosts usually gain most from help after about a week; shorter stays may require payment. Visit at least two communities, so gifts can travel between them. The more you have to offer, the more they are willing to offer you food and accommodation without charging money for it."
+msgstr "Les hôtes profitent généralement le plus d'une aide à partir d'environ une semaine ; les séjours plus courts peuvent être payants. Visite au moins deux communautés, pour que des dons puissent voyager entre elles. Plus tu as à offrir, plus ils seront prêts à t'offrir le gîte et le couvert sans te demander d'argent."
+
+#: help/templates/help
+msgid "4. Gather people"
+msgstr "4. Réunir du monde"
+
+#: help/templates/help
+msgid "Travelling together is not only more fun with the right people, you can also do so much more together. You can look for people with the right skill sets to build houses, ponds or food forests. A nice offer for a community and a nice learning opportunity for all involved. People can ask to join your tour once it is published, or you can invite people you find in the network."
+msgstr "Voyager ensemble n'est pas seulement plus agréable avec les bonnes personnes, vous pouvez aussi faire beaucoup plus ensemble. Tu peux chercher des personnes avec les bonnes compétences pour construire des maisons, des étangs ou des forêts comestibles. Une belle offre pour une communauté et une belle occasion d'apprendre pour tout le monde. Une fois ton tour publié, on peut demander à voyager avec toi, ou tu peux inviter des personnes que tu trouves dans le réseau."
+
+#: help/templates/help
+msgid "5. Publish"
+msgstr "5. Publier"
+
+#: help/templates/help
+msgid "Only the tour organisers see the draft of a tour. Once published, the tour is on the map; without stops and days it is a tour idea. You can make fellow travellers organisers too, or hand the whole tour over to someone."
+msgstr "Seul·es les organisateur·rices du tour voient son brouillon. Une fois publié, le tour est sur la carte ; sans étapes ni jours, c'est une idée de tour. Tu peux aussi faire de tes compagnons de voyage des organisateur·rices, ou confier tout le tour à quelqu'un."
+
+#: help/templates/help
+msgid "The ambassador accepts, declines or proposes other days. The route shows each stop's answer. When people join or leave, the host is told the new number. At an event where people just come, your visit counts at once because it doesn't need approval."
+msgstr "L'ambassadeur·rice accepte, refuse ou propose d'autres jours. L'itinéraire montre la réponse de chaque étape. Quand quelqu'un rejoint ou quitte le tour, l'hôte apprend le nouveau nombre. À un événement où l'on vient simplement, votre visite compte tout de suite, car elle n'a pas besoin d'être acceptée."
+
+#: help/templates/help
+msgid "That is why it is important to post wishes to your community profile."
+msgstr "C'est pourquoi il est important de publier des souhaits sur le profil de votre communauté."

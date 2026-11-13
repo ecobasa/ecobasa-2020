@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block head_title %}{% trans "Help" %} — ecobasa{% endblock %}
+
+{% block content %}
+<div class="container-content">
+  <h1><i class="fa-regular fa-circle-question mr-2"></i>{% trans "Help" %}</h1>
+  <p class="text-lg">{% trans "How ecobasa works and how to use it." %}</p>
+
+  <ul class="list-none p-0 mt-8 space-y-4">
+    <li>
+      <a href="{% url 'help:tours' %}" class="flex items-start gap-4 p-6 rounded-2xl bg-secondary bg-opacity-75 shadow hover:shadow-lg transition">
+        <span class="flex-none w-14 h-14 rounded-lg bg-primary flex items-center justify-center"><i class="fa-solid fa-route text-2xl text-secondary"></i></span>
+        <span class="flex-1 min-w-0">
+          <span class="block font-serif text-2xl text-primary">{% trans "Community-Tours" %}</span>
+          <span class="block text-brown">{% trans "Travel from community to community, join a tour for part of the way, plan your own, and take gifts along." %}</span>
+        </span>
+      </a>
+    </li>
+  </ul>
+
+  <p class="mt-8">{% blocktrans %}Something missing or unclear? <a href="/contact">Write to us</a>, we are glad to hear it.{% endblocktrans %}</p>
+</div>
+{% endblock content %}
