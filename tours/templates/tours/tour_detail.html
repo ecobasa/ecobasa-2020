@@ -137,6 +137,22 @@
         </ul>
       {% endif %}
 
+      {# Gifts that travel along: from where to where, and where each stands #}
+      {% if deliveries or could_travel %}
+        <h2 id="deliveries">{% trans "Deliveries" %}</h2>
+        {% if deliveries %}
+          <ul class="list-none m-0 p-0 space-y-2 mb-3">
+            {% for delivery in deliveries %}{% include "tours/_delivery_row.html" %}{% endfor %}
+          </ul>
+        {% endif %}
+      {% endif %}
+      {% if travelling and tour.is_current %}
+        <p class="mb-6">
+          <a href="{% if can_edit %}{% url 'tours:plan' tour.slug %}#could-travel{% else %}{% url 'tours:deliveries' tour.slug %}{% endif %}" class="btn btn-purple"><i class="fa-solid fa-box mr-1"></i>{% trans "Could travel with you" %}{% if could_travel %} ({{ could_travel }}){% endif %}</a>
+          {% if deliveries %}<a href="{% url 'tours:deliveries' tour.slug %}#packing" class="btn btn-purple ml-2"><i class="fa-solid fa-list-check mr-1"></i>{% trans "Packing list" %}</a>{% endif %}
+        </p>
+      {% endif %}
+
       {% with learn=tour.learn_skills.all %}
         {% if learn %}
           <h2>{% trans "What we want to learn" %}</h2>
@@ -367,8 +383,23 @@ document.addEventListener('DOMContentLoaded', function () {
     return el;
   };
   const routes = EcoMap.addRouteLayer(map, JSON.parse(document.getElementById('tour-geojson').textContent), {
-    hover: false, legModes: true,
+    hover: false, legModes: true, deliveriesAlways: true,
     onSelect(props, coordinate) {
+      if (props && props.kind === 'delivery') {
+        // What travels along, from where to where, and where it stands
+        const el = document.createElement('div');
+        el.className = 'map-popup';
+        el.innerHTML = '<button type="button" class="map-popup-close" aria-label="{% trans "Close"|escapejs %}">&times;</button>'
+          + '<h3 class="m-0 pr-6"></h3><div class="mt-1"></div><div class="mt-1 text-sm"></div>';
+        el.querySelector('button').addEventListener('click', () => popup.setPosition(undefined));
+        el.querySelector('h3').textContent = props.name + (props.amount ? ' · ' + props.amount : '');
+        const lines = el.querySelectorAll('div');
+        lines[0].textContent = props.ends;
+        lines[1].textContent = props.status;
+        popupEl.replaceChildren(el);
+        popup.setPosition(coordinate);
+        return;
+      }
       if (!props || props.kind !== 'stop') { popup.setPosition(undefined); return; }
       popupEl.replaceChildren(stopPopup(props));
       popup.setPosition(props.geometry.getCoordinates());  // above the pin, wherever it was clicked

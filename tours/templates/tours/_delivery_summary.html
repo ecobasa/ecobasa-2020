@@ -1,0 +1,14 @@
+{% load i18n %}
+{# On the match page of a gift taken along on a tour (gift_economy.matches includes the templates of what is attached to a match): the tour, from where to where, who brings it, and where the other side stands #}
+{% with delivery=attachment ends=attachment.ends %}
+  <div class="border rounded-xl bg-secondary bg-opacity-60 p-4 text-sm mb-4 space-y-2">
+    <div><i class="fa-solid fa-box text-primary mr-1"></i><strong>{% trans "Deliveries" %}:</strong>
+      <a href="{{ delivery.tour.get_absolute_url }}" class="underline">{{ delivery.tour.title }}</a>
+    </div>
+    <div><i class="fa-solid fa-route text-primary mr-1"></i>{{ ends.0 }} → {{ ends.1 }}{% if delivery.amount %} · {{ delivery.amount }}{% endif %}</div>
+    <div><i class="fa-solid fa-gift text-primary mr-1"></i><a href="{{ delivery.offer.get_absolute_url }}" class="underline">{{ delivery.offer.display_title }}</a>
+      → <a href="{{ delivery.wish.get_absolute_url }}" class="underline">{{ delivery.wish.display_title }}</a> <span class="opacity-70">({{ delivery.wish.holder_name }})</span></div>
+    <div><i class="fa-solid fa-user text-primary mr-1"></i>{% trans "Brought by" %} <a href="{{ delivery.bringer.get_absolute_url }}" class="underline">{{ delivery.bringer.name|default:delivery.bringer.email }}</a></div>
+    {% with label=delivery.status_label %}<div class="{{ label.2 }}"><i class="{{ label.1 }} mr-1"></i>{{ label.0 }}</div>{% endwith %}
+  </div>
+{% endwith %}

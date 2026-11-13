@@ -118,7 +118,37 @@
         return styles;
       };
 
+      // A gift taken along: a thin dashed brown arc from where it is picked up to where
+      // it is handed over, a small gift in its middle (solid once handed over). Only of
+      // the lit tour, unless options.deliveriesAlways (the tour's own page)
+      const deliveryStyle = function (feature) {
+        if (!options.deliveriesAlways && feature.get('slug') !== lit) return null;
+        const coords = feature.getGeometry().getCoordinates();
+        const middle = coords[Math.floor(coords.length / 2)];
+        const done = feature.get('state') === 'handed_over';
+        return [
+          new ol.style.Style({
+            stroke: new ol.style.Stroke({ color: '#452912', width: 1.5, lineDash: done ? undefined : [4, 4] }),
+            zIndex: 3,
+          }),
+          new ol.style.Style({
+            geometry: new ol.geom.Point(middle),
+            image: new ol.style.Circle({
+              radius: 8,
+              fill: new ol.style.Fill({ color: '#fcf3e5' }),
+              stroke: new ol.style.Stroke({ color: '#452912', width: 1.5 }),
+            }),
+            text: new ol.style.Text({
+              text: String.fromCodePoint(0xF06B), font: '900 8px "Font Awesome 6 Free"',
+              fill: new ol.style.Fill({ color: '#452912' }),
+            }),
+            zIndex: 4,
+          }),
+        ];
+      };
+
       const style = function (feature, resolution) {
+        if (feature.get('kind') === 'delivery') return deliveryStyle(feature);
         const state = feature.get('state');
         const isLit = lit && feature.get('slug') === lit;
         const isDim = lit && !isLit;

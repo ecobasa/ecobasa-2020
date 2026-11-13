@@ -372,3 +372,55 @@ def recommendation_features(recommendations, km):
             },
         })
     return {"type": "FeatureCollection", "features": features}
+
+
+def arc(a, b, bend=0.2, steps=16):
+    """Coordinates of a gentle curve from point a to point b (lon/lat), bent to the left
+    of the way, so it doesn't hide the route line under it."""
+    (x1, y1), (x2, y2) = a.coords, b.coords
+    dx, dy = x2 - x1, y2 - y1
+    cx, cy = (x1 + x2) / 2 - dy * bend, (y1 + y2) / 2 + dx * bend
+    coords = []
+    for i in range(steps + 1):
+        t = i / steps
+        coords.append([
+            (1 - t) ** 2 * x1 + 2 * (1 - t) * t * cx + t ** 2 * x2,
+            (1 - t) ** 2 * y1 + 2 * (1 - t) * t * cy + t ** 2 * y2,
+        ])
+    return coords
+
+
+def _delivery_end(stop, listing):
+    if stop is not None:
+        return stop.public_place()[1]
+    return listing.public_place[1]
+
+
+def delivery_features(tour, deliveries):
+    """Gifts taken along as arcs from where they are picked up to where they are handed
+    over, at the places everyone may see (a person's near the route only roughly). One's
+    own gift starts where its bringer gets on."""
+    starts = {t.user_id: t.from_stop for t in tour.counted_travellers()}
+    first = next(iter(tour.stops.all()), None)
+    features = []
+    for delivery in deliveries:
+        if delivery.needs_pickup:
+            a = _delivery_end(delivery.pickup_stop, delivery.offer)
+        else:
+            start = delivery.pickup_stop or starts.get(delivery.bringer_id) or first
+            a = start.public_place()[1] if start is not None else None
+        b = _delivery_end(delivery.dropoff_stop, delivery.wish)
+        if a is None or b is None or a.equals(b):
+            continue
+        start_label, end_label = delivery.ends()
+        label, _icon, _colour = delivery.status_label
+        features.append({
+            "type": "Feature",
+            "geometry": {"type": "LineString", "coordinates": arc(a, b)},
+            "properties": {
+                "kind": "delivery", "slug": tour.slug, "name": delivery.title, "amount": delivery.amount,
+                "ends": f"{start_label} → {end_label}", "status": str(label),
+                "state": "handed_over" if delivery.delivered_at else "open",
+            },
+        })
+    return features

@@ -44,6 +44,7 @@ DEMO_PASSWORD = "ecobasa123"
 COUNTRY_OF_PLACE = {
     "Görlitz, Germany": "DE", "Bautzen, Germany": "DE", "Ariège, France": "FR", "Utrecht, Netherlands": "NL",
     "Extremadura, Spain": "ES", "Alentejo, Portugal": "PT", "Puerto Viejo de Talamanca, Costa Rica": "CR",
+    "Bocas del Toro, Panama": "PA", "Copenhagen, Denmark": "DK", "Montpellier, France": "FR",
 }
 SEED_IMAGES_DIR = os.path.join(os.path.dirname(__file__), "seed_images")
 
@@ -166,6 +167,27 @@ class Command(BaseCommand):
                 ecobasa_what="Sending moringa north to people who think a frost is a personality trait.",
                 location_name="Puerto Viejo de Talamanca, Costa Rica", point=(-82.7539, 9.6560),
             ),
+            dict(
+                email="nils@ecobasa.demo", name="Nils Haugen",
+                about="Sailed around half the world, then forgot which half. Restores old boats in a Caribbean boatyard.",
+                world="Lends his ketch to anyone who promises to talk to her nicely.",
+                ecobasa_what="Someone to sail 'Albatroz' back to Europe before her barnacles unionise.",
+                location_name="Bocas del Toro, Panama", point=(-82.2479, 9.3403),
+            ),
+            dict(
+                email="freja@ecobasa.demo", name="Freja Holm",
+                about="Spins yarn on the ferry, knits on the bus, unravels on Sundays.",
+                world="Runs a repair café where nothing leaves without a darned elbow.",
+                ecobasa_what="Wool that hasn't seen a factory, for jumpers that outlive me.",
+                location_name="Copenhagen, Denmark", point=(12.5683, 55.6761),
+            ),
+            dict(
+                email="jules@ecobasa.demo", name="Jules Arnaud",
+                about="Teaches maths, brews tea, loses to the cat at chess.",
+                world="Leaves jars of something fermented on the neighbours' doorsteps.",
+                ecobasa_what="A kombucha culture that survives a teacher's holidays.",
+                location_name="Montpellier, France", point=(3.8767, 43.6108),
+            ),
         ]
 
         users = {}
@@ -234,6 +256,15 @@ class Command(BaseCommand):
                 accomodation="Bring your own boots. The goats will judge them regardless.",
                 inhabitants=5, children=0, max_guests=4,
                 location_name="Extremadura, Spain", point=(-6.3372, 39.4750),
+            ),
+            dict(
+                name="Cacao Tierra Viva", owner="valeria@ecobasa.demo",
+                type=Community.COMMUNITY_TYPE_FARM, status=Community.COMMUNITY_STATUS_ESTABLISHED,
+                vision="Cacao under the shade of the old forest, and the forest staying old.",
+                description="Six families growing cacao, bananas and arguments about fermentation boxes, at the edge of the rainforest.",
+                accomodation="Hammocks on the drying deck. The howler monkeys are the alarm clock, at 4:30.",
+                inhabitants=17, children=6, max_guests=5,
+                location_name="Puerto Viejo de Talamanca, Costa Rica", point=(-82.7539, 9.6560),
             ),
             dict(
                 name="The Someday Ecovillage (Still Just a WhatsApp Group)", owner="ana@ecobasa.demo",
@@ -1336,6 +1367,111 @@ class Command(BaseCommand):
             travel_mode="train", open_to_join=True, max_people=3,
             good_to_know="Bring your own lunch, I bring the tea.",
         )
+        self._seed_boat_tour(users, communities, tour, place, day)
+        self._seed_gifts_along_tours(users, communities)
+
+    def _seed_gifts_along_tours(self, users, communities):
+        """Something for each tour with stops to take along: offered at or near one place on
+        its route and wished for at or near a later one (tours.deliveries)."""
+        bjorn, mireille = users["bjorn@ecobasa.demo"], users["mireille@ecobasa.demo"]
+        diego, ana = users["diego@ecobasa.demo"], users["ana@ecobasa.demo"]
+        freja, jules = users["freja@ecobasa.demo"], users["jules@ecobasa.demo"]
+        sonnenkraut, kombucha = communities["Sonnenkraut Ecovillage"], communities["Kombucha Commune"]
+        goats, barefoot = communities["Three Goats and a Dream Farm"], communities["Barefoot Bureaucracy House Project"]
+        cacao = communities["Cacao Tierra Viva"]
+        OFFER, WISH = Listing.TYPE_OFFER, Listing.TYPE_WISH
+        for holder, type, kind, title, fields in [
+            # Jars, olives and a long way south: honey from the open day to the
+            # fermentation weekend, a wheelbarrow from the house project to the farm
+            (sonnenkraut, OFFER, Listing.KIND_FOOD, "Honey", dict(quantity=6, unit="pieces", description="Six jars of linden honey from our bees.")),
+            (kombucha, WISH, Listing.KIND_FOOD, "Honey", dict(quantity=3, unit="pieces", description="To sweeten the next batch of mead.")),
+            (barefoot, OFFER, Listing.KIND_TOOL, "Wheelbarrow", dict(description="Sturdy, with a new tyre. We pave our yard now.")),
+            (goats, WISH, Listing.KIND_TOOL, "Wheelbarrow", dict(description="Ours lost its wheel and its will to live.")),
+            # By bike to the rocket stove: tomato seeds, light enough for a bike, for
+            # Sonnenkraut and for Björn, who lives by the route
+            (barefoot, OFFER, Listing.KIND_SEEDS_PLANTS, "Tomato", dict(quantity=6, unit="packets", plant_form=Listing.PLANT_FORM_SEEDS,
+                                                                       open_pollinated=True, description="Saved from our balcony tomatoes.")),
+            (sonnenkraut, WISH, Listing.KIND_SEEDS_PLANTS, "Tomato", dict(quantity=2, unit="packets", plant_form=Listing.PLANT_FORM_SEEDS)),
+            (bjorn, WISH, Listing.KIND_SEEDS_PLANTS, "Tomato", dict(quantity=1, unit="packets", plant_form=Listing.PLANT_FORM_SEEDS)),
+            # Hitchhiking the Pyrenees: olive oil from the farm up to the commune
+            (goats, OFFER, Listing.KIND_FOOD, "Olive oil", dict(quantity=10, unit="l", description="Last season's, pressed down the road.")),
+            (kombucha, WISH, Listing.KIND_FOOD, "Olive oil", dict(quantity=5, unit="l")),
+            # Visiting the Kombucha Commune: chestnuts found by the way, in the Cévennes
+            (diego, OFFER, Listing.KIND_FOOD, "Chestnuts", dict(
+                public_good=True, location=Point(3.2200, 44.3600, srid=4326), location_public=True,
+                location_name="Chestnut grove by the old road, Lozère",
+                description="Old trees by the road, nobody picks them. Bring a bag in October.")),
+            (kombucha, WISH, Listing.KIND_FOOD, "Chestnuts", dict(description="For chestnut flour and a winter of pancakes.")),
+            # The rides: Björn's goat wool to Freja in Copenhagen, Mireille's kombucha
+            # culture to Jules in Montpellier
+            (bjorn, OFFER, Listing.KIND_MATERIAL, "Wool", dict(quantity=3, unit="kg", description="Raw, from the goats. They didn't ask, they never do.")),
+            (freja, WISH, Listing.KIND_MATERIAL, "Wool", dict(quantity=2, unit="kg", description="Unwashed is fine, I like the smell.")),
+            (mireille, OFFER, Listing.KIND_FOOD, "Kombucha", dict(description="A SCOBY with a good temper, and a litre of starter tea.")),
+            (jules, WISH, Listing.KIND_FOOD, "Kombucha", dict()),
+            # Across the Atlantic: coffee from the cacao farm to Ana as well
+            (cacao, OFFER, Listing.KIND_FOOD, "Coffee", dict(quantity=5, unit="kg", description="Shade-grown beside the cacao, sun-dried.")),
+            (ana, WISH, Listing.KIND_FOOD, "Coffee", dict(quantity=2, unit="kg", description="For the long evenings of planning our village.")),
+        ]:
+            self._thing(holder, type, kind, title, **fields)
+
+    def _seed_boat_tour(self, users, communities, tour, place, day):
+        """Across the Atlantic by sail: Valeria's community grows cacao, Ana wants to make
+        chocolate in the Alentejo, the tour still looks for a boat, and Nils lends one.
+        The cocoa beans travel along to Ana (a delivery she agreed to)."""
+        from gift_economy.matches.models import Match
+        from tours import deliveries
+        from tours.models import Delivery
+
+        valeria, ana, nils = users["valeria@ecobasa.demo"], users["ana@ecobasa.demo"], users["nils@ecobasa.demo"]
+        cacao = communities["Cacao Tierra Viva"]
+        atlantic = tour(
+            "Across the Atlantic by sail", valeria,
+            stops=[
+                dict(community=cacao, arrive_on=day(40), leave_on=day(44), note="Loading the beans, saying goodbye to the monkeys."),
+                dict(place("Horta marina, Faial (Azores)", -28.6274, 38.5312, "PT"), arrive_on=day(66), leave_on=day(69),
+                     flexible=True, note="Paint our boat's name on the harbour wall, like every crew does."),
+                dict(place("Doca de Alcântara, Lisbon", -9.1724, 38.7030, "PT"), arrive_on=day(78), leave_on=day(79),
+                     flexible=True, onward_mode="train"),
+                dict(place("Évora", -7.9097, 38.5714, "PT"), arrive_on=day(80)),
+            ],
+            learn=["Sailing"],
+            description="From the cacao farm in Talamanca to Portugal under sail, with the trade winds and a stop "
+                        "in the Azores. We still look for a boat that can make the crossing.",
+            travel_mode="boat", open_to_join=True, max_people=4,
+            costs_note="We share food and harbour fees; nobody pays for the wind.",
+            good_to_know="About five weeks at sea. Some sailing experience helps, seasickness tablets help more.",
+        )
+        self._seed_tour_need(atlantic, "Sailing boat", Listing.KIND_VEHICLE, lend=True,
+                             description="A boat for four that can cross the Atlantic, from Panama or Costa Rica")
+        boat, _created = self._thing(nils, Listing.TYPE_OFFER, Listing.KIND_VEHICLE, "Sailing boat", lend=True,
+                                     description="'Albatroz', a 12 m ketch with a new mainsail, ready for an ocean crossing.")
+        # Nils lends it for the crossing without sailing along, and fetches it in Lisbon:
+        # that covers what the tour looks for
+        need = Listing.objects.get(tour=atlantic, type=Listing.TYPE_WISH, title="Sailing boat")
+        if not need.contributions.exists():
+            from gift_economy.matches.models import Contribution, Loan, loan_span
+
+            lend = Match(
+                from_user=nils, recipient=valeria, status=Match.STATUS_ACCEPTED, responded_at=timezone.now(),
+                message="Take Albatroz across, she knows the way better than I do. I'll fly over and fetch her in Lisbon.",
+            )
+            lend.target = need
+            lend.save()
+            Contribution.objects.bulk_create([Contribution(match=lend, listing=need), Contribution(match=lend, listing=boat)])
+            starts_at, ends_at = loan_span(day(38), day(79))
+            Loan.objects.create(match=lend, starts_at=starts_at, ends_at=ends_at)
+        beans, _created = self._thing(cacao, Listing.TYPE_OFFER, Listing.KIND_FOOD, "Cocoa beans", quantity=30, unit="kg",
+                                      description="Fermented and sun-dried on our deck, this season's harvest.")
+        self._thing(ana, Listing.TYPE_WISH, Listing.KIND_FOOD, "Cocoa beans", quantity=10, unit="kg",
+                    description="For a first try at bean-to-bar chocolate in our (future) village kitchen.")
+        if not Delivery.objects.filter(tour=atlantic).exists():
+            pair = next((p for p in deliveries.delivery_suggestions(atlantic) if p.offer == beans), None)
+            if pair is not None:
+                delivery = deliveries.take(
+                    atlantic, pair, valeria,
+                    to_receiver="Hola Ana! We sail to Portugal in a few weeks and could bring you 10 kg of our cocoa beans.",
+                )
+                Match.objects.filter(pk=delivery.handover_match_id).update(status=Match.STATUS_ACCEPTED, responded_at=timezone.now())
 
     def _seed_tour_need(self, tour, title, kind, skill=None, **fields):
         Listing.objects.get_or_create(

@@ -120,14 +120,14 @@ class Match(models.Model):
         helping hands purple, seeds and plants green, food a lighter green, other things in
         the primary colour (by their kind), stays green."""
         model = self.content_type.model
-        if model == "listing":
+        # What is attached to it (a tour's stop for a tour visit, a gift taken along on
+        # a tour), else a target with kinds of its own (an event), says what it is
+        own_kind = next((getattr(a, "get_match_kind") for a in self.attachments() if hasattr(a, "get_match_kind")), None)
+        if model == "listing" and own_kind is None:
             listing = self.target
             if listing is not None and listing.kind != listing.KIND_OTHER:
                 return listing.kind_label, listing.kind_icon, listing.colour
             return _("Gift"), "fa-gift", "bg-primary"
-        # What is attached to it (a tour's stop for a tour visit), else a target with
-        # kinds of its own (an event), says what it is
-        own_kind = next((getattr(a, "get_match_kind") for a in self.attachments() if hasattr(a, "get_match_kind")), None)
         own_kind = own_kind or getattr(self.target, "get_match_kind", None)
         if own_kind is not None:
             return own_kind()
@@ -167,15 +167,19 @@ class Match(models.Model):
     def attachments(self):
         """What other apps attach to this match one to one and want shown with it: their
         models say so with `match_attachment_template` (tours.Stop for a tour visit). The
-        matches app knows none of them by name."""
+        matches app knows none of them by name. Each knows the match it was found on
+        (`attached_match`): a model can be attached to more than one match (a delivery to
+        the one with its giver and the one with its receiver)."""
         if not hasattr(self, "_attachments"):
             found = []
             for rel in self._meta.related_objects:
                 if rel.one_to_one and hasattr(rel.related_model, "match_attachment_template"):
                     try:
-                        found.append(getattr(self, rel.get_accessor_name()))
+                        attachment = getattr(self, rel.get_accessor_name())
                     except rel.related_model.DoesNotExist:
-                        pass
+                        continue
+                    attachment.attached_match = self
+                    found.append(attachment)
             self._attachments = found
         return self._attachments
 

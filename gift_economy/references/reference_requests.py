@@ -53,7 +53,13 @@ def exchange_dates(match):
 
 def reference_due_at(match):
     """When to ask for the reference: after the stay ended or the agreed date, or a while
-    after acceptance if there was no date."""
+    after acceptance if there was no date. What is attached to the match may say when it
+    happened (a gift taken along on a tour: when it was handed over), and nothing is due
+    until it has."""
+    for attachment in match.attachments():
+        if hasattr(attachment, "happened_at"):
+            when = attachment.happened_at(match)
+            return when + timedelta(days=settings.REFERENCE_REQUEST_DELAY_DAYS) if when else None
     start, end = exchange_dates(match)
     if end or start:
         return (end or start) + timedelta(days=settings.REFERENCE_REQUEST_DELAY_DAYS)

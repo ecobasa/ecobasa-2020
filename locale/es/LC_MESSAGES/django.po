@@ -6325,3 +6325,236 @@ msgstr "Invitar a tu tour"
 #: tours/templates/tours/tour_list.html:94
 msgid "Rides"
 msgstr "Viajes compartidos"
+
+#: tours/models.py
+msgctxt "delivery status"
+msgid "Asked"
+msgstr "Preguntado"
+
+#: tours/models.py
+msgctxt "delivery status"
+msgid "Agreed"
+msgstr "Acordado"
+
+#: tours/models.py
+msgctxt "delivery status"
+msgid "On board"
+msgstr "A bordo"
+
+#: tours/models.py
+msgctxt "delivery status"
+msgid "Handed over"
+msgstr "Entregado"
+
+#: tours/models.py
+msgctxt "delivery status"
+msgid "Didn't work out"
+msgstr "No salió"
+
+#: tours/models.py
+msgctxt "delivery status"
+msgid "Not this"
+msgstr "Esto no"
+
+#: tours/models.py
+msgctxt "a gift taken along on a tour"
+msgid "Delivery"
+msgstr "Para llevar"
+
+#: tours/models.py
+msgid "Delivery"
+msgstr "Para llevar"
+
+#: tours/models.py
+msgid "Deliveries"
+msgstr "Regalos para llevar"
+
+#: tours/models.py
+msgid "Picked up"
+msgstr "Recogido"
+
+#: tours/models.py
+msgid "Handed over"
+msgstr "Entregado"
+
+#: tours/models.py
+#, python-format
+msgid "with %(name)s"
+msgstr "con %(name)s"
+
+#: tours/models.py
+msgid "would take your offer along on their tour"
+msgstr "llevaría tu oferta en su tour"
+
+#: tours/models.py
+msgid "would bring your wish along on their tour"
+msgstr "te traería tu deseo en su tour"
+
+#: tours/models.py
+#, python-format
+msgid "%(actor)s would take your offer along on their tour: %(title)s"
+msgstr "%(actor)s llevaría tu oferta en su tour: %(title)s"
+
+#: tours/models.py
+#, python-format
+msgid "%(actor)s would bring your wish along on their tour: %(title)s"
+msgstr "%(actor)s te traería tu deseo en su tour: %(title)s"
+
+#: tours/deliveries.py
+#, python-format
+msgid "Hello! I'm travelling with the tour %(tour)s and could take %(title)s along to %(where)s, where it is wished for."
+msgstr "¡Hola! Viajo con el tour %(tour)s y podría llevar %(title)s a %(where)s, donde lo desean."
+
+#: tours/deliveries.py
+#, python-format
+msgid "We are with you around %(day)s."
+msgstr "Estaremos con vosotros hacia el %(day)s."
+
+#: tours/deliveries.py
+#, python-format
+msgid "Hello! I'm travelling with the tour %(tour)s and could bring you %(title)s from %(origin)s."
+msgstr "¡Hola! Viajo con el tour %(tour)s y podría traerte %(title)s desde %(origin)s."
+
+#: tours/deliveries.py
+#, python-format
+msgid "Hello! I'm travelling with the tour %(tour)s and could bring you %(title)s."
+msgstr "¡Hola! Viajo con el tour %(tour)s y podría traerte %(title)s."
+
+#: tours/deliveries.py
+msgid "The other side can't take part, so this delivery doesn't work out. I'm taking my request back."
+msgstr "La otra parte no puede participar, así que esto no sale. Retiro mi solicitud."
+
+#: tours/forms.py
+msgid "To the giver"
+msgstr "A quien lo regala"
+
+#: tours/forms.py
+msgid "To the receiver"
+msgstr "A quien lo recibe"
+
+#: tours/views.py
+msgid "This can't travel with you any more."
+msgstr "Esto ya no puede viajar con vosotros."
+
+#: tours/views.py
+msgid "Please check how much you take along."
+msgstr "Revisa cuánto llevas, por favor."
+
+#: tours/views.py
+msgid "Asked. Once both sides agree, it is on your packing list."
+msgstr "Preguntado. Cuando ambas partes acepten, estará en tu lista de equipaje."
+
+#: tours/views.py
+msgid "Handed over. Thank you for bringing it!"
+msgstr "Entregado. ¡Gracias por traerlo!"
+
+#: tours/templates/tours/deliveries.html
+msgid "Could travel with you"
+msgstr "Podría viajar con vosotros"
+
+#: tours/templates/tours/deliveries.html
+msgid "Offered on your route and wished for further on. Take it along: the giver and the receiver are each asked, as for any gift."
+msgstr "Ofrecido en vuestra ruta y deseado más adelante. Llévalo: se pregunta a quien lo regala y a quien lo recibe, como con cualquier regalo."
+
+#: tours/templates/tours/deliveries.html
+msgid "Yours"
+msgstr "Tuyo"
+
+#: tours/templates/tours/deliveries.html
+#, python-format
+msgid "%(name)s wishes for: %(title)s"
+msgstr "%(name)s desea: %(title)s"
+
+#: tours/templates/tours/deliveries.html
+msgid "picked up on the way"
+msgstr "se recoge por el camino"
+
+#: tours/templates/tours/deliveries.html
+msgid "handed over on the way"
+msgstr "se entrega por el camino"
+
+#: tours/templates/tours/deliveries.html
+msgid "Not this"
+msgstr "Esto no"
+
+#: tours/templates/tours/deliveries.html
+msgid "I'll take it"
+msgstr "Lo llevo yo"
+
+#: tours/templates/tours/deliveries.html
+#, python-format
+msgid "To %(name)s, who gives it"
+msgstr "A %(name)s, que lo regala"
+
+#: tours/templates/tours/deliveries.html
+#, python-format
+msgid "To %(name)s, who wishes for it"
+msgstr "A %(name)s, que lo desea"
+
+#: tours/templates/tours/deliveries.html
+msgid "Someone else on the tour travels this stretch and could take it."
+msgstr "Otra persona del tour hace este tramo y podría llevarlo."
+
+#: tours/templates/tours/deliveries.html
+msgid "Nothing fits along your route at the moment. Offers at a stop are matched with wishes at the stops after it, and with what people near the route wish for."
+msgstr "Por ahora nada encaja en vuestra ruta. Las ofertas de una parada se comparan con los deseos de las paradas siguientes y con lo que desea la gente cerca de la ruta."
+
+#: tours/templates/tours/deliveries.html
+msgid "Waiting for answers"
+msgstr "Esperando respuesta"
+
+#: tours/templates/tours/deliveries.html
+msgid "Giver"
+msgstr "Quien regala"
+
+#: tours/templates/tours/deliveries.html
+msgid "Receiver"
+msgstr "Quien recibe"
+
+#: tours/templates/tours/deliveries.html
+#, python-format
+msgid "The other side said no. Take your request to %(name)s back too?"
+msgstr "La otra parte dijo que no. ¿Retirar también tu solicitud a %(name)s?"
+
+#: tours/templates/tours/deliveries.html
+msgid "Packing list"
+msgstr "Lista de equipaje"
+
+#: tours/templates/tours/deliveries.html
+msgid "Print"
+msgstr "Imprimir"
+
+#: tours/templates/tours/deliveries.html
+#, python-format
+msgid "On the way: %(place)s"
+msgstr "Por el camino: %(place)s"
+
+#: tours/templates/tours/deliveries.html
+msgid "Pick up"
+msgstr "Recoger"
+
+#: tours/templates/tours/deliveries.html
+msgid "Hand over"
+msgstr "Entregar"
+
+#: tours/templates/tours/deliveries.html
+#, python-format
+msgid "from %(name)s"
+msgstr "de %(name)s"
+
+#: tours/templates/tours/deliveries.html
+#, python-format
+msgid "for %(name)s"
+msgstr "para %(name)s"
+
+#: tours/templates/tours/deliveries.html
+msgid "after picking it up"
+msgstr "después de recogerlo"
+
+#: tours/templates/tours/deliveries.html
+msgid "Nothing to take along yet. Once a giver and a receiver both agree, the gift is on this list at the stop where you pick it up and the one where you hand it over."
+msgstr "Todavía nada que llevar. Cuando quien regala y quien recibe acepten, el regalo aparece aquí en la parada donde lo recoges y en la que lo entregas."
+
+#: tours/templates/tours/_delivery_row.html
+msgid "Brought by"
+msgstr "Lo trae"

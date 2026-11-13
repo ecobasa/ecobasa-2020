@@ -3,6 +3,7 @@ import json
 from django import forms
 from django.contrib.auth import get_user_model
 from django.contrib.gis import forms as gis_forms
+from django.core.validators import MaxValueValidator
 from django.utils.formats import date_format
 from django.utils.translation import gettext_lazy as _
 from django_countries import countries as all_countries
@@ -596,3 +597,23 @@ VehicleFormSet = forms.inlineformset_factory(
 TourNeedFormSet = forms.inlineformset_factory(
     Tour, Listing, form=NeedForm, formset=BaseNeedFormSet, fk_name="tour", extra=0, can_delete=True,
 )
+
+
+class DeliveryForm(forms.Form):
+    """"I'll take it": how much, in the wish's unit (at most what could travel), and a
+    message to the giver and one to the receiver, made ready to change."""
+
+    quantity = forms.IntegerField(label=_("How many / how much?"), min_value=1, required=False)
+    to_giver = forms.CharField(label=_("To the giver"), widget=forms.Textarea(attrs={"rows": 3}), required=False)
+    to_receiver = forms.CharField(label=_("To the receiver"), widget=forms.Textarea(attrs={"rows": 3}))
+
+    def __init__(self, *args, pair, ask_giver=True, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.pair = pair
+        if ask_giver:
+            self.fields["to_giver"].required = True
+        if pair.quantity:
+            self.fields["quantity"].validators.append(MaxValueValidator(pair.quantity))
+
+    def clean_quantity(self):
+        return self.cleaned_data.get("quantity") or self.pair.quantity

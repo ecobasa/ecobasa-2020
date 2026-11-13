@@ -26,12 +26,12 @@ from gift_economy.gifts.skills.models import Skill, skill_name_q
 from gift_economy.matches.emails import notify_match_created, notify_match_message, notify_match_response
 from gift_economy.matches.models import Contribution, Match, MatchMessage
 
-from . import matching
+from . import deliveries as deliveries_module, matching
 from .forms import (
-    HostForm, InviteForm, JoinForm, PlaceForm, RideForm, StopForm, TourForm, TourNeedFormSet, VehicleFormSet,
+    DeliveryForm, HostForm, InviteForm, JoinForm, PlaceForm, RideForm, StopForm, TourForm, TourNeedFormSet, VehicleFormSet,
 )
-from .geo import MAX_TOURS, TourFilters, feature_collection, recommendation_features
-from .models import Stop, Tour, Traveller, Vehicle, append_stop, insert_stop, move_stop, remove_stop, set_order
+from .geo import MAX_TOURS, TourFilters, delivery_features, feature_collection, recommendation_features
+from .models import Delivery, Stop, Tour, Traveller, Vehicle, append_stop, insert_stop, move_stop, remove_stop, set_order
 from .recommend import AREA_CHOICES, DEFAULT_AREA_KM, hints, km_of, recommend_stops, suggest_order
 
 _STOPS = ("stops__event__community", "stops__community__photos", "learn_skills", "vehicles__drivers")
@@ -116,7 +116,17 @@ def api_routes(request):
     filters = TourFilters(request.GET, request.user)
     tours = filters.in_view(filters.apply(_tours().listed().current()))
     tours.sort(key=lambda tour: (tour.starts_on is None, tour.starts_on or timezone.localdate()))
-    return JsonResponse(feature_collection(tours[:MAX_TOURS], request.user))
+    tours = tours[:MAX_TOURS]
+    geojson = feature_collection(tours, request.user)
+    # What travels along with each, shown while one hovers the tour
+    by_tour = {}
+    for delivery in _delivery_rows(Delivery.objects.filter(tour__in=tours)):
+        if delivery.status != Delivery.STATUS_FELL_THROUGH:
+            by_tour.setdefault(delivery.tour_id, []).append(delivery)
+    for tour in tours:
+        if tour.pk in by_tour:
+            geojson["features"] += delivery_features(tour, by_tour[tour.pk])
+    return JsonResponse(geojson)
 
 
 def _join_state(tour, user):
@@ -185,7 +195,13 @@ def tour_detail(request, slug):
     on_tour = any(traveller.user_id == request.user.pk for traveller in travellers)
     # Only the one matches go to hands the tour over (staff too)
     can_hand_over = request.user.is_authenticated and (request.user.pk == tour.organiser_id or request.user.is_staff)
+    # What travels along: who travels sees what didn't work out too, and what could
+    travelling = request.user.is_authenticated and (can_edit or on_tour)
+    gifts = [d for d in _deliveries_of(tour) if travelling or d.status != Delivery.STATUS_FELL_THROUGH]
     return render(request, "tours/tour_detail.html", {
+        "deliveries": gifts,
+        "travelling": travelling,
+        "could_travel": len(deliveries_module.delivery_suggestions(tour, stops)) if travelling else 0,
         "needs": needs,
         "vehicles": tour.vehicles.all(),
         "tour": tour,
@@ -198,8 +214,16 @@ def tour_detail(request, slug):
         "join": _join_state(tour, request.user),
         "skills": _skills([traveller.user for traveller in travellers]),
         "route": _route(tour, viewer=request.user if on_tour else None),
-        "geojson": feature_collection([tour], request.user),
+        "geojson": _with_deliveries(feature_collection([tour], request.user), tour, gifts),
     })
+
+
+def _with_deliveries(geojson, tour, gifts):
+    """The route map with arcs for what travels along (not what didn't work out)."""
+    shown = [d for d in gifts if d.status != Delivery.STATUS_FELL_THROUGH]
+    if geojson["features"] and shown:
+        geojson["features"] += delivery_features(tour, shown)
+    return geojson
 
 
 def _route(tour, viewer=None):
@@ -361,6 +385,8 @@ def _planner(request, tour, show_order=False):
     context = {
         "tour": tour, "route": _route(tour), "can_edit": True, "km": km, "area_choices": AREA_CHOICES,
         "recommendations": recommendations, "hints": hints(tour, stops),
+        # Gifts that could travel along the route as it is now
+        "pairs": _pairs(tour, request.user, stops), "next": tour.url("plan"),
         "geojson": feature_collection([tour], request.user),
         "recommended_geojson": recommendation_features(recommendations, km),
     }
@@ -956,3 +982,144 @@ def needs_add(request, slug):
             "skills": ", ".join(skill.get_name() for skill in chosen),
         })
     return redirect(tour.url("needs") + "#gaps")
+
+
+# ── Gifts that travel along ─────────────────────────────────────────
+
+def _on_tour(tour, user):
+    """Whether `user` travels on the tour (or organises it): they see what could travel
+    along, take it up and keep the packing list."""
+    return tour.can_edit(user) or any(t.user_id == user.pk for t in tour.counted_travellers())
+
+
+def _travelling(slug, user):
+    tour = _tour(slug, user)
+    if not _on_tour(tour, user):
+        raise PermissionDenied
+    return tour
+
+
+def _deliveries_of(tour):
+    return _delivery_rows(tour.deliveries.all())
+
+
+def _pairs(tour, user, stops=None):
+    """What could travel along, each with ready-made messages for `user` to change."""
+    pairs = deliveries_module.delivery_suggestions(tour, stops)
+    for pair in pairs:
+        pair.to_giver, pair.to_receiver = deliveries_module.default_messages(tour, pair)
+        pair.ask_giver = pair.asks_giver(user)
+    return pairs
+
+
+def _back(request, tour, anchor):
+    """Back to the planner or the deliveries page, where it was asked from."""
+    back = request.POST.get("next")
+    if back not in (tour.url("plan"), tour.url("deliveries")):
+        back = tour.url("deliveries")
+    return redirect(back + anchor)
+
+
+def _delivery_rows(deliveries):
+    """Taken up (not set aside), with what their status, ends and links need."""
+    return list(
+        deliveries.active().select_related(
+            "offer__owner", "offer__community__owner", "offer__event", "wish__owner", "wish__community__owner",
+            "wish__event", "wish__tour", "pickup_stop__community", "pickup_stop__event", "dropoff_stop__community",
+            "dropoff_stop__event", "bringer", "pickup_match", "handover_match",
+        )
+    )
+
+
+@login_required
+def deliveries(request, slug):
+    """What could travel along with the tour, what waits for answers, and the packing
+    list: what to pick up and hand over at each stop."""
+    tour = _travelling(slug, request.user)
+    stops = tour.ordered_stops()
+    # Organisers find what could travel along in the planner
+    can_plan = tour.can_edit(request.user)
+    pairs = [] if can_plan else _pairs(tour, request.user, stops)
+    rows = _deliveries_of(tour)
+    for row in rows:
+        row.mine = row.can_act(request.user)
+    waiting = [d for d in rows if d.status in (Delivery.STATUS_ASKED, Delivery.STATUS_FELL_THROUGH)]
+    return render(request, "tours/deliveries.html", {
+        "tour": tour,
+        "pairs": pairs,
+        "can_plan": can_plan,
+        "waiting": waiting,
+        "packing": deliveries_module.packing_list(tour, rows, stops),
+    })
+
+
+@login_required
+@require_POST
+def delivery_take(request, slug):
+    """"I'll take it": the matches with the giver and the receiver, with the messages
+    and how much as the bringer set them."""
+    tour = _travelling(slug, request.user)
+    pair = deliveries_module.find(tour, request.POST.get("pair", ""))
+    if pair is None or not pair.can_take(request.user):
+        messages.error(request, _("This can't travel with you any more."))
+        return _back(request, tour, "#could-travel")
+    form = DeliveryForm(request.POST, pair=pair, ask_giver=pair.asks_giver(request.user))
+    if not form.is_valid():
+        messages.error(request, _("Please check how much you take along."))
+        return _back(request, tour, f"#pair-{pair.key.replace(':', '-')}")
+    deliveries_module.take(
+        tour, pair, request.user, quantity=form.cleaned_data["quantity"],
+        to_giver=form.cleaned_data["to_giver"], to_receiver=form.cleaned_data["to_receiver"], http_request=request,
+    )
+    messages.success(request, _("Asked. Once both sides agree, it is on your packing list."))
+    return _back(request, tour, "#could-travel")
+
+
+@login_required
+@require_POST
+def delivery_dismiss(request, slug):
+    """"Not this": the pair isn't suggested on this tour again."""
+    tour = _travelling(slug, request.user)
+    pair = deliveries_module.find(tour, request.POST.get("pair", ""))
+    if pair is not None:
+        deliveries_module.dismiss(tour, pair, request.user)
+    return _back(request, tour, "#could-travel")
+
+
+def _delivery(tour, pk, user):
+    delivery = get_object_or_404(tour.deliveries.active().select_related("offer", "wish", "bringer"), pk=pk)
+    if not delivery.can_act(user):
+        raise PermissionDenied
+    return delivery
+
+
+@login_required
+@require_POST
+def delivery_picked_up(request, slug, pk):
+    tour = _travelling(slug, request.user)
+    delivery = _delivery(tour, pk, request.user)
+    if delivery.can_pick_up:
+        deliveries_module.picked_up(delivery)
+    return redirect(tour.url("deliveries") + "#packing")
+
+
+@login_required
+@require_POST
+def delivery_handed_over(request, slug, pk):
+    tour = _travelling(slug, request.user)
+    delivery = _delivery(tour, pk, request.user)
+    if delivery.can_hand_over:
+        deliveries_module.handed_over(delivery)
+        messages.success(request, _("Handed over. Thank you for bringing it!"))
+    return redirect(tour.url("deliveries") + "#packing")
+
+
+@login_required
+@require_POST
+def delivery_withdraw(request, slug, pk):
+    """One side said no: the bringer takes their request to the other side back."""
+    tour = _travelling(slug, request.user)
+    delivery = _delivery(tour, pk, request.user)
+    if deliveries_module.withdraw_other(delivery, request.user, http_request=request) is not None:
+        messages.success(request, _("Your request has been withdrawn."))
+    return redirect(tour.url("deliveries") + "#waiting")

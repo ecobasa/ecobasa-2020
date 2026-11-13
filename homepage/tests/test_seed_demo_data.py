@@ -24,3 +24,17 @@ def test_demo_data_names_things_as_the_form_would_and_spreads_them_over_the_map(
     window = Listing.objects.get(title="Wooden window")
     assert window.thing.slug == "wooden-window" and [c.slug for c in window.categories.all()] == ["building-renovation"]
     assert Listing.objects.get(title="Lamp").thing.kind == "material"
+    # Cocoa from the cacao farm sails to Portugal, where Ana agreed to receive it
+    from tours.models import Delivery
+    delivery = Delivery.objects.get(tour__title="Across the Atlantic by sail")
+    assert (delivery.offer.title, delivery.wish.owner.email, delivery.status) == ("Cocoa beans", "ana@ecobasa.demo", Delivery.STATUS_AGREED)
+    # The boat it looked for is lent by Nils, who doesn't sail along
+    need = Listing.objects.get(tour=delivery.tour, title="Sailing boat")
+    assert need.status == Listing.STATUS_PROMISED and need.promised_by()[0].email == "nils@ecobasa.demo"
+    assert not delivery.tour.travellers.filter(user__email="nils@ecobasa.demo").exists()
+    # Every tour with a route has something to take along
+    from tours.deliveries import delivery_suggestions
+    from tours.models import Tour
+    for tour in Tour.objects.all():
+        if tour.stops.count() > 1:
+            assert delivery_suggestions(tour), tour.title

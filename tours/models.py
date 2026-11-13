@@ -292,8 +292,12 @@ class Tour(models.Model):
     def can_view(self, user):
         if self._can_view(user):
             return True
-        # The hosts it asked
-        return user.is_authenticated and self.stops.filter(visit_match__recipient=user).exists()
+        # The hosts it asked, and the givers and receivers of what it takes along
+        if not user.is_authenticated:
+            return False
+        return self.stops.filter(visit_match__recipient=user).exists() or self.deliveries.filter(
+            models.Q(pickup_match__recipient=user) | models.Q(handover_match__recipient=user)
+        ).exists()
 
     def _can_view(self, user):
         """A draft only for its organisers. A personal tour that is not listed only for
@@ -956,3 +960,191 @@ def remove_stop(stop):
             if rest.order != order:
                 Stop.objects.filter(pk=rest.pk).update(order=order)
     tour.rebuild_route()
+
+
+class DeliveryQuerySet(models.QuerySet):
+    def active(self):
+        """Taken up, not set aside with "Not this"."""
+        return self.filter(dismissed_at=None)
+
+    def touching(self, listing):
+        """The deliveries that take an offer along or bring a wish."""
+        return self.filter(models.Q(offer=listing) | models.Q(wish=listing))
+
+
+class Delivery(models.Model):
+    """A gift that travels along a tour: an offer picked up at or near one stop and
+    handed over for a wish at or near a later one, by a traveller who is on the tour in
+    between (the bringer). The giver and the receiver each agree to it in a match of
+    their own, as for any gift: the bringer asks the giver for the offer (none if it is
+    the bringer's own, or a public good nobody asks for) and offers it to the one who
+    wishes for it. A pair set aside with "Not this" is a delivery with `dismissed_at`
+    and no matches, so it is not suggested again."""
+
+    STATUS_ASKED = "asked"
+    STATUS_AGREED = "agreed"
+    STATUS_ON_BOARD = "on_board"
+    STATUS_HANDED_OVER = "handed_over"
+    STATUS_FELL_THROUGH = "fell_through"
+    STATUS_DISMISSED = "dismissed"
+    STATUS_LABELS = {
+        STATUS_ASKED: (pgettext_lazy("delivery status", "Asked"), "fa-solid fa-hourglass-half", "text-yellow"),
+        STATUS_AGREED: (pgettext_lazy("delivery status", "Agreed"), "fa-solid fa-circle-check", "text-green"),
+        STATUS_ON_BOARD: (pgettext_lazy("delivery status", "On board"), "fa-solid fa-box", "text-green"),
+        STATUS_HANDED_OVER: (pgettext_lazy("delivery status", "Handed over"), "fa-solid fa-gift", "text-green"),
+        STATUS_FELL_THROUGH: (pgettext_lazy("delivery status", "Didn't work out"), "fa-solid fa-circle-xmark", "text-red"),
+        STATUS_DISMISSED: (pgettext_lazy("delivery status", "Not this"), "fa-solid fa-eye-slash", "opacity-70"),
+    }
+
+    tour = models.ForeignKey(Tour, on_delete=models.CASCADE, related_name="deliveries")
+    offer = models.ForeignKey("gifts.Listing", on_delete=models.CASCADE, related_name="+", verbose_name=_("Offer"))
+    wish = models.ForeignKey("gifts.Listing", on_delete=models.CASCADE, related_name="+", verbose_name=_("Wish"))
+    # In the wish's unit
+    quantity = models.PositiveIntegerField(_("How many / how much?"), null=True, blank=True)
+    # None: picked up or handed over on the way, between two stops (at a person's place
+    # near the route), or the bringer's own offer, which travels with them
+    pickup_stop = models.ForeignKey(Stop, on_delete=models.SET_NULL, null=True, blank=True, related_name="+")
+    dropoff_stop = models.ForeignKey(Stop, on_delete=models.SET_NULL, null=True, blank=True, related_name="+")
+    # Who takes it along; for a pair set aside, who set it aside
+    bringer = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="+")
+    pickup_match = models.OneToOneField(
+        "matches.Match", on_delete=models.SET_NULL, null=True, blank=True, related_name="delivery_pickup",
+    )
+    handover_match = models.OneToOneField(
+        "matches.Match", on_delete=models.SET_NULL, null=True, blank=True, related_name="delivery_handover",
+    )
+    # Why they fit (matches.Suggestion.REASON_CHOICES)
+    reason = models.CharField(max_length=20, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    picked_up_at = models.DateTimeField(_("Picked up"), null=True, blank=True)
+    delivered_at = models.DateTimeField(_("Handed over"), null=True, blank=True)
+    dismissed_at = models.DateTimeField(null=True, blank=True)
+
+    objects = DeliveryQuerySet.as_manager()
+
+    class Meta:
+        ordering = ["created_at", "pk"]
+        verbose_name = _("Delivery")
+        verbose_name_plural = _("Deliveries")
+        constraints = [
+            models.UniqueConstraint(fields=["tour", "offer", "wish"], name="one_delivery_per_pair_and_tour"),
+        ]
+
+    def __str__(self):
+        return f"{self.offer} → {self.wish} on {self.tour}"
+
+    # ── Where it stands ─────────────────────────────────────────────
+    @property
+    def needs_pickup(self):
+        """Whether the giver is asked: not for the bringer's own offer, nor for a public
+        good, which is just there."""
+        return not (self.offer.public_good or self.offer.manager == self.bringer)
+
+    def _matches(self):
+        return [self.handover_match] + ([self.pickup_match] if self.needs_pickup else [])
+
+    @property
+    def status(self):
+        from gift_economy.matches.models import Match
+
+        if self.dismissed_at:
+            return self.STATUS_DISMISSED
+        if self.delivered_at:
+            return self.STATUS_HANDED_OVER
+        matches = self._matches()
+        if any(match is None or match.is_closed for match in matches):
+            return self.STATUS_FELL_THROUGH
+        if self.picked_up_at:
+            return self.STATUS_ON_BOARD
+        if all(match.status == Match.STATUS_ACCEPTED for match in matches):
+            return self.STATUS_AGREED
+        return self.STATUS_ASKED
+
+    @property
+    def status_label(self):
+        return self.STATUS_LABELS[self.status]
+
+    @property
+    def is_agreed(self):
+        return self.status in (self.STATUS_AGREED, self.STATUS_ON_BOARD, self.STATUS_HANDED_OVER)
+
+    @property
+    def can_pick_up(self):
+        return self.status == self.STATUS_AGREED and self.needs_pickup
+
+    @property
+    def can_hand_over(self):
+        """Once on board, or agreed when nothing has to be picked up."""
+        status = self.status
+        return status == self.STATUS_ON_BOARD or status == self.STATUS_AGREED and not self.needs_pickup
+
+    def open_match_left(self):
+        """When one side said no: the bringer's match with the other side if it is
+        still open, so they can withdraw it too; else None."""
+        if self.status != self.STATUS_FELL_THROUGH:
+            return None
+        return next((match for match in self._matches() if match is not None and not match.is_closed), None)
+
+    def can_act(self, user):
+        """The bringer, and the tour's organisers, tick it off."""
+        return user.is_authenticated and (user.pk == self.bringer_id or self.tour.can_edit(user))
+
+    @property
+    def amount(self):
+        return self.wish.format_amount(self.quantity) if self.quantity else ""
+
+    @property
+    def title(self):
+        return self.offer.display_title
+
+    def ends(self):
+        """(from, to) in words: a stop's label, the town near the route, or "with the
+        bringer" for their own offer."""
+        return self._end(self.pickup_stop, self.offer, own=not self.needs_pickup and not self.offer.public_good), \
+            self._end(self.dropoff_stop, self.wish)
+
+    def _end(self, stop, listing, own=False):
+        if stop is not None:
+            return stop.label
+        if own:
+            return str(_("with %(name)s") % {"name": self.bringer.name or self.bringer.email})
+        return listing.public_place[0] or listing.holder_name
+
+    # ── As what its two matches are attached to (gift_economy.matches) ──
+    match_attachment_template = "tours/_delivery_summary.html"
+
+    def _is_pickup(self):
+        """Whether the match it was found on (Match.attachments) asks the giver."""
+        match = getattr(self, "attached_match", None)
+        return match is not None and match.pk == self.pickup_match_id
+
+    def get_match_kind(self):
+        return pgettext_lazy("a gift taken along on a tour", "Delivery"), "fa-box", "bg-green"
+
+    def get_match_verb(self):
+        if self._is_pickup():
+            return _("would take your offer along on their tour")
+        return _("would bring your wish along on their tour")
+
+    def get_match_request_text(self):
+        if self._is_pickup():
+            return _("%(actor)s would take your offer along on their tour: %(title)s")
+        return _("%(actor)s would bring your wish along on their tour: %(title)s")
+
+    def get_match_summary(self, match):
+        start, end = self.ends()
+        line = f"{self.tour.title}: {start} → {end}"
+        return f"{line} · {self.amount}" if self.amount else line
+
+    # After it was picked up or handed over, the giver and the receiver write about the
+    # tour, or about the one who brought it; the bringer about them
+    def get_reference_group(self):
+        return self.tour
+
+    def get_reference_present(self, match):
+        return [self.bringer]
+
+    def happened_at(self, match):
+        """When what the match is about happened (picked up, handed over), None while it
+        hasn't: the reference requests wait for it."""
+        return self.picked_up_at if match.pk == self.pickup_match_id else self.delivered_at

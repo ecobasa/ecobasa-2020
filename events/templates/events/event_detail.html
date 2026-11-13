@@ -131,6 +131,7 @@
       {% endif %}
 
       {% tour_visits_to event %}
+      {% deliveries_with event %}
 
       {% if can_edit and not event.is_open or offers %}
         <h2>{% trans "Offers" %}</h2>

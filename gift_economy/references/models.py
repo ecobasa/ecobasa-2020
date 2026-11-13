@@ -255,7 +255,8 @@ def reference_choices(match, user):
 def match_reference_subject(match, user, about=""):
     """What `user` writes about after `match`, as (subject, gift name, skill name): the
     requester (and who came along) writes about the community, the skill's holder (tagged
-    with the skill) or the owner; the owner writes about the requester. After a group's
+    with the skill), the community whose gift it was or the owner; the owner writes about
+    the requester. After a group's
     stay the host writes about the group, or about one of its people (`about`, see
     reference_choices). A gift's name is carried along, and a skill that was learned or
     helped with is tagged.
@@ -263,10 +264,12 @@ def match_reference_subject(match, user, about=""):
     target = match.target
     if target is None:
         return None
+    model = match.content_type.model
+    gift = target.get_match_display_name() if model == "listing" and target.is_thing else ""
     choices = reference_choices(match, user)
     if choices:
-        return dict(choices).get(about, choices[0][1]), "", ""
-    model = match.content_type.model
+        # A gift taken along on a tour keeps its name
+        return dict(choices).get(about, choices[0][1]), gift, ""
     is_requester = on_asking_side(match, user)
     if model == "community" and is_requester:
         return target, "", ""
@@ -286,10 +289,13 @@ def match_reference_subject(match, user, about=""):
             if other is None:
                 return None
             return other, "", "" if is_requester or not target.skill_id else target.get_match_display_name()
+    if is_requester and model == "listing" and target.community_id:
+        # A community's gift: who asked for it, or brought it, writes about the community
+        return target.community, gift, ""
     other = match.recipient if is_requester else match.from_user
     if other is None:
         return None
-    return other, target.get_match_display_name() if model == "listing" and target.is_thing else "", ""
+    return other, gift, ""
 
 
 def _received(match, user, things):

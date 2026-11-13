@@ -157,6 +157,9 @@
   </div>
   {% endif %}
 
+  {# Taken along on a tour, from where to where (tours_tags) #}
+  {% deliveries_with listing %}
+
   {# ── Who it belongs to: a person, or a community (and its project) ── #}
   {% with holder=listing.holder %}{% if holder %}
   <div class="mt-8">

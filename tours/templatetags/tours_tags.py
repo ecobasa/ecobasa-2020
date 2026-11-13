@@ -97,3 +97,31 @@ def tour_geojson(context, tour):
     from ..geo import feature_collection
 
     return feature_collection([tour], context["request"].user)
+
+
+@register.inclusion_tag("tours/_deliveries_box.html", takes_context=True)
+def deliveries_with(context, obj):
+    """"Deliveries" on a gift's, community's or event's page: the gifts taken along on
+    tours that it gives or receives, as the viewer may see the tours. Not what didn't
+    work out or was set aside."""
+    from django.db.models import Q
+
+    from ..models import Delivery
+
+    viewer = context["request"].user
+    model = obj._meta.model_name
+    if model == "listing":
+        found = Delivery.objects.touching(obj)
+    elif model == "event":
+        found = Delivery.objects.filter(Q(offer__event=obj) | Q(wish__event=obj))
+    else:
+        found = Delivery.objects.filter(Q(offer__community=obj) | Q(wish__community=obj))
+    found = (
+        found.active().select_related(
+            "tour", "offer__owner", "offer__community", "wish__owner", "wish__community", "wish__tour",
+            "pickup_stop__community", "pickup_stop__event", "dropoff_stop__community", "dropoff_stop__event",
+            "bringer", "pickup_match", "handover_match",
+        ).order_by("-created_at")[:20]
+    )
+    shown = [d for d in found if d.status != Delivery.STATUS_FELL_THROUGH and d.tour.can_view(viewer)]
+    return {"deliveries": shown, "user": viewer}

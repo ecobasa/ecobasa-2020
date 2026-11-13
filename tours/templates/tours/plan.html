@@ -129,6 +129,12 @@
         {% else %}
           <p class="italic m-0 text-sm">{% trans "Add a first stop, or choose countries in the tour's basics, to see communities and events worth a visit." %}</p>
         {% endif %}
+
+        {# Gifts offered on the route that are wished for further on #}
+        {% if route|length > 1 %}
+          <h3 id="could-travel" class="mt-8 mb-2">{% trans "Could travel with you" %}</h3>
+          {% include "tours/_could_travel.html" %}
+        {% endif %}
       </section>
 
       {# For the map, read again after each swap #}

@@ -174,6 +174,7 @@ FOOD = [
     ("food-coffee", "food-pantry-staples", F, "Coffee", "Kaffee", "Café", "Café", "coffee beans|Kaffeebohnen|Espresso"),
     ("food-tea", "food-pantry-staples", F, "Tea", "Tee", "Té negro y verde", "Thé", "black tea|Schwarztee|green tea|grüner Tee|chai|Teebeutel"),
     ("food-chocolate", "food-pantry-staples", F, "Chocolate", "Schokolade", "Chocolate", "Chocolat", "Kakao|cocoa|cacao|Schoki"),
+    ("food-cocoa-beans", "food-chocolate", F, "Cocoa beans", "Kakaobohnen", "Granos de cacao", "Fèves de cacao", "cacao beans|cocoa bean|Kakaobohne|cocoa nibs|cacao nibs|Kakaonibs|Rohkakao|raw cacao|habas de cacao|nibs de cacao|grué de cacao|amêndoas de cacau"),
     ("food-sweets", "food-pantry-staples", F, "Sweets", "Süßigkeiten", "Dulces", "Confiseries", "candy|Bonbons|Süßes|chuches|golosinas|bonbons"),
     ("food-nut-butter", "food-pantry-staples", F, "Nut butter", "Nussmus", "Crema de frutos secos", "Purée d'oléagineux", "Mandelmus|almond butter|Cashewmus|Haselnussmus|tahini|Tahin|Sesammus|purée d'amande"),
     ("food-peanut-butter", "food-nut-butter", F, "Peanut butter", "Erdnussbutter", "Crema de cacahuete", "Beurre de cacahuète", "Erdnussmus|mantequilla de maní|mantequilla de cacahuate|pasta de amendoim|beurre d'arachide"),

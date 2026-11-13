@@ -1,0 +1,60 @@
+{% load i18n %}
+{# What could travel along: offers at or near one place on the route that fit wishes at or near a later one (tours.deliveries), each to take along or set aside. `next`: where to come back to #}
+{% if pairs %}
+  <p class="text-sm">{% trans "Offered on your route and wished for further on. Take it along: the giver and the receiver are each asked, as for any gift." %}</p>
+  <ul class="list-none m-0 p-0 space-y-3">
+    {% for pair in pairs %}
+      <li id="pair-{{ pair.offer.pk }}-{{ pair.wish.pk }}" class="m-0 p-3 rounded border bg-secondary">
+        <div class="flex flex-wrap items-start gap-3">
+          <i class="fa-solid {{ pair.offer.kind_icon }} text-primary w-5 text-center mt-1"></i>
+          <div class="flex-1 min-w-0">
+            <a href="{{ pair.offer.get_absolute_url }}" class="font-semibold hover:underline">{{ pair.offer.display_title }}</a>{% if pair.amount %}<span class="opacity-70"> · {{ pair.amount }}</span>{% endif %}
+            <span class="text-sm block">
+              <i class="fa-solid fa-route mr-1 opacity-70"></i>{% if pair.own %}{% trans "Yours" %}{% else %}{{ pair.pickup.label|default:pair.offer.holder_name }}{% endif %}
+              → {{ pair.dropoff.label|default:pair.wish.holder_name }}
+            </span>
+            <span class="text-xs opacity-80 block">
+              {% blocktrans with title=pair.wish.display_title name=pair.wish.holder_name %}{{ name }} wishes for: {{ title }}{% endblocktrans %}
+              {% if not pair.pickup.stop and not pair.own %}· {% trans "picked up on the way" %}{% endif %}
+              {% if not pair.dropoff.stop %}· {% trans "handed over on the way" %}{% endif %}
+            </span>
+          </div>
+          <div class="flex flex-wrap gap-2 items-center">
+            <form method="post" action="{% url 'tours:delivery_dismiss' tour.slug %}">{% csrf_token %}
+              <input type="hidden" name="pair" value="{{ pair.key }}"><input type="hidden" name="next" value="{{ next }}">
+              <button type="submit" class="btn btn-purple text-sm py-1 px-3">{% trans "Not this" %}</button>
+            </form>
+          </div>
+        </div>
+        {% if user.pk in pair.bringers %}
+          {# Ready-made messages to change before they go out #}
+          <details class="mt-2">
+            <summary class="btn text-sm py-1 px-3 inline-block cursor-pointer list-none [&::-webkit-details-marker]:hidden"><i class="fa-solid fa-box mr-1"></i>{% trans "I'll take it" %}</summary>
+            <form method="post" action="{% url 'tours:delivery_take' tour.slug %}" class="mt-3 space-y-2 text-sm">{% csrf_token %}
+              <input type="hidden" name="pair" value="{{ pair.key }}"><input type="hidden" name="next" value="{{ next }}">
+              {% if pair.quantity %}
+                <label class="block">{% trans "How many / how much?" %}
+                  <input type="number" name="quantity" min="1" max="{{ pair.quantity }}" value="{{ pair.quantity }}" class="form-input w-24 ml-2">
+                  {{ pair.wish.get_unit_display }}
+                </label>
+              {% endif %}
+              {% if pair.ask_giver %}
+                <label class="block">{% blocktrans with name=pair.offer.holder_name %}To {{ name }}, who gives it{% endblocktrans %}
+                  <textarea name="to_giver" rows="3" required class="form-textarea w-full">{{ pair.to_giver }}</textarea>
+                </label>
+              {% endif %}
+              <label class="block">{% blocktrans with name=pair.wish.holder_name %}To {{ name }}, who wishes for it{% endblocktrans %}
+                <textarea name="to_receiver" rows="3" required class="form-textarea w-full">{{ pair.to_receiver }}</textarea>
+              </label>
+              <button type="submit" class="btn"><i class="fa-solid fa-box mr-1"></i>{% trans "I'll take it" %}</button>
+            </form>
+          </details>
+        {% else %}
+          <p class="text-xs opacity-70 mt-2 mb-0">{% trans "Someone else on the tour travels this stretch and could take it." %}</p>
+        {% endif %}
+      </li>
+    {% endfor %}
+  </ul>
+{% else %}
+  <p class="text-sm m-0">{% trans "Nothing fits along your route at the moment. Offers at a stop are matched with wishes at the stops after it, and with what people near the route wish for." %}</p>
+{% endif %}

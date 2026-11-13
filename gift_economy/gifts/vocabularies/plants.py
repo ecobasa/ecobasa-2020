@@ -104,7 +104,7 @@ PLANTS = [
     ("baobab", "tropical-fruit", S, "Baobab", "Affenbrotbaum", "Baobab", "Baobab", "Adansonia digitata|Mbuyu|Pain de singe|Monkey bread"),
     ("coconut", "tropical-fruit", S, "Coconut palm", "Kokospalme", "Cocotero", "Cocotier", "Cocos nucifera|Kokosnuss|Kokos|Coconut|Coco|Noix de coco|Coqueiro|Nariyal|Mnazi"),
     ("date-palm", "tropical-fruit", S, "Date palm", "Dattelpalme", "Palmera datilera", "Palmier dattier", "Phoenix dactylifera|Dattel|Dátil|Datte|Tâmara|Medjool|Deglet Nour|Tende"),
-    ("cacao", "tropical-fruit", S, "Cacao", "Kakaobaum", "Cacao", "Cacaoyer", "Theobroma cacao|Kakao|Kakaopflanze|Cacau|Cacaueiro|Cacaotier"),
+    ("cacao", "tropical-fruit", S, "Cacao", "Kakaobaum", "Cacao", "Cacaoyer", "Theobroma cacao|Kakao|Kakaopflanze|Cacau|Cacaueiro|Cacaotier|cocoa|cocoa tree|cocoa beans|cacao beans|cacao seeds|Kakaobohnen|granos de cacao|semillas de cacao|fèves de cacao"),
 
     # --- Soft fruit -----------------------------------------------------------------
     ("soft-fruit", "", S, "Berry bush", "Beerenobst", "Arbusto de bayas", "Petit fruit", "Beerenstrauch|Strauchbeere|Beerengehölz|soft fruit|Frutos rojos|Petits fruits"),
