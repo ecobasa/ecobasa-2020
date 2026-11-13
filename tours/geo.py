@@ -43,6 +43,8 @@ MODE_CODEPOINTS = {
     "mixed": 0xF4D7,  # route
 }
 PLACE_PIN = (0xF3C5, "#da6137")  # primary, location-dot
+# A ride's two places, in its line's colour (purple, see static/js/ecobasa-map.js)
+RIDE_PIN = (0xF3C5, "#80143b")
 # A tour idea without stops, at about where its organiser lives
 IDEA_PIN = (0xF207, "#80143b")  # purple, bus
 
@@ -316,7 +318,7 @@ def tour_features(tour, user=None):
         label = stop.label
         if stop.event_id:
             label = f"{stop.event.title} · {stop.community.name}"
-        icon, color = stop_pin(stop)
+        icon, color = RIDE_PIN if props["line"] == "ride" else stop_pin(stop)
         if stop.event_id:
             link = stop.event.get_absolute_url()
         elif stop.community_id:
