@@ -7497,3 +7497,7 @@ msgstr "En voyageant ainsi, tu as besoin de peu d'argent, mais parfois si. Ne fa
 #: help/templates/help/travelling_tips.html
 msgid "ask kindly for what is left over at the end of the evening, or take what guests leave on their plates before the waiters clear the table, if you are sure nobody sees you…"
 msgstr "demande gentiment ce qui reste en fin de soirée, ou prends ce que les clients laissent dans leur assiette avant que les serveurs ne débarrassent, si tu es sûr·e que personne ne te voit…"
+
+#: templates/_navbar.html
+msgid "Home"
+msgstr "Accueil"

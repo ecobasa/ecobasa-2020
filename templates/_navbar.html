@@ -13,11 +13,23 @@
     <div class="flex justify-between h-16">
       <div class="flex">
         {% comment %} Logo {% endcomment %}
-        <div class="flex-shrink-0 flex items-center md:mr-6">
-          <a href="/" class="flex items-center">
+        <div class="relative flex-shrink-0 h-16 flex items-center md:mr-6" x-data="{ open: false }"
+             @mouseenter="if (window.matchMedia('(hover: hover)').matches) open = true" @mouseleave="open = false"
+             @keydown.escape="open = false" @click.away="open = false">
+          <a href="/" class="flex items-center" @click.prevent="open = true" :aria-expanded="open" aria-haspopup="true">
             <svg class="fill-current h-7 w-7 mt-1 mr-2" viewbox="0 0 180 205"><path d="M83 199.78C72.2 191.8 63.73 177 61.5 162.27c-.55-3.72-.42-4.57.67-4.18.75.27 7.26 2.07 14.47 4l13.1 3.52 11.75-3.01c6.47-1.66 12.58-3.45 13.59-4 2.97-1.58 3.14-1.25 2.4 4.78-1.79 14.67-9 27.71-20.21 36.5-3.34 2.61-6.44 4.74-6.9 4.73-.46 0-3.77-2.18-7.36-4.83zm-67.64-40.66a68.23 68.23 0 01-10.77-3.37L0 153.72l.59-4.3c1.78-13.09 4.43-20.21 10.9-29.28 5.05-7.08 15.36-16.38 15.9-14.34.35 1.32 2.1 8.16 5.41 21.14 1.68 6.6 2.07 7.14 11.99 16.81 5.64 5.5 10.25 10.19 10.25 10.42 0 1-7.94 4.3-12.8 5.33-6.95 1.48-19.15 1.3-26.88-.38zm119.21-.1c-3.28-.8-6.95-2.1-8.16-2.89-2.16-1.41-1.98-1.65 8.54-11.72 9.6-9.2 10.82-10.75 11.5-14.72a58.48 58.48 0 012.74-9.44 52.28 52.28 0 002.66-10.33l.69-5.33 6.15 4.98c10.96 8.88 18.94 23.86 20.1 37.72l.5 6.16-4.23 2.17c-9.38 4.78-28.21 6.37-40.49 3.4zM21.6 94.57C9.56 84.63 1.04 67.75 1.04 53.88c0-4.14.18-4.4 4.28-6.16 12.6-5.4 35.1-5.6 47.53-.4l3.5 1.46-8.41 8.48c-4.62 4.66-9.86 9.39-11.65 10.5-2.84 1.77-3.25 2.57-3.25 6.27 0 2.34-1.13 7.55-2.5 11.6-1.38 4.04-2.5 8.62-2.5 10.17 0 1.56-.35 2.83-.77 2.83-.42 0-2.98-1.83-5.68-4.06zm130.45 1.03c0-1.67-.9-5.72-2.01-9-1.1-3.29-2.48-8.1-3.05-10.72-.86-3.93-2.37-6.14-8.74-12.75-4.24-4.4-9.23-9.2-11.1-10.65l-3.4-2.64 3.1-1.6c5.5-2.85 14.4-4.61 23.27-4.61 10.68 0 17.65 1.27 24.7 4.5l5.4 2.47-.63 4.26c-2 13.43-5.32 22.15-11.6 30.46-3.5 4.63-13.46 13.3-15.28 13.3-.36 0-.66-1.36-.66-3.02zM62.42 41.05c1.86-15.82 10.16-29.5 23.44-38.64 4.02-2.77 4.6-2.9 7.02-1.65 4.7 2.42 15.57 14.2 18.82 20.37a67.53 67.53 0 016.78 21.37c.56 3.92.44 4.29-1.16 3.6-.98-.43-6.5-2.04-12.28-3.58-5.78-1.54-11.3-3.28-12.27-3.87a3.42 3.42 0 00-3.63-.07c-1.03.54-6 1.91-11.06 3.04-5.06 1.13-10.8 2.72-12.76 3.53l-3.56 1.5.66-5.6z"/></svg>
             <span class="font-serif font-normal text-3xl mb-1">ecobasa.org</span>
           </a>
+          <div x-show="open" x-cloak
+               x-transition:enter="transition ease-out duration-200"
+               x-transition:enter-start="opacity-0"
+               x-transition:enter-end="opacity-100"
+               class="absolute -left-4 top-full w-[calc(100%+2rem)] rounded-br-md shadow-lg z-40">
+            <div class="py-1 rounded-br-md bg-primary bg-opacity-75 backdrop-blur shadow-xs">
+              <a href="/" class="dropdown-link"><i class="fa-solid fa-house mr-2"></i>{% trans "Home" %}</a>
+              <a href="{% url 'help:index' %}" class="dropdown-link"><i class="fa-regular fa-circle-question mr-2"></i>{% trans "Help" %}</a>
+            </div>
+          </div>
         </div>
         {% comment %} Desktop Menu {% endcomment %}
         <div class="hidden sm:ml-6 sm:flex">
@@ -41,26 +53,6 @@
             <i class="fa fa-heart mr-2"></i>
             {% trans "Support" %}
           </a>
-          {% comment %} About: help pages for now, the pages about ecobasa join later {% endcomment %}
-          <div class="relative ml-8 inline-flex items-center" x-data="{ open: false }" @keydown.escape="open = false">
-            <button type="button" @click="open = !open" :aria-expanded="open" aria-haspopup="true" title="{% trans "About" %}"
-                    class="{% if namespace == "help" %}text-brown{% endif %} whitespace-nowrap inline-flex items-center px-1 pt-1 font-bold leading-5 hover:text-brown focus:outline-none focus:text-brown transition duration-150 ease-in-out">
-              <i class="fa-solid fa-circle-info 2xl:mr-2"></i>
-              <span class="sr-only 2xl:not-sr-only">{% trans "About" %}</span>
-              <i class="fa-solid fa-chevron-down text-xs ml-1"></i>
-            </button>
-            <div x-show="open" x-cloak @click.away="open = false"
-                 x-transition:enter="transition ease-out duration-200"
-                 x-transition:enter-start="opacity-0 transform scale-95"
-                 x-transition:enter-end="opacity-100 transform scale-100"
-                 class="origin-top-left absolute left-0 top-full mt-3 w-48 rounded-md shadow-lg z-40">
-              <div class="py-1 rounded-md bg-primary bg-opacity-75 backdrop-blur shadow-xs">
-                <a href="{% url 'help:index' %}" class="dropdown-link">
-                  <i class="fa-regular fa-circle-question mr-2"></i>{% trans "Help" %}
-                </a>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
       <div class="flex items-center">
@@ -68,7 +60,7 @@
       {% if request.user.is_authenticated %}
         <div class="hidden sm:ml-6 sm:flex sm:items-center">
           {% comment %} Notification Bell {% endcomment %}
-          <div class="relative mr-1" x-data="{
+          <div class="relative mr-1 h-16 flex items-center" x-data="{
                  open: false, notifications: [], unread: {{ unread_notifications_count }}, hasMore: false,
                  init() {
                    setInterval(() => {
@@ -95,8 +87,8 @@
                  x-transition:leave="transition ease-in duration-75"
                  x-transition:leave-start="opacity-100 transform scale-100"
                  x-transition:leave-end="opacity-0 transform scale-95"
-                 class="origin-top-right absolute right-0 mt-3 w-80 rounded-md shadow-lg z-50">
-              <div class="rounded-md bg-primary bg-opacity-75 backdrop-blur shadow-xs text-secondary">
+                 class="origin-top-right absolute right-0 top-full w-80 rounded-b-md shadow-lg z-50">
+              <div class="rounded-b-md bg-primary bg-opacity-75 backdrop-blur shadow-xs text-secondary">
                 <div class="flex items-center justify-between px-4 py-2 border-b border-secondary border-opacity-20">
                   <span class="text-sm font-semibold">{% trans "Notifications" %}</span>
                   <a href="{% url 'notifications:list' %}" class="text-xs hover:underline opacity-70">{% trans "See all" %}</a>
@@ -132,7 +124,7 @@
           </div>
 
           {% comment %} Profile dropdown {% endcomment %}
-          <div class="ml-3 relative" x-data="{ open: false }" @close-user-menu.window="open = false">
+          <div class="ml-3 relative h-16 flex items-center" x-data="{ open: false }" @close-user-menu.window="open = false">
             <div>
                 <button @click="open = !open" @keydown.escape="open = false" :aria-expanded="open" class="flex rounded-full transition duration-150 ease-in-out" id="user-menu" aria-label="{% trans 'User menu' %}" aria-haspopup="true">
                {% if request.user.image %}
@@ -150,8 +142,8 @@
                   x-transition:leave="transition ease-in duration-75"
                   x-transition:leave-start="opacity-100 transform scale-100"
                   x-transition:leave-end="opacity-0 transform scale-95"
-                  class="origin-top-right absolute right-0 mt-3 w-60 rounded-md shadow-lg z-40">
-              <div class="py-1 rounded-md bg-primary bg-opacity-75 backdrop-blur shadow-xs">
+                  class="origin-top-right absolute -right-4 top-full w-60 rounded-bl-md shadow-lg z-40">
+              <div class="py-1 rounded-bl-md bg-primary bg-opacity-75 backdrop-blur shadow-xs">
                 <a href="{{ request.user.get_absolute_url }}" class="dropdown-link">
                   <i class="fa fa-user mr-2"></i>
                   {% trans "Your Profile" %}
