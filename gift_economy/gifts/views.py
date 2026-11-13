@@ -26,7 +26,7 @@ from users.models import User
 from users.places import approximate, town
 from gift_economy.gifts.skills.models import Skill, skill_name_q
 from gift_economy.matches.forms import MatchForm
-from gift_economy.matches.models import Contribution, Loan, Match
+from gift_economy.matches.models import Contribution, Loan, Match, Suggestion
 from gift_economy.matches.emails import notify_match_created
 from dashboard_lists import Choice, paginate, query_url
 
@@ -87,7 +87,12 @@ def detail(request, pk):
     givable = not help_url or (listing.event_id and listing.is_thing)
     # A public good is just there: nobody needs to ask for it
     if request.user.is_authenticated and manager is not None and request.user != manager and givable and not listing.public_good:
-        form = MatchForm(request.POST or None, loan_of=listing if listing.lend else None)
+        # From a tour's suggestion to give a thing along to this wish: a message ready
+        suggestion = _giving_along(request, listing)
+        form = MatchForm(
+            request.POST or None, loan_of=listing if listing.lend else None,
+            initial={"message": suggestion.message} if suggestion else None,
+        )
         if request.method == "POST" and form.is_valid():
             match = form.save(commit=False)
             match.from_user = request.user
@@ -492,3 +497,15 @@ def gifts_suggest(request):
                 add(word.lower(), "text")
 
     return JsonResponse(suggestions[:8], safe=False)
+
+
+def _giving_along(request, listing):
+    """The viewer's suggestion (?suggestion=) to give a thing along with a tour to this wish."""
+    pk = request.GET.get("suggestion", "")
+    if not pk.isdigit() or not listing.is_wish:
+        return None
+    suggestion = Suggestion.objects.filter(
+        pk=pk, user=request.user, kind=Suggestion.KIND_TOURS, reason=Suggestion.REASON_WANTS,
+        detail_id=str(listing.pk),
+    ).first()
+    return suggestion

@@ -294,8 +294,11 @@ def _directions(stop, viewer, arriving_mode):
     }
 
 
-def _save_tour(request, tour, template, context):
-    form = TourForm(request.POST or None, request.FILES or None, instance=tour)
+def _save_tour(request, tour, template, context, going_to=None):
+    """`going_to`: (event, stay) for a new tour to an event one is coming to: named after
+    it, and its first stop is there on the stay's days."""
+    initial = {"title": going_to[0].get_match_display_name()} if going_to else None
+    form = TourForm(request.POST or None, request.FILES or None, instance=tour, initial=initial)
     if request.method == "POST" and form.is_valid():
         is_new = tour.pk is None
         with transaction.atomic():
@@ -305,6 +308,14 @@ def _save_tour(request, tour, template, context):
             tour.touch(save=False)
             tour.save()
             form.save_learn_skills(tour)
+            if is_new and going_to:
+                host, stay = going_to
+                first, last = matching.stay_days(stay)
+                if host._meta.model_name == "event":
+                    stop = Stop(tour=tour, event=host, arrive_on=first or host.starts_on, leave_on=last or host.ends_on)
+                else:
+                    stop = Stop(tour=tour, community=host, arrive_on=first, leave_on=last)
+                append_stop(stop)
         if is_new:
             messages.success(request, _("Your tour is saved as a draft. Now add its stops."))
             return redirect(tour.url("plan"))
@@ -315,7 +326,24 @@ def _save_tour(request, tour, template, context):
 
 @login_required
 def create(request):
-    return _save_tour(request, Tour(), "tours/tour_form.html", {})
+    """A new tour. ?event= or ?stay=: "Go there together", a tour to an event or
+    community one is coming to."""
+    going_to = _going_to(request)
+    return _save_tour(request, Tour(), "tours/tour_form.html", {"going_to": going_to}, going_to=going_to)
+
+
+def _going_to(request):
+    """(event or community, stay) for ?event= (an event the user is coming to) or ?stay=
+    (one of their stays), else None."""
+    stays = matching.stays_of(request.user)
+    event, pk = request.GET.get("event", ""), request.GET.get("stay", "")
+    if event.isdigit():
+        stay = stays.filter(content_type__model="event", object_id=event).first()
+    elif pk.isdigit():
+        stay = stays.filter(pk=pk).first()
+    else:
+        return None
+    return (stay.target, stay) if stay is not None and stay.target is not None else None
 
 
 @login_required
@@ -617,9 +645,15 @@ def join(request, slug):
         messages.error(request, _("This tour doesn't look for travellers."))
         return redirect(tour.get_absolute_url())
 
+    # A suggestion opens the page with the stretch that fits (?from=, ?to=: stop pks) and
+    # a message for why (?suggestion=)
+    initial = {name: request.GET[key] for name, key in (("from_stop", "from"), ("to_stop", "to")) if request.GET.get(key)}
+    suggestion = _suggestion(request, tour)
+    if suggestion is not None:
+        initial["message"] = suggestion.message
     form = JoinForm(
         tour, request.POST or None, instance=own or Traveller(tour=tour, user=request.user), with_message=own is None,
-        preselected=request.GET.getlist("need"),
+        preselected=request.GET.getlist("need"), initial=initial if own is None else None,
     )
     if request.method == "POST" and form.is_valid():
         if own is None:
@@ -654,6 +688,18 @@ def join(request, slug):
         "free": free if any(places is not None for places in free) else None,
         "stops": tour.ordered_stops(),
     })
+
+
+def _suggestion(request, tour):
+    """The viewer's suggestion of this tour named in ?suggestion=, if any."""
+    from gift_economy.matches.models import Suggestion
+
+    pk = request.GET.get("suggestion", "")
+    if not pk.isdigit():
+        return None
+    return Suggestion.objects.filter(
+        pk=pk, user=request.user, kind=Suggestion.KIND_TOURS, other_id=str(tour.pk),
+    ).first()
 
 
 def _cover(match, chosen):

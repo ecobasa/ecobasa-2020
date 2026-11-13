@@ -3,6 +3,7 @@ from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.urls import reverse
+from django.utils.formats import date_format
 from django.utils.html import escape, format_html
 from django.utils.translation import gettext_lazy as _
 
@@ -619,6 +620,16 @@ def _name(user):
     return (user.name or user.email) if user else ""
 
 
+class SuggestionQuerySet(models.QuerySet):
+    def shown_to(self, user):
+        """What `user` sees of their suggestions: not hidden, and while they pause tour
+        suggestions none about travelling along."""
+        found = self.filter(user=user, dismissed_at=None)
+        if getattr(user, "tours_paused", False):
+            found = found.exclude(kind=Suggestion.KIND_TOURS, reason__in=Suggestion.TRAVEL_REASONS)
+        return found
+
+
 class Suggestion(models.Model):
     """Something of someone else's that fits something of yours, found by the matching
     (matching.py) as soon as either was saved: their gift offer for your wish, their wish
@@ -629,10 +640,31 @@ class Suggestion(models.Model):
     REASON_SKILL = "skill"
     REASON_WORDS = "words"
     REASON_THING = "thing"
+    # Why a tour fits someone: it stops where they stay around their days, it passes
+    # near where they live, it wants to learn what they wish to learn, a stop offers what
+    # they wish for, a stop wishes for what they offer (given to the tour to take along)
+    REASON_STAY = "stay"
+    REASON_ROUTE = "route"
+    REASON_LEARN = "learn"
+    REASON_HAS = "has"
+    REASON_WANTS = "wants"
+    # A ride towards home after a stay; someone from nearby coming to the same event or
+    # community in the same days (the other side is their stay, not a tour)
+    REASON_HOME = "home"
+    REASON_TOGETHER = "together"
+    # Those that are about travelling along: silenced while someone pauses tour suggestions
+    TRAVEL_REASONS = (REASON_ROUTE, REASON_LEARN, REASON_HAS)
     REASON_CHOICES = [
         (REASON_SKILL, _("Same skill")),
         (REASON_WORDS, _("Similar title")),
         (REASON_THING, _("Same kind of thing")),
+        (REASON_STAY, _("Goes where you stay")),
+        (REASON_ROUTE, _("Passes near you")),
+        (REASON_LEARN, _("Wants to learn the same")),
+        (REASON_HAS, _("A stop has what you wish for")),
+        (REASON_WANTS, _("A stop wishes for what you have")),
+        (REASON_HOME, _("A ride towards your home")),
+        (REASON_TOGETHER, _("Someone from near you comes too")),
     ]
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="suggestions")
@@ -644,13 +676,20 @@ class Suggestion(models.Model):
     other_type = models.ForeignKey(ContentType, on_delete=models.CASCADE, related_name="+")
     other_id = models.CharField(max_length=255)
     other = GenericForeignKey("other_type", "other_id")
+    # For a tour: the offer or wish at one of its stops it is about (REASON_HAS, REASON_WANTS)
+    detail_type = models.ForeignKey(ContentType, on_delete=models.CASCADE, null=True, blank=True, related_name="+")
+    detail_id = models.CharField(max_length=255, blank=True)
+    detail = GenericForeignKey("detail_type", "detail_id")
     other_user = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True, blank=True, related_name="+",
     )
     KIND_GIFT = "gift"
     KIND_SKILLS = "skills"
-    # Things (gifts, and materials and tools for events) or skills (and knowledge)
-    KIND_CHOICES = [(KIND_GIFT, _("Gifts")), (KIND_SKILLS, _("Skills"))]
+    KIND_TOURS = "tours"
+    # Things (gifts, and materials and tools for events), skills (and knowledge), or a
+    # tour to travel along on (the other side is the tour, the own side what it fits:
+    # a stay, a wish to learn, or the person themselves for where they live)
+    KIND_CHOICES = [(KIND_GIFT, _("Gifts")), (KIND_SKILLS, _("Skills")), (KIND_TOURS, _("Tours"))]
 
     kind = models.CharField(max_length=10, choices=KIND_CHOICES, default=KIND_GIFT)
     reason = models.CharField(max_length=20, choices=REASON_CHOICES)
@@ -659,6 +698,8 @@ class Suggestion(models.Model):
     seen_at = models.DateTimeField(null=True, blank=True)
     emailed_at = models.DateTimeField(null=True, blank=True)
     dismissed_at = models.DateTimeField(null=True, blank=True)
+
+    objects = SuggestionQuerySet.as_manager()
 
     class Meta:
         ordering = ["-created_at"]
@@ -679,8 +720,87 @@ class Suggestion(models.Model):
         return self.other_type.model
 
     @property
+    def is_tour(self):
+        return self.kind == self.KIND_TOURS
+
+    @property
+    def is_ride(self):
+        """A tour that is just a ride from A to B."""
+        return self.is_tour and getattr(self.other, "is_ride", False)
+
+    @property
+    def is_together(self):
+        """Someone from near them comes to the same event or community: the other side
+        is their stay."""
+        return self.is_tour and self.reason == self.REASON_TOGETHER
+
+    def _tour_text(self):
+        """Why a tour fits, as (text, values): %(tour)s is left for its title (a ride is
+        named by where it goes instead)."""
+        own = self.own
+        if self.reason == self.REASON_HOME:
+            start, end, day = self.other.ride_ends()
+            target = getattr(own, "target", None)
+            return _("A ride from %(from)s to %(to)s on %(date)s, towards your home after %(place)s"), {
+                "from": start, "to": end, "date": date_format(day, "MONTH_DAY_FORMAT") if day else "",
+                "place": target.get_match_display_name() if target is not None else "",
+            }
+        if self.is_together:
+            target = getattr(own, "target", None)
+            person = self.other.from_user
+            return _("%(name)s is also coming to %(place)s around the same days, from near you"), {
+                "name": person.name or person.email,
+                "place": target.get_match_display_name() if target is not None else "",
+            }
+        if self.reason == self.REASON_STAY and self.is_ride:
+            start, end, day = self.other.ride_ends()
+            target = getattr(own, "target", None)
+            return _("A ride from %(from)s to %(to)s on %(date)s, near %(place)s where you are then"), {
+                "from": start, "to": end, "date": date_format(day, "MONTH_DAY_FORMAT") if day else "",
+                "place": target.get_match_display_name() if target is not None else "",
+            }
+        if self.reason == self.REASON_STAY:
+            target = getattr(own, "target", None)
+            place = target.get_match_display_name() if target is not None else ""
+            return _("The tour %(tour)s goes to %(place)s around the days that you are also there"), {"place": place}
+        if self.reason == self.REASON_LEARN:
+            return _("The tour %(tour)s wants to learn %(skill)s too"), {"skill": own.display_title}
+        if self.reason in (self.REASON_HAS, self.REASON_WANTS):
+            detail = self.detail
+            values = {"place": "", "title": ""}
+            if detail is not None:
+                values = {
+                    "place": detail.event.title if detail.event_id else detail.community.name,
+                    "title": f"{detail.display_title} ({detail.amount})" if detail.amount else detail.display_title,
+                }
+            if self.reason == self.REASON_HAS:
+                return _("The tour %(tour)s goes to %(place)s, which offers: %(title)s"), values
+            return _("The tour %(tour)s goes to %(place)s, which is looking for: %(title)s"), values
+        return _("The tour %(tour)s passes near you"), {}
+
+    @property
+    def gives_along(self):
+        """A tour that could take something of theirs along to a stop that wishes for it."""
+        return self.is_tour and self.reason == self.REASON_WANTS
+
+    @property
+    def message(self):
+        """A message for acting on it, ready to change: to the tour's organisers when
+        asking to join, to a stop's host when giving something along."""
+        other = self.other
+        if not self.is_tour or other is None or self.is_together:
+            return ""
+        return other.get_suggestion_message(self)
+
+    @property
     def icon(self):
         other = self.other
+        if self.is_together:
+            return "fa-people-group"
+        if self.is_ride:
+            return "fa-people-arrows"
+        if self.is_tour:
+            return "fa-route"
         if other is None or self.other_model != "listing":
             return "fa-handshake-angle"
         if other.event_id and other.is_wish:
@@ -697,6 +817,9 @@ class Suggestion(models.Model):
         other = self.other
         if other is None:
             return ""
+        if self.is_tour:
+            text, values = self._tour_text()
+            return text % {**({} if self.is_together else {"tour": other.title}), **values}
         if self.other_model != "listing":
             return str(other)
         title = f"{other.display_title} ({other.amount})" if other.amount else other.display_title
@@ -741,6 +864,20 @@ class Suggestion(models.Model):
         if other is None:
             return ""
         link = '<a href="{}" class="font-semibold hover:underline">{}</a>'
+        if self.is_ride:
+            return format_html(link, other.get_absolute_url(), self.text)
+        if self.is_together:
+            text, values = self._tour_text()
+            person = other.from_user
+            values["name"] = format_html(link, person.get_absolute_url(), values["name"])
+            return format_html(escape(text).replace("%(name)s", "{name}").replace("%(place)s", "{place}"), **values)
+        if self.is_tour:
+            text, values = self._tour_text()
+            return format_html(
+                escape(text).replace("%(tour)s", "{tour}").replace("%(place)s", "{place}").replace("%(skill)s", "{skill}")
+                .replace("%(title)s", "{title}"),
+                tour=format_html(link, other.get_absolute_url(), other.title), **values,
+            )
         if self.other_model == "listing" and other.event_id and other.is_wish:
             event = other.event
             title = f"{other.display_title} ({other.amount})" if other.amount else other.display_title
@@ -775,6 +912,17 @@ class Suggestion(models.Model):
         own = self.own
         if own is None:
             return ""
+        if self.is_tour:
+            if self.reason in (self.REASON_STAY, self.REASON_HOME, self.REASON_TOGETHER):
+                target = own.target
+                return _("your stay at %(place)s") % {"place": target.get_match_display_name() if target else ""}
+            if self.reason == self.REASON_LEARN:
+                return _("your wish to learn: %(skill)s") % {"skill": own.display_title}
+            if self.reason == self.REASON_HAS:
+                return _("your wish: %(title)s") % {"title": own.display_title}
+            if self.reason == self.REASON_WANTS:
+                return _("your offer: %(title)s") % {"title": own.display_title}
+            return _("where you live")
         if self.own_type.model != "listing":
             return str(own)
         if own.event_id:
@@ -792,6 +940,9 @@ class Suggestion(models.Model):
         other = self.other
         if other is None:
             return ""
+        if self.is_together:
+            # Their profile, never their match with the host
+            return other.from_user.get_absolute_url()
         if self.other_model == "listing" and other.event_id and other.is_wish:
             return f"{other.event.get_absolute_url()}#need-{other.pk}"
         return other.get_absolute_url()
@@ -807,6 +958,15 @@ class Suggestion(models.Model):
         tour's need, the volunteer form for a community's wish for a skill, else the thing's page (where it can be asked for or
         offered)."""
         other = self.other
+        if self.is_together:
+            # Start a tour or ride there, prefilled from their own stay
+            return f"{reverse('tours:create')}?stay={self.own.pk}"
+        if self.gives_along and self.detail is not None:
+            # The stop's wish, with an offer to it written already
+            return f"{self.detail.get_absolute_url()}?suggestion={self.pk}"
+        if self.is_tour and other is not None:
+            # The join page, with the stretch that fits already chosen
+            return other.get_suggestion_url(self)
         if self.other_model == "listing" and other is not None and other.is_wish:
             if other.event_id:
                 return f"{other.event.url('offer_help')}?need={other.pk}"

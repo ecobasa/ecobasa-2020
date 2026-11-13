@@ -1,7 +1,11 @@
+import calendar
+import datetime
+
 from django.conf import settings
 from django.contrib.gis.db import models
 from django.core.mail import send_mail
 from django.urls import reverse
+from django.utils import timezone
 from django.utils.text import slugify
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.utils.translation import gettext_lazy as _
@@ -110,6 +114,9 @@ class User(AbstractUser):
     )
     match_radius = models.PositiveSmallIntegerField(_("How far away (km)?"), default=150)
     match_global = models.BooleanField(_("Search worldwide"), default=False)
+    # Suggestions of tours to travel along on: paused until this day, or off until they
+    # turn them on again (PAUSED_FOREVER)
+    tours_paused_until = models.DateField(_("Tour suggestions paused until"), null=True, blank=True)
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = ["name"]
@@ -120,6 +127,34 @@ class User(AbstractUser):
         # Prefer username; otherwise slugified name; finally primary key
         slug = self.username or slugify(self.name) or str(self.pk)
         return reverse("users:detail", kwargs={"slug": slug})
+
+    # ── Tour suggestions, on or paused ──────────────────────────────
+    PAUSED_FOREVER = datetime.date.max
+    TOUR_PAUSE_CHOICES = [
+        ("on", _("On")),
+        ("1", _("Pause for 1 month")),
+        ("3", _("3 months")),
+        ("6", _("6 months")),
+        ("off", _("Off")),
+    ]
+
+    @property
+    def tours_paused(self):
+        """Whether they don't want to hear of tours to travel along on now."""
+        return self.tours_paused_until is not None and self.tours_paused_until >= timezone.localdate()
+
+    @property
+    def tours_off(self):
+        return self.tours_paused_until == self.PAUSED_FOREVER
+
+    def pause_tours(self, choice):
+        """Set the pause from one of TOUR_PAUSE_CHOICES (not saved)."""
+        if choice == "on":
+            self.tours_paused_until = None
+        elif choice == "off":
+            self.tours_paused_until = self.PAUSED_FOREVER
+        elif choice in ("1", "3", "6"):
+            self.tours_paused_until = add_months(timezone.localdate(), int(choice))
 
     @property
     def last_active(self):
@@ -149,3 +184,11 @@ class User(AbstractUser):
         Sends an email to this User.
         '''
         send_mail(subject, message, from_email, [self.email], **kwargs)
+
+
+def add_months(day, months):
+    """The same day `months` later, or the month's last day if it is shorter."""
+    month = day.month - 1 + months
+    year, month = day.year + month // 12, month % 12 + 1
+    last = calendar.monthrange(year, month)[1]
+    return day.replace(year=year, month=month, day=min(day.day, last))

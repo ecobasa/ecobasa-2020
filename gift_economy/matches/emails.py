@@ -10,7 +10,7 @@ from django.urls import reverse
 from django.utils import timezone, translation
 from django.utils.translation import ngettext
 
-from .models import Match
+from .models import Match, Suggestion
 
 TOKEN_SALT    = "matches-action"
 TOKEN_MAX_AGE = 60 * 60 * 24 * 30   # 30 days
@@ -213,7 +213,7 @@ def send_suggestion_email(user, now=None):
     if last and now - last < SUGGESTIONS_MIN_INTERVAL:
         return False
     pending = list(
-        user.suggestions.filter(emailed_at=None, dismissed_at=None)
+        Suggestion.objects.shown_to(user).filter(emailed_at=None)
         .select_related("own_type", "other_type").prefetch_related("own", "other")
     )
     found = [s for s in pending if s.other is not None and s.own is not None]
@@ -226,10 +226,13 @@ def send_suggestion_email(user, now=None):
         context = {
             "recipient": user,
             "headline": subject,
-            "suggestions": found,
+            "suggestions": [s for s in found if not s.is_tour],
+            "tours": [s for s in found if s.is_tour],
+            "with_rides": any(s.is_ride for s in found),
             "site_url": settings.SITE_URL.rstrip("/"),
             "list_url": _site_url(reverse("matches:list")),
             "settings_url": _site_url(reverse("users:update") + "#matches"),
+            "pause_tours_url": _site_url(reverse("matches:pause_tours", args=[make_suggestions_unsubscribe_token(user)])),
             "unsubscribe_url": _site_url(reverse("matches:suggestions_unsubscribe", args=[make_suggestions_unsubscribe_token(user)])),
         }
         text_body = render_to_string("matches/email/suggestions.txt", context)

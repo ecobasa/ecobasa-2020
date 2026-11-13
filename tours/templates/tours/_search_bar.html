@@ -65,6 +65,10 @@
           <label class="flex items-center gap-2 cursor-pointer text-sm"><input type="checkbox" class="form-checkbox light h-4 w-4" x-model="$store.tourMap.children" @change="window.tourFiltersChanged()"><i class="fa-solid fa-children"></i>{% trans "Children welcome" %}</label>
           <label class="flex items-center gap-2 cursor-pointer text-sm"><input type="checkbox" class="form-checkbox light h-4 w-4" x-model="$store.tourMap.animals" @change="window.tourFiltersChanged()"><i class="fa-solid fa-paw"></i>{% trans "Animals welcome" %}</label>
           <label class="flex items-center gap-2 cursor-pointer text-sm"><input type="checkbox" class="form-checkbox light h-4 w-4" x-model="$store.tourMap.free" @change="window.tourFiltersChanged()"><i class="fa-solid fa-user-plus"></i>{% trans "Has free places" %}</label>
+          {% if request.user.is_authenticated %}
+            <label class="flex items-center gap-2 cursor-pointer text-sm"><input type="checkbox" class="form-checkbox light h-4 w-4" x-model="$store.tourMap.fits" @change="window.tourFiltersChanged()"><i class="fa-solid fa-hands-helping"></i>{% trans "Fits my skills" %}</label>
+            {% if request.user.location %}<label class="flex items-center gap-2 cursor-pointer text-sm"><input type="checkbox" class="form-checkbox light h-4 w-4" x-model="$store.tourMap.passes" @change="window.tourFiltersChanged()"><i class="fa-solid fa-house"></i>{% trans "Passes near me" %}</label>{% endif %}
+          {% endif %}
         </div>
         <button type="button" x-show="$store.tourMap.filterCount > 0" class="text-xs underline opacity-70 hover:opacity-100" @click="$store.tourMap.clear()">{% trans "Clear filters" %}</button>
       </div>

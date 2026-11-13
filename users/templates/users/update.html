@@ -56,6 +56,9 @@
         </label>
       </div>
       {% for error in form.match_radius.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+      <label class="flex flex-wrap items-center gap-2 text-sm">
+        {{ form.tour_suggestions.label }} {{ form.tour_suggestions }}
+      </label>
       <p class="text-xs">{% trans "We compare your wishes, offers and skills with those of people, communities and projects within this distance of your place, as soon as something is added. New suggestions show in your notifications; the email collects them once a week." %}</p>
     </div>
 

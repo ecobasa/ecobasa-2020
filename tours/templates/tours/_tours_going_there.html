@@ -1,0 +1,22 @@
+{% load i18n %}
+{# On a stay's match page: tours that stop there around its days (tours.templatetags.tours_tags.tours_going_there) #}
+{% if fits %}
+<div class="rounded-xl p-4 mb-6 border bg-secondary bg-opacity-50">
+  <h2 class="mt-0">{% trans "Tours going there around your days" %}</h2>
+  <ul class="list-none p-0 m-0 space-y-2">
+    {% for fit in fits %}{% with tour=fit.tour %}
+      <li class="m-0 flex flex-wrap items-center gap-3">
+        <i class="fa-solid {{ tour.travel_mode_icon }} text-xl text-primary w-6 text-center"></i>
+        <div class="flex-1 min-w-0">
+          <a href="{{ tour.get_absolute_url }}" class="font-serif text-primary hover:underline">{{ tour.title }}</a>
+          <div class="text-xs text-brown">
+            {% with stop=fit.to_stop|default:fit.from_stop %}{% if stop.arrive_on or stop.leave_on %}<i class="fa-regular fa-calendar mr-1"></i>{% include "tours/_stop_dates.html" %} · {% endif %}{% endwith %}
+            {% if fit.to_stop %}{{ fit.from_stop.label }} → {{ fit.to_stop.label }}{% else %}{{ fit.from_stop.label }} →{% endif %}
+          </div>
+        </div>
+        <a href="{{ fit.join_url }}" class="btn text-sm py-1 px-3"><i class="fa-solid fa-route mr-1"></i>{% trans "Ask to join" %}</a>
+      </li>
+    {% endwith %}{% endfor %}
+  </ul>
+</div>
+{% endif %}

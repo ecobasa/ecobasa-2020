@@ -119,7 +119,9 @@ class Notification(models.Model):
 
     def _suggestion_text(self):
         """Counts what is new for them, so the one notification stays true."""
-        new = self.recipient.suggestions.filter(seen_at=None, dismissed_at=None).count()
+        from gift_economy.matches.models import Suggestion
+
+        new = Suggestion.objects.shown_to(self.recipient).filter(seen_at=None).count()
         if not new:
             return str(_("Suggestions near you: what fits your wishes, offers and skills."))
         return ngettext(

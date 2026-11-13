@@ -13,4 +13,5 @@ urlpatterns = [
     path("action/<str:token>/", views.email_action,  name="email_action"),
     path("suggestions/<int:pk>/dismiss/",        views.dismiss_suggestion,      name="dismiss_suggestion"),
     path("suggestions/emails/stop/<str:token>/", views.suggestions_unsubscribe, name="suggestions_unsubscribe"),
+    path("suggestions/tours/pause/<str:token>/", views.pause_tour_suggestions, name="pause_tours"),
 ]

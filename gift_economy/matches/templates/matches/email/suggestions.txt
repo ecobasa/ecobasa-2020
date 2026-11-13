@@ -1,14 +1,22 @@
 {% load i18n %}{% autoescape off %}{% blocktrans with name=recipient.name|default:recipient.email %}Hello {{ name }},{% endblocktrans %}
 
-{{ headline }}:
+{{ headline }}{% if suggestions %}:{% endif %}
 {% for s in suggestions %}
 - {{ s.text }}{% if s.distance_km is not None %} ({% blocktrans with km=s.distance_km %}{{ km }} km away{% endblocktrans %}){% endif %}
   {% blocktrans with own=s.own_text %}fits {{ own }}{% endblocktrans %}
   {{ site_url }}{{ s.url }}
+{% endfor %}{% if tours %}
+{% if with_rides %}{% trans "Tours and rides for you" %}{% else %}{% trans "Tours for you" %}{% endif %}:
+{% for s in tours %}
+- {{ s.text }}{% if s.distance_km is not None %} ({% blocktrans with km=s.distance_km %}{{ km }} km away{% endblocktrans %}){% endif %}
+  {% blocktrans with own=s.own_text %}fits {{ own }}{% endblocktrans %}
+  {{ site_url }}{{ s.action_url }}
 {% endfor %}
+{% trans "Not travelling now? Pause tour suggestions" %}: {{ pause_tours_url }}
+{% endif %}
 {% trans "All your suggestions" %}: {{ list_url }}
 
 --
 {% trans "You get this because you share wishes, offers or skills on ecobasa.org." %}
-{% trans "Change distance or turn off" %}: {{ settings_url }}
-{% trans "Unsubscribe" %}: {{ unsubscribe_url }}{% endautoescape %}
+{% trans "Change distance or search worldwide" %}: {{ settings_url }}
+{% trans "Turn off weekly email notifications" %}: {{ unsubscribe_url }}{% endautoescape %}

@@ -456,6 +456,34 @@ class Tour(models.Model):
         """Not by its own travellers: they write about the hosts and about each other."""
         return not any(traveller.user_id == user.pk for traveller in self.counted_travellers())
 
+    # ── As a suggestion to someone (gift_economy.matches.Suggestion) ─
+    def get_suggestion_url(self, suggestion):
+        """The join page, with the stretch that fits the suggestion already chosen."""
+        from .matching import stretch_for
+
+        start, end = stretch_for(self, suggestion)
+        url = self.join_url(start, end)
+        return f"{url}{'&' if '?' in url else '?'}suggestion={suggestion.pk}"
+
+    def ride_ends(self):
+        """(from, to, day) of a ride as everyone sees them: the towns and the day it goes."""
+        stops = self.ordered_stops()
+        if len(stops) < 2:
+            return "", "", None
+        start, end = stops[0], stops[-1]
+        return start.public_place()[0], end.public_place()[0], start.leave_on or start.arrive_on or end.arrive_on
+
+    def get_suggestion_message(self, suggestion):
+        """What one would write when acting on a suggestion of this tour."""
+        from .matching import message_for
+
+        return message_for(self, suggestion)
+
+    def join_url(self, start=None, end=None):
+        """The join page, opening with a stretch (stops, None for the start or the end)."""
+        query = "&".join(f"{name}={stop.pk}" for name, stop in (("from", start), ("to", end)) if stop is not None)
+        return self.url("join") + (f"?{query}" if query else "")
+
     # ── As what a join request is about (gift_economy.matches) ──────
     def get_match_owner(self):
         return self.organiser

@@ -160,6 +160,11 @@ class TourFilters:
         self.children = params.get("children") == "1"
         self.animals = params.get("animals") == "1"
         self.free = params.get("free") == "1"
+        # Logged in only: tours that fit their skills (or want to learn what they do), and
+        # tours passing within their distance of where they live
+        signed_in = user is not None and user.is_authenticated
+        self.fits = signed_in and params.get("fits") == "1"
+        self.passes = signed_in and params.get("passes") == "1"
         country = (params.get("country") or "").strip().upper()
         self.country = country if len(country) == 2 and country.isalpha() else ""
         self.near = _point(params.get("near"))
@@ -169,7 +174,7 @@ class TourFilters:
     def active(self):
         return bool(
             self.show or self.country or self.q or self.since or self.until or self.learn or self.mode
-            or self.children or self.animals or self.free
+            or self.children or self.animals or self.free or self.fits or self.passes
         )
 
     def apply(self, tours):
@@ -220,6 +225,14 @@ class TourFilters:
             tours = tours.filter(pk__in=[
                 tour.pk for tour in candidates if any(places is None or places > 0 for places in tour.free_places())
             ])
+        if self.fits:
+            from .matching import fits_skills
+
+            tours = tours.filter(pk__in=fits_skills(self.user))
+        if self.passes:
+            from .matching import passes_near
+
+            tours = tours.filter(pk__in=passes_near(self.user, tours.model.objects.all()).values("pk"))
         return tours.distinct()
 
     def by_distance(self, tours):

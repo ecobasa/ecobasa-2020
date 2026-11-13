@@ -1,0 +1,9 @@
+{% load i18n %}
+{# On an event's page, for who is coming: start a tour there (tours.templatetags.tours_tags.go_together) #}
+{% if event %}
+<div class="flex flex-wrap items-center gap-3 mt-4 p-3 rounded border bg-secondary bg-opacity-50 text-sm">
+  <i class="fa-solid fa-route text-xl text-primary"></i>
+  <span class="flex-1 min-w-0">{% if others %}{% blocktrans count count=others %}{{ count }} other from near you is coming in your days{% plural %}{{ count }} others from near you are coming in your days{% endblocktrans %}{% endif %}</span>
+  <a href="{% url 'tours:create' %}?event={{ event.pk }}" class="btn text-sm py-1 px-3"><i class="fa-solid fa-route mr-1"></i>{% trans "Go there together" %}</a>
+</div>
+{% endif %}

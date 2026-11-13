@@ -21,7 +21,7 @@
     <span class="opacity-70">{% trans "Plan a tour" %}</span>
   </div>
   {% endif %}
-  <h1><i class="fa-solid fa-route mr-2 text-primary"></i>{% if tour %}{{ tour.title }}{% else %}{% trans "Plan a tour" %}{% endif %}</h1>
+  <h1><i class="fa-solid fa-route mr-2 text-primary"></i>{% if tour %}{{ tour.title }}{% elif going_to %}{% trans "Go there together" %}{% else %}{% trans "Plan a tour" %}{% endif %}</h1>
   {% if not tour %}<p class="text-sm">{% trans "First the basics. Next you add the stops: communities, their events, or other places." %}</p>{% endif %}
 
   <form method="post" enctype="multipart/form-data" class="border rounded-xl bg-secondary p-6 space-y-4"

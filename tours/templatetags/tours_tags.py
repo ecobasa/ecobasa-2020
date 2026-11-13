@@ -125,3 +125,41 @@ def deliveries_with(context, obj):
     )
     shown = [d for d in found if d.status != Delivery.STATUS_FELL_THROUGH and d.tour.can_view(viewer)]
     return {"deliveries": shown, "user": viewer}
+
+
+@register.inclusion_tag("tours/_tours_going_there.html", takes_context=True)
+def tours_going_there(context, match):
+    """On a stay's match page, for the one who stays: the tours that stop there around
+    their days and have room, each with the stretch to get there."""
+    from ..matching import by_stay, joinable, stays_of
+
+    viewer = context["request"].user
+    if not viewer.is_authenticated or viewer.pk != match.from_user_id:
+        return {"fits": []}
+    stays = stays_of(viewer).filter(pk=match.pk)
+    fits = by_stay(viewer, joinable(viewer), stays=stays)
+    return {"fits": sorted(fits, key=lambda fit: fit.tour.starts_on or fit.tour.created_at.date())}
+
+
+@register.inclusion_tag("tours/_go_together.html", takes_context=True)
+def go_together(context, event):
+    """On an event's page, for who is coming: start a tour there, and how many others
+    from near them come in the same days."""
+    from gift_economy.matches.matching import distance_km
+
+    from ..matching import around_days, stay_days, stays_of
+
+    viewer = context["request"].user
+    if not viewer.is_authenticated or not event.is_current:
+        return {}
+    own = stays_of(viewer).filter(content_type__model="event", object_id=str(event.pk)).first()
+    if own is None:
+        return {}
+    days = stay_days(own)
+    near = set()
+    if viewer.location is not None:
+        for stay in event.matches.exclude(from_user=viewer).filter(status="accepted").select_related("stay_details", "from_user"):
+            home = stay.from_user.location
+            if home is not None and distance_km(viewer.location, home) <= (viewer.match_radius or 0) and around_days(stay_days(stay), *days):
+                near.add(stay.from_user_id)
+    return {"event": event, "others": len(near)}

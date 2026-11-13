@@ -184,18 +184,34 @@ def _join_requests(request):
         if answered_by is not None:
             received |= answered_by(user)
     boxes = {"received": tours.filter(received).distinct(), "sent": tours.filter(from_user=user)}
-    waiting = {"received": boxes["received"].filter(status=Match.STATUS_PENDING).count(), "sent": 0}
-    counts = {key: matches.count() for key, matches in boxes.items()}
+    # Tours that fit them, first
+    suggestions = _suggestions_of(user).filter(kind=Suggestion.KIND_TOURS)
+    waiting = {
+        "suggestions": suggestions.filter(seen_at=None).count(),
+        "received": boxes["received"].filter(status=Match.STATUS_PENDING).count(), "sent": 0,
+    }
+    counts = {"suggestions": suggestions.count(), **{key: matches.count() for key, matches in boxes.items()}}
     box = request.GET.get("box")
-    if box not in boxes:
-        box = "received" if waiting["received"] or (counts["received"] and not counts["sent"]) else "sent"
+    if box not in counts:
+        if waiting["received"]:
+            box = "received"
+        elif waiting["suggestions"] or not (counts["received"] or counts["sent"]):
+            box = "suggestions"
+        else:
+            box = "received" if counts["received"] and not counts["sent"] else "sent"
     tabs = [
         Choice(label, query_url(request, box=key, status=None), key == box, counts[key], waiting[key])
-        for key, label in (("received", _("Requests to you")), ("sent", _("Your requests")))
+        for key, label in (("suggestions", _("Suggestions")), ("received", _("Requests to you")), ("sent", _("Your requests")))
     ]
+    context = {"request_type": "tours", "kind": _TOURS, "tabs": tabs, "box": box}
+    if box == "suggestions":
+        page = paginate(request, suggestions)
+        shown = _shown(page.object_list)
+        return render(request, "matches/matches_list.html", {
+            **context, "page": page, "suggestions": shown, "new_ids": _mark_seen(user, shown),
+        })
     return render(request, "matches/matches_list.html", {
-        "request_type": "tours", "kind": _TOURS, "tabs": tabs, "box": box,
-        **_requests(request, boxes[box]), "show_from": box == "received", "empty": _TOURS["empty"],
+        **context, **_requests(request, boxes[box]), "show_from": box == "received", "empty": _TOURS["empty"],
     })
 
 
@@ -526,7 +542,7 @@ def email_action(request, token):
 
 def _suggestions_of(user):
     return (
-        user.suggestions.filter(dismissed_at=None)
+        Suggestion.objects.shown_to(user)
         .select_related("own_type", "other_type", "other_user")
         .prefetch_related("own", "other")
     )
@@ -567,3 +583,20 @@ def suggestions_unsubscribe(request, token):
         "You won't get emails about suggestions any more. You can turn them on again in your profile."
     ))
     return redirect("homepage:homepage")
+
+
+def pause_tour_suggestions(request, token):
+    """From the weekly email, no login needed: pause tour suggestions for a while, or
+    turn them off until they turn them on again in their profile."""
+    try:
+        pk = read_suggestions_unsubscribe_token(token)
+    except signing.BadSignature:
+        return HttpResponseBadRequest("Invalid link.")
+    user = get_object_or_404(get_user_model(), pk=pk)
+    choices = [(key, label) for key, label in user.TOUR_PAUSE_CHOICES if key != "on"]
+    if request.method == "POST" and request.POST.get("pause") in dict(choices):
+        user.pause_tours(request.POST["pause"])
+        user.save(update_fields=["tours_paused_until"])
+        flash.success(request, _("Tour suggestions are paused. You can turn them on again in your profile."))
+        return redirect("homepage:homepage")
+    return render(request, "matches/pause_tours.html", {"choices": choices})

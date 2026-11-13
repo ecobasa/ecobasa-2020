@@ -2742,13 +2742,13 @@ msgstr ""
 
 #: gift_economy/matches/templates/matches/email/suggestions.html:42
 #: gift_economy/matches/templates/matches/email/suggestions.txt:13
-msgid "Change distance or turn off"
-msgstr "Changer la distance ou désactiver"
+msgid "Change distance or search worldwide"
+msgstr "Changer la distance ou chercher dans le monde entier"
 
 #: gift_economy/matches/templates/matches/email/suggestions.html:42
 #: gift_economy/matches/templates/matches/email/suggestions.txt:14
-msgid "Unsubscribe"
-msgstr "Se désabonner"
+msgid "Turn off weekly email notifications"
+msgstr "Désactiver les notifications hebdomadaires par e-mail"
 
 #: gift_economy/matches/templates/matches/email_action_done.html:8
 msgid "Done — you said yes."
@@ -6597,3 +6597,142 @@ msgstr "Apporté par"
 #: tours/templates/tours/tour_list.html:151
 msgid "Planned Tours"
 msgstr "Tours planifiés"
+
+msgid "Goes where you stay"
+msgstr "Va là où tu séjournes"
+
+msgid "Passes near you"
+msgstr "Passe près de chez toi"
+
+msgid "Wants to learn the same"
+msgstr "Veut apprendre la même chose"
+
+msgid "The tour %(tour)s goes to %(place)s around the days that you are also there"
+msgstr "Le tour %(tour)s va à %(place)s autour des jours où tu y es aussi"
+
+msgid "The tour %(tour)s wants to learn %(skill)s too"
+msgstr "Le tour %(tour)s veut aussi apprendre %(skill)s"
+
+msgid "The tour %(tour)s passes near you"
+msgstr "Le tour %(tour)s passe près de chez toi"
+
+msgid "your stay at %(place)s"
+msgstr "ton séjour à %(place)s"
+
+msgid "your wish to learn: %(skill)s"
+msgstr "ton souhait d'apprendre : %(skill)s"
+
+msgid "where you live"
+msgstr "là où tu habites"
+
+msgid "Tours for you"
+msgstr "Des tours pour toi"
+
+msgid "Tours going there around your days"
+msgstr "Tours qui y vont autour de tes dates"
+
+msgid "Go there together"
+msgstr "Y aller ensemble"
+
+msgid "Fits my skills"
+msgstr "Va avec mes compétences"
+
+msgid "Passes near me"
+msgstr "Passe près de chez moi"
+
+msgid "%(count)s other is coming in your days"
+msgid_plural "%(count)s others are coming in your days"
+msgstr[0] "%(count)s autre personne vient à tes dates"
+msgstr[1] "%(count)s autres personnes viennent à tes dates"
+
+msgid "A stop has what you wish for"
+msgstr "Une étape a ce que tu souhaites"
+
+msgid "A stop wishes for what you have"
+msgstr "Une étape souhaite ce que tu as"
+
+msgid "The tour %(tour)s goes to %(place)s, which offers: %(title)s"
+msgstr "Le tour %(tour)s va à %(place)s, qui offre : %(title)s"
+
+msgid "The tour %(tour)s goes to %(place)s, which is looking for: %(title)s"
+msgstr "Le tour %(tour)s va à %(place)s, qui cherche : %(title)s"
+
+msgid "Give it along"
+msgstr "Le confier au tour"
+
+msgid "The tour %(tour)s comes to you around %(date)s and passes through my country. I could give them my %(title)s to bring along."
+msgstr "Le tour %(tour)s arrive chez vous vers le %(date)s et passe par mon pays. Je pourrais leur confier %(title)s à vous apporter."
+
+msgid "The tour %(tour)s comes to you and passes through my country. I could give them my %(title)s to bring along."
+msgstr "Le tour %(tour)s arrive chez vous et passe par mon pays. Je pourrais leur confier %(title)s à vous apporter."
+
+msgid "I'm staying at %(place)s from %(from)s and would like to travel there with you from %(stop)s."
+msgstr "Je séjourne à %(place)s à partir du %(from)s et j'aimerais y aller avec vous depuis %(stop)s."
+
+msgid "I'm staying at %(place)s and would like to travel there with you from %(stop)s."
+msgstr "Je séjourne à %(place)s et j'aimerais y aller avec vous depuis %(stop)s."
+
+msgid "You pass near where I live; I'd like to come along from %(stop)s."
+msgstr "Vous passez près de chez moi ; j'aimerais venir avec vous depuis %(stop)s."
+
+msgid "I'd like to learn %(skill)s too and would love to learn it together."
+msgstr "J'aimerais aussi apprendre %(skill)s et ce serait super de l'apprendre ensemble."
+
+msgid "%(place)s offers %(title)s, which I'm looking for; I'd like to travel there with you."
+msgstr "%(place)s offre %(title)s, que je cherche ; j'aimerais y aller avec vous."
+
+msgid "Tour suggestions"
+msgstr "Suggestions de tours"
+
+msgid "On"
+msgstr "Activées"
+
+msgid "Pause for 1 month"
+msgstr "Pause pendant 1 mois"
+
+msgid "3 months"
+msgstr "3 mois"
+
+msgid "6 months"
+msgstr "6 mois"
+
+msgid "Off"
+msgstr "Désactivées"
+
+msgid "Paused until %(date)s"
+msgstr "En pause jusqu'au %(date)s"
+
+msgid "Tour suggestions paused until"
+msgstr "Suggestions de tours en pause jusqu'au"
+
+msgid "Tour suggestions are paused. You can turn them on again in your profile."
+msgstr "Les suggestions de tours sont en pause. Tu peux les réactiver dans ton profil."
+
+msgid "Not travelling now? Pause tour suggestions"
+msgstr "Tu ne voyages pas en ce moment ? Mets les suggestions de tours en pause"
+
+msgid "A ride from %(from)s to %(to)s on %(date)s, near %(place)s where you are then"
+msgstr "Un covoiturage de %(from)s à %(to)s le %(date)s, près de %(place)s où tu seras alors"
+
+msgid "Tours and rides for you"
+msgstr "Des tours et des covoiturages pour toi"
+
+msgid "A ride towards your home"
+msgstr "Un covoiturage vers chez toi"
+
+msgid "Someone from near you comes too"
+msgstr "Quelqu'un de près de chez toi vient aussi"
+
+msgid "A ride from %(from)s to %(to)s on %(date)s, towards your home after %(place)s"
+msgstr "Un covoiturage de %(from)s à %(to)s le %(date)s, vers chez toi après %(place)s"
+
+msgid "%(name)s is also coming to %(place)s around the same days, from near you"
+msgstr "%(name)s vient aussi à %(place)s vers les mêmes jours, de près de chez toi"
+
+msgid "I'm staying at %(place)s and would like to ride back towards home with you."
+msgstr "Je séjourne à %(place)s et j'aimerais rentrer avec vous vers chez moi."
+
+msgid "%(count)s other from near you is coming in your days"
+msgid_plural "%(count)s others from near you are coming in your days"
+msgstr[0] "%(count)s autre personne de près de chez toi vient à tes dates"
+msgstr[1] "%(count)s autres personnes de près de chez toi viennent à tes dates"

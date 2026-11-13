@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block head_title %}{% trans "Not travelling now? Pause tour suggestions" %} — ecobasa{% endblock %}
+
+{% block content %}
+<div class="container-form">
+  <h1>{% trans "Not travelling now? Pause tour suggestions" %}</h1>
+  <form method="post" class="border rounded-xl bg-secondary p-6 flex flex-wrap gap-3">{% csrf_token %}
+    {% for key, label in choices %}
+      <button type="submit" name="pause" value="{{ key }}" class="btn {% if key == 'off' %}btn-purple{% endif %}">{{ label }}</button>
+    {% endfor %}
+  </form>
+</div>
+{% endblock %}
