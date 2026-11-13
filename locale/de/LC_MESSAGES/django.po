@@ -5665,3 +5665,27 @@ msgstr "<a href=\"%(url)s\" class=\"underline\">Melde dich an</a>, um zu sehen, 
 
 msgid "Show"
 msgstr "Zeigen"
+
+# tours: skills to learn at the stops
+msgid "You can learn this on the way"
+msgstr "Das kannst du unterwegs lernen"
+
+msgid "Skills that your stops teach. Add them to what you want to learn, so people who want to learn the same find your tour."
+msgstr "Fähigkeiten, die deine Stationen weitergeben. Füge sie zu dem hinzu, was ihr lernen wollt, damit dich Leute finden, die dasselbe lernen wollen."
+
+msgid "Add all"
+msgstr "Alle hinzufügen"
+
+#, python-format
+msgid "Added to what you want to learn: %(skills)s"
+msgstr "Zu dem hinzugefügt, was ihr lernen wollt: %(skills)s"
+
+# tours: filter pills
+msgid "Only tours"
+msgstr "Nur Touren"
+
+msgid "Only tour ideas"
+msgstr "Nur Tour-Ideen"
+
+msgid "Near a place"
+msgstr "In der Nähe eines Ortes"

@@ -36,9 +36,9 @@
            class="absolute {{ align|default:"left-0" }} top-full mt-2 w-72 bg-primary text-secondary rounded-lg shadow-xl border border-red p-4 z-30 space-y-4">
         <div>
           <div class="text-xs font-bold uppercase tracking-wider opacity-70 mb-2">{% trans "Show" %}</div>
-          <div class="flex flex-wrap gap-2">
-            <button type="button" class="pill pill-lg transition-opacity" :class="$store.tourMap.shows('tours') ? 'bg-brown' : 'bg-brown opacity-50'" @click="$store.tourMap.toggleShow('tours')" :aria-pressed="$store.tourMap.shows('tours')"><i class="fa-solid fa-route mr-1"></i>{% trans "Tours" %}</button>
-            <button type="button" class="pill pill-lg transition-opacity" :class="$store.tourMap.shows('ideas') ? 'bg-brown' : 'bg-brown opacity-50'" @click="$store.tourMap.toggleShow('ideas')" :aria-pressed="$store.tourMap.shows('ideas')"><i class="fa-solid fa-lightbulb mr-1"></i>{% trans "Tour ideas" %}</button>
+          <div class="space-y-1">
+            <label class="flex items-center gap-2 cursor-pointer text-sm"><input type="checkbox" class="form-checkbox light h-4 w-4" :checked="$store.tourMap.shows('tours')" @change="$store.tourMap.toggleShow('tours'); $el.checked = $store.tourMap.shows('tours')"><i class="fa-solid fa-route"></i>{% trans "Tours" %}</label>
+            <label class="flex items-center gap-2 cursor-pointer text-sm"><input type="checkbox" class="form-checkbox light h-4 w-4" :checked="$store.tourMap.shows('ideas')" @change="$store.tourMap.toggleShow('ideas'); $el.checked = $store.tourMap.shows('ideas')"><i class="fa-solid fa-lightbulb"></i>{% trans "Tour ideas" %}</label>
           </div>
         </div>
         <div>

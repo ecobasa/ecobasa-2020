@@ -17,6 +17,7 @@ urlpatterns = [
     path("<slug:slug>/plan/stops/<int:pk>/edit/", views.stop_edit, name="stop_edit"),
     path("<slug:slug>/plan/stops/<int:pk>/move/<str:direction>/", views.stop_move, name="stop_move"),
     path("<slug:slug>/plan/stops/<int:pk>/delete/", views.stop_delete, name="stop_delete"),
+    path("<slug:slug>/plan/learn/", views.learn_add, name="learn_add"),
     path("<slug:slug>/publish/", views.publish, name="publish"),
     path("<slug:slug>/archive/", views.archive, name="archive"),
     path("<slug:slug>/confirm/", views.confirm, name="confirm"),

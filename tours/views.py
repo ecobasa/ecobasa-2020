@@ -10,6 +10,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_POST
+from django_countries import countries as all_countries
 
 from communities.models import Community
 from dashboard_lists import paginate
@@ -78,7 +79,17 @@ def tour_list(request):
         )
     return render(request, "tours/tour_list.html", {
         "filters": TourFilters(request.GET), "own": own, "mode_choices": Tour.MODE_CHOICES,
+        "countries": _countries(),
     })
+
+
+def _countries():
+    """The countries the listed, current tours travel through, by name: (code, name)."""
+    codes = set()
+    for countries in Tour.objects.listed().current().values_list("countries", flat=True):
+        # Stored as "DE,NL,FR"
+        codes.update(code for code in (countries or "").split(",") if code)
+    return sorted(((code, all_countries.name(code)) for code in codes if all_countries.name(code)), key=lambda pair: pair[1])
 
 
 def api_list(request):
@@ -182,6 +193,49 @@ def edit(request, slug):
     return _save_tour(request, tour, "tours/tour_form.html", {"tour": tour})
 
 
+def _learnable(tour):
+    """What one can learn at the tour's stops and doesn't want to learn yet: an event's
+    skills to learn, a community's skill offers (as on its page, also its current
+    events'). [(skill, [stop labels])], by name."""
+    stops = list(tour.ordered_stops())
+    events = {stop.event_id for stop in stops if stop.event_id}
+    communities = {stop.community_id for stop in stops if stop.community_id and not stop.event_id}
+    offers = (
+        Listing.objects.current()
+        .filter(type=Listing.TYPE_OFFER, kind=Listing.KIND_SKILL, skill__isnull=False)
+        .filter(Q(event__in=events) | Q(community__in=communities))
+        .exclude(skill__in=tour.learn_skills.all())
+        .select_related("skill")
+    )
+    where = {}
+    for offer in offers:
+        for stop in stops:
+            here = stop.event_id == offer.event_id if stop.event_id else (stop.community_id == offer.community_id)
+            if here:
+                labels = where.setdefault(offer.skill, [])
+                if stop.label not in labels:
+                    labels.append(stop.label)
+    return sorted(where.items(), key=lambda pair: pair[0].get_name().lower())
+
+
+@login_required
+@require_POST
+def learn_add(request, slug):
+    """Add skills one can learn at the stops to what the tour wants to learn."""
+    tour = _editable(slug, request.user)
+    learnable = {skill.pk: skill for skill, _labels in _learnable(tour)}
+    # One skill (its button), or all of them ("Add all")
+    ids = request.POST.getlist("all") if request.GET.get("all") else request.POST.getlist("skill")
+    chosen = [learnable[pk] for pk in map(int, filter(str.isdigit, ids)) if pk in learnable]
+    if chosen:
+        tour.learn_skills.add(*chosen)
+        tour.touch()
+        messages.success(request, _("Added to what you want to learn: %(skills)s") % {
+            "skills": ", ".join(skill.get_name() for skill in chosen),
+        })
+    return redirect(tour.url("plan") + "#learn")
+
+
 @login_required
 def plan(request, slug):
     """The route: the stops in order, moving them, and adding one."""
@@ -197,7 +251,7 @@ def plan(request, slug):
         return redirect(tour.url("plan"))
     tour = _tours().get(pk=tour.pk)
     return render(request, "tours/plan.html", {
-        "tour": tour, "route": _route(tour), "form": form, "can_edit": True,
+        "tour": tour, "route": _route(tour), "form": form, "can_edit": True, "learnable": _learnable(tour),
     })
 
 

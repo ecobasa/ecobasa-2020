@@ -1,0 +1,10 @@
+{# The filters in use as small pills, each with an x to take it off, like the gifts'. Bound to $store.tourMap #}
+<div x-show="$store.tourMap.pills.length" x-cloak class="flex flex-wrap gap-1">
+  <template x-for="pill in $store.tourMap.pills" :key="pill.key">
+    <span class="inline-flex items-center gap-1 text-xs bg-primary text-secondary rounded-full px-2 py-0.5">
+      <i class="fa-solid" :class="pill.icon"></i>
+      <span x-text="pill.label" class="truncate max-w-[12rem]"></span>
+      <button type="button" @click="$store.tourMap.unset(pill.key)" class="opacity-70 hover:opacity-100" aria-label="{% load i18n %}{% trans 'Remove' %}">&times;</button>
+    </span>
+  </template>
+</div>

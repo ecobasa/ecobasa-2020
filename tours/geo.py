@@ -149,12 +149,14 @@ class TourFilters:
         self.mode = params.get("mode") or ""
         self.children = params.get("children") == "1"
         self.animals = params.get("animals") == "1"
+        country = (params.get("country") or "").strip().upper()
+        self.country = country if len(country) == 2 and country.isalpha() else ""
         self.near = _point(params.get("near"))
         self.bbox = _bbox(params.get("bbox"))
 
     @property
     def active(self):
-        return bool(self.show or self.q or self.since or self.until or self.learn or self.mode or self.children or self.animals)
+        return bool(self.show or self.country or self.q or self.since or self.until or self.learn or self.mode or self.children or self.animals)
 
     def apply(self, tours):
         """Narrow a queryset of tours. Tour ideas have no dates: the dates leave them be."""
@@ -164,6 +166,9 @@ class TourFilters:
             tours = tours.exclude(starts_on=None, ends_on=None)
         elif self.show == "ideas":
             tours = tours.filter(starts_on=None, ends_on=None)
+        if self.country:
+            # Stored as "DE,NL,FR"
+            tours = tours.filter(countries__regex=rf"(^|,){self.country}(,|$)")
         if self.q:
             tours = tours.filter(search_q(self.q))
         if self.since:

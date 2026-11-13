@@ -24,6 +24,28 @@
     {% endif %}
   </section>
 
+  {# Skills one can learn at the stops: a click adds one to what the tour wants to learn #}
+  {% if learnable %}
+    <section id="learn" class="border rounded-xl bg-secondary bg-opacity-60 p-6 mb-6">
+      <h2 class="mt-0">{% trans "You can learn this on the way" %}</h2>
+      <p class="text-sm">{% trans "Skills that your stops teach. Add them to what you want to learn, so people who want to learn the same find your tour." %}</p>
+      <form method="post" action="{% url 'tours:learn_add' tour.slug %}" class="flex flex-wrap gap-2 items-center">
+        {% csrf_token %}
+        {% for skill, labels in learnable %}
+          <button type="submit" name="skill" value="{{ skill.pk }}" class="pill pill-lg bg-purple"
+                  title="{% for label in labels %}{{ label }}{% if not forloop.last %}, {% endif %}{% endfor %}">
+            <i class="fa fa-plus mr-1"></i>{{ skill.get_name }}
+            <span class="opacity-70 text-xs ml-1">· {{ labels|join:", " }}</span>
+          </button>
+        {% endfor %}
+        {% if learnable|length > 1 %}
+          {% for skill, labels in learnable %}<input type="hidden" name="all" value="{{ skill.pk }}">{% endfor %}
+          <button type="submit" formaction="{% url 'tours:learn_add' tour.slug %}?all=1" class="text-sm underline ml-2">{% trans "Add all" %}</button>
+        {% endif %}
+      </form>
+    </section>
+  {% endif %}
+
   <form method="post" class="border rounded-xl bg-secondary p-6 space-y-4">
     {% csrf_token %}
     <h2 class="mt-0">{% trans "Add a stop" %}</h2>

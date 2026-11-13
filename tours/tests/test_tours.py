@@ -487,3 +487,44 @@ def test_cards_show_countries_and_the_organiser_to_people_logged_in(organiser, o
     assert "Germany" in html or "Deutschland" in html
     assert organiser.get_absolute_url() in html
     assert organiser.get_absolute_url() not in Client().get(reverse("tours:api-list")).content.decode()
+
+
+def test_the_plan_suggests_skills_to_learn_at_the_stops(tour, organiser, other, farm, project):
+    from gift_economy.gifts.models import Listing
+    from gift_economy.gifts.skills.models import get_or_create_skill
+
+    def skill_offer(name, **holder):
+        return Listing.objects.create(type=Listing.TYPE_OFFER, kind=Listing.KIND_SKILL, skill=get_or_create_skill(name)[0], **holder)
+
+    add(tour, community=farm)
+    add(tour, event=project)
+    cob = skill_offer("Cob building", community=farm).skill                 # the community teaches it
+    masonry = skill_offer("Masonry", community=project.community, event=project).skill  # the project teaches it
+    pottery = skill_offer("Pottery", community=project.community).skill     # not at a stop: the event's community is not one
+    yoga = skill_offer("Yoga", community=farm).skill
+    tour.learn_skills.add(yoga)                                             # already wanted
+
+    client = login(organiser)
+    page = client.get(tour.url("plan")).content.decode()
+    offered = lambda skill: f'name="skill" value="{skill.pk}"' in page
+    assert offered(cob) and offered(masonry)
+    assert not offered(pottery) and not offered(yoga)
+
+    client.post(reverse("tours:learn_add", args=[tour.slug]), {"skill": masonry.pk})
+    assert set(tour.learn_skills.all()) == {yoga, masonry}
+    client.post(reverse("tours:learn_add", args=[tour.slug]) + "?all=1", {"all": [cob.pk, pottery.pk]})
+    assert set(tour.learn_skills.all()) == {yoga, masonry, cob}
+    # Only the organiser
+    assert login(other).post(reverse("tours:learn_add", args=[tour.slug]), {"skill": cob.pk}).status_code == 403
+
+
+def test_filter_by_country(organiser, farm, village):
+    france = published(organiser, "South", {"name": "Lyon", "location": Point(4.8357, 45.764, srid=4326), "country": "FR"},
+                       {"name": "Paris", "location": Point(2.35, 48.85, srid=4326), "country": "FR"})
+    idea = published(organiser, "North", countries=["DK", "SE"])
+    assert slugs(routes(country="FR")) == {france.slug}
+    listed = Client().get(reverse("tours:api-list"), {"country": "se"}).content.decode()
+    assert "North" in listed and "South" not in listed
+    # The list offers the countries tours go through
+    page = Client().get(reverse("tours:list")).content.decode()
+    assert '<option value="DK">' in page and '<option value="FR">' in page and '<option value="DE">' not in page

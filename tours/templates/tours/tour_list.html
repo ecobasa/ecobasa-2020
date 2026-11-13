@@ -21,35 +21,73 @@
       children: {{ filters.children|yesno:'true,false' }},
       animals: {{ filters.animals|yesno:'true,false' }},
       near: '{{ request.GET.near|escapejs }}',
+      country: '{{ filters.country|escapejs }}',
       loading: false,
       count: 0,
       get filterCount() {
-        return [this.show, this.from || this.until, this.learn, this.mode, this.children, this.animals].filter(Boolean).length;
+        return [this.show, this.from || this.until, this.learn, this.mode, this.children, this.animals, this.country].filter(Boolean).length;
       },
       get anything() { return this.filterCount > 0 || !!this.q || !!this.near; },
+      // The filters in use, as small pills to take off one by one
+      get pills() {
+        const pills = [];
+        if (this.show) pills.push({ key: 'show', icon: this.show === 'tours' ? 'fa-route' : 'fa-lightbulb', label: TOUR_LABELS[this.show] });
+        if (this.near) pills.push({ key: 'near', icon: 'fa-map-marker-alt', label: TOUR_LABELS.near });
+        if (this.country) pills.push({ key: 'country', icon: 'fa-earth-europe', label: TOUR_COUNTRIES[this.country] || this.country });
+        if (this.from) pills.push({ key: 'from', icon: 'fa-calendar', label: TOUR_LABELS.from + ' ' + this.from });
+        if (this.until) pills.push({ key: 'until', icon: 'fa-calendar', label: TOUR_LABELS.until + ' ' + this.until });
+        this.learn.split(',').filter(Boolean).forEach(name => pills.push({ key: 'learn:' + name, icon: 'fa-graduation-cap', label: name }));
+        if (this.mode) pills.push({ key: 'mode', icon: 'fa-route', label: TOUR_MODES[this.mode] || this.mode });
+        if (this.children) pills.push({ key: 'children', icon: 'fa-children', label: TOUR_LABELS.children });
+        if (this.animals) pills.push({ key: 'animals', icon: 'fa-paw', label: TOUR_LABELS.animals });
+        return pills;
+      },
+      unset(key) {
+        if (key.startsWith('learn:')) {
+          const name = key.slice(6);
+          this.learn = this.learn.split(',').filter(n => n && n !== name).join(',');
+          document.querySelectorAll('[data-tour-learn]').forEach(input => input.__tagify && input.__tagify.removeTags(name));
+        } else if (key === 'children' || key === 'animals') {
+          this[key] = false;
+        } else {
+          this[key] = '';
+        }
+        window.tourFiltersChanged();
+      },
       params() {
         const params = new URLSearchParams();
-        ['show', 'q', 'from', 'until', 'learn', 'mode', 'near'].forEach(key => { if (this[key]) params.set(key, this[key]); });
+        ['show', 'q', 'from', 'until', 'learn', 'mode', 'near', 'country'].forEach(key => { if (this[key]) params.set(key, this[key]); });
         if (this.children) params.set('children', '1');
         if (this.animals) params.set('animals', '1');
         return params;
       },
       clear() {
-        Object.assign(this, { show: '', q: '', from: '', until: '', learn: '', mode: '', children: false, animals: false, near: '' });
+        Object.assign(this, { show: '', country: '', q: '', from: '', until: '', learn: '', mode: '', children: false, animals: false, near: '' });
         document.querySelectorAll('[data-tour-learn]').forEach(input => input.__tagify && input.__tagify.removeAllTags());
         window.tourFiltersChanged();
       },
-      // Tours with dates and tour ideas: both shown, or one of them alone
+      // Tours with dates and tour ideas: both shown, or one of them alone (never none)
       shows(kind) { return !this.show || this.show === kind; },
       toggleShow(kind) {
         const other = kind === 'tours' ? 'ideas' : 'tours';
-        this.show = !this.show ? other : (this.show === kind ? '' : kind);
+        if (!this.show) this.show = other;
+        else if (this.show !== kind) this.show = '';
+        else return;
         window.tourFiltersChanged();
       },
       showMap() { this.view = 'map'; },
       showList() { this.view = 'list'; window.tourListReload(); },
     });
   });
+
+  // Words for the filter pills
+  const TOUR_LABELS = {
+    tours: '{% trans "Only tours"|escapejs %}', ideas: '{% trans "Only tour ideas"|escapejs %}',
+    near: '{% trans "Near a place"|escapejs %}', from: '{% trans "From"|escapejs %}', until: '{% trans "Until"|escapejs %}',
+    children: '{% trans "Children welcome"|escapejs %}', animals: '{% trans "Animals welcome"|escapejs %}',
+  };
+  const TOUR_MODES = { {% for value, label in mode_choices %}'{{ value }}': '{{ label|escapejs }}',{% endfor %} };
+  const TOUR_COUNTRIES = { {% for code, name in countries %}'{{ code }}': '{{ name|escapejs }}',{% endfor %} };
 
   // Search suggestions: tours, skills, stops, and places (to move the map there)
   function tourSuggestions() {
@@ -116,6 +154,7 @@
     <div class="absolute top-4 left-4 flex flex-col gap-3 z-10 w-full max-w-40 md:max-w-60 lg:max-w-xs xl:max-w-md">
       <div class="bg-secondary bg-opacity-30 backdrop-blur rounded-lg shadow p-3 flex flex-col gap-2">
         {% include "tours/_search_bar.html" with row="flex-col lg:flex-row" %}
+        {% include "tours/_filter_pills.html" %}
 
         <div class="flex items-center justify-between text-brown text-sm">
           <span x-text="'{% trans "Tours on the map"|escapejs %}: ' + $store.tourMap.count"></span>
@@ -143,22 +182,32 @@
        @click.self="$store.tourMap.showMap()" @keydown.escape.window="$store.tourMap.showMap()">
     <div class="modal-content" role="dialog" aria-modal="true">
       <button type="button" class="modal-close" @click="$store.tourMap.showMap()">&times;</button>
-      <h2 class="mt-0 flex items-center gap-2"><i class="fa-solid fa-route text-primary"></i>{% trans "Community-Tours" %}</h2>
-      <p class="text-sm">{% trans "Travel from community to community and from event to event: help, learn, and take gifts along. Join a tour for all of it or for part of the way." %}</p>
-      {% if own %}
-        <details class="mb-4 border rounded-xl bg-secondary bg-opacity-60 p-3" open>
-          <summary class="cursor-pointer font-semibold text-sm">{% trans "Your tours that are not in the list" %} <span class="opacity-60">{{ own|length }}</span></summary>
-          <div class="flex flex-col gap-3 mt-3">{% for tour in own %}{% include "tours/_tour_card.html" %}{% endfor %}</div>
-        </details>
-      {% endif %}
-      {# The same search and filters as on the map; then tours and ideas, where the tabs were #}
-      <div class="mb-3">{% include "tours/_search_bar.html" with align="right-0" %}</div>
-      <div class="mb-3"><div class="flex flex-wrap gap-2">
-          <button type="button" class="pill pill-lg transition-opacity" :class="$store.tourMap.shows('tours') ? 'bg-primary' : 'bg-primary opacity-50'" @click="$store.tourMap.toggleShow('tours')" :aria-pressed="$store.tourMap.shows('tours')"><i class="fa-solid fa-route mr-1"></i>{% trans "Tours" %}</button>
-          <button type="button" class="pill pill-lg transition-opacity" :class="$store.tourMap.shows('ideas') ? 'bg-yellow' : 'bg-yellow opacity-50'" @click="$store.tourMap.toggleShow('ideas')" :aria-pressed="$store.tourMap.shows('ideas')"><i class="fa-solid fa-lightbulb mr-1"></i>{% trans "Tour ideas" %}</button>
-        </div></div>
-      <div id="tour-list" class="max-h-[60vh] overflow-y-auto">
-        <div class="text-center py-8 text-brown"><i class="fa fa-spinner fa-spin text-2xl"></i></div>
+      {# The same search and filters as on the map, the country, the filters in use #}
+      <div class="space-y-3 mb-4">
+        {% include "tours/_search_bar.html" with align="right-0" %}
+        {% if countries %}
+          <select class="form-select w-full rounded text-sm" x-model="$store.tourMap.country" @change="window.tourFiltersChanged()">
+            <option value="">{% trans "All countries" %}</option>
+            {% for code, name in countries %}<option value="{{ code }}">{{ name }}</option>{% endfor %}
+          </select>
+        {% endif %}
+        {% include "tours/_filter_pills.html" %}
+        <div class="text-xs text-brown flex justify-end" x-cloak x-show="$store.tourMap.anything">
+          <button type="button" class="underline opacity-70 hover:opacity-100 whitespace-nowrap" @click="$store.tourMap.clear()">{% trans "Clear filters" %}</button>
+        </div>
+      </div>
+      {# One scrolling list, as high as the gifts' and communities': what tours are, your own tours that are in no list, then the tours #}
+      <div id="tour-list-scroll" class="max-h-[60vh] overflow-y-auto space-y-3">
+        <p class="text-sm m-0"><i class="fa-solid fa-route text-primary mr-1"></i>{% trans "Travel from community to community and from event to event: help, learn, and take gifts along. Join a tour for all of it or for part of the way." %}</p>
+        {% if own %}
+          <details class="border rounded-xl bg-secondary bg-opacity-60 p-3" open>
+            <summary class="cursor-pointer font-semibold text-sm">{% trans "Your tours that are not in the list" %} <span class="opacity-60">{{ own|length }}</span></summary>
+            <div class="flex flex-col gap-3 mt-3">{% for tour in own %}{% include "tours/_tour_card.html" %}{% endfor %}</div>
+          </details>
+        {% endif %}
+        <div id="tour-list">
+          <div class="text-center py-8 text-brown"><i class="fa fa-spinner fa-spin text-2xl"></i></div>
+        </div>
       </div>
     </div>
   </div>
