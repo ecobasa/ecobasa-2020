@@ -5969,3 +5969,19 @@ msgstr "Was wir hier lernen möchten"
 
 msgid "From what your tour wants to learn. Ticked: what one can learn here."
 msgstr "Aus dem, was eure Tour lernen will. Angekreuzt: was man hier lernen kann."
+
+# tours: references about a tour
+msgid "Who was there"
+msgstr "Wer dabei war"
+
+msgid "Who is your story about?"
+msgstr "Über wen ist deine Geschichte?"
+
+msgid "The whole group"
+msgstr "Die ganze Gruppe"
+
+msgid "Write about someone else too?"
+msgstr "Auch über jemand anderen schreiben?"
+
+msgid "Back to tour"
+msgstr "Zurück zur Tour"

@@ -39,6 +39,9 @@
   </header>
   {% endwith %}
   <p class="text-sm m-0">{{ ref.text|linebreaksbr }}</p>
+  {% with present=ref.people.all %}{% if present %}
+    <p class="text-xs text-brown mt-2 mb-0"><i class="fa-solid fa-people-group mr-1"></i>{% trans "Who was there" %}: {% for person in present %}<a href="{{ person.get_absolute_url }}" class="text-primary">{{ person.name|default:person.email }}</a>{% if not forloop.last %}, {% endif %}{% endfor %}</p>
+  {% endif %}{% endwith %}
   {% if ref.photo %}<img src="{{ ref.photo.url }}" alt="" loading="lazy" class="mt-3 rounded-lg max-h-64 object-cover">{% endif %}
   {% if ref.visible_skill_tags or ref.gift_names %}
     <div class="flex flex-wrap items-center gap-2 mt-3 text-xs">

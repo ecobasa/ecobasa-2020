@@ -1,0 +1,104 @@
+"""References about a tour: the whole group at a visit, with who was there (package 4)."""
+
+from datetime import datetime, time, timedelta
+
+import pytest
+from django.conf import settings
+from django.contrib.contenttypes.models import ContentType
+from django.test import Client
+from django.urls import reverse
+from django.utils import timezone
+
+from gift_economy.references.models import Reference, ReferenceRequest
+from gift_economy.references.reference_requests import send_reference_requests
+
+from ..models import Tour
+from .test_joining import accept, person
+from .test_tours import farm, login, organiser, other, published, village  # noqa: F401
+from .test_visits import ask_host, farm_stop, joined, tour  # noqa: F401
+
+pytestmark = pytest.mark.django_db
+
+
+@pytest.fixture
+def visited(tour, organiser, farm, django_capture_on_commit_callbacks):
+    """Olga, Otto and Rita stayed at the farm; Rita got off there."""
+    stops = tour.ordered_stops()
+    joined(tour, person("Otto"), stops[0], stops[2], 1, django_capture_on_commit_callbacks)
+    joined(tour, person("Rita"), stops[0], stops[1], 1, django_capture_on_commit_callbacks)
+    stop = farm_stop(tour)
+    ask_host(organiser, tour, stop)
+    stop.refresh_from_db()
+    accept(stop.visit_match, farm.owner)
+    stop.refresh_from_db()
+    return stop
+
+
+def after(stop):
+    end = timezone.make_aware(datetime.combine(stop.leave_on, time.min))
+    return end + timedelta(days=settings.REFERENCE_REQUEST_DELAY_DAYS, hours=1)
+
+
+def test_after_the_visit_host_and_group_are_asked(visited, organiser, farm):
+    match = visited.visit_match
+    assert sorted(u.name for u in match.stay_details.companions.all()) == ["Otto", "Rita"]
+    send_reference_requests(now=after(visited))
+    asked = {r.user.name for r in ReferenceRequest.objects.filter(match=match)}
+    assert asked == {"Olga", "Otto", "Rita", farm.owner.name}
+
+
+def test_the_host_writes_about_the_group_and_about_one_of_them(visited, farm):
+    match = visited.visit_match
+    send_reference_requests(now=after(visited))
+    key = ReferenceRequest.objects.get(match=match, user=farm.owner).key
+    url = reverse("references:request", args=[key])
+    page = Client().get(url).content.decode()
+    assert "The whole group" in page and "Otto" in page and "Who was there" in page
+
+    otto = match.stay_details.companions.get(name="Otto")
+    rita = match.stay_details.companions.get(name="Rita")
+    Client().post(url, {"impression": "positive", "text": "A lovely group, the jars still stand.", "people": [str(otto.pk)]})
+    group_reference = Reference.objects.get(content_type=ContentType.objects.get_for_model(Tour))
+    assert group_reference.subject == visited.tour and list(group_reference.people.all()) == [otto]
+
+    Client().post(f"{url}?about={rita.pk}", {"impression": "positive", "text": "Rita fixed our pump."})
+    assert Reference.objects.get(author=farm.owner, object_id=str(rita.pk)).subject == rita
+
+    # The tour page lists the group's reference with who was there; Rita's stays on her profile
+    page = Client().get(visited.tour.get_absolute_url()).content.decode()
+    assert "the jars still stand" in page and "Rita fixed our pump" not in page
+
+
+def test_the_group_writes_about_the_host(visited, farm):
+    match = visited.visit_match
+    send_reference_requests(now=after(visited))
+    otto = match.stay_details.companions.get(name="Otto")
+    key = ReferenceRequest.objects.get(match=match, user=otto).key
+    Client().post(reverse("references:request", args=[key]), {"impression": "positive", "text": "We felt at home."})
+    assert Reference.objects.get(author=otto).subject == farm
+
+
+def test_travellers_dont_write_about_their_own_tour(visited, organiser):
+    tour = visited.tour
+    otto = tour.travellers.get(user__name="Otto").user
+    url = reverse("references:save", args=[ContentType.objects.get_for_model(Tour).pk, tour.pk])
+    assert login(otto).post(url, {"impression": "positive", "text": "Us!"}).status_code == 403
+    vera = person("Vera")
+    page = login(vera).get(tour.get_absolute_url()).content.decode()
+    assert url in page
+    login(vera).post(url, {"impression": "positive", "text": "They helped at our market.", "people": [str(otto.pk)]})
+    reference = Reference.objects.get(author=vera)
+    assert reference.recipient == organiser and list(reference.people.all()) == [otto]
+
+
+def test_a_host_who_travels_along_is_asked_once_as_host(tour, organiser, farm, django_capture_on_commit_callbacks):
+    stops = tour.ordered_stops()
+    joined(tour, farm.owner, stops[0], stops[2], 1, django_capture_on_commit_callbacks)
+    stop = farm_stop(tour)
+    ask_host(organiser, tour, stop)
+    stop.refresh_from_db()
+    accept(stop.visit_match, farm.owner)
+    send_reference_requests(now=after(stop))
+    request = ReferenceRequest.objects.get(match=stop.visit_match, user=farm.owner)
+    page = Client().get(reverse("references:request", args=[request.key])).content.decode()
+    assert "The whole group" in page

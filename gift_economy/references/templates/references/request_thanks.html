@@ -14,5 +14,18 @@
       <i class="fa fa-comments mr-2"></i>{% trans "View references" %}
     </a>
   {% endif %}
+  {% if others %}
+    {# The host of a group: about the group, and about single people of it #}
+    <div class="mt-8">
+      <p class="font-semibold">{% trans "Write about someone else too?" %}</p>
+      <div class="flex flex-wrap justify-center gap-2 mt-2">
+        {% for key, other in others %}
+          <a href="{% url 'references:request' reference_request.key %}?about={{ key }}" class="pill bg-purple">
+            {% if key == "group" %}<i class="fa-solid fa-people-group mr-1"></i>{% trans "The whole group" %}{% else %}<i class="fa fa-user mr-1"></i>{{ other.name|default:other.email }}{% endif %}
+          </a>
+        {% endfor %}
+      </div>
+    </div>
+  {% endif %}
 </div>
 {% endblock %}

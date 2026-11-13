@@ -28,9 +28,22 @@ class ReferenceForm(forms.ModelForm):
             }),
         }
 
-    def __init__(self, *args, subject=None, story=False, **kwargs):
+    def __init__(self, *args, subject=None, story=False, present=(), **kwargs):
         super().__init__(*args, **kwargs)
         self.story = story
+        # About a group (a tour): who of it was there, everyone from the match ticked
+        group = getattr(subject, "get_reference_people", None)
+        if group is not None:
+            people = list(group())
+            self.fields["people"] = forms.MultipleChoiceField(
+                label=_("Who was there"), required=False, widget=forms.CheckboxSelectMultiple,
+                choices=[(str(person.pk), person.name or person.email) for person in people],
+            )
+            self.group_people = {str(person.pk): person for person in people}
+            if self.instance.pk:
+                self.fields["people"].initial = [str(pk) for pk in self.instance.people.values_list("pk", flat=True)]
+            else:
+                self.fields["people"].initial = [str(person.pk) for person in present]
         if story:
             self.fields["text"].label = _("Your story")
             self.fields["text"].widget.attrs.update(rows=6, placeholder=_("What happened? What are you grateful for?"))
@@ -67,6 +80,8 @@ class ReferenceForm(forms.ModelForm):
             reference.photo.save(photo.name, photo, save=False)
         reference.save()
         self.save_tags(reference, holder=subject)
+        if "people" in self.fields:
+            reference.people.set([self.group_people[pk] for pk in self.cleaned_data.get("people", []) if pk in self.group_people])
         return reference
 
     def gift_names(self):

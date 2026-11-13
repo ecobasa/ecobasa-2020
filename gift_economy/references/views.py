@@ -13,7 +13,7 @@ from django.views.decorators.http import require_POST
 from dashboard_lists import Choice, paginate, query_url
 
 from .forms import ReferenceForm, form_context
-from .models import Reference, ReferenceSkill, is_referenceable, with_card_data, references_about, match_gift_names, match_reference_subject, match_skill_names, subject_owner
+from .models import Reference, ReferenceSkill, can_write_about, is_referenceable, match_gift_names, match_reference_group, match_reference_subject, match_skill_names, reference_choices, references_about, subject_owner, with_card_data
 from .notifications import notify_reference_created
 from .reference_requests import exchange_context, existing_reference, find_reference_request, subject_name
 
@@ -33,8 +33,7 @@ def save(request, content_type_id, object_id):
         subject = content_type.get_object_for_this_type(pk=object_id)
     except content_type.model_class().DoesNotExist:
         raise Http404
-    owner = subject_owner(subject)
-    if owner == request.user:
+    if not can_write_about(subject, request.user):
         raise PermissionDenied
 
     existing = Reference.objects.filter(
@@ -152,10 +151,14 @@ def reference_request(request, key):
     if reference_request is None:
         return render(request, "references/request_expired.html", status=404)
     match, user = reference_request.match, reference_request.user
-    subject, gift, skill = match_reference_subject(match, user)
-    reference = existing_reference(reference_request)
+    # After a group's stay the host writes about the group or one of its people (?about=)
+    choices = reference_choices(match, user)
+    about = request.GET.get("about", "") if any(key == request.GET.get("about") for key, _s in choices) else ""
+    subject, gift, skill = match_reference_subject(match, user, about)
+    reference = existing_reference(reference_request, about)
+    _group, present = match_reference_group(match)
     if request.method == "POST":
-        form = ReferenceForm(request.POST, request.FILES, instance=reference, subject=subject, story=True)
+        form = ReferenceForm(request.POST, request.FILES, instance=reference, subject=subject, story=True, present=present)
         if form.is_valid():
             saved = form.save_reference(user, subject, match=match)
             reference_request.reference = saved
@@ -164,9 +167,12 @@ def reference_request(request, key):
                 notify_reference_created(saved, http_request=request)
             return render(request, "references/request_thanks.html", {
                 "subject": subject, "shared": saved.share_publicly,
+                # The host of a group may write about others of it too
+                "others": [(key, other) for key, other in choices if other != subject],
+                "reference_request": reference_request,
             })
     else:
-        form = ReferenceForm(instance=reference, subject=subject, story=True, initial={
+        form = ReferenceForm(instance=reference, subject=subject, story=True, present=present, initial={
             # From the email after a reply: "allow sharing" comes pre-ticked
             **({"share_publicly": True} if request.GET.get("share") else {}),
         })
@@ -182,6 +188,8 @@ def reference_request(request, key):
         "subject_name": subject_name(subject),
         **exchange_context(match, user),
         "reference_request": reference_request,
+        "choices": choices,
+        "about": about or (choices[0][0] if choices else ""),
     })
 
 

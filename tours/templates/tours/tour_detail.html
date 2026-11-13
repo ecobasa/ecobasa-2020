@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% load i18n %}
+{% load i18n references_tags %}
 
 {% block head_title %}{{ tour.title }} — {% trans "Community-Tours" %} — ecobasa{% endblock %}
 
@@ -121,6 +121,9 @@
           {% endfor %}
         </div>
       {% endif %}
+
+      {# What hosts and others who met the group say about it #}
+      {% references_for tour %}
     </div>
 
     <aside class="sm:col-span-4 space-y-[32px]">

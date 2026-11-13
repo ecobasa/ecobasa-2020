@@ -15,6 +15,14 @@
   {{ form.text }}
   {% for e in form.text.errors %}<p class="field-error">{{ e }}</p>{% endfor %}
 </div>
+{% if form.people %}
+  <fieldset class="form-group mb-4">
+    <legend class="form-label">{{ form.people.label }}</legend>
+    <div class="flex flex-wrap gap-x-4 gap-y-1">
+      {% for box in form.people %}<label class="inline-flex items-center gap-2 text-sm text-brown cursor-pointer">{{ box.tag }} {{ box.choice_label }}</label>{% endfor %}
+    </div>
+  </fieldset>
+{% endif %}
 {% if form.can_tag %}
   <div class="form-group mb-4">
     <label class="form-label" for="reference-skill-names">{% trans "Which skills was it about?" %}</label>

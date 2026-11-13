@@ -4,7 +4,7 @@ from django import template
 from django.contrib.contenttypes.models import ContentType
 
 from ..forms import ReferenceForm, form_context
-from ..models import Reference, ReferenceSkill, references_about, with_card_data, match_gift_names, match_reference_subject, match_skill_names, subject_owner
+from ..models import Reference, ReferenceSkill, can_write_about, references_about, with_card_data, match_gift_names, match_reference_subject, match_skill_names, subject_owner
 
 register = template.Library()
 
@@ -30,7 +30,7 @@ def references_for(context, subject):
     own = next(
         (r for r in references if r.author_id == user.pk and not r.about_other), None
     ) if user.is_authenticated else None
-    can_write = user.is_authenticated and not is_owner
+    can_write = can_write_about(subject, user)
 
     form = None
     prefill_gifts = []

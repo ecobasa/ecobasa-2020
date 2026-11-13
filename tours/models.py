@@ -319,6 +319,22 @@ class Tour(models.Model):
             and not t.ride_only
         ]
 
+    # ── References about the whole group (gift_economy.references) ──
+    # Hosts and others who met the group write about it, saying who of it was there.
+    # References about single travellers stay on their profiles.
+    reference_subject = True
+
+    def get_reference_kind(self):
+        return _("Tour"), "fa-route", "bg-purple"
+
+    def get_reference_people(self):
+        """Who can be named as having been there: everyone on the tour."""
+        return [traveller.user for traveller in self.counted_travellers()]
+
+    def can_be_referenced_by(self, user):
+        """Not by its own travellers: they write about the hosts and about each other."""
+        return not any(traveller.user_id == user.pk for traveller in self.counted_travellers())
+
     # ── As what a join request is about (gift_economy.matches) ──────
     def get_match_owner(self):
         return self.organiser
@@ -588,6 +604,13 @@ class Stop(models.Model):
 
     def get_match_verb(self):
         return _("asked to host their tour at")
+
+    # After the visit the host writes about the group, or about one of them
+    def get_reference_group(self):
+        return self.tour
+
+    def get_reference_present(self, match):
+        return [match.from_user, *match.stay_details.companions.all()]
 
     def get_match_summary(self, match):
         people = match.people
