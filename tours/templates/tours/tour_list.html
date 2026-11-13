@@ -120,7 +120,7 @@
         if (!term || term.length < 2) return this.close();
         this._timer = setTimeout(() => {
           const tours = fetch('{% url "tours:api-suggest" %}?q=' + encodeURIComponent(term)).then(r => r.json()).catch(() => []);
-          const places = fetch('https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=4&q=' + encodeURIComponent(term))
+          const places = fetch('https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=4&accept-language={{ LANGUAGE_CODE }}&q=' + encodeURIComponent(term))
             .then(r => r.json())
             .then(data => data.map(d => ({ value: EcoMap.formatAddress(d), type: 'place', lon: parseFloat(d.lon), lat: parseFloat(d.lat) })))
             .catch(() => []);

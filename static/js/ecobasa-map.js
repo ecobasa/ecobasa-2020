@@ -13,6 +13,9 @@
     return 'https://tiles.stadiamaps.com/tiles/' + tile + '/{z}/{x}/{y}.' + (ext || 'png') + suffix;
   }
 
+  // Place names in the page's language (<html lang>): Nominatim gives each place's own otherwise
+  var LANGUAGE = document.documentElement.lang || 'en';
+
   // Where the house number goes before the street ("10 Downing Street"), and where the
   // postcode follows the town ("London SW1A 2AA"); elsewhere "Hauptstraße 5, 14473 Potsdam"
   var NUMBER_FIRST  = ['au', 'ca', 'fr', 'gb', 'ie', 'il', 'in', 'lu', 'nz', 'us', 'za'];
@@ -334,7 +337,7 @@
 
     async reverseGeocode(lon, lat) {
       try {
-        const r = await fetch('https://nominatim.openstreetmap.org/reverse?format=json&lat=' + lat + '&lon=' + lon + '&addressdetails=1');
+        const r = await fetch('https://nominatim.openstreetmap.org/reverse?format=json&lat=' + lat + '&lon=' + lon + '&addressdetails=1&accept-language=' + LANGUAGE);
         return await r.json();
       } catch (e) { return null; }
     },
@@ -475,7 +478,7 @@
           }
           this.loading = true;
           try {
-            const r = await fetch('https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&q=' + encodeURIComponent(term));
+            const r = await fetch('https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&accept-language=' + LANGUAGE + '&q=' + encodeURIComponent(term));
             const data = await r.json();
             this.results = data.slice(0, 5).map(function (res) {
               return Object.assign({}, res, { label: EcoMap.formatAddress(res) });

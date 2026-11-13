@@ -55,7 +55,7 @@
             const promises = [communityFetch];
             if (includeNominatim) {
               const nominatimFetch = fetch(
-                'https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=12&q=' + encodeURIComponent(term)
+                'https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=12&accept-language={{ LANGUAGE_CODE }}&q=' + encodeURIComponent(term)
               ).then(r => r.json()).then(data => {
                 const seen = new Set();
                 const perCountry = {};

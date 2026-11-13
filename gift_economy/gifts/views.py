@@ -410,13 +410,15 @@ def nominatim_proxy(request):
     q = request.GET.get("q", "").strip()
     if len(q) < 3:
         return JsonResponse([], safe=False)
-    cache_key = "nominatim:" + q.lower()
+    # Names in the page's language: Nominatim gives each place's own otherwise
+    language = request.LANGUAGE_CODE
+    cache_key = f"nominatim:{language}:{q.lower()}"
     cached = cache.get(cache_key)
     if cached is not None:
         return JsonResponse(cached, safe=False)
     try:
         url = "https://nominatim.openstreetmap.org/search?" + urllib.parse.urlencode({
-            "format": "json", "addressdetails": "1", "limit": "10", "q": q,
+            "format": "json", "addressdetails": "1", "limit": "10", "q": q, "accept-language": language,
         })
         req = urllib.request.Request(url, headers={"User-Agent": "ecobasa.org/1.0 geocoder"})
         with urllib.request.urlopen(req, timeout=5) as resp:
