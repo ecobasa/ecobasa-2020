@@ -8,6 +8,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.html import strip_tags
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_POST
 from django_countries import countries as all_countries
@@ -23,8 +24,9 @@ from gift_economy.matches.models import Contribution, Match, MatchMessage
 
 from . import matching
 from .forms import HostForm, JoinForm, StopForm, TourForm, TourNeedFormSet, VehicleFormSet
-from .geo import MAX_TOURS, TourFilters, feature_collection
-from .models import Stop, Tour, Traveller, append_stop, move_stop, remove_stop
+from .geo import MAX_TOURS, TourFilters, feature_collection, recommendation_features
+from .models import Stop, Tour, Traveller, append_stop, insert_stop, move_stop, remove_stop, set_order
+from .recommend import AREA_CHOICES, DEFAULT_AREA_KM, hints, km_of, recommend_stops, suggest_order
 
 _STOPS = ("stops__event__community", "stops__community__photos", "learn_skills", "vehicles__drivers")
 
@@ -171,6 +173,8 @@ def tour_detail(request, slug):
     prefetch_related_objects([traveller.user for traveller in travellers], "communities")
     team = tour.team_skill_ids()
     needs = [(need, matching.role(need, team)) for need in tour.needs()]
+    # The way to each stop in a maps app, only for those who travel along
+    on_tour = any(traveller.user_id == request.user.pk for traveller in travellers)
     return render(request, "tours/tour_detail.html", {
         "needs": needs,
         "vehicles": tour.vehicles.all(),
@@ -182,14 +186,16 @@ def tour_detail(request, slug):
         "stops": stops,
         "join": _join_state(tour, request.user),
         "skills": _skills([traveller.user for traveller in travellers]),
-        "route": _route(tour),
+        "route": _route(tour, viewer=request.user if on_tour else None),
         "geojson": feature_collection([tour], request.user),
     })
 
 
-def _route(tour):
+def _route(tour, viewer=None):
     """The stops in order, each with the place everyone may see and the leg after it
-    (with its free places, on a tour that looks for travellers and has a limit)."""
+    (with its free places, on a tour that looks for travellers and has a limit). With a
+    `viewer` who travels along, each stop also has the links that open the way there in
+    a maps app (_directions)."""
     from .visits import clashes
 
     stops = tour.ordered_stops()
@@ -211,8 +217,46 @@ def _route(tour):
             "free": max(free[index], 0) if leg and free[index] is not None else None,
             # Its days overlap the stop before (other days agreed with a host, say)
             "clash": index in clashing,
+            "directions": _directions(stop, viewer, stops[index - 1].onward_mode if index else "") if viewer else None,
         })
     return route
+
+
+# How the leg to a stop is travelled, as Apple Maps' dirflg (driving, walking, transit)
+# and as OpenStreetMap's routing engine (car, bike, foot; it has no trains)
+_APPLE_MODES = {
+    Tour.MODE_VAN: "d", Tour.MODE_CAR: "d", Tour.MODE_HITCHHIKING: "d", Tour.MODE_FOOT: "w", Tour.MODE_TRAIN: "r",
+}
+_OSM_ENGINES = {Tour.MODE_BICYCLE: "fossgis_osrm_bike", Tour.MODE_FOOT: "fossgis_osrm_foot"}
+_GOOGLE_MODES = {Tour.MODE_BICYCLE: "bicycling", Tour.MODE_FOOT: "walking", Tour.MODE_TRAIN: "transit"}
+
+
+def _directions(stop, viewer, arriving_mode):
+    """Links that open the way to a stop in a maps app or on a map website, from
+    wherever one is: a geo: link (Android lets one choose any app; the page shows it
+    only there, tour_detail.html), Apple Maps, Google Maps, OpenStreetMap's directions
+    and OsmAnd. The pin is named after the community, also for one of its events, or the other place.
+    The place as `viewer` may know it: a private community's only roughly until its host
+    agreed to the group (`approximate`)."""
+    from urllib.parse import quote
+
+    _name, point = stop.place_for(viewer)
+    if point is None:
+        return None
+    lat, lon = round(point.y, 6), round(point.x, 6)
+    mode = arriving_mode or stop.tour.travel_mode
+    flag = _APPLE_MODES.get(mode)
+    name = stop.community.name if stop.community_id else stop.name
+    engine = _OSM_ENGINES.get(mode, "fossgis_osrm_car")
+    return {
+        "osm": f"https://www.openstreetmap.org/directions?engine={engine}&route=%3B{lat}%2C{lon}",
+        "geo": f"geo:{lat},{lon}?q={lat},{lon}({quote(name)})",
+        "apple": f"https://maps.apple.com/?daddr={lat},{lon}" + (f"&dirflg={flag}" if flag else ""),
+        "google": f"https://www.google.com/maps/dir/?api=1&destination={lat}%2C{lon}"
+                  f"&travelmode={_GOOGLE_MODES.get(mode, 'driving')}",
+        "osmand": f"https://osmand.net/map/?pin={lat},{lon}#16/{lat}/{lon}",
+        "approximate": bool(stop.community_id and not stop.community.shows_place_to(viewer)),
+    }
 
 
 def _save_tour(request, tour, template, context):
@@ -288,9 +332,49 @@ def learn_add(request, slug):
     return redirect(tour.url("plan") + "#learn")
 
 
+def _area_km(request):
+    try:
+        km = int(request.GET.get("km") or request.POST.get("km") or DEFAULT_AREA_KM)
+    except ValueError:
+        return DEFAULT_AREA_KM
+    return km if km in AREA_CHOICES else DEFAULT_AREA_KM
+
+
+def _planner(request, tour, show_order=False):
+    """What the planner shows under its map: the route, an order with fewer km if
+    asked for, the hints, and the communities and events recommended on the way."""
+    tour = _tours().get(pk=tour.pk)
+    stops = tour.ordered_stops()
+    km = _area_km(request)
+    recommendations = recommend_stops(tour, km)
+    context = {
+        "tour": tour, "route": _route(tour), "can_edit": True, "km": km, "area_choices": AREA_CHOICES,
+        "recommendations": recommendations, "hints": hints(tour, stops),
+        "geojson": feature_collection([tour], request.user),
+        "recommended_geojson": recommendation_features(recommendations, km),
+    }
+    if show_order:
+        order = suggest_order(stops)
+        context["order_asked"] = True
+        if order is not None and [s.pk for s in order] != [s.pk for s in stops]:
+            context.update({"order": order, "order_km": km_of(order), "current_km": km_of(stops)})
+    return context
+
+
+def _render_plan(request, tour, form, show_order=False):
+    """The planner page. htmx takes its #planner part out of it."""
+    context = _planner(request, tour, show_order=show_order)
+    return render(request, "tours/plan.html", {**context, "form": form, "learnable": _learnable(context["tour"])})
+
+
+def _is_htmx(request):
+    return request.headers.get("HX-Request") == "true"
+
+
 @login_required
 def plan(request, slug):
-    """The route: the stops in order, moving them, and adding one."""
+    """The route: the stops in order, moving them, adding one, and the communities and
+    events recommended on the way. Its #planner part is swapped by htmx."""
     tour = _editable(slug, request.user)
     form = StopForm(request.POST or None)
     if request.method == "POST" and form.is_valid():
@@ -301,10 +385,49 @@ def plan(request, slug):
             tour.touch()
         messages.success(request, _("The stop has been added."))
         return redirect(tour.url("plan"))
-    tour = _tours().get(pk=tour.pk)
-    return render(request, "tours/plan.html", {
-        "tour": tour, "route": _route(tour), "form": form, "can_edit": True, "learnable": _learnable(tour),
-    })
+    return _render_plan(request, tour, form, show_order=bool(request.GET.get("order")))
+
+
+@login_required
+@require_POST
+def plan_add(request, slug):
+    """Add a recommended community or event as a stop, where it adds the fewest km. A
+    stop at an event with an end gets its days."""
+    tour = _editable(slug, request.user)
+    event = None
+    if request.POST.get("event"):
+        event = get_object_or_404(Event.objects.current().select_related("community"), pk=request.POST["event"])
+        community = event.community
+    else:
+        community = get_object_or_404(Community.objects.exclude(owner=None), pk=request.POST.get("community") or 0)
+    stop = Stop(tour=tour, event=event, community=community)
+    if event and event.ends_on:
+        stop.arrive_on, stop.leave_on = event.starts_on or event.ends_on, event.ends_on
+    try:
+        position = int(request.POST.get("position", ""))
+    except ValueError:
+        position = tour.stops.count()
+    with transaction.atomic():
+        insert_stop(stop, position)
+        tour.touch()
+    if _is_htmx(request):
+        return _render_plan(request, tour, StopForm())
+    messages.success(request, _("The stop has been added."))
+    return redirect(f"{tour.url('plan')}?km={_area_km(request)}")
+
+
+@login_required
+@require_POST
+def plan_order(request, slug):
+    """Take the order the planner suggested (worked out again, so it fits the stops as
+    they are now)."""
+    tour = _editable(slug, request.user)
+    order = suggest_order(tour.ordered_stops())
+    if order is not None:
+        set_order(tour, order)
+        tour.touch()
+        messages.success(request, _("The stops are in the new order."))
+    return redirect(tour.url("plan"))
 
 
 def _stop(tour, pk):
@@ -396,7 +519,8 @@ def api_hosts(request):
     for event in Event.objects.filter(community__in=communities).current().order_by("starts_on", "title"):
         events.setdefault(event.community_id, []).append({
             "id": event.pk, "title": event.title, "kind": str(event.kind_label),
-            "dates": render_to_string("events/_event_dates.html", {"event": event}).strip(),
+            # Plain text: it goes into an option of the event select
+            "dates": strip_tags(render_to_string("events/_event_dates.html", {"event": event})).strip(),
         })
     return JsonResponse({"results": [
         {

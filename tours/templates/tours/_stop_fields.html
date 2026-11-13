@@ -1,5 +1,5 @@
 {% load i18n %}
-{# A stop's fields: a community (and maybe one of its events), found by name or place, or another place on the map; then the days #}
+{# A stop's fields, with their script below: a community (and maybe one of its events), found by name or place, or another place on the map; then the days #}
 {% with chosen=form.chosen_community %}
 <div x-data="stopWhere('{{ form.where.value|default:'community' }}', {% if chosen %}'{{ chosen.name|escapejs }}'{% else %}''{% endif %})" class="space-y-4">
   {{ form.non_field_errors }}
@@ -52,6 +52,7 @@
       </div>
     {% endif %}{% endfor %}
   </div>
+  <p class="text-xs m-0"><i class="fa-regular fa-lightbulb mr-1 text-primary"></i>{% trans "Hosts usually gain from help after about a week." %}</p>
   <label class="inline-flex items-center gap-2">{{ form.flexible }} {{ form.flexible.label }}</label>
   <div class="form-group">
     <label class="form-label" for="{{ form.note.id_for_label }}">{{ form.note.label }}</label>
@@ -63,3 +64,47 @@
   </div>
 </div>
 {% endwith %}
+
+{# Choosing the community (and one of its events) by name, and another place on the map #}
+<script src="https://cdn.jsdelivr.net/npm/ol@v7.2.2/dist/ol.js"></script>
+<script>
+document.addEventListener('alpine:init', () => {
+  Alpine.data('stopWhere', (where, communityName) => ({
+    where: where, query: communityName, results: [],
+    async search() {
+      const q = this.query.trim();
+      if (q.length < 2) { this.results = []; return; }
+      const response = await fetch('{% url "tours:api-hosts" %}?q=' + encodeURIComponent(q));
+      this.results = (await response.json()).results;
+    },
+    // A community chosen: its events to choose from
+    choose(res) {
+      document.getElementById('{{ form.community.id_for_label }}').value = res.id;
+      this.query = res.name;
+      this.results = [];
+      const select = document.getElementById('{{ form.event.id_for_label }}');
+      select.length = 1;
+      res.events.forEach(event => {
+        select.add(new Option(event.title + ' (' + event.kind + ', ' + event.dates + ')', event.id));
+      });
+    },
+    // The map was hidden: let it take its size
+    shown() {
+      if (this.where === 'place') this.$nextTick(() => window.stopPicker && window.stopPicker.map.updateSize());
+    },
+  }));
+});
+document.addEventListener('DOMContentLoaded', () => {
+  const locationInput = document.getElementById('id_location');
+  window.stopPicker = EcoMap.initLocationPicker({
+    mapTarget: 'stop-location-map',
+    locationInput: locationInput,
+    countryInput: document.getElementById('id_country'),
+    nameInput: document.getElementById('id_location_name'),
+    groupName: 'stop-layer',
+    setPointFn: 'setStopPoint',
+    badge: 0xF3C5,  // fa-location-dot
+    existingWkt: locationInput ? locationInput.value : '',
+  });
+});
+</script>

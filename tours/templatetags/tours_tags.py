@@ -52,3 +52,29 @@ def tour_visits_to(context, host):
         "stops": [stop for stop in stops if stop.tour.can_view(viewer)],
         "on_event": host._meta.model_name == "event",
     }
+
+
+@register.inclusion_tag("tours/_need_tour.html", takes_context=True)
+def tour_box(context, tour):
+    """The tour on the gift page of something it looks for: what it is, who and how many
+    travel, and where it goes, so one can tell whether one can help. Places as everyone
+    sees them; who organises it only for people logged in, as on the tour's page."""
+    viewer = context["request"].user
+    stops = tour.ordered_stops()
+    counted = tour.counted_travellers()
+    free = tour.free_on(stops=stops) if tour.open_to_join else None
+    return {
+        "tour": tour,
+        "stops": [(stop, stop.public_place()[0]) for stop in stops],
+        "people": sum(t.people for t in counted),
+        "free": free,
+        "organiser": tour.organiser if viewer.is_authenticated else None,
+    }
+
+
+@register.simple_tag(takes_context=True)
+def tour_geojson(context, tour):
+    """The tour's route and stops as GeoJSON for a map, at the places everyone may see."""
+    from ..geo import feature_collection
+
+    return feature_collection([tour], context["request"].user)

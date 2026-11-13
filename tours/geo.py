@@ -47,11 +47,15 @@ PLACE_PIN = (0xF3C5, "#da6137")  # primary, location-dot
 IDEA_PIN = (0xF207, "#80143b")  # purple, bus
 
 
+def host_pin(community, event=None):
+    if event is not None:
+        return EVENT_PINS.get(event.kind, EVENT_PINS["community_event"])
+    return COMMUNITY_PINS.get(community.type, COMMUNITY_PIN)
+
+
 def stop_pin(stop):
-    if stop.event_id:
-        return EVENT_PINS.get(stop.event.kind, EVENT_PINS["community_event"])
     if stop.community_id:
-        return COMMUNITY_PINS.get(stop.community.type, COMMUNITY_PIN)
+        return host_pin(stop.community, stop.event if stop.event_id else None)
     return PLACE_PIN
 
 
@@ -306,3 +310,27 @@ def tour_features(tour, user=None):
 
 def feature_collection(tours, user=None):
     return {"type": "FeatureCollection", "features": [f for tour in tours for f in tour_features(tour, user)]}
+
+
+def recommendation_features(recommendations, km):
+    """The planner's recommended communities and events (tours.recommend) as GeoJSON
+    points, at the places everyone may see, with their reasons and what adding one
+    posts (position, community or event, the area)."""
+    features = []
+    for rec in recommendations:
+        icon, color = host_pin(rec.community, rec.event)
+        features.append({
+            "type": "Feature",
+            "geometry": {"type": "Point", "coordinates": [rec.point.x, rec.point.y]},
+            "properties": {
+                "kind": "recommended", "name": rec.name, "place": rec.place or "",
+                "community": rec.community.name if rec.event else "",
+                "link": rec.host.get_absolute_url(), "icon": icon, "color": color, "rough": rec.rough,
+                "extra_km": rec.extra_km, "reasons": [[reason.key, reason.text] for reason in rec.reasons],
+                "add": {
+                    "position": rec.position, "km": km,
+                    **({"event": rec.event.pk} if rec.event else {"community": rec.community.pk}),
+                },
+            },
+        })
+    return {"type": "FeatureCollection", "features": features}

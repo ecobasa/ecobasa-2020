@@ -605,7 +605,7 @@ class Stop(models.Model):
     HOST_DECLINED = "declined"
     HOST_COMING = "coming"
     HOST_LABELS = {
-        HOST_NOT_ASKED: (pgettext_lazy("host status", "Not asked yet"), "fa-regular fa-circle", "text-brown"),
+        HOST_NOT_ASKED: (pgettext_lazy("host status", "Not asked yet"), "fa-solid fa-ban", "text-red"),
         HOST_ASKED: (pgettext_lazy("host status", "Asked"), "fa-solid fa-hourglass-half", "text-yellow"),
         HOST_AGREED: (pgettext_lazy("host status", "Agreed"), "fa-solid fa-circle-check", "text-green"),
         HOST_OTHER_DAYS: (pgettext_lazy("host status", "Other days proposed"), "fa-solid fa-calendar-days", "text-yellow"),
@@ -815,6 +815,28 @@ def append_stop(stop):
     stop.order = 0 if last is None else last + 1
     stop.save()
     stop.tour.rebuild_route()
+
+
+def insert_stop(stop, position):
+    """Add `stop` to its tour's route at `position` (0 is the start), moving the stops
+    from there on one place on."""
+    tour = stop.tour
+    with transaction.atomic():
+        count = tour.stops.count()
+        position = max(0, min(position, count))
+        # The constraint on the order is deferred, so they can move up in one go
+        tour.stops.filter(order__gte=position).update(order=models.F("order") + 1)
+        stop.order = position
+        stop.save()
+    tour.rebuild_route()
+
+
+def set_order(tour, stops):
+    """Put the tour's stops in the order of `stops` (all of them)."""
+    with transaction.atomic():
+        for order, stop in enumerate(stops):
+            Stop.objects.filter(pk=stop.pk, tour=tour).update(order=order)
+    tour.rebuild_route()
 
 
 def move_stop(stop, step):

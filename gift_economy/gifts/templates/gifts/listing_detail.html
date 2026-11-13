@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% load static i18n l10n references_tags %}
+{% load static i18n l10n references_tags tours_tags %}
 
 {% block extrahead %}
   {{ block.super }}
@@ -165,12 +165,8 @@
     </h2>
     <div class="flex flex-col items-center gap-3 p-4 border rounded bg-primary bg-opacity-5">
       {% if listing.tour %}
-        <a href="{{ holder.get_absolute_url }}" class="block">
-          {% if holder.picture %}<img src="{{ holder.picture }}" alt="" class="w-20 h-20 rounded-full object-cover mx-auto">
-          {% else %}<div class="w-20 h-20 rounded-full bg-purple flex items-center justify-center text-secondary mx-auto"><i class="fa-solid {{ holder.travel_mode_icon }} text-3xl"></i></div>{% endif %}
-        </a>
-        <a href="{{ holder.get_absolute_url }}" class="font-serif text-primary">{{ holder.title }}</a>
-        <div class="text-xs"><i class="fa-regular fa-calendar mr-1"></i>{% include "tours/_tour_dates.html" with tour=holder %}</div>
+        {# What the tour is, who travels and where it goes (tours_tags) #}
+        {% tour_box holder %}
       {% elif listing.community %}
         {% with photo=holder.photos.all|first %}
         <a href="{{ holder.get_absolute_url }}" class="block">
@@ -200,7 +196,7 @@
         <a href="{{ holder.get_absolute_url }}" class="font-serif text-primary">{{ holder.name|default:holder.username }}</a>
         <div class="text-xs">{% include "events/_freshness.html" with when=holder.last_active %}</div>
       {% endif %}
-      {% if holder_place_name %}
+      {% if holder_place_name and not listing.tour %}
         <div class="text-sm"><i class="fa fa-map-marker mr-2"></i>{{ holder_place_name }}</div>
       {% endif %}
     </div>
@@ -346,10 +342,11 @@
 
   {% references_for listing %}
 
-  {# ── Location map ── #}
-  {% if listing.point %}
+  {# ── Location map; a tour's need: the whole route, where one could meet the tour ── #}
+  {% if listing.tour %}{% tour_geojson listing.tour as route_geojson %}{% endif %}
+  {% if listing.point or route_geojson.features %}
   <div class="mt-10">
-    <h2 class="text-lg font-semibold mb-3">{% trans "Location" %}</h2>
+    <h2 class="text-lg font-semibold mb-3">{% if route_geojson.features %}{% trans "Route" %}{% else %}{% trans "Location" %}{% endif %}</h2>
     <div class="relative">
       <div id="listing-detail-map" class="w-full h-96 rounded shadow overflow-hidden"></div>
     </div>
@@ -363,7 +360,25 @@
 
 {% block javascript %}
   {{ block.super }}
-  {% if place.1 %}
+  {% if listing.tour %}{% tour_geojson listing.tour as route_geojson %}{% endif %}
+  {% if route_geojson.features %}
+  {{ route_geojson|json_script:"tour-route" }}
+  <script src="https://cdn.jsdelivr.net/npm/ol@v7.2.2/dist/ol.js"></script>
+  <script>
+  // A tour's need: the tour's route and its stops, at the places everyone may see
+  document.addEventListener('DOMContentLoaded', function () {
+    const mapEl = document.getElementById('listing-detail-map');
+    if (!mapEl) return;
+    const tiles = EcoMap.buildBaseLayers();
+    const map = new ol.Map({ target: mapEl, layers: tiles.all, view: new ol.View({ center: [0, 0], zoom: 2, maxZoom: 16 }) });
+    tiles.setBaseLayer('ecobasa');
+    const menu = EcoMap.buildLayerToggle(map, 'listing-detail-layer');
+    menu.querySelectorAll('input').forEach(r => r.addEventListener('change', e => { if (e.target.checked) tiles.setBaseLayer(e.target.value); }));
+    const routes = EcoMap.addRouteLayer(map, JSON.parse(document.getElementById('tour-route').textContent), { hover: false, legModes: true });
+    routes.fit([40, 40, 40, 40]);
+  });
+  </script>
+  {% elif place.1 %}
   <script src="https://cdn.jsdelivr.net/npm/ol@v7.2.2/dist/ol.js"></script>
   <script>
   /* ================================================================

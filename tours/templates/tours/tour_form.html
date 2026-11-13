@@ -5,7 +5,22 @@
 
 {% block content %}
 <div class="container-form">
-  <div class="mb-2 text-sm"><a href="{% url 'tours:list' %}" class="hover:underline">{% trans "Community-Tours" %}</a></div>
+  {# Where this page is #}
+  {% if tour %}
+  <div class="mb-2 text-sm flex flex-wrap items-center gap-x-2 gap-y-1">
+    <a href="{% url 'tours:list' %}" class="hover:underline">{% trans "Community-Tours" %}</a>
+    <i class="fa-solid fa-chevron-right text-xs opacity-50" aria-hidden="true"></i>
+    <a href="{{ tour.get_absolute_url }}" class="hover:underline">{{ tour.title }}</a>
+    <i class="fa-solid fa-chevron-right text-xs opacity-50" aria-hidden="true"></i>
+    <span class="opacity-70">{% trans "Edit" %}</span>
+  </div>
+  {% else %}
+  <div class="mb-2 text-sm flex flex-wrap items-center gap-x-2 gap-y-1">
+    <a href="{% url 'tours:list' %}" class="hover:underline">{% trans "Community-Tours" %}</a>
+    <i class="fa-solid fa-chevron-right text-xs opacity-50" aria-hidden="true"></i>
+    <span class="opacity-70">{% trans "Plan a tour" %}</span>
+  </div>
+  {% endif %}
   <h1><i class="fa-solid fa-route mr-2 text-primary"></i>{% if tour %}{{ tour.title }}{% else %}{% trans "Plan a tour" %}{% endif %}</h1>
   {% if not tour %}<p class="text-sm">{% trans "First the basics. Next you add the stops: communities, their events, or other places." %}</p>{% endif %}
 

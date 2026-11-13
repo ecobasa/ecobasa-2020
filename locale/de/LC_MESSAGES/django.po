@@ -5488,9 +5488,6 @@ msgstr "Station %(number)s"
 msgid "Add the stops in the order you travel. Days can come later: without them the tour is an idea."
 msgstr "Füge die Stationen in der Reihenfolge hinzu, in der du reist. Die Tage können später kommen: ohne sie ist die Tour eine Idee."
 
-msgid "Hosts usually gain from help after about a week. Visit at least two communities so gifts can travel."
-msgstr "Gastgeber*innen haben meist nach etwa einer Woche etwas von der Hilfe. Besuche mindestens zwei Gemeinschaften, damit Geschenke mitreisen können."
-
 #, python-format
 msgid "Altogether about %(km)s km."
 msgstr "Insgesamt etwa %(km)s km."
@@ -6101,3 +6098,88 @@ msgstr "von deiner Tour"
 
 msgid "Start"
 msgstr "Start"
+
+#, python-format
+msgid "Learn: %(what)s"
+msgstr "Lernen: %(what)s"
+
+#, python-format
+msgid "Needs: %(what)s"
+msgstr "Braucht: %(what)s"
+
+msgid "Fits your days"
+msgstr "Passt zu euren Tagen"
+
+#, python-format
+msgid "Room for %(n)s"
+msgstr "Platz für %(n)s"
+
+msgid "Little room then"
+msgstr "Dann wenig Platz"
+
+msgid "On the way"
+msgstr "Auf dem Weg"
+
+msgid "Gifts could travel"
+msgstr "Geschenke könnten mitreisen"
+
+msgid "Active lately"
+msgstr "Kürzlich aktiv"
+
+msgid "Hosts usually gain from help after about a week."
+msgstr "Gastgeber*innen haben meist nach etwa einer Woche etwas von der Hilfe."
+
+msgid "Visit at least two communities so gifts can travel."
+msgstr "Besuche mindestens zwei Gemeinschaften, damit Geschenke mitreisen können."
+
+msgid "3 to 5 people fit into a community most easily; with experience, up to 10."
+msgstr "3 bis 5 Leute passen am leichtesten in eine Gemeinschaft; mit Erfahrung bis zu 10."
+
+msgid "Suggest an order"
+msgstr "Reihenfolge vorschlagen"
+
+#, python-format
+msgid "About %(new)s km instead of %(old)s km. Stops with days keep their order among each other."
+msgstr "Etwa %(new)s km statt %(old)s km. Stationen mit Tagen behalten ihre Reihenfolge untereinander."
+
+msgid "Use this order"
+msgstr "Diese Reihenfolge übernehmen"
+
+msgid "We found no order with fewer kilometres. Stops with days keep their order among each other."
+msgstr "Wir haben keine Reihenfolge mit weniger Kilometern gefunden. Stationen mit Tagen behalten ihre Reihenfolge untereinander."
+
+msgid "Recommended on the way"
+msgstr "Empfohlen auf dem Weg"
+
+#, python-format
+msgid "within %(km)s km of the route"
+msgstr "im Umkreis von %(km)s km um die Route"
+
+msgid "Add"
+msgstr "Hinzufügen"
+
+msgid "Nothing found here yet. Try a wider area."
+msgstr "Hier noch nichts gefunden. Versuch es mit einem größeren Umkreis."
+
+msgid "Add a first stop, or choose countries in the tour's basics, to see communities and events worth a visit."
+msgstr "Füge eine erste Station hinzu oder wähle Länder in den Grunddaten der Tour, um Gemeinschaften und Events zu sehen, die einen Besuch wert sind."
+
+msgid "The stops are in the new order."
+msgstr "Die Stationen sind in der neuen Reihenfolge."
+
+
+msgid "(approximate place until the host has agreed)"
+msgstr "(ungefährer Ort, bis die Gastgeber*innen zugesagt haben)"
+
+#, python-format
+msgid "%(n)s reference"
+msgid_plural "%(n)s references"
+msgstr[0] "%(n)s Referenz"
+msgstr[1] "%(n)s Referenzen"
+
+
+msgid "Maps app on this phone"
+msgstr "Karten-App auf diesem Handy"
+
+msgid "Open in maps"
+msgstr "In Karten öffnen"
