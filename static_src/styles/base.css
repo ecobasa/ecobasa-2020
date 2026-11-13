@@ -106,8 +106,8 @@ nav {
 	a:hover { @apply text-brown; }
 }
 .feature-box-primary { --accent: theme('colors.primary'); }
-.feature-box-purple  { --accent: theme('colors.purple'); }
-.feature-box-green   { --accent: theme('colors.green'); }
+.feature-box-purple  { --accent: theme('colors.purple.DEFAULT'); }
+.feature-box-green   { --accent: theme('colors.green.DEFAULT'); }
 .feature-list { @apply mt-8 mb-0 list-outside pl-5 text-sm font-bold; }
 .soon { @apply ml-1 px-2 py-0.5 rounded-full text-xs bg-brown bg-opacity-10; }
 

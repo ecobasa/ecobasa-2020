@@ -149,9 +149,9 @@
 
 /* ── Tagify — nested selectors give (0,2,0) specificity to beat CDN's (0,1,0) ── */
 .tagify {
-  --tags-border-color: theme('colors.purple');
+  --tags-border-color: theme('colors.purple.DEFAULT');
   --tags-hover-border-color: theme('colors.third');
-  --tag-bg: theme('colors.purple');
+  --tag-bg: theme('colors.purple.DEFAULT');
   --tag-text-color: theme('colors.secondary');
   --tag-hover: theme('colors.primary');
   --tag-border-radius: 9999px;
