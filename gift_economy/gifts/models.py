@@ -319,16 +319,19 @@ class Listing(RandomIdMixin, models.Model):
         KIND_MATERIAL: "fa-cubes", KIND_TOOL: "fa-screwdriver-wrench", KIND_VEHICLE: "fa-van-shuttle", KIND_SEEDS_PLANTS: "fa-seedling", KIND_FOOD: "fa-apple-whole", KIND_OTHER: "fa-gift",
         KIND_SKILL: "fa-graduation-cap", KIND_KNOWLEDGE: "fa-lightbulb", KIND_HANDS: "fa-handshake-angle",
     }
-    # Pill colour: skills purple, seeds and plants green, other things in the primary colour
-    KIND_COLOURS = {**{kind: "bg-purple" for kind in SKILL_KINDS}, KIND_SEEDS_PLANTS: "bg-green"}
+    # Pill colour: skills purple, seeds and plants green, food a lighter green, other things
+    # in the primary colour
+    KIND_COLOURS = {
+        **{kind: "bg-purple" for kind in SKILL_KINDS}, KIND_SEEDS_PLANTS: "bg-green", KIND_FOOD: "bg-green-80",
+    }
     # A pill colour as text (an icon on a light background) and on a map (tailwind.config.js)
     TEXT_COLOURS = {
         "bg-primary": "text-primary", "bg-purple": "text-purple", "bg-yellow": "text-yellow",
-        "bg-green": "text-green", "bg-yellow-60k": "text-yellow-60k",
+        "bg-green": "text-green", "bg-green-80": "text-green-80", "bg-yellow-60k": "text-yellow-60k",
     }
     HEX_COLOURS = {
         "bg-primary": "#da6137", "bg-purple": "#80143b", "bg-yellow": "#de7a08",
-        "bg-green": "#4f5613", "bg-yellow-60k": "#593103",
+        "bg-green": "#4f5613", "bg-green-80": "#727842", "bg-yellow-60k": "#593103",
     }
     # Font Awesome code points for map markers: the kind, else a gift (offer) or heart (wish)
     KIND_GLYPHS = {
@@ -606,8 +609,8 @@ class Listing(RandomIdMixin, models.Model):
 
     @property
     def marker_colour(self):
-        """Its map marker's and its card badge's colour: an event's need dark yellow, skills and
-        seeds and plants by their kind, else an offer in the primary colour, a wish yellow."""
+        """Its map marker's and its card badge's colour: an event's need dark yellow, skills,
+        seeds and plants and food by their kind, else an offer in the primary colour, a wish yellow."""
         if self.event_id and self.is_wish:
             return "bg-yellow-60k"
         return self.KIND_COLOURS.get(self.kind) or self.TYPE_COLOURS[self.type]
