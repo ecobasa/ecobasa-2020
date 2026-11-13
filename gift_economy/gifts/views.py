@@ -64,8 +64,10 @@ def detail(request, pk):
     context["help_url"] = help_url
 
     manager = listing.manager
+    # A thing a project needs can also just be given, by someone who doesn't come
+    givable = not help_url or (listing.event_id and listing.is_thing)
     # A public good is just there: nobody needs to ask for it
-    if request.user.is_authenticated and manager is not None and request.user != manager and not help_url and not listing.public_good:
+    if request.user.is_authenticated and manager is not None and request.user != manager and givable and not listing.public_good:
         form = MatchForm(request.POST or None, loan_of=listing if listing.lend else None)
         if request.method == "POST" and form.is_valid():
             match = form.save(commit=False)

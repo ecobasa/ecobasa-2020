@@ -80,7 +80,7 @@
               <li id="need-{{ need.pk }}" class="flex flex-wrap items-center gap-3 p-3 rounded border bg-secondary bg-opacity-50 {% if need.is_done %}opacity-70{% endif %}">
                 <i class="fa-solid {{ need.kind_icon }} text-primary w-5 text-center"></i>
                 <div class="flex-1 min-w-0">
-                  <span class="font-semibold {% if need.is_done %}line-through{% endif %}">{{ need.display_title }}</span>
+                  <a href="{{ need.get_absolute_url }}" class="font-semibold hover:underline {% if need.is_done %}line-through{% endif %}">{{ need.display_title }}</a>
                   {% if need.amount %}<span class="opacity-70"> · {{ need.amount }}</span>{% endif %}
                   <span class="text-xs opacity-70 block">{{ need.kind_label }}
                     {% if need.status == 'covered' %}· {% trans "covered" %}
