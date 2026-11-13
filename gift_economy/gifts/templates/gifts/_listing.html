@@ -1,25 +1,14 @@
 {% load i18n %}{# An offer or wish as a card in the list: a thing, a skill, knowledge, helping hands or a project's need #}
-<a href="{% url "gifts:detail" listing.pk %}" class="relative w-full max-w-4xl group flex items-stretch justify-between my-5 sm:my-10 md:mb-20 bg-secondary bg-opacity-50 p-5 rounded-md hover:text-primary hover:shadow-lg">
+<a href="{% url "gifts:detail" listing.pk %}" class="relative w-full group flex items-stretch bg-secondary bg-opacity-50 rounded-md hover:text-primary hover:shadow-lg">
   <div class="text-xs absolute bottom-0 right-0 rounded-full p-2 text-secondary {{ listing.marker_colour }}">
     {% if listing.event_id and listing.is_wish %}<i class="fa-solid {{ listing.event.kind_icon }} mr-1"></i>{{ listing.event.texts.need }}
     {% else %}<i class="fa-solid {% if listing.kind != 'other' %}{{ listing.kind_icon }}{% elif listing.is_offer %}fa-gift{% else %}fa-heart{% endif %} mr-1"></i>{{ listing.get_type_display }}{% endif %}
   </div>
-  {# Picture beside the text; the giver's line under both on small screens, under the text on larger ones #}
-  <div class="grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 sm:gap-x-6 w-full">
-    {% with photo=listing.community.photos.all|first %}
-    {% if listing.image %}
-      <img class="sm:row-span-2 h-20 w-20 sm:h-32 sm:w-48 object-cover rounded" src="{{ listing.image.url }}" alt="" loading="lazy">
-    {% elif photo %}
-      <img class="sm:row-span-2 h-20 w-20 sm:h-32 sm:w-48 object-cover rounded" src="{{ photo.image.url }}" alt="" loading="lazy">
-    {% elif listing.tour_id and listing.tour.picture %}
-      <img class="sm:row-span-2 h-20 w-20 sm:h-32 sm:w-48 object-cover rounded" src="{{ listing.tour.picture }}" alt="" loading="lazy">
-    {% elif listing.owner.image %}
-      <img class="sm:row-span-2 h-20 w-20 sm:h-32 sm:w-48 object-cover rounded" src="{{ listing.owner.image.url }}" alt="" loading="lazy">
-    {% else %}
-      <div class="sm:row-span-2 h-20 w-20 sm:h-32 sm:w-48 {{ listing.colour }} rounded flex items-center justify-center"><i class="fa-solid {{ listing.kind_icon }} text-3xl text-secondary"></i></div>
-    {% endif %}
-    {% endwith %}
-
+  {# Its own photo, filling the left side; the giver has their picture in the line below #}
+  {% if listing.image %}
+    <img class="w-24 sm:w-48 flex-shrink-0 object-cover rounded-l-md" src="{{ listing.image.url }}" alt="" loading="lazy">
+  {% endif %}
+  <div class="flex-1 min-w-0 p-5 flex flex-col">
     {# Everything in the flow, so nothing overlaps when it wraps on small screens #}
     <div class="min-w-0">
       <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
@@ -40,13 +29,22 @@
       <p class="text-sm text-brown">{{ listing.description|truncatewords:20 }}</p>
     </div>
     {# Room on the right for the type badge in the corner #}
-    <div class="col-span-2 sm:col-span-1 sm:col-start-2 self-end pt-2 pr-24 text-sm sm:text-base">
-      {% if listing.community_id %}
-        <i class="fa fa-home mr-2"></i>{{ listing.community.name }}{% if listing.event_id %} · {{ listing.event.title }}{% endif %}
-      {% elif listing.tour_id %}
-        <i class="fa-solid fa-route mr-2"></i>{{ listing.tour.title }}
-      {% else %}
-        <i class="fa fa-user mr-2"></i>{{ listing.owner.name }}{% for community in listing.owner.member_communities %}{% if forloop.first %} · <i class="fa fa-home mx-1"></i>{% else %}, {% endif %}{{ community.name }}{% endfor %}
+    <div class="mt-auto pt-2 pr-24 text-sm sm:text-base flex flex-wrap items-center gap-x-4 gap-y-2">
+      <span class="flex items-center gap-2 min-w-0">
+        {% include "_avatar.html" with who=listing.holder %}
+        {% if listing.community_id %}
+          {{ listing.community.name }}{% if listing.event_id %} · {{ listing.event.title }}{% endif %}
+        {% elif listing.tour_id %}
+          {{ listing.tour.title }}
+        {% else %}
+          {{ listing.owner.name }}
+        {% endif %}
+      </span>
+      {% if not listing.community_id and not listing.tour_id %}
+        {# The communities the giver belongs to #}
+        {% for community in listing.owner.member_communities %}
+          <span class="flex items-center gap-2 min-w-0">{% include "_avatar.html" with who=community %}{{ community.name }}</span>
+        {% endfor %}
       {% endif %}
     </div>
   </div>

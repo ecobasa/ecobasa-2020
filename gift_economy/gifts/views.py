@@ -382,7 +382,7 @@ def gifts_markers(request):
 @require_GET
 def gifts_list_partial(request):
     listings_queryset = _filtered_listings(request, require_location=False).prefetch_related(
-        "categories", "community__photos", "owner__communities", "tour__stops__community__photos",
+        "categories", "community__photos", "owner__communities__photos",
     )
     # Your own (and your communities') are nearest, so they would always come first; the
     # map still shows them
