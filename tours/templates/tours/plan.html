@@ -55,8 +55,8 @@
     </div>
   </form>
 
-  <div class="flex flex-wrap justify-end gap-3 mt-6">
-    <a href="{{ tour.get_absolute_url }}" class="btn btn-lg btn-purple">{% trans "See the tour" %}</a>
+  <div class="flex flex-wrap justify-between gap-3 mt-6">
+    <a href="{{ tour.get_absolute_url }}" class="btn btn-lg btn-purple">{% trans "Cancel" %}</a>
     {% if not tour.is_published %}
       <form method="post" action="{% url 'tours:publish' tour.slug %}">{% csrf_token %}
         <button type="submit" class="btn btn-lg"><i class="fa-solid fa-paper-plane mr-2"></i>{% trans "Publish" %}</button>

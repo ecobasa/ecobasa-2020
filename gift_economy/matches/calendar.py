@@ -107,7 +107,7 @@ def stays_of(community):
             | Q(content_type=ContentType.objects.get_for_model(Event), object_id__in=[str(pk) for pk in event_ids])
         )
         .select_related("from_user", "content_type", "stay_details")
-        .prefetch_related("contributions__listing__skill")
+        .prefetch_related("contributions__listing__skill", "stay_details__companions")
     )
     events = {str(event.pk): event for event in community.events.all()}
     dated, undated = [], []

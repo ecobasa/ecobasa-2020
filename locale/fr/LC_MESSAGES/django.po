@@ -5896,3 +5896,85 @@ msgstr "Écris-lui quelques mots pour dire pourquoi, s'il te plaît."
 #, python-format
 msgid "%(name)s is no longer on the tour."
 msgstr "%(name)s ne fait plus partie du tour."
+
+# tours: tour visits (package 4)
+msgid "Coming along"
+msgstr "Viennent aussi"
+
+msgid "Who you are as a group, what you would like to do and learn there, what you bring, and what you need: food (diet, allergies), where you would sleep."
+msgstr "Qui vous êtes en tant que groupe, ce que vous aimeriez faire et apprendre là-bas, ce que vous apportez et ce dont vous avez besoin : nourriture (régime, allergies), où vous dormiriez."
+
+msgctxt "host status"
+msgid "Not asked yet"
+msgstr "Pas encore demandé"
+
+msgctxt "host status"
+msgid "Asked"
+msgstr "Demandé"
+
+msgctxt "host status"
+msgid "Agreed"
+msgstr "Accepté"
+
+msgctxt "host status"
+msgid "Other days proposed"
+msgstr "Autres jours proposés"
+
+msgctxt "host status"
+msgid "Declined"
+msgstr "Refusé"
+
+msgctxt "host status"
+msgid "We're coming"
+msgstr "Nous venons"
+
+msgid "Tour visit"
+msgstr "Visite du tour"
+
+#, python-format
+msgid "%(tour)s · %(people)s"
+msgstr "%(tour)s · %(people)s"
+
+msgid "Ask to host us"
+msgstr "Demander à nous accueillir"
+
+msgid "Its days overlap with the stop before"
+msgstr "Ses jours chevauchent l'étape précédente"
+
+msgid "Tour visits"
+msgstr "Visites de tours"
+
+#, python-format
+msgid "stop %(number)s"
+msgstr "étape %(number)s"
+
+msgid "People just come to this event. The tour goes on its list with your group; nobody has to answer."
+msgstr "À cet événement, on vient simplement. Le tour est ajouté à la liste avec votre groupe ; personne n'a besoin de répondre."
+
+#, python-format
+msgid "%(community)s gets one request for the whole group. If people get on or off later, the request follows them."
+msgstr "%(community)s reçoit une seule demande pour tout le groupe. Si des gens montent ou descendent plus tard, la demande suit."
+
+msgid "We bring"
+msgstr "Nous apportons"
+
+msgid "This stop can't be asked to host you."
+msgstr "On ne peut pas demander à cette étape de vous accueillir."
+
+msgid "The tour is on the event's list."
+msgstr "Le tour est sur la liste de l'événement."
+
+#, python-format
+msgid "Our group has changed: we are %(n)s person now."
+msgid_plural "Our group has changed: we are %(n)s people now."
+msgstr[0] "Notre groupe a changé : nous sommes maintenant %(n)s personne."
+msgstr[1] "Notre groupe a changé : nous sommes maintenant %(n)s personnes."
+
+msgid "asked to host their tour at"
+msgstr "a demandé d'accueillir son tour à"
+
+msgid "What we would like to learn here"
+msgstr "Ce que nous aimerions apprendre ici"
+
+msgid "From what your tour wants to learn. Ticked: what one can learn here."
+msgstr "Parmi ce que votre tour veut apprendre. Coché : ce qu'on peut apprendre ici."

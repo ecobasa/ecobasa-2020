@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% load i18n site_tags %}
+{% load i18n site_tags tours_tags %}
 
 {% block head_title %}{{ event.title }} — {{ community.name }} — ecobasa{% endblock %}
 
@@ -129,6 +129,8 @@
           <p class="text-sm italic">{% trans "Log in to see who is coming." %}</p>
         {% endif %}
       {% endif %}
+
+      {% tour_visits_to event %}
 
       {% if can_edit and not event.is_open or offers %}
         <h2>{% trans "Offers" %}</h2>

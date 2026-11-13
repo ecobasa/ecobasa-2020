@@ -17,7 +17,7 @@ from dashboard_lists import Choice, paginate, query_url
 from gift_economy.matches.emails import notify_match_created
 from gift_economy.gifts.models import Listing
 from gift_economy.matches.matching import distance_km
-from gift_economy.matches.models import Contribution, Match, StayDetails
+from gift_economy.matches.models import Match, StayDetails, create_stay
 from gift_economy.gifts.skills.models import skill_name_q
 
 from . import kinds
@@ -268,17 +268,12 @@ def offer_help(request, community_slug, slug):
     form = HelpOfferForm(event, request.POST or None, preselected=request.GET.getlist("need"))
     if request.method == "POST" and form.is_valid():
         with transaction.atomic():
-            match = Match(from_user=request.user, recipient=event.get_match_owner(), message=form.cleaned_data["message"])
-            match.target = event
-            match.save()
-            StayDetails.objects.create(
-                match=match,
-                volunteer_mode="wish",
+            match = create_stay(
+                request.user, event, message=form.cleaned_data["message"], volunteer_mode="wish",
                 stay_from=_day_start(form.cleaned_data["stay_from"]),
                 stay_to=_day_start(form.cleaned_data["stay_to"]),
+                contributions=form.chosen_needs(),
             )
-            for need, quantity in form.chosen_needs():
-                Contribution.objects.create(listing=need, match=match, quantity=quantity)
         notify_match_created(match, http_request=request)
         messages.success(request, _("Your offer has been sent to %(community)s!") % {"community": event.community.name})
         return redirect(match.get_absolute_url())

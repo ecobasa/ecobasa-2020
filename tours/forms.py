@@ -269,3 +269,121 @@ class JoinForm(forms.ModelForm):
                 _("There is no room for that many on this stretch: %(free)s free.") % {"free": free}
             )
         return cleaned
+
+
+class HostForm(forms.Form):
+    """The organisers ask a stop's host to take the group (a tour visit): the days, what
+    the group would like to learn there, what it helps with, a few lines. How many come
+    follows from the travellers at that stop. As the volunteer form on a community's page:
+    at a community its events' needs and its wishes for things, at an event that event's
+    needs. Each need gets a checkbox (need_<id>) and, if it has a quantity, an amount
+    (quantity_<id>), as when offering help."""
+
+    learn = forms.MultipleChoiceField(
+        label=_("What we would like to learn here"), required=False, widget=forms.CheckboxSelectMultiple,
+    )
+
+    stay_from = forms.DateField(label=_("Arrival"), required=False, widget=forms.DateInput(attrs={"type": "date"}))
+    stay_to = forms.DateField(label=_("Departure"), required=False, widget=forms.DateInput(attrs={"type": "date"}))
+    message = forms.CharField(
+        label=_("Message"), widget=forms.Textarea(attrs={"rows": 5}),
+        help_text=_("Who you are as a group, what you would like to do and learn there, what you bring, and what you need: food (diet, allergies), where you would sleep."),
+    )
+
+    def __init__(self, stop, people, *args, open_event=False, **kwargs):
+        super().__init__(*args, **kwargs)
+        from gift_economy.gifts import units
+        from gift_economy.gifts.models import Listing
+
+        self.stop = stop
+        # (event or None, needs): an event's open needs, then the community's wishes
+        self.groups = []
+        if open_event:
+            # Just saying the tour comes: no needs to choose, a message is optional
+            self.fields["message"].required = False
+            self.fields["message"].help_text = ""
+        elif stop.event_id:
+            self.groups = [(stop.event, [need for need in stop.event.needs() if not need.is_done])]
+        else:
+            community = stop.community
+            for event in community.events.current().prefetch_related("listings__contributions__match"):
+                self.groups.append((event, [need for need in event.needs() if not need.is_done]))
+            self.groups.append((None, list(
+                Listing.objects.of(community).open()
+                .filter(type=Listing.TYPE_WISH, event=None, kind__in=Listing.THING_KINDS).order_by("-updated_at")
+            )))
+        self.groups = [(event, needs) for event, needs in self.groups if needs]
+        self.needs = [need for _event, needs in self.groups for need in needs]
+
+        # The tour's skills to learn, the ones taught here ticked
+        wanted = list(stop.tour.learn_skills.all())
+        if wanted and not open_event:
+            taught = self._taught()
+            self.fields["learn"].choices = [(str(skill.pk), skill.get_name()) for skill in wanted]
+            self.fields["learn"].widget.attrs["class"] = "form-checkbox"
+            self.initial.setdefault("learn", [str(skill.pk) for skill in wanted if skill.pk in taught])
+            self.taught = taught
+        else:
+            del self.fields["learn"]
+        self.initial.setdefault("stay_from", stop.arrive_on)
+        self.initial.setdefault("stay_to", stop.leave_on)
+        for need in self.needs:
+            self.fields[f"need_{need.pk}"] = forms.BooleanField(
+                required=False, widget=forms.CheckboxInput(attrs={"class": "form-checkbox"}),
+            )
+            if need.quantity:
+                remaining = need.remaining or need.quantity
+                self.fields[f"quantity_{need.pk}"] = forms.IntegerField(
+                    required=False, min_value=1,
+                    initial=min(people, remaining) if need.unit == units.PEOPLE else remaining,
+                    widget=forms.NumberInput(attrs={"class": "form-input w-24", "min": "1"}),
+                )
+        self.fields["message"].widget.attrs["class"] = "form-textarea w-full"
+        for name in ("stay_from", "stay_to"):
+            self.fields[name].widget.attrs["class"] = "form-input w-full"
+
+    def _taught(self):
+        """Ids of the skills one can learn at the stop: what its event or community offers
+        to teach (its events' too), and its members' skills."""
+        from gift_economy.gifts.models import Listing
+
+        stop = self.stop
+        offers = Listing.objects.open().filter(type=Listing.TYPE_OFFER, kind=Listing.KIND_SKILL)
+        if stop.event_id:
+            found = [offers.filter(event=stop.event)]
+        else:
+            found = [
+                Listing.objects.of(stop.community).filter(type=Listing.TYPE_OFFER, kind=Listing.KIND_SKILL),
+                offers.filter(owner__in=stop.community.members(), community=None),
+            ]
+        return {pk for queryset in found for pk in queryset.values_list("skill_id", flat=True) if pk}
+
+    def need_groups(self):
+        """[(event or None, [(need, checkbox, amount field or None)])] for the template."""
+        return [
+            (event, [
+                (need, self[f"need_{need.pk}"], self[f"quantity_{need.pk}"] if f"quantity_{need.pk}" in self.fields else None)
+                for need in needs
+            ])
+            for event, needs in self.groups
+        ]
+
+    def chosen_needs(self):
+        return [
+            (need, self.cleaned_data.get(f"quantity_{need.pk}"))
+            for need in self.needs if self.cleaned_data.get(f"need_{need.pk}")
+        ]
+
+    def chosen_skills(self):
+        """The names of the skills ticked to learn, comma separated (StayDetails.practice_skills)."""
+        if "learn" not in self.fields:
+            return ""
+        names = dict(self.fields["learn"].choices)
+        return ", ".join(names[pk] for pk in self.cleaned_data.get("learn", []))
+
+    def clean(self):
+        cleaned = super().clean()
+        stay_from, stay_to = cleaned.get("stay_from"), cleaned.get("stay_to")
+        if stay_from and stay_to and stay_to < stay_from:
+            self.add_error("stay_to", _("The stay can't end before it starts."))
+        return cleaned

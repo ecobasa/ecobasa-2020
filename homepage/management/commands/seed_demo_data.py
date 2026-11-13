@@ -552,7 +552,8 @@ class Command(BaseCommand):
 
     def _get_or_create_match(self, from_user, recipient, target, **defaults):
         ct = ContentType.objects.get_for_model(target)
-        match, created = Match.objects.get_or_create(
+        # A tour visit to the same host is another match (tours.Stop.visit_match)
+        match, created = Match.objects.filter(tour_stop__isnull=True).get_or_create(
             from_user=from_user, recipient=recipient,
             content_type=ct, object_id=str(target.pk),
             defaults=defaults,
@@ -1298,6 +1299,24 @@ class Command(BaseCommand):
         # last part only (open)
         self._seed_join(jars, sam, 1, 3, "accepted", "I can help with the jars, and I'd love to see the olives.")
         self._seed_join(jars, diego, 2, 3, "pending", "Could you take me from the fermentation weekend down south?")
+        # Tour visits: the house project agreed, the fermentation weekend is asked
+        self._seed_visit(jars, 1, "accepted", "We are a small group with a van full of jars. We'd cook for everyone one evening.")
+        self._seed_visit(jars, 2, "pending", "We'd love to join the weekend as a group and help with setting up.")
+
+    def _seed_visit(self, tour, index, status, message):
+        """The tour asks a stop's host to take the group (tours.visits.ask_host)."""
+        from gift_economy.matches.models import Match
+        from tours.visits import ask_host
+
+        stops = tour.ordered_stops()
+        if len(stops) <= index or stops[index].visit_match_id or not stops[index].can_ask_host:
+            return
+        stop = stops[index]
+        match = ask_host(stop, tour.organiser, message=message, stay_from=stop.arrive_on, stay_to=stop.leave_on)
+        if status == Match.STATUS_ACCEPTED and match.status != status:
+            match.status = status
+            match.responded_at = timezone.now()
+            match.save()
 
     def _seed_join(self, tour, user, start, end, status, message):
         from gift_economy.matches.models import Match

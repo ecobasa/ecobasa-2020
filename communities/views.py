@@ -189,7 +189,7 @@ def volunteer_request(request, community_slug):
 
     import datetime
     from django.utils import timezone
-    from gift_economy.matches.models import Match, StayDetails
+    from gift_economy.matches.models import create_stay
     from gift_economy.matches.emails import notify_match_created
 
     volunteer_mode       = request.POST.get("volunteer_mode", "")
@@ -210,35 +210,22 @@ def volunteer_request(request, community_slug):
     stay_from = _parse_dt(request.POST.get("stay_from", ""))
     stay_to   = _parse_dt(request.POST.get("stay_to", ""))
 
-    vr = Match(
-        from_user = request.user,
-        recipient = community.get_match_owner(),
-        message   = msg_body,
-    )
-    vr.target = community
-    vr.save()
-    StayDetails.objects.create(
-        match                 = vr,
-        volunteer_mode        = volunteer_mode,
-        practice_skills       = practice_skills,
-        practice_skill_level  = practice_skill_level,
-        sender_skills         = sender_skills,
-        stay_from             = stay_from,
-        stay_to               = stay_to,
-    )
-
     # Needs of the community's events and its wishes they bring along
     from gift_economy.gifts import units
-    from gift_economy.matches.models import Contribution
     needs = Listing.objects.of(community).current().filter(
         type=Listing.TYPE_WISH, pk__in=request.POST.getlist("need"), event__isnull=False,
     ).prefetch_related("contributions__match")
     wishes = [listing for listing in _community_wishes(community) if listing.pk in request.POST.getlist("listing")]
-    Contribution.objects.bulk_create([
-        # A volunteer counts as one person towards a need for people
-        Contribution(listing=need, match=vr, quantity=1 if need.quantity and need.unit == units.PEOPLE else None)
-        for need in needs if not need.is_done
-    ] + [Contribution(listing=listing, match=vr) for listing in wishes])
+    vr = create_stay(
+        request.user, community, message=msg_body, stay_from=stay_from, stay_to=stay_to,
+        volunteer_mode=volunteer_mode, practice_skills=practice_skills,
+        practice_skill_level=practice_skill_level, sender_skills=sender_skills,
+        contributions=[
+            # A volunteer counts as one person towards a need for people
+            (need, 1 if need.quantity and need.unit == units.PEOPLE else None)
+            for need in needs if not need.is_done
+        ] + [(listing, None) for listing in wishes],
+    )
 
     notify_match_created(vr, http_request=request)
 

@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% load i18n embed_video_tags static l10n references_tags %}
+{% load i18n embed_video_tags static l10n references_tags tours_tags %}
 
 {% block extrahead %}
 	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.css">
@@ -245,6 +245,8 @@
 					{% endif %}
 				{% endif %}
 			{% endif %}
+
+			{% tour_visits_to community %}
 
 			{% references_for community %}
 		</div>

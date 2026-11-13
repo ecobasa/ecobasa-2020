@@ -21,7 +21,7 @@ from gift_economy.gifts.skills.models import Skill, skill_name_q
 from gift_economy.matches.emails import notify_match_created, notify_match_message, notify_match_response
 from gift_economy.matches.models import Match, MatchMessage
 
-from .forms import JoinForm, StopForm, TourForm
+from .forms import HostForm, JoinForm, StopForm, TourForm
 from .geo import MAX_TOURS, TourFilters, feature_collection
 from .models import Stop, Tour, Traveller, append_stop, move_stop, remove_stop
 
@@ -185,9 +185,12 @@ def tour_detail(request, slug):
 def _route(tour):
     """The stops in order, each with the place everyone may see and the leg after it
     (with its free places, on a tour that looks for travellers and has a limit)."""
+    from .visits import clashes
+
     stops = tour.ordered_stops()
     legs = tour.legs(stops)
     free = tour.free_places(stops=stops) if tour.open_to_join and tour.max_people else [None] * len(legs)
+    clashing = clashes(stops)
     route = []
     for index, stop in enumerate(stops):
         name, _point = stop.public_place()
@@ -201,6 +204,8 @@ def _route(tour):
             "leg_mode": dict(Tour.MODE_CHOICES)[mode] if leg else None,
             "leg_icon": Tour.MODE_ICONS.get(mode) if leg else None,
             "free": max(free[index], 0) if leg and free[index] is not None else None,
+            # Its days overlap the stop before (other days agreed with a host, say)
+            "clash": index in clashing,
         })
     return route
 
@@ -554,3 +559,34 @@ def mine(request):
         rows.append({"tour": traveller.tour, "traveller": traveller, "stretch": _stretch_text(traveller)})
     page = paginate(request, rows)
     return render(request, "tours/mine.html", {"page": page})
+
+
+@login_required
+def ask_host(request, slug, pk):
+    """"Ask to host us" on a stop with a host (plan 7, "Asking the hosts"): the days and
+    the group come from the tour, the organisers tick what they help with and write a few
+    lines. At an event where people just come, the tour only says it is coming."""
+    from .visits import ask_host as send
+
+    tour = _editable(slug, request.user)
+    stop = _stop(tour, pk)
+    if not stop.community_id or not stop.can_ask_host or stop.host.get_match_owner() is None:
+        messages.info(request, _("This stop can't be asked to host you."))
+        return redirect(tour.get_absolute_url())
+    group = stop.group()
+    people = max(stop.group_people(group), 1)
+    form = HostForm(stop, people, request.POST or None, open_event=stop.joins_open_event)
+    if request.method == "POST" and form.is_valid():
+        match = send(
+            stop, request.user, message=form.cleaned_data["message"],
+            stay_from=form.cleaned_data["stay_from"], stay_to=form.cleaned_data["stay_to"],
+            contributions=form.chosen_needs(), practice_skills=form.chosen_skills(), http_request=request,
+        )
+        if stop.joins_open_event:
+            messages.success(request, _("The tour is on the event's list."))
+            return redirect(tour.get_absolute_url())
+        messages.success(request, _("Your request has been sent to %(community)s!") % {"community": stop.community.name})
+        return redirect(match.get_absolute_url())
+    return render(request, "tours/ask_host.html", {
+        "tour": tour, "stop": stop, "form": form, "group": group, "people": people,
+    })

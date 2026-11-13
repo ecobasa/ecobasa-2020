@@ -8,7 +8,7 @@ from django.db import transaction
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.text import slugify
-from django.utils.translation import gettext_lazy as _
+from django.utils.translation import gettext_lazy as _, ngettext, pgettext_lazy
 from django_countries.fields import CountryField
 
 from communities.models import Community
@@ -233,6 +233,12 @@ class Tour(models.Model):
         return self.travellers.filter(user=user, is_organiser=True).exists()
 
     def can_view(self, user):
+        if self._can_view(user):
+            return True
+        # The hosts it asked (5.5 rule 8)
+        return user.is_authenticated and self.stops.filter(visit_match__recipient=user).exists()
+
+    def _can_view(self, user):
         """A draft only for its organisers. A personal tour that is not listed only for
         its traveller and staff; the hosts it asks and the givers and receivers of its
         deliveries come with those features (docs/community-tours-plan.md, 5.5 rule 8)."""
@@ -433,6 +439,11 @@ class Stop(models.Model):
     note = models.TextField(_("What we plan here"), blank=True)
     # If the way on from here goes another way (a ferry, a train)
     onward_mode = models.CharField(_("Going on by"), max_length=20, choices=MODE_CHOICES, blank=True)
+    # The tour visit: the group's stay, asked of the host once (plan D4). Its status is
+    # where the host stands
+    visit_match = models.OneToOneField(
+        "matches.Match", on_delete=models.SET_NULL, null=True, blank=True, related_name="tour_stop",
+    )
 
     class Meta:
         ordering = ["order", "pk"]
@@ -496,6 +507,94 @@ class Stop(models.Model):
         if self.community_id:
             return self.community.place_for(user)
         return self.name, self.location
+
+    # ── The tour visit: where the host stands ───────────────────────
+    HOST_NOT_ASKED = "not_asked"
+    HOST_ASKED = "asked"
+    HOST_AGREED = "agreed"
+    HOST_OTHER_DAYS = "other_days"
+    HOST_DECLINED = "declined"
+    HOST_COMING = "coming"
+    HOST_LABELS = {
+        HOST_NOT_ASKED: (pgettext_lazy("host status", "Not asked yet"), "fa-regular fa-circle", "text-brown"),
+        HOST_ASKED: (pgettext_lazy("host status", "Asked"), "fa-solid fa-hourglass-half", "text-yellow"),
+        HOST_AGREED: (pgettext_lazy("host status", "Agreed"), "fa-solid fa-circle-check", "text-green"),
+        HOST_OTHER_DAYS: (pgettext_lazy("host status", "Other days proposed"), "fa-solid fa-calendar-days", "text-yellow"),
+        HOST_DECLINED: (pgettext_lazy("host status", "Declined"), "fa-solid fa-circle-xmark", "text-red"),
+        HOST_COMING: (pgettext_lazy("host status", "We're coming"), "fa-solid fa-people-group", "text-green"),
+    }
+
+    @property
+    def joins_open_event(self):
+        """An event where people just come: the tour says it is coming, nobody answers."""
+        return bool(self.event_id and self.event.is_open)
+
+    @property
+    def host_status(self):
+        """Where the host stands (N24), "" without a host."""
+        from gift_economy.matches.models import Match
+
+        if not self.community_id or self.host.get_match_owner() is None:
+            return ""
+        match = self.visit_match
+        if match is None or match.status == Match.STATUS_WITHDRAWN:
+            return self.HOST_NOT_ASKED
+        if match.is_coming:
+            return self.HOST_COMING
+        return {
+            Match.STATUS_ACCEPTED: self.HOST_AGREED,
+            Match.STATUS_COUNTER: self.HOST_OTHER_DAYS,
+            Match.STATUS_DECLINED: self.HOST_DECLINED,
+        }.get(match.status, self.HOST_ASKED)
+
+    @property
+    def host_status_label(self):
+        return self.HOST_LABELS.get(self.host_status, ("", "", ""))
+
+    @property
+    def can_ask_host(self):
+        """Whether the organisers can ask (again): not yet, or after a no or a withdrawal."""
+        return self.host_status in (self.HOST_NOT_ASKED, self.HOST_DECLINED)
+
+    def group(self):
+        """The counted travellers at this stop's stay: who the host is asked to take."""
+        return self.tour.present_at(self)
+
+    def group_people(self, group=None):
+        return sum(t.people for t in (self.group() if group is None else group))
+
+    # ── As what a tour visit is attached to (gift_economy.matches) ──
+    match_attachment_template = "tours/_visit_summary.html"
+
+    def visit_people(self):
+        """Who comes on the tour visit, each with the skills they offer, for the host:
+        [(user, [skill listings])]. The one who asked first."""
+        from gift_economy.gifts.models import Listing
+
+        match = self.visit_match
+        if match is None:
+            return []
+        people = [match.from_user, *match.stay_details.companions.all()]
+        offers = {}
+        for offer in (
+            Listing.objects.open().filter(owner__in=people, community=None, type=Listing.TYPE_OFFER, kind=Listing.KIND_SKILL)
+            .exclude(available=False).select_related("skill")
+        ):
+            offers.setdefault(offer.owner_id, []).append(offer)
+        return [(person, sorted(offers.get(person.pk, []), key=lambda l: l.display_title)) for person in people]
+
+    def get_match_kind(self):
+        return _("Tour visit"), "fa-route", "bg-green"
+
+    def get_match_verb(self):
+        return _("asked to host their tour at")
+
+    def get_match_summary(self, match):
+        people = match.people
+        return _("%(tour)s · %(people)s") % {
+            "tour": self.tour.title,
+            "people": ngettext("%(n)s person", "%(n)s people", people) % {"n": people},
+        }
 
 
 class Traveller(models.Model):

@@ -125,8 +125,10 @@ class Match(models.Model):
             if listing is not None and listing.kind != listing.KIND_OTHER:
                 return listing.kind_label, listing.kind_icon, listing.colour
             return _("Gift"), "fa-gift", "bg-primary"
-        # A target with kinds of its own (an event) says what it is
-        own_kind = getattr(self.target, "get_match_kind", None)
+        # What is attached to it (a tour's stop for a tour visit), else a target with
+        # kinds of its own (an event), says what it is
+        own_kind = next((getattr(a, "get_match_kind") for a in self.attachments() if hasattr(a, "get_match_kind")), None)
+        own_kind = own_kind or getattr(self.target, "get_match_kind", None)
         if own_kind is not None:
             return own_kind()
         if model == "community":
@@ -147,11 +149,29 @@ class Match(models.Model):
 
     @property
     def summary(self):
-        """A line the target gives about this match (a tour: the stretch and how many),
-        for the emails; "" if it has none."""
-        target = self.target
-        get = getattr(target, "get_match_summary", None)
-        return get(self) if get else ""
+        """A line the target, or what is attached to the match, gives about it (a join
+        request: the stretch and how many; a tour visit: the tour and its group), for the
+        emails; "" if there is none."""
+        for source in (*self.attachments(), self.target):
+            get = getattr(source, "get_match_summary", None)
+            if get:
+                return get(self)
+        return ""
+
+    def attachments(self):
+        """What other apps attach to this match one to one and want shown with it: their
+        models say so with `match_attachment_template` (tours.Stop for a tour visit). The
+        matches app knows none of them by name."""
+        if not hasattr(self, "_attachments"):
+            found = []
+            for rel in self._meta.related_objects:
+                if rel.one_to_one and hasattr(rel.related_model, "match_attachment_template"):
+                    try:
+                        found.append(getattr(self, rel.get_accessor_name()))
+                    except rel.related_model.DoesNotExist:
+                        pass
+            self._attachments = found
+        return self._attachments
 
     @property
     def is_closed(self):
@@ -377,6 +397,11 @@ class StayDetails(models.Model):
     stay_to = models.DateTimeField(null=True, blank=True)
     # Who asked and those they bring (children, friends without an account)
     people = models.PositiveSmallIntegerField(_("People coming"), default=1)
+    # The registered people among them (a tour visit's group): they see the place once
+    # it is accepted, as the one who asked does
+    companions = models.ManyToManyField(
+        settings.AUTH_USER_MODEL, blank=True, related_name="stays_along", verbose_name=_("Coming along"),
+    )
     practice_skills = models.TextField(blank=True)
     practice_skill_level = models.CharField(max_length=20, blank=True)
     sender_skills = models.TextField(blank=True)
@@ -553,6 +578,31 @@ class Contribution(models.Model):
     @property
     def amount(self):
         return self.listing.format_amount(self.quantity)
+
+
+def create_stay(from_user, target, *, message="", stay_from=None, stay_to=None, people=1,
+                contributions=(), status=None, companions=(), **details):
+    """A stay at a community or event: the match, its details and what it brings
+    (`contributions`: (listing, quantity) pairs; `details`: more StayDetails fields such as
+    `volunteer_mode`). Asking to volunteer, offering help with
+    an event and a tour asking to be hosted all make one. Notifying is up to the caller."""
+    from django.utils import timezone
+
+    match = Match(from_user=from_user, recipient=target.get_match_owner(), message=message)
+    if status:
+        match.status = status
+        match.responded_at = timezone.now()
+    match.target = target
+    match.save()
+    details = StayDetails.objects.create(
+        match=match, stay_from=stay_from, stay_to=stay_to, people=people, **details,
+    )
+    if companions:
+        details.companions.set(companions)
+    Contribution.objects.bulk_create([
+        Contribution(listing=listing, match=match, quantity=quantity) for listing, quantity in contributions
+    ])
+    return match
 
 
 def _name(user):

@@ -1,0 +1,22 @@
+{% load i18n %}
+{# On a community's or event's page: the tours coming (tours.templatetags.tours_tags.tour_visits_to) #}
+{% if stops %}
+<div class="mt-8">
+  <h2>{% trans "Tour visits" %}</h2>
+  <ul class="list-none p-0 m-0 space-y-2">
+    {% for stop in stops %}
+      <li class="m-0">
+        <a href="{{ stop.tour.get_absolute_url }}" class="flex items-start gap-3 p-3 rounded bg-secondary bg-opacity-50 hover:bg-opacity-80">
+          <i class="fa-solid {{ stop.tour.travel_mode_icon }} text-xl text-primary flex-shrink-0 mt-1"></i>
+          <div class="min-w-0">
+            <div class="font-serif text-primary">{{ stop.tour.title }}</div>
+            <div class="text-xs text-brown">
+              {% if stop.arrive_on or stop.leave_on %}<i class="fa-regular fa-calendar mr-1"></i>{% include "tours/_stop_dates.html" %} · {% endif %}{% blocktrans count count=stop.visit_match.people %}{{ count }} person{% plural %}{{ count }} people{% endblocktrans %}{% if stop.event and not on_event %} · {{ stop.event.title }}{% endif %}
+            </div>
+          </div>
+        </a>
+      </li>
+    {% endfor %}
+  </ul>
+</div>
+{% endif %}

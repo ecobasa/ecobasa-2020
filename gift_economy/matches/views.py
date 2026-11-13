@@ -390,6 +390,7 @@ def match_detail(request, pk):
             flash.success(request, _("Counter-proposal sent."))
             return redirect(match.get_absolute_url())
 
+    attached_verb = next((a.get_match_verb() for a in match.attachments() if hasattr(a, "get_match_verb")), None)
     return render(request, "matches/match_detail.html", {
         "match":                match,
         # Volunteer visits and join requests have their own place in the sidebar and breadcrumb
@@ -409,6 +410,8 @@ def match_detail(request, pk):
         # Said to the one who asked, it isn't "your offer"
         "match_verb":           (
             _("is coming to") if match.is_coming
+            # What is attached to the match (a tour visit) may say it better
+            else attached_verb if attached_verb
             else target.get_match_verb(own=False) if is_requester and isinstance(target, Listing)
             else target.get_match_verb()
         ),

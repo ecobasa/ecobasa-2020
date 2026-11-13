@@ -164,6 +164,7 @@
     <div class="prose text-sm mb-4">{{ match.message|linebreaksbr }}</div>
 
     {% if summary_template %}{% include summary_template %}{% endif %}
+    {% for attachment in match.attachments %}{% include attachment.match_attachment_template %}{% endfor %}
 
     {% if match.is_loan %}
       <div class="text-sm mb-2">

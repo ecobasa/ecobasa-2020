@@ -22,6 +22,19 @@
             {% if stop.event %}<a href="{{ stop.community.get_absolute_url }}" class="hover:underline">{{ stop.community.name }}</a>{% if item.place %} · {% endif %}{% endif %}{% if stop.community and item.place %}{{ item.place }}{% endif %}
             {% if stop.arrive_on or stop.leave_on %}<span class="ml-1"><i class="fa-regular fa-calendar mr-1"></i>{% include "tours/_stop_dates.html" %}</span>{% endif %}
           </div>
+          {# Where the host stands, for everyone (plan D18); the organisers ask from here #}
+          {% with status=stop.host_status %}{% if status %}{% with label=stop.host_status_label %}
+            <div class="flex flex-wrap items-center gap-2 text-sm mt-1">
+              <span class="{{ label.2 }} font-semibold"><i class="{{ label.1 }} mr-1"></i>{{ label.0 }}</span>
+              {% if can_edit or editing %}
+                {% if stop.can_ask_host %}
+                  <a href="{% url 'tours:ask_host' tour.slug stop.pk %}" class="btn btn-purple text-xs"><i class="fa-solid fa-paper-plane mr-1"></i>{% if stop.joins_open_event %}{% trans "We're coming" context "host status" %}{% else %}{% trans "Ask to host us" %}{% endif %}</a>
+                {% endif %}
+                {% if stop.visit_match and status != "not_asked" %}<a href="{{ stop.visit_match.get_absolute_url }}" class="underline text-xs">{% trans "View conversation" %}</a>{% endif %}
+              {% endif %}
+            </div>
+          {% endwith %}{% endif %}{% endwith %}
+          {% if item.clash %}<div class="text-sm text-red mt-1"><i class="fa-solid fa-triangle-exclamation mr-1"></i>{% trans "Its days overlap with the stop before" %}</div>{% endif %}
           {% if stop.note %}<p class="text-sm m-0 mt-1">{{ stop.note|linebreaksbr }}</p>{% endif %}
           {% if editing %}
             <div class="flex flex-wrap gap-2 mt-2 text-sm">
