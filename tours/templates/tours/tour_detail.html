@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block head_title %}{{ tour.title }} — {% trans "Community-Tours" %} — ecobasa{% endblock %}
+
+{% block content %}
+<div class="container-page">
+  <div class="mb-2 text-sm"><a href="{% url 'tours:list' %}" class="hover:underline">{% trans "Community-Tours" %}</a></div>
+
+  {% if not tour.is_published %}
+    <div class="rounded-xl p-4 mb-6 border border-yellow bg-yellow bg-opacity-10 text-sm flex flex-wrap items-center gap-3">
+      <span><i class="fa-solid fa-pen-ruler mr-2"></i>{% trans "This is a draft: only you can see it." %}</span>
+      <form method="post" action="{% url 'tours:publish' tour.slug %}">{% csrf_token %}
+        <button type="submit" class="btn"><i class="fa-solid fa-paper-plane mr-1"></i>{% trans "Publish" %}</button>
+      </form>
+    </div>
+  {% elif tour.archived_at or tour.is_over %}
+    <div class="rounded-xl p-4 mb-6 border border-primary bg-primary bg-opacity-10 text-sm">
+      <i class="fa-solid fa-box-archive mr-2"></i>
+      {% if tour.is_over %}{% trans "This tour is over." %}{% else %}{% trans "This tour has been archived." %}{% endif %}
+      {% if can_edit and not tour.is_over %}
+        <form method="post" action="{% url 'tours:confirm' tour.slug %}" class="inline">{% csrf_token %}
+          <button type="submit" class="underline ml-1">{% trans "Bring it back" %}</button>
+        </form>
+      {% endif %}
+    </div>
+  {% elif can_edit and not tour.listed %}
+    <div class="rounded-xl p-4 mb-6 border border-primary bg-primary bg-opacity-10 text-sm">
+      <i class="fa-solid fa-eye-slash mr-2"></i>{% trans "This tour is not in the list or on the map. Only you see it." %}
+    </div>
+  {% endif %}
+
+  <div class="grid grid-cols-1 sm:grid-cols-12 gap-6">
+    <div class="sm:col-span-8">
+      {% if tour.is_idea %}<span class="pill bg-yellow text-xs">{% trans "Idea" %}</span>{% endif %}
+      <h1 class="mb-1 mt-2">{{ tour.title }}</h1>
+      <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm mb-6">
+        <span><i class="fa-regular fa-calendar mr-1"></i>{% include "tours/_tour_dates.html" %}</span>
+        <span><i class="fa-solid {{ tour.travel_mode_icon }} mr-1"></i>{{ tour.get_travel_mode_display }}</span>
+        {% if tour.distance_km %}<span><i class="fa-solid fa-route mr-1"></i>{% blocktrans with km=tour.distance_km %}about {{ km }} km{% endblocktrans %}</span>{% endif %}
+        {% if tour.countries %}<span><i class="fa-solid fa-earth-europe mr-1"></i>{% for country in tour.countries %}{{ country.name }}{% if not forloop.last %}, {% endif %}{% endfor %}</span>{% endif %}
+      </div>
+
+      {% if can_edit %}
+        <div class="flex flex-wrap gap-2 mb-6">
+          <a href="{% url 'tours:edit' tour.slug %}" class="btn"><i class="fa fa-edit mr-1"></i>{% trans "Edit" %}</a>
+          <a href="{% url 'tours:stops' tour.slug %}" class="btn"><i class="fa-solid fa-route mr-1"></i>{% trans "Plan the route" %}</a>
+          {% if tour.is_published and tour.is_current %}
+            <form method="post" action="{% url 'tours:confirm' tour.slug %}">{% csrf_token %}
+              <button type="submit" class="btn btn-purple" title="{% trans 'Say that this tour is still planned as it is' %}"><i class="fa fa-check mr-1"></i>{% trans "Still current" %}</button>
+            </form>
+          {% endif %}
+          {% if not tour.archived_at %}
+            <form method="post" action="{% url 'tours:archive' tour.slug %}" onsubmit="return confirm('{% trans "Archive this tour? It will no longer be listed." as question %}{{ question|escapejs }}')">{% csrf_token %}
+              <button type="submit" class="btn btn-purple"><i class="fa-solid fa-box-archive mr-1"></i>{% trans "Archive" %}</button>
+            </form>
+          {% endif %}
+        </div>
+      {% endif %}
+
+      {% if tour.image %}<img src="{{ tour.image.url }}" alt="" class="w-full max-h-96 object-cover rounded-xl mb-4">{% endif %}
+      {% if tour.description %}<p>{{ tour.description|linebreaksbr }}</p>{% endif %}
+
+      <h2>{% trans "Route" %}</h2>
+      {% if route %}
+        {% include "tours/_route.html" %}
+      {% else %}
+        <p class="italic">{% trans "No stops yet: this tour is still an idea." %}</p>
+        {% if can_edit %}<a href="{% url 'tours:stops' tour.slug %}" class="btn"><i class="fa fa-plus mr-1"></i>{% trans "Add stops" %}</a>{% endif %}
+      {% endif %}
+
+      {% with skills=tour.learn_skills.all %}
+        {% if skills %}
+          <h2>{% trans "What we want to learn" %}</h2>
+          <div class="flex flex-wrap gap-2">
+            {% for skill in skills %}<span class="pill bg-primary bg-opacity-20"><i class="fa-solid fa-graduation-cap mr-1"></i>{{ skill.get_name }}</span>{% endfor %}
+          </div>
+        {% endif %}
+      {% endwith %}
+    </div>
+
+    <aside class="sm:col-span-4 space-y-4">
+      <div class="border rounded-xl bg-secondary bg-opacity-60 p-4 text-sm space-y-2">
+        {% if user.is_authenticated and tour.organiser %}
+          <div><span class="font-semibold">{% trans "Organiser" %}:</span> <a href="{{ tour.organiser.get_absolute_url }}" class="hover:underline">{{ tour.organiser.name }}</a></div>
+        {% endif %}
+        {% if tour.open_to_join %}
+          <div><i class="fa-solid fa-user-group mr-1"></i>{% trans "I'm looking for travellers" %}{% if tour.max_people %} · {% blocktrans count count=tour.max_people %}{{ count }} person at most{% plural %}{{ count }} people at most{% endblocktrans %}{% endif %}</div>
+        {% endif %}
+        {% if tour.children_welcome %}<div><i class="fa-solid fa-children mr-1"></i>{% trans "Children welcome" %}</div>{% endif %}
+        {% if tour.animals_welcome %}<div><i class="fa-solid fa-paw mr-1"></i>{% trans "Animals welcome" %}</div>{% endif %}
+        {% if tour.costs_note %}<div><span class="font-semibold">{% trans "How we share costs" %}:</span> {{ tour.costs_note }}</div>{% endif %}
+        {% if tour.good_to_know %}<div><span class="font-semibold">{% trans "Good to know" %}:</span><br>{{ tour.good_to_know|linebreaksbr }}</div>{% endif %}
+      </div>
+    </aside>
+  </div>
+</div>
+{% endblock %}

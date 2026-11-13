@@ -16,6 +16,7 @@ urlpatterns = [
     # Events live under their host: /communities/<community>/events/<event>/
     path("", include("events.urls", namespace="events")),
     path("communities/", include("communities.urls")),
+    path("community-tours/", include("tours.urls", namespace="tours")),
     path("skills/", include("gift_economy.gifts.skills.urls")),
     path("notifications/", include("notifications.urls")),
     path("messages/", include(("postman_urls", "postman"), namespace="postman")),

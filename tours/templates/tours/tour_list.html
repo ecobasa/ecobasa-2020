@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block head_title %}{% trans "Community-Tours" %} — ecobasa{% endblock %}
+
+{% block content %}
+<div class="container-page">
+  <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+    <h1 class="text-4xl font-semibold flex items-center gap-2 m-0"><i class="fa-solid fa-route text-primary"></i>{% trans "Community-Tours" %}</h1>
+    <a href="{% url 'tours:create' %}" class="btn btn-lg"><i class="fa fa-plus mr-2"></i>{% trans "Plan a tour" %}</a>
+  </div>
+  <p class="text-sm mb-6">{% trans "Travel from community to community and from event to event: help, learn, and take gifts along. Join a tour for all of it or for part of the way." %}</p>
+
+  {% if own %}
+    <section class="mb-8">
+      <h2>{% trans "Your tours that are not in the list" %}</h2>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {% for tour in own %}{% include "tours/_tour_card.html" %}{% endfor %}
+      </div>
+    </section>
+  {% endif %}
+
+  {% include "dashboard/_tabs.html" %}
+  {% if tours %}
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      {% for tour in tours %}{% include "tours/_tour_card.html" %}{% endfor %}
+    </div>
+    {% include "dashboard/_pager.html" %}
+  {% else %}
+    <p class="italic">{% if tab == "ideas" %}{% trans "No tour ideas yet." %}{% else %}{% trans "No tours planned yet." %}{% endif %}</p>
+  {% endif %}
+</div>
+{% endblock %}

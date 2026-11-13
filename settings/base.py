@@ -87,6 +87,7 @@ LOCAL_APPS = [
     "gift_economy.matches",
     "gift_economy.references",
     "events",
+    "tours",
 ]
 
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps

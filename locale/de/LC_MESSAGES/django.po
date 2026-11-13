@@ -5269,3 +5269,348 @@ msgid "You are coming."
 msgid_plural "You are coming, %(count)s people."
 msgstr[0] "Du kommst."
 msgstr[1] "Ihr kommt zu %(count)s."
+
+# tours (Community-Tours, package 1)
+
+msgid "Community-Tours"
+msgstr "Community-Tours"
+
+msgid "What we want to learn"
+msgstr "Was wir lernen wollen"
+
+msgid "Skills from the list. We use them to find communities and events where you can learn them."
+msgstr "Fähigkeiten aus der Liste. Damit finden wir Gemeinschaften und Events, bei denen du sie lernen kannst."
+
+msgid "Countries"
+msgstr "Länder"
+
+msgid "Where about you want to go. Once the tour has stops, they say it."
+msgstr "Wohin es ungefähr gehen soll. Sobald die Tour Stationen hat, ergibt es sich aus ihnen."
+
+msgid "e.g. Permaculture tour through Portugal"
+msgstr "z. B. Permakultur-Tour durch Portugal"
+
+msgid "Why you travel, what you'd like to do on the way, who you'd like to meet."
+msgstr "Warum du reist, was du unterwegs machen möchtest, wen du treffen möchtest."
+
+msgid "e.g. Permaculture, Yoga"
+msgstr "z. B. Permakultur, Yoga"
+
+msgid "Please choose countries from the list."
+msgstr "Bitte wähle Länder aus der Liste."
+
+msgid "Where"
+msgstr "Wo"
+
+msgid "At a community"
+msgstr "Bei einer Gemeinschaft"
+
+msgid "Another place"
+msgstr "Anderer Ort"
+
+msgid "At one of its events?"
+msgstr "Bei einem ihrer Events?"
+
+msgid "No, a stay at the community"
+msgstr "Nein, ein Aufenthalt bei der Gemeinschaft"
+
+msgid "Place"
+msgstr "Ort"
+
+msgid "Going on from here by"
+msgstr "Von hier weiter mit"
+
+msgid "As the tour travels"
+msgstr "Wie die Tour reist"
+
+msgid "e.g. help with the harvest, a yoga week"
+msgstr "z. B. bei der Ernte helfen, eine Yoga-Woche"
+
+msgid "Please choose a community."
+msgstr "Bitte wähle eine Gemeinschaft."
+
+msgid "Please choose one of this community's events."
+msgstr "Bitte wähle eines der Events dieser Gemeinschaft."
+
+msgid "Please choose the place on the map."
+msgstr "Bitte wähle den Ort auf der Karte."
+
+msgid "You can't leave before you arrive."
+msgstr "Du kannst nicht abreisen, bevor du ankommst."
+
+msgid "Van or bus"
+msgstr "Bus oder Van"
+
+msgid "Car"
+msgstr "Auto"
+
+msgid "Bicycle"
+msgstr "Fahrrad"
+
+msgid "Train and bus"
+msgstr "Bahn und Bus"
+
+msgid "Hitchhiking"
+msgstr "Trampen"
+
+msgid "On foot"
+msgstr "Zu Fuß"
+
+msgid "Boat"
+msgstr "Boot"
+
+msgid "Mixed"
+msgstr "Gemischt"
+
+msgid "Organiser"
+msgstr "Organisator*in"
+
+msgid "How we travel"
+msgstr "Wie wir reisen"
+
+msgid "I'm looking for travellers"
+msgstr "Ich suche Mitreisende"
+
+msgid "How many people at most?"
+msgstr "Wie viele Personen höchstens?"
+
+msgid "Including you."
+msgstr "Dich mitgezählt."
+
+msgid "Show this tour in the list and on the map"
+msgstr "Diese Tour in der Liste und auf der Karte zeigen"
+
+msgid "Children welcome"
+msgstr "Kinder willkommen"
+
+msgid "Animals welcome"
+msgstr "Tiere willkommen"
+
+msgid "Good to know"
+msgstr "Gut zu wissen"
+
+msgid "How we share costs"
+msgstr "Wie wir Kosten teilen"
+
+msgid "e.g. we share fuel, everyone brings food for the road"
+msgstr "z. B. wir teilen den Sprit, alle bringen Essen für unterwegs mit"
+
+msgid "Published"
+msgstr "Veröffentlicht"
+
+msgid "Route"
+msgstr "Route"
+
+msgid "About how many km"
+msgstr "Ungefähr wie viele km"
+
+msgid "Tour"
+msgstr "Tour"
+
+msgid "Arrive"
+msgstr "Ankunft"
+
+msgid "Leave"
+msgstr "Abreise"
+
+msgid "Setting off at"
+msgstr "Abfahrt um"
+
+msgid "Give or take a few days"
+msgstr "Plus/minus ein paar Tage"
+
+msgid "What we plan here"
+msgstr "Was wir hier vorhaben"
+
+msgid "Going on by"
+msgstr "Weiter mit"
+
+msgid "Stop"
+msgstr "Station"
+
+msgid "Stops"
+msgstr "Stationen"
+
+#, python-format
+msgid "(%(kind)s)"
+msgstr "(%(kind)s)"
+
+msgid "Move up"
+msgstr "Nach oben"
+
+msgid "Move down"
+msgstr "Nach unten"
+
+msgid "Remove this stop?"
+msgstr "Diese Station entfernen?"
+
+#, python-format
+msgid "setting off at %(time)s"
+msgstr "Abfahrt um %(time)s"
+
+msgid "give or take a few days"
+msgstr "plus/minus ein paar Tage"
+
+msgid "Name or place of the community…"
+msgstr "Name oder Ort der Gemeinschaft…"
+
+msgid "events"
+msgstr "Events"
+
+msgid "Its current projects and community events."
+msgstr "Ihre aktuellen Projekte und Gemeinschafts-Events."
+
+msgid "A meeting point, a town, or a gathering that is not on ecobasa. Everyone sees this place as you enter it: choose a meeting point, not your home."
+msgstr "Ein Treffpunkt, eine Stadt oder ein Treffen, das nicht auf ecobasa ist. Alle sehen diesen Ort so, wie du ihn eingibst: Wähle einen Treffpunkt, nicht dein Zuhause."
+
+#, python-format
+msgid "%(count)s stop"
+msgid_plural "%(count)s stops"
+msgstr[0] "%(count)s Station"
+msgstr[1] "%(count)s Stationen"
+
+msgid "Idea"
+msgstr "Idee"
+
+msgid "Draft"
+msgstr "Entwurf"
+
+msgid "Not in the list"
+msgstr "Nicht in der Liste"
+
+msgid "No dates yet"
+msgstr "Noch keine Daten"
+
+#, python-format
+msgid "Stop %(number)s"
+msgstr "Station %(number)s"
+
+msgid "Add the stops in the order you travel. Days can come later: without them the tour is an idea."
+msgstr "Füge die Stationen in der Reihenfolge hinzu, in der du reist. Die Tage können später kommen: ohne sie ist die Tour eine Idee."
+
+msgid "Hosts usually gain from help after about a week. Visit at least two communities so gifts can travel."
+msgstr "Gastgeber*innen haben meist nach etwa einer Woche etwas von der Hilfe. Besuche mindestens zwei Gemeinschaften, damit Geschenke mitreisen können."
+
+#, python-format
+msgid "Altogether about %(km)s km."
+msgstr "Insgesamt etwa %(km)s km."
+
+msgid "No stops yet."
+msgstr "Noch keine Stationen."
+
+msgid "Add a stop"
+msgstr "Station hinzufügen"
+
+msgid "Add stop"
+msgstr "Station hinzufügen"
+
+msgid "See the tour"
+msgstr "Zur Tour"
+
+msgid "Publish"
+msgstr "Veröffentlichen"
+
+msgid "This is a draft: only you can see it."
+msgstr "Das ist ein Entwurf: Nur du kannst ihn sehen."
+
+msgid "This tour is over."
+msgstr "Diese Tour ist vorbei."
+
+msgid "This tour has been archived."
+msgstr "Diese Tour wurde archiviert."
+
+msgid "This tour is not in the list or on the map. Only you see it."
+msgstr "Diese Tour ist nicht in der Liste und nicht auf der Karte. Nur du siehst sie."
+
+msgid "Plan the route"
+msgstr "Route planen"
+
+msgid "Say that this tour is still planned as it is"
+msgstr "Sagen, dass die Tour noch so geplant ist"
+
+msgid "Archive this tour? It will no longer be listed."
+msgstr "Diese Tour archivieren? Sie wird dann nicht mehr gelistet."
+
+msgid "No stops yet: this tour is still an idea."
+msgstr "Noch keine Stationen: Diese Tour ist noch eine Idee."
+
+msgid "Add stops"
+msgstr "Stationen hinzufügen"
+
+#, python-format
+msgid "%(count)s person at most"
+msgid_plural "%(count)s people at most"
+msgstr[0] "höchstens %(count)s Person"
+msgstr[1] "höchstens %(count)s Personen"
+
+msgid "Edit tour"
+msgstr "Tour bearbeiten"
+
+msgid "Plan a tour"
+msgstr "Tour planen"
+
+msgid "First the basics. Next you add the stops: communities, their events, or other places."
+msgstr "Erst das Wichtigste. Danach fügst du die Stationen hinzu: Gemeinschaften, ihre Events oder andere Orte."
+
+msgid "Travel company"
+msgstr "Reisegesellschaft"
+
+msgid "A tour of your own, to learn and to take gifts along. Nobody can ask to join."
+msgstr "Eine Tour für dich allein, zum Lernen und um Geschenke mitzunehmen. Niemand kann Mitreisen anfragen."
+
+msgid "3 to 5 people fit into a community most easily."
+msgstr "3 bis 5 Personen passen am leichtesten in eine Gemeinschaft."
+
+msgid "Otherwise only you see it, and later the hosts you ask."
+msgstr "Sonst siehst nur du sie und später die Gastgeber*innen, die du anfragst."
+
+msgid "Who is welcome"
+msgstr "Wer willkommen ist"
+
+msgid "Next: the route"
+msgstr "Weiter: die Route"
+
+msgid "Travel from community to community and from event to event: help, learn, and take gifts along. Join a tour for all of it or for part of the way."
+msgstr "Reise von Gemeinschaft zu Gemeinschaft und von Event zu Event: hilf mit, lerne und nimm Geschenke mit. Reise bei einer Tour ganz oder für ein Stück des Weges mit."
+
+msgid "Your tours that are not in the list"
+msgstr "Deine Touren, die nicht in der Liste sind"
+
+msgid "No tour ideas yet."
+msgstr "Noch keine Tour-Ideen."
+
+msgid "No tours planned yet."
+msgstr "Noch keine Touren geplant."
+
+msgid "Tour ideas"
+msgstr "Tour-Ideen"
+
+msgid "Your tour is saved as a draft. Now add its stops."
+msgstr "Deine Tour ist als Entwurf gespeichert. Füge jetzt ihre Stationen hinzu."
+
+msgid "The tour has been saved."
+msgstr "Die Tour wurde gespeichert."
+
+msgid "The stop has been added."
+msgstr "Die Station wurde hinzugefügt."
+
+msgid "The stop has been saved."
+msgstr "Die Station wurde gespeichert."
+
+msgid "The stop has been removed."
+msgstr "Die Station wurde entfernt."
+
+msgid "Your tour is published. Others find it in the list of tours."
+msgstr "Deine Tour ist veröffentlicht. Andere finden sie in der Liste der Touren."
+
+msgid "Your tour is published. It is not in the list, as you chose."
+msgstr "Deine Tour ist veröffentlicht. Wie gewünscht ist sie nicht in der Liste."
+
+msgid "The tour has been archived."
+msgstr "Die Tour wurde archiviert."
+
+msgid "This tour is over. Change the days of its stops to bring it back."
+msgstr "Diese Tour ist vorbei. Ändere die Tage ihrer Stationen, um sie zurückzuholen."
+
+msgid "Thanks, the tour is marked as current."
+msgstr "Danke, die Tour ist als aktuell markiert."

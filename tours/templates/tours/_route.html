@@ -1,0 +1,48 @@
+{% load i18n %}
+{# The route as a timeline: numbered stops, the way between them. Places as everyone sees them. With `editing`: move, change and remove a stop #}
+<ol class="list-none m-0 p-0">
+  {% for item in route %}
+    {% with stop=item.stop %}
+    <li class="m-0">
+      <div class="flex items-start gap-3">
+        <span class="flex-none w-8 h-8 rounded-full bg-primary text-secondary font-bold flex items-center justify-center">{{ item.number }}</span>
+        <div class="flex-1 min-w-0 pb-2">
+          <div class="font-semibold">
+            <i class="fa-solid {{ stop.icon }} mr-1 text-primary"></i>
+            {% if stop.event %}
+              <a href="{{ stop.event.get_absolute_url }}" class="hover:underline">{{ stop.event.title }}</a>
+              <span class="font-normal text-sm">{% blocktrans with kind=stop.event.kind_label %}({{ kind }}){% endblocktrans %}</span>
+            {% elif stop.community %}
+              <a href="{{ stop.community.get_absolute_url }}" class="hover:underline">{{ stop.community.name }}</a>
+            {% else %}
+              {{ stop.name }}
+            {% endif %}
+          </div>
+          <div class="text-sm opacity-80">
+            {% if stop.event %}<a href="{{ stop.community.get_absolute_url }}" class="hover:underline">{{ stop.community.name }}</a>{% if item.place %} · {% endif %}{% endif %}{% if stop.community and item.place %}{{ item.place }}{% endif %}
+            {% if stop.arrive_on or stop.leave_on %}<span class="ml-1"><i class="fa-regular fa-calendar mr-1"></i>{% include "tours/_stop_dates.html" %}</span>{% endif %}
+          </div>
+          {% if stop.note %}<p class="text-sm m-0 mt-1">{{ stop.note|linebreaksbr }}</p>{% endif %}
+          {% if editing %}
+            <div class="flex flex-wrap gap-2 mt-2 text-sm">
+              {% if not forloop.first %}
+                <form method="post" action="{% url 'tours:stop_move' tour.slug stop.pk 'up' %}">{% csrf_token %}<button type="submit" class="btn btn-purple" title="{% trans 'Move up' %}"><i class="fa fa-arrow-up"></i></button></form>
+              {% endif %}
+              {% if not forloop.last %}
+                <form method="post" action="{% url 'tours:stop_move' tour.slug stop.pk 'down' %}">{% csrf_token %}<button type="submit" class="btn btn-purple" title="{% trans 'Move down' %}"><i class="fa fa-arrow-down"></i></button></form>
+              {% endif %}
+              <a href="{% url 'tours:stop_edit' tour.slug stop.pk %}" class="btn btn-purple"><i class="fa fa-edit mr-1"></i>{% trans "Change" %}</a>
+              <form method="post" action="{% url 'tours:stop_delete' tour.slug stop.pk %}" onsubmit="return confirm('{% trans "Remove this stop?" as question %}{{ question|escapejs }}')">{% csrf_token %}<button type="submit" class="btn btn-purple" title="{% trans 'Remove' %}"><i class="fa fa-trash"></i></button></form>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+      {% if item.leg %}
+        <div class="ml-4 border-l-2 border-dashed border-primary pl-6 py-2 text-sm opacity-80">
+          <i class="fa-solid {{ item.leg_icon }} mr-1"></i>{{ item.leg_mode }}{% if item.leg.km is not None %} · {% blocktrans with km=item.leg.km %}about {{ km }} km{% endblocktrans %}{% endif %}
+        </div>
+      {% endif %}
+    </li>
+    {% endwith %}
+  {% endfor %}
+</ol>

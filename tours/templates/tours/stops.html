@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block head_title %}{% trans "Route" %} — {{ tour.title }} — ecobasa{% endblock %}
+
+{% block extrahead %}
+{{ block.super }}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v7.2.2/ol.css">
+{% endblock %}
+
+{% block content %}
+<div class="container-form">
+  <div class="mb-2 text-sm"><a href="{{ tour.get_absolute_url }}" class="hover:underline">{{ tour.title }}</a></div>
+  <h1><i class="fa-solid fa-route mr-2 text-primary"></i>{% trans "Route" %}</h1>
+  <p class="text-sm">{% trans "Add the stops in the order you travel. Days can come later: without them the tour is an idea." %}</p>
+  <p class="text-xs opacity-80">{% trans "Hosts usually gain from help after about a week. Visit at least two communities so gifts can travel." %}</p>
+
+  <section class="border rounded-xl bg-secondary bg-opacity-60 p-6 mb-6">
+    {% if route %}
+      {% include "tours/_route.html" with editing=True %}
+      {% if tour.distance_km %}<p class="text-sm mt-2">{% blocktrans with km=tour.distance_km %}Altogether about {{ km }} km.{% endblocktrans %}</p>{% endif %}
+    {% else %}
+      <p class="italic m-0">{% trans "No stops yet." %}</p>
+    {% endif %}
+  </section>
+
+  <form method="post" class="border rounded-xl bg-secondary p-6 space-y-4">
+    {% csrf_token %}
+    <h2 class="mt-0">{% trans "Add a stop" %}</h2>
+    {% include "tours/_stop_fields.html" %}
+    <div class="flex justify-end gap-3 pt-2">
+      <button type="submit" class="btn btn-lg"><i class="fa fa-plus mr-2"></i>{% trans "Add stop" %}</button>
+    </div>
+  </form>
+
+  <div class="flex flex-wrap justify-end gap-3 mt-6">
+    <a href="{{ tour.get_absolute_url }}" class="btn btn-lg btn-purple">{% trans "See the tour" %}</a>
+    {% if not tour.is_published %}
+      <form method="post" action="{% url 'tours:publish' tour.slug %}">{% csrf_token %}
+        <button type="submit" class="btn btn-lg"><i class="fa-solid fa-paper-plane mr-2"></i>{% trans "Publish" %}</button>
+      </form>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+
+{% block javascript %}
+{{ block.super }}
+{% include "tours/_stop_js.html" %}
+{% endblock %}
