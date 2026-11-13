@@ -140,6 +140,15 @@ class Reference(models.Model):
         subject = self.subject
         return f"{subject.get_absolute_url()}#reference-{self.pk}" if subject is not None else ""
 
+    @property
+    def visited(self):
+        """Where a reference about a group (a tour) happened: the host of the stay it was
+        written after, an event or a community. None otherwise."""
+        subject = self.subject
+        if self.match is None or subject is None or not hasattr(subject, "get_reference_people"):
+            return None
+        return self.match.target
+
     def confirmed_skill_tags(self):
         """Skills tagged on it that the person or community confirmed (uses a prefetch)."""
         return [tag for tag in self.skill_tags.all() if tag.status == ReferenceSkill.STATUS_CONFIRMED]

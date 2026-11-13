@@ -44,6 +44,16 @@ class ReferenceForm(forms.ModelForm):
                 self.fields["people"].initial = [str(pk) for pk in self.instance.people.values_list("pk", flat=True)]
             else:
                 self.fields["people"].initial = [str(person.pk) for person in present]
+        # Written on the group's page: at which of its stays (a request's story knows it)
+        visits = getattr(subject, "get_reference_visits", None)
+        if visits is not None and not story:
+            self.visits = {str(match.pk): match for match, _label in visits()}
+            if self.visits:
+                self.fields["visit"] = forms.ChoiceField(
+                    label=_("Where did you meet them?"), required=False,
+                    choices=[("", "—")] + [(str(match.pk), label) for match, label in visits()],
+                    initial=str(self.instance.match_id or ""),
+                )
         if story:
             self.fields["text"].label = _("Your story")
             self.fields["text"].widget.attrs.update(rows=6, placeholder=_("What happened? What are you grateful for?"))
@@ -80,6 +90,9 @@ class ReferenceForm(forms.ModelForm):
             reference.photo.save(photo.name, photo, save=False)
         reference.save()
         self.save_tags(reference, holder=subject)
+        if "visit" in self.fields:
+            reference.match = self.visits.get(self.cleaned_data.get("visit") or "")
+            reference.save(update_fields=["match"])
         if "people" in self.fields:
             reference.people.set([self.group_people[pk] for pk in self.cleaned_data.get("people", []) if pk in self.group_people])
         return reference

@@ -67,6 +67,8 @@ def test_the_host_writes_about_the_group_and_about_one_of_them(visited, farm):
     # The tour page lists the group's reference with who was there; Rita's stays on her profile
     page = Client().get(visited.tour.get_absolute_url()).content.decode()
     assert "the jars still stand" in page and "Rita fixed our pump" not in page
+    # It names where the group stayed
+    assert group_reference.visited == visited.community and visited.community.get_absolute_url() in page
 
 
 def test_the_group_writes_about_the_host(visited, farm):
@@ -86,9 +88,14 @@ def test_travellers_dont_write_about_their_own_tour(visited, organiser):
     vera = person("Vera")
     page = login(vera).get(tour.get_absolute_url()).content.decode()
     assert url in page
-    login(vera).post(url, {"impression": "positive", "text": "They helped at our market.", "people": [str(otto.pk)]})
+    assert "Where did you meet them?" in page
+    login(vera).post(url, {
+        "impression": "positive", "text": "They helped at our market.", "people": [str(otto.pk)],
+        "visit": str(visited.visit_match_id),
+    })
     reference = Reference.objects.get(author=vera)
     assert reference.recipient == organiser and list(reference.people.all()) == [otto]
+    assert reference.visited == visited.community
 
 
 def test_a_host_who_travels_along_is_asked_once_as_host(tour, organiser, farm, django_capture_on_commit_callbacks):

@@ -39,6 +39,10 @@
   </header>
   {% endwith %}
   <p class="text-sm m-0">{{ ref.text|linebreaksbr }}</p>
+  {% with place=ref.visited %}{% if place %}
+    {# A group's reference: the event or community it stayed with #}
+    <p class="text-xs text-brown mt-2 mb-0"><i class="fa fa-map-marker mr-1"></i>{% if place.community %}<a href="{{ place.get_absolute_url }}" class="text-primary">{{ place.title }}</a> · <a href="{{ place.community.get_absolute_url }}" class="text-primary">{{ place.community.name }}</a>{% else %}<a href="{{ place.get_absolute_url }}" class="text-primary">{{ place.name }}</a>{% endif %}</p>
+  {% endif %}{% endwith %}
   {% with present=ref.people.all %}{% if present %}
     <p class="text-xs text-brown mt-2 mb-0"><i class="fa-solid fa-people-group mr-1"></i>{% trans "Who was there" %}: {% for person in present %}<a href="{{ person.get_absolute_url }}" class="text-primary">{{ person.name|default:person.email }}</a>{% if not forloop.last %}, {% endif %}{% endfor %}</p>
   {% endif %}{% endwith %}
