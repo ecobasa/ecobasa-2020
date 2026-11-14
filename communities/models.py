@@ -56,11 +56,13 @@ class Community(UniqueSlugMixin, models.Model):
         null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    owner = models.ForeignKey(
+    # Represents the community to the network and the network to the community: matches
+    # on the community, its events and listings are addressed to them
+    ambassador = models.ForeignKey(
         User,
         on_delete=models.SET_NULL,
-        related_name="communities",
-        verbose_name=_("Owner"),
+        related_name="ambassador_of",
+        verbose_name=_("Ambassador"),
         null=True,
     )
     inhabitants = models.PositiveIntegerField(
@@ -134,6 +136,14 @@ class Community(UniqueSlugMixin, models.Model):
     def get_absolute_url(self) -> str:
         return reverse("communities:detail", kwargs={"slug": self.slug})
 
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        # The ambassador is a member too
+        update_fields = kwargs.get("update_fields")
+        if self.ambassador_id and (update_fields is None or "ambassador" in update_fields):
+            if not self.memberships.counted().filter(user_id=self.ambassador_id).exists():
+                Membership.objects.create(community=self, user_id=self.ambassador_id)
+
     # Same icons as the community map markers
     TYPE_ICONS = {
         COMMUNITY_TYPE_ECOVILLAGE: "fa-people-roof",
@@ -187,9 +197,55 @@ class Community(UniqueSlugMixin, models.Model):
         return (self.location_name, self.location) if self.shows_place_to(user) else self.rough_place()
 
     def members(self):
-        """Who belongs to the community. For now its ambassador; real membership can
-        extend this."""
-        return [self.owner] if self.owner_id else []
+        """Who belongs to the community, its ambassador first."""
+        return [membership.user for membership in self.member_list()]
+
+    def member_list(self):
+        """Its memberships that count, the ambassador's first."""
+        memberships = self.memberships.counted().select_related("user")
+        return sorted(memberships, key=lambda membership: membership.user_id != self.ambassador_id)
+
+    def is_member(self, user):
+        return user.is_authenticated and self.memberships.counted().filter(user=user).exists()
+
+    def membership_of(self, user):
+        """`user`'s membership, also one still asked for, or None."""
+        if not user.is_authenticated:
+            return None
+        return self.memberships.current().filter(user=user).select_related("match").first()
+
+    def can_edit(self, user):
+        """Its members edit its page and its offers and wishes (and staff)."""
+        return user.is_authenticated and (user.is_staff or self.is_member(user))
+
+    def is_ambassador(self, user):
+        return user.is_authenticated and (user.is_staff or user.pk == self.ambassador_id)
+
+    def hand_over(self, user):
+        """Make a member the ambassador. The open and accepted matches addressed to the
+        one before (stays, its events', offers' and wishes', membership applications)
+        move to them; the one before stays a member."""
+        from django.contrib.contenttypes.models import ContentType
+        from django.db import transaction
+        from gift_economy.matches.models import Match
+
+        before = self.ambassador
+        with transaction.atomic():
+            self.ambassador = user
+            self.save(update_fields=["ambassador"])
+            if before is None:
+                return
+            def of(model, pks):
+                return Q(content_type=ContentType.objects.get_by_natural_key(*model), object_id__in=[str(pk) for pk in pks])
+            ours = (
+                of(("communities", "community"), [self.pk])
+                | of(("events", "event"), self.events.values_list("pk", flat=True))
+                | of(("gifts", "listing"), self.listings.values_list("pk", flat=True))
+                | of(("communities", "membership"), self.memberships.values_list("pk", flat=True))
+            )
+            Match.objects.filter(
+                ours, recipient=before, status__in=[Match.STATUS_PENDING, Match.STATUS_COUNTER, Match.STATUS_ACCEPTED],
+            ).exclude(from_user=user).update(recipient=user)
 
     def get_reference_subjects(self):
         """What references on this page can be about: the community and its offers and
@@ -206,7 +262,7 @@ class Community(UniqueSlugMixin, models.Model):
 
     # ── matches.Match target protocol ───────────────────────────────
     def get_match_owner(self):
-        return self.owner
+        return self.ambassador
 
     def get_match_display_name(self):
         return self.name
@@ -243,3 +299,103 @@ class CommunityPhoto(models.Model):
 
     def __str__(self):
         return f"Photo for {self.community.name}"
+
+
+def with_member_communities(path=""):
+    """A prefetch of the communities people belong to, for User.member_communities():
+    `path` leads from the queryset to the people (e.g. "owner__")."""
+    from django.db.models import Prefetch
+
+    return Prefetch(
+        f"{path}memberships", to_attr="counted_memberships",
+        queryset=Membership.objects.counted().select_related("community").prefetch_related("community__photos"),
+    )
+
+
+class MembershipQuerySet(models.QuerySet):
+    def current(self):
+        """Not left nor removed: members, and those who asked and wait for an answer."""
+        from gift_economy.matches.models import Match
+
+        return self.filter(ended_at=None).filter(
+            Q(match=None) | Q(match__status__in=[Match.STATUS_PENDING, Match.STATUS_ACCEPTED, Match.STATUS_COUNTER])
+        )
+
+    def counted(self):
+        """Members: without a match (the ambassador, or added in the admin), or accepted."""
+        from gift_economy.matches.models import Match
+
+        return self.filter(ended_at=None).filter(Q(match=None) | Q(match__status=Match.STATUS_ACCEPTED))
+
+
+class Membership(models.Model):
+    """Someone belonging to a community, also a planned one nobody lives in yet. Others
+    than the ambassador ask for it with a match that has the membership as target, and
+    count once it is accepted. Leaving keeps the row (ended_at), so the match keeps its
+    target."""
+
+    community = models.ForeignKey(Community, on_delete=models.CASCADE, related_name="memberships")
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="memberships")
+    match = models.OneToOneField(
+        "matches.Match", on_delete=models.SET_NULL, null=True, blank=True, related_name="membership",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    ended_at = models.DateTimeField(null=True, blank=True)
+
+    objects = MembershipQuerySet.as_manager()
+
+    class Meta:
+        ordering = ["created_at", "pk"]
+        verbose_name = _("Membership")
+        verbose_name_plural = _("Memberships")
+
+    def __str__(self):
+        return f"{self.user} in {self.community}"
+
+    @property
+    def is_counted(self):
+        from gift_economy.matches.models import Match
+
+        return self.ended_at is None and (self.match_id is None or self.match.status == Match.STATUS_ACCEPTED)
+
+    def end(self):
+        from django.utils import timezone
+
+        self.ended_at = timezone.now()
+        self.save(update_fields=["ended_at"])
+
+    def get_absolute_url(self):
+        return self.community.get_absolute_url()
+
+    # ── As what a membership application is about (gift_economy.matches) ──
+    def get_match_owner(self):
+        return self.community.ambassador
+
+    def get_match_display_name(self):
+        return self.community.name
+
+    def get_match_location(self):
+        return self.community.get_match_location()
+
+    @property
+    def place_seed(self):
+        return self.community.place_seed
+
+    @property
+    def place_is_public(self):
+        return self.community.place_is_public
+
+    def get_match_icon(self):
+        return self.community.get_type_icon()
+
+    def get_match_kind(self):
+        return _("Membership application"), "fa-people-group", "bg-green"
+
+    def get_match_verb(self, own=True):
+        return _("asked to become a member of")
+
+    def get_match_request_text(self):
+        return _("%(actor)s asked to become a member of %(title)s")
+
+    # A membership is a yes or a no, there is nothing to counter-propose
+    match_counter = False

@@ -51,7 +51,7 @@ class DetailView(LoginRequiredMixin, DetailView):
             listings = list(Listing.objects.of(user).current().select_related("skill"))
             with_skill = sorted((l for l in listings if l.skill_id), key=lambda l: l.display_title)
             ctx["listings"] = [l for l in listings if not l.skill_id]
-            ctx["communities"] = user.communities.prefetch_related("photos").order_by("name")
+            ctx["communities"] = user.member_communities_qs().prefetch_related("photos").order_by("name")
             ctx["user_skills"] = [l for l in with_skill if l.is_offer]
             ctx["skill_wishes"] = [l for l in with_skill if l.is_wish]
             # Others see only about where they live (users.places)

@@ -7,7 +7,12 @@
      {% elif match.status == 'withdrawn' %}border-brown border-opacity-40
      {% else %}border-yellow{% endif %}">
   <div class="flex-none">
-    <i class="fa-solid {{ match.target.get_match_icon }} text-2xl text-primary opacity-70"></i>
+    {# A membership application: who applied, or the community one applied to #}
+    {% if request_type == "members" %}
+      {% if show_from %}{% include "_avatar.html" with who=match.from_user %}{% else %}{% include "_avatar.html" with who=match.target.community %}{% endif %}
+    {% else %}
+      <i class="fa-solid {{ match.target.get_match_icon }} text-2xl text-primary opacity-70"></i>
+    {% endif %}
   </div>
   <div class="flex-1 min-w-0">
     <div class="flex items-center gap-2 min-w-0">

@@ -36,7 +36,7 @@ def aware(d):
 @pytest.fixture
 def east(organiser, farm, village):
     """From the farm near Potsdam to the village near Dresden, in a week."""
-    village.owner = person("Vera")
+    village.ambassador = person("Vera")
     village.save()
     return published(
         organiser, "Clay and seeds",
@@ -90,7 +90,7 @@ def test_a_stay_in_other_weeks_or_without_room_fits_no_tour(east, village):
 
 
 def test_a_stay_at_an_event_fits_a_stop_at_its_community(organiser, village, project):
-    village.owner = person("Vera")
+    village.ambassador = person("Vera")
     village.save()
     tour = published(
         organiser, "To the stove", {"name": "Leipzig", "location": Point(12.37, 51.34, srid=4326), "leave_on": day(19)},
@@ -153,7 +153,7 @@ def test_no_suggestion_of_ones_own_tour(east, organiser, village):
 
 
 def test_none_for_a_personal_tour_that_is_not_listed(organiser, village):
-    village.owner = person("Vera")
+    village.ambassador = person("Vera")
     village.save()
     personal = published(
         organiser, "Just me", {"community": village, "arrive_on": day(8), "leave_on": day(9)},
@@ -230,7 +230,7 @@ def test_the_stay_page_lists_tours_going_there(east, village):
     stops = east.ordered_stops()
     assert f"?from={stops[1].pk}&amp;to={stops[2].pk}" in page
     # Not for the host
-    assert "Tours going there" not in login(village.owner).get(match.get_absolute_url()).content.decode()
+    assert "Tours going there" not in login(village.ambassador).get(match.get_absolute_url()).content.decode()
 
 
 def test_index_filters_fits_my_skills_and_passes_near_me(east, organiser, farm):
@@ -428,7 +428,7 @@ def ride(organiser):
 
 
 def test_a_ride_is_suggested_to_who_stays_near_where_it_ends(ride, village):
-    village.owner = person("Vera")
+    village.ambassador = person("Vera")
     village.save()
     assert ride.is_ride
     lea = User.objects.create_user(email="lea@example.com", password="secret", name="Lea", location=LEIPZIG, match_radius=50)
@@ -447,7 +447,7 @@ def test_a_ride_is_suggested_to_who_stays_near_where_it_ends(ride, village):
 
 
 def test_a_ride_isnt_suggested_for_passing_by_or_to_who_lives_far_from_its_start(ride, village):
-    village.owner = person("Vera")
+    village.ambassador = person("Vera")
     village.save()
     # Lives right by the way, but stays nowhere near its end
     near = User.objects.create_user(email="nina@example.com", password="secret", name="Nina",
@@ -460,7 +460,7 @@ def test_a_ride_isnt_suggested_for_passing_by_or_to_who_lives_far_from_its_start
 
 
 def test_a_ride_towards_home_after_a_stay(organiser, village):
-    village.owner = person("Vera")
+    village.ambassador = person("Vera")
     village.save()
     ride = published(
         organiser, "Dresden → Leipzig",
@@ -490,7 +490,7 @@ def test_people_from_near_each_other_coming_to_the_same_event(project):
         User.objects.create_user(email=f"{name.lower()}@example.com", password="secret", name=name, location=point)
         for name, point in (("Lena", LEIPZIG), ("Mia", Point(12.40, 51.30, srid=4326)), ("Fiona", FAR_AWAY), ("Oda", LEIPZIG))
     )
-    project.community.owner = person("Vera")
+    project.community.ambassador = person("Vera")
     project.community.save()
     mine = stay(lena, project, day(20), day(25))
     theirs = stay(mia, project, day(24), day(30))
@@ -516,7 +516,7 @@ def test_people_from_near_each_other_coming_to_the_same_event(project):
 
 
 def test_going_together_to_a_community_only_once_both_are_accepted(village):
-    village.owner = person("Vera")
+    village.ambassador = person("Vera")
     village.save()
     lena = User.objects.create_user(email="lena@example.com", password="secret", name="Lena", location=LEIPZIG)
     mia = User.objects.create_user(email="mia@example.com", password="secret", name="Mia", location=LEIPZIG)

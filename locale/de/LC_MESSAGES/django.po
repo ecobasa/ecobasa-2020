@@ -7503,3 +7503,81 @@ msgstr "Auf der Karte zeigen"
 #: events/templates/events/going.html:10
 msgid "Events you are attending"
 msgstr "Events, an denen du teilnimmst"
+
+msgid "Membership"
+msgstr "Mitgliedschaft"
+
+msgid "Memberships"
+msgstr "Mitgliedschaften"
+
+msgid "Membership application"
+msgstr "Mitgliedsantrag"
+
+msgid "asked to become a member of"
+msgstr "möchte Mitglied werden bei"
+
+#, python-format
+msgid "%(actor)s asked to become a member of %(title)s"
+msgstr "%(actor)s möchte Mitglied werden bei %(title)s"
+
+msgid "Membership applications"
+msgstr "Mitgliedsanträge"
+
+msgid "No membership applications yet."
+msgstr "Noch keine Mitgliedsanträge."
+
+msgid "Your membership application has been sent to the ambassador."
+msgstr "Dein Mitgliedsantrag ist an die*den Botschafter*in gegangen."
+
+msgid "Make another member the ambassador before you leave."
+msgstr "Mach ein anderes Mitglied zur*zum Botschafter*in, bevor du gehst."
+
+#, python-format
+msgid "You left %(name)s."
+msgstr "Du hast %(name)s verlassen."
+
+msgid "Make another member the ambassador first."
+msgstr "Mach zuerst ein anderes Mitglied zur*zum Botschafter*in."
+
+#, python-format
+msgid "%(name)s is no longer a member."
+msgstr "%(name)s ist kein Mitglied mehr."
+
+#, python-format
+msgid "%(name)s is the ambassador now."
+msgstr "%(name)s ist jetzt Botschafter*in."
+
+msgid "Members"
+msgstr "Mitglieder"
+
+msgid "Manage"
+msgstr "Verwalten"
+
+#, python-format
+msgid "Make %(name)s the ambassador? Requests to the community then go to them; you stay a member."
+msgstr "%(name)s zur*zum Botschafter*in machen? Anfragen an die Gemeinschaft gehen dann an %(name)s; du bleibst Mitglied."
+
+msgid "Make ambassador"
+msgstr "Zur*zum Botschafter*in machen"
+
+#, python-format
+msgid "Remove %(name)s from the community?"
+msgstr "%(name)s aus der Gemeinschaft nehmen?"
+
+msgid "Remove from community"
+msgstr "Aus der Gemeinschaft nehmen"
+
+msgid "Ask to become a member"
+msgstr "Mitglied werden"
+
+msgid "Leave this community?"
+msgstr "Diese Gemeinschaft verlassen?"
+
+msgid "Leave community"
+msgstr "Gemeinschaft verlassen"
+
+msgid "Your membership application waits for an answer."
+msgstr "Dein Mitgliedsantrag wartet auf Antwort."
+
+msgid "Who you are and how you belong to the community"
+msgstr "Wer du bist und wie du zur Gemeinschaft gehörst"

@@ -262,7 +262,7 @@ class ListingQuerySet(models.QuerySet):
     def managed_by(self, user):
         """What a person answers for: their own, their communities' (as ambassador) and
         their tours' needs (as organiser)."""
-        return self.filter(Q(owner=user, community=None) | Q(community__owner=user) | Q(tour__organiser=user))
+        return self.filter(Q(owner=user, community=None) | Q(community__ambassador=user) | Q(tour__organiser=user))
 
     def to_lend(self):
         """Tools and vehicles to lend (they come back), as opposed to given away."""
@@ -670,11 +670,16 @@ class Listing(RandomIdMixin, models.Model):
         tour's organiser (matches are addressed to them)."""
         if self.tour_id:
             return self.tour.organiser
-        return self.community.owner if self.community_id else self.owner
+        return self.community.ambassador if self.community_id else self.owner
 
     def can_edit(self, user):
-        """Its manager (and staff), and for a public good every member."""
-        return user.is_authenticated and (self.public_good or self.is_managed_by(user))
+        """Its manager (and staff), and for a public good every member; a community's
+        offers and wishes also every member of the community."""
+        if not user.is_authenticated:
+            return False
+        if self.public_good or self.is_managed_by(user):
+            return True
+        return bool(self.community_id) and self.community.is_member(user)
 
     def is_managed_by(self, user):
         if self.tour_id:

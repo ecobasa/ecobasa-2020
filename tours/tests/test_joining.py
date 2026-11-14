@@ -220,7 +220,7 @@ def test_a_profile_lists_the_tours_someone_is_on(four_stops, organiser, other):
 
 def test_a_traveller_who_is_an_ambassador_shows_their_community(four_stops, organiser, farm):
     stops = four_stops.ordered_stops()
-    _, traveller = ask(farm.owner, four_stops, stops[0], stops[1])
+    _, traveller = ask(farm.ambassador, four_stops, stops[0], stops[1])
     page = reverse("tours:detail", args=[four_stops.slug])
     assert farm.get_absolute_url() + '" class="block text-sm' not in login(organiser).get(page).content.decode()
     accept(traveller.match, organiser)

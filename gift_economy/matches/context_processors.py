@@ -30,8 +30,8 @@ def lending_calendar(request):
         if not request.user.is_authenticated:
             return []
         from gift_economy.gifts.models import Listing
-        lending = Listing.objects.to_lend().filter(community__owner=request.user).values("community")
-        return list(request.user.communities.filter(pk__in=lending).order_by("name"))
+        lending = Listing.objects.to_lend().filter(community__ambassador=request.user).values("community")
+        return list(request.user.ambassador_of.filter(pk__in=lending).order_by("name"))
 
     return {
         "has_lending_calendar": SimpleLazyObject(own),

@@ -16,7 +16,7 @@
 
         <div class="pt-3"></div>
         <a href="{% url 'matches:list' %}"
-           class="flex items-center px-3 py-2 rounded {% if ns == 'matches' and request_type != 'volunteer' and request_type != 'tours' and u != 'calendar' and u != 'lending' and u != 'community_lending' %}bg-secondary text-primary font-semibold{% else %}text-secondary hover:bg-secondary hover:text-primary{% endif %}">
+           class="flex items-center px-3 py-2 rounded {% if ns == 'matches' and request_type != 'volunteer' and request_type != 'tours' and request_type != 'members' and u != 'calendar' and u != 'lending' and u != 'community_lending' %}bg-secondary text-primary font-semibold{% else %}text-secondary hover:bg-secondary hover:text-primary{% endif %}">
           <i class="fa-solid fa-handshake mr-2"></i>{% trans "Matches" %}
           {% if new_suggestions_count %}<span class="ml-auto pill bg-purple text-secondary text-xs" title="{% trans 'New suggestions' %}">{{ new_suggestions_count }}</span>{% endif %}
         </a>
@@ -70,11 +70,10 @@
             <i class="fa-solid fa-screwdriver-wrench mr-2 self-start mt-1"></i><span class="leading-snug">{% blocktrans with name=community.name %}Tool library · {{ name }}{% endblocktrans %}</span>
           </a>
         {% endfor %}
-      {% if owned_communities %}
-        <span class="block px-3 py-2 rounded text-secondary opacity-40 cursor-default text-sm">
-          <i class="fa-solid fa-door-open mr-2"></i>{% trans "Member Applications" %} <span class="text-xs opacity-60">({% trans "coming soon" %})</span>
-        </span>
-      {% endif %}
+        <a href="{% url 'matches:list' %}?type=members"
+          class="flex items-center px-3 py-2 rounded {% if request_type == 'members' %}bg-secondary text-primary font-semibold{% else %}text-secondary hover:bg-secondary hover:text-primary{% endif %}">
+          <i class="fa-solid fa-door-open mr-2"></i>{% trans "Membership applications" %}
+        </a>
         <div class="pt-4 pb-1 px-3 text-xs text-secondary opacity-60 uppercase tracking-wide">{% trans "Tours" %}</div>
 
         <a href="{% url 'tours:mine' %}"

@@ -18,7 +18,7 @@
     </p>
     {% if helper_count %}
       <p class="mb-1">{% blocktrans count counter=helper_count %}Thanks to {{ counter }} person who helps out.{% plural %}Thanks to {{ counter }} people who help out.{% endblocktrans %}</p>
-      {% if request.user == community.owner %}<p class="text-sm opacity-80 mb-0">{% trans "Say thank you with a reference: it helps them find their next match." %}</p>{% endif %}
+      {% if request.user == community.ambassador %}<p class="text-sm opacity-80 mb-0">{% trans "Say thank you with a reference: it helps them find their next match." %}</p>{% endif %}
     {% endif %}
   </div>
 
@@ -37,7 +37,7 @@
                 {% for helper in helpers %}
                   <span class="inline-flex items-center gap-1">
                     <a href="{{ helper.match.get_absolute_url }}" class="font-semibold hover:underline">{{ helper.person.name|default:helper.person.email }}</a>
-                    {% if request.user == community.owner and not helper.thanked %}
+                    {% if request.user == community.ambassador and not helper.thanked %}
                       {% reference_url_for_match helper.match as reference_url %}
                       {% if reference_url %}<a href="{{ reference_url }}" class="btn text-xs py-1 px-2 whitespace-nowrap"><i class="fa fa-pencil mr-1"></i>{% trans "Write a reference" %}</a>{% endif %}
                     {% endif %}

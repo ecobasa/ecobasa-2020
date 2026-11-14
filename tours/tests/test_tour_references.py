@@ -29,7 +29,7 @@ def visited(tour, organiser, farm, django_capture_on_commit_callbacks):
     stop = farm_stop(tour)
     ask_host(organiser, tour, stop)
     stop.refresh_from_db()
-    accept(stop.visit_match, farm.owner)
+    accept(stop.visit_match, farm.ambassador)
     stop.refresh_from_db()
     return stop
 
@@ -44,13 +44,13 @@ def test_after_the_visit_host_and_group_are_asked(visited, organiser, farm):
     assert sorted(u.name for u in match.stay_details.companions.all()) == ["Otto", "Rita"]
     send_reference_requests(now=after(visited))
     asked = {r.user.name for r in ReferenceRequest.objects.filter(match=match)}
-    assert asked == {"Olga", "Otto", "Rita", farm.owner.name}
+    assert asked == {"Olga", "Otto", "Rita", farm.ambassador.name}
 
 
 def test_the_host_writes_about_the_group_and_about_one_of_them(visited, farm):
     match = visited.visit_match
     send_reference_requests(now=after(visited))
-    key = ReferenceRequest.objects.get(match=match, user=farm.owner).key
+    key = ReferenceRequest.objects.get(match=match, user=farm.ambassador).key
     url = reverse("references:request", args=[key])
     page = Client().get(url).content.decode()
     assert "The whole group" in page and "Otto" in page and "Who was there" in page
@@ -62,7 +62,7 @@ def test_the_host_writes_about_the_group_and_about_one_of_them(visited, farm):
     assert group_reference.subject == visited.tour and list(group_reference.people.all()) == [otto]
 
     Client().post(f"{url}?about={rita.pk}", {"impression": "positive", "text": "Rita fixed our pump."})
-    assert Reference.objects.get(author=farm.owner, object_id=str(rita.pk)).subject == rita
+    assert Reference.objects.get(author=farm.ambassador, object_id=str(rita.pk)).subject == rita
 
     # The tour page lists the group's reference with who was there; Rita's stays on her profile
     page = Client().get(visited.tour.get_absolute_url()).content.decode()
@@ -93,8 +93,8 @@ def test_the_guestbook_takes_entries_at_any_stop_and_waits_for_strangers(visited
     entries = Reference.objects.filter(author=otto).order_by("pk")
     assert [(r.place, r.pending) for r in entries] == [(stops[0], False), (stops[1], False)]
     # The host is known to the tour too
-    login(farm.owner).post(url, {"impression": "positive", "text": "Come back!", "place": str(stops[1].pk)})
-    assert not Reference.objects.get(author=farm.owner).pending
+    login(farm.ambassador).post(url, {"impression": "positive", "text": "Come back!", "place": str(stops[1].pk)})
+    assert not Reference.objects.get(author=farm.ambassador).pending
     # Someone it doesn't know waits, seen only by them and the travellers
     vera = person("Vera")
     login(vera).post(url, {"impression": "positive", "text": "They helped at our market.", "place": str(stops[2].pk)})
@@ -115,13 +115,13 @@ def test_the_guestbook_takes_entries_at_any_stop_and_waits_for_strangers(visited
 
 def test_a_host_who_travels_along_is_asked_once_as_host(tour, organiser, farm, django_capture_on_commit_callbacks):
     stops = tour.ordered_stops()
-    joined(tour, farm.owner, stops[0], stops[2], 1, django_capture_on_commit_callbacks)
+    joined(tour, farm.ambassador, stops[0], stops[2], 1, django_capture_on_commit_callbacks)
     stop = farm_stop(tour)
     ask_host(organiser, tour, stop)
     stop.refresh_from_db()
-    accept(stop.visit_match, farm.owner)
+    accept(stop.visit_match, farm.ambassador)
     send_reference_requests(now=after(stop))
-    request = ReferenceRequest.objects.get(match=stop.visit_match, user=farm.owner)
+    request = ReferenceRequest.objects.get(match=stop.visit_match, user=farm.ambassador)
     page = Client().get(reverse("references:request", args=[request.key])).content.decode()
     assert "The whole group" in page
 
@@ -144,7 +144,7 @@ def test_once_over_the_tour_page_says_how_it_went_and_whom_to_write_about(visite
     assert f"{organiser.get_absolute_url()}#references" in page
     assert f"{otto.get_absolute_url()}#references" not in page
     # The host writes about the group
-    page = login(farm.owner).get(tour.get_absolute_url()).content.decode()
+    page = login(farm.ambassador).get(tour.get_absolute_url()).content.decode()
     assert f"{tour.get_absolute_url()}#references" in page
     # Someone who wasn't there only reads how it went
     page = login(person("Vera")).get(tour.get_absolute_url()).content.decode()

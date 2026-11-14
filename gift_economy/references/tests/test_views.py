@@ -32,7 +32,7 @@ def listing(owner):
 
 @pytest.fixture
 def community(owner):
-    return Community.objects.create(name="Goat Farm", owner=owner)
+    return Community.objects.create(name="Goat Farm", ambassador=owner)
 
 
 def _client_for(user):

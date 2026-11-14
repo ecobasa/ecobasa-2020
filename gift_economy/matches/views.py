@@ -23,7 +23,7 @@ from gift_economy.gifts.models import Listing
 
 from .emails import notify_match_message, notify_match_response, read_action_token, read_suggestions_unsubscribe_token
 from .forms import MatchMessageForm
-from .models import STAY_APP_LABELS, Loan, Match, MatchMessage, Suggestion, loan_span
+from .models import Loan, Match, MatchMessage, Suggestion, loan_span, stay_q
 
 # What the matches page can show, by its "type" query param: gifts (things) and skills
 # (and knowledge and helping hands) together on one page (with suggestions first),
@@ -34,6 +34,10 @@ _TYPES = {
 }
 _VOLUNTEER = {
     "title": _("Volunteer Visits"), "icon": "fa-solid fa-campground", "empty": _("No volunteer visits yet."),
+}
+# Asking to become a member of a community (the membership is the target)
+_MEMBERS = {
+    "title": _("Membership applications"), "icon": "fa-solid fa-door-open", "empty": _("No membership applications yet."),
 }
 # Asking to join a tour (the tours app is the target; matches doesn't import it)
 TOUR_APP_LABEL = "tours"
@@ -64,7 +68,7 @@ def _listing_matches(kinds=None):
 
 
 def _stays():
-    return _with_details(Match.objects.filter(content_type__app_label__in=STAY_APP_LABELS))
+    return _with_details(Match.objects.filter(stay_q()))
 
 
 # ── Matches page ───────────────────────────────────────────────────────────────
@@ -77,6 +81,8 @@ def matches_list(request):
     kind = request.GET.get("type", "")
     if kind == "volunteer":
         return _volunteer_visits(request)
+    if kind == "members":
+        return _membership_applications(request)
     if kind == "tours":
         return _join_requests(request)
     if kind not in _TYPES:
@@ -144,14 +150,27 @@ def _requests(request, matches):
 
 
 def _volunteer_visits(request):
-    """Volunteer stays and help with events, received and sent. Only ambassadors
-    receive them, so the others (who never did) see just their own requests."""
+    """Volunteer stays and help with events, received and sent."""
+    return _received_and_sent(request, _stays(), "volunteer", _VOLUNTEER)
+
+
+def _membership_applications(request):
+    """Asking to become a member of a community, received (as its ambassador) and sent."""
+    applications = _with_details(Match.objects.filter(
+        content_type__app_label="communities", content_type__model="membership",
+    ))
+    return _received_and_sent(request, applications, "members", _MEMBERS)
+
+
+def _received_and_sent(request, matches, request_type, kind):
+    """Requests to a community, received and sent. Only ambassadors receive them, so the
+    others (who never did) see just their own requests."""
     user = request.user
     boxes = {
-        "received": _stays().filter(recipient=user),
-        "sent":     _stays().filter(from_user=user),
+        "received": matches.filter(recipient=user),
+        "sent":     matches.filter(from_user=user),
     }
-    if not user.communities.exists() and not boxes["received"].exists():
+    if not user.ambassador_of.exists() and not boxes["received"].exists():
         del boxes["received"]
     # The owner answers a request, the requester a counter-proposal
     answers = {"received": Match.STATUS_PENDING, "sent": Match.STATUS_COUNTER}
@@ -168,8 +187,8 @@ def _volunteer_visits(request):
         if key in boxes
     ]
     return render(request, "matches/matches_list.html", {
-        "request_type": "volunteer", "kind": _VOLUNTEER, "tabs": tabs, "box": box,
-        **_requests(request, boxes[box]), "show_from": box == "received", "empty": _VOLUNTEER["empty"],
+        "request_type": request_type, "kind": kind, "tabs": tabs, "box": box,
+        **_requests(request, boxes[box]), "show_from": box == "received", "empty": kind["empty"],
     })
 
 
@@ -491,7 +510,7 @@ def _person(user):
         "user": user,
         "skills": skills,
         "offers": list(offers.exclude(kind=Listing.KIND_SKILL).order_by("-updated_at")),
-        "communities": list(user.communities.order_by("name")),
+        "communities": user.member_communities(),
     }
 
 

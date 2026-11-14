@@ -208,7 +208,7 @@
                   <div class="font-serif font-bold text-xl">{{ person.name }}</div>
                 </a>
                 {% if traveller.is_organiser %}<div class="text-xs opacity-70">{% trans "Organiser" %}</div>{% endif %}
-                {% for community in person.communities.all %}
+                {% for community in person.member_communities %}
                   <a href="{{ community.get_absolute_url }}" class="block text-sm text-primary hover:underline"><i class="fa-solid {{ community.get_type_icon }} mr-1"></i>{{ community.name }}</a>
                 {% endfor %}
                 {% if traveller.stretch %}<div class="text-xs"><i class="fa-solid fa-route mr-1"></i>{{ traveller.stretch }}</div>{% endif %}

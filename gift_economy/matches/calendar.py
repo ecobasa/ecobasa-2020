@@ -124,7 +124,7 @@ def stays_of(community):
 
 def _ambassadors_community(request, community_slug):
     community = get_object_or_404(Community, slug=community_slug)
-    if not (request.user.is_staff or request.user == community.owner):
+    if not (request.user.is_staff or request.user == community.ambassador):
         raise PermissionDenied
     return community
 
@@ -240,9 +240,9 @@ def _helpers(need, community):
     for contribution in sorted(need.contributions.all(), key=lambda c: c.match.created_at):
         match = contribution.match
         person = match.from_user
-        if match.status != Match.STATUS_ACCEPTED or person == community.owner or person in [h.person for h in helpers]:
+        if match.status != Match.STATUS_ACCEPTED or person == community.ambassador or person in [h.person for h in helpers]:
             continue
-        thanked = any(reference.author_id == community.owner_id for reference in match.references.all())
+        thanked = any(reference.author_id == community.ambassador_id for reference in match.references.all())
         helpers.append(Helper(person, match, thanked))
     return helpers
 

@@ -253,7 +253,7 @@ def test_a_project_needs_a_vehicle_from_the_vocabulary():
     from communities.models import Community
     from events.forms import NeedForm
     from events.models import Event
-    community = Community.objects.create(name="Hof", owner=_user("anna"))
+    community = Community.objects.create(name="Hof", ambassador=_user("anna"))
     project = Event.objects.create(community=community, title="Umzug")
     assert NeedForm({"kind": "vehicle", "title": "Transporter"}, instance=Listing(event=project)).is_valid()
     assert not NeedForm({"kind": "vehicle", "title": "Raumschiff"}, instance=Listing(event=project)).is_valid()
@@ -322,7 +322,7 @@ def test_the_place_starts_from_the_profile_and_stays_with_it_unless_moved():
     client = _client_for(anna)
     form = client.get(reverse("gifts:create")).context["form"]
     assert form.initial["location"] == anna.location and form.initial["location_name"] == "Schiltern"
-    hof = Community.objects.create(name="Hof", owner=anna, location=Point(16.37, 48.21, srid=4326), location_name="Wien")
+    hof = Community.objects.create(name="Hof", ambassador=anna, location=Point(16.37, 48.21, srid=4326), location_name="Wien")
     form = client.get(reverse("gifts:create"), {"community": hof.slug}).context["form"]
     assert form.initial["location_name"] == "Wien"
 

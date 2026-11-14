@@ -39,7 +39,7 @@ _LISTINGS = Prefetch(
 
 
 def _events():
-    return Event.objects.select_related("community", "community__owner").prefetch_related(_LISTINGS, "community__photos")
+    return Event.objects.select_related("community", "community__ambassador").prefetch_related(_LISTINGS, "community__photos")
 
 
 def _event(community_slug, slug, events=None):
@@ -262,7 +262,7 @@ def create(request, community_slug):
 
 @login_required
 def edit(request, community_slug, slug):
-    event = _event(community_slug, slug, Event.objects.select_related("community__owner"))
+    event = _event(community_slug, slug, Event.objects.select_related("community__ambassador"))
     if not event.can_edit(request.user):
         raise PermissionDenied
     return _save_event(request, event, {"community": event.community, "event": event})
@@ -271,7 +271,7 @@ def edit(request, community_slug, slug):
 @login_required
 @require_POST
 def archive(request, community_slug, slug):
-    event = _event(community_slug, slug, Event.objects.select_related("community__owner"))
+    event = _event(community_slug, slug, Event.objects.select_related("community__ambassador"))
     if not event.can_edit(request.user):
         raise PermissionDenied
     event.archived_at = timezone.now()
@@ -285,7 +285,7 @@ def archive(request, community_slug, slug):
 def confirm(request, community_slug, slug):
     """The ambassador says the event is still current (also brings back an archived one
     that hasn't ended)."""
-    event = _event(community_slug, slug, Event.objects.select_related("community__owner"))
+    event = _event(community_slug, slug, Event.objects.select_related("community__ambassador"))
     if not event.can_edit(request.user):
         raise PermissionDenied
     if event.is_over:
@@ -317,7 +317,7 @@ def confirm_by_email(request, community_slug, slug, token):
 @require_POST
 def toggle_need(request, community_slug, slug, need_pk):
     """Mark a need as covered (however it was covered), or open it again."""
-    event = _event(community_slug, slug, Event.objects.select_related("community__owner"))
+    event = _event(community_slug, slug, Event.objects.select_related("community__ambassador"))
     if not event.can_edit(request.user):
         raise PermissionDenied
     need = get_object_or_404(event.listings.filter(type=Listing.TYPE_WISH), pk=need_pk)

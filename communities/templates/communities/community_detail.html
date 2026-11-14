@@ -99,7 +99,7 @@
 	{% if not hero_image and not photos %}
 		<h1>{{ community.name }}</h1>
 	{% endif %}
-	{% if request.user.is_authenticated and request.user.is_staff or request.user.is_authenticated and community.owner and request.user == community.owner %}
+	{% if can_edit %}
 		<a class="btn btn-lg btn-primary absolute right-4 top-0 bg-opacity-70 backdrop-blur-sm" href="{% url 'communities:update' slug=community.slug %}"><i class="fa fa-edit mr-2"></i>{% trans "Edit" %}</a>
 	{% endif %}
 	<div class="grid grid-cols-1 sm:grid-cols-12 gap-6">
@@ -132,10 +132,10 @@
 						</a>
 					{% endfor %}
 				</div>
-				{% if request.user == community.owner %}
+				{% if can_edit %}
 					<a href="{% url 'gifts:create' %}?community={{ community.slug }}&type=offer&kind=skill" class="text-sm underline"><i class="fa fa-plus mr-1"></i>{% trans "Add a skill" %}</a>
 				{% endif %}
-			{% elif request.user == community.owner %}
+			{% elif can_edit %}
 				<h2>{% trans "Skills you can learn here" %}</h2>
 				<a href="{% url 'gifts:create' %}?community={{ community.slug }}&type=offer&kind=skill" class="btn">
 					<i class="fa fa-plus mr-1"></i>{% trans "Add a skill" %}
@@ -156,7 +156,7 @@
 			{% endif %}
 
 			{# The seed library: seeds and plants the community and its members swap #}
-			{% if seeds_plants or is_ambassador %}
+			{% if seeds_plants or can_edit %}
 				<h2 id="seeds-plants">{% trans "Seeds & plants to swap" %}</h2>
 				{% if seeds_plants %}
 					<div class="flex flex-wrap gap-2 mb-2">
@@ -172,13 +172,13 @@
 				{% else %}
 					<p class="text-sm mb-2">{% trans "Keep varieties alive: share the seeds you save with members and neighbours, like a seed library." %}</p>
 				{% endif %}
-				{% if is_ambassador %}
+				{% if can_edit %}
 					<a href="{% url 'gifts:create' %}?community={{ community.slug }}&type=offer&kind=seeds_plants" class="btn mb-4"><i class="fa fa-plus mr-1"></i>{% trans "Add seeds & plants" %}</a>
 				{% endif %}
 			{% endif %}
 
 			{# The tool library: what the community and its members lend, with whether it is lent today #}
-			{% if library or is_ambassador %}
+			{% if library or can_edit %}
 				<h2 id="library">{% trans "To borrow here" %}</h2>
 				{% if library %}
 					<p class="text-sm mb-2">{% trans "Tools and vehicles the community and its members lend. Ask for the days you need one." %}</p>
@@ -196,10 +196,10 @@
 				{% else %}
 					<p class="text-sm mb-2">{% trans "Start a tool library: lend your community's tools, cargo bike, car or trailer to members and neighbours, and see in a calendar who has what when." %}</p>
 				{% endif %}
-				{% if is_ambassador %}
+				{% if can_edit %}
 					<div class="flex flex-wrap gap-2 mb-4">
 						<a href="{% url 'gifts:create' %}?community={{ community.slug }}&type=offer&kind=tool&lend=1" class="btn"><i class="fa fa-plus mr-1"></i>{% trans "Add something to lend" %}</a>
-						{% if library %}<a href="{% url 'matches:community_lending' community.slug %}" class="btn btn-purple"><i class="fa-regular fa-calendar mr-1"></i>{% trans "Lending calendar" %}</a>{% endif %}
+						{% if library and is_ambassador %}<a href="{% url 'matches:community_lending' community.slug %}" class="btn btn-purple"><i class="fa-regular fa-calendar mr-1"></i>{% trans "Lending calendar" %}</a>{% endif %}
 					</div>
 				{% endif %}
 			{% endif %}
@@ -208,14 +208,14 @@
 				<h2>{% trans "Looking for people with these skills" %}</h2>
 				<div class="flex flex-wrap gap-2 mb-2">
 					{% for sw in skill_wishes %}
-						<a {% if request.user == community.owner %}href="{{ sw.get_edit_url }}"{% elif request.user.is_authenticated %}href="#" @click.prevent="openVolunteer('{{ sw.skill|escapejs }}', 'wish', {{ sw.skill_id }})"{% else %}href="{% url 'users:login' %}?next={{ request.path }}"{% endif %}
+						<a {% if can_edit %}href="{{ sw.get_edit_url }}"{% elif request.user.is_authenticated %}href="#" @click.prevent="openVolunteer('{{ sw.skill|escapejs }}', 'wish', {{ sw.skill_id }})"{% else %}href="{% url 'users:login' %}?next={{ request.path }}"{% endif %}
 							class="pill pill-lg bg-yellow hover:bg-purple transition-opacity">
 							<i class="mr-1 fa fa-search"></i>{{ sw.skill }}
 							{% if sw.level %}<span class="opacity-70 text-xs ml-1">({{ sw.get_level_display }}+)</span>{% endif %}
 						</a>
 					{% endfor %}
 				</div>
-			{% elif request.user == community.owner %}
+			{% elif can_edit %}
 				<h2>{% trans "Looking for people with these skills" %}</h2>
 				<a href="{% url 'gifts:create' %}?community={{ community.slug }}&type=wish&kind=hands" class="btn">
 					<i class="fa fa-plus mr-1"></i>{% trans "Add skills you're looking for" %}
@@ -336,20 +336,22 @@
 			<!-- Toast slot for HTMX success messages -->
 			<div id="volunteer-messages-slot"></div>
 
-			<!-- Ambassador / owner -->
-			{% if community.owner %}
+			<!-- Ambassador -->
+			{% if community.ambassador %}
 				<div class="text-center mt-6">
 					<h3>{% trans "Gift-economy Ambassador" %}</h3>
-					<a href="{{ community.owner.get_absolute_url }}" class="block mb-4">
-						{% include "_avatar.html" with who=community.owner large=True classes="mx-auto mb-2" %}
-						<div class="font-serif font-bold text-xl">{{ community.owner.name }}</div>
+					<a href="{{ community.ambassador.get_absolute_url }}" class="block mb-4">
+						{% include "_avatar.html" with who=community.ambassador large=True classes="mx-auto mb-2" %}
+						<div class="font-serif font-bold text-xl">{{ community.ambassador.name }}</div>
 					</a>
-					<div class="text-sm -mt-2">{% include "events/_freshness.html" with when=community.owner.last_active %}</div>
+					<div class="text-sm -mt-2">{% include "events/_freshness.html" with when=community.ambassador.last_active %}</div>
 				</div>
 			{% endif %}
 
+			{% include "communities/_members.html" %}
+
 			<!-- Volunteer request button (mobile later, desktop mid-sidebar) -->
-			{% if community.owner %}
+			{% if community.ambassador %}
 				{% if request.user.is_authenticated %}
 					<button
 						type="button"

@@ -20,7 +20,7 @@ def pending_reference_skills(request):
             return []
         return [
             {"community": community, "pending": pending_count(community)}
-            for community in request.user.communities.order_by("name")
+            for community in request.user.ambassador_of.order_by("name")
         ]
 
     return {

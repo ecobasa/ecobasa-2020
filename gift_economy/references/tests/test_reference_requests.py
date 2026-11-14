@@ -59,7 +59,7 @@ def gift_match(owner, requester):
 
 @pytest.fixture
 def stay(owner, requester):
-    match = _match(Community.objects.create(name="Goat Farm", owner=owner), requester, owner, days_ago=40)
+    match = _match(Community.objects.create(name="Goat Farm", ambassador=owner), requester, owner, days_ago=40)
     StayDetails.objects.create(match=match, stay_to=timezone.now() - timedelta(days=2))
     return match
 
@@ -282,7 +282,7 @@ class TestEveryKindOfMatch:
 
     def test_helping_a_community_with_a_wished_skill(self, owner, requester):
         skill = Skill.objects.create(name="Cob building")
-        community = Community.objects.create(name="Goat Farm", owner=owner)
+        community = Community.objects.create(name="Goat Farm", ambassador=owner)
         match = _match(skill_wish(community, skill), requester, owner)
         page, reference = self._answer(match, requester)
         assert "You are writing about a community" in page

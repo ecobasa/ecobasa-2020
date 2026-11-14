@@ -162,9 +162,19 @@ class User(AbstractUser):
         return self.last_seen or self.last_login
 
     def member_communities(self):
-        """The communities they belong to. For now the ones they're the ambassador of
-        (as Community.members); real membership can extend this."""
-        return list(self.communities.all())
+        """The communities they belong to, by name (communities.models.with_member_communities
+        prefetches them for a list of people)."""
+        from communities.models import Membership
+
+        memberships = getattr(self, "counted_memberships", None)
+        if memberships is None:
+            memberships = Membership.objects.counted().filter(user=self).select_related("community")
+        return sorted((membership.community for membership in memberships), key=lambda community: community.name)
+
+    def member_communities_qs(self):
+        from communities.models import Community, Membership
+
+        return Community.objects.filter(pk__in=Membership.objects.counted().filter(user=self).values("community"))
 
     def get_reference_subjects(self):
         """What references on this profile can be about: the person and their offers and

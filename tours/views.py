@@ -18,7 +18,7 @@ from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_POST
 from django_countries import countries as all_countries
 
-from communities.models import Community
+from communities.models import Community, with_member_communities
 from dashboard_lists import paginate
 from events.models import Event
 from gift_economy.gifts.models import Listing
@@ -198,8 +198,8 @@ def tour_detail(request, slug):
     stops = tour.ordered_stops()
     for traveller in travellers:
         traveller.stretch = "" if traveller.whole_route else _stretch_text(traveller)
-    # The communities they are ambassador of, shown with them
-    prefetch_related_objects([traveller.user for traveller in travellers], "communities")
+    # The communities they belong to, shown with them
+    prefetch_related_objects([traveller.user for traveller in travellers], with_member_communities())
     team = tour.team_skill_ids()
     needs = [(need, matching.role(need, team)) for need in tour.needs()]
     # The way to each stop in a maps app, only for those who travel along
@@ -241,7 +241,7 @@ def _wrap_up(tour, user, stops, needs, gifts, travellers):
             hosts = {stop.community_id: stop.community for stop in agreed if stop.community_id}
             references += [
                 (community.name, f"{community.get_absolute_url()}#references")
-                for community in hosts.values() if community.owner_id != user.pk
+                for community in hosts.values() if community.ambassador_id != user.pk
             ]
             others = {t.user_id: t.user for t in travellers if t.user_id != user.pk}
             references += [(person.name or person.email, f"{person.get_absolute_url()}#references") for person in others.values()]
@@ -508,7 +508,7 @@ def plan_add(request, slug):
         event = get_object_or_404(Event.objects.current().select_related("community"), pk=request.POST["event"])
         community = event.community
     else:
-        community = get_object_or_404(Community.objects.exclude(owner=None), pk=request.POST.get("community") or 0)
+        community = get_object_or_404(Community.objects.exclude(ambassador=None), pk=request.POST.get("community") or 0)
     stop = Stop(tour=tour, event=event, community=community)
     if event and event.ends_on:
         stop.arrive_on, stop.leave_on = event.starts_on or event.ends_on, event.ends_on
@@ -1134,7 +1134,7 @@ def _delivery_rows(deliveries):
     """Taken up (not set aside), with what their status, ends and links need."""
     return list(
         deliveries.active().select_related(
-            "offer__owner", "offer__community__owner", "offer__event", "wish__owner", "wish__community__owner",
+            "offer__owner", "offer__community__ambassador", "offer__event", "wish__owner", "wish__community__ambassador",
             "wish__event", "wish__tour", "pickup_stop__community", "pickup_stop__event", "dropoff_stop__community",
             "dropoff_stop__event", "bringer", "pickup_match", "handover_match",
         )

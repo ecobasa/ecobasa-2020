@@ -18,7 +18,7 @@ def user():
 
 @pytest.fixture
 def community(user):
-    return Community.objects.create(name="Test Community", owner=user)
+    return Community.objects.create(name="Test Community", ambassador=user)
 
 
 @pytest.fixture
@@ -114,7 +114,7 @@ def test_volunteers_can_bring_what_the_community_needs(user, community):
 
     project = Event.objects.create(community=community, title="Rocket stove")
     clay = need(project, kind=Listing.KIND_MATERIAL, title="Clay")
-    other_project = Event.objects.create(community=Community.objects.create(name="Elsewhere", owner=user), title="X")
+    other_project = Event.objects.create(community=Community.objects.create(name="Elsewhere", ambassador=user), title="X")
     foreign = need(other_project, kind=Listing.KIND_TOOL, title="Spade")
     wish = Listing.objects.create(title="Wheelbarrow", type="wish", community=community)
     Listing.objects.create(title="Old bike", type="offer", community=community)

@@ -132,7 +132,7 @@ def test_the_form_makes_every_kind(anna):
 
 @pytest.mark.django_db
 def test_a_community_offers_and_wishes_through_its_ambassador(anna, ben):
-    community = Community.objects.create(name="Hof", slug="hof", owner=anna, location=GOERLITZ)
+    community = Community.objects.create(name="Hof", slug="hof", ambassador=anna, location=GOERLITZ)
     url = reverse("gifts:create") + "?community=hof"
     assert _client(ben).post(url, {"type": "wish", "kind": "material", "title": "Clay"}).status_code == 403
     _client(anna).post(url, {"type": "wish", "kind": "material", "title": "Clay", "community": "hof"})
@@ -146,14 +146,14 @@ def test_a_community_offers_and_wishes_through_its_ambassador(anna, ben):
     request = _request(clay, ben)
     assert request.recipient == anna
     # It stays with the community when the ambassador changes
-    community.owner = ben
+    community.ambassador = ben
     community.save()
     assert Listing.objects.get(pk=clay.pk).manager == ben
 
 
 @pytest.mark.django_db
 def test_a_projects_listings_are_listed_while_it_runs(anna, ben):
-    community = Community.objects.create(name="Hof", owner=anna, location=GOERLITZ)
+    community = Community.objects.create(name="Hof", ambassador=anna, location=GOERLITZ)
     project = Event.objects.create(community=community, title="Rocket stove")
     clay = need(project, "Clay", kind=Listing.KIND_MATERIAL)
     learn = skill_offer(community, Skill.objects.create(name="Masonry"), event=project)
@@ -174,7 +174,7 @@ def test_a_projects_listings_are_listed_while_it_runs(anna, ben):
 def test_the_community_page_lists_its_and_its_members_skills_and_gifts_once(anna, ben):
     """A skill both the community and its member (the ambassador) offer shows once, as the
     community's; members' other offers are the community's gifts on offer."""
-    community = Community.objects.create(name="Hof", slug="hof", owner=anna, location=GOERLITZ)
+    community = Community.objects.create(name="Hof", slug="hof", ambassador=anna, location=GOERLITZ)
     baking = Skill.objects.create(name="Bread Baking", slug="bread-baking")
     ours = skill_offer(community, baking, level="advanced", description="Bake with us on Saturdays.")
     skill_offer(anna, baking)
@@ -197,7 +197,7 @@ def test_the_community_page_lists_its_and_its_members_skills_and_gifts_once(anna
 
 @pytest.mark.django_db
 def test_a_projects_need_says_what_it_is_for(anna, ben):
-    community = Community.objects.create(name="Hof", owner=anna, location=GOERLITZ)
+    community = Community.objects.create(name="Hof", ambassador=anna, location=GOERLITZ)
     project = Event.objects.create(community=community, title="Rocket stove", starts_on=timezone.localdate())
     clay = need(project, "Clay", kind=Listing.KIND_MATERIAL)
     with translation.override("en"):
@@ -208,7 +208,7 @@ def test_a_projects_need_says_what_it_is_for(anna, ben):
 
 @pytest.mark.django_db
 def test_a_thing_a_project_needs_can_also_just_be_given(anna, ben):
-    community = Community.objects.create(name="Hof", owner=anna, location=GOERLITZ)
+    community = Community.objects.create(name="Hof", ambassador=anna, location=GOERLITZ)
     project = Event.objects.create(community=community, title="Rocket stove", starts_on=timezone.localdate())
     clay = need(project, "Clay", kind=Listing.KIND_MATERIAL, community=community, quantity=200, unit="kg")
     hands = need(project, "Masons", kind=Listing.KIND_HANDS, community=community)
@@ -225,7 +225,7 @@ def test_a_thing_a_project_needs_can_also_just_be_given(anna, ben):
 
 @pytest.mark.django_db
 def test_a_communitys_wish_shows_the_community_and_its_ambassador(anna, ben):
-    community = Community.objects.create(name="Hof", owner=anna, location=GOERLITZ, type="e")
+    community = Community.objects.create(name="Hof", ambassador=anna, location=GOERLITZ, type="e")
     clay = Listing.objects.create(community=community, type="wish", kind="material", title="Clay")
     with translation.override("en"):
         page = _client(ben).get(clay.get_absolute_url()).content.decode()
@@ -236,7 +236,7 @@ def test_a_communitys_wish_shows_the_community_and_its_ambassador(anna, ben):
 
 @pytest.mark.django_db
 def test_a_projects_needs_link_to_their_gift_pages(anna, ben):
-    community = Community.objects.create(name="Hof", owner=anna, location=GOERLITZ)
+    community = Community.objects.create(name="Hof", ambassador=anna, location=GOERLITZ)
     project = Event.objects.create(community=community, title="Rocket stove", starts_on=timezone.localdate())
     clay = need(project, "Clay", kind=Listing.KIND_MATERIAL, community=community)
     page = _client(ben).get(project.get_absolute_url()).content.decode()

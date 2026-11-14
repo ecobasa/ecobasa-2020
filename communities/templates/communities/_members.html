@@ -1,0 +1,73 @@
+{% load i18n %}
+{# Who belongs to the community, for everyone; profiles need a login. Its ambassador hands the role over and takes members off; others ask to become a member or leave #}
+<div id="members" class="mt-6">
+	<h2>{% trans "Members" %}</h2>
+	{% if member_list %}
+		<ul class="space-y-2 mb-4">
+			{% for m in member_list %}{% with person=m.user %}
+				<li class="flex items-center gap-3">
+					<a href="{{ person.get_absolute_url }}" class="flex items-center gap-3 min-w-0 hover:text-primary">
+						{% include "_avatar.html" with who=person %}
+						<span class="min-w-0">
+							<span class="block font-semibold truncate">{{ person.name|default:person.username }}</span>
+							{% if person.pk == community.ambassador_id %}<span class="block text-xs opacity-70">{% trans "Ambassador" %}</span>{% endif %}
+						</span>
+					</a>
+					{% if is_ambassador and person.pk != community.ambassador_id %}
+						<div class="ml-auto relative" x-data="{ open: false }" @keydown.escape="open = false">
+							<button type="button" @click="open = !open" :aria-expanded="open" aria-haspopup="true"
+								class="btn btn-primary text-xs py-1 px-2" title="{% trans 'Manage' %}" aria-label="{% trans 'Manage' %}">
+								<i class="fa-solid fa-ellipsis"></i>
+							</button>
+							<div x-show="open" style="display:none" @click.away="open = false"
+								class="origin-top-right absolute right-0 top-full mt-1 w-56 rounded-md shadow-lg z-40">
+								<div class="py-1 rounded-md bg-primary bg-opacity-75 backdrop-blur shadow-xs">
+									<form method="post" action="{% url 'communities:hand_over' community.slug m.pk %}"
+										onsubmit="return confirm('{% blocktrans with name=person.name|default:person.email asvar question %}Make {{ name }} the ambassador? Requests to the community then go to them; you stay a member.{% endblocktrans %}{{ question|escapejs }}')">{% csrf_token %}
+										<button type="submit" class="hover:text-brown dropdown-link w-full text-left"><i class="fa-solid fa-handshake mr-2"></i>{% trans "Make ambassador" %}</button>
+									</form>
+									<form method="post" action="{% url 'communities:remove_member' community.slug m.pk %}"
+										onsubmit="return confirm('{% blocktrans with name=person.name|default:person.email asvar question %}Remove {{ name }} from the community?{% endblocktrans %}{{ question|escapejs }}')">{% csrf_token %}
+										<button type="submit" class="hover:text-brown dropdown-link w-full text-left"><i class="fa-solid fa-user-minus mr-2"></i>{% trans "Remove from community" %}</button>
+									</form>
+								</div>
+							</div>
+						</div>
+					{% endif %}
+				</li>
+			{% endwith %}{% endfor %}
+		</ul>
+	{% endif %}
+
+	{% if applications %}
+		<h3 class="text-base">{% trans "Membership applications" %}</h3>
+		<ul class="space-y-1 mb-4 text-sm">
+			{% for application in applications %}
+				<li><a href="{{ application.match.get_absolute_url }}" class="underline"><i class="fa-solid fa-door-open mr-1"></i>{{ application.user.name|default:application.user.username }}</a></li>
+			{% endfor %}
+		</ul>
+	{% endif %}
+
+	{% if not request.user.is_authenticated %}
+		{% if community.ambassador %}
+			<a class="btn w-full" href="{% url 'users:login' %}?next={{ request.path }}"><i class="fa-solid fa-door-open mr-1"></i>{% trans "Ask to become a member" %}</a>
+		{% endif %}
+	{% elif membership and membership.is_counted %}
+		{% if request.user.pk != community.ambassador_id %}
+			<form method="post" action="{% url 'communities:leave' community.slug %}"
+				onsubmit="return confirm('{% trans "Leave this community?" as question %}{{ question|escapejs }}')">{% csrf_token %}
+				<button type="submit" class="btn text-sm"><i class="fa-solid fa-person-walking-arrow-right mr-1"></i>{% trans "Leave community" %}</button>
+			</form>
+		{% endif %}
+	{% elif membership %}
+		<a href="{{ membership.match.get_absolute_url }}" class="text-sm underline"><i class="fa-solid fa-hourglass-half mr-1"></i>{% trans "Your membership application waits for an answer." %}</a>
+	{% elif community.ambassador %}
+		<details>
+			<summary class="btn w-full cursor-pointer list-none [&::-webkit-details-marker]:hidden text-center"><i class="fa-solid fa-door-open mr-1"></i>{% trans "Ask to become a member" %}</summary>
+			<form method="post" action="{% url 'communities:apply' community.slug %}" class="mt-2 space-y-2">{% csrf_token %}
+				<textarea name="message" rows="4" class="form-textarea w-full text-sm" placeholder="{% trans 'Who you are and how you belong to the community' %}"></textarea>
+				<button type="submit" class="btn btn-primary w-full">{% trans "Send" %}</button>
+			</form>
+		</details>
+	{% endif %}
+</div>

@@ -41,7 +41,7 @@ def other():
 def farm():
     ambassador = User.objects.create_user(email="amb@example.com", password="secret", name="Ana")
     return Community.objects.create(
-        name="Lindenhof", owner=ambassador, location=FARM_POINT, country="DE",
+        name="Lindenhof", ambassador=ambassador, location=FARM_POINT, country="DE",
         location_name="Lindenweg 7, 14467 Potsdam, Deutschland", location_public=False,
     )
 

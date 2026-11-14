@@ -10,10 +10,11 @@ from django.contrib import messages
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_GET, require_POST
 
-from .models import Community, public_location
+from .models import Community, Membership, public_location
 from .models import CommunityPhoto
 from .forms import CommunityForm
 from gift_economy.gifts.models import Listing, skill_offers, sync_skill_listings
+from gift_economy.matches.models import Match
 from gift_economy.gifts.skills.models import Skill, skill_name_q, skill_slug_for_name
 
 from django.contrib.gis.geos import Polygon, Point
@@ -82,7 +83,8 @@ def detail(request, slug):
     community_skills.sort(key=lambda listing: listing.display_title)
     # Its members' skills join them, each skill once (the community's own listing wins);
     # their other offers are listed as the community's gifts
-    members = community.members()
+    member_list = community.member_list()
+    members = [membership.user for membership in member_list]
     member_offers = list(
         Listing.objects.open().filter(owner__in=members, community=None, type=Listing.TYPE_OFFER)
         .exclude(type=Listing.TYPE_OFFER, skill__isnull=False, available=False).select_related("owner", "skill")
@@ -114,7 +116,7 @@ def detail(request, slug):
     # Build a {skill_id: level_display} map for the visiting user so the modal can show their level
     user_levels_json = "{}"
     help_wish = learn_skill = None
-    if request.user.is_authenticated and request.user != community.owner:
+    if request.user.is_authenticated and request.user != community.ambassador:
         # ?help=<skill slug> (from a suggestion) opens the volunteer form for that wish,
         # ?learn=<skill slug> (from a skill's page) for learning that skill here
         help_wish = next((sw for sw in skill_wishes if sw.skill.slug == request.GET.get("help")), None)
@@ -132,7 +134,8 @@ def detail(request, slug):
             "listings", queryset=Listing.objects.select_related("skill").prefetch_related("contributions__match"),
         ))
     )
-    is_ambassador = request.user.is_authenticated and (request.user.is_staff or request.user == community.owner)
+    is_ambassador = community.is_ambassador(request.user)
+    membership = community.membership_of(request.user)
 
     shows_place = community.shows_place_to(request.user)
     place_name, place_point = community.place_for(request.user)
@@ -148,6 +151,14 @@ def detail(request, slug):
         # The ambassador also sees archived and ended events, to bring one back
         "past_events":    events.exclude(pk__in=events.current()).order_by("-updated_at")[:10] if is_ambassador else [],
         "is_ambassador":    is_ambassador,
+        # Members edit its page and its offers and wishes
+        "can_edit":         community.can_edit(request.user),
+        "member_list":      member_list,
+        "membership":       membership,
+        # Who asked to become a member and waits for an answer, for its ambassador
+        "applications":     community.memberships.current().exclude(match=None).exclude(
+            match__status=Match.STATUS_ACCEPTED,
+        ).select_related("user", "match") if is_ambassador else [],
         "photos":           photos,
         "hero_image":       hero_image,
         "community_skills": community_skills,
@@ -182,8 +193,7 @@ def _community_wishes(community):
 @require_POST
 def volunteer_request(request, community_slug):
     community = get_object_or_404(Community, slug=community_slug)
-    owner = community.owner
-    if not owner:
+    if not community.ambassador:
         messages.error(request, _("This community has no contact person."))
         return redirect(community.get_absolute_url())
 
@@ -317,7 +327,7 @@ def create(request):
         if form.is_valid():
             community = form.save(commit=False)
             if request.user.is_authenticated:
-                community.owner = request.user
+                community.ambassador = request.user
             community.save()
             if hasattr(form, "save_m2m"):
                 form.save_m2m()
@@ -345,7 +355,7 @@ def create(request):
 
 def delete(request, slug):
     community = get_object_or_404(Community, slug=slug)
-    if not request.user.is_authenticated or (community.owner and request.user != community.owner and not request.user.is_staff):
+    if not request.user.is_authenticated or (community.ambassador and request.user != community.ambassador and not request.user.is_staff):
         return redirect(community.get_absolute_url())
     if request.method == "POST":
         community.delete()
@@ -356,7 +366,7 @@ def delete(request, slug):
 
 def update(request, slug):
     community = get_object_or_404(Community, slug=slug)
-    if not request.user.is_authenticated or (community.owner and request.user != community.owner and not request.user.is_staff):
+    if not community.can_edit(request.user) and not (community.ambassador is None and request.user.is_authenticated):
         return redirect(community.get_absolute_url())
 
     if request.method == "POST":
@@ -629,3 +639,86 @@ def community_suggest(request):
         add(skill.get_name(), "skill")
 
     return JsonResponse(suggestions[:12], safe=False)
+
+
+# ── Members ──────────────────────────────────────────────────────────────
+
+@login_required
+@require_POST
+def apply(request, slug):
+    """Ask to become a member: a match with the membership as target, answered by the
+    ambassador."""
+    from django.db import transaction
+    from gift_economy.matches.emails import notify_match_created
+
+    community = get_object_or_404(Community, slug=slug)
+    own = community.membership_of(request.user)
+    if own is not None:
+        return redirect(own.match.get_absolute_url() if own.match_id else community.get_absolute_url())
+    if community.ambassador is None:
+        messages.error(request, _("This community has no contact person."))
+        return redirect(community.get_absolute_url())
+    with transaction.atomic():
+        membership = Membership.objects.create(community=community, user=request.user)
+        # No meeting place to agree on: it's about belonging to the community
+        match = Match(
+            from_user=request.user, recipient=community.ambassador,
+            message=request.POST.get("message", "").strip(), location_type="",
+        )
+        match.target = membership
+        match.save()
+        membership.match = match
+        membership.save(update_fields=["match"])
+    notify_match_created(match, http_request=request)
+    messages.success(request, _("Your membership application has been sent to the ambassador."))
+    return redirect(match.get_absolute_url())
+
+
+@login_required
+@require_POST
+def leave(request, slug):
+    """End one's own membership. The ambassador hands the role over first."""
+    community = get_object_or_404(Community, slug=slug)
+    own = community.memberships.counted().filter(user=request.user).first()
+    if own is None:
+        return redirect(community.get_absolute_url())
+    if request.user.pk == community.ambassador_id:
+        messages.error(request, _("Make another member the ambassador before you leave."))
+        return redirect(community.get_absolute_url())
+    own.end()
+    messages.success(request, _("You left %(name)s.") % {"name": community.name})
+    return redirect(community.get_absolute_url())
+
+
+def _ambassadors_member(request, slug, pk):
+    """(community, membership) for its ambassador acting on another member."""
+    from django.core.exceptions import PermissionDenied
+
+    community = get_object_or_404(Community, slug=slug)
+    if not community.is_ambassador(request.user):
+        raise PermissionDenied
+    membership = get_object_or_404(community.memberships.counted().select_related("user"), pk=pk)
+    return community, membership
+
+
+@login_required
+@require_POST
+def remove_member(request, slug, pk):
+    community, membership = _ambassadors_member(request, slug, pk)
+    if membership.user_id == community.ambassador_id:
+        messages.error(request, _("Make another member the ambassador first."))
+    else:
+        membership.end()
+        messages.success(request, _("%(name)s is no longer a member.") % {"name": membership.user.name})
+    return redirect(community.get_absolute_url() + "#members")
+
+
+@login_required
+@require_POST
+def hand_over(request, slug, pk):
+    """Make another member the ambassador."""
+    community, membership = _ambassadors_member(request, slug, pk)
+    if membership.user_id != community.ambassador_id:
+        community.hand_over(membership.user)
+        messages.success(request, _("%(name)s is the ambassador now.") % {"name": membership.user.name})
+    return redirect(community.get_absolute_url() + "#members")

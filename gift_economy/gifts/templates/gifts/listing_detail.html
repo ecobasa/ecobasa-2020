@@ -174,8 +174,8 @@
         <a href="{{ holder.get_absolute_url }}" class="block">{% include "_avatar.html" with who=holder large=True classes="mx-auto" %}</a>
         <span class="pill bg-green"><i class="fa-solid {{ holder.get_type_icon }} mr-1"></i>{{ holder.get_type_display|default:_("Community") }}</span>
         <a href="{{ holder.get_absolute_url }}" class="font-serif text-primary text-lg">{{ holder.name }}</a>
-        {% if request.user.is_authenticated and holder.owner %}
-          <div class="text-xs"><span class="opacity-70">{% trans "Ambassador" %}:</span> <a href="{{ holder.owner.get_absolute_url }}" class="underline">{{ holder.owner.name|default:holder.owner.username }}</a></div>
+        {% if request.user.is_authenticated and holder.ambassador %}
+          <div class="text-xs"><span class="opacity-70">{% trans "Ambassador" %}:</span> <a href="{{ holder.ambassador.get_absolute_url }}" class="underline">{{ holder.ambassador.name|default:holder.ambassador.username }}</a></div>
         {% endif %}
         {% if listing.event %}
           <a href="{{ listing.event.get_absolute_url }}" class="text-sm underline"><i class="fa-solid {{ listing.event.kind_icon }} mr-1"></i>{{ listing.event.title }}</a>

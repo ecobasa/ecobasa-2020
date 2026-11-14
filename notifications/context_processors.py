@@ -5,6 +5,6 @@ def unread_notifications(request):
     return {
         "unread_notifications_count": request.user.notifications.filter(is_read=False).count(),
         "owned_communities": list(
-            Community.objects.filter(owner=request.user).only("name", "slug").order_by("name")
+            Community.objects.filter(ambassador=request.user).only("name", "slug").order_by("name")
         ),
     }

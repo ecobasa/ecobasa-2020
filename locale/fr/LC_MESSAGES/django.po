@@ -7512,3 +7512,81 @@ msgstr "Voir sur la carte"
 #: events/templates/events/going.html:10
 msgid "Events you are attending"
 msgstr "Événements auxquels tu participes"
+
+msgid "Membership"
+msgstr "Adhésion"
+
+msgid "Memberships"
+msgstr "Adhésions"
+
+msgid "Membership application"
+msgstr "Demande d'adhésion"
+
+msgid "asked to become a member of"
+msgstr "souhaite devenir membre de"
+
+#, python-format
+msgid "%(actor)s asked to become a member of %(title)s"
+msgstr "%(actor)s souhaite devenir membre de %(title)s"
+
+msgid "Membership applications"
+msgstr "Demandes d'adhésion"
+
+msgid "No membership applications yet."
+msgstr "Pas encore de demandes d'adhésion."
+
+msgid "Your membership application has been sent to the ambassador."
+msgstr "Ta demande d'adhésion a été envoyée à l'ambassadeur·rice."
+
+msgid "Make another member the ambassador before you leave."
+msgstr "Nomme un·e autre membre ambassadeur·rice avant de partir."
+
+#, python-format
+msgid "You left %(name)s."
+msgstr "Tu as quitté %(name)s."
+
+msgid "Make another member the ambassador first."
+msgstr "Nomme d'abord un·e autre membre ambassadeur·rice."
+
+#, python-format
+msgid "%(name)s is no longer a member."
+msgstr "%(name)s n'est plus membre."
+
+#, python-format
+msgid "%(name)s is the ambassador now."
+msgstr "%(name)s est maintenant ambassadeur·rice."
+
+msgid "Members"
+msgstr "Membres"
+
+msgid "Manage"
+msgstr "Gérer"
+
+#, python-format
+msgid "Make %(name)s the ambassador? Requests to the community then go to them; you stay a member."
+msgstr "Nommer %(name)s ambassadeur·rice ? Les demandes à la communauté iront alors à %(name)s ; tu restes membre."
+
+msgid "Make ambassador"
+msgstr "Nommer ambassadeur·rice"
+
+#, python-format
+msgid "Remove %(name)s from the community?"
+msgstr "Retirer %(name)s de la communauté ?"
+
+msgid "Remove from community"
+msgstr "Retirer de la communauté"
+
+msgid "Ask to become a member"
+msgstr "Demander à devenir membre"
+
+msgid "Leave this community?"
+msgstr "Quitter cette communauté ?"
+
+msgid "Leave community"
+msgstr "Quitter la communauté"
+
+msgid "Your membership application waits for an answer."
+msgstr "Ta demande d'adhésion attend une réponse."
+
+msgid "Who you are and how you belong to the community"
+msgstr "Qui tu es et comment tu fais partie de la communauté"

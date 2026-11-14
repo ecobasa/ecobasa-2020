@@ -125,7 +125,7 @@ class TestVolunteerVisits:
     @pytest.fixture
     def stay(self, owner, requester):
         from communities.models import Community
-        community = Community.objects.create(name="Hof Lindenblüte", owner=owner)
+        community = Community.objects.create(name="Hof Lindenblüte", ambassador=owner)
         m = Match(from_user=requester, message="May I come in May?")
         m.target = community
         m.recipient = community.get_match_owner()
@@ -148,13 +148,13 @@ class TestVolunteerVisits:
 
     def test_ambassador_without_requests_still_has_the_received_tab(self, owner):
         from communities.models import Community
-        Community.objects.create(name="Gut Wiesengrund", owner=owner)
+        Community.objects.create(name="Gut Wiesengrund", ambassador=owner)
         context = _client_for(owner).get("/matches/?type=volunteer").context
         assert [str(t.label) for t in context["tabs"]] == ["Requests to you", "Your requests"]
 
     def test_received_tab_stays_after_giving_up_the_community(self, owner, stay):
         from communities.models import Community
-        Community.objects.filter(owner=owner).update(owner=None)
+        Community.objects.filter(ambassador=owner).update(ambassador=None)
         context = _client_for(owner).get("/matches/?type=volunteer").context
         assert [str(t.label) for t in context["tabs"]] == ["Requests to you", "Your requests"]
 
@@ -212,7 +212,7 @@ def stay(requester, owner):
 
     from ..models import StayDetails
 
-    community = Community.objects.create(name="Green Valley", owner=owner)
+    community = Community.objects.create(name="Green Valley", ambassador=owner)
     m = Match(from_user=requester, message="Can I come help?")
     m.target = community
     m.recipient = community.get_match_owner()
@@ -303,7 +303,7 @@ def test_the_match_shows_what_the_other_side_brings(owner, requester, stay):
                              content_type=ContentType.objects.get_for_model(Listing), object_id=str(masonry.pk))
     Listing.objects.create(title="Lime mortar", type="offer", kind=Listing.KIND_MATERIAL, owner=requester)
     Listing.objects.create(title="A tent", type="wish", owner=requester)
-    Community.objects.create(name="Other Hof", owner=requester)
+    Community.objects.create(name="Other Hof", ambassador=requester)
     stay.stay_details.sender_skills = "Masonry, Juggling"
     stay.stay_details.save()
 
@@ -363,7 +363,7 @@ def test_accepting_a_stay_updates_the_project_needs(owner, requester):
     from communities.models import Community
     from events.models import Event
 
-    community = Community.objects.create(name="Hof", owner=owner)
+    community = Community.objects.create(name="Hof", ambassador=owner)
     project = Event.objects.create(community=community, title="Oven")
     hands = need(project, kind=Listing.KIND_HANDS, title="Helping hands", quantity=2, unit="people")
     clay = need(project, kind=Listing.KIND_MATERIAL, title="Clay")

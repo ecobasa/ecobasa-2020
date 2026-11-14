@@ -28,7 +28,7 @@ from django.core.management.base import BaseCommand
 from django.db.models import Q
 from django.utils import timezone
 
-from communities.models import Community, CommunityPhoto
+from communities.models import Community, CommunityPhoto, Membership
 from gift_economy.gifts.models import Listing, ListingCategory
 from gift_economy.gifts.things import WHITELISTED_KINDS
 from gift_economy.matches.models import Contribution, Loan, Match, MatchMessage, StayDetails, loan_span
@@ -93,6 +93,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         users = self._seed_users()
         communities = self._seed_communities(users)
+        self._seed_members(users, communities)
         self._seed_listings(users)
         self._seed_seeds_and_plants(users, communities)
         self._seed_community_photos(communities)
@@ -221,7 +222,7 @@ class Command(BaseCommand):
         self.stdout.write("Seeding communities…")
         specs = [
             dict(
-                name="Sonnenkraut Ecovillage", owner="luna@ecobasa.demo",
+                name="Sonnenkraut Ecovillage", ambassador="luna@ecobasa.demo",
                 type=Community.COMMUNITY_TYPE_ECOVILLAGE, status=Community.COMMUNITY_STATUS_ESTABLISHED,
                 vision="A thriving mess of vegetables, opinions, and mostly-functional compost toilets.",
                 description="Est. long enough ago that nobody remembers who planted the first zucchini, or why so many.",
@@ -230,7 +231,7 @@ class Command(BaseCommand):
                 location_name="Görlitz, Germany", point=(14.9857, 51.1642),
             ),
             dict(
-                name="Kombucha Commune", owner="mireille@ecobasa.demo",
+                name="Kombucha Commune", ambassador="mireille@ecobasa.demo",
                 type=Community.COMMUNITY_TYPE_COMUNE, status=Community.COMMUNITY_STATUS_STARTING,
                 vision="Everything ferments eventually — vegetables, ideas, minor disagreements about chores.",
                 description="Three years in, still arguing about the chore wheel, deeply in love with our SCOBYs.",
@@ -239,7 +240,7 @@ class Command(BaseCommand):
                 location_name="Ariège, France", point=(1.6069, 42.9622),
             ),
             dict(
-                name="Barefoot Bureaucracy House Project", owner="sam@ecobasa.demo",
+                name="Barefoot Bureaucracy House Project", ambassador="sam@ecobasa.demo",
                 type=Community.COMMUNITY_TYPE_HOUSEPROJECT, status=Community.COMMUNITY_STATUS_ESTABLISHED,
                 vision="Consensus decisions, laminated meeting agendas, and surprisingly good soup.",
                 description="We turned a old bureaucracy building's paperwork obsession into a well-run household.",
@@ -250,7 +251,7 @@ class Command(BaseCommand):
                 location_public=True,
             ),
             dict(
-                name="Three Goats and a Dream Farm", owner="diego@ecobasa.demo",
+                name="Three Goats and a Dream Farm", ambassador="diego@ecobasa.demo",
                 type=Community.COMMUNITY_TYPE_FARM, status=Community.COMMUNITY_STATUS_ESTABLISHED,
                 vision="Regenerative grazing, mud architecture, and goats who run the place in all but name.",
                 description="Started with a dream and one goat. Now three goats, still one dream, more mud.",
@@ -259,7 +260,7 @@ class Command(BaseCommand):
                 location_name="Extremadura, Spain", point=(-6.3372, 39.4750),
             ),
             dict(
-                name="Cacao Tierra Viva", owner="valeria@ecobasa.demo",
+                name="Cacao Tierra Viva", ambassador="valeria@ecobasa.demo",
                 type=Community.COMMUNITY_TYPE_FARM, status=Community.COMMUNITY_STATUS_ESTABLISHED,
                 vision="Cacao under the shade of the old forest, and the forest staying old.",
                 description="Six families growing cacao, bananas and arguments about fermentation boxes, at the edge of the rainforest.",
@@ -268,7 +269,7 @@ class Command(BaseCommand):
                 location_name="Puerto Viejo de Talamanca, Costa Rica", point=(-82.7539, 9.6560),
             ),
             dict(
-                name="The Someday Ecovillage (Still Just a WhatsApp Group)", owner="ana@ecobasa.demo",
+                name="The Someday Ecovillage (Still Just a WhatsApp Group)", ambassador="ana@ecobasa.demo",
                 type=Community.COMMUNITY_TYPE_PROJECT, status=Community.COMMUNITY_STATUS_PLANNING,
                 vision="Land, community, purpose — we're 90% vision board, 10% actual plan.",
                 description="47 members strong. Zero hectares acquired. Group chat activity: extremely high.",
@@ -281,7 +282,7 @@ class Command(BaseCommand):
         communities = {}
         for spec in specs:
             defaults = {
-                "owner": users[spec["owner"]],
+                "ambassador": users[spec["ambassador"]],
                 "type": spec["type"],
                 "status": spec["status"],
                 "vision": spec["vision"],
@@ -306,6 +307,36 @@ class Command(BaseCommand):
                 community.save(update_fields=["location_public"])
             communities[spec["name"]] = community
         return communities
+
+    def _seed_members(self, users, communities):
+        """A few members besides the ambassadors, and one membership application each
+        way (pending and accepted)."""
+        self.stdout.write("Seeding members…")
+        members = {
+            "Sonnenkraut Ecovillage": ["bjorn@ecobasa.demo", "nils@ecobasa.demo"],
+            "Kombucha Commune": ["jules@ecobasa.demo"],
+            "The Someday Ecovillage (Still Just a WhatsApp Group)": ["freja@ecobasa.demo", "sam@ecobasa.demo"],
+        }
+        for name, emails in members.items():
+            for email in emails:
+                if not communities[name].memberships.filter(user=users[email]).exists():
+                    Membership.objects.create(community=communities[name], user=users[email])
+        applications = [
+            ("Sonnenkraut Ecovillage", "jules@ecobasa.demo", Match.STATUS_PENDING,
+             "I've visited twice for the harvest and I'd love to stay for good. I bring fermenting jars and patience."),
+            ("Three Goats and a Dream Farm", "valeria@ecobasa.demo", Match.STATUS_ACCEPTED,
+             "I helped with the mud house last spring. The goats already treat me like family."),
+        ]
+        for name, email, status, message in applications:
+            community, user = communities[name], users[email]
+            if community.memberships.filter(user=user).exists():
+                continue
+            membership = Membership.objects.create(community=community, user=user)
+            match = Match(from_user=user, recipient=community.ambassador, message=message, status=status, location_type="")
+            match.target = membership
+            match.save()
+            membership.match = match
+            membership.save(update_fields=["match"])
 
     # ── Listings ─────────────────────────────────────────────────────────
 
@@ -1053,7 +1084,7 @@ class Command(BaseCommand):
 
         def project(community, title, needs, learn=(), **fields):
             obj, created = Event.objects.get_or_create(
-                community=community, title=title, defaults={"created_by": community.owner, **fields},
+                community=community, title=title, defaults={"created_by": community.ambassador, **fields},
             )
             # What helpers can learn: the community's skills in the project, listed with it
             # while the project runs
@@ -1167,7 +1198,7 @@ class Command(BaseCommand):
         def event(community, title, **fields):
             obj, _created = Event.objects.get_or_create(
                 community=community, title=title,
-                defaults={"created_by": community.owner, "kind": Event.KIND_COMMUNITY_EVENT, **fields},
+                defaults={"created_by": community.ambassador, "kind": Event.KIND_COMMUNITY_EVENT, **fields},
             )
             return obj
 

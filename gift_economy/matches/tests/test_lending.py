@@ -306,7 +306,7 @@ def test_vehicles_are_lent_too(lender):
 @pytest.fixture
 def community(lender):
     from communities.models import Community
-    return Community.objects.create(name="Hof Wiese", owner=lender)
+    return Community.objects.create(name="Hof Wiese", ambassador=lender)
 
 
 @pytest.fixture

@@ -35,7 +35,7 @@ def volunteer():
 @pytest.fixture
 def community(ambassador):
     return Community.objects.create(
-        name="Hof Wiesengrund", owner=ambassador, location=FARM, location_name=ADDRESS, telephone="+49 89 1234567",
+        name="Hof Wiesengrund", ambassador=ambassador, location=FARM, location_name=ADDRESS, telephone="+49 89 1234567",
     )
 
 

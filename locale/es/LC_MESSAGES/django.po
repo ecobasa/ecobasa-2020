@@ -7477,3 +7477,81 @@ msgstr "Ver en el mapa"
 #: events/templates/events/going.html:10
 msgid "Events you are attending"
 msgstr "Eventos a los que asistes"
+
+msgid "Membership"
+msgstr "Membresía"
+
+msgid "Memberships"
+msgstr "Membresías"
+
+msgid "Membership application"
+msgstr "Solicitud de membresía"
+
+msgid "asked to become a member of"
+msgstr "quiere ser miembro de"
+
+#, python-format
+msgid "%(actor)s asked to become a member of %(title)s"
+msgstr "%(actor)s quiere ser miembro de %(title)s"
+
+msgid "Membership applications"
+msgstr "Solicitudes de membresía"
+
+msgid "No membership applications yet."
+msgstr "Todavía no hay solicitudes de membresía."
+
+msgid "Your membership application has been sent to the ambassador."
+msgstr "Tu solicitud de membresía se ha enviado al embajador/a la embajadora."
+
+msgid "Make another member the ambassador before you leave."
+msgstr "Haz embajador/a a otro miembro antes de irte."
+
+#, python-format
+msgid "You left %(name)s."
+msgstr "Has dejado %(name)s."
+
+msgid "Make another member the ambassador first."
+msgstr "Primero haz embajador/a a otro miembro."
+
+#, python-format
+msgid "%(name)s is no longer a member."
+msgstr "%(name)s ya no es miembro."
+
+#, python-format
+msgid "%(name)s is the ambassador now."
+msgstr "%(name)s es ahora embajador/a."
+
+msgid "Members"
+msgstr "Miembros"
+
+msgid "Manage"
+msgstr "Gestionar"
+
+#, python-format
+msgid "Make %(name)s the ambassador? Requests to the community then go to them; you stay a member."
+msgstr "¿Hacer embajador/a a %(name)s? Las solicitudes a la comunidad le llegarán entonces a %(name)s; tú sigues siendo miembro."
+
+msgid "Make ambassador"
+msgstr "Hacer embajador/a"
+
+#, python-format
+msgid "Remove %(name)s from the community?"
+msgstr "¿Quitar a %(name)s de la comunidad?"
+
+msgid "Remove from community"
+msgstr "Quitar de la comunidad"
+
+msgid "Ask to become a member"
+msgstr "Pedir ser miembro"
+
+msgid "Leave this community?"
+msgstr "¿Dejar esta comunidad?"
+
+msgid "Leave community"
+msgstr "Dejar la comunidad"
+
+msgid "Your membership application waits for an answer."
+msgstr "Tu solicitud de membresía espera respuesta."
+
+msgid "Who you are and how you belong to the community"
+msgstr "Quién eres y cómo formas parte de la comunidad"
