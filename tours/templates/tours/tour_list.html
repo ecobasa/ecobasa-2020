@@ -350,7 +350,7 @@ document.addEventListener('DOMContentLoaded', function () {
   const base = EcoMap.buildBaseLayers();
   tourMap = new ol.Map({
     target: 'tour-map', layers: base.all,
-    view: new ol.View({ center: ol.proj.fromLonLat([10, 48]), zoom: 4, maxZoom: 18 }),
+    view: new ol.View({ center: ol.proj.fromLonLat([0, 20]), zoom: 2, maxZoom: 18 }),
   });
   base.setBaseLayer('ecobasa');
   const menu = EcoMap.buildLayerToggle(tourMap, 'tour-layer', {
@@ -390,7 +390,7 @@ document.addEventListener('DOMContentLoaded', function () {
   }));
 
   const store = Alpine.store('tourMap');
-  window.tourMapReload(!store.near);
+  window.tourMapReload(!!store.q && !store.near);
   if (store.near) {
     const [lat, lon] = store.near.split(',').map(parseFloat);
     window._tourMapPanTo(lon, lat, 7);

@@ -48,18 +48,17 @@ def _event(community_slug, slug, events=None):
 
 def event_list(request):
     """Events on a map, the list in a modal, with a search and filters (EventFilters),
-    as on the communities. The map starts around where one asked (?near=) or the place in
-    one's profile."""
+    as on the communities. The map starts on the whole world, or around where one asked
+    (?near=)."""
     user = request.user
     filters = EventFilters(request.GET, user)
-    home = filters.near or (user.location if user.is_authenticated else None)
     return render(request, "events/event_list.html", {
         "filters": filters,
         "countries": _countries(filters),
         "kind_choices": [(value, kinds.TEXTS[value]["plural"], kinds.ICONS[value]) for value, _label in kinds.CHOICES],
         "need_choices": [(value, label) for value, label in NeedForm.KIND_CHOICES],
         "flag_choices": _flag_choices(user),
-        "home": home,
+        "home": filters.near,
         "radius": user.match_radius if user.is_authenticated else None,
     })
 
