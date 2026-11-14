@@ -7,7 +7,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.core import signing
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
-from django.db.models import Prefetch, Q
+from django.db.models import F, Prefetch, Q
 from django.http import HttpResponseBadRequest, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
@@ -18,7 +18,7 @@ from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_POST
 
 from communities.models import Community
-from dashboard_lists import paginate
+from dashboard_lists import Choice, paginate, query_url
 from gift_economy.matches.emails import notify_match_created
 from gift_economy.gifts.models import Listing
 from gift_economy.matches.models import Match, StayDetails, create_stay
@@ -26,7 +26,7 @@ from gift_economy.gifts.skills.models import Skill, skill_name_q
 
 from . import kinds
 from .forms import ComingForm, EventForm, HelpOfferForm, NeedForm, NeedFormSet
-from .filters import EventFilters
+from .filters import EventFilters, going_to
 from .freshness import read_confirm_token
 from .models import Event
 
@@ -60,6 +60,26 @@ def event_list(request):
         "flag_choices": _flag_choices(user),
         "home": filters.near,
         "radius": user.match_radius if user.is_authenticated else None,
+    })
+
+
+@login_required
+def going(request):
+    """The events one comes to or whose help was accepted, as cards in the dashboard:
+    those not over yet, the soonest first, or the past ones, the latest first."""
+    past = request.GET.get("when") == "past"
+    mine = _events().filter(pk__in=going_to(request.user))
+    today = timezone.localdate()
+    upcoming = mine.current().order_by(F("starts_on").asc(nulls_first=True), F("ends_on").asc(nulls_last=True))
+    over = mine.filter(ends_on__lt=today).order_by("-ends_on", "-starts_on")
+    page = paginate(request, over if past else upcoming)
+    return render(request, "events/going.html", {
+        "page": page,
+        "past": past,
+        "whens": [
+            Choice(_("Upcoming"), query_url(request, when=None), active=not past, count=upcoming.count()),
+            Choice(_("Past"), query_url(request, when="past"), active=past, count=over.count()),
+        ],
     })
 
 

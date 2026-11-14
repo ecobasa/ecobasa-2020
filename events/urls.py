@@ -21,7 +21,8 @@ community_patterns = [
 urlpatterns = [
     # All current events, nearest first, and those one is going to
     path("events/", views.event_list, name="list"),
-    path("events/suggest/", views.api_suggest, name="api-suggest"),
+    path("events/going/", views.going, name="going"),
+    path("events/suggest/",views.api_suggest, name="api-suggest"),
     path("events/list/", views.api_list, name="api-list"),
     path("events/markers/", views.api_markers, name="api-markers"),
     path("communities/<slug:community_slug>/events/", include(community_patterns)),

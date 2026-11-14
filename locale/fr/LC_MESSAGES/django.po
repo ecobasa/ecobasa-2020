@@ -7502,3 +7502,13 @@ msgstr "Accueil"
 #: gift_economy/matches/templates/matches/matches_list.html:26
 msgid "Change matching distance"
 msgstr "Modifier la distance des matchs"
+
+#: events/templates/events/going.html:11
+msgid "Show on map"
+msgstr "Voir sur la carte"
+
+#: templates/_navbar.html:166 templates/_navbar.html:278
+#: templates/dashboard/base.html:29 events/templates/events/going.html:4
+#: events/templates/events/going.html:10
+msgid "Events you are attending"
+msgstr "Événements auxquels tu participes"

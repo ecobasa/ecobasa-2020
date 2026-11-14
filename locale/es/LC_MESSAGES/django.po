@@ -7467,3 +7467,13 @@ msgstr "Inicio"
 #: gift_economy/matches/templates/matches/matches_list.html:26
 msgid "Change matching distance"
 msgstr "Cambiar la distancia de los matches"
+
+#: events/templates/events/going.html:11
+msgid "Show on map"
+msgstr "Ver en el mapa"
+
+#: templates/_navbar.html:166 templates/_navbar.html:278
+#: templates/dashboard/base.html:29 events/templates/events/going.html:4
+#: events/templates/events/going.html:10
+msgid "Events you are attending"
+msgstr "Eventos a los que asistes"

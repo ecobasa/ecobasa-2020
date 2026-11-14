@@ -386,9 +386,31 @@ def test_event_search_suggests_events_hosts_skills_and_places(community, project
 @pytest.mark.django_db
 def test_events_have_a_main_menu_entry_and_going_to_in_ones_menu(project, helper):
     content = Client().get(project.get_absolute_url()).content.decode()
-    going = f'{reverse("events:list")}?going=1&amp;view=list'
+    going = f'href="{reverse("events:going")}"'
     assert f'href="{reverse("events:list")}"' in content and going not in content
     assert going in _client(helper).get(project.get_absolute_url()).content.decode()
+
+
+@pytest.mark.django_db
+def test_going_to_page_lists_upcoming_soonest_first_and_past_latest_first(community, project, helper):
+    today = timezone.localdate()
+    running = Event.objects.create(community=community, title="Running now", starts_on=today - timedelta(days=3))
+    soon = Event.objects.create(community=community, title="Open day", starts_on=today + timedelta(days=1), ends_on=today + timedelta(days=1))
+    last_year = Event.objects.create(community=community, title="Last year", ends_on=today - timedelta(days=300))
+    last_month = Event.objects.create(community=community, title="Last month", ends_on=today - timedelta(days=30), archived_at=timezone.now())
+    Event.objects.create(community=community, title="Not mine", starts_on=today + timedelta(days=2))
+    for event in (project, running, soon, last_year, last_month):
+        _offer(event, helper, status=Match.STATUS_ACCEPTED)
+
+    def titles(**params):
+        return [event.title for event in _client(helper).get(reverse("events:going"), params).context["page"]]
+
+    assert titles() == ["Running now", "Open day", "Rocket stove"]
+    assert titles(when="past") == ["Last month", "Last year"]
+    content = _client(helper).get(reverse("events:going")).content.decode()
+    assert f'{reverse("events:list")}?going=1&amp;view=list' in content
+    # Only logged in
+    assert Client().get(reverse("events:going")).status_code == 302
 
 
 @pytest.mark.django_db

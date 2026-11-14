@@ -24,9 +24,9 @@
            class="flex items-center px-3 py-2 rounded {% if ns == 'gifts' %}bg-secondary text-primary font-semibold{% else %}text-secondary hover:bg-secondary hover:text-primary{% endif %}">
           <i class="fa fa-gift mr-2"></i>{% trans "Your gifts and wishes" %}
         </a>
-        <a href="{% url 'events:list' %}?going=1&amp;view=list"
-           class="flex items-center px-3 py-2 rounded text-secondary hover:bg-secondary hover:text-primary">
-          <i class="fa-solid fa-calendar-check mr-2"></i>{% trans "Going to" %}
+        <a href="{% url 'events:going' %}"
+           class="flex items-center px-3 py-2 rounded {% if ns == 'events' and u == 'going' %}bg-secondary text-primary font-semibold{% else %}text-secondary hover:bg-secondary hover:text-primary{% endif %}">
+          <i class="fa-solid fa-calendar-check mr-2"></i>{% trans "Events you are attending" %}
         </a>
         {% if has_lending_calendar %}
         <a href="{% url 'matches:lending' %}"

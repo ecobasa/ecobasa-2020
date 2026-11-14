@@ -162,8 +162,8 @@
                 <a href="{% url 'tours:mine' %}" class="dropdown-link">
                   <i class="fa-solid fa-route mr-2"></i>{% trans "Your tours" %}
                 </a>
-                <a href="{% url 'events:list' %}?going=1&amp;view=list" class="dropdown-link">
-                  <i class="fa-solid fa-calendar-check mr-2"></i>{% trans "Going to" %}
+                <a href="{% url 'events:going' %}" class="dropdown-link">
+                  <i class="fa-solid fa-calendar-check mr-2"></i>{% trans "Events you are attending" %}
                 </a>
                 <a href="{% url 'gifts:mine' %}" class="dropdown-link">
                   <span class="flex items-center"><i class="fa-solid fa-gift mr-2"></i>{% trans "Your gifts and wishes" %}</span>
@@ -275,7 +275,7 @@
           <a href="{% url 'matches:list' %}" class="mt-1 flex items-center px-4 py-2 text-base text-secondary hover:text-primary hover:bg-secondary focus:text-primary focus:bg-secondary" role="menuitem"><i class="fa-solid fa-handshake mr-2"></i>{% trans "Matches" %}{% if new_suggestions_count %}<span class="ml-auto pill bg-purple text-secondary text-xs">{{ new_suggestions_count }}</span>{% endif %}</a>
           <a href="{% url 'matches:list' %}?type=volunteer" class="mt-1 block px-4 py-2 text-base text-secondary hover:text-primary hover:bg-secondary focus:text-primary focus:bg-secondary" role="menuitem"><i class="fa-solid fa-campground mr-2"></i>{% trans "Volunteer Visits" %}</a>
           <a href="{% url 'tours:mine' %}" class="mt-1 block px-4 py-2 text-base text-secondary hover:text-primary hover:bg-secondary focus:text-primary focus:bg-secondary" role="menuitem"><i class="fa-solid fa-route mr-2"></i>{% trans "Your tours" %}</a>
-          <a href="{% url 'events:list' %}?going=1&amp;view=list" class="mt-1 block px-4 py-2 text-base text-secondary hover:text-primary hover:bg-secondary focus:text-primary focus:bg-secondary" role="menuitem"><i class="fa-solid fa-calendar-check mr-2"></i>{% trans "Going to" %}</a>
+          <a href="{% url 'events:going' %}" class="mt-1 block px-4 py-2 text-base text-secondary hover:text-primary hover:bg-secondary focus:text-primary focus:bg-secondary" role="menuitem"><i class="fa-solid fa-calendar-check mr-2"></i>{% trans "Events you are attending" %}</a>
           <a href="{% url 'references:list' %}" class="mt-1 flex items-center px-4 py-2 text-base text-secondary hover:text-primary hover:bg-secondary focus:text-primary focus:bg-secondary" role="menuitem"><i class="fa fa-comments mr-2"></i>{% trans "References" %}{% if pending_reference_skills %}<span class="ml-auto pill bg-purple text-secondary text-xs">{{ pending_reference_skills }}</span>{% endif %}</a>
           {% if owned_communities %}
             <div class="border-t border-gray-200 mt-2 pt-2">

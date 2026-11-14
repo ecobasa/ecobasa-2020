@@ -1,0 +1,27 @@
+{% extends 'dashboard/base.html' %}
+{% load i18n %}
+
+{% block head_title %}{% trans "Events you are attending" %} — ecobasa{% endblock %}
+
+{% block dashboard_content %}
+{# The events one comes to or helps with: those ahead, or the past ones #}
+<section class="mb-8">
+  <div class="flex flex-wrap items-center gap-3 mb-4">
+    <h1 class="text-4xl font-semibold flex items-center gap-2 m-0"><i class="fa-solid fa-calendar-check text-primary"></i>{% trans "Events you are attending" %}</h1>
+    <a href="{% url 'events:list' %}?going=1&amp;view=list" class="btn btn-purple ml-auto"><i class="fa-solid fa-map mr-1"></i>{% trans "Show on map" %}</a>
+  </div>
+  {% include "dashboard/_filters.html" with filters=whens %}
+  {% if page.object_list %}
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      {% for event in page %}
+        {% include "events/_event_card.html" with show_community=True %}
+      {% endfor %}
+    </div>
+    {% include "dashboard/_pager.html" %}
+  {% elif past %}
+    <p class="italic">{% trans "No past events found." %}</p>
+  {% else %}
+    <p class="italic">{% trans "You are not going to any current event yet." %}</p>
+  {% endif %}
+</section>
+{% endblock %}
