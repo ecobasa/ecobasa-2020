@@ -7843,3 +7843,6 @@ msgstr "Eine Zustiftung"
 
 msgid "Other ways communities do it: a direct loan, a share of the property, a one-off fee, or work instead of money."
 msgstr "Andere Wege, wie Gemeinschaften es machen: ein Direktkredit, ein Anteil am Eigentum, ein einmaliger Beitrag oder Arbeit statt Geld."
+
+msgid "Add gifts"
+msgstr "Geschenke hinzufügen"

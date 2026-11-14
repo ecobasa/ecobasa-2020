@@ -7817,3 +7817,6 @@ msgstr "Una aportación a una fundación"
 
 msgid "Other ways communities do it: a direct loan, a share of the property, a one-off fee, or work instead of money."
 msgstr "Otras formas en que lo hacen las comunidades: un préstamo directo, una parte de la propiedad, una cuota única o trabajo en lugar de dinero."
+
+msgid "Add gifts"
+msgstr "Añadir regalos"

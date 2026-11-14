@@ -135,13 +135,15 @@
 					{% endfor %}
 				</div>
 				{% if can_edit %}
-					<a href="{% url 'gifts:create' %}?community={{ community.slug }}&type=offer&kind=skill" class="text-sm underline"><i class="fa fa-plus mr-1"></i>{% trans "Add a skill" %}</a>
+					<div class="flex flex-wrap gap-2 mb-4">
+						<a href="{% url 'gifts:create' %}?community={{ community.slug }}&type=offer&kind=skill" class="btn"><i class="fa fa-plus mr-1"></i>{% trans "Add a skill" %}</a>
+					</div>
 				{% endif %}
 			{% elif can_edit %}
 				<h2>{% trans "Skills you can learn here" %}</h2>
-				<a href="{% url 'gifts:create' %}?community={{ community.slug }}&type=offer&kind=skill" class="btn">
-					<i class="fa fa-plus mr-1"></i>{% trans "Add a skill" %}
-				</a>
+				<div class="flex flex-wrap gap-2 mb-4">
+					<a href="{% url 'gifts:create' %}?community={{ community.slug }}&type=offer&kind=skill" class="btn"><i class="fa fa-plus mr-1"></i>{% trans "Add a skill" %}</a>
+				</div>
 			{% endif %}
 
 			{% if gifts %}
@@ -154,6 +156,16 @@
 							{% if not listing.community_id %}<span class="opacity-70 text-xs ml-1">· {{ listing.owner.name|default:listing.owner.username }}</span>{% endif %}
 						</a>
 					{% endfor %}
+				</div>
+				{% if can_edit %}
+					<div class="flex flex-wrap gap-2 mb-4">
+						<a href="{% url 'gifts:create' %}?community={{ community.slug }}&type=offer" class="btn"><i class="fa fa-plus mr-1"></i>{% trans "Add gifts" %}</a>
+					</div>
+				{% endif %}
+			{% elif can_edit %}
+				<h2>{% trans "Gifts on offer" %}</h2>
+				<div class="flex flex-wrap gap-2 mb-4">
+					<a href="{% url 'gifts:create' %}?community={{ community.slug }}&type=offer" class="btn"><i class="fa fa-plus mr-1"></i>{% trans "Add gifts" %}</a>
 				</div>
 			{% endif %}
 
@@ -175,7 +187,9 @@
 					<p class="text-sm mb-2">{% trans "Keep varieties alive: share the seeds you save with members and neighbours, like a seed library." %}</p>
 				{% endif %}
 				{% if can_edit %}
-					<a href="{% url 'gifts:create' %}?community={{ community.slug }}&type=offer&kind=seeds_plants" class="btn mb-4"><i class="fa fa-plus mr-1"></i>{% trans "Add seeds & plants" %}</a>
+					<div class="flex flex-wrap gap-2 mb-4">
+						<a href="{% url 'gifts:create' %}?community={{ community.slug }}&type=offer&kind=seeds_plants" class="btn"><i class="fa fa-plus mr-1"></i>{% trans "Add seeds & plants" %}</a>
+					</div>
 				{% endif %}
 			{% endif %}
 
@@ -217,11 +231,16 @@
 						</a>
 					{% endfor %}
 				</div>
+				{% if can_edit %}
+					<div class="flex flex-wrap gap-2 mb-4">
+						<a href="{% url 'gifts:create' %}?community={{ community.slug }}&type=wish&kind=hands" class="btn"><i class="fa fa-plus mr-1"></i>{% trans "Add skills you're looking for" %}</a>
+					</div>
+				{% endif %}
 			{% elif can_edit %}
 				<h2>{% trans "Looking for people with these skills" %}</h2>
-				<a href="{% url 'gifts:create' %}?community={{ community.slug }}&type=wish&kind=hands" class="btn">
-					<i class="fa fa-plus mr-1"></i>{% trans "Add skills you're looking for" %}
-				</a>
+				<div class="flex flex-wrap gap-2 mb-4">
+					<a href="{% url 'gifts:create' %}?community={{ community.slug }}&type=wish&kind=hands" class="btn"><i class="fa fa-plus mr-1"></i>{% trans "Add skills you're looking for" %}</a>
+				</div>
 			{% endif %}
 
 			<!-- Its events: projects and community events -->
