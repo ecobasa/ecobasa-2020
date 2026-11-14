@@ -8123,3 +8123,15 @@ msgstr "No se pregunta con lo que habéis rellenado en «Así vivimos»."
 
 msgid "Add gifts"
 msgstr "Añadir regalos"
+
+msgid "What we offer"
+msgstr "Lo que ofrecemos"
+
+msgid "What we wish for"
+msgstr "Lo que deseamos"
+
+msgid "Things we wish for"
+msgstr "Cosas que deseamos"
+
+msgid "Add things you wish for"
+msgstr "Añadir cosas que deseáis"

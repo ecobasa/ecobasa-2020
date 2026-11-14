@@ -8149,3 +8149,15 @@ msgstr "Wird bei dem, was ihr unter „So leben wir“ ausgefüllt habt, nicht g
 
 msgid "Add gifts"
 msgstr "Geschenke hinzufügen"
+
+msgid "What we offer"
+msgstr "Was wir anbieten"
+
+msgid "What we wish for"
+msgstr "Was wir uns wünschen"
+
+msgid "Things we wish for"
+msgstr "Dinge, die wir uns wünschen"
+
+msgid "Add things you wish for"
+msgstr "Gewünschte Dinge hinzufügen"

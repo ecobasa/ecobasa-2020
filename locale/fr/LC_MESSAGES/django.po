@@ -8158,3 +8158,15 @@ msgstr "Pas posée avec ce que vous avez rempli dans « Comment nous vivons »."
 
 msgid "Add gifts"
 msgstr "Ajouter des dons"
+
+msgid "What we offer"
+msgstr "Ce que nous offrons"
+
+msgid "What we wish for"
+msgstr "Ce que nous souhaitons"
+
+msgid "Things we wish for"
+msgstr "Choses que nous souhaitons"
+
+msgid "Add things you wish for"
+msgstr "Ajouter les choses souhaitées"

@@ -192,6 +192,8 @@ def detail(request, slug):
     is_ambassador = community.is_ambassador(request.user)
     membership = community.membership_of(request.user)
 
+    thing_wishes = _community_wishes(community)
+
     shows_place = community.shows_place_to(request.user)
     place_name, place_point = community.place_for(request.user)
     return render(request, "communities/community_detail.html", {
@@ -224,6 +226,8 @@ def detail(request, slug):
         "seeds_plants":     seeds_plants,
         "learn_skill":      learn_skill,
         "skill_wishes":     skill_wishes,
+        # Its wishes for materials, tools, food…
+        "thing_wishes":     thing_wishes,
         "user_levels_json": user_levels_json,
         "own_skill_names":  ", ".join(
             l.display_title for l in skill_offers(request.user).select_related("skill")
@@ -232,7 +236,7 @@ def detail(request, slug):
         # What the volunteer form offers to bring along: open needs of current events
         # and the ambassador's gift wishes
         "bring_events":   [(p, needs) for p in events.current() if (needs := [n for n in p.needs() if not n.is_done])],
-        "bring_wishes":     _community_wishes(community),
+        "bring_wishes":     thing_wishes,
     })
 
 

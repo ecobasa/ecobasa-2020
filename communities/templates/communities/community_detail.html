@@ -118,12 +118,14 @@
 
 			{% include "communities/_house_agreements.html" %}
 
-			
-			<!-- Skills -->
+			{# What the community and its members give, then what it wishes for #}
+			{% if skills or gifts or seeds_plants or library or can_edit %}
+				<h2 id="offers">{% trans "What we offer" %}</h2>
+			{% endif %}
 
 			{# Each skill once: the community's, else a member's; each links to its page with the level and how to learn it #}
 			{% if skills %}
-				<h2>{% trans "Skills you can learn here" %}</h2>
+				<h3>{% trans "Skills you can learn here" %}</h3>
 				<div class="flex flex-wrap gap-2 mb-2">
 					{% for listing, people in skills %}
 						<a href="{{ listing.get_absolute_url }}" class="pill pill-lg bg-purple transition-opacity"
@@ -140,7 +142,7 @@
 					</div>
 				{% endif %}
 			{% elif can_edit %}
-				<h2>{% trans "Skills you can learn here" %}</h2>
+				<h3>{% trans "Skills you can learn here" %}</h3>
 				<div class="flex flex-wrap gap-2 mb-4">
 					<a href="{% url 'gifts:create' %}?community={{ community.slug }}&type=offer&kind=skill" class="btn"><i class="fa fa-plus mr-1"></i>{% trans "Add a skill" %}</a>
 				</div>
@@ -149,7 +151,7 @@
 			{% include "communities/_show_offers.html" %}
 
 			{% if gifts %}
-				<h2>{% trans "Gifts on offer" %}</h2>
+				<h3>{% trans "Gifts on offer" %}</h3>
 				<div class="flex flex-wrap gap-2 mb-2">
 					{% for listing in gifts %}
 						<a href="{{ listing.get_absolute_url }}" class="pill pill-lg {{ listing.colour }}">
@@ -165,7 +167,7 @@
 					</div>
 				{% endif %}
 			{% elif can_edit %}
-				<h2>{% trans "Gifts on offer" %}</h2>
+				<h3>{% trans "Gifts on offer" %}</h3>
 				<div class="flex flex-wrap gap-2 mb-4">
 					<a href="{% url 'gifts:create' %}?community={{ community.slug }}&type=offer" class="btn"><i class="fa fa-plus mr-1"></i>{% trans "Add gifts" %}</a>
 				</div>
@@ -173,7 +175,7 @@
 
 			{# The seed library: seeds and plants the community and its members swap #}
 			{% if seeds_plants or can_edit %}
-				<h2 id="seeds-plants">{% trans "Seeds & plants to swap" %}</h2>
+				<h3 id="seeds-plants">{% trans "Seeds & plants to swap" %}</h3>
 				{% if seeds_plants %}
 					<div class="flex flex-wrap gap-2 mb-2">
 						{% for listing in seeds_plants %}
@@ -197,7 +199,7 @@
 
 			{# The tool library: what the community and its members lend, with whether it is lent today #}
 			{% if library or can_edit %}
-				<h2 id="library">{% trans "To borrow here" %}</h2>
+				<h3 id="library">{% trans "To borrow here" %}</h3>
 				{% if library %}
 					<p class="text-sm mb-2">{% trans "Tools and vehicles the community and its members lend. Ask for the days you need one." %}</p>
 					<div class="flex flex-wrap gap-2 mb-2">
@@ -222,8 +224,12 @@
 				{% endif %}
 			{% endif %}
 
+			{% if skill_wishes or thing_wishes or can_edit %}
+				<h2 id="wishes">{% trans "What we wish for" %}</h2>
+			{% endif %}
+
 			{% if skill_wishes %}
-				<h2>{% trans "Looking for people with these skills" %}</h2>
+				<h3>{% trans "Looking for people with these skills" %}</h3>
 				<div class="flex flex-wrap gap-2 mb-2">
 					{% for sw in skill_wishes %}
 						<a {% if can_edit %}href="{{ sw.get_edit_url }}"{% elif request.user.is_authenticated %}href="#" @click.prevent="openVolunteer('{{ sw.skill|escapejs }}', 'wish', {{ sw.skill_id }})"{% else %}href="{% url 'users:login' %}?next={{ request.path }}"{% endif %}
@@ -239,10 +245,30 @@
 					</div>
 				{% endif %}
 			{% elif can_edit %}
-				<h2>{% trans "Looking for people with these skills" %}</h2>
+				<h3>{% trans "Looking for people with these skills" %}</h3>
 				<div class="flex flex-wrap gap-2 mb-4">
 					<a href="{% url 'gifts:create' %}?community={{ community.slug }}&type=wish&kind=hands" class="btn"><i class="fa fa-plus mr-1"></i>{% trans "Add skills you're looking for" %}</a>
 				</div>
+			{% endif %}
+
+			{# Materials, tools, food… it wishes for; each opens the wish, to offer to fulfil it #}
+			{% if thing_wishes or can_edit %}
+				<h3 id="thing-wishes">{% trans "Things we wish for" %}</h3>
+				{% if thing_wishes %}
+					<div class="flex flex-wrap gap-2 mb-2">
+						{% for listing in thing_wishes %}
+							<a href="{{ listing.get_absolute_url }}" class="pill pill-lg bg-yellow hover:bg-purple transition-opacity">
+								{% include "gifts/_listing_icon.html" %}{{ listing.display_title|truncatechars:40 }}
+								{% if listing.amount %}<span class="opacity-70 text-xs ml-1">({{ listing.amount }})</span>{% endif %}
+							</a>
+						{% endfor %}
+					</div>
+				{% endif %}
+				{% if can_edit %}
+					<div class="flex flex-wrap gap-2 mb-4">
+						<a href="{% url 'gifts:create' %}?community={{ community.slug }}&type=wish" class="btn"><i class="fa fa-plus mr-1"></i>{% trans "Add things you wish for" %}</a>
+					</div>
+				{% endif %}
 			{% endif %}
 
 			<!-- Its events: projects and community events -->

@@ -143,6 +143,20 @@ def test_volunteers_can_bring_what_the_community_needs(user, community):
 
 
 @pytest.mark.django_db
+def test_page_groups_offers_and_wishes(community):
+    """Its offers come under one heading, its wishes for skills and things under another."""
+    from gift_economy.gifts.models import Listing
+
+    Listing.objects.create(title="Wheelbarrow", type="wish", community=community)
+    Listing.objects.create(title="Hammock", type="wish", owner=community.ambassador)  # not the community's
+
+    html = Client().get(community.get_absolute_url()).content.decode()
+    assert 'id="wishes"' in html and "Things we wish for" in html
+    assert "Wheelbarrow" in html and "Hammock" not in html
+    assert 'id="offers"' not in html  # nothing on offer, and the visitor can't add any
+
+
+@pytest.mark.django_db
 def test_skill_fields_take_skills_from_the_list_only(user_client, community):
     """Every skill field is marked for the shared Tagify setup (users/_skill_tagify_js.html:
     suggestions, no free tags)."""
