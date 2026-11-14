@@ -1,0 +1,48 @@
+{% load i18n %}
+{# One group of library questions in the onboarding process editor: its box switches all of them #}
+<fieldset class="border rounded-xl bg-secondary p-6"
+  x-data="{ on: { {% for form in forms %}'{{ form.question.key }}': {{ form.on.value|yesno:'true,false' }}{% if not forloop.last %}, {% endif %}{% endfor %} } }">
+  <legend class="sr-only">{{ title }}</legend>
+  <label class="flex items-center gap-2 cursor-pointer mb-4">
+    <input type="checkbox" class="form-checkbox" :checked="Object.values(on).some(Boolean)"
+      @change="Object.keys(on).forEach(key => on[key] = $event.target.checked)">
+    <span class="text-lg font-semibold text-primary">{{ title }}</span>
+  </label>
+  <div class="space-y-4">
+    {% for form in forms %}{% with question=form.question %}
+      <div x-data="{ type: '{{ form.type.value|escapejs }}' }">
+        <label class="flex items-start gap-2 cursor-pointer">
+          <input type="checkbox" name="{{ form.on.html_name }}" class="form-checkbox mt-1 flex-shrink-0" x-model="on['{{ question.key }}']">
+          <span>
+            {% if form.shown_text %}
+              {{ form.shown_text }}
+            {% elif form.not_asked %}
+              <span class="opacity-70">{{ question.text }}</span>
+              <span class="block text-xs text-brown">{% trans "Not asked with what you filled in under How we live." %} <a href="{% url 'communities:update' community.slug %}" class="underline">{% trans "Edit" %}</a></span>
+            {% else %}
+              <span class="opacity-70">{{ question.fact_label }}</span>
+              <span class="block text-xs text-brown">{% trans "Shows once it's filled in under How we live." %} <a href="{% url 'communities:update' community.slug %}" class="underline">{% trans "Edit" %}</a></span>
+            {% endif %}
+            {% if question.help_text %}<span class="block text-xs opacity-70">{{ question.help_text }}</span>{% endif %}
+            {% if form.country_note %}<span class="block text-xs text-brown"><i class="fa-solid fa-circle-info mr-1"></i>{{ form.country_note }}</span>{% endif %}
+            {% if question.sensitive %}<span class="pill bg-purple text-xs mt-1"><i class="fa-solid fa-lock mr-1"></i>{% trans "Sensitive: always optional, only you see the answer" %}</span>{% endif %}
+          </span>
+        </label>
+        <div x-show="on['{{ question.key }}']" x-cloak class="ml-7 mt-2 space-y-2 text-sm">
+          <div class="flex flex-wrap gap-x-4 gap-y-1">
+            {% for option in form.type %}<label class="inline-flex items-center gap-2 cursor-pointer">{{ option.tag }} {{ option.choice_label }}</label>{% endfor %}
+          </div>
+          {% if not question.sensitive %}
+            <label class="flex items-center gap-2 cursor-pointer" x-show="type === 'info'">{{ form.required }} {{ form.required.label }}</label>
+          {% endif %}
+          <div>
+            <label class="form-label" for="{{ form.note.id_for_label }}">{{ form.note.label }}</label>
+            {{ form.note }}
+            <p class="text-xs text-brown">{{ form.note.help_text }}</p>
+          </div>
+          {% for error in form.non_field_errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+        </div>
+      </div>
+    {% endwith %}{% endfor %}
+  </div>
+</fieldset>

@@ -13,6 +13,7 @@ urlpatterns = [
     path('<slug:slug>/members/leave/', views.leave, name='leave'),
     path('<slug:slug>/members/offers/', views.show_offers, name='show_offers'),
     path('<slug:slug>/members/invite/', views.invite, name='invite'),
+    path('<slug:slug>/onboarding/', views.onboarding, name='onboarding'),
     path('<slug:slug>/members/people/', views.api_people, name='api-people'),
     path('<slug:slug>/members/<int:pk>/remove/', views.remove_member, name='remove_member'),
     path('<slug:slug>/members/<int:pk>/ambassador/', views.hand_over, name='hand_over'),

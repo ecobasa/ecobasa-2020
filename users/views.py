@@ -156,11 +156,21 @@ class UpdateView(LoginRequiredMixin, django_views.FormView):
 
     def form_valid(self, form):
         self.object = form.save()
+        # Whether their offers and skills show on each of their communities' pages
+        showing = set(self.request.POST.getlist("shows_offers"))
+        for membership in self._memberships():
+            if membership.shows_offers != (str(membership.pk) in showing):
+                membership.shows_offers = not membership.shows_offers
+                membership.save(update_fields=["shows_offers"])
         return redirect(self.get_success_url())
+
+    def _memberships(self):
+        return self.request.user.memberships.counted().select_related("community")
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx["user_obj"] = self.request.user
+        ctx["memberships"] = self._memberships()
         return ctx
 
     def get_success_url(self):

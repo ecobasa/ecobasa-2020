@@ -1,0 +1,37 @@
+{% load i18n %}
+{# On a membership application's match page, for the ambassador and the applicant only: what they agreed to and answered, worded as they saw it, and what to talk about at the visit #}
+{% with application=target.application %}
+	{% if application %}
+		<div class="border rounded-xl bg-secondary p-4 mb-4 space-y-4 text-sm">
+			{% if application.agreed %}
+				<div>
+					<h3 class="text-base mt-0">{% trans "Agreed to" %}</h3>
+					{% for answer in application.agreed %}
+						<p class="flex items-start gap-2 my-1"><i class="fa-solid fa-check text-primary mt-1"></i><span>{{ answer.text }}</span></p>
+					{% endfor %}
+				</div>
+			{% endif %}
+			{% if application.answered %}
+				<div class="space-y-3">
+					<h3 class="text-base mt-0">{% trans "Answers" %}</h3>
+					{% for answer in application.answered %}
+						<div>
+							<p class="font-semibold my-0">{{ answer.text }}{% if answer.sensitive %} <i class="fa-solid fa-lock text-purple ml-1" title="{% trans 'Only the ambassador sees this' %}"></i>{% endif %}</p>
+							<p class="my-0 whitespace-pre-line">{% if answer.answer is None %}<span class="opacity-70">—</span>{% elif answer.answer is True %}{% trans "Yes" %}{% elif answer.answer is False %}{% trans "No" %}{% else %}{{ answer.answer }}{% endif %}</p>
+						</div>
+					{% endfor %}
+				</div>
+			{% endif %}
+			{% if application.talks %}
+				<div>
+					<h3 class="text-base mt-0">{% trans "We'd like to talk about this when you visit" %}</h3>
+					{% for answer in application.talks %}
+						<p class="flex items-start gap-2 my-1"><i class="fa-regular fa-comments text-primary mt-1"></i><span>{{ answer.text }}</span></p>
+					{% endfor %}
+				</div>
+			{% endif %}
+		</div>
+	{% elif not target.is_invitation %}
+		<p class="pill bg-green text-sm mb-4"><i class="fa-solid fa-house mr-1"></i>{% trans "Already lives here" %}</p>
+	{% endif %}
+{% endwith %}

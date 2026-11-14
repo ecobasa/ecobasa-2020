@@ -17,6 +17,7 @@ from embed_video.fields import EmbedVideoField
 from taggit.managers import TaggableManager
 from taggit.models import TaggedItemBase
 
+from . import onboarding
 from .mixins import UniqueSlugMixin
 
 class TaggedSkills(TaggedItemBase):
@@ -276,6 +277,11 @@ class Community(UniqueSlugMixin, models.Model):
         _("Vision and statutes (PDF)"), upload_to="community-statutes/", blank=True,
         validators=[FileExtensionValidator(["pdf"])],
     )
+    # The rest of its onboarding process, handled locally: trial period, plenum, buying in
+    after_visit = models.TextField(
+        _("Our process after the visit"), blank=True,
+        help_text=_("Trial period, plenum, buying in: what comes after the visit you handle yourselves. Describe it here, so people know what's coming."),
+    )
     matches = GenericRelation("matches.Match")
 
     def __str__(self):
@@ -312,6 +318,25 @@ class Community(UniqueSlugMixin, models.Model):
 
     def get_absolute_url(self) -> str:
         return reverse("communities:detail", kwargs={"slug": self.slug})
+
+    def onboarding(self):
+        """Its onboarding process as the applicant meets it: the must-matches first, then
+        what it asks, then what it'd like to talk about at the visit. Each question with
+        its wording for now (`shown_text`); a statement whose fact isn't filled in is left
+        out."""
+        from . import onboarding
+
+        order = {onboarding.MUST_MATCH: 0, onboarding.INFO: 1, onboarding.DISCUSSION: 2}
+        shown = []
+        for question in self.onboarding_questions.all():
+            question.shown_text = question.text_for()
+            if question.shown_text:
+                shown.append(question)
+        # The library's in its order (so new library questions fall into place), its own after them
+        shown.sort(key=lambda question: (
+            order[question.type], not question.key, onboarding.POSITIONS.get(question.key, 0) if question.key else question.position,
+        ))
+        return shown
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
@@ -593,3 +618,98 @@ class Membership(models.Model):
 
     # A membership is a yes or a no, there is nothing to counter-propose
     match_counter = False
+
+    def get_match_summary_template(self):
+        return "communities/_application_summary.html"
+
+
+class MembershipApplication(models.Model):
+    """What someone answered when they asked to become a member, each question frozen
+    with its wording at the time, so later changes to the onboarding process don't
+    change what they answered. Only the ambassador and the applicant see it. Someone
+    who already lives there asks without one."""
+
+    membership = models.OneToOneField(Membership, on_delete=models.CASCADE, related_name="application")
+    # [{"key", "type", "kind", "text", "sensitive", "answer"}], in the order asked
+    answers = models.JSONField(default=list)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = _("Membership application")
+        verbose_name_plural = _("Membership applications")
+
+    def __str__(self):
+        return str(self.membership)
+
+    def of_type(self, type):
+        return [answer for answer in self.answers if answer["type"] == type]
+
+    def agreed(self):
+        return self.of_type(onboarding.MUST_MATCH)
+
+    def answered(self):
+        return self.of_type(onboarding.INFO)
+
+    def talks(self):
+        return self.of_type(onboarding.DISCUSSION)
+
+
+class OnboardingQuestion(models.Model):
+    """One question of a community's onboarding process: a library question it switched
+    on (`key`, see communities.onboarding), or one of its own (`text`)."""
+
+    community = models.ForeignKey(Community, on_delete=models.CASCADE, related_name="onboarding_questions")
+    key = models.CharField(max_length=40, blank=True)
+    type = models.CharField(_("Type"), max_length=10, choices=onboarding.TYPE_CHOICES, default=onboarding.INFO)
+    required = models.BooleanField(_("Required"), default=False)
+    position = models.PositiveSmallIntegerField(default=0)
+    note = models.TextField(_("Note"), blank=True, help_text=_("Shown under the question"))
+    # Its own questions
+    text = models.CharField(_("Question"), max_length=500, blank=True)
+    answer_kind = models.CharField(
+        _("Answered as"), max_length=8, choices=onboarding.OWN_KIND_CHOICES, default=onboarding.TEXT, blank=True,
+    )
+
+    class Meta:
+        ordering = ["position", "pk"]
+        verbose_name = _("Onboarding question")
+        verbose_name_plural = _("Onboarding questions")
+        constraints = [
+            models.UniqueConstraint(fields=["community", "key"], condition=~Q(key=""), name="one_library_question_each"),
+        ]
+
+    def __str__(self):
+        return self.key or self.text
+
+    @property
+    def library(self):
+        """Its library question (None for its own, or for a key the library dropped)."""
+        return onboarding.QUESTIONS.get(self.key) if self.key else None
+
+    @property
+    def module(self):
+        return onboarding.MODULE_OF.get(self.key)
+
+    @property
+    def kind(self):
+        if self.type == onboarding.MUST_MATCH:
+            return onboarding.AGREE
+        return self.library.kind if self.library else self.answer_kind or onboarding.TEXT
+
+    @property
+    def sensitive(self):
+        return bool(self.library and self.library.sensitive)
+
+    @property
+    def is_required(self):
+        """Whether the applicant has to answer it: a must-match always, a sensitive
+        question or a discussion topic never."""
+        if self.type == onboarding.MUST_MATCH:
+            return True
+        return self.type == onboarding.INFO and self.required and not self.sensitive
+
+    def text_for(self):
+        """Its wording for its community now ("" for a statement whose fact isn't filled in)."""
+        if self.key:
+            return self.library.text_for(self.community) if self.library else ""
+        return self.text

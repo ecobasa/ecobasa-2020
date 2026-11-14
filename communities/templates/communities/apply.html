@@ -1,0 +1,133 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block head_title %}{% trans "Ask to become a member" %} — {{ community.name }} — ecobasa{% endblock %}
+
+{% block content %}
+<div class="container-form">
+  {# Where this page is #}
+  <div class="mb-2 text-sm flex flex-wrap items-center gap-x-2 gap-y-1">
+    <a href="{% url 'communities:list' %}" class="hover:underline">{% trans "Communities" %}</a>
+    <i class="fa-solid fa-chevron-right text-xs opacity-50" aria-hidden="true"></i>
+    <a href="{{ community.get_absolute_url }}" class="hover:underline">{{ community.name }}</a>
+    <i class="fa-solid fa-chevron-right text-xs opacity-50" aria-hidden="true"></i>
+    <span class="opacity-70">{% trans "Ask to become a member" %}</span>
+  </div>
+  <h1>{% trans "Ask to become a member" %}</h1>
+
+  {# Must-matches first: the rest of the form and sending wait until all are agreed to #}
+  <form method="post" class="space-y-6"
+    x-data="{ livesHere: {{ form.lives_here.value|yesno:'true,false' }}, agreed: { {% for field in form.must_match_fields %}'{{ field.html_name }}': {{ field.value|yesno:'true,false' }}{% if not forloop.last %}, {% endif %}{% endfor %} },
+              get allAgreed() { return Object.values(this.agreed).every(Boolean) } }">
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+
+    {% if form.only_residents %}
+      {% include "communities/_not_looking.html" %}
+    {% else %}
+      <label class="flex items-start gap-2 cursor-pointer">
+        {{ form.lives_here }}
+        <span class="font-semibold">{{ form.lives_here.label }}</span>
+      </label>
+
+      {# What to read before applying, each with its statement right under it; then the other must-matches #}
+      {% with readings=form.readings others=form.other_must_match_fields %}
+        {% if readings or others %}
+          <section x-show="!livesHere" class="border rounded-xl bg-secondary p-6 space-y-4">
+            {% if form.must_match_fields %}<h2 class="mt-0">{% trans "What you agree to when you apply" %}</h2>{% endif %}
+            {% for key, field in readings %}
+              <div>
+                {% if key == "statutes" %}
+                  <h3 class="text-base mt-0">{% trans "Vision and statutes" %}</h3>
+                  <div class="flex flex-wrap gap-2 mb-2">
+                    {% if community.statutes_url %}<a href="{{ community.statutes_url }}" target="_blank" rel="noopener" class="btn text-sm"><i class="fa-solid fa-link mr-1"></i>{% trans "Vision and statutes" %}</a>{% endif %}
+                    {% if community.statutes_file %}<a href="{{ community.statutes_file.url }}" target="_blank" rel="noopener" class="btn text-sm"><i class="fa-solid fa-file-pdf mr-1"></i>{% trans "Vision and statutes (PDF)" %}</a>{% endif %}
+                  </div>
+                {% elif key == "house_agreements" %}
+                  <h3 class="text-base mt-0">{% trans "House agreements" %}</h3>
+                  <p class="whitespace-pre-line text-sm mt-0">{{ community.house_agreements }}</p>
+                {% elif key == "animals" %}
+                  <h3 class="text-base mt-0">{% trans "Animals and animal products" %}</h3>
+                  <p class="whitespace-pre-line text-sm mt-0">{{ community.animals }}</p>
+                {% elif key == "exit_terms" %}
+                  <h3 class="text-base mt-0">{% trans "Exit terms" %}</h3>
+                  <p class="whitespace-pre-line text-sm mt-0">{{ community.exit_terms }}</p>
+                {% endif %}
+                {% if field %}{% include "communities/_agree_field.html" %}{% endif %}
+              </div>
+            {% endfor %}
+            {% for field in others %}{% include "communities/_agree_field.html" %}{% endfor %}
+          </section>
+        {% endif %}
+      {% endwith %}
+    {% endif %}
+
+    {# Who lives there already only writes a few words; everyone else starts here, after the must-matches #}
+    {% trans "Who you are and how you belong to the community" as resident_hint %}
+    <div {% if not form.only_residents %}:class="!livesHere && !allAgreed && 'opacity-50'"{% endif %}>
+      <label class="form-label" for="{{ form.message.id_for_label }}">{{ form.message.label }}</label>
+      <textarea name="{{ form.message.html_name }}" id="{{ form.message.id_for_label }}" rows="4" class="form-textarea w-full"
+        {% if form.only_residents %}placeholder="{{ resident_hint }}"{% else %}:placeholder="livesHere ? '{{ resident_hint|escapejs }}' : ''" :disabled="!livesHere && !allAgreed"{% endif %}>{{ form.message.value|default_if_none:'' }}</textarea>
+      {% for error in form.message.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+    </div>
+
+    {% if not form.only_residents %}
+      <div x-show="!livesHere" class="space-y-6">
+        {% if form.info_fields %}
+          <fieldset class="border rounded-xl bg-secondary p-6 space-y-4" :disabled="!allAgreed" :class="!allAgreed && 'opacity-50'">
+            <legend class="sr-only">{% trans "What we'd like to know from you" %}</legend>
+            <h2 class="mt-0">{% trans "What we'd like to know from you" %}</h2>
+            <p x-show="!allAgreed" class="text-sm text-brown">{% trans "Agree to everything above first." %}</p>
+            {% for field in form.info_fields %}
+              <div>
+                {% if field.widget_type == "checkbox" %}
+                  <label class="flex items-start gap-2 cursor-pointer">{{ field }} <span>{{ field.label }}{% if not field.field.required %} <span class="text-xs opacity-70">({% trans "optional" %})</span>{% endif %}</span></label>
+                {% else %}
+                  <label class="form-label" for="{{ field.id_for_label }}">
+                    {{ field.label }}{% if not field.field.required %} <span class="text-xs font-normal opacity-70">({% trans "optional" %})</span>{% endif %}
+                    {% if field.field.question.sensitive %}<span class="pill bg-purple text-xs ml-1"><i class="fa-solid fa-lock mr-1"></i>{% trans "Only the ambassador sees this" %}</span>{% endif %}
+                  </label>
+                  {% if field.widget_type == "radioselect" %}
+                    <div class="flex flex-wrap gap-x-4 gap-y-1">
+                      {% for option in field %}<label class="inline-flex items-center gap-2 cursor-pointer">{{ option.tag }} {{ option.choice_label }}</label>{% endfor %}
+                    </div>
+                  {% else %}
+                    {{ field }}
+                  {% endif %}
+                {% endif %}
+                {% if field.help_text %}<p class="text-xs text-brown">{{ field.help_text }}</p>{% endif %}
+                {% for error in field.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+              </div>
+            {% endfor %}
+          </fieldset>
+        {% endif %}
+
+        {% if form.talks %}
+          <section>
+            <h2>{% trans "We'd like to talk about this when you visit" %}</h2>
+            <div class="space-y-2">
+              {% for question in form.talks %}
+                <p class="flex items-start gap-2 my-0"><i class="fa-regular fa-comments text-primary mt-1"></i><span>{{ question.shown_text }}{% if question.note %}<span class="block text-xs text-brown">{{ question.note }}</span>{% endif %}</span></p>
+              {% endfor %}
+            </div>
+          </section>
+        {% endif %}
+
+        {% if community.after_visit %}
+          <section>
+            <h2>{% trans "Our process after the visit" %}</h2>
+            <p class="whitespace-pre-line">{{ community.after_visit }}</p>
+          </section>
+        {% endif %}
+      </div>
+    {% endif %}
+
+    <div class="flex flex-wrap gap-2 justify-between">
+      <a href="{{ community.get_absolute_url }}#members" class="btn btn-lg btn-purple"><i class="fa fa-ban mr-1"></i>{% trans "Cancel" %}</a>
+      <button type="submit" class="btn btn-lg" :disabled="!livesHere && !allAgreed" :class="!livesHere && !allAgreed && 'opacity-50 cursor-not-allowed'">
+        <i class="fa-solid fa-door-open mr-1"></i>{% trans "Send" %}
+      </button>
+    </div>
+  </form>
+</div>
+{% endblock %}

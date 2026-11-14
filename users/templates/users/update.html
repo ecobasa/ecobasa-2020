@@ -62,6 +62,21 @@
       <p class="text-xs">{% trans "We compare your wishes, offers and skills with those of people, communities and projects within this distance of your place, as soon as something is added. New suggestions show in your notifications; the email collects them once a week." %}</p>
     </div>
 
+    {% if memberships %}
+      <div id="communities" class="mt-8 p-4 bg-secondary bg-opacity-75 rounded-md shadow space-y-3 scroll-mt-24">
+        <h2 class="mt-0">{% trans "My Communities" %}</h2>
+        {% for membership in memberships %}
+          <div>
+            <a href="{{ membership.community.get_absolute_url }}" class="font-semibold hover:underline">{{ membership.community.name }}</a>
+            <label class="flex items-start gap-2 text-sm cursor-pointer mt-1">
+              <input type="checkbox" name="shows_offers" value="{{ membership.pk }}" class="form-checkbox mt-0.5 flex-shrink-0" {% if membership.shows_offers %}checked{% endif %}>
+              <span>{% blocktrans with name=user_obj.name|default:user_obj.username %}Show my ({{ name }}) personal offers and skills on this community page{% endblocktrans %}</span>
+            </label>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
     <div class="flex items-center justify-end gap-4 mt-12">
       <a class="btn btn-lg btn-purple" href="{{ user_obj.get_absolute_url }}"><i class="fa fa-times mr-2"></i>{% trans "Cancel" %}</a>
       <button class="btn btn-lg" type="submit"><i class="fa fa-check mr-2"></i>{% trans "Save changes" %}</button>

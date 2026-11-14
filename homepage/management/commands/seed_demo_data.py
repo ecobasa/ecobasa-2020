@@ -25,10 +25,11 @@ from django.contrib.contenttypes.models import ContentType
 from django.contrib.gis.geos import Point
 from django.core.files import File
 from django.core.management.base import BaseCommand
-from django.db.models import Q
+from django.db.models import F, Q
 from django.utils import timezone
 
-from communities.models import Community, CommunityPhoto, Membership
+from communities import onboarding
+from communities.models import Community, CommunityPhoto, Membership, MembershipApplication, OnboardingQuestion
 from gift_economy.gifts.models import Listing, ListingCategory
 from gift_economy.gifts.things import WHITELISTED_KINDS
 from gift_economy.matches.models import Contribution, Loan, Match, MatchMessage, StayDetails, loan_span
@@ -95,6 +96,7 @@ class Command(BaseCommand):
         communities = self._seed_communities(users)
         self._seed_members(users, communities)
         self._seed_how_we_live(communities)
+        self._seed_onboarding(communities)
         self._seed_listings(users)
         self._seed_seeds_and_plants(users, communities)
         self._seed_community_photos(communities)
@@ -404,6 +406,67 @@ class Command(BaseCommand):
         }
         for name, fields in lives.items():
             Community.objects.filter(pk=communities[name].pk).update(**fields)
+
+    def _seed_onboarding(self, communities):
+        """Two onboarding processes: a thorough one and a short one."""
+        self.stdout.write("Seeding onboarding processes…")
+        processes = {
+            "Sonnenkraut Ecovillage": dict(
+                modules=["motivation", "conflict", "finances", "everyday", "household", "commitments"],
+                off=["other_communities", "debts"],
+                types={"feedback": onboarding.INFO},
+                required=["why_here", "conflict_story"],
+                notes={"school": "The village school is a Freie Schule, ten minutes by bike."},
+                own=[("Which of our working groups would you like to join first?", onboarding.TEXT, onboarding.INFO)],
+                after_visit="After your visit you start a trial year. Halfway through we sit together and see how it feels; "
+                            "at the end the plenum decides by consent. Then you buy your cooperative shares.",
+            ),
+            "Kombucha Commune": dict(
+                modules=["motivation", "everyday"],
+                off=["community_meaning"],
+                own=[("Have you ever brewed anything?", onboarding.YES_NO, onboarding.INFO),
+                     ("How do you feel about a shared purse?", onboarding.TEXT, onboarding.DISCUSSION)],
+                after_visit="Six months of trial living, then we decide together, in consensus.",
+            ),
+        }
+        for name, process in processes.items():
+            community = communities[name]
+            if community.onboarding_questions.exists():
+                continue
+            for module in onboarding.MODULES:
+                if module.key not in process["modules"]:
+                    continue
+                for question in module.questions:
+                    if question.key in process.get("off", []):
+                        continue
+                    OnboardingQuestion.objects.create(
+                        community=community, key=question.key, position=onboarding.POSITIONS[question.key],
+                        type=process.get("types", {}).get(question.key, question.type),
+                        required=question.key in process.get("required", []),
+                        note=process.get("notes", {}).get(question.key, ""),
+                    )
+            for position, (text, kind, type) in enumerate(process["own"], start=len(onboarding.POSITIONS)):
+                OnboardingQuestion.objects.create(community=community, text=text, answer_kind=kind, type=type, position=position)
+            Community.objects.filter(pk=community.pk).update(after_visit=process["after_visit"])
+
+        # The open applications there went through it
+        replies = {
+            "why_here": "I helped at your harvest last year and never quite left in my head.",
+            "conflict_story": "Our flat share argued about the heating for a winter. A mediator helped; we still meet for dinner.",
+            "give_get": "Carpentry and patience. I hope for people to grow old with.",
+        }
+        for name in processes:
+            community = Community.objects.get(name=name)
+            for membership in community.memberships.filter(match__status=Match.STATUS_PENDING, application=None).exclude(
+                match__recipient=F("user"),
+            ):
+                answers = [{
+                    "key": question.key, "type": question.type, "kind": question.kind, "text": question.shown_text,
+                    "sensitive": question.sensitive,
+                    "answer": True if question.type == onboarding.MUST_MATCH
+                    else replies.get(question.key) if question.type == onboarding.INFO else None,
+                } for question in community.onboarding()]
+                MembershipApplication.objects.create(membership=membership, answers=answers)
 
     # ── Listings ─────────────────────────────────────────────────────────
 

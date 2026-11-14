@@ -6,7 +6,8 @@ from django.forms.widgets import ClearableFileInput
 from django.utils.translation import gettext_lazy as _
 from taggit.forms import TagWidget
 
-from .models import Community, language_choices
+from . import onboarding
+from .models import Community, OnboardingQuestion, language_choices
 
 
 # The "How we live" fields, in the order of their section on the form
@@ -219,3 +220,185 @@ class InviteForm(forms.Form):
         if self.community.memberships.current().filter(user=user).exists():
             raise forms.ValidationError(_("They are a member already, or have been asked."))
         return user
+
+
+class LibraryQuestionForm(forms.Form):
+    """A library question in the onboarding process editor: whether the community asks
+    it, and what it makes of it."""
+
+    on = forms.BooleanField(required=False)
+    type = forms.ChoiceField(label=_("Type"), widget=forms.RadioSelect)
+    required = forms.BooleanField(label=_("Required"), required=False,
+                                  widget=forms.CheckboxInput(attrs={"class": "form-checkbox"}))
+    note = forms.CharField(
+        label=_("Note"), required=False, help_text=_("Shown under the question"),
+        widget=forms.Textarea(attrs={"rows": 2, "class": "form-textarea w-full"}),
+    )
+
+    def __init__(self, question, community, row=None, *args, **kwargs):
+        initial = {
+            "on": row is not None,
+            "type": row.type if row else question.type,
+            "required": row.required if row else False,
+            "note": row.note if row else "",
+        }
+        super().__init__(*args, prefix=question.key, initial=initial, **kwargs)
+        self.question, self.row = question, row
+        self.fields["type"].choices = [choice for choice in onboarding.TYPE_CHOICES if choice[0] in question.types]
+        self.fields["type"].widget.attrs.update({"class": "form-radio", "x-model": "type"})
+        # Its wording here and now ("" while its fact isn't filled in)
+        self.shown_text = question.text_for(community)
+        self.not_asked = not question.is_asked(community)
+        self.country_note = question.note_for(community)
+
+    def clean(self):
+        cleaned = super().clean()
+        # Sensitive questions stay optional
+        if self.question.sensitive:
+            cleaned["required"] = False
+        return cleaned
+
+
+class OwnQuestionForm(forms.ModelForm):
+    """One of the community's own questions."""
+
+    class Meta:
+        model = OnboardingQuestion
+        fields = ["text", "answer_kind", "type", "required", "note"]
+        widgets = {
+            "text": forms.TextInput(attrs={"class": "form-input w-full"}),
+            "answer_kind": forms.Select(attrs={"class": "form-select"}),
+            "type": forms.Select(attrs={"class": "form-select"}),
+            "required": forms.CheckboxInput(attrs={"class": "form-checkbox"}),
+            "note": forms.Textarea(attrs={"rows": 2, "class": "form-textarea w-full"}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["text"].required = True
+        self.fields["answer_kind"].required = True
+        self.fields["answer_kind"].choices = onboarding.OWN_KIND_CHOICES
+
+
+class BaseOwnQuestionFormSet(forms.BaseModelFormSet):
+    def add_fields(self, form, index):
+        super().add_fields(form, index)
+        form.fields["ORDER"].label = _("Order")
+        form.fields["ORDER"].widget.attrs["class"] = "form-input w-20"
+        form.fields["DELETE"].label = _("Delete")
+        form.fields["DELETE"].widget.attrs["class"] = "form-checkbox"
+
+
+OwnQuestionFormSet = forms.modelformset_factory(
+    OnboardingQuestion, form=OwnQuestionForm, formset=BaseOwnQuestionFormSet, extra=1, can_delete=True, can_order=True,
+)
+
+
+class AfterVisitForm(forms.ModelForm):
+    class Meta:
+        model = Community
+        fields = ["after_visit"]
+        widgets = {"after_visit": forms.Textarea(attrs={"rows": 5, "class": "form-textarea w-full"})}
+
+
+class ApplicationForm(forms.Form):
+    """Asking to become a member. Someone who already lives there only writes a few
+    words; everyone else goes through the community's onboarding process: agrees to the
+    must-matches first, then answers its questions."""
+
+    # The questions are hidden for someone who already lives there and must not block sending
+    use_required_attribute = False
+
+    lives_here = forms.BooleanField(label=_("I already live here"), required=False,
+                                    widget=forms.CheckboxInput(attrs={"class": "form-checkbox", "x-model": "livesHere"}))
+    message = forms.CharField(
+        label=_("Message"), required=False,
+        widget=forms.Textarea(attrs={"rows": 4, "class": "form-textarea w-full",
+                                     "placeholder": _("Who you are and how you belong to the community")}),
+    )
+
+    def __init__(self, community, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.community = community
+        # Only people who live there already ask while it isn't looking for new members
+        self.only_residents = not community.looking_for_members
+        self.questions = community.onboarding()
+        self.talks = [question for question in self.questions if question.type == onboarding.DISCUSSION]
+        if self.only_residents or (self.is_bound and self.data.get("lives_here")):
+            return
+        for question in self.questions:
+            field = self._field_for(question)
+            if field is not None:
+                field.question = question
+                self.fields[f"q{question.pk}"] = field
+
+    def _field_for(self, question):
+        if question.type == onboarding.DISCUSSION:
+            return None
+        library = question.library
+        help_text = " ".join(filter(None, [
+            question.note, str(library.help_text) if library and library.help_text else "",
+            library.note_for(self.community) if library else "",
+        ]))
+        options = {"label": question.shown_text, "required": question.is_required, "help_text": help_text}
+        kind = question.kind
+        if kind == onboarding.AGREE:
+            return forms.BooleanField(widget=forms.CheckboxInput(attrs={"class": "form-checkbox mt-1 flex-shrink-0"}), **options)
+        if kind == onboarding.YES_NO:
+            return forms.ChoiceField(choices=(("yes", _("Yes")), ("no", _("No"))), widget=forms.RadioSelect, **options)
+        if kind == onboarding.CHOICE:
+            return forms.ChoiceField(choices=library.choices, widget=forms.RadioSelect, **options)
+        if kind == onboarding.NUMBER:
+            return forms.IntegerField(min_value=0, widget=forms.NumberInput(attrs={"class": "form-input w-28"}), **options)
+        return forms.CharField(widget=forms.Textarea(attrs={"rows": 3, "class": "form-textarea w-full"}), **options)
+
+    @property
+    def lives_here_now(self):
+        return self.only_residents or bool(self.cleaned_data.get("lives_here"))
+
+    def _fields_of(self, type):
+        return [field for field in self if getattr(field.field, "question", None) and field.field.question.type == type]
+
+    def must_match_fields(self):
+        return self._fields_of(onboarding.MUST_MATCH)
+
+    # Statements about a text of the community's, agreed to right under it
+    READ_KEYS = ("statutes", "house_agreements", "animals", "exit_terms")
+
+    def readings(self):
+        """The community's texts to read before applying, in the order of READ_KEYS, each
+        with its statement's field (None if the community doesn't ask it)."""
+        community = self.community
+        has = {
+            "statutes": community.statutes_url or community.statutes_file,
+            "house_agreements": community.house_agreements,
+            "animals": community.animals,
+            "exit_terms": community.buy_in is not None and community.exit_terms,
+        }
+        fields = {field.field.question.key: field for field in self.must_match_fields()}
+        return [(key, fields.get(key)) for key in self.READ_KEYS if has[key]]
+
+    def other_must_match_fields(self):
+        return [field for field in self.must_match_fields() if field.field.question.key not in self.READ_KEYS]
+
+    def info_fields(self):
+        return self._fields_of(onboarding.INFO)
+
+    def answers(self):
+        """The answers, each with its question as it was worded now."""
+        answers = []
+        for question in self.questions:
+            answer = None
+            if question.type != onboarding.DISCUSSION:
+                value = self.cleaned_data.get(f"q{question.pk}")
+                if question.kind == onboarding.YES_NO:
+                    answer = {"yes": True, "no": False}.get(value)
+                elif question.kind == onboarding.CHOICE:
+                    answer = str(dict(question.library.choices).get(value, "")) or None
+                elif value not in (None, ""):
+                    answer = value
+            answers.append({
+                "key": question.key, "type": question.type, "kind": question.kind, "text": question.shown_text,
+                "sensitive": question.sensitive, "answer": answer,
+            })
+        return answers

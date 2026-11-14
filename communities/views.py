@@ -701,12 +701,14 @@ def community_suggest(request):
 # ── Members ──────────────────────────────────────────────────────────────
 
 @login_required
-@require_POST
 def apply(request, slug):
     """Ask to become a member: a match with the membership as target, answered by the
-    ambassador."""
+    ambassador. Who doesn't live there yet goes through the onboarding process; their
+    answers stay with the membership."""
     from django.db import transaction
     from gift_economy.matches.emails import notify_match_created
+    from .forms import ApplicationForm
+    from .models import MembershipApplication
 
     community = get_object_or_404(Community, slug=slug)
     own = community.membership_of(request.user)
@@ -715,20 +717,25 @@ def apply(request, slug):
     if community.ambassador is None:
         messages.error(request, _("This community has no contact person."))
         return redirect(community.get_absolute_url())
-    with transaction.atomic():
-        membership = Membership.objects.create(community=community, user=request.user)
-        # No meeting place to agree on: it's about belonging to the community
-        match = Match(
-            from_user=request.user, recipient=community.ambassador,
-            message=request.POST.get("message", "").strip(), location_type="",
-        )
-        match.target = membership
-        match.save()
-        membership.match = match
-        membership.save(update_fields=["match"])
-    notify_match_created(match, http_request=request)
-    messages.success(request, _("Your membership application has been sent to the ambassador."))
-    return redirect(match.get_absolute_url())
+    form = ApplicationForm(community, request.POST or None)
+    if request.method == "POST" and form.is_valid():
+        with transaction.atomic():
+            membership = Membership.objects.create(community=community, user=request.user)
+            # No meeting place to agree on: it's about belonging to the community
+            match = Match(
+                from_user=request.user, recipient=community.ambassador,
+                message=form.cleaned_data["message"].strip(), location_type="",
+            )
+            match.target = membership
+            match.save()
+            membership.match = match
+            membership.save(update_fields=["match"])
+            if not form.lives_here_now:
+                MembershipApplication.objects.create(membership=membership, answers=form.answers())
+        notify_match_created(match, http_request=request)
+        messages.success(request, _("Your membership application has been sent to the ambassador."))
+        return redirect(match.get_absolute_url())
+    return render(request, "communities/apply.html", {"community": community, "form": form})
 
 
 @login_required
@@ -790,7 +797,7 @@ def show_offers(request, slug):
     if own is not None:
         own.shows_offers = request.POST.get("shows_offers") == "1"
         own.save(update_fields=["shows_offers"])
-    return redirect(community.get_absolute_url() + "#members")
+    return redirect(community.get_absolute_url() + "#show-offers")
 
 
 @login_required
@@ -848,3 +855,59 @@ def api_people(request, slug):
          "place": town(person.location_name) or ""}
         for person in people
     ]})
+
+
+@login_required
+def onboarding(request, slug):
+    """The ambassador sets up the onboarding process: which library questions the
+    community asks and as what, its own questions, and what comes after the visit."""
+    from django.core.exceptions import PermissionDenied
+    from django.db import transaction
+    from . import onboarding as library
+    from .forms import AfterVisitForm, LibraryQuestionForm, OwnQuestionFormSet
+    from .models import OnboardingQuestion
+
+    community = get_object_or_404(Community, slug=slug)
+    if not community.is_ambassador(request.user):
+        raise PermissionDenied
+    data = request.POST if request.method == "POST" else None
+    rows = {row.key: row for row in community.onboarding_questions.exclude(key="")}
+    forms_of = {
+        module.key: [LibraryQuestionForm(question, community, rows.get(question.key), data) for question in module.questions]
+        for module in library.MODULES
+    }
+    # The statements to agree to come first, as in the application; then the questions by module
+    must_matches = [form for module in library.MODULES for form in forms_of[module.key] if form.question.kind == library.AGREE]
+    modules = [
+        (module, questions) for module in library.MODULES
+        if (questions := [form for form in forms_of[module.key] if form.question.kind != library.AGREE])
+    ]
+    own = OwnQuestionFormSet(data, prefix="own", queryset=community.onboarding_questions.filter(key=""))
+    after_visit = AfterVisitForm(data, instance=community)
+    forms = [form for module_forms in forms_of.values() for form in module_forms]
+    if data is not None and all([form.is_valid() for form in forms]) and own.is_valid() and after_visit.is_valid():
+        with transaction.atomic():
+            for form in forms:
+                key, cleaned = form.question.key, form.cleaned_data
+                if not cleaned["on"]:
+                    if form.row:
+                        form.row.delete()
+                    continue
+                row = form.row or OnboardingQuestion(community=community, key=key)
+                row.type, row.required, row.note = cleaned["type"], cleaned["required"], cleaned["note"]
+                row.position = library.POSITIONS[key]
+                row.save()
+            for form in own.deleted_forms:
+                if form.instance.pk:
+                    form.instance.delete()
+            # Its own questions after the library's, in the order it gave
+            for position, form in enumerate(own.ordered_forms, start=len(library.POSITIONS)):
+                question = form.save(commit=False)
+                question.community, question.position = community, position
+                question.save()
+            after_visit.save()
+        messages.success(request, _("Your onboarding process has been saved."))
+        return redirect(community.get_absolute_url() + "#members")
+    return render(request, "communities/onboarding.html", {
+        "community": community, "must_matches": must_matches, "modules": modules, "own": own, "after_visit": after_visit,
+    })

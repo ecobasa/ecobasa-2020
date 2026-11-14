@@ -1,0 +1,5 @@
+{% load i18n %}
+{# Hard to miss, so nobody who doesn't live there yet asks anyway #}
+<p class="rounded p-3 border border-red bg-red bg-opacity-10 text-sm font-semibold {{ class }}" role="alert">
+	<i class="fa-solid fa-triangle-exclamation text-red mr-1"></i>{% trans "Not looking for new members right now. Only if you live here already, you can ask to be added." %}
+</p>

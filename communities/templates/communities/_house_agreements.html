@@ -1,5 +1,5 @@
 {% load i18n %}
-{# The community's rules in its own words; the facts are in the sidebar #}
+{# The community's rules in its own words; the facts are in the sidebar. The exit terms only on the apply page, for people who seriously want to join #}
 {% if community.animals %}
 	<h2 id="animals">{% trans "Animals and animal products" %}</h2>
 	<p class="whitespace-pre-line">{{ community.animals }}</p>
@@ -7,8 +7,4 @@
 {% if community.house_agreements %}
 	<h2 id="house-agreements">{% trans "House agreements" %}</h2>
 	<p class="whitespace-pre-line">{{ community.house_agreements }}</p>
-{% endif %}
-{% if community.buy_in and community.exit_terms %}
-	<h2>{% trans "Exit terms" %}</h2>
-	<p class="whitespace-pre-line">{{ community.exit_terms }}</p>
 {% endif %}

@@ -59,8 +59,11 @@ class TestProfile:
 
         with translation.override("en"):
             page = Client().get(community.get_absolute_url()).content.decode()
+            apply_page = _client(_user("ole@example.com")).get(reverse("communities:apply", args=[community.slug])).content.decode()
             facts = {label: value for _icon, label, value in community.lives()}
-        assert "How we live" in page and "Paid back within a year." in page
+        # The exit terms only for who asks to become a member
+        assert "How we live" in page and "Paid back within a year." not in page
+        assert "Paid back within a year." in apply_page
         assert facts["Buy-in"] == "15 000 EUR (Cooperative shares)"
         assert facts["Work commitment"] == "10 hours per week" and facts["Languages"] == "German, English"
         assert facts["Shared kitchen"] == "Vegan, Gluten-free"

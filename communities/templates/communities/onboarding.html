@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block head_title %}{% trans "Onboarding process" %} — {{ community.name }} — ecobasa{% endblock %}
+
+{% block content %}
+<div class="container-form">
+  {# Where this page is #}
+  <div class="mb-2 text-sm flex flex-wrap items-center gap-x-2 gap-y-1">
+    <a href="{% url 'communities:list' %}" class="hover:underline">{% trans "Communities" %}</a>
+    <i class="fa-solid fa-chevron-right text-xs opacity-50" aria-hidden="true"></i>
+    <a href="{{ community.get_absolute_url }}" class="hover:underline">{{ community.name }}</a>
+    <i class="fa-solid fa-chevron-right text-xs opacity-50" aria-hidden="true"></i>
+    <span class="opacity-70">{% trans "Onboarding process" %}</span>
+  </div>
+  <h1>{% trans "Onboarding process" %}</h1>
+  <p>{% trans "Choose what you'd like to know from people who want to become members. People see it when they ask to become a member, unless they already live with you." %}</p>
+  <dl class="text-sm space-y-1 mb-4">
+    <div><dt class="inline font-semibold">{% trans "Must-match" %}:</dt> <dd class="inline">{% trans "comes first in the application; nobody can send it before agreeing to all of them." %}</dd></div>
+    <div><dt class="inline font-semibold">{% trans "Info" %}:</dt> <dd class="inline">{% trans "answered in the application, read by you." %}</dd></div>
+    <div><dt class="inline font-semibold">{% trans "Talk at the visit" %}:</dt> <dd class="inline">{% trans "not answered in the application; you talk about it when they visit." %}</dd></div>
+  </dl>
+  {% if not community.looking_for_members %}
+    <p class="pill bg-brown mb-4"><i class="fa-solid fa-circle-info mr-1"></i>{% trans "You aren't looking for new members right now. Your onboarding process shows once you are (under How we live)." %}</p>
+  {% endif %}
+
+  <form method="post" class="space-y-6">
+    {% csrf_token %}
+
+    {# The statements to agree to first, as in the application; then the questions, module by module #}
+    {% if must_matches %}
+      {% trans "Must-matches" as title %}
+      {% include "communities/_onboarding_fieldset.html" with title=title forms=must_matches %}
+    {% endif %}
+    {% for module, forms in modules %}
+      {% include "communities/_onboarding_fieldset.html" with title=module.title %}
+    {% endfor %}
+
+    {# Its own questions, after the library's #}
+    <fieldset class="border rounded-xl bg-secondary p-6">
+      <legend class="sr-only">{% trans "Our own questions" %}</legend>
+      <h2 class="mt-0 text-lg">{% trans "Our own questions" %}</h2>
+      {{ own.management_form }}
+      {{ own.non_form_errors }}
+      <div class="space-y-6">
+        {% for form in own %}
+          <div class="space-y-2 {% if not forloop.first %}border-t pt-4{% endif %}">
+            {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
+            <div>
+              <label class="form-label" for="{{ form.text.id_for_label }}">{{ form.text.label }}</label>
+              {{ form.text }}
+              {% for error in form.text.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+            </div>
+            <div class="flex flex-wrap items-end gap-4 text-sm">
+              <div>
+                <label class="form-label" for="{{ form.type.id_for_label }}">{{ form.type.label }}</label>
+                {{ form.type }}
+              </div>
+              <div>
+                <label class="form-label" for="{{ form.answer_kind.id_for_label }}">{{ form.answer_kind.label }}</label>
+                {{ form.answer_kind }}
+              </div>
+              <div>
+                <label class="form-label" for="{{ form.ORDER.id_for_label }}">{{ form.ORDER.label }}</label>
+                {{ form.ORDER }}
+              </div>
+              <label class="flex items-center gap-2 cursor-pointer pb-2">{{ form.required }} {{ form.required.label }}</label>
+              {% if form.instance.pk %}<label class="flex items-center gap-2 cursor-pointer pb-2">{{ form.DELETE }} {{ form.DELETE.label }}</label>{% endif %}
+            </div>
+            <div class="text-sm">
+              <label class="form-label" for="{{ form.note.id_for_label }}">{{ form.note.label }}</label>
+              {{ form.note }}
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+      <p class="text-xs text-brown mt-2">{% trans "Save to add another question." %}</p>
+    </fieldset>
+
+    {# What comes after the visit, handled locally #}
+    <fieldset class="border rounded-xl bg-secondary p-6">
+      <legend class="sr-only">{{ after_visit.after_visit.label }}</legend>
+      <label class="text-lg font-semibold text-primary block mb-2" for="{{ after_visit.after_visit.id_for_label }}">{{ after_visit.after_visit.label }}</label>
+      {{ after_visit.after_visit }}
+      <p class="text-xs text-brown">{{ after_visit.after_visit.help_text }}</p>
+      {% for error in after_visit.after_visit.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+    </fieldset>
+
+    <div class="flex flex-wrap gap-2 justify-between">
+      <a href="{{ community.get_absolute_url }}#members" class="btn btn-lg btn-purple"><i class="fa fa-ban mr-1"></i>{% trans "Cancel" %}</a>
+      <button type="submit" class="btn btn-lg"><i class="fa-solid fa-check mr-1"></i>{% trans "Save" %}</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

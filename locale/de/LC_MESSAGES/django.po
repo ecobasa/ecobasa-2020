@@ -7736,8 +7736,8 @@ msgstr "Egal"
 msgid "You are invited to become a member: answer the invitation"
 msgstr "Du bist eingeladen, Mitglied zu werden: auf die Einladung antworten"
 
-msgid "Not looking for new members right now. If you live here already, ask to be added."
-msgstr "Sucht gerade keine neuen Mitglieder. Wenn du schon hier lebst, frag, ob du aufgenommen wirst."
+msgid "Not looking for new members right now. Only if you live here already, you can ask to be added."
+msgstr "Sucht gerade keine neuen Mitglieder. Nur wenn du schon hier lebst, kannst du fragen, ob du aufgenommen wirst."
 
 msgid "People looking for a community find you by these, so they know before they ask whether it fits."
 msgstr "Wer eine Gemeinschaft sucht, findet euch darüber und weiß schon vor der Anfrage, ob es passt."
@@ -7843,6 +7843,309 @@ msgstr "Eine Zustiftung"
 
 msgid "Other ways communities do it: a direct loan, a share of the property, a one-off fee, or work instead of money."
 msgstr "Andere Wege, wie Gemeinschaften es machen: ein Direktkredit, ein Anteil am Eigentum, ein einmaliger Beitrag oder Arbeit statt Geld."
+
+# Onboarding process
+msgid "Note"
+msgstr "Hinweis"
+
+msgid "Our process after the visit"
+msgstr "Unser Weg nach dem Besuch"
+
+msgid "Trial period, plenum, buying in: what comes after the visit you handle yourselves. Describe it here, so people know what's coming."
+msgstr "Probezeit, Plenum, Einlage: Was nach dem Besuch kommt, regelt ihr selbst. Beschreibt es hier, damit alle wissen, was sie erwartet."
+
+msgid "Answered as"
+msgstr "Antwort als"
+
+msgid "Onboarding question"
+msgstr "Aufnahmefrage"
+
+msgid "Info"
+msgstr "Info"
+
+msgid "Text"
+msgstr "Text"
+
+msgid "Yes or no"
+msgstr "Ja oder nein"
+
+
+#, python-format
+msgid "The buy-in is %(amount)s. I can bring at least that."
+msgstr "Die Einlage beträgt %(amount)s. Mindestens so viel kann ich einbringen."
+
+#, python-format
+msgid "The monthly contribution is %(amount)s. My income covers it."
+msgstr "Der monatliche Beitrag beträgt %(amount)s. Mein Einkommen deckt ihn."
+
+msgid "We share part of our income. I'm open to that."
+msgstr "Wir teilen einen Teil unseres Einkommens. Dafür bin ich offen."
+
+msgid "We share all our income. I'm open to that."
+msgstr "Wir teilen unser ganzes Einkommen. Dafür bin ich offen."
+
+#, python-format
+msgid "Our shared kitchen cooks: %(diets)s. That's fine for me."
+msgstr "Unsere gemeinsame Küche kocht: %(diets)s. Das ist für mich in Ordnung."
+
+
+msgid "There are no pets here. I'll come without any."
+msgstr "Hier leben keine Haustiere. Ich komme ohne."
+
+msgid "I've read what you say about animals and animal products, and it's fine for me."
+msgstr "Ich habe gelesen, was ihr über Tiere und tierische Produkte schreibt, und bin damit einverstanden."
+
+msgid "We have no room for more children right now. I'll come without children."
+msgstr "Wir haben gerade keinen Platz für weitere Kinder. Ich komme ohne Kinder."
+
+msgid "We live adults-only. I'll come without children."
+msgstr "Bei uns leben nur Erwachsene. Ich komme ohne Kinder."
+
+msgid "I've read your house agreements and will keep to them."
+msgstr "Ich habe eure Hausvereinbarungen gelesen und halte mich daran."
+
+msgid "Motivation and fit"
+msgstr "Motivation und Passung"
+
+msgid "Which other communities have you visited or lived in, and what made you leave?"
+msgstr "In welchen anderen Gemeinschaften warst du zu Besuch oder hast gelebt, und warum bist du gegangen?"
+
+msgid "Communication and conflict"
+msgstr "Kommunikation und Konflikte"
+
+msgid "Tell us about a real conflict you were part of, and how it ended."
+msgstr "Erzähl uns von einem echten Konflikt, an dem du beteiligt warst, und wie er ausgegangen ist."
+
+msgid "Which ways of talking and deciding together do you know from experience?"
+msgstr "Welche Formen, gemeinsam zu sprechen und zu entscheiden, kennst du aus eigener Erfahrung?"
+
+msgid "For example consensus, sociocracy, nonviolent communication, Forum"
+msgstr "Zum Beispiel Konsens, Soziokratie, Gewaltfreie Kommunikation, Forum"
+
+msgid "How do you take critical feedback?"
+msgstr "Wie gehst du mit kritischem Feedback um?"
+
+msgid "When a conflict gets stuck, I'm willing to go into mediation."
+msgstr "Wenn ein Konflikt festgefahren ist, bin ich zu einer Mediation bereit."
+
+msgid "How many hours a week can you realistically give, and does that change with the seasons?"
+msgstr "Wie viele Stunden pro Woche kannst du realistisch einbringen, und ändert sich das mit den Jahreszeiten?"
+
+msgid "How will you earn your living?"
+msgstr "Wovon wirst du leben?"
+
+msgid "A local job"
+msgstr "Eine Arbeit vor Ort"
+
+msgid "What physical work can you do, for example on the farm or on building sites?"
+msgstr "Welche körperliche Arbeit kannst du machen, zum Beispiel auf dem Hof oder auf der Baustelle?"
+
+msgid "Do you have debts we should know about?"
+msgstr "Hast du Schulden, von denen wir wissen sollten?"
+
+msgid "Household"
+msgstr "Haushalt"
+
+
+msgid "What are your plans for your children's school?"
+msgstr "Was hast du für die Schule deiner Kinder vor?"
+
+msgid "School is compulsory in Germany, so homeschooling isn't an option."
+msgstr "In Deutschland gilt Schulpflicht, Hausunterricht ist also keine Option."
+
+msgid "What do you expect from shared childcare?"
+msgstr "Was erwartest du von gemeinsamer Kinderbetreuung?"
+
+msgid "Is there anything we should know so we can support you well?"
+msgstr "Gibt es etwas, das wir wissen sollten, damit wir dich gut unterstützen können?"
+
+
+msgid "Practical"
+msgstr "Praktisches"
+
+msgid "How long is the notice period where you live now?"
+msgstr "Wie lang ist die Kündigungsfrist dort, wo du jetzt wohnst?"
+
+msgid "Do you need to register your address here?"
+msgstr "Brauchst du hier eine Meldeadresse?"
+
+msgid "Everyone here has to register where they live (Meldeadresse)."
+msgstr "Hier gilt Meldepflicht: Alle müssen sich dort anmelden, wo sie wohnen."
+
+msgid "What you'd share can also become your offers on ecobasa."
+msgstr "Was du teilen würdest, kann auch zu deinen Angeboten auf ecobasa werden."
+
+msgid "Onboarding process"
+msgstr "Aufnahmeverfahren"
+
+msgid "What you agree to when you apply"
+msgstr "Dem stimmst du mit deinem Antrag zu"
+
+msgid "We'd like to talk about this when you visit"
+msgstr "Darüber möchten wir bei deinem Besuch sprechen"
+
+
+
+msgid "comes first in the application; nobody can send it before agreeing to all of them."
+msgstr "steht im Antrag ganz vorn; niemand kann ihn abschicken, ohne allen zuzustimmen."
+
+msgid "answered in the application, read by you."
+msgstr "wird im Antrag beantwortet, ihr lest es."
+
+msgid "not answered in the application; you talk about it when they visit."
+msgstr "wird nicht im Antrag beantwortet; ihr sprecht beim Besuch darüber."
+
+msgid "Shows once it's filled in under How we live."
+msgstr "Erscheint, sobald es unter „So leben wir“ ausgefüllt ist."
+
+msgid "Sensitive: always optional, only you see the answer"
+msgstr "Vertraulich: immer freiwillig, nur ihr seht die Antwort"
+
+msgid "Save to add another question."
+msgstr "Speichert, um eine weitere Frage hinzuzufügen."
+
+msgid "Required"
+msgstr "Pflichtfrage"
+
+msgid "Shown under the question"
+msgstr "Steht unter der Frage"
+
+msgid "Question"
+msgstr "Frage"
+
+msgid "Onboarding questions"
+msgstr "Aufnahmefragen"
+
+msgid "Must-match"
+msgstr "Voraussetzung"
+
+
+msgid "I've read what happens to the buy-in when someone leaves, and I accept it."
+msgstr "Ich habe gelesen, was mit der Einlage passiert, wenn jemand geht, und bin damit einverstanden."
+
+msgid "I've read your vision and statutes."
+msgstr "Ich habe eure Vision und Satzung gelesen."
+
+msgid "Why this community, and why now?"
+msgstr "Warum diese Gemeinschaft, und warum jetzt?"
+
+msgid "What does living in community mean to you?"
+msgstr "Was bedeutet Gemeinschaftsleben für dich?"
+
+msgid "What do you hope to give here, and what do you hope to get?"
+msgstr "Was möchtest du hier geben, und was erhoffst du dir?"
+
+msgid "What would make you leave this community?"
+msgstr "Was würde dich dazu bringen, diese Gemeinschaft zu verlassen?"
+
+msgid "Work and contribution"
+msgstr "Mitarbeit und Beitrag"
+
+msgid "Remote work"
+msgstr "Ortsunabhängige Arbeit"
+
+msgid "A business inside the community"
+msgstr "Ein eigenes Gewerbe in der Gemeinschaft"
+
+msgid "Nothing yet"
+msgstr "Noch nichts"
+
+msgid "Finances"
+msgstr "Finanzen"
+
+msgid "Everyday agreements"
+msgstr "Alltag und Vereinbarungen"
+
+msgid "Who would move in with you?"
+msgstr "Wer würde mit dir einziehen?"
+
+msgid "Support needs"
+msgstr "Unterstützung"
+
+msgid "When would you like to move in?"
+msgstr "Wann möchtest du einziehen?"
+
+msgid "What would you bring into the commons?"
+msgstr "Was würdest du zum Teilen mitbringen?"
+
+msgid "Commitments"
+msgstr "Zusagen"
+
+msgid "What we'd like to know from you"
+msgstr "Was wir gern von dir wissen möchten"
+
+msgid "You aren't looking for new members right now. Your onboarding process shows once you are (under How we live)."
+msgstr "Ihr sucht gerade keine neuen Mitglieder. Euer Aufnahmeverfahren erscheint, sobald ihr sucht (unter „So leben wir“)."
+
+msgid "Our own questions"
+msgstr "Unsere eigenen Fragen"
+
+msgid "Your onboarding process has been saved."
+msgstr "Euer Aufnahmeverfahren ist gespeichert."
+
+#, python-format
+msgid "We each give about %(n)s hour a week to the community. That works for me."
+msgid_plural "We each give about %(n)s hours a week to the community. That works for me."
+msgstr[0] "Jede*r von uns bringt etwa %(n)s Stunde pro Woche für die Gemeinschaft ein. Das passt für mich."
+msgstr[1] "Jede*r von uns bringt etwa %(n)s Stunden pro Woche für die Gemeinschaft ein. Das passt für mich."
+
+#, python-format
+msgid "We mainly speak %(languages)s. I speak it or I'm willing to learn it."
+msgid_plural "We mainly speak %(languages)s. I speak at least one of them or I'm willing to learn."
+msgstr[0] "Wir sprechen vor allem %(languages)s. Ich spreche die Sprache oder bin bereit, sie zu lernen."
+msgstr[1] "Wir sprechen vor allem %(languages)s. Ich spreche mindestens eine davon oder bin bereit, sie zu lernen."
+
+#, python-format
+msgid "Everyone starts with a trial period of %(n)s month. I accept that."
+msgid_plural "Everyone starts with a trial period of %(n)s months. I accept that."
+msgstr[0] "Alle beginnen mit einer Probezeit von %(n)s Monat. Damit bin ich einverstanden."
+msgstr[1] "Alle beginnen mit einer Probezeit von %(n)s Monaten. Damit bin ich einverstanden."
+
+msgid "I already live here"
+msgstr "Ich wohne schon hier"
+
+msgid "Only the ambassador sees this"
+msgstr "Nur der*die Botschafter*in sieht das"
+
+msgid "Agree to everything above first."
+msgstr "Stimme zuerst allem oben zu."
+
+msgid "No"
+msgstr "Nein"
+
+msgid "Talk at the visit"
+msgstr "Beim Besuch besprechen"
+
+msgid "Agreed to"
+msgstr "Zugestimmt"
+
+msgid "Answers"
+msgstr "Antworten"
+
+msgid "Already lives here"
+msgstr "Wohnt schon hier"
+
+msgid "Must-matches"
+msgstr "Voraussetzungen"
+
+msgid "Choose what you'd like to know from people who want to become members. People see it when they ask to become a member, unless they already live with you."
+msgstr "Wählt aus, was ihr von Menschen wissen möchtet, die Mitglied werden wollen. Sie sehen es, wenn sie fragen, ob sie Mitglied werden können, außer sie wohnen schon bei euch."
+
+#, python-format
+msgid "Show my (%(name)s) personal offers and skills on this community page"
+msgstr "Meine (%(name)s) persönlichen Angebote und Fähigkeiten auf dieser Gemeinschaftsseite zeigen"
+
+msgid "Adults and children. Every adult applies on their own."
+msgstr "Erwachsene und Kinder. Jede*r Erwachsene stellt einen eigenen Antrag."
+
+msgid "Will you bring any pets? If so, which ones, how many, and what are they like?"
+msgstr "Bringst du Haustiere mit? Wenn ja, welche, wie viele, und wie sind sie so?"
+
+msgid "With people, children and other animals."
+msgstr "Mit Menschen, Kindern und anderen Tieren."
+
+msgid "Not asked with what you filled in under How we live."
+msgstr "Wird bei dem, was ihr unter „So leben wir“ ausgefüllt habt, nicht gefragt."
 
 msgid "Add gifts"
 msgstr "Geschenke hinzufügen"

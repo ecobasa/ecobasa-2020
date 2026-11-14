@@ -1,5 +1,5 @@
 {% load i18n %}
-{# Who belongs to the community, for everyone; profiles need a login. Its ambassador invites people, hands the role over and takes members off; members choose whether their offers show and leave; others ask to become a member #}
+{# Who belongs to the community, for everyone; profiles need a login. Its ambassador invites people, sets up the onboarding process, hands the role over and takes members off; members leave; others ask to become a member #}
 <div id="members" class="mt-6">
 	<h2>{% trans "Members" %}</h2>
 	{% if community.looking_for_members %}
@@ -52,7 +52,10 @@
 	{% endif %}
 
 	{% if is_ambassador and community.ambassador %}
-		<a href="{% url 'communities:invite' community.slug %}" class="btn text-sm mb-3"><i class="fa-solid fa-user-plus mr-1"></i>{% trans "Invite someone" %}</a>
+		<div class="flex flex-wrap gap-2 mb-3">
+			<a href="{% url 'communities:invite' community.slug %}" class="btn text-sm"><i class="fa-solid fa-user-plus mr-1"></i>{% trans "Invite someone" %}</a>
+			<a href="{% url 'communities:onboarding' community.slug %}" class="btn text-sm"><i class="fa-solid fa-list-check mr-1"></i>{% trans "Onboarding process" %}</a>
+		</div>
 	{% endif %}
 
 	{% if not request.user.is_authenticated %}
@@ -60,14 +63,6 @@
 			<a class="btn w-full" href="{% url 'users:login' %}?next={{ request.path }}"><i class="fa-solid fa-door-open mr-1"></i>{% trans "Ask to become a member" %}</a>
 		{% endif %}
 	{% elif membership and membership.is_counted %}
-		{# Their own offers and skills on the community page, if they want #}
-		<form method="post" action="{% url 'communities:show_offers' community.slug %}" class="mb-3">{% csrf_token %}
-			<input type="hidden" name="shows_offers" value="{% if membership.shows_offers %}0{% else %}1{% endif %}">
-			<label class="flex items-start gap-2 text-sm cursor-pointer">
-				<input type="checkbox" class="form-checkbox mt-0.5 flex-shrink-0" {% if membership.shows_offers %}checked{% endif %} onchange="this.form.submit()">
-				<span>{% trans "Show my offers and skills on the community page" %}</span>
-			</label>
-		</form>
 		{% if request.user.pk != community.ambassador_id %}
 			<form method="post" action="{% url 'communities:leave' community.slug %}"
 				onsubmit="return confirm('{% trans "Leave this community?" as question %}{{ question|escapejs }}')">{% csrf_token %}
@@ -80,14 +75,8 @@
 		<a href="{{ membership.match.get_absolute_url }}" class="text-sm underline"><i class="fa-solid fa-hourglass-half mr-1"></i>{% trans "Your membership application waits for an answer." %}</a>
 	{% elif community.ambassador %}
 		{% if not community.looking_for_members %}
-			<p class="text-xs mb-1">{% trans "Not looking for new members right now. If you live here already, ask to be added." %}</p>
+			{% include "communities/_not_looking.html" with class="mb-4" %}
 		{% endif %}
-		<details>
-			<summary class="btn w-full cursor-pointer list-none [&::-webkit-details-marker]:hidden text-center"><i class="fa-solid fa-door-open mr-1"></i>{% trans "Ask to become a member" %}</summary>
-			<form method="post" action="{% url 'communities:apply' community.slug %}" class="mt-2 space-y-2">{% csrf_token %}
-				<textarea name="message" rows="4" class="form-textarea w-full text-sm" placeholder="{% trans 'Who you are and how you belong to the community' %}"></textarea>
-				<button type="submit" class="btn btn-primary w-full">{% trans "Send" %}</button>
-			</form>
-		</details>
+		<a class="btn w-full" href="{% url 'communities:apply' community.slug %}"><i class="fa-solid fa-door-open mr-1"></i>{% trans "Ask to become a member" %}</a>
 	{% endif %}
 </div>
