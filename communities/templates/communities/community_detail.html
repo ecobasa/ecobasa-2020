@@ -116,6 +116,8 @@
 				<p>{{ community.vision }}</p>
 			{% endif %}
 
+			{% include "communities/_house_agreements.html" %}
+
 			
 			<!-- Skills -->
 
@@ -257,41 +259,25 @@
 			<div class="flex flex-col">
 
 		<!-- Statistics -->
-			{% if community.type or community.status or community.inhabitants or community.children %}
+			{% if community.type or community.status or community.inhabitants or community.children or community.children_welcome %}
 				<h2 class="mt-0">{% trans "Statistics" %}</h2>
-				<span class="block text-primary mb-2">
-					{% if community.type == "e" %}
-						<i class="mr-1 fa fa-home"></i> {% trans "Ecovillage" %}
-					{% elif community.type == "p" %}
-						<i class="mr-1 fa fa-tag"></i>{% trans "Planning Initiative" %}
-					{% elif community.type == "c" %}
-						<i class="mr-1 fa fa-home"></i>{% trans "Commune" %}
-					{% elif community.type == "h" %}
-						<i class="mr-1 fa fa-home"></i>{% trans "Houseproject" %}
-					{% elif community.type == "f" %}
-						<i class="mr-1 fa fa-home"></i>{% trans "Permaculture Farm" %}
+				<dl class="grid grid-cols-2 sm:grid-cols-1 lg:grid-cols-2 gap-x-4 gap-y-2 mb-4">
+					{% if community.type %}{% trans "Type of community" as label %}{% include "communities/_fact.html" with icon=community.get_type_icon value=community.get_type_display %}{% endif %}
+					{% if community.status %}{% trans "Project status" as label %}{% include "communities/_fact.html" with icon="fa-seedling" value=community.get_status_display %}{% endif %}
+					{% if community.inhabitants %}{% trans "People" as label %}{% include "communities/_fact.html" with icon="fa-users" value=community.inhabitants %}{% endif %}
+					{# How many children live there, and whether more are welcome #}
+					{% if community.children or community.children_welcome %}
+						{% trans "Children" as label %}
+						{% if community.children and community.children_welcome %}
+							{% with value=community.children|stringformat:"s"|add:" · "|add:community.get_children_welcome_display %}{% include "communities/_fact.html" with icon="fa-child" %}{% endwith %}
+						{% else %}
+							{% include "communities/_fact.html" with icon="fa-child" value=community.children|default:community.get_children_welcome_display %}
+						{% endif %}
 					{% endif %}
-				</span>
-				<span class="block text-primary mb-2">
-					{% if community.status == "s" %}
-						<i class="mr-1 fa fa-hand-rock"></i>{% trans "Starting Project (first years)" %}
-					{% elif community.status == "e" %}
-						<i class="mr-1 fa fa-thumbs-up"></i>{% trans "Established (+4 years)" %}
-					{% elif community.status == "l" %}
-						<i class="mr-1 fa fa-map-marker"></i>{% trans "Land Offer" %}
-					{% endif %}
-				</span>
-				{% with community.inhabitants as inhabitants %}
-					{% if inhabitants %}
-						<span class="block text-primary mb-2"><i class="mr-1 fa fa-users"></i>{% blocktrans count inhabitants as count %}{{ count }} person living there{% plural %}{{ count }} people living there{% endblocktrans %}</span>
-					{% endif %}
-				{% endwith %}
-				{% with community.children as children %}
-					{% if children %}
-						<span class="block text-primary mb-2"><i class="mr-1 fa fa-child"></i>{% blocktrans count children as count %}{{ count }} child{% plural %}{{ count }} children{% endblocktrans %}</span>
-					{% endif %}
-				{% endwith %}
+				</dl>
 			{% endif %}
+
+			{% include "communities/_how_we_live.html" %}
 
 			<!-- Video -->
 			{% if community.video %}

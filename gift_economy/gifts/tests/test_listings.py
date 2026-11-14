@@ -173,8 +173,10 @@ def test_a_projects_listings_are_listed_while_it_runs(anna, ben):
 @pytest.mark.django_db
 def test_the_community_page_lists_its_and_its_members_skills_and_gifts_once(anna, ben):
     """A skill both the community and its member (the ambassador) offer shows once, as the
-    community's; members' other offers are the community's gifts on offer."""
+    community's; the other offers of members who show theirs are the community's gifts on
+    offer."""
     community = Community.objects.create(name="Hof", slug="hof", ambassador=anna, location=GOERLITZ)
+    community.memberships.update(shows_offers=True)
     baking = Skill.objects.create(name="Bread Baking", slug="bread-baking")
     ours = skill_offer(community, baking, level="advanced", description="Bake with us on Saturdays.")
     skill_offer(anna, baking)

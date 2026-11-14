@@ -7,6 +7,14 @@
   <script>
     const communityTypeLabels   = { {% for v, l in community_types %}'{{ v }}': '{{ l|escapejs }}',{% endfor %} };
     const communityStatusLabels = { {% for v, l in community_statuses %}'{{ v }}': '{{ l|escapejs }}',{% endfor %} };
+    // A set "How we live" filter as its pill says it
+    const lifeLabels = { {% for param, label, choices in life_filters %}'{{ param }}': ['{{ label|escapejs }}', { {% for v, l in choices %}'{{ v }}': '{{ l|escapejs }}',{% endfor %} }],{% endfor %} };
+    function lifeLabel(param, value) {
+      const [label, choices] = lifeLabels[param] || [param, {}];
+      // A checkbox says it all with its label
+      if (Object.keys(choices).length === 1) return label;
+      return label + ': ' + value.split(',').map(v => choices[v] || v).join(', ');
+    }
 
     document.addEventListener('alpine:init', () => {
       Alpine.store('communityMap', {
@@ -19,6 +27,17 @@
         selectedTypes: [],
         selectedStatuses: [],
         selectedCountry: '',
+        // The "How we live" filters, by their parameter
+        life: { {% for param, label, choices in life_filters %}'{{ param }}': '',{% endfor %} },
+        lifeCount()   { return Object.values(this.life).filter(Boolean).length; },
+        clearLife()   { Object.keys(this.life).forEach(param => this.life[param] = ''); },
+        // A filter with several values, kept comma separated
+        toggleLife(param, value, on) {
+          const values = this.life[param].split(',').filter(v => v && v !== value);
+          if (on) values.push(value);
+          this.life[param] = values.join(',');
+        },
+        filterCount() { return this.selectedTypes.length + this.selectedStatuses.length + this.lifeCount(); },
         showMap()  { this.view = 'map'; },
         showList() { this.view = 'list'; }
       });
@@ -190,12 +209,12 @@
           <div class="relative" x-data="{ filterOpen: false }">
             <button type="button"
               @click="filterOpen = !filterOpen"
-              :class="($store.communityMap.selectedTypes.length + $store.communityMap.selectedStatuses.length) > 0 ? 'ring-2 ring-offset-1 ring-primary' : ''"
+              :class="$store.communityMap.filterCount() > 0 ? 'ring-2 ring-offset-1 ring-primary' : ''"
               class="btn h-full px-3 flex items-center gap-1 text-sm"
               title="{% trans 'Filters' %}">
               <i class="fa fa-sliders-h"></i>
-              <span x-show="($store.communityMap.selectedTypes.length + $store.communityMap.selectedStatuses.length) > 0"
-                x-text="$store.communityMap.selectedTypes.length + $store.communityMap.selectedStatuses.length"
+              <span x-show="$store.communityMap.filterCount() > 0"
+                x-text="$store.communityMap.filterCount()"
                 class="text-xs font-bold leading-none">
               </span>
             </button>
@@ -204,7 +223,7 @@
             <div x-show="filterOpen" x-cloak
               @click.away="filterOpen = false"
               @keydown.escape.window="filterOpen = false"
-              class="absolute left-0 top-full mt-2 w-64 bg-primary text-secondary rounded-lg shadow-xl border border-red p-4 z-30 space-y-4">
+              class="absolute left-0 top-full mt-2 w-64 max-h-[70vh] overflow-y-auto bg-primary text-secondary rounded-lg shadow-xl border border-red p-4 z-30 space-y-4">
 
               <div>
                 <div class="text-xs font-bold uppercase tracking-wider opacity-70 mb-2">{% trans "Type" %}</div>
@@ -244,10 +263,12 @@
                 </div>
               </div>
 
+              {% include "communities/_life_filters.html" %}
+
               <button type="button"
-                x-show="($store.communityMap.selectedTypes.length + $store.communityMap.selectedStatuses.length) > 0"
+                x-show="$store.communityMap.filterCount() > 0"
                 class="text-xs underline opacity-70 hover:opacity-100"
-                @click="$store.communityMap.selectedTypes = []; $store.communityMap.selectedStatuses = []; window._communityMapReload && window._communityMapReload();">
+                @click="$store.communityMap.selectedTypes = []; $store.communityMap.selectedStatuses = []; $store.communityMap.clearLife(); window._communityMapReload && window._communityMapReload();">
                 {% trans "Clear filters" %}
               </button>
             </div>
@@ -271,7 +292,7 @@
         </div>{# end search+buttons flex #}
 
         {% comment %}Active filter pills — compact summary row{% endcomment %}
-        <div x-show="($store.communityMap.selectedTypes.length + $store.communityMap.selectedStatuses.length) > 0"
+        <div x-show="$store.communityMap.filterCount() > 0"
           x-cloak
           class="flex flex-wrap gap-1">
           <template x-for="t in $store.communityMap.selectedTypes" :key="t">
@@ -286,17 +307,18 @@
               <button @click="$store.communityMap.selectedStatuses = $store.communityMap.selectedStatuses.filter(v => v !== s); window._communityMapReload && window._communityMapReload();" class="opacity-70 hover:opacity-100">&times;</button>
             </span>
           </template>
+          {% include "communities/_life_filter_pills.html" %}
         </div>
 
         {% comment %}Count + clear row{% endcomment %}
         <div class="flex items-center justify-between text-brown">
           <span x-text="$store.communityMap.markerCount + ' {% trans "results on map" %}'"></span>
           <button type="button" x-cloak
-            x-show="$store.communityMap.selectedTypes.length + $store.communityMap.selectedStatuses.length + ($store.communityMap.selectedCountry ? 1 : 0) + ($store.communityMap.q ? 1 : 0) > 0"
+            x-show="$store.communityMap.filterCount() + ($store.communityMap.selectedCountry ? 1 : 0) + ($store.communityMap.q ? 1 : 0) > 0"
             class="underline opacity-70 hover:opacity-100"
             @click="
               $store.communityMap.selectedTypes = [];
-              $store.communityMap.selectedStatuses = [];
+              $store.communityMap.selectedStatuses = []; $store.communityMap.clearLife();
               $store.communityMap.selectedCountry = '';
               $store.communityMap.q = '';
               $store.communityMap.location = '';
@@ -427,12 +449,12 @@
           <div class="relative flex-shrink-0" x-data="{ modalFilterOpen: false }">
             <button type="button"
               @click="modalFilterOpen = !modalFilterOpen"
-              :class="($store.communityMap.selectedTypes.length + $store.communityMap.selectedStatuses.length) > 0 ? 'ring-2 ring-offset-1 ring-primary' : ''"
+              :class="$store.communityMap.filterCount() > 0 ? 'ring-2 ring-offset-1 ring-primary' : ''"
               class="btn h-full px-3 flex items-center gap-1 text-sm"
               title="{% trans 'Filters' %}">
               <i class="fa fa-sliders-h"></i>
-              <span x-show="($store.communityMap.selectedTypes.length + $store.communityMap.selectedStatuses.length) > 0"
-                x-text="$store.communityMap.selectedTypes.length + $store.communityMap.selectedStatuses.length"
+              <span x-show="$store.communityMap.filterCount() > 0"
+                x-text="$store.communityMap.filterCount()"
                 class="text-xs font-bold leading-none">
               </span>
             </button>
@@ -440,7 +462,7 @@
             <div x-show="modalFilterOpen" x-cloak
               @click.away="modalFilterOpen = false"
               @keydown.escape.window="modalFilterOpen = false"
-              class="absolute left-0 top-full mt-2 w-64 bg-primary text-secondary rounded-lg shadow-xl border border-red p-4 z-30 space-y-4">
+              class="absolute left-0 top-full mt-2 w-64 max-h-[70vh] overflow-y-auto bg-primary text-secondary rounded-lg shadow-xl border border-red p-4 z-30 space-y-4">
 
               <div>
                 <div class="text-xs font-bold uppercase tracking-wider opacity-70 mb-2">{% trans "Type" %}</div>
@@ -482,12 +504,14 @@
                 </div>
               </div>
 
+              {% include "communities/_life_filters.html" with in_list=True %}
+
               <button type="button"
-                x-show="($store.communityMap.selectedTypes.length + $store.communityMap.selectedStatuses.length) > 0"
+                x-show="$store.communityMap.filterCount() > 0"
                 class="text-xs underline opacity-70 hover:opacity-100"
                 @click="
                   $store.communityMap.selectedTypes = [];
-                  $store.communityMap.selectedStatuses = [];
+                  $store.communityMap.selectedStatuses = []; $store.communityMap.clearLife();
                   window._communityMapReload && window._communityMapReload();
                   $nextTick(() => htmx.trigger(document.getElementById('modal-search-q'), 'list:search'));
                 ">
@@ -530,7 +554,7 @@
         </select>
 
         {% comment %}Active filter pills in modal{% endcomment %}
-        <div x-show="($store.communityMap.selectedTypes.length + $store.communityMap.selectedStatuses.length) > 0"
+        <div x-show="$store.communityMap.filterCount() > 0"
           x-cloak class="flex flex-wrap gap-1">
           <template x-for="t in $store.communityMap.selectedTypes" :key="t">
             <span class="inline-flex items-center gap-1 text-xs bg-primary text-secondary rounded-full px-2 py-0.5">
@@ -556,17 +580,18 @@
                 class="opacity-70 hover:opacity-100">&times;</button>
             </span>
           </template>
+          {% include "communities/_life_filter_pills.html" with in_list=True %}
         </div>
 
         {% comment %}Result count + clear-all button{% endcomment %}
         <div class="text-xs text-brown flex items-center justify-between gap-2">
           <span id="community-modal-count" hx-swap-oob="true"></span>
           <button type="button" x-cloak
-            x-show="$store.communityMap.selectedTypes.length + $store.communityMap.selectedStatuses.length + ($store.communityMap.selectedCountry ? 1 : 0) + ($store.communityMap.q ? 1 : 0) > 0"
+            x-show="$store.communityMap.filterCount() + ($store.communityMap.selectedCountry ? 1 : 0) + ($store.communityMap.q ? 1 : 0) > 0"
             class="underline opacity-70 hover:opacity-100 whitespace-nowrap"
             @click="
               $store.communityMap.selectedTypes = [];
-              $store.communityMap.selectedStatuses = [];
+              $store.communityMap.selectedStatuses = []; $store.communityMap.clearLife();
               $store.communityMap.selectedCountry = '';
               $store.communityMap.q = '';
               $store.communityMap.location = '';
@@ -599,7 +624,8 @@
     <input type="hidden" name="q"        :value="$store.communityMap.q">
     <input type="hidden" name="location" :value="$store.communityMap.location">
     <input type="hidden" name="country"  :value="$store.communityMap.selectedCountry">
-  </div>
+    {% for param, label, choices in life_filters %}<input type="hidden" name="{{ param }}" :value="$store.communityMap.life.{{ param }}">
+    {% endfor %}  </div>
 
 </div>
 {% endblock %}
@@ -654,6 +680,7 @@ function buildCommunityPopupHTML(f) {
     html += `<span class="pill bg-primary"><i class="fa fa-home mr-1"></i>${type}</span>`;
 
   if (name) html += `<h3>${url ? `<a href="${url}">${name}</a>` : name}</h3>`;
+  if (f.get('looking')) html += `<span class="pill bg-green"><i class="fa-solid fa-door-open mr-1"></i>{% trans "Looking for new members" %}</span>`;
 
   if (img)         html += `<img src="${img}" class="w-full h-24 object-cover rounded my-2">`;
 
@@ -725,6 +752,7 @@ function initCommunityMap() {
     if (store.selectedCountry) params.set('country', store.selectedCountry);
     store.selectedTypes.forEach(t    => params.append('type', t));
     store.selectedStatuses.forEach(s => params.append('status', s));
+    Object.entries(store.life).forEach(([param, value]) => { if (value) params.set(param, value); });
     // When fitting to results, skip bbox so all matches are returned globally
     if (!fitToResults) {
       const view = communityOlMap.getView();

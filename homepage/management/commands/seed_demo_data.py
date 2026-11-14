@@ -94,6 +94,7 @@ class Command(BaseCommand):
         users = self._seed_users()
         communities = self._seed_communities(users)
         self._seed_members(users, communities)
+        self._seed_how_we_live(communities)
         self._seed_listings(users)
         self._seed_seeds_and_plants(users, communities)
         self._seed_community_photos(communities)
@@ -337,6 +338,72 @@ class Command(BaseCommand):
             match.save()
             membership.match = match
             membership.save(update_fields=["match"])
+
+        # Some show their offers and skills on the community page
+        Membership.objects.filter(
+            community=communities["Sonnenkraut Ecovillage"], user__email__in=["luna@ecobasa.demo", "bjorn@ecobasa.demo"],
+        ).update(shows_offers=True)
+        Membership.objects.filter(community=communities["Kombucha Commune"]).update(shows_offers=True)
+        # The ambassador invited someone, who hasn't answered yet
+        community, person = communities["Kombucha Commune"], users["freja@ecobasa.demo"]
+        if not community.memberships.filter(user=person).exists():
+            membership = Membership.objects.create(community=community, user=person)
+            match = Match(
+                from_user=community.ambassador, recipient=person, location_type="",
+                message="You've fed our SCOBYs all summer. Want to stay and argue about the chore wheel with us?",
+            )
+            match.target = membership
+            match.save()
+            membership.match = match
+            membership.save(update_fields=["match"])
+
+    def _seed_how_we_live(self, communities):
+        """How the communities live, filled in differently, for the filters on the map."""
+        self.stdout.write("Seeding how communities live…")
+        lives = {
+            "Sonnenkraut Ecovillage": dict(
+                looking_for_members=True, kitchen=[Community.KITCHEN_VEGETARIAN], private_kitchens=True,
+                children_welcome=Community.CHILDREN_WELCOME, pets=Community.PETS_ASK,
+                currency="EUR", buy_in=12000, buy_in_kind=Community.BUY_IN_SHARES, monthly_contribution=350,
+                work_hours=12, decision_making=Community.DECISIONS_CONSENT, income_sharing=Community.INCOME_SHARING_NONE,
+                trial_months=12, languages=["de", "en"],
+                animals="Chickens for eggs, bees for honey. Nobody slaughters here; meat cooked at home stays in the private kitchens.",
+                exit_terms="Your shares are paid back within two years after you leave, as the cooperative's statutes say.",
+                house_agreements="No cars inside the village. Guests can stay up to two weeks, longer after asking the plenum. Quiet after 22:00.",
+            ),
+            "Kombucha Commune": dict(
+                looking_for_members=True, kitchen=[Community.KITCHEN_VEGAN, Community.KITCHEN_GLUTEN_FREE, Community.KITCHEN_SUGAR_FREE],
+                children_welcome=Community.CHILDREN_NO_ROOM,
+                pets=Community.PETS_NONE, work_hours=20, decision_making=Community.DECISIONS_CONSENSUS,
+                income_sharing=Community.INCOME_SHARING_FULLY, trial_months=6, languages=["fr", "en"],
+                house_agreements="Shared purse, shared chores (yes, the wheel). No alcohol in the common rooms.",
+            ),
+            "Barefoot Bureaucracy House Project": dict(
+                kitchen=[Community.KITCHEN_ANY], private_kitchens=True,
+                buy_in=2000, buy_in_kind=Community.BUY_IN_FOUNDATION,
+                children_welcome=Community.CHILDREN_ADULTS_ONLY,
+                pets=Community.PETS_WELCOME, currency="EUR", monthly_contribution=480, work_hours=4,
+                decision_making=Community.DECISIONS_MAJORITY, income_sharing=Community.INCOME_SHARING_NONE,
+                languages=["nl", "en"], statutes_url="https://example.org/barefoot-bureaucracy/house-agreement",
+            ),
+            "Three Goats and a Dream Farm": dict(
+                kitchen=[Community.KITCHEN_ANY], pets=Community.PETS_WELCOME, decision_making=Community.DECISIONS_DOOCRACY,
+                currency="EUR", buy_in=8000, buy_in_kind=Community.BUY_IN_RENT_TO_OWN,
+                exit_terms="What you paid in counts towards your share of the farm; leave and it's paid back over three years.",
+                languages=["es", "en"],
+                animals="Three goats for milk and cheese, a dozen hens. We slaughter old hens ourselves, once a year, together.",
+            ),
+            "Cacao Tierra Viva": dict(
+                looking_for_members=True, kitchen=[Community.KITCHEN_ANY, Community.KITCHEN_LACTOSE_FREE],
+                children_welcome=Community.CHILDREN_WELCOME,
+                pets=Community.PETS_WELCOME, currency="USD", buy_in=3000, buy_in_kind=Community.BUY_IN_LOAN,
+                work_hours=25, decision_making=Community.DECISIONS_COUNCIL, income_sharing=Community.INCOME_SHARING_PARTLY,
+                trial_months=3, languages=["es", "en"],
+                exit_terms="The loan is paid back in full within six months of leaving.",
+            ),
+        }
+        for name, fields in lives.items():
+            Community.objects.filter(pk=communities[name].pk).update(**fields)
 
     # ── Listings ─────────────────────────────────────────────────────────
 

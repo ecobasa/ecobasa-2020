@@ -62,8 +62,63 @@ def index(request):
             "countries": countries,
             "community_types": Community.COMMUNITY_TYPE_CHOICES,
             "community_statuses": Community.COMMUNITY_STATUS_CHOICES,
+            "life_filters": _life_filters(),
         },
     )
+
+
+def _life_filters():
+    """The "How we live" filters for the map and list: (param, label, choices), and
+    the ones for an amount up to (param, label, None). One with a single choice is a
+    checkbox with the label; the kitchen's diets are checkboxes, all to fit."""
+    from .models import language_name
+
+    used = sorted(
+        {code for codes in Community.objects.exclude(languages=[]).values_list("languages", flat=True) for code in codes},
+        key=lambda code: language_name(code).lower(),
+    )
+    return [
+        ("looking", _("Looking for new members"), [("1", _("Yes"))]),
+        ("kitchen", _("Shared kitchen"), [
+            (code, label) for code, label in Community.KITCHEN_CHOICES if code != Community.KITCHEN_ANY
+        ]),
+        ("children", _("Children welcome"), [(Community.CHILDREN_WELCOME, _("Welcome"))]),
+        ("pets", _("Pets"), [(Community.PETS_WELCOME, _("Welcome")), (Community.PETS_ASK, _("Ask us first"))]),
+        ("decisions", _("Decision making"), Community.DECISION_CHOICES),
+        ("language", _("Languages"), [(code, language_name(code)) for code in used if language_name(code)]),
+        ("buy_in", _("Buy-in up to"), None),
+        ("work", _("Work commitment up to (hours per week)"), None),
+    ]
+
+
+def _life_q(params):
+    """Communities that fit the "How we live" filters in `params` (a QueryDict)."""
+    found = Q()
+    if params.get("looking"):
+        found &= Q(looking_for_members=True)
+    # Diets, comma separated: the kitchen cooks all of them (a vegan one is vegetarian too)
+    for diet in filter(None, (params.get("kitchen") or "").split(",")):
+        if diet == Community.KITCHEN_VEGETARIAN:
+            found &= Q(kitchen__overlap=[Community.KITCHEN_VEGETARIAN, Community.KITCHEN_VEGAN])
+        elif diet in dict(Community.KITCHEN_CHOICES):
+            found &= Q(kitchen__contains=[diet])
+    if params.get("children") == Community.CHILDREN_WELCOME:
+        found &= Q(children_welcome=Community.CHILDREN_WELCOME)
+    pets = params.get("pets")
+    if pets == Community.PETS_WELCOME:
+        found &= Q(pets=Community.PETS_WELCOME)
+    elif pets == Community.PETS_ASK:
+        found &= Q(pets__in=[Community.PETS_WELCOME, Community.PETS_ASK])
+    if params.get("decisions") in dict(Community.DECISION_CHOICES):
+        found &= Q(decision_making=params["decisions"])
+    if params.get("language"):
+        found &= Q(languages__contains=[params["language"]])
+    # Up to an amount: none asked counts as fitting
+    for param, field in (("buy_in", "buy_in"), ("work", "work_hours")):
+        value = (params.get(param) or "").strip()
+        if value.isdigit():
+            found &= Q(**{f"{field}__isnull": True}) | Q(**{f"{field}__lte": int(value)})
+    return found
 
 
 def detail(request, slug):
@@ -84,9 +139,9 @@ def detail(request, slug):
     # Its members' skills join them, each skill once (the community's own listing wins);
     # their other offers are listed as the community's gifts
     member_list = community.member_list()
-    members = [membership.user for membership in member_list]
+    showing = [membership.user for membership in member_list if membership.shows_offers]
     member_offers = list(
-        Listing.objects.open().filter(owner__in=members, community=None, type=Listing.TYPE_OFFER)
+        Listing.objects.open().filter(owner__in=showing, community=None, type=Listing.TYPE_OFFER)
         .exclude(type=Listing.TYPE_OFFER, skill__isnull=False, available=False).select_related("owner", "skill")
     )
     holders = {}
@@ -158,7 +213,7 @@ def detail(request, slug):
         # Who asked to become a member and waits for an answer, for its ambassador
         "applications":     community.memberships.current().exclude(match=None).exclude(
             match__status=Match.STATUS_ACCEPTED,
-        ).select_related("user", "match") if is_ambassador else [],
+        ).exclude(match__recipient=F("user")).select_related("user", "match") if is_ambassador else [],
         "photos":           photos,
         "hero_image":       hero_image,
         "community_skills": community_skills,
@@ -457,6 +512,7 @@ def _base_qs(request, require_location=True):
     selected_statuses = request.GET.getlist("status")
     if selected_statuses:
         qs = qs.filter(status__in=selected_statuses)
+    qs = qs.filter(_life_q(request.GET))
 
     return qs.distinct()
 
@@ -525,6 +581,7 @@ def community_markers(request):
                 "children":    c.children,
                 "max_guests":  c.max_guests,
                 "skills":      sorted({cs.skill.get_name() for cs in c.skill_offers}),
+                "looking":     c.looking_for_members,
             },
         })
 
@@ -722,3 +779,72 @@ def hand_over(request, slug, pk):
         community.hand_over(membership.user)
         messages.success(request, _("%(name)s is the ambassador now.") % {"name": membership.user.name})
     return redirect(community.get_absolute_url() + "#members")
+
+
+@login_required
+@require_POST
+def show_offers(request, slug):
+    """A member chooses whether their offers and skills show on the community page."""
+    community = get_object_or_404(Community, slug=slug)
+    own = community.memberships.counted().filter(user=request.user).first()
+    if own is not None:
+        own.shows_offers = request.POST.get("shows_offers") == "1"
+        own.save(update_fields=["shows_offers"])
+    return redirect(community.get_absolute_url() + "#members")
+
+
+@login_required
+def invite(request, slug):
+    """The ambassador invites someone to become a member: a match from them to the one
+    invited, with a new membership as target. They count once they accept; an
+    invitation asks nothing more of them."""
+    from django.core.exceptions import PermissionDenied
+    from django.db import transaction
+    from gift_economy.matches.emails import notify_match_created
+    from .forms import InviteForm
+
+    community = get_object_or_404(Community, slug=slug)
+    if not community.is_ambassador(request.user) or community.ambassador is None:
+        raise PermissionDenied
+    form = InviteForm(community, request.POST or None, initial={"user": request.GET.get("user", "")})
+    if request.method == "POST" and form.is_valid():
+        person = form.cleaned_data["user"]
+        with transaction.atomic():
+            membership = Membership.objects.create(community=community, user=person)
+            match = Match(
+                from_user=community.ambassador, recipient=person, message=form.cleaned_data["message"],
+                location_type="",
+            )
+            match.target = membership
+            match.save()
+            membership.match = match
+            membership.save(update_fields=["match"])
+        notify_match_created(match, http_request=request)
+        messages.success(request, _("Your invitation has been sent to %(name)s.") % {"name": person.name or person.email})
+        return redirect(community.get_absolute_url() + "#members")
+    return render(request, "communities/invite.html", {
+        "community": community, "form": form, "chosen": form.chosen_user(),
+    })
+
+
+@login_required
+@require_GET
+def api_people(request, slug):
+    """People whose name matches `q`, to invite into the community (its ambassador
+    only): their name, picture and town. Not those who are members or asked already."""
+    from django.contrib.auth import get_user_model
+    from django.core.exceptions import PermissionDenied
+
+    community = get_object_or_404(Community, slug=slug)
+    if not community.is_ambassador(request.user):
+        raise PermissionDenied
+    q = (request.GET.get("q") or "").strip()
+    if len(q) < 2:
+        return JsonResponse({"results": []})
+    on = community.memberships.current().values_list("user_id", flat=True)
+    people = get_user_model().objects.filter(is_active=True, name__icontains=q).exclude(pk__in=on).order_by("name")[:8]
+    return JsonResponse({"results": [
+        {"id": person.pk, "name": person.name, "image": person.image.url if person.image else "",
+         "place": town(person.location_name) or ""}
+        for person in people
+    ]})

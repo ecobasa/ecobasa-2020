@@ -319,8 +319,9 @@ class TestToolLibrary:
     def test_the_community_page_lists_what_it_lends_apart_from_gifts(self, community, van, ladder, borrower):
         Listing.objects.create(title="Apples", type="offer", kind="material", community=community)
         _loan(van, borrower, _day(0), _day(2))
+        community.memberships.update(shows_offers=True)
         response = Client().get(community.get_absolute_url())
-        assert response.context["library"] == [ladder, van]  # the ambassador's ladder too
+        assert response.context["library"] == [ladder, van]  # the ambassador's ladder too, they show theirs
         assert [listing.title for listing in response.context["gifts"]] == ["Apples"]
         page = response.content.decode()
         assert "To borrow here" in page and "free" in page and "until" in page

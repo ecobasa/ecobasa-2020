@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block head_title %}{% trans "Invite someone" %} — {{ community.name }} — ecobasa{% endblock %}
+
+{% block content %}
+<div class="container-form">
+  {# Where this page is #}
+  <div class="mb-2 text-sm flex flex-wrap items-center gap-x-2 gap-y-1">
+    <a href="{% url 'communities:list' %}" class="hover:underline">{% trans "Communities" %}</a>
+    <i class="fa-solid fa-chevron-right text-xs opacity-50" aria-hidden="true"></i>
+    <a href="{{ community.get_absolute_url }}" class="hover:underline">{{ community.name }}</a>
+    <i class="fa-solid fa-chevron-right text-xs opacity-50" aria-hidden="true"></i>
+    <span class="opacity-70">{% trans "Invite someone" %}</span>
+  </div>
+  <h1>{% trans "Invite someone" %}</h1>
+  <p>{% trans "They get your invitation and become a member once they accept it." %}</p>
+
+  <form method="post" class="border rounded-xl bg-secondary p-6 space-y-4">
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+    {# Found by name; the hidden field keeps who was chosen #}
+    <div class="form-group relative" x-data="invitePerson('{% if chosen %}{{ chosen.name|escapejs }}{% endif %}')">
+      <label class="form-label" for="invite-person-search">{{ form.user.label }}</label>
+      {{ form.user }}
+      <input type="text" id="invite-person-search" class="form-input w-full" autocomplete="off" x-model="query"
+             @input.debounce.300ms="search()" placeholder="{% trans 'Their name…' %}">
+      <div x-show="results.length" @click.outside="results = []" x-cloak
+           class="absolute z-20 inset-x-0 bg-secondary shadow-lg text-sm py-2 rounded-b border">
+        <template x-for="res in results" :key="res.id">
+          <a href="#" @click.prevent="choose(res)" class="flex items-center gap-2 px-3 py-2 hover:bg-primary hover:text-secondary">
+            <template x-if="res.image"><img :src="res.image" alt="" class="w-6 h-6 rounded-full object-cover"></template>
+            <template x-if="!res.image"><i class="fa fa-user w-6 text-center"></i></template>
+            <span x-text="res.name"></span>
+            <span class="opacity-70" x-show="res.place" x-text="'· ' + res.place"></span>
+          </a>
+        </template>
+      </div>
+      {% for error in form.user.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="{{ form.message.id_for_label }}">{{ form.message.label }}</label>
+      {{ form.message }}
+      <p class="text-xs mt-1">{{ form.message.help_text }}</p>
+      {% for error in form.message.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+    </div>
+    <div class="flex flex-wrap gap-2">
+      <button type="submit" class="btn btn-lg"><i class="fa-solid fa-user-plus mr-1"></i>{% trans "Invite someone" %}</button>
+      <a href="{{ community.get_absolute_url }}#members" class="btn btn-lg btn-purple">{% trans "Cancel" %}</a>
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+{% block javascript %}
+{{ block.super }}
+<script>
+document.addEventListener('alpine:init', () => {
+  Alpine.data('invitePerson', (name) => ({
+    query: name, results: [],
+    async search() {
+      const q = this.query.trim();
+      document.getElementById('{{ form.user.id_for_label }}').value = '';
+      if (q.length < 2) { this.results = []; return; }
+      const response = await fetch('{% url "communities:api-people" community.slug %}?q=' + encodeURIComponent(q));
+      this.results = (await response.json()).results;
+    },
+    choose(res) {
+      document.getElementById('{{ form.user.id_for_label }}').value = res.id;
+      this.query = res.name;
+      this.results = [];
+    },
+  }));
+});
+</script>
+{% endblock %}

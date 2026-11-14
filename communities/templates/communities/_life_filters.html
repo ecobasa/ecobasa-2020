@@ -1,0 +1,43 @@
+{% load i18n %}
+{# The "How we live" filters, in the map's and the list's filter popover; `in_list` also reloads the list #}
+{% for param, label, choices in life_filters %}
+  {% if param == "kitchen" %}
+    {# Several diets, all to fit: kept comma separated in one parameter #}
+    <div>
+      <div class="text-xs font-bold uppercase tracking-wider opacity-70 mb-1">{{ label }}</div>
+      {% for value, choice in choices %}
+        <label class="flex items-center gap-2 cursor-pointer text-sm hover:bg-secondary hover:bg-opacity-10 rounded px-1 py-0.5">
+          <input type="checkbox" class="form-checkbox light h-4 w-4 flex-shrink-0"
+            :checked="$store.communityMap.life.kitchen.split(',').includes('{{ value }}')"
+            @change="$store.communityMap.toggleLife('kitchen', '{{ value }}', $el.checked); window._communityMapReload && window._communityMapReload();{% if in_list %} $nextTick(() => htmx.trigger(document.getElementById('modal-search-q'), 'list:search'));{% endif %}">
+          <span>{{ choice }}</span>
+        </label>
+      {% endfor %}
+    </div>
+  {% elif choices|length == 1 %}
+    {% with value=choices.0.0 %}
+      <label class="flex items-center gap-2 cursor-pointer text-sm hover:bg-secondary hover:bg-opacity-10 rounded px-1 py-0.5">
+        <input type="checkbox" class="form-checkbox light h-4 w-4 flex-shrink-0"
+          :checked="$store.communityMap.life.{{ param }} === '{{ value }}'"
+          @change="$store.communityMap.life.{{ param }} = $el.checked ? '{{ value }}' : ''; window._communityMapReload && window._communityMapReload();{% if in_list %} $nextTick(() => htmx.trigger(document.getElementById('modal-search-q'), 'list:search'));{% endif %}">
+        <span>{{ label }}</span>
+      </label>
+    {% endwith %}
+  {% elif choices is None or choices %}
+    <div>
+      <label class="block text-xs font-bold uppercase tracking-wider opacity-70 mb-1" for="life-{{ param }}{% if in_list %}-list{% endif %}">{{ label }}</label>
+      {% if choices is None %}
+        <input type="number" min="0" id="life-{{ param }}{% if in_list %}-list{% endif %}" class="form-input text-sm text-primary w-full"
+          x-model.lazy="$store.communityMap.life.{{ param }}"
+          @change="window._communityMapReload && window._communityMapReload();{% if in_list %} $nextTick(() => htmx.trigger(document.getElementById('modal-search-q'), 'list:search'));{% endif %}">
+      {% else %}
+        <select id="life-{{ param }}{% if in_list %}-list{% endif %}" class="form-select text-sm text-primary w-full"
+          x-model="$store.communityMap.life.{{ param }}"
+          @change="window._communityMapReload && window._communityMapReload();{% if in_list %} $nextTick(() => htmx.trigger(document.getElementById('modal-search-q'), 'list:search'));{% endif %}">
+          <option value="">{% trans "Any" %}</option>
+          {% for value, choice in choices %}<option value="{{ value }}">{{ choice }}</option>{% endfor %}
+        </select>
+      {% endif %}
+    </div>
+  {% endif %}
+{% endfor %}

@@ -1,10 +1,13 @@
+from django.conf.locale import LANG_INFO
 from django.contrib.contenttypes.fields import GenericRelation
 from django.contrib.gis.db import models
 from django.contrib.gis.db.models.functions import SnapToGrid
+from django.contrib.postgres.fields import ArrayField
+from django.core.validators import FileExtensionValidator
 from django.db.models import Case, Q, When
 from django.db.models.functions import Cast
 from django.urls import reverse
-from django.utils.translation import gettext_lazy as _
+from django.utils.translation import gettext, gettext_lazy as _, ngettext
 from django_countries.fields import CountryField
 
 from users.models import User
@@ -21,6 +24,20 @@ class TaggedSkills(TaggedItemBase):
 
     class Meta:
         app_label = 'communities'
+
+def language_name(code):
+    """A language's name in the current language ("" for an unknown code)."""
+    info = LANG_INFO.get(code, {})
+    return gettext(info["name"]) if "name" in info else ""
+
+
+def language_choices():
+    """(code, name) for every language Django knows, by name in the current language."""
+    return sorted(
+        ((code, language_name(code)) for code, info in LANG_INFO.items() if "name" in info),
+        key=lambda choice: choice[1].lower(),
+    )
+
 
 def public_location():
     """Where a community is, for sorting and filtering by place (as a flat geometry): only
@@ -128,10 +145,170 @@ class Community(UniqueSlugMixin, models.Model):
         _("Public: show our exact place, address and phone number to everyone"), default=False,
         help_text=_("Otherwise people see only roughly where you are, and your address and phone number once you have accepted their visit."),
     )
+    # ── How we live: what seekers filter on before they ask to become a member ──
+    looking_for_members = models.BooleanField(_("Looking for new members"), default=False)
+    # What the shared kitchen cooks, as many as fit (eating anything rules out vegetarian and vegan)
+    KITCHEN_ANY = "any"
+    KITCHEN_VEGETARIAN = "vegetarian"
+    KITCHEN_VEGAN = "vegan"
+    KITCHEN_GLUTEN_FREE = "gluten_free"
+    KITCHEN_LACTOSE_FREE = "lactose_free"
+    KITCHEN_SUGAR_FREE = "sugar_free"
+    KITCHEN_RAW = "raw"
+    KITCHEN_AYURVEDIC = "ayurvedic"
+    KITCHEN_HALAL = "halal"
+    KITCHEN_KOSHER = "kosher"
+    KITCHEN_CHOICES = (
+        (KITCHEN_ANY, _("Eats anything")),
+        (KITCHEN_VEGETARIAN, _("Vegetarian")),
+        (KITCHEN_VEGAN, _("Vegan")),
+        (KITCHEN_GLUTEN_FREE, _("Gluten-free")),
+        (KITCHEN_LACTOSE_FREE, _("Lactose-free")),
+        (KITCHEN_SUGAR_FREE, _("Sugar-free")),
+        (KITCHEN_RAW, _("Raw food")),
+        (KITCHEN_AYURVEDIC, _("Ayurvedic")),
+        (KITCHEN_HALAL, _("Halal")),
+        (KITCHEN_KOSHER, _("Kosher")),
+    )
+    kitchen = ArrayField(
+        models.CharField(max_length=12, choices=KITCHEN_CHOICES), verbose_name=_("Shared kitchen"), default=list, blank=True,
+    )
+    private_kitchens = models.BooleanField(_("Private kitchens too"), default=False)
+    CHILDREN_WELCOME = "welcome"
+    CHILDREN_NO_ROOM = "no_room"
+    CHILDREN_ADULTS_ONLY = "adults"
+    CHILDREN_CHOICES = (
+        (CHILDREN_WELCOME, _("Welcome")),
+        (CHILDREN_NO_ROOM, _("No room for more right now")),
+        (CHILDREN_ADULTS_ONLY, _("Adults-only")),
+    )
+    children_welcome = models.CharField(_("Children"), max_length=8, blank=True, choices=CHILDREN_CHOICES)
+    PETS_WELCOME = "welcome"
+    PETS_ASK = "ask"
+    PETS_NONE = "none"
+    PETS_CHOICES = (
+        (PETS_WELCOME, _("Welcome")),
+        (PETS_ASK, _("Ask us first")),
+        (PETS_NONE, _("None")),
+    )
+    pets = models.CharField(_("Pets"), max_length=8, blank=True, choices=PETS_CHOICES)
+    # Vegetarian or vegan is more than the kitchen, and communities are often strict about it
+    animals = models.TextField(
+        _("Animals and animal products"), blank=True,
+        help_text=_("Do you keep animals, and what for? Which animal products are used here (milk, eggs, honey, meat, leather, wool)? Do you slaughter?"),
+    )
+    currency = models.CharField(
+        _("Currency"), max_length=3, default="EUR", help_text=_("For the buy-in and the monthly contribution, e.g. EUR"),
+    )
+    buy_in = models.PositiveIntegerField(_("Buy-in"), null=True, blank=True)
+    # What the buy-in is also says who owns the place and how you get your money out
+    BUY_IN_SHARES = "shares"
+    BUY_IN_STOCK = "stock"
+    BUY_IN_FOUNDATION = "foundation"
+    BUY_IN_RENT_TO_OWN = "rent_to_own"
+    BUY_IN_LOAN = "loan"
+    BUY_IN_DONATION = "donation"
+    BUY_IN_KIND_CHOICES = (
+        (BUY_IN_SHARES, _("Cooperative shares")),
+        (BUY_IN_STOCK, _("Shares in a stock corporation")),
+        (BUY_IN_FOUNDATION, _("A contribution to a foundation")),
+        (BUY_IN_RENT_TO_OWN, _("Rent-to-own")),
+        (BUY_IN_LOAN, _("A loan")),
+        (BUY_IN_DONATION, _("A donation")),
+    )
+    buy_in_kind = models.CharField(
+        _("What the buy-in is"), max_length=12, blank=True, choices=BUY_IN_KIND_CHOICES,
+        help_text=_("Other ways communities do it: a direct loan, a share of the property, a one-off fee, or work instead of money."),
+    )
+    monthly_contribution = models.PositiveIntegerField(_("Monthly contribution"), null=True, blank=True)
+    work_hours = models.PositiveSmallIntegerField(
+        _("Work commitment"), null=True, blank=True, help_text=_("Hours per week"),
+    )
+    DECISIONS_CONSENSUS = "consensus"
+    DECISIONS_CONSENT = "consent"
+    DECISIONS_SYSTEMIC = "systemic"
+    DECISIONS_COUNCIL = "council"
+    DECISIONS_MAJORITY = "majority"
+    DECISIONS_COMPETENCE = "competence"
+    DECISIONS_DOOCRACY = "doocracy"
+    DECISIONS_HOLACRACY = "holacracy"
+    DECISIONS_ELECTED_LEADER = "elected"
+    DECISIONS_LEADER = "leader"
+    DECISIONS_OTHER = "other"
+    DECISION_CHOICES = (
+        (DECISIONS_CONSENSUS, _("Consensus")),
+        (DECISIONS_CONSENT, _("Consent (sociocracy)")),
+        (DECISIONS_SYSTEMIC, _("Systemic consensing")),
+        (DECISIONS_COUNCIL, _("Council (talking circle)")),
+        (DECISIONS_MAJORITY, _("Majority vote")),
+        (DECISIONS_COMPETENCE, _("Competence hierarchy")),
+        (DECISIONS_DOOCRACY, _("Do-ocracy (who does it decides)")),
+        (DECISIONS_HOLACRACY, _("Holacracy")),
+        (DECISIONS_ELECTED_LEADER, _("An elected leader decides")),
+        (DECISIONS_LEADER, _("A leader decides")),
+        (DECISIONS_OTHER, _("Other")),
+    )
+    decision_making = models.CharField(_("Decision making"), max_length=10, blank=True, choices=DECISION_CHOICES)
+    INCOME_SHARING_NONE = "none"
+    INCOME_SHARING_PARTLY = "partly"
+    INCOME_SHARING_FULLY = "fully"
+    INCOME_SHARING_CHOICES = (
+        (INCOME_SHARING_NONE, _("None")),
+        (INCOME_SHARING_PARTLY, _("Partly")),
+        (INCOME_SHARING_FULLY, _("Fully")),
+    )
+    income_sharing = models.CharField(_("Income sharing"), max_length=8, blank=True, choices=INCOME_SHARING_CHOICES)
+    trial_months = models.PositiveSmallIntegerField(
+        _("Trial period"), null=True, blank=True, help_text=_("Months"),
+    )
+    # Codes from Django's LANG_INFO (language_choices)
+    languages = ArrayField(models.CharField(max_length=12), verbose_name=_("Languages"), default=list, blank=True)
+    exit_terms = models.TextField(
+        _("Exit terms"), blank=True,
+        help_text=_("What happens to the buy-in when someone leaves, and how long the payout takes."),
+    )
+    house_agreements = models.TextField(
+        _("House agreements"), blank=True,
+        help_text=_("Alcohol, smoking, drugs, cars, flying, guests and partners staying over, noise, cleanliness, phone and wifi zones, rituals and spiritual practice …"),
+    )
+    statutes_url = models.URLField(_("Vision and statutes"), max_length=250, blank=True, help_text=_("A link"))
+    statutes_file = models.FileField(
+        _("Vision and statutes (PDF)"), upload_to="community-statutes/", blank=True,
+        validators=[FileExtensionValidator(["pdf"])],
+    )
     matches = GenericRelation("matches.Match")
 
     def __str__(self):
         return self.name
+
+    def lives(self):
+        """Its "How we live" facts that are filled in, as (icon, label, value) for its page
+        (whether children are welcome goes with how many live there)."""
+        def money(amount):
+            return f"{amount:,} {self.currency}".replace(",", " ") if amount is not None else ""
+
+        kitchen = ", ".join(str(label) for code, label in self.KITCHEN_CHOICES if code in self.kitchen)
+        if kitchen and self.private_kitchens:
+            kitchen = f"{kitchen} · {_('Private kitchens too')}"
+        buy_in = money(self.buy_in)
+        if buy_in and self.buy_in_kind:
+            buy_in = f"{buy_in} ({self.get_buy_in_kind_display()})"
+        facts = [
+            ("fa-utensils", _("Shared kitchen"), kitchen),
+            ("fa-paw", _("Pets"), self.get_pets_display()),
+            ("fa-coins", _("Buy-in"), buy_in),
+            ("fa-calendar", _("Monthly contribution"), money(self.monthly_contribution)),
+            ("fa-person-digging", _("Work commitment"),
+             ngettext("%(n)s hour per week", "%(n)s hours per week", self.work_hours) % {"n": self.work_hours}
+             if self.work_hours else ""),
+            ("fa-people-arrows", _("Decision making"), self.get_decision_making_display()),
+            ("fa-hand-holding-heart", _("Income sharing"), self.get_income_sharing_display()),
+            ("fa-hourglass-half", _("Trial period"),
+             ngettext("%(n)s month", "%(n)s months", self.trial_months) % {"n": self.trial_months}
+             if self.trial_months else ""),
+            ("fa-language", _("Languages"), ", ".join(language_name(code) for code in self.languages)),
+        ]
+        return [fact for fact in facts if fact[2]]
 
     def get_absolute_url(self) -> str:
         return reverse("communities:detail", kwargs={"slug": self.slug})
@@ -204,6 +381,10 @@ class Community(UniqueSlugMixin, models.Model):
         """Its memberships that count, the ambassador's first."""
         memberships = self.memberships.counted().select_related("user")
         return sorted(memberships, key=lambda membership: membership.user_id != self.ambassador_id)
+
+    def showing_offers(self):
+        """The members whose offers and skills show with the community."""
+        return User.objects.filter(pk__in=self.memberships.counted().filter(shows_offers=True).values("user_id"))
 
     def is_member(self, user):
         return user.is_authenticated and self.memberships.counted().filter(user=user).exists()
@@ -341,6 +522,8 @@ class Membership(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True)
     ended_at = models.DateTimeField(null=True, blank=True)
+    # Their offers and skills show on the community page only if they want
+    shows_offers = models.BooleanField(_("Show my offers and skills on the community page"), default=False)
 
     objects = MembershipQuerySet.as_manager()
 
@@ -388,13 +571,24 @@ class Membership(models.Model):
     def get_match_icon(self):
         return self.community.get_type_icon()
 
+    @property
+    def is_invitation(self):
+        """The ambassador invited them, rather than they asked to become a member."""
+        return self.match_id is not None and self.match.recipient_id == self.user_id
+
     def get_match_kind(self):
+        if self.is_invitation:
+            return _("Invitation"), "fa-envelope-open-text", "bg-purple"
         return _("Membership application"), "fa-people-group", "bg-green"
 
     def get_match_verb(self, own=True):
+        if self.is_invitation:
+            return _("invited you to become a member of")
         return _("asked to become a member of")
 
     def get_match_request_text(self):
+        if self.is_invitation:
+            return _("%(actor)s invited you to become a member of %(title)s")
         return _("%(actor)s asked to become a member of %(title)s")
 
     # A membership is a yes or a no, there is nothing to counter-propose

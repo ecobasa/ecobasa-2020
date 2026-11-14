@@ -91,6 +91,9 @@
         <label class="form-label" for="id_children">{{ form.children.label }}</label>
         {{ form.children }}
         {% for error in form.children.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+        <label class="form-label mt-2" for="id_children_welcome">{% trans "Are more children welcome?" %}</label>
+        {{ form.children_welcome }}
+        {% for error in form.children_welcome.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
       </div>
     </div>
 
@@ -98,6 +101,33 @@
       <label class="form-label" for="id_telephone">{{ form.telephone.label }}</label>
       {{ form.telephone }}
       {% for error in form.telephone.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+    </div>
+
+    {# Who we are: seekers filter on these before they ask to become a member #}
+    <h3 class="text-lg font-semibold text-primary">{% trans "How we live" %}</h3>
+    <p class="text-sm -mt-4">{% trans "People looking for a community find you by these, so they know before they ask whether it fits." %}</p>
+    <div class="space-y-4" x-data="{ buyIn: '{{ form.buy_in.value|default_if_none:''|escapejs }}' }">
+      {% for field in form.how_we_live %}
+        {% if field.widget_type == "checkbox" %}
+          <label class="flex items-start gap-2">
+            {{ field }}
+            <span class="font-semibold">{{ field.label }}</span>
+          </label>
+        {% else %}
+          <div {% if field.name == "exit_terms" %}x-show="buyIn" x-cloak{% endif %}>
+            <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+            {% if field.widget_type == "checkboxselectmultiple" %}
+              <div class="grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-1">
+                {% for option in field %}<label class="flex items-center gap-2 cursor-pointer">{{ option.tag }}<span>{{ option.choice_label }}</span></label>{% endfor %}
+              </div>
+            {% else %}
+              {{ field }}
+            {% endif %}
+            {% if field.help_text %}<p class="text-xs text-brown">{{ field.help_text }}</p>{% endif %}
+            {% for error in field.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+          </div>
+        {% endif %}
+      {% endfor %}
     </div>
 
     <h3 class="text-lg font-semibold text-primary">{% trans "Visitor information" %}</h3>
@@ -145,7 +175,6 @@
     <div>
       <label class="form-label" for="id_skill_wishes">{% trans "Skills we're looking for in visitors or new members" %}</label>
       {{ form.skill_wishes }}
-      {% if form.skill_wishes.help_text %}<p class="text-xs text-brown">{{ form.skill_wishes.help_text }}</p>{% endif %}
       {% for error in form.skill_wishes.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
     </div>
 
@@ -226,6 +255,22 @@
 
       applyTypeStyle();
       document.getElementById('id_type')?.addEventListener('change', applyTypeStyle);
+
+      // Languages by name, only ones Django knows; the input holds their codes
+      const languagesInput = document.getElementById('id_languages');
+      if (languagesInput && window.Tagify) {
+        const known = JSON.parse(languagesInput.dataset.languages || '[]');
+        const chosen = (languagesInput.value || '').split(',').map(s => s.trim()).filter(Boolean);
+        languagesInput.value = '';
+        const tagify = new Tagify(languagesInput, {
+          enforceWhitelist: true,
+          editTags: false,
+          whitelist: known,
+          dropdown: { enabled: 1, maxItems: 15, closeOnSelect: true, searchKeys: ['value'], highlightFirst: true },
+          originalInputValueFormat: vals => vals.map(v => v.code).join(','),
+        });
+        tagify.addTags(known.filter(language => chosen.includes(language.code)));
+      }
     });
   </script>
 {% endblock %}

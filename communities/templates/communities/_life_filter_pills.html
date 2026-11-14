@@ -1,0 +1,8 @@
+{% load i18n %}
+{# One pill per "How we live" filter that is set; `in_list` also reloads the list #}
+<template x-for="[param, value] in Object.entries($store.communityMap.life).filter(([p, v]) => v)" :key="param">
+  <span class="inline-flex items-center gap-1 text-xs bg-primary text-secondary rounded-full px-2 py-0.5">
+    <span x-text="lifeLabel(param, value)"></span>
+    <button @click="$store.communityMap.life[param] = ''; window._communityMapReload && window._communityMapReload();{% if in_list %} $nextTick(() => htmx.trigger(document.getElementById('modal-search-q'), 'list:search'));{% endif %}" class="opacity-70 hover:opacity-100">&times;</button>
+  </span>
+</template>

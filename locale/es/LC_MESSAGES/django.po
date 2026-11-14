@@ -7555,3 +7555,265 @@ msgstr "Tu solicitud de membresía espera respuesta."
 
 msgid "Who you are and how you belong to the community"
 msgstr "Quién eres y cómo formas parte de la comunidad"
+
+#, python-format
+msgid "Unknown language: %(code)s"
+msgstr "Idioma desconocido: %(code)s"
+
+msgid "Languages"
+msgstr "Idiomas"
+
+msgid "The languages you speak together."
+msgstr "Los idiomas que habláis entre vosotros."
+
+msgid "Why you'd like them to become a member."
+msgstr "Por qué te gustaría que fuera miembro."
+
+msgid "They are a member already, or have been asked."
+msgstr "Ya es miembro o ya se le ha preguntado."
+
+msgid "Looking for new members"
+msgstr "Buscamos nuevos miembros"
+
+msgid "Eats anything"
+msgstr "Comemos de todo"
+
+msgid "Vegetarian"
+msgstr "Vegetariana"
+
+msgid "Vegan"
+msgstr "Vegana"
+
+msgid "Shared kitchen"
+msgstr "Cocina compartida"
+
+msgid "Private kitchens too"
+msgstr "También cocinas privadas"
+
+msgid "Welcome"
+msgstr "Bienvenidos"
+
+msgid "No room for more right now"
+msgstr "Ahora mismo no hay sitio para más"
+
+msgid "Adults-only"
+msgstr "Solo adultos"
+
+msgid "Children"
+msgstr "Niños"
+
+msgid "Ask us first"
+msgstr "Pregúntanos antes"
+
+msgid "None"
+msgstr "Ninguno"
+
+msgid "Pets"
+msgstr "Mascotas"
+
+msgid "Currency"
+msgstr "Moneda"
+
+msgid "For the buy-in and the monthly contribution, e.g. EUR"
+msgstr "Para la aportación inicial y la cuota mensual, p. ej. EUR"
+
+msgid "Buy-in"
+msgstr "Aportación inicial"
+
+msgid "Cooperative shares"
+msgstr "Participaciones de la cooperativa"
+
+msgid "A loan"
+msgstr "Un préstamo"
+
+msgid "A donation"
+msgstr "Una donación"
+
+msgid "What the buy-in is"
+msgstr "Qué es la aportación inicial"
+
+msgid "Monthly contribution"
+msgstr "Cuota mensual"
+
+msgid "Work commitment"
+msgstr "Compromiso de trabajo"
+
+msgid "Hours per week"
+msgstr "Horas por semana"
+
+msgid "Consensus"
+msgstr "Consenso"
+
+msgid "Consent (sociocracy)"
+msgstr "Consentimiento (sociocracia)"
+
+msgid "Majority vote"
+msgstr "Votación por mayoría"
+
+msgid "Decision making"
+msgstr "Toma de decisiones"
+
+msgid "Partly"
+msgstr "En parte"
+
+msgid "Fully"
+msgstr "Del todo"
+
+msgid "Income sharing"
+msgstr "Economía compartida"
+
+msgid "Trial period"
+msgstr "Periodo de prueba"
+
+msgid "Months"
+msgstr "Meses"
+
+msgid "Exit terms"
+msgstr "Si te vas"
+
+msgid "What happens to the buy-in when someone leaves, and how long the payout takes."
+msgstr "Qué pasa con la aportación cuando alguien se va y cuánto tarda en devolverse."
+
+msgid "House agreements"
+msgstr "Acuerdos de convivencia"
+
+msgid "Alcohol, smoking, drugs, cars, flying, guests and partners staying over, noise, cleanliness, phone and wifi zones, rituals and spiritual practice …"
+msgstr "Alcohol, tabaco, drogas, coches, volar, invitados y parejas que se quedan a dormir, ruido, limpieza, zonas sin móvil ni wifi, rituales y práctica espiritual …"
+
+msgid "Vision and statutes"
+msgstr "Visión y estatutos"
+
+msgid "A link"
+msgstr "Un enlace"
+
+msgid "Vision and statutes (PDF)"
+msgstr "Visión y estatutos (PDF)"
+
+msgid "Show my offers and skills on the community page"
+msgstr "Mostrar mis ofertas y habilidades en la página de la comunidad"
+
+msgid "invited you to become a member of"
+msgstr "te invita a ser miembro de"
+
+#, python-format
+msgid "%(actor)s invited you to become a member of %(title)s"
+msgstr "%(actor)s te invita a ser miembro de %(title)s"
+
+msgid "How we live"
+msgstr "Así vivimos"
+
+
+
+msgid "Any"
+msgstr "Cualquiera"
+
+msgid "You are invited to become a member: answer the invitation"
+msgstr "Te han invitado a ser miembro: responder a la invitación"
+
+msgid "Not looking for new members right now. If you live here already, ask to be added."
+msgstr "Ahora mismo no busca nuevos miembros. Si ya vives aquí, pide que te añadan."
+
+msgid "People looking for a community find you by these, so they know before they ask whether it fits."
+msgstr "Quien busca una comunidad os encuentra por esto y sabe antes de preguntar si encaja."
+
+msgid "They get your invitation and become a member once they accept it."
+msgstr "Recibe tu invitación y pasa a ser miembro en cuanto la acepta."
+
+msgid "Yes"
+msgstr "Sí"
+
+msgid "Buy-in up to"
+msgstr "Aportación inicial hasta"
+
+msgid "Work commitment up to (hours per week)"
+msgstr "Compromiso de trabajo hasta (horas por semana)"
+
+#, python-format
+msgid "%(n)s hour per week"
+msgid_plural "%(n)s hours per week"
+msgstr[0] "%(n)s hora por semana"
+msgstr[1] "%(n)s horas por semana"
+
+#, python-format
+msgid "%(n)s month"
+msgid_plural "%(n)s months"
+msgstr[0] "%(n)s mes"
+msgstr[1] "%(n)s meses"
+
+msgid "Systemic consensing"
+msgstr "Consenso sistémico"
+
+msgid "Council (talking circle)"
+msgstr "Consejo (círculo de palabra)"
+
+msgid "Competence hierarchy"
+msgstr "Jerarquía de competencias"
+
+msgid "Do-ocracy (who does it decides)"
+msgstr "Do-cracia (decide quien lo hace)"
+
+msgid "Holacracy"
+msgstr "Holocracia"
+
+msgid "An elected leader decides"
+msgstr "Decide una persona elegida"
+
+msgid "A leader decides"
+msgstr "Decide una persona responsable"
+
+msgid "Animals and animal products"
+msgstr "Animales y productos animales"
+
+msgid "Do you keep animals, and what for? Which animal products are used here (milk, eggs, honey, meat, leather, wool)? Do you slaughter?"
+msgstr "¿Tenéis animales, y para qué? ¿Qué productos animales se usan aquí (leche, huevos, miel, carne, cuero, lana)? ¿Sacrificáis animales?"
+
+msgid "Are more children welcome?"
+msgstr "¿Son bienvenidos más niños?"
+
+msgid "List seminars, topics, and how visitors can join. Later you can add each one as an event on your community page, so people find it on the events map too."
+msgstr "Enumera seminarios, temas y cómo pueden participar los visitantes. Más tarde puedes añadir cada uno como evento en la página de tu comunidad, para que también aparezca en el mapa de eventos."
+
+msgid "Gluten-free"
+msgstr "Sin gluten"
+
+msgid "Lactose-free"
+msgstr "Sin lactosa"
+
+msgid "Sugar-free"
+msgstr "Sin azúcar"
+
+msgid "Raw food"
+msgstr "Crudivegana"
+
+msgid "Ayurvedic"
+msgstr "Ayurvédica"
+
+msgid "Halal"
+msgstr "Halal"
+
+msgid "Kosher"
+msgstr "Kosher"
+
+
+
+
+msgid "Rent-to-own"
+msgstr "Alquiler con opción a compra"
+
+
+
+
+msgid "What the shared kitchen cooks. Tick all that fit."
+msgstr "Lo que cocina la cocina compartida. Marca todo lo que encaje."
+
+msgid "A kitchen that eats anything isn't vegetarian or vegan."
+msgstr "Una cocina en la que se come de todo no es vegetariana ni vegana."
+
+msgid "Shares in a stock corporation"
+msgstr "Acciones de una sociedad anónima"
+
+msgid "A contribution to a foundation"
+msgstr "Una aportación a una fundación"
+
+msgid "Other ways communities do it: a direct loan, a share of the property, a one-off fee, or work instead of money."
+msgstr "Otras formas en que lo hacen las comunidades: un préstamo directo, una parte de la propiedad, una cuota única o trabajo en lugar de dinero."
