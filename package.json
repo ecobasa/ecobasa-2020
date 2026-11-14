@@ -3,7 +3,7 @@
     "version": "3.0.0",
     "description": "gift-economy network for sustainable communities",
     "author": "Arne Bollinger",
-    "license": "none",
+    "license": "PolyForm-Noncommercial-1.0.0",
     "scripts": {
         "build:css": "postcss static_src/styles/base.css -o static/styles/base.min.css",
         "watch:css": "onchange -i '**/*.*' tailwind.config.js -e 'static/styles/base.min.css' -- npm run build:css",
