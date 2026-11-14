@@ -44,9 +44,9 @@
       <p class="text-xs mt-1">{{ form.message.help_text }}</p>
       {% for error in form.message.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
     </div>
-    <div class="flex flex-wrap gap-2">
+    <div class="flex flex-wrap gap-2 justify-between">
+      <a href="{{ community.get_absolute_url }}#members" class="btn btn-lg btn-purple"><i class="fa fa-ban mr-1"></i>{% trans "Cancel" %}</a>
       <button type="submit" class="btn btn-lg"><i class="fa-solid fa-user-plus mr-1"></i>{% trans "Invite someone" %}</button>
-      <a href="{{ community.get_absolute_url }}#members" class="btn btn-lg btn-purple">{% trans "Cancel" %}</a>
     </div>
   </form>
 </div>
