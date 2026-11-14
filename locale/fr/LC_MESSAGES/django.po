@@ -403,8 +403,8 @@ msgid "Gifts on offer"
 msgstr "Cadeaux proposés"
 
 #: communities/templates/communities/community_detail.html:160
-msgid "Seeds & plants to swap"
-msgstr "Graines et plantes à échanger"
+msgid "Seeds & plants to share"
+msgstr "Graines et plantes à partager"
 
 #: communities/templates/communities/community_detail.html:173
 msgid ""
@@ -3649,10 +3649,10 @@ msgstr "Dons et souhaits – nous te proposons des Matchs près de chez toi"
 
 #: homepage/templates/homepage/homepage.html:33
 msgid ""
-"Swap seeds & plants: open-pollinated, with variety and harvest year, as well "
+"Share seeds & plants: open-pollinated, with variety and harvest year, as well "
 "as young plants, cuttings and scion wood"
 msgstr ""
-"Échanger des graines et plantes : reproductibles, avec variété et année de "
+"Partager des graines et des plantes : reproductibles, avec variété et année de "
 "récolte, ainsi que jeunes plants, boutures et greffons"
 
 #: homepage/templates/homepage/homepage.html:34

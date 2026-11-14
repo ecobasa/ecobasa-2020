@@ -296,7 +296,7 @@ class Listing(RandomIdMixin, models.Model):
     KIND_TOOL = "tool"
     # A cargo bike, a car, a trailer, a van: mostly lent rather than given away
     KIND_VEHICLE = "vehicle"
-    # Seeds and plants to swap, of a crop or a plant (the seed and plant vocabulary) and
+    # Seeds and plants to share, of a crop or a plant (the seed and plant vocabulary) and
     # a variety
     KIND_SEEDS_PLANTS = "seeds_plants"
     # Food to share: a harvest too big to eat, food saved from being thrown away (the food
