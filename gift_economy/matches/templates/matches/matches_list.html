@@ -23,7 +23,7 @@
     {% include "matches/_suggestions_intro.html" %}
     {% if request_type == "tours" and request.user.tours_paused %}
       <p class="text-sm mb-4"><i class="fa-solid fa-pause mr-1"></i>{% if request.user.tours_off %}{% trans "Tour suggestions" %}: {% trans "Off" %}{% else %}{% blocktrans with date=request.user.tours_paused_until|date:"j F Y" %}Paused until {{ date }}{% endblocktrans %}{% endif %}
-        <a href="{% url 'users:update' %}#matches" class="underline">{% trans "Change" %}</a></p>
+        <a href="{% url 'users:update' %}#matches" class="underline">{% trans "Change matching distance" %}</a></p>
     {% endif %}
     {% if suggestions %}
       <ul class="list-none p-0 space-y-2">

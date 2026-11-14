@@ -2446,10 +2446,6 @@ msgstr ""
 "offrent ou cherchent et qui va avec tes souhaits, tes dons et tes "
 "compétences. Cela devient un match dès que l'un·e de vous fait une demande."
 
-#: gift_economy/matches/templates/matches/_suggestions_intro.html:17
-msgid "Change"
-msgstr "Modifier"
-
 #: gift_economy/matches/templates/matches/_suggestions_intro.html:22
 #: notifications/models.py:14
 msgid ""
@@ -7501,3 +7497,8 @@ msgstr "demande gentiment ce qui reste en fin de soirée, ou prends ce que les c
 #: templates/_navbar.html
 msgid "Home"
 msgstr "Accueil"
+
+#: gift_economy/matches/templates/matches/_suggestions_intro.html:17
+#: gift_economy/matches/templates/matches/matches_list.html:26
+msgid "Change matching distance"
+msgstr "Modifier la distance des matchs"

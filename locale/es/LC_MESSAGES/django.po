@@ -2436,10 +2436,6 @@ msgstr ""
 "o necesitan y encaja con tus deseos, ofertas y habilidades. Se convierte en "
 "un match en cuanto una de las partes pregunta."
 
-#: gift_economy/matches/templates/matches/_suggestions_intro.html:17
-msgid "Change"
-msgstr "Cambiar"
-
 #: gift_economy/matches/templates/matches/_suggestions_intro.html:22
 #: notifications/models.py:14
 msgid ""
@@ -7466,3 +7462,8 @@ msgstr "pide amablemente lo que sobra al final de la noche, o llévate lo que lo
 #: templates/_navbar.html
 msgid "Home"
 msgstr "Inicio"
+
+#: gift_economy/matches/templates/matches/_suggestions_intro.html:17
+#: gift_economy/matches/templates/matches/matches_list.html:26
+msgid "Change matching distance"
+msgstr "Cambiar la distancia de los matches"
