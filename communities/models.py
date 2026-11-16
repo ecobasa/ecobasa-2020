@@ -17,7 +17,7 @@ from embed_video.fields import EmbedVideoField
 from taggit.managers import TaggableManager
 from taggit.models import TaggedItemBase
 
-from . import onboarding
+from . import declines, onboarding
 from .mixins import UniqueSlugMixin
 
 class TaggedSkills(TaggedItemBase):
@@ -621,6 +621,8 @@ class Membership(models.Model):
     shows_offers = models.BooleanField(_("Show my offers and skills on the community page"), default=False)
     # And that they became a member after a tour visit, on the tour's page
     shows_visit = models.BooleanField(_("Show that I found this community through ecobasa"), default=False)
+    # How the ambassador said no to the application, if they did
+    declined_as = models.CharField(_("Declined as"), max_length=8, blank=True, choices=declines.KIND_CHOICES)
 
     objects = MembershipQuerySet.as_manager()
 
@@ -738,6 +740,10 @@ class Membership(models.Model):
         application goes to the visit unless the ambassador chose to make them a member.
         The days they suggest for the visit stay with their answer."""
         data = data or {}
+        if self.declined_as:
+            # A no changed into a yes
+            self.declined_as = ""
+            self.save(update_fields=["declined_as"])
         if not self.match_accept_choices() or data.get("accept_as") == self.STAGE_MEMBER:
             self.make_member()
             return
@@ -750,6 +756,56 @@ class Membership(models.Model):
         if answer is not None and (visit_from or visit_to):
             answer.counter_stay_from, answer.counter_stay_to = visit_from, visit_to
             answer.save(update_fields=["counter_stay_from", "counter_stay_to"])
+
+    # ── Saying no to an application ──
+    # It hurts to be turned down by a community. The ambassador starts from a text for
+    # "not now" or "no" at the stage it is at, fills in what it's about, and the
+    # applicant sees no red "Declined", only the community's answer.
+    def match_decline_fields(self):
+        """The fields that come with declining: only an application has them."""
+        if self.is_invitation or not self.has_application():
+            return ""
+        return "communities/_decline_fields.html"
+
+    def decline_texts(self):
+        """(kind, label, text) to start from, for the stage the application is at."""
+        stage = self.STAGE_VISIT if self.stage == self.STAGE_VISIT else self.STAGE_APPLICATION
+        ambassador = self.community.ambassador
+        names = {
+            "name": self.user.name or self.user.email.split("@")[0],
+            "community": self.community.name,
+            "ambassador": (ambassador.name or "") if ambassador else "",
+        }
+        return [(kind, label, declines.text(stage, kind, **names)) for kind, label in declines.KIND_CHOICES]
+
+    @property
+    def decline_guidance(self):
+        return declines.GUIDANCE
+
+    def match_decline_error(self, match, data):
+        if self.match_decline_fields() and declines.is_unfilled(data.get("body", "")):
+            return _("Please fill in or delete the part in brackets first.")
+        return ""
+
+    def match_declined(self, match, data):
+        if not self.match_decline_fields():
+            return
+        kind = data.get("decline_as", "")
+        self.declined_as = kind if kind in dict(declines.KIND_CHOICES) else declines.NO
+        self.save(update_fields=["declined_as"])
+
+    def match_declined_label(self):
+        """What a declined application shows instead of a red "Declined"."""
+        if not self.match_decline_fields():
+            return None
+        if self.declined_as == declines.NOT_NOW:
+            return _("Not now")
+        return _("Not this time")
+
+    def get_match_declined_text(self):
+        if not self.match_decline_fields():
+            return None
+        return _("%(actor)s answered your membership application: %(title)s")
 
     # ── The visit, agreed in the application's conversation ──
     # The days are messages with them (`counter_stay_from/to`): the invitation to visit

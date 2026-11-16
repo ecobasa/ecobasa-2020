@@ -2,6 +2,7 @@
 <a href="{{ match.get_absolute_url }}"
    class="flex items-center gap-4 p-4 bg-secondary bg-opacity-50 hover:bg-opacity-80 rounded border-2 transition-colors
      {% if match.status == 'accepted' %}border-green
+     {% elif match.gentle_decline %}border-primary border-opacity-40
      {% elif match.status == 'declined' %}border-red
      {% elif match.status == 'counter' %}border-primary
      {% elif match.status == 'withdrawn' %}border-brown border-opacity-40
@@ -58,6 +59,10 @@
     {% elif match.status == "accepted" %}
       <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-green text-secondary">
         <i class="fa-solid fa-handshake-simple"></i>{% trans "Accepted" %}
+      </span>
+    {% elif match.gentle_decline %}
+      <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-primary text-secondary">
+        <i class="fa-solid fa-envelope-open-text"></i>{{ match.gentle_decline }}
       </span>
     {% elif match.status == "declined" %}
       <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-red text-secondary">

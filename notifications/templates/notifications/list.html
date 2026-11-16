@@ -27,7 +27,7 @@
            class="flex items-start gap-3 border rounded-lg p-3 border-2 focus:border-2
              {% if not n.is_read %}bg-secondary{% else %}bg-secondary bg-opacity-60 hover:bg-opacity-100{% endif %}
              {% if n.tag == 'accepted' %}{% if n.is_read %}border-green/70 hover:border-green{% else %}border-green{% endif %}
-             {% elif n.tag == 'declined' %}{% if n.is_read %}border-red/70 hover:border-red{% else %}border-red{% endif %}
+             {% elif n.is_red %}{% if n.is_read %}border-red/70 hover:border-red{% else %}border-red{% endif %}
              {% elif n.tag == 'counter' %}{% if n.is_read %}border-yellow/70 hover:border-yellow{% else %}border-yellow{% endif %}
              {% elif n.tag == 'requested' %}{% if n.is_read %}border-secondary/10 border-0 hover:border-primary/60{% else %}border-primary{% endif %}
              {% elif not n.is_read %}border-primary
@@ -35,12 +35,12 @@
 
           <div class="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5
             {% if n.tag == 'accepted' %}bg-green bg-opacity-20
-            {% elif n.tag == 'declined' %}bg-red bg-opacity-20
+            {% elif n.is_red %}bg-red bg-opacity-20
             {% elif n.tag == 'counter' %}bg-yellow bg-opacity-20
             {% else %}bg-primary bg-opacity-20{% endif %}
             {% if n.is_read %}opacity-50{% endif %}">
             <i class="fa-solid {{ n.icon }} text-sm
-              {% if n.tag == 'accepted' %}text-green{% elif n.tag == 'declined' %}text-red{% elif n.tag == 'counter' %}text-yellow{% else %}text-primary{% endif %}"></i>
+              {% if n.tag == 'accepted' %}text-green{% elif n.is_red %}text-red{% elif n.tag == 'counter' %}text-yellow{% else %}text-primary{% endif %}"></i>
           </div>
 
           <div class="min-w-0 flex-1">

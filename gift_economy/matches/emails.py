@@ -70,7 +70,12 @@ def notify_match_created(match, http_request=None):
         if http_request:
             _send_email(notification, "matches/email/match_request", http_request, {
                 "accept_url":  _action_url(http_request, match.pk, "accept"),
-                "decline_url": _action_url(http_request, match.pk, "decline"),
+                # Saying no may take a few words first, on the match page
+                "decline_url": (
+                    http_request.build_absolute_uri(f"{match.get_absolute_url()}?decline=1#compose")
+                    if getattr(match.target, "match_decline_fields", lambda: "")()
+                    else _action_url(http_request, match.pk, "decline")
+                ),
             })
 
 

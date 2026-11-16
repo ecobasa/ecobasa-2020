@@ -29,6 +29,7 @@
   {% if match.status != 'pending' %}
     <div class="rounded-xl p-5 mb-6 border
       {% if match.status == 'accepted' %}border-green bg-green bg-opacity-10
+      {% elif match.gentle_decline %}border-primary bg-primary bg-opacity-10
       {% elif match.status == 'declined' %}border-red bg-red bg-opacity-10
       {% elif match.status == 'counter' %}border-yellow bg-yellow bg-opacity-10
       {% elif match.status == 'withdrawn' %}border-brown bg-brown bg-opacity-10
@@ -38,6 +39,9 @@
         {% if match.status == 'accepted' %}
           <i class="fa fa-check-circle text-green text-xl"></i>
           <span class="font-semibold text-green">{% trans "Match confirmed" %}</span>
+        {% elif match.gentle_decline %}
+          <i class="fa-solid fa-envelope-open-text text-primary text-xl"></i>
+          <span class="font-semibold text-primary">{{ match.gentle_decline }}</span>
         {% elif match.status == 'declined' %}
           <i class="fa fa-times-circle text-red text-xl"></i>
           <span class="font-semibold text-red">{% trans "Declined" %}</span>
@@ -145,6 +149,8 @@
           <span class="pill bg-yellow">{% trans "Pending" %}</span>
         {% elif match.status == 'accepted' %}
           <span class="pill bg-green">{% trans "Accepted" %}</span>
+        {% elif match.gentle_decline %}
+          <span class="pill bg-primary">{{ match.gentle_decline }}</span>
         {% elif match.status == 'declined' %}
           <span class="pill bg-red">{% trans "Declined" %}</span>
         {% elif match.status == 'counter' %}
@@ -246,7 +252,7 @@
       {% for msg in thread %}
         <div class="border rounded-xl bg-secondary p-4
           {% if msg.status_to == 'accepted' %}border-green
-          {% elif msg.status_to == 'declined' %}border-red
+          {% elif msg.status_to == 'declined' and not decline_label %}border-red
           {% elif msg.status_to == 'counter' %}border-yellow
           {% elif msg.status_to == 'withdrawn' %}border-brown
           {% endif %}">
@@ -259,11 +265,13 @@
             {% if msg.status_to %}
               <span class="pill text-xs
                 {% if msg.status_to == 'accepted' %}bg-green
+                {% elif msg.status_to == 'declined' and decline_label %}bg-primary
                 {% elif msg.status_to == 'declined' %}bg-red
                 {% elif msg.status_to == 'counter' %}bg-yellow
                 {% elif msg.status_to == 'withdrawn' %}bg-brown text-secondary
                 {% endif %}">
                 {% if msg.status_to == 'accepted' %}<i class="fa fa-check mr-1"></i>{% trans "Accepted" %}
+                {% elif msg.status_to == 'declined' and decline_label %}{{ decline_label }}
                 {% elif msg.status_to == 'declined' %}<i class="fa fa-times mr-1"></i>{% trans "Declined" %}
                 {% elif msg.status_to == 'counter' %}<i class="fa fa-exchange mr-1"></i>{% trans "Counter-proposed" %}
                 {% elif msg.status_to == 'withdrawn' %}<i class="fa-solid fa-rotate-left mr-1"></i>{% trans "Withdrawn" %}
@@ -323,9 +331,20 @@
   {% if is_party %}
   {# ── Bottom compose area ──────────────────────────────────────────── #}
   <div id="compose" class="border rounded-xl bg-secondary p-6"
-       x-data="{ isCounter: false, acceptAs: '', counterLocType: '{{ proposed_place.type|default:"my_place" }}' }">
+       x-data="{ isCounter: false, acceptAs: '', counterLocType: '{{ proposed_place.type|default:"my_place" }}',
+                 declining: {% if decline_fields and declining %}true{% else %}false{% endif %}, body: '', startText: '',
+                 // A text to start from replaces what is in the box, unless they wrote something of their own
+                 startFrom(text) {
+                   const box = this.$root.querySelector('[name=body]');
+                   if (box.value.trim() && box.value !== this.startText && !confirm('{{ _("Replace what you wrote with this text?")|escapejs }}')) return;
+                   box.value = this.body = this.startText = text;
+                   // The whole text to read, not just its first lines
+                   box.style.height = 'auto';
+                   box.style.height = box.scrollHeight + 'px';
+                 },
+                 get unfilled() { return /\[[^\]]*\]/.test(this.body); } }">
 
-    <form method="post">
+    <form method="post" @input="if ($event.target.name === 'body') body = $event.target.value">
       {% csrf_token %}
 
       {# Counter-proposal extra fields (collapsible) #}
@@ -427,6 +446,8 @@
       </div>
       {% endif %}
 
+      {% if decline_fields %}{% include decline_fields %}{% endif %}
+
       {# Message textarea — always visible #}
       <div class="form-group mb-4">
         {{ message_form.body }}
@@ -436,21 +457,40 @@
       <div class="flex flex-wrap gap-2">
 
         <button type="submit" name="action" value="message"
-          x-show="!isCounter && !acceptAs" class="btn">
+          x-show="!isCounter && !acceptAs && !declining" class="btn">
           <i class="fa fa-paper-plane mr-2"></i>{% trans "Send" %}
         </button>
 
         {% if can_decide %}
+          {% if decline_fields and match.status != 'declined' %}
+            {# Saying no opens texts to start from; it goes once the part in brackets is filled in or deleted #}
+            <button type="button" @click="declining = true" x-show="!isCounter && !acceptAs && !declining" class="btn btn-red">
+              <i class="fa fa-times mr-2"></i>{% if match.status == 'accepted' %}{% trans "Change to Declined" %}{% else %}{% trans "Decline" %}{% endif %}
+            </button>
+            <div x-show="declining" style="display:none" class="w-full space-y-2">
+              <p x-show="unfilled" class="text-sm text-red my-0"><i class="fa-solid fa-circle-exclamation mr-1"></i>{% trans "Please fill in or delete the part in brackets first." %}</p>
+              <div class="flex flex-wrap justify-between gap-2">
+                <button type="button" @click="declining = false" class="btn btn-purple">
+                  <i class="fa-solid fa-ban mr-2"></i>{% trans "Cancel" %}
+                </button>
+                <button type="submit" name="action" value="decline" :disabled="unfilled" class="btn btn-red">
+                  <i class="fa fa-times mr-2"></i>{% trans "Send and decline" %}
+                </button>
+              </div>
+            </div>
+          {% endif %}
           {% if match.status == 'accepted' %}
+            {% if not decline_fields %}
             <button type="submit" name="action" value="decline"
               x-show="!isCounter" class="btn btn-red">
               <i class="fa fa-times mr-2"></i>{% trans "Change to Declined" %}
             </button>
+            {% endif %}
           {% elif accept_choices %}
             {# A way to accept with more to fill in (the days for a visit) opens its fields first #}
             {% for value, label, icon, fields in accept_choices %}
               {% if fields %}
-                <button type="button" @click="acceptAs = '{{ value }}'" x-show="!isCounter && !acceptAs" class="btn btn-green">
+                <button type="button" @click="acceptAs = '{{ value }}'" x-show="!isCounter && !acceptAs && !declining" class="btn btn-green">
                   <i class="fa-solid {{ icon }} mr-2"></i>{{ label }}
                 </button>
                 <div x-show="acceptAs === '{{ value }}'" style="display:none" class="w-full border rounded-xl p-4 space-y-3">
@@ -462,13 +502,13 @@
                 </div>
               {% else %}
                 <button type="submit" name="action" value="accept" @click="acceptAs = '{{ value }}'; $el.form.accept_as.value = '{{ value }}'"
-                  x-show="!isCounter && !acceptAs" class="btn btn-green">
+                  x-show="!isCounter && !acceptAs && !declining" class="btn btn-green">
                   <i class="fa-solid {{ icon }} mr-2"></i>{{ label }}
                 </button>
               {% endif %}
             {% endfor %}
             <input type="hidden" name="accept_as" :value="acceptAs">
-            {% if match.status != 'declined' %}
+            {% if match.status != 'declined' and not decline_fields %}
             <button type="submit" name="action" value="decline"
               x-show="!isCounter && !acceptAs" class="btn btn-red">
               <i class="fa fa-times mr-2"></i>{% trans "Decline" %}

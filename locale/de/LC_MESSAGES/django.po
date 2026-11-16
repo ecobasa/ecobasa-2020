@@ -8328,3 +8328,66 @@ msgstr "Mach eine Tour daraus: Andere können mitkommen, und die Packliste zeigt
 
 msgid "Good for your application, too: more experience of community life, good references and gifts you bring along make a good impression."
 msgstr "Gut für deinen Antrag: Mehr Erfahrung mit dem Leben in Gemeinschaft, gute Referenzen und mitgebrachte Geschenke machen einen guten Eindruck."
+
+msgid "Hello %(name)s,\n\nthank you for your application and for the care you put into your answers. I'm writing for all of us at %(community)s.\n\nWe talked about it together, and right now we can't take in new members: [in a few words what's going on with you, e.g. no free room this year, or a time of big changes among yourselves]. So it's a \"not now\" from us. It's about where we are at the moment, not about you.\n\nIf you're still looking later, we'd be glad to hear from you again [when, if you know]. And if you have a question or would like to talk, just write here.\n\nWarm wishes,\n%(ambassador)s"
+msgstr "Hallo %(name)s,\n\ndanke für deinen Antrag und die Sorgfalt in deinen Antworten. Ich schreibe dir für uns alle in %(community)s.\n\nWir haben gemeinsam darüber gesprochen, und gerade können wir keine neuen Mitglieder aufnehmen: [in ein paar Worten, was bei euch los ist, z. B. dieses Jahr kein freies Zimmer, oder eine Zeit großer Veränderungen bei euch]. Darum ist es von uns ein „gerade nicht“. Das hat mit unserer Lage gerade zu tun, nicht mit dir.\n\nWenn du später noch suchst, freuen wir uns, wieder von dir zu hören [wann, falls ihr es wisst]. Und wenn du eine Frage hast oder reden möchtest, schreib einfach hier.\n\nHerzliche Grüße,\n%(ambassador)s"
+
+msgid "Hello %(name)s,\n\nthank you for your application, and for being so open with us about who you are and what you're looking for. I'm writing for all of us at %(community)s.\n\nWe read your answers carefully and talked about them together, and we've decided not to invite you for a visit. What mattered most to us: [in a few honest words what it's about for you: what you need in your life together, not what's wrong with them].\n\nWe imagine this may be hard to read, especially after you opened up to us. An application shows only a small part of a person, and our decision isn't a judgment of who you are. It's about whether our way of living and yours fit together right now. If you'd like to understand it better, I'm glad to talk with you, here or on a call.\n\nOther communities are looking for new members too, and one of them may fit better what you're looking for.\n\nAll the best on your way,\n%(ambassador)s"
+msgstr "Hallo %(name)s,\n\ndanke für deinen Antrag und dafür, wie offen du uns erzählt hast, wer du bist und was du suchst. Ich schreibe dir für uns alle in %(community)s.\n\nWir haben deine Antworten aufmerksam gelesen und gemeinsam besprochen, und wir haben entschieden, dich nicht zu einem Besuch einzuladen. Am wichtigsten war uns dabei: [in ein paar ehrlichen Worten, worum es euch geht: was ihr in eurem Zusammenleben braucht, nicht was an der Person falsch wäre].\n\nWir können uns vorstellen, dass das schwer zu lesen ist, gerade nachdem du dich uns geöffnet hast. Ein Antrag zeigt nur einen kleinen Teil eines Menschen, und unsere Entscheidung ist kein Urteil darüber, wer du bist. Es geht darum, ob unsere und deine Art zu leben gerade zusammenpassen. Wenn du sie besser verstehen möchtest, rede ich gern mit dir, hier oder am Telefon.\n\nAuch andere Gemeinschaften suchen neue Mitglieder, und vielleicht passt eine davon besser zu dem, was du suchst.\n\nAlles Gute auf deinem Weg,\n%(ambassador)s"
+
+msgid "Hello %(name)s,\n\nthank you for visiting us and for the days we shared. I'm writing for all of us at %(community)s.\n\nAfter your visit we sat together, and for now we won't go on with your membership application process: [what it's about for you right now, e.g. you'd like to get to know each other longer, or have things to settle among yourselves first]. This isn't a final no.\n\nIf you like, [what could come next, e.g. another, longer stay, or applying again in spring]. How is this for you? I'm here if you want to talk.\n\nWarm wishes,\n%(ambassador)s"
+msgstr "Hallo %(name)s,\n\ndanke für deinen Besuch und die Tage, die wir zusammen hatten. Ich schreibe dir für uns alle in %(community)s.\n\nNach deinem Besuch haben wir zusammengesessen, und vorerst gehen wir nicht weiter zur Mitgliedschaft: [worum es euch gerade geht, z. B. ihr möchtet euch länger kennenlernen, oder erst etwas untereinander klären]. Das ist kein endgültiges Nein.\n\nWenn du magst, [was als Nächstes sein könnte, z. B. ein weiterer, längerer Aufenthalt, oder ein neuer Antrag im Frühling]. Wie ist das für dich? Ich bin da, wenn du reden möchtest.\n\nHerzliche Grüße,\n%(ambassador)s"
+
+msgid "Hello %(name)s,\n\nthank you for the time you spent with us and for everything you gave during your visit. I'm writing for all of us at %(community)s.\n\nAfter your visit we talked a lot together, and we've decided not to go on with your membership application process. [What it's about for you: what you noticed in living together and what you need, without judging who they are. If you already told them in person, say so.]\n\nWe know this can hurt, all the more after living with us for a while. A few days show only a part of a whole life, and our decision is about how our living together and yours fit, not about what you're worth. If you'd like to talk about it, with me or someone else from us, we're open to that.\n\nWe wish you a place where you can arrive.\n%(ambassador)s"
+msgstr "Hallo %(name)s,\n\ndanke für die Zeit mit uns und für alles, was du während deines Besuchs gegeben hast. Ich schreibe dir für uns alle in %(community)s.\n\nNach deinem Besuch haben wir viel miteinander gesprochen und entschieden, dass wir den Weg zur Mitgliedschaft mit dir nicht weitergehen. [Worum es euch geht: was ihr im Zusammenleben bemerkt habt und was ihr braucht, ohne zu urteilen, wer die Person ist. Wenn ihr es schon persönlich gesagt habt, schreibt das dazu.]\n\nWir wissen, dass das wehtun kann, umso mehr, nachdem du eine Weile mit uns gelebt hast. Ein paar Tage zeigen nur einen Teil eines ganzen Lebens, und unsere Entscheidung sagt etwas darüber, wie unser und dein Leben zusammenpassen, nicht, was du wert bist. Wenn du darüber reden möchtest, mit mir oder jemand anderem von uns, sind wir offen dafür.\n\nWir wünschen dir einen Ort, an dem du ankommen kannst.\n%(ambassador)s"
+
+msgid "If you've met them, say it in person or on a call first. The message follows that."
+msgstr "Wenn ihr euch schon begegnet seid, sag es zuerst persönlich oder am Telefon. Die Nachricht kommt danach."
+
+msgid "Speak for yourselves: what you need and what you noticed, not what they are."
+msgstr "Sprich für euch: was ihr braucht und was ihr bemerkt habt, nicht was die Person ist."
+
+msgid "Say the decision early and plainly; a vague no keeps people hoping."
+msgstr "Sag die Entscheidung früh und klar; ein vages Nein lässt Menschen weiter hoffen."
+
+msgid "Write only what is true, but not everything that is true."
+msgstr "Schreib nur, was wahr ist, aber nicht alles, was wahr ist."
+
+msgid "\"Not now\" means you'd gladly read a new application from them. If it's about something fundamental, say so kindly, so they don't hope and apply again in vain."
+msgstr "„Gerade nicht“ heißt, dass ihr einen neuen Antrag gern lesen würdet. Geht es um etwas Grundsätzliches, sag es freundlich, damit niemand vergeblich hofft und sich noch einmal bewirbt."
+
+msgid "Offer a conversation only if someone will really have it, and keep it if they come."
+msgstr "Biete ein Gespräch nur an, wenn es wirklich jemand führt, und halte es, wenn die Person kommt."
+
+msgid "Don't write it alone or in a hurry: let someone else from the community read it first."
+msgstr "Schreib es nicht allein und nicht in Eile: Lass vorher jemand anderen aus der Gemeinschaft drüberlesen."
+
+msgid "Not now"
+msgstr "Gerade nicht"
+
+msgid "Not this time"
+msgstr "Diesmal nicht"
+
+msgid "Declined as"
+msgstr "Abgesagt als"
+
+msgid "Please fill in or delete the part in brackets first."
+msgstr "Bitte füll zuerst den Teil in eckigen Klammern aus oder lösch ihn."
+
+msgid "%(actor)s answered your membership application: %(title)s"
+msgstr "%(actor)s hat auf deinen Mitgliedsantrag geantwortet: %(title)s"
+
+msgid "Start from a text"
+msgstr "Mit einem Text beginnen"
+
+msgid "Saying no with care"
+msgstr "Mit Sorgfalt absagen"
+
+msgid "Send and decline"
+msgstr "Senden und absagen"
+
+msgid "Replace what you wrote with this text?"
+msgstr "Was du geschrieben hast, durch diesen Text ersetzen?"
+
+msgid "Communities looking for new members"
+msgstr "Gemeinschaften, die neue Mitglieder suchen"

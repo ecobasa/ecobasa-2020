@@ -6,6 +6,8 @@
 		<span class="font-semibold">{% trans "Stage" %}:</span>
 		{% if target.ended_at %}
 			<span class="pill bg-primary">{% trans "Not a member any more" %}</span>
+		{% elif match.gentle_decline %}
+			<span class="pill bg-primary">{{ match.gentle_decline }}</span>
 		{% elif match.status == "declined" or match.status == "withdrawn" %}
 			<span class="pill bg-red">{{ match.get_status_display }}</span>
 		{% elif target.is_counted %}
@@ -16,6 +18,11 @@
 			<span class="pill bg-primary"><i class="fa-solid fa-paper-plane mr-1"></i>{% trans "Sent" context "application" %}</span>
 		{% endif %}
 	</p>
+
+	{% if match.gentle_decline and is_requester %}
+		{# Where else they might be at home #}
+		<p class="my-0"><a href="{% url 'communities:list' %}?looking=1" class="underline"><i class="fa-solid fa-map-location-dot mr-1"></i>{% trans "Communities looking for new members" %}</a></p>
+	{% endif %}
 
 	{% if target.is_visiting %}
 		<div class="flex items-start gap-2">

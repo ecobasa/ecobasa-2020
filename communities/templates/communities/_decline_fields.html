@@ -1,0 +1,20 @@
+{% load i18n %}
+{# Saying no to a membership application: a text to start from, "not now" or "no" at the stage it is at, and what helps to say it with care. The part in brackets is theirs to fill in or delete #}
+<div x-show="declining" style="display:none" class="border rounded-xl p-4 mb-4 space-y-3 text-sm">
+  <p class="font-semibold my-0">{% trans "Start from a text" %}</p>
+  <div class="flex flex-wrap gap-4">
+    {% for kind, label, text in target.decline_texts %}
+      <label class="flex items-center gap-2 cursor-pointer">
+        <input type="radio" name="decline_as" value="{{ kind }}" class="form-radio" data-text="{{ text }}"
+          @change="startFrom($el.dataset.text)">
+        {{ label }}
+      </label>
+    {% endfor %}
+  </div>
+  <div>
+    <p class="font-semibold my-0">{% trans "Saying no with care" %}</p>
+    <ul class="list-disc pl-5 my-1 space-y-1">
+      {% for line in target.decline_guidance %}<li>{{ line }}</li>{% endfor %}
+    </ul>
+  </div>
+</div>

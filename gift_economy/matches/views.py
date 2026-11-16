@@ -394,6 +394,12 @@ def match_detail(request, pk):
                     if error:
                         flash.error(request, error)
                         return redirect(match.get_absolute_url())
+                if new_status == Match.STATUS_DECLINED:
+                    # A target may want more said first (the part to fill in of a text)
+                    error = getattr(target, "match_decline_error", lambda match, data: "")(match, request.POST)
+                    if error:
+                        flash.error(request, error)
+                        return redirect(f"{match.get_absolute_url()}?decline=1#compose")
                 if new_status == Match.STATUS_ACCEPTED and match.is_loan:
                     # The agreed time is the loan's from now on; a tool is lent once at a time
                     starts_at, ends_at = match.loan_period()
@@ -415,6 +421,8 @@ def match_detail(request, pk):
                 # or straight to being a member, as the one accepting chose)
                 if new_status == Match.STATUS_ACCEPTED and hasattr(target, "match_accepted"):
                     target.match_accepted(match, request.POST)
+                if new_status == Match.STATUS_DECLINED and hasattr(target, "match_declined"):
+                    target.match_declined(match, request.POST)
             notify_match_response(match, actor=request.user, http_request=request, message=body)
             flash.success(request, _("Response sent."))
             return redirect(match.get_absolute_url())
@@ -508,6 +516,11 @@ def match_detail(request, pk):
         "can_decide":           can_decide,
         # More than one way to accept it (a membership application: invite to visit, or make member)
         "accept_choices":       getattr(target, "match_accept_choices", lambda: [])() if can_decide else [],
+        # What comes with declining (a membership application: texts to start from)
+        "decline_fields":       getattr(target, "match_decline_fields", lambda: "")() if can_decide else "",
+        "declining":            request.GET.get("decline") == "1",
+        # And what its no is called in the thread, instead of a red "Declined"
+        "decline_label":        getattr(target, "match_declined_label", lambda: None)(),
         # What the target adds to a message in the thread (a membership application: the visit)
         "answer_template":      getattr(target, "match_answer_template", ""),
         "can_counter":          can_counter,
@@ -582,6 +595,9 @@ def email_action(request, token):
         return redirect(match.get_absolute_url())
 
     target = match.target
+    if action == "decline" and getattr(target, "match_decline_fields", lambda: "")():
+        # Saying no to it takes a few words first: the match page, with its texts
+        return redirect(f"{match.get_absolute_url()}?decline=1#compose")
     if action == "accept" and match.is_loan and target is not None and target.lends_out and not target.is_free(
         match.loan.starts_at, match.loan.ends_at, exclude_match=match,
     ):

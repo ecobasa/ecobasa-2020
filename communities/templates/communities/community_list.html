@@ -28,7 +28,9 @@
         selectedStatuses: [],
         selectedCountry: '',
         // The "How we live" filters, by their parameter
-        life: { {% for param, label, choices in life_filters %}'{{ param }}': '',{% endfor %} },
+        // A link may bring some along (?looking=1)
+        life: { {% for param, label, choices in life_filters %}'{{ param }}': '',{% endfor %}
+                ...Object.fromEntries([...new URLSearchParams(location.search)].filter(([param]) => param in lifeLabels)) },
         lifeCount()   { return Object.values(this.life).filter(Boolean).length; },
         clearLife()   { Object.keys(this.life).forEach(param => this.life[param] = ''); },
         // A filter with several values, kept comma separated

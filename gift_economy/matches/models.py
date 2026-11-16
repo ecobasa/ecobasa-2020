@@ -205,6 +205,14 @@ class Match(models.Model):
     def is_closed(self):
         return self.status in self.CLOSED_STATUSES
 
+    @property
+    def gentle_decline(self):
+        """What a target says instead of a red "Declined" (a membership application:
+        "Not now"), or None."""
+        if self.status != self.STATUS_DECLINED:
+            return None
+        return getattr(self.target, "match_declined_label", lambda: None)()
+
     def _extras(self):
         """The contributions beyond what the match is about (its target listing)."""
         target_id = self.object_id if self.content_type.model == "listing" else None
