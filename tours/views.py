@@ -18,7 +18,7 @@ from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_POST
 from django_countries import countries as all_countries
 
-from communities.models import Community, with_member_communities
+from communities.models import Community, Membership, with_member_communities
 from dashboard_lists import paginate
 from events.models import Event
 from gift_economy.gifts.models import Listing
@@ -198,8 +198,15 @@ def tour_detail(request, slug):
     stops = tour.ordered_stops()
     for traveller in travellers:
         traveller.stretch = "" if traveller.whole_route else _stretch_text(traveller)
-    # The communities they belong to, shown with them
+    # The communities they belong to, shown with them; those they became a member of
+    # after visiting them on this tour, if they want that shown
     prefetch_related_objects([traveller.user for traveller in travellers], with_member_communities())
+    found_here = set(
+        Membership.objects.counted().filter(shows_visit=True, visit__tour_stop__tour=tour)
+        .values_list("user_id", "community_id")
+    )
+    for traveller in travellers:
+        traveller.found_here = {community_id for user_id, community_id in found_here if user_id == traveller.user_id}
     team = tour.team_skill_ids()
     needs = [(need, matching.role(need, team)) for need in tour.needs()]
     # The way to each stop in a maps app, only for those who travel along
@@ -359,6 +366,9 @@ def _save_tour(request, tour, template, context, going_to=None):
                     stop = Stop(tour=tour, event=host, arrive_on=first or host.starts_on, leave_on=last or host.ends_on)
                 else:
                     stop = Stop(tour=tour, community=host, arrive_on=first, leave_on=last)
+                    # An accepted stay there is the stop's visit: the host isn't asked again
+                    if stay.status == Match.STATUS_ACCEPTED and not hasattr(stay, "tour_stop"):
+                        stop.visit_match = stay
                 append_stop(stop)
         if is_new:
             messages.success(request, _("Your tour is saved as a draft. Now add its stops."))

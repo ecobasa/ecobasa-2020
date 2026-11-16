@@ -17,6 +17,10 @@ urlpatterns = [
     path('<slug:slug>/members/people/', views.api_people, name='api-people'),
     path('<slug:slug>/members/<int:pk>/remove/', views.remove_member, name='remove_member'),
     path('<slug:slug>/members/<int:pk>/ambassador/', views.hand_over, name='hand_over'),
+    path('<slug:slug>/members/<int:pk>/make-member/', views.make_member, name='make_member'),
+    path('<slug:slug>/members/<int:pk>/lives-here/', views.lives_here, name='lives_here'),
+    path('<slug:slug>/members/<int:pk>/visit-days/', views.visit_days, name='visit_days'),
+    path('<slug:slug>/members/<int:pk>/visit-days/accept/', views.accept_visit_days, name='accept_visit_days'),
     path('volunteer-request/<slug:community_slug>/', views.volunteer_request, name='volunteer_request'),
     # API endpoints for the map template
     path('api/markers/', views.community_markers, name='api-markers'),

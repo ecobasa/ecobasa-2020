@@ -276,6 +276,13 @@
           {% if msg.body %}
             <div class="prose text-sm mb-3">{{ msg.body|linebreaksbr }}</div>
           {% endif %}
+          {% if msg.status_to == 'accepted' and match.is_community_stay and msg.counter_stay_from %}
+            <div class="text-sm mb-2">
+              <i class="fa fa-campground mr-1 text-primary"></i>
+              <strong>{% trans "Agreed stay" %}:</strong>
+              {% include "matches/_stay_period.html" with stay_from=msg.counter_stay_from stay_to=msg.counter_stay_to %}
+            </div>
+          {% endif %}
 
           {% if msg.status_to == 'counter' %}
             {% if msg.counter_location %}
@@ -305,6 +312,9 @@
             {% endwith %}
           {% endif %}
 
+          {# Last in the message: what the target adds to it (a membership application: accepting or proposing other days for the visit) #}
+          {% if answer_template %}{% include answer_template %}{% endif %}
+
         </div>
       {% endfor %}
     </div>
@@ -313,7 +323,7 @@
   {% if is_party %}
   {# ── Bottom compose area ──────────────────────────────────────────── #}
   <div id="compose" class="border rounded-xl bg-secondary p-6"
-       x-data="{ isCounter: false, counterLocType: '{{ proposed_place.type|default:"my_place" }}' }">
+       x-data="{ isCounter: false, acceptAs: '', counterLocType: '{{ proposed_place.type|default:"my_place" }}' }">
 
     <form method="post">
       {% csrf_token %}
@@ -426,7 +436,7 @@
       <div class="flex flex-wrap gap-2">
 
         <button type="submit" name="action" value="message"
-          x-show="!isCounter" class="btn">
+          x-show="!isCounter && !acceptAs" class="btn">
           <i class="fa fa-paper-plane mr-2"></i>{% trans "Send" %}
         </button>
 
@@ -436,6 +446,34 @@
               x-show="!isCounter" class="btn btn-red">
               <i class="fa fa-times mr-2"></i>{% trans "Change to Declined" %}
             </button>
+          {% elif accept_choices %}
+            {# A way to accept with more to fill in (the days for a visit) opens its fields first #}
+            {% for value, label, icon, fields in accept_choices %}
+              {% if fields %}
+                <button type="button" @click="acceptAs = '{{ value }}'" x-show="!isCounter && !acceptAs" class="btn btn-green">
+                  <i class="fa-solid {{ icon }} mr-2"></i>{{ label }}
+                </button>
+                <div x-show="acceptAs === '{{ value }}'" style="display:none" class="w-full border rounded-xl p-4 space-y-3">
+                  {% include fields %}
+                  <div class="flex flex-wrap gap-2">
+                    <button type="submit" name="action" value="accept" class="btn btn-green"><i class="fa-solid {{ icon }} mr-2"></i>{{ label }}</button>
+                    <button type="button" @click="acceptAs = ''" class="btn btn-purple"><i class="fa-solid fa-times mr-2"></i>{% trans "Cancel" %}</button>
+                  </div>
+                </div>
+              {% else %}
+                <button type="submit" name="action" value="accept" @click="acceptAs = '{{ value }}'; $el.form.accept_as.value = '{{ value }}'"
+                  x-show="!isCounter && !acceptAs" class="btn btn-green">
+                  <i class="fa-solid {{ icon }} mr-2"></i>{{ label }}
+                </button>
+              {% endif %}
+            {% endfor %}
+            <input type="hidden" name="accept_as" :value="acceptAs">
+            {% if match.status != 'declined' %}
+            <button type="submit" name="action" value="decline"
+              x-show="!isCounter && !acceptAs" class="btn btn-red">
+              <i class="fa fa-times mr-2"></i>{% trans "Decline" %}
+            </button>
+            {% endif %}
           {% elif match.status == 'declined' %}
             <button type="submit" name="action" value="accept"
               x-show="!isCounter" class="btn btn-green">

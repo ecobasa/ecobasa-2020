@@ -167,12 +167,16 @@ class UpdateView(LoginRequiredMixin, django_views.FormView):
 
     def form_valid(self, form):
         self.object = form.save()
-        # Whether their offers and skills show on each of their communities' pages
-        showing = set(self.request.POST.getlist("shows_offers"))
-        for membership in self._memberships():
-            if membership.shows_offers != (str(membership.pk) in showing):
-                membership.shows_offers = not membership.shows_offers
-                membership.save(update_fields=["shows_offers"])
+        # Whether their offers and skills show on each of their communities' pages, and
+        # (for those they came to on a visit) that they found it through ecobasa
+        for field in ("shows_offers", "shows_visit"):
+            chosen = set(self.request.POST.getlist(field))
+            for membership in self._memberships():
+                if field == "shows_visit" and not membership.visit_id:
+                    continue
+                if getattr(membership, field) != (str(membership.pk) in chosen):
+                    setattr(membership, field, not getattr(membership, field))
+                    membership.save(update_fields=[field])
         return redirect(self.get_success_url())
 
     def _memberships(self):

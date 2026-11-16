@@ -23,7 +23,7 @@ from gift_economy.gifts.models import Listing
 
 from .emails import notify_match_message, notify_match_response, read_action_token, read_suggestions_unsubscribe_token
 from .forms import MatchMessageForm
-from .models import Loan, Match, MatchMessage, Suggestion, loan_span, stay_q
+from .models import Loan, Match, MatchMessage, Suggestion, loan_span, stay_q, talked_over_elsewhere_q
 
 # What the matches page can show, by its "type" query param: gifts (things) and skills
 # (and knowledge and helping hands) together on one page (with suggestions first),
@@ -68,7 +68,7 @@ def _listing_matches(kinds=None):
 
 
 def _stays():
-    return _with_details(Match.objects.filter(stay_q()))
+    return _with_details(Match.objects.filter(stay_q()).exclude(talked_over_elsewhere_q()))
 
 
 # ── Matches page ───────────────────────────────────────────────────────────────
@@ -252,7 +252,7 @@ def waiting_counts(user):
 
     counts = {
         "matches": waiting(Match.objects.filter(content_type__app_label="gifts")),
-        "volunteer": waiting(Match.objects.filter(stay_q())),
+        "volunteer": waiting(Match.objects.filter(stay_q()).exclude(talked_over_elsewhere_q())),
         "members": waiting(_applications()),
         "tours": waiting(Match.objects.filter(content_type__app_label=TOUR_APP_LABEL), _tours_received(user)),
     }
@@ -297,6 +297,10 @@ def match_detail(request, pk):
     target = match.target
     if target is None:
         raise Http404
+    # A target may have it talked over elsewhere for now (a membership application's visit)
+    elsewhere = getattr(target, "match_redirect", lambda match: "")(match)
+    if elsewhere:
+        return redirect(elsewhere)
 
     # Only the two sides act on a match; staff may open it too. A target may let others
     # answer for its owner (a tour's other organisers)
@@ -399,10 +403,18 @@ def match_detail(request, pk):
                     match.loan.starts_at, match.loan.ends_at = starts_at, ends_at
                     match.loan.save()
                 body = request.POST.get("body", "").strip()
-                MatchMessage.objects.create(match=match, sender=request.user, body=body, status_to=new_status)
+                answer = MatchMessage(match=match, sender=request.user, body=body, status_to=new_status)
+                if new_status == Match.STATUS_ACCEPTED and match.is_community_stay:
+                    # The agreed days stand with the acceptance, the latest word on them
+                    answer.counter_stay_from, answer.counter_stay_to = match.stay_period()
+                answer.save()
                 match.status       = new_status
                 match.responded_at = timezone.now()
                 match.save()
+                # A target may go on from here (a membership application: to the visit,
+                # or straight to being a member, as the one accepting chose)
+                if new_status == Match.STATUS_ACCEPTED and hasattr(target, "match_accepted"):
+                    target.match_accepted(match, request.POST)
             notify_match_response(match, actor=request.user, http_request=request, message=body)
             flash.success(request, _("Response sent."))
             return redirect(match.get_absolute_url())
@@ -494,6 +506,10 @@ def match_detail(request, pk):
             else target.get_match_verb()
         ),
         "can_decide":           can_decide,
+        # More than one way to accept it (a membership application: invite to visit, or make member)
+        "accept_choices":       getattr(target, "match_accept_choices", lambda: [])() if can_decide else [],
+        # What the target adds to a message in the thread (a membership application: the visit)
+        "answer_template":      getattr(target, "match_answer_template", ""),
         "can_counter":          can_counter,
         "can_withdraw":         can_withdraw,
         "proposed_place":       _proposed_place(match, request.user, latest_counter_msg) if can_counter else None,
@@ -582,7 +598,12 @@ def email_action(request, token):
         match.status       = Match.STATUS_ACCEPTED if action == "accept" else Match.STATUS_DECLINED
         match.responded_at = timezone.now()
         match.save(update_fields=["status", "responded_at"])
-        MatchMessage.objects.create(match=match, sender=actor, body="", status_to=match.status)
+        answer = MatchMessage(match=match, sender=actor, body="", status_to=match.status)
+        if match.status == Match.STATUS_ACCEPTED and match.is_community_stay:
+            answer.counter_stay_from, answer.counter_stay_to = match.stay_period()
+        answer.save()
+        if action == "accept" and hasattr(target, "match_accepted"):
+            target.match_accepted(match)
     notify_match_response(match, actor=actor, http_request=request)
 
     return render(request, "matches/email_action_done.html", {

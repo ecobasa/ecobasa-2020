@@ -1,0 +1,20 @@
+{% load i18n community_filters %}
+{# On a stay or tour visit at a community that is the visit for a membership application: for the ambassador and the applicant only, with what to talk about #}
+{% applications_visiting match request.user as visiting %}
+{% for membership in visiting %}
+	<div class="border rounded-xl bg-secondary p-4 mb-4 space-y-2 text-sm">
+		<p class="my-0">
+			<i class="fa-solid fa-door-open text-primary mr-1"></i>
+			<a href="{{ membership.match.get_absolute_url }}" class="underline">{% blocktrans with name=membership.user.name|default:membership.user.username %}The visit for {{ name }}'s membership application{% endblocktrans %}</a>
+			{% if membership.is_counted %}<span class="pill bg-green ml-1">{% trans "Member" %}</span>{% endif %}
+		</p>
+		{% with talks=membership.application.talks %}
+			{% if talks %}
+				<h3 class="text-base mt-0">{% trans "We'd like to talk about this when you visit" %}</h3>
+				{% for answer in talks %}
+					<p class="flex items-start gap-2 my-1"><i class="fa-regular fa-comments text-primary mt-1"></i><span>{{ answer.text }}</span></p>
+				{% endfor %}
+			{% endif %}
+		{% endwith %}
+	</div>
+{% endfor %}

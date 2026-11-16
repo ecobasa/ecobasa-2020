@@ -9,7 +9,7 @@ from django.utils.translation import gettext_lazy as _
 from taggit.forms import TagWidget
 
 from . import onboarding
-from .models import Community, OnboardingQuestion, language_choices
+from .models import Community, Membership, OnboardingQuestion, language_choices
 
 
 # The "How we live" fields, in the order of their section on the form
@@ -219,7 +219,8 @@ class InviteForm(forms.Form):
 
     def clean_user(self):
         user = self.cleaned_data["user"]
-        if self.community.memberships.current().filter(user=user).exists():
+        # Who is invited to visit can be invited: it makes them a member
+        if self.community.memberships.current().exclude(stage=Membership.STAGE_VISIT).filter(user=user).exists():
             raise forms.ValidationError(_("They are a member already, or have been asked."))
         return user
 

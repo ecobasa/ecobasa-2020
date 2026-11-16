@@ -210,6 +210,7 @@
                 {% if traveller.is_organiser %}<div class="text-xs opacity-70">{% trans "Organiser" %}</div>{% endif %}
                 {% for community in person.member_communities %}
                   <a href="{{ community.get_absolute_url }}" class="block text-sm text-primary hover:underline"><i class="fa-solid {{ community.get_type_icon }} mr-1"></i>{{ community.name }}</a>
+                  {% if community.pk in traveller.found_here %}<div class="text-xs"><i class="fa-solid fa-seedling text-green mr-1"></i>{% trans "Became a member after this tour" %}</div>{% endif %}
                 {% endfor %}
                 {% if traveller.stretch %}<div class="text-xs"><i class="fa-solid fa-route mr-1"></i>{{ traveller.stretch }}</div>{% endif %}
                 {% if traveller.people > 1 %}<div class="text-xs">{% blocktrans count count=traveller.people|add:"-1" %}and {{ count }} more{% plural %}and {{ count }} more{% endblocktrans %}</div>{% endif %}

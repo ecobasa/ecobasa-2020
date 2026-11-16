@@ -485,6 +485,30 @@ class Community(UniqueSlugMixin, models.Model):
     def get_match_request_text(self):
         return _("%(actor)s requested a volunteer stay at %(title)s")
 
+    def get_match_summary_template(self):
+        return "communities/_stay_application.html"
+
+    def match_redirect(self, match):
+        """While someone is invited to visit, their visit's stay is talked over in their
+        membership application: its page leads there."""
+        membership = self.memberships.filter(visit=match, stage=Membership.STAGE_VISIT, ended_at=None).select_related("match").first()
+        return membership.match.get_absolute_url() + "#compose" if membership is not None and membership.is_visiting else ""
+
+    def applications_visiting(self, match, viewer):
+        """The membership applications a stay (or tour visit) here is the visit for: asked
+        for as part of one, or someone on it is invited to visit. The ambassador sees all
+        of them, everyone else only their own."""
+        from gift_economy.matches.models import Match
+
+        details = getattr(match, "stay_details", None)
+        people = [match.from_user_id, *(details.companions.values_list("pk", flat=True) if details else [])]
+        found = self.memberships.filter(ended_at=None, match__status=Match.STATUS_ACCEPTED).filter(
+            Q(visit=match) | Q(stage=Membership.STAGE_VISIT, visit=None, user_id__in=people),
+        ).select_related("user", "match", "application")
+        if not self.is_ambassador(viewer):
+            found = found.filter(user_id=viewer.pk)
+        return list(found)
+
     class Meta:
         verbose_name = _("Community")
         verbose_name_plural = _("Communities")
@@ -505,6 +529,34 @@ class CommunityPhoto(models.Model):
 
     def __str__(self):
         return f"Photo for {self.community.name}"
+
+
+def _day(raw):
+    """A day from a date input, as an aware datetime at its start; None if blank or invalid."""
+    from datetime import date, datetime, time
+    from django.utils import timezone
+
+    try:
+        day = date.fromisoformat(raw) if raw else None
+    except ValueError:
+        return None
+    return timezone.make_aware(datetime.combine(day, time())) if day else None
+
+
+def _day_of(value):
+    """The start of the (local) day of a datetime, None for None."""
+    from django.utils import timezone
+
+    return _day(timezone.localdate(value).isoformat()) if value else None
+
+
+def agreed_text(start, end):
+    """The message saying the days for a visit are agreed."""
+    from datetime import timedelta
+    from gift_economy.matches.models import period_text
+
+    days = period_text(start or end, (end or start) + timedelta(days=1)) if start or end else ""
+    return str(_("Agreed on the days for the visit: %(days)s") % {"days": days})
 
 
 def with_member_communities(path=""):
@@ -528,17 +580,30 @@ class MembershipQuerySet(models.QuerySet):
         )
 
     def counted(self):
-        """Members: without a match (the ambassador, or added in the admin), or accepted."""
+        """Members: at the member stage, without a match (the ambassador, or added in the
+        admin) or with it accepted."""
         from gift_economy.matches.models import Match
 
-        return self.filter(ended_at=None).filter(Q(match=None) | Q(match__status=Match.STATUS_ACCEPTED))
+        return self.filter(ended_at=None, stage=Membership.STAGE_MEMBER).filter(
+            Q(match=None) | Q(match__status=Match.STATUS_ACCEPTED)
+        )
 
 
 class Membership(models.Model):
     """Someone belonging to a community, also a planned one nobody lives in yet. Others
     than the ambassador ask for it with a match that has the membership as target, and
-    count once it is accepted. Leaving keeps the row (ended_at), so the match keeps its
-    target."""
+    count once they reach the member stage. An accepted application goes on to the
+    visit, and may stay there: what comes after it the community handles itself. Leaving
+    keeps the row (ended_at), so the match keeps its target."""
+
+    STAGE_APPLICATION = "application"
+    STAGE_VISIT = "visit"
+    STAGE_MEMBER = "member"
+    STAGE_CHOICES = (
+        (STAGE_APPLICATION, _("Application")),
+        (STAGE_VISIT, _("Visit")),
+        (STAGE_MEMBER, _("Member")),
+    )
 
     community = models.ForeignKey(Community, on_delete=models.CASCADE, related_name="memberships")
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="memberships")
@@ -547,8 +612,15 @@ class Membership(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True)
     ended_at = models.DateTimeField(null=True, blank=True)
+    stage = models.CharField(_("Stage"), max_length=12, choices=STAGE_CHOICES, default=STAGE_MEMBER)
+    # The stay or tour visit at the community it came from, if that went through ecobasa
+    visit = models.ForeignKey(
+        "matches.Match", on_delete=models.SET_NULL, null=True, blank=True, related_name="visit_memberships",
+    )
     # Their offers and skills show on the community page only if they want
     shows_offers = models.BooleanField(_("Show my offers and skills on the community page"), default=False)
+    # And that they became a member after a tour visit, on the tour's page
+    shows_visit = models.BooleanField(_("Show that I found this community through ecobasa"), default=False)
 
     objects = MembershipQuerySet.as_manager()
 
@@ -564,7 +636,30 @@ class Membership(models.Model):
     def is_counted(self):
         from gift_economy.matches.models import Match
 
-        return self.ended_at is None and (self.match_id is None or self.match.status == Match.STATUS_ACCEPTED)
+        return self.ended_at is None and self.stage == self.STAGE_MEMBER and (
+            self.match_id is None or self.match.status == Match.STATUS_ACCEPTED
+        )
+
+    @property
+    def is_visiting(self):
+        """Their application was accepted: they are invited to visit."""
+        from gift_economy.matches.models import Match
+
+        return self.ended_at is None and self.stage == self.STAGE_VISIT and self.match_id is not None and (
+            self.match.status == Match.STATUS_ACCEPTED
+        )
+
+    def make_member(self):
+        """They are a member now, remembering the visit they came from: the stay asked for
+        as part of the application, else their latest accepted stay or tour visit here that
+        has begun."""
+        from django.utils import timezone
+
+        if self.visit_id is None:
+            begun = [stay for stay in self.stays_here() if (stay.stay_details.stay_from or stay.created_at) <= timezone.now()]
+            self.visit = begun[0] if begun else None
+        self.stage = self.STAGE_MEMBER
+        self.save(update_fields=["stage", "visit"])
 
     def end(self):
         from django.utils import timezone
@@ -620,6 +715,163 @@ class Membership(models.Model):
     # to ask for along with it
     match_counter = False
     match_extras = False
+
+    def has_application(self):
+        try:
+            return self.application is not None
+        except MembershipApplication.DoesNotExist:
+            return False
+
+    def match_accept_choices(self):
+        """How the ambassador accepts an application: inviting to visit (with days they
+        suggest for it, the fields' template), or making them a member right away. One
+        plain "Accept" for the rest."""
+        if self.is_invitation or not self.has_application():
+            return []
+        return [
+            (self.STAGE_VISIT, _("Invite to visit"), "fa-campground", "communities/_visit_days.html"),
+            (self.STAGE_MEMBER, _("Make member"), "fa-user-check", ""),
+        ]
+
+    def match_accepted(self, match, data=None):
+        """Accepted: an invitation, or who lives there already, makes a member; an
+        application goes to the visit unless the ambassador chose to make them a member.
+        The days they suggest for the visit stay with their answer."""
+        data = data or {}
+        if not self.match_accept_choices() or data.get("accept_as") == self.STAGE_MEMBER:
+            self.make_member()
+            return
+        self.stage = self.STAGE_VISIT
+        self.save(update_fields=["stage"])
+        visit_from, visit_to = _day(data.get("visit_from")), _day(data.get("visit_to"))
+        if visit_from and visit_to and visit_to < visit_from:
+            visit_to = None
+        answer = match.thread.filter(status_to=match.STATUS_ACCEPTED).last()
+        if answer is not None and (visit_from or visit_to):
+            answer.counter_stay_from, answer.counter_stay_to = visit_from, visit_to
+            answer.save(update_fields=["counter_stay_from", "counter_stay_to"])
+
+    # ── The visit, agreed in the application's conversation ──
+    # The days are messages with them (`counter_stay_from/to`): the invitation to visit
+    # may bring the first ones, then each proposal from either side (the ambassador
+    # first) is a counter-proposal, and accepting the latest is an "accepted" message
+    # with the agreed days, so they always stand in the latest word. Accepting makes the
+    # stay (or moves it), accepted, as the membership's visit. A volunteer stay the
+    # applicant asks for at the community meanwhile is the visit too, its days their
+    # proposal; while they are invited to visit, its own page leads here.
+
+    def _days_messages(self):
+        if not hasattr(self, "_days"):
+            self._days = list(self.match.thread.exclude(
+                counter_stay_from=None, counter_stay_to=None,
+            ).select_related("sender")) if self.match_id else []
+        return self._days
+
+    def visit_proposal(self):
+        """The latest word on the days: a proposal, or their agreement. None if none."""
+        days = self._days_messages()
+        return days[-1] if days else None
+
+    def visit_answer(self):
+        """Where the conversation shows the visit: with the latest word on the days, else
+        with the invitation to visit."""
+        from gift_economy.matches.models import Match
+
+        return self.visit_proposal() or (
+            self.match.thread.filter(status_to=Match.STATUS_ACCEPTED).last() if self.match_id else None
+        )
+
+    def suggested_visit(self):
+        """(from, to) proposed or agreed last for the visit, else (None, None)."""
+        proposal = self.visit_proposal()
+        return (proposal.counter_stay_from, proposal.counter_stay_to) if proposal else (None, None)
+
+    @property
+    def visit_is_own(self):
+        """Its visit is a stay of the applicant's at the community, its days agreed here
+        (not a tour visit, which the membership only remembers)."""
+        visit = self.visit if self.visit_id else None
+        return (
+            visit is not None and visit.from_user_id == self.user_id and visit.is_community_stay
+            and getattr(visit, "stay_details", None) is not None and not hasattr(visit, "tour_stop")
+        )
+
+    def visit_agreed(self):
+        """Whether the latest word on the days is their agreement (accepting days proposed
+        before; the invitation's own days are only proposed)."""
+        from gift_economy.matches.models import Match
+
+        days = self._days_messages()
+        return len(days) > 1 and days[-1].status_to == Match.STATUS_ACCEPTED
+
+    def visit_waits_for(self, user):
+        """Whether `user` is asked to accept the days proposed last (the other side is)."""
+        proposal = self.visit_proposal()
+        return bool(proposal and proposal.sender_id != user.pk and not self.visit_agreed())
+
+    def can_propose_visit(self, user):
+        """Both sides propose days while invited to visit; the ambassador first."""
+        if not self.is_visiting:
+            return False
+        if user.pk == self.community.ambassador_id or self.community.is_ambassador(user):
+            return True
+        return user.pk == self.user_id and self.visit_proposal() is not None
+
+    def agree_on_visit(self, user):
+        """`user` accepted the days proposed last: the stay is made, or moved to them and
+        accepted (its own conversation says so too)."""
+        from django.utils import timezone
+        from gift_economy.matches.models import Match, MatchMessage, StayDetails, create_stay
+
+        stay_from, stay_to = self.suggested_visit()
+        if self.visit_is_own:
+            stay = self.visit
+            stay.stay_details.stay_from, stay.stay_details.stay_to = stay_from, stay_to
+            stay.stay_details.save(update_fields=["stay_from", "stay_to"])
+            stay.status, stay.responded_at = Match.STATUS_ACCEPTED, timezone.now()
+            stay.save(update_fields=["status", "responded_at"])
+            MatchMessage.objects.create(
+                match=stay, sender=user, status_to=Match.STATUS_ACCEPTED,
+                counter_stay_from=stay_from, counter_stay_to=stay_to,
+            )
+            return stay
+        stay = create_stay(
+            self.user, self.community, message=self.match.message, stay_from=stay_from, stay_to=stay_to,
+            status=Match.STATUS_ACCEPTED, volunteer_mode=StayDetails.MODE_APPLICATION,
+        )
+        MatchMessage.objects.create(
+            match=stay, sender=user, status_to=Match.STATUS_ACCEPTED, counter_stay_from=stay_from, counter_stay_to=stay_to,
+        )
+        self.visit = stay
+        self.save(update_fields=["visit"])
+        return stay
+
+    def propose_visit(self, sender, stay_from, stay_to, body="", agreed=False):
+        """Days in the conversation (whole days): proposed, or `agreed` to."""
+        from gift_economy.matches.models import Match, MatchMessage
+
+        message = MatchMessage.objects.create(
+            match=self.match, sender=sender, body=body,
+            status_to=Match.STATUS_ACCEPTED if agreed else Match.STATUS_COUNTER,
+            counter_stay_from=_day_of(stay_from), counter_stay_to=_day_of(stay_to),
+        )
+        self.__dict__.pop("_days", None)
+        return message
+
+    def adopt_stay(self, stay):
+        """They asked for a volunteer stay at the community while invited to visit: it is
+        the visit, and its days their proposal in the conversation."""
+        self.visit = stay
+        self.save(update_fields=["visit"])
+        details = stay.stay_details
+        return self.propose_visit(
+            stay.from_user, details.stay_from, details.stay_to,
+            # Their own words, else a line saying what it is
+            body=stay.message.strip() or str(_("I asked for a volunteer stay on these days.")),
+        )
+
+    # Shown with the latest word on the visit: its days, and accepting or proposing others
+    match_answer_template = "communities/_visit_answer.html"
 
     def match_person(self, user, match):
         """The ambassador sees what someone asking to become a member has to offer and

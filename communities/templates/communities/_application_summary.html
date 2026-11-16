@@ -1,5 +1,6 @@
 {% load i18n %}
 {# On a membership application's match page, for the ambassador and the applicant only: what they agreed to and answered, worded as they saw it, and what to talk about at the visit #}
+{% if not target.is_invitation %}{% include "communities/_application_stage.html" %}{% endif %}
 {% if is_owner and not target.is_invitation %}{% include "communities/_application_review.html" %}{% endif %}
 {% with application=target.application %}
 	{% if application %}

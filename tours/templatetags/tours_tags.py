@@ -128,9 +128,14 @@ def deliveries_with(context, obj):
 
 
 @register.inclusion_tag("tours/_tours_going_there.html", takes_context=True)
-def tours_going_there(context, match):
+def tours_going_there(context, match, for_application=False):
     """On a stay's match page, for the one who stays: the tours that stop there around
-    their days and have room, each with the stretch to get there."""
+    their days and have room, each with the stretch to get there; and, once it's
+    accepted, starting a tour there of their own (the stay becomes its stop's visit).
+    `for_application`: shown with the visit for a membership application."""
+    from django.urls import reverse
+    from gift_economy.matches.models import Match
+
     from ..matching import by_stay, joinable, stays_of
 
     viewer = context["request"].user
@@ -138,7 +143,12 @@ def tours_going_there(context, match):
         return {"fits": []}
     stays = stays_of(viewer).filter(pk=match.pk)
     fits = by_stay(viewer, joinable(viewer), stays=stays)
-    return {"fits": sorted(fits, key=lambda fit: fit.tour.starts_on or fit.tour.created_at.date())}
+    own_tour = match.status == Match.STATUS_ACCEPTED and not match.is_coming and not hasattr(match, "tour_stop")
+    return {
+        "fits": sorted(fits, key=lambda fit: fit.tour.starts_on or fit.tour.created_at.date()),
+        "start_url": f"{reverse('tours:create')}?stay={match.pk}" if own_tour and stays.exists() else "",
+        "for_application": for_application,
+    }
 
 
 @register.inclusion_tag("tours/_go_together.html", takes_context=True)

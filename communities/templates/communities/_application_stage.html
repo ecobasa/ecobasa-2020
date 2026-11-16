@@ -1,0 +1,52 @@
+{% load i18n %}
+{# Where a membership application stands, for the ambassador and the applicant. Invited to visit: the visit (asked for as part of it, or how to ask for it), what comes after it, and the ways to become a member #}
+{% with community=target.community %}
+<div class="border rounded-xl p-4 mb-4 space-y-3 text-sm">
+	<p class="flex flex-wrap items-center gap-2 my-0">
+		<span class="font-semibold">{% trans "Stage" %}:</span>
+		{% if target.ended_at %}
+			<span class="pill bg-primary">{% trans "Not a member any more" %}</span>
+		{% elif match.status == "declined" or match.status == "withdrawn" %}
+			<span class="pill bg-red">{{ match.get_status_display }}</span>
+		{% elif target.is_counted %}
+			<span class="pill bg-green"><i class="fa-solid fa-user-check mr-1"></i>{% trans "Member" %}</span>
+		{% elif target.is_visiting %}
+			<span class="pill bg-green"><i class="fa-solid fa-campground mr-1"></i>{% trans "Invited to visit" %}</span>
+		{% else %}
+			<span class="pill bg-primary"><i class="fa-solid fa-paper-plane mr-1"></i>{% trans "Sent" context "application" %}</span>
+		{% endif %}
+	</p>
+
+	{% if target.is_visiting %}
+		<div class="flex items-start gap-2">
+			<i class="fa-solid fa-campground text-primary mt-1"></i>
+			{# Its days are talked over in this conversation; the stay's page leads here #}
+			{% if target.visit_agreed %}
+				{% with days=target.suggested_visit %}
+					<p class="my-0">{% if is_requester %}{% trans "Your visit" %}{% else %}{% trans "The visit" %}{% endif %}:
+						<a href="#compose" class="underline">{% include "matches/_stay_period.html" with stay_from=days.0 stay_to=days.1 %}</a></p>
+				{% endwith %}
+			{% else %}
+				<p class="my-0 opacity-70"><a href="#compose" class="underline">{% trans "No days agreed for the visit yet" %}</a></p>
+			{% endif %}
+		</div>
+
+		{% if community.after_visit %}
+			<div>
+				<h3 class="text-base mt-0">{% trans "Our process after the visit" %}</h3>
+				<p class="my-0 whitespace-pre-line">{{ community.after_visit }}</p>
+			</div>
+		{% endif %}
+
+		{% if is_owner %}
+			<form method="post" action="{% url 'communities:make_member' community.slug target.pk %}">{% csrf_token %}
+				<button type="submit" class="btn btn-green text-sm"><i class="fa-solid fa-user-check mr-1"></i>{% trans "Make member" %}</button>
+			</form>
+		{% elif is_requester %}
+			<form method="post" action="{% url 'communities:lives_here' community.slug target.pk %}">{% csrf_token %}
+				<button type="submit" class="btn text-sm"><i class="fa-solid fa-house mr-1"></i>{% trans "I already live here" %}</button>
+			</form>
+		{% endif %}
+	{% endif %}
+</div>
+{% endwith %}

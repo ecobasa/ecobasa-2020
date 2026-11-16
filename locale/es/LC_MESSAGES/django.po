@@ -8210,3 +8210,95 @@ msgstr "Aún no hay estancias ni visitas del tour aquí"
 
 msgid "Skills you look for that they have"
 msgstr "Habilidades que buscáis y que tiene"
+
+msgid "Stage"
+msgstr "Etapa"
+
+msgid "Application"
+msgstr "Solicitud"
+
+msgid "Visit"
+msgstr "Visita"
+
+msgid "Member"
+msgstr "Miembro"
+
+msgctxt "application"
+msgid "Sent"
+msgstr "Enviada"
+
+msgid "Show that I found this community through ecobasa"
+msgstr "Mostrar que encontré esta comunidad a través de ecobasa"
+
+msgid "Became a member after this tour"
+msgstr "Se hizo miembro después de este tour"
+
+msgid "Invite to visit"
+msgstr "Invitar a una visita"
+
+msgid "Make member"
+msgstr "Aceptar como miembro"
+
+msgid "Invited to visit"
+msgstr "Invitado/a a una visita"
+
+msgid "Not a member any more"
+msgstr "Ya no es miembro"
+
+msgid "Your visit"
+msgstr "Tu visita"
+
+msgid "The visit"
+msgstr "La visita"
+
+msgid "%(name)s is a member of %(community)s now."
+msgstr "%(name)s ya es miembro de %(community)s."
+
+msgid "The visit for %(name)s's membership application"
+msgstr "La visita para la solicitud de membresía de %(name)s"
+
+msgid "You are invited to visit."
+msgstr "Estás invitado/a a una visita."
+
+msgid "Suggest days for the visit (optional)"
+msgstr "Proponer días para la visita (opcional)"
+
+msgid "Suggest other days"
+msgstr "Proponer otros días"
+
+msgid "Suggest days for the visit"
+msgstr "Proponer días para la visita"
+
+msgid "A few words, if you like"
+msgstr "Unas palabras, si quieres"
+
+msgid "Accept these days"
+msgstr "Aceptar estos días"
+
+msgid "%(name)s will suggest days for your visit here."
+msgstr "%(name)s te propondrá aquí días para tu visita."
+
+msgid "No days agreed for the visit yet"
+msgstr "Aún no hay días acordados para la visita"
+
+msgid "They can accept these days or suggest others. Once you agree on them, the visit is an accepted stay."
+msgstr "Puede aceptar estos días o proponer otros. En cuanto os pongáis de acuerdo, la visita es una estancia aceptada."
+
+msgid "Agreed on the days for the visit: %(days)s"
+msgstr "Días acordados para la visita: %(days)s"
+
+
+msgid "I asked for a volunteer stay on these days."
+msgstr "He pedido una estancia en comunidad en estos días."
+
+msgid "Agreed stay"
+msgstr "Fechas acordadas"
+
+msgid "Start a Community-Tour with this stay"
+msgstr "Empezar un Community-Tour con esta estancia"
+
+msgid "Make a tour out of it: others can come along, and the packing list shows what you could bring. Gifts a community wishes for can often be picked up from other communities along the way."
+msgstr "Haz un tour de ello: otras personas pueden venir, y la lista de equipaje muestra lo que podrías llevar. Los regalos que desea una comunidad a menudo se pueden recoger en otras comunidades del camino."
+
+msgid "Good for your application, too: more experience of community life, good references and gifts you bring along make a good impression."
+msgstr "También es bueno para tu solicitud: más experiencia de vida en comunidad, buenas referencias y los regalos que traigas causan buena impresión."

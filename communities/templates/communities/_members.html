@@ -51,6 +51,15 @@
 		</ul>
 	{% endif %}
 
+	{% if visiting %}
+		<h3 class="text-base">{% trans "Invited to visit" %}</h3>
+		<ul class="space-y-1 mb-4 text-sm">
+			{% for application in visiting %}
+				<li><a href="{{ application.match.get_absolute_url }}" class="underline"><i class="fa-solid fa-campground mr-1"></i>{{ application.user.name|default:application.user.username }}</a></li>
+			{% endfor %}
+		</ul>
+	{% endif %}
+
 	{% if is_ambassador and community.ambassador %}
 		<div class="flex flex-wrap gap-2 mb-3">
 			<a href="{% url 'communities:invite' community.slug %}" class="btn text-sm"><i class="fa-solid fa-user-plus mr-1"></i>{% trans "Invite someone" %}</a>
@@ -71,6 +80,8 @@
 		{% endif %}
 	{% elif membership and membership.is_invitation %}
 		<a href="{{ membership.match.get_absolute_url }}" class="btn w-full"><i class="fa-solid fa-envelope-open-text mr-1"></i>{% trans "You are invited to become a member: answer the invitation" %}</a>
+	{% elif membership.is_visiting %}
+		<p class="text-sm mb-2"><a href="{{ membership.match.get_absolute_url }}#compose" class="underline"><i class="fa-solid fa-campground mr-1"></i>{% trans "You are invited to visit." %}</a></p>
 	{% elif membership %}
 		<a href="{{ membership.match.get_absolute_url }}" class="text-sm underline"><i class="fa-solid fa-hourglass-half mr-1"></i>{% trans "Your membership application waits for an answer." %}</a>
 	{% elif community.ambassador %}

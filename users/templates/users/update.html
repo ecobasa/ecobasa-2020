@@ -72,6 +72,12 @@
               <input type="checkbox" name="shows_offers" value="{{ membership.pk }}" class="form-checkbox mt-0.5 flex-shrink-0" {% if membership.shows_offers %}checked{% endif %}>
               <span>{% blocktrans with name=user_obj.name|default:user_obj.username %}Show my ({{ name }}) personal offers and skills on this community page{% endblocktrans %}</span>
             </label>
+            {% if membership.visit_id %}
+              <label class="flex items-start gap-2 text-sm cursor-pointer mt-1">
+                <input type="checkbox" name="shows_visit" value="{{ membership.pk }}" class="form-checkbox mt-0.5 flex-shrink-0" {% if membership.shows_visit %}checked{% endif %}>
+                <span>{% trans "Show that I found this community through ecobasa" %}</span>
+              </label>
+            {% endif %}
           </div>
         {% endfor %}
       </div>

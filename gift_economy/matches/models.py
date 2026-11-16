@@ -25,6 +25,13 @@ def stay_q():
     return q
 
 
+def talked_over_elsewhere_q():
+    """Stays whose days are talked over in another conversation, so the lists leave them
+    out: the visit for a membership application while its applicant is invited to visit
+    (communities.Membership.visit). Their pages lead to that conversation."""
+    return Q(visit_memberships__stage="visit", visit_memberships__ended_at=None)
+
+
 class Match(models.Model):
     """A negotiation between two users over something one of them offers or wishes for
     (a gift listing: a thing, a skill, knowledge, helping hands), a stay at a community or
@@ -411,9 +418,11 @@ class StayDetails(models.Model):
 
     # Said "I'm coming" to an open event: accepted at once, nobody answers
     MODE_COME = "come"
+    # The visit for a membership application, its days agreed in the application's conversation
+    MODE_APPLICATION = "application"
 
     match = models.OneToOneField(Match, on_delete=models.CASCADE, related_name="stay_details")
-    volunteer_mode = models.CharField(max_length=20, blank=True)  # 'offer' | 'wish' | 'come'
+    volunteer_mode = models.CharField(max_length=20, blank=True)  # 'offer' | 'wish' | 'come' | 'application'
     stay_from = models.DateTimeField(null=True, blank=True)
     stay_to = models.DateTimeField(null=True, blank=True)
     # Who asked and those they bring (children, friends without an account)

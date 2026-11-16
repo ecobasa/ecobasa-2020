@@ -217,6 +217,10 @@ def detail(request, slug):
         "applications":     community.memberships.current().exclude(match=None).exclude(
             match__status=Match.STATUS_ACCEPTED,
         ).exclude(match__recipient=F("user")).select_related("user", "match") if is_ambassador else [],
+        # And who is invited to visit
+        "visiting":         community.memberships.current().filter(
+            stage=Membership.STAGE_VISIT, match__status=Match.STATUS_ACCEPTED,
+        ).select_related("user", "match") if is_ambassador else [],
         "photos":           photos,
         "hero_image":       hero_image,
         "community_skills": community_skills,
@@ -259,7 +263,7 @@ def volunteer_request(request, community_slug):
 
     import datetime
     from gift_economy.matches.models import create_stay
-    from gift_economy.matches.emails import notify_match_created
+    from gift_economy.matches.emails import notify_match_created, notify_match_message
 
     volunteer_mode       = request.POST.get("volunteer_mode", "")
     practice_skills      = request.POST.get("practice_skills", "").strip()
@@ -296,7 +300,13 @@ def volunteer_request(request, community_slug):
         ] + [(listing, None) for listing in wishes],
     )
 
-    notify_match_created(vr, http_request=request)
+    # Invited to visit: the stay is the visit, its days a proposal in the application
+    visiting = community.membership_of(request.user)
+    if visiting is not None and visiting.is_visiting and not visiting.visit_agreed():
+        proposal = visiting.adopt_stay(vr)
+        notify_match_message(visiting.match, sender=request.user, message=proposal.body, http_request=request)
+    else:
+        notify_match_created(vr, http_request=request)
 
     messages.success(request, str(_("Your request has been sent to %(community)s!") % {"community": community.name}))
 
@@ -733,7 +743,7 @@ def apply(request, slug):
     form = ApplicationForm(community, request.POST or None, user=request.user, family=family)
     if request.method == "POST" and form.is_valid():
         with transaction.atomic():
-            membership = Membership.objects.create(community=community, user=request.user)
+            membership = Membership.objects.create(community=community, user=request.user, stage=Membership.STAGE_APPLICATION)
             # No meeting place to agree on: it's about belonging to the community
             match = Match(
                 from_user=request.user, recipient=community.ambassador,
@@ -791,6 +801,127 @@ def _ambassadors_member(request, slug, pk):
     return community, membership
 
 
+def _visiting(request, slug, pk):
+    """(community, membership) of an application accepted for a visit, for its ambassador
+    or the one who applied."""
+    from django.core.exceptions import PermissionDenied
+
+    community = get_object_or_404(Community, slug=slug)
+    membership = get_object_or_404(community.memberships.select_related("user", "match"), pk=pk)
+    if not membership.is_visiting:
+        return community, None
+    if not (community.is_ambassador(request.user) or membership.user_id == request.user.pk):
+        raise PermissionDenied
+    return community, membership
+
+
+def _made_member(request, membership):
+    """Make someone invited to visit a member, and tell them in their application."""
+    from gift_economy.matches.emails import notify_match_message
+    from gift_economy.matches.models import MatchMessage
+
+    membership.make_member()
+    name = membership.user.name or membership.user.email
+    body = _("%(name)s is a member of %(community)s now.") % {"name": name, "community": membership.community.name}
+    MatchMessage.objects.create(match=membership.match, sender=request.user, body=body)
+    notify_match_message(membership.match, sender=request.user, message=body, http_request=request)
+    messages.success(request, body)
+
+
+@login_required
+@require_POST
+def make_member(request, slug, pk):
+    """The ambassador makes someone invited to visit a member."""
+    from django.core.exceptions import PermissionDenied
+
+    community, membership = _visiting(request, slug, pk)
+    if membership is None:
+        return redirect(community.get_absolute_url())
+    if not community.is_ambassador(request.user):
+        raise PermissionDenied
+    _made_member(request, membership)
+    return redirect(membership.match.get_absolute_url())
+
+
+def _days_text(start, end):
+    """Whole days, as a stay's period reads ("Mon 3 May – Mon 17 May")."""
+    from datetime import timedelta
+    from gift_economy.matches.models import period_text
+
+    return period_text(start or end, (end or start) + timedelta(days=1))
+
+
+@login_required
+@require_POST
+def visit_days(request, slug, pk):
+    """Either side proposes days for the visit, in the application's conversation; the
+    ambassador first."""
+    from django.core.exceptions import PermissionDenied
+    from gift_economy.matches.emails import notify_match_message
+    from .models import _day
+
+    community, membership = _visiting(request, slug, pk)
+    if membership is None:
+        return redirect(community.get_absolute_url())
+    if not membership.can_propose_visit(request.user):
+        raise PermissionDenied
+    visit_from, visit_to = _day(request.POST.get("visit_from")), _day(request.POST.get("visit_to"))
+    if not (visit_from or visit_to) or (visit_from and visit_to and visit_to < visit_from):
+        messages.error(request, _("Please suggest when the stay could start or end."))
+        return redirect(membership.match.get_absolute_url())
+    body = request.POST.get("body", "").strip()
+    membership.propose_visit(request.user, visit_from, visit_to, body)
+    notify_match_message(
+        membership.match, sender=request.user, http_request=request,
+        message=body or f"{_('Suggested stay')}: {_days_text(visit_from, visit_to)}",
+    )
+    return redirect(membership.match.get_absolute_url() + "#compose")
+
+
+@login_required
+@require_POST
+def accept_visit_days(request, slug, pk):
+    """The other side accepts the days proposed last: the visit is agreed, as an accepted
+    stay at the community."""
+    from django.core.exceptions import PermissionDenied
+    from django.db import transaction
+    from gift_economy.matches.emails import notify_match_message
+
+    community, membership = _visiting(request, slug, pk)
+    if membership is None:
+        return redirect(community.get_absolute_url())
+    if not membership.visit_waits_for(request.user):
+        raise PermissionDenied
+    from .models import agreed_text
+
+    with transaction.atomic():
+        membership.agree_on_visit(request.user)
+        days = membership.suggested_visit()
+        # The agreed days stand in the latest message
+        membership.propose_visit(request.user, *days, agreed=True)
+    body = agreed_text(*days)
+    notify_match_message(membership.match, sender=request.user, message=body, http_request=request)
+    messages.success(request, body)
+    return redirect(membership.match.get_absolute_url() + "#compose")
+
+
+@login_required
+@require_POST
+def lives_here(request, slug, pk):
+    """Someone invited to visit says they live there now; the ambassador then makes them
+    a member."""
+    from gift_economy.matches.emails import notify_match_message
+    from gift_economy.matches.models import MatchMessage
+
+    community, membership = _visiting(request, slug, pk)
+    if membership is None or membership.user_id != request.user.pk:
+        return redirect(community.get_absolute_url())
+    body = str(_("I already live here"))
+    MatchMessage.objects.create(match=membership.match, sender=request.user, body=body)
+    notify_match_message(membership.match, sender=request.user, message=body, http_request=request)
+    return redirect(membership.match.get_absolute_url())
+
+
 @login_required
 @require_POST
 def remove_member(request, slug, pk):
@@ -842,8 +973,13 @@ def invite(request, slug):
     form = InviteForm(community, request.POST or None, initial={"user": request.GET.get("user", "")})
     if request.method == "POST" and form.is_valid():
         person = form.cleaned_data["user"]
+        visiting = community.membership_of(person)
+        if visiting is not None and visiting.is_visiting:
+            # They asked already: inviting them completes their application
+            _made_member(request, visiting)
+            return redirect(community.get_absolute_url() + "#members")
         with transaction.atomic():
-            membership = Membership.objects.create(community=community, user=person)
+            membership = Membership.objects.create(community=community, user=person, stage=Membership.STAGE_APPLICATION)
             match = Match(
                 from_user=community.ambassador, recipient=person, message=form.cleaned_data["message"],
                 location_type="",
@@ -875,7 +1011,7 @@ def api_people(request, slug):
     q = (request.GET.get("q") or "").strip()
     if len(q) < 2:
         return JsonResponse({"results": []})
-    on = community.memberships.current().values_list("user_id", flat=True)
+    on = community.memberships.current().exclude(stage=Membership.STAGE_VISIT).values_list("user_id", flat=True)
     people = get_user_model().objects.filter(is_active=True, name__icontains=q).exclude(pk__in=on).exclude(pk=request.user.pk).order_by("name")[:8]
     return JsonResponse({"results": [
         {"id": person.pk, "name": person.name, "image": person.image.url if person.image else "",

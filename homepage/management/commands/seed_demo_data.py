@@ -312,8 +312,8 @@ class Command(BaseCommand):
         return communities
 
     def _seed_members(self, users, communities):
-        """A few members besides the ambassadors, and one membership application each
-        way (pending and accepted)."""
+        """A few members besides the ambassadors, and membership applications: one
+        waiting, one invited to visit, and one accepted from someone who lives there."""
         self.stdout.write("Seeding members…")
         members = {
             "Sonnenkraut Ecovillage": ["bjorn@ecobasa.demo", "nils@ecobasa.demo"],
@@ -325,21 +325,31 @@ class Command(BaseCommand):
                 if not communities[name].memberships.filter(user=users[email]).exists():
                     Membership.objects.create(community=communities[name], user=users[email])
         applications = [
-            ("Sonnenkraut Ecovillage", "jules@ecobasa.demo", Match.STATUS_PENDING,
+            ("Sonnenkraut Ecovillage", "jules@ecobasa.demo", Match.STATUS_PENDING, Membership.STAGE_APPLICATION,
              "I've visited twice for the harvest and I'd love to stay for good. I bring fermenting jars and patience."),
-            ("Three Goats and a Dream Farm", "valeria@ecobasa.demo", Match.STATUS_ACCEPTED,
+            ("Sonnenkraut Ecovillage", "valeria@ecobasa.demo", Match.STATUS_ACCEPTED, Membership.STAGE_VISIT,
+             "Your seed library is why I found you. I'd like to come for a few weeks and see if we fit."),
+            ("Three Goats and a Dream Farm", "valeria@ecobasa.demo", Match.STATUS_ACCEPTED, Membership.STAGE_MEMBER,
              "I helped with the mud house last spring. The goats already treat me like family."),
         ]
-        for name, email, status, message in applications:
+        for name, email, status, stage, message in applications:
             community, user = communities[name], users[email]
             if community.memberships.filter(user=user).exists():
                 continue
-            membership = Membership.objects.create(community=community, user=user)
+            membership = Membership.objects.create(community=community, user=user, stage=stage)
             match = Match(from_user=user, recipient=community.ambassador, message=message, status=status, location_type="")
             match.target = membership
             match.save()
             membership.match = match
             membership.save(update_fields=["match"])
+            if stage == Membership.STAGE_VISIT:
+                # Invited to visit, with days the ambassador suggests
+                start = timezone.make_aware(datetime.combine(timezone.localdate() + timedelta(days=24), datetime_time()))
+                MatchMessage.objects.create(
+                    match=match, sender=community.ambassador, status_to=Match.STATUS_ACCEPTED,
+                    body="We'd love to meet you. The harvest weeks are a good time to see how we live.",
+                    counter_stay_from=start, counter_stay_to=start + timedelta(days=14),
+                )
 
         # Some show their offers and skills on the community page
         Membership.objects.filter(
@@ -349,7 +359,7 @@ class Command(BaseCommand):
         # The ambassador invited someone, who hasn't answered yet
         community, person = communities["Kombucha Commune"], users["freja@ecobasa.demo"]
         if not community.memberships.filter(user=person).exists():
-            membership = Membership.objects.create(community=community, user=person)
+            membership = Membership.objects.create(community=community, user=person, stage=Membership.STAGE_APPLICATION)
             match = Match(
                 from_user=community.ambassador, recipient=person, location_type="",
                 message="You've fed our SCOBYs all summer. Want to stay and argue about the chore wheel with us?",
@@ -457,7 +467,9 @@ class Command(BaseCommand):
         }
         for name in processes:
             community = Community.objects.get(name=name)
-            for membership in community.memberships.filter(match__status=Match.STATUS_PENDING, application=None).exclude(
+            for membership in community.memberships.filter(
+                stage__in=[Membership.STAGE_APPLICATION, Membership.STAGE_VISIT], application=None,
+            ).exclude(
                 match__recipient=F("user"),
             ):
                 answers = [{
