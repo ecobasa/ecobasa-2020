@@ -495,9 +495,9 @@
                 </button>
                 <div x-show="acceptAs === '{{ value }}'" style="display:none" class="w-full border rounded-xl p-4 space-y-3">
                   {% include fields %}
-                  <div class="flex flex-wrap gap-2">
+                  <div class="flex flex-wrap justify-between gap-2">
+                    <button type="button" @click="acceptAs = ''" class="btn btn-purple"><i class="fa-solid fa-ban mr-2"></i>{% trans "Cancel" %}</button>
                     <button type="submit" name="action" value="accept" class="btn btn-green"><i class="fa-solid {{ icon }} mr-2"></i>{{ label }}</button>
-                    <button type="button" @click="acceptAs = ''" class="btn btn-purple"><i class="fa-solid fa-times mr-2"></i>{% trans "Cancel" %}</button>
                   </div>
                 </div>
               {% else %}
@@ -548,14 +548,14 @@
           </button>
           {% endif %}
 
-          <button type="submit" name="action" value="counter"
-            x-show="isCounter" style="display:none" class="btn">
-            <i class="fa fa-paper-plane mr-2"></i>{% trans "Send counter-proposal" %}
-          </button>
-          <button type="button" x-show="isCounter" style="display:none"
-            @click="isCounter = false" class="btn btn-purple">
-            <i class="fa fa-times mr-2"></i>{% trans "Cancel" %}
-          </button>
+          <div x-show="isCounter" style="display:none" class="w-full flex flex-wrap justify-between gap-2">
+            <button type="button" @click="isCounter = false" class="btn btn-purple">
+              <i class="fa-solid fa-ban mr-2"></i>{% trans "Cancel" %}
+            </button>
+            <button type="submit" name="action" value="counter" class="btn">
+              <i class="fa fa-paper-plane mr-2"></i>{% trans "Send counter-proposal" %}
+            </button>
+          </div>
         {% endif %}
 
         {% if can_withdraw %}

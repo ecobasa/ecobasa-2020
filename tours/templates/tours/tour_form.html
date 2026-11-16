@@ -64,7 +64,7 @@
     {% endfor %}
 
     <div class="flex justify-between gap-3 pt-4">
-      <a href="{% if tour %}{{ tour.get_absolute_url }}{% else %}{% url 'tours:list' %}{% endif %}" class="btn btn-lg btn-purple"><icon class="fa fa-ban mr-1"></icon>{% trans "Cancel" %}</a>
+      <a href="{% if tour %}{{ tour.get_absolute_url }}{% else %}{% url 'tours:list' %}{% endif %}" class="btn btn-lg btn-purple"><i class="fa fa-ban mr-1"></i>{% trans "Cancel" %}</a>
       <button type="submit" class="btn btn-lg"><i class="fa fa-save mr-2"></i>{% if tour %}{% trans "Save" %}{% else %}{% trans "Next: the route" %}{% endif %}</button>
     </div>
   </form>

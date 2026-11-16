@@ -56,11 +56,11 @@
               {% for stop in order %}<li><i class="fa-solid {{ stop.icon }} mr-1 text-primary"></i>{{ stop.label }}{% if stop.arrive_on or stop.leave_on %} · {% include "tours/_stop_dates.html" %}{% endif %}</li>{% endfor %}
             </ol>
             <p class="text-sm">{% blocktrans with new=order_km old=current_km %}About {{ new }} km instead of {{ old }} km. Stops with days keep their order among each other.{% endblocktrans %}</p>
-            <div class="flex flex-wrap gap-3">
+            <div class="flex flex-wrap justify-between gap-3">
+              <a href="{% url 'tours:plan' tour.slug %}?km={{ km }}" hx-get="{% url 'tours:plan' tour.slug %}?km={{ km }}" class="btn btn-purple"><i class="fa-solid fa-ban mr-1"></i>{% trans "Cancel" %}</a>
               <form method="post" action="{% url 'tours:plan_order' tour.slug %}">{% csrf_token %}
                 <button type="submit" class="btn"><i class="fa-solid fa-check mr-1"></i>{% trans "Use this order" %}</button>
               </form>
-              <a href="{% url 'tours:plan' tour.slug %}?km={{ km }}" hx-get="{% url 'tours:plan' tour.slug %}?km={{ km }}" class="btn btn-purple">{% trans "Cancel" %}</a>
             </div>
           {% else %}
             <p class="m-0 text-sm">{% trans "We found no order with fewer kilometres. Stops with days keep their order among each other." %}</p>

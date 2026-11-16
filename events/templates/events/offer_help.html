@@ -65,8 +65,8 @@
       {% for error in form.message.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
     </div>
 
-    <div class="flex justify-end gap-3">
-      <a href="{{ event.get_absolute_url }}" class="btn btn-lg btn-purple"><i class="fa-solid fa-times mr-2"></i>{% trans "Cancel" %}</a>
+    <div class="flex justify-between gap-3">
+      <a href="{{ event.get_absolute_url }}" class="btn btn-lg btn-purple"><i class="fa-solid fa-ban mr-2"></i>{% trans "Cancel" %}</a>
       <button type="submit" class="btn btn-lg"><i class="fa-solid fa-paper-plane mr-2"></i>{% trans "Send offer" %}</button>
     </div>
   </form>

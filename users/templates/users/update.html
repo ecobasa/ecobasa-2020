@@ -83,8 +83,8 @@
       </div>
     {% endif %}
 
-    <div class="flex items-center justify-end gap-4 mt-12">
-      <a class="btn btn-lg btn-purple" href="{{ user_obj.get_absolute_url }}"><i class="fa fa-times mr-2"></i>{% trans "Cancel" %}</a>
+    <div class="flex items-center justify-between gap-4 mt-12">
+      <a class="btn btn-lg btn-purple" href="{{ user_obj.get_absolute_url }}"><i class="fa fa-ban mr-2"></i>{% trans "Cancel" %}</a>
       <button class="btn btn-lg" type="submit"><i class="fa fa-check mr-2"></i>{% trans "Save changes" %}</button>
     </div>
   </form>

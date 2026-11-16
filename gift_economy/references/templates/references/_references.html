@@ -37,9 +37,9 @@
         {% csrf_token %}
         {% if at_stops and own_reference %}<input type="hidden" name="reference" value="{{ own_reference.pk }}">{% endif %}
         {% include "references/_reference_form_fields.html" %}
-        <div class="flex flex-wrap gap-2">
+        <div class="flex flex-wrap justify-between gap-2">
+          <button type="button" class="btn btn-purple" @click="open = false"><i class="fa fa-ban mr-2"></i>{% trans "Cancel" %}</button>
           <button type="submit" class="btn"><i class="fa fa-check mr-2"></i>{% trans "Save reference" %}</button>
-          <button type="button" class="btn btn-purple" @click="open = false">{% trans "Cancel" %}</button>
         </div>
       </form>
       {% if own_reference %}

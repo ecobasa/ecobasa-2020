@@ -141,12 +141,12 @@
       </div>
     </div>
 
-    <div class="flex items-center justify-end gap-4 mt-12">
+    <div class="flex flex-wrap items-center gap-4 mt-12">
+      <a class="btn btn-lg btn-purple flex" href="{% if listing.pk %}{% url "gifts:detail" listing.pk %}{% elif community %}{{ community.get_absolute_url }}{% else %}{% url "gifts:search" %}{% endif %}"><i class="fa fa-ban mr-2"></i>{% trans "Cancel" %}</a>
       {% if listing.pk %}
-      <a href="{% url "gifts:delete" listing.pk %}" class="btn btn-lg btn-red"><i class="fa fa-recycle mr-2"></i>{% trans "Delete" %}</a>
+      <a href="{% url "gifts:delete" listing.pk %}" class="btn btn-lg btn-red ml-auto"><i class="fa fa-recycle mr-2"></i>{% trans "Delete" %}</a>
       {% endif %}
-      <a class="btn btn-lg btn-purple flex" href="{% if listing.pk %}{% url "gifts:detail" listing.pk %}{% elif community %}{{ community.get_absolute_url }}{% else %}{% url "gifts:search" %}{% endif %}"><i class="fa fa-times mr-2"></i>{% trans "Cancel" %}</a>
-      <button class="btn btn-lg" type="submit">
+      <button class="btn btn-lg{% if not listing.pk %} ml-auto{% endif %}" type="submit">
         <i class="fa fa-check mr-2"></i>{% trans "Save" %}
       </button>
     </div>

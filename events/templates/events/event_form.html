@@ -72,8 +72,8 @@
     <template id="need-row-template">{% include "events/_need_row.html" with need_form=formset.empty_form %}</template>
     <button type="button" class="btn btn-purple" @click="add()"><i class="fa fa-plus mr-1"></i>{% trans "Add a need" %}</button>
 
-    <div class="flex justify-end gap-3 pt-4">
-      <a href="{% if event %}{{ event.get_absolute_url }}{% else %}{{ community.get_absolute_url }}{% endif %}" class="btn btn-lg btn-purple">{% trans "Cancel" %}</a>
+    <div class="flex justify-between gap-3 pt-4">
+      <a href="{% if event %}{{ event.get_absolute_url }}{% else %}{{ community.get_absolute_url }}{% endif %}" class="btn btn-lg btn-purple"><i class="fa fa-ban mr-2"></i>{% trans "Cancel" %}</a>
       <button type="submit" class="btn btn-lg"><i class="fa fa-save mr-2"></i>{% trans "Save" %}</button>
     </div>
   </form>

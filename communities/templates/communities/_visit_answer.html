@@ -32,9 +32,9 @@
 						</label>
 					</div>
 					<textarea name="body" rows="2" class="form-textarea w-full" placeholder="{% trans 'A few words, if you like' %}"></textarea>
-					<div class="flex flex-wrap gap-2">
+					<div class="flex flex-wrap justify-between gap-2">
+						<button type="button" @click="open = false" class="btn btn-purple text-sm"><i class="fa-solid fa-ban mr-1"></i>{% trans "Cancel" %}</button>
 						<button type="submit" class="btn btn-green text-sm"><i class="fa fa-paper-plane mr-1"></i>{% trans "Send" %}</button>
-						<button type="button" @click="open = false" class="btn btn-purple text-sm"><i class="fa-solid fa-times mr-1"></i>{% trans "Cancel" %}</button>
 					</div>
 				</form>
 			{% endif %}

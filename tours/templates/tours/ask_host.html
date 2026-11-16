@@ -93,8 +93,8 @@
         {% for error in field.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
       </div>
     {% endwith %}
-    <div class="flex justify-end gap-3 pt-4">
-      <a href="{{ tour.get_absolute_url }}" class="btn btn-lg btn-purple">{% trans "Cancel" %}</a>
+    <div class="flex justify-between gap-3 pt-4">
+      <a href="{{ tour.get_absolute_url }}" class="btn btn-lg btn-purple"><i class="fa fa-ban mr-2"></i>{% trans "Cancel" %}</a>
       <button type="submit" class="btn btn-lg"><i class="fa-solid fa-paper-plane mr-2"></i>{% if stop.joins_open_event %}{% trans "We're coming" context "host status" %}{% else %}{% trans "Ask to host us" %}{% endif %}</button>
     </div>
   </form>

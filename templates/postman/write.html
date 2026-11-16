@@ -79,13 +79,13 @@
       {{ form.body }}
     </div>
 
-    <div class="flex items-center gap-4">
-      <button type="submit" class="btn btn-lg">
-        <i class="fa fa-paper-plane mr-2"></i>{% trans "Send" %}
-      </button>
+    <div class="flex items-center justify-between gap-4">
       <a href="{% url 'postman:inbox' %}" class="btn btn-lg btn-purple">
         <i class="fa fa-ban mr-2"></i>{% trans "Cancel" %}
       </a>
+      <button type="submit" class="btn btn-lg">
+        <i class="fa fa-paper-plane mr-2"></i>{% trans "Send" %}
+      </button>
     </div>
   </form>
 {% endblock postman_content %}

@@ -39,8 +39,8 @@
         {% for error in field.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
       </div>
     {% endif %}{% endfor %}
-    <div class="flex justify-end gap-3 pt-2">
-      <a href="{% url 'tours:list' %}" class="btn btn-lg btn-purple">{% trans "Cancel" %}</a>
+    <div class="flex justify-between gap-3 pt-2">
+      <a href="{% url 'tours:list' %}" class="btn btn-lg btn-purple"><i class="fa fa-ban mr-2"></i>{% trans "Cancel" %}</a>
       <button type="submit" class="btn btn-lg"><i class="fa-solid fa-paper-plane mr-2"></i>{% trans "Offer a ride" %}</button>
     </div>
   </form>
