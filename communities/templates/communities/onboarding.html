@@ -14,7 +14,7 @@
     <span class="opacity-70">{% trans "Onboarding process" %}</span>
   </div>
   <h1>{% trans "Onboarding process" %}</h1>
-  <p>{% trans "Choose what you'd like to know from people who want to become members. People see it when they ask to become a member, unless they already live with you." %}</p>
+  <p>{% trans "Choose what you'd like to know from people who want to become members. People see it when they ask to become a member, unless they already live with you." %} {% include "help/_link.html" with page="help:members" anchor="process" %}</p>
   <dl class="text-sm space-y-1 mb-4">
     <div><dt class="inline font-semibold">{% trans "Must-match" %}:</dt> <dd class="inline">{% trans "comes first in the application; nobody can send it before agreeing to all of them." %}</dd></div>
     <div><dt class="inline font-semibold">{% trans "Info" %}:</dt> <dd class="inline">{% trans "answered in the application, read by you." %}</dd></div>

@@ -14,6 +14,7 @@
     <span class="opacity-70">{% trans "Ask to become a member" %}</span>
   </div>
   <h1>{% trans "Ask to become a member" %}</h1>
+  <p>{% include "help/_link.html" with page="help:members" anchor="apply" %}</p>
 
   {# Must-matches first: the rest of the form and sending wait until all are agreed to #}
   <form method="post" class="space-y-6"

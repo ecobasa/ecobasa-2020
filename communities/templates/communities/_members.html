@@ -64,6 +64,7 @@
 		<div class="flex flex-wrap gap-2 mb-3">
 			<a href="{% url 'communities:invite' community.slug %}" class="btn text-sm"><i class="fa-solid fa-user-plus mr-1"></i>{% trans "Invite someone" %}</a>
 			<a href="{% url 'communities:onboarding' community.slug %}" class="btn text-sm"><i class="fa-solid fa-list-check mr-1"></i>{% trans "Onboarding process" %}</a>
+			<span class="self-center">{% include "help/_link.html" with page="help:members" anchor="looking" %}</span>
 		</div>
 	{% endif %}
 

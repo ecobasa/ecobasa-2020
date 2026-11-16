@@ -1,0 +1,137 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block head_title %}{% trans "Help" %}: {% trans "Members and applications" %} — ecobasa{% endblock %}
+
+{% block content %}
+{% url 'communities:list' as list_url %}{% url 'matches:list' as matches_url %}{% url 'users:update' as settings_url %}
+<div class="container-page">
+  <a href="{% url 'help:index' %}" class="text-sm"><i class="fa fa-arrow-left mr-1"></i>{% trans "Help" %}</a>
+  <h1 class="mt-2 text-4xl sm:text-5xl hyphens-auto"><i class="fa-solid fa-door-open mr-2"></i>{% trans "Members and applications" %}</h1>
+
+  <div class="lg:grid lg:grid-cols-4 lg:gap-10">
+    {# Contents, beside the text on wide screens #}
+    <nav class="mb-8 lg:mb-0" aria-label="{% trans 'Contents' %}">
+      <div class="lg:sticky lg:top-6 p-4 rounded-lg bg-secondary bg-opacity-75 text-sm">
+        <span class="block font-bold mb-2">{% trans "Contents" %}</span>
+        <ol class="m-0 space-y-1">
+          <li class="mb-0"><a class="text-yellow hover:text-purple" href="#what">{% trans "How someone becomes a member" %}</a></li>
+          <li class="mb-0"><a class="text-yellow hover:text-purple" href="#apply">{% trans "Ask to become a member" %}</a></li>
+          <li class="mb-0"><a class="text-yellow hover:text-purple" href="#looking">{% trans "For ambassadors: looking for new members" %}</a></li>
+          <li class="mb-0"><a class="text-yellow hover:text-purple" href="#process">{% trans "Set up your onboarding process" %}</a></li>
+          <li class="mb-0"><a class="text-yellow hover:text-purple" href="#review">{% trans "Read an application" %}</a></li>
+          <li class="mb-0"><a class="text-yellow hover:text-purple" href="#visit">{% trans "The visit" %}</a></li>
+          <li class="mb-0"><a class="text-yellow hover:text-purple" href="#no">{% trans "Saying no with care" %}</a></li>
+          <li class="mb-0"><a class="text-yellow hover:text-purple" href="#members">{% trans "Members and the ambassador" %}</a></li>
+          <li class="mb-0"><a class="text-yellow hover:text-purple" href="#privacy">{% trans "Privacy and deleting" %}</a></li>
+        </ol>
+      </div>
+    </nav>
+
+    <div class="lg:col-span-3 max-w-3xl min-w-0">
+      <section id="what" class="scroll-mt-6">
+        <h2 class="text-3xl sm:text-4xl hyphens-auto">{% trans "How someone becomes a member" %}</h2>
+        <p class="text-lg">{% trans "The community's profile says who we are: how we eat, whether children are welcome, what it costs, how we decide. The application asks who you are. So people see before they apply whether they fit, and nobody has to be turned down for something the profile could have told them." %}</p>
+        <ul class="list-none p-0 mt-6 grid sm:grid-cols-3 gap-4">
+          <li class="p-4 rounded-lg bg-secondary bg-opacity-75">
+            <i class="fa-solid fa-envelope-open-text text-purple mr-1"></i><strong>{% trans "Application" %}</strong><br>
+            {% trans "You answer the community's questions. The ambassador reads them and invites you to visit, or answers you otherwise." %}
+          </li>
+          <li class="p-4 rounded-lg bg-secondary bg-opacity-75">
+            <i class="fa-solid fa-campground text-purple mr-1"></i><strong>{% trans "Visit" %}</strong><br>
+            {% trans "You agree on days, live with them for a while, and talk about what matters to both sides." %}
+          </li>
+          <li class="p-4 rounded-lg bg-secondary bg-opacity-75">
+            <i class="fa-solid fa-user-check text-purple mr-1"></i><strong>{% trans "Member" %}</strong><br>
+            {% trans "What comes after the visit, a trial time, a plenum, buying in, each community does its own way, and describes it." %}
+          </li>
+        </ul>
+        <p class="mt-4">{% trans "ecobasa accompanies you up to the visit. Nobody expects the community to come back and confirm the membership here: once you live there, you become a member the simple way, by an invitation or with “I already live here”." %}</p>
+      </section>
+
+      <section id="apply" class="mt-12 scroll-mt-6">
+        <h2 class="text-3xl sm:text-4xl hyphens-auto">{% trans "Ask to become a member" %}</h2>
+        <p>{% blocktrans %}<a href="{{ list_url }}?looking=1">Communities looking for new members</a> have the button “Ask to become a member” on their page. Before you apply, filter the list by how they live, and read the profile: the kitchen, children, animals, the buy-in, the work, how they decide.{% endblocktrans %}</p>
+        <ol>
+          <li>{% trans "First come the must-matches: what the community expects of everyone who lives there. Only when you agree to all of them can you send your application, so nobody writes long answers for a place that doesn't fit." %}</li>
+          <li>{% trans "Then the community's questions. Some are marked “We'd like to talk about this when you visit”: you don't answer those now, they are topics for later." %}</li>
+          <li>{% trans "Questions about health, debts or what work you can do are always optional. You answer them only if you want to, and only the ambassador sees them." %}</li>
+          <li>{% trans "Applying as a family or with friends? Every adult applies on their own. Add the others under “Applying together with”, by name or by email address, with the children's ages; they get a link and their application goes with yours." %}</li>
+        </ol>
+        <p>{% blocktrans %}Your application and its answer are under <a href="{{ matches_url }}?type=members">Membership applications</a>. There you see the stage it is at, the topics for the visit and what the community does after it, and you can write to the ambassador.{% endblocktrans %}</p>
+        <p>{% trans "Do you live there already? Tick “I already live here”: you skip the questions, and the ambassador confirms you as a member." %}</p>
+      </section>
+
+      <section id="looking" class="mt-12 scroll-mt-6">
+        <h2 class="text-3xl sm:text-4xl hyphens-auto">{% trans "For ambassadors: looking for new members" %}</h2>
+        <p>{% trans "In your community's form, fill in “How we live” and tick “Looking for new members”. Then your community shows up when people filter the communities for it, and “Ask to become a member” appears on your page." %}</p>
+        <p class="p-4 rounded-lg bg-secondary bg-opacity-75 text-sm"><i class="fa-regular fa-lightbulb text-primary mr-1"></i>{% trans "The more your profile says, the fewer applications you have to turn down. A rule never needs to be a question: what the profile states, applicants agree to as a must-match." %}</p>
+      </section>
+
+      <section id="process" class="mt-12 scroll-mt-6">
+        <h2 class="text-3xl sm:text-4xl hyphens-auto">{% trans "Set up your onboarding process" %}</h2>
+        <p>{% trans "In the Members section of your community's page, open “Onboarding process”. There you choose what you'd like to know from people who apply." %}</p>
+        <h3>{% trans "Choose questions" %}</h3>
+        <p>{% trans "The questions come in topics: motivation, conflict and communication, work, finances, everyday agreements, family, support, practical things and commitments. Switch on a topic, then switch off single questions you don't need. Add a short note under any question, for example about the school nearby, and add questions of your own." %}</p>
+        <p>{% trans "The questions are worded with care and translated, so everyone reads them in their own language. The must-matches come from your profile: a vegan kitchen becomes “Our shared kitchen is vegan. That's fine for me.”" %}</p>
+        <h3>{% trans "Three kinds of questions" %}</h3>
+        <ul>
+          <li><strong>{% trans "Must-match" %}</strong>: {% trans "comes first in the application; nobody can send it before agreeing to all of them." %}</li>
+          <li><strong>{% trans "Info" %}</strong>: {% trans "answered in the application, read by you." %}</li>
+          <li><strong>{% trans "Talk at the visit" %}</strong>: {% trans "not answered in the application; you talk about it when they visit." %}</li>
+        </ul>
+        <p>{% trans "Each question comes with a suggested kind; you can change it. Mark a question as required if you need the answer. Questions about health, debts and physical work stay optional." %}</p>
+        <p class="p-4 rounded-lg bg-secondary bg-opacity-75 text-sm"><i class="fa-regular fa-lightbulb text-primary mr-1"></i>{% trans "Ask few questions in writing and keep the deep ones for the visit. What someone writes about a conflict says less than an evening together at the kitchen table." %}</p>
+        <h3>{% trans "Our process after the visit" %}</h3>
+        <p>{% trans "Describe what happens after the visit: a trial time, who decides and how, when shares are bought. Applicants see it before they apply and again while they are invited to visit." %}</p>
+      </section>
+
+      <section id="review" class="mt-12 scroll-mt-6">
+        <h2 class="text-3xl sm:text-4xl hyphens-auto">{% trans "Read an application" %}</h2>
+        <p>{% blocktrans %}New applications reach you by email and under <a href="{{ matches_url }}?type=members">Membership applications</a>. Open one to read the answers. Beside them you see what ecobasa knows anyway: the references on their profile, their stays and tour visits at your community, and the skills you look for that they have. If they applied before, a badge says how that ended, and when.{% endblocktrans %}</p>
+        <p>{% trans "Have questions? Write back in the conversation below the answers. Then answer the application:" %}</p>
+        <ul>
+          <li><strong>{% trans "Invite to visit" %}</strong>: {% trans "the usual way. You can suggest days for the visit right away." %}</li>
+          <li><strong>{% trans "Make member" %}</strong>: {% trans "when you already know them well enough." %}</li>
+          <li><strong>{% trans "Decline" %}</strong>: {% trans "see below, saying no with care." %}</li>
+        </ul>
+      </section>
+
+      <section id="visit" class="mt-12 scroll-mt-6">
+        <h2 class="text-3xl sm:text-4xl hyphens-auto">{% trans "The visit" %}</h2>
+        <p>{% trans "The days for the visit are agreed in the application's conversation, so everything stays in one place. Either side suggests days, the other accepts them or suggests other days. Once agreed, the visit is a stay at your community like any other: it is in your calendar, the visitor sees the exact place, and afterwards you can write references for each other." %}</p>
+        <p>{% trans "The topics you want to talk about at the visit are shown with the application and with the stay, for both of you." %}</p>
+        <p>{% trans "Coming from far away? With agreed days, the application shows tours and rides going there, and you can start a Community-Tour with the stay. A tour visit or an earlier stay can count as the visit too." %}</p>
+        <p>{% trans "After the visit the community goes its own way. When the person becomes a member, press “Make member” on the application, invite them, or they say “I already live here”. A membership that started with a visit through ecobasa remembers it, and can show it if the member agrees." %}</p>
+      </section>
+
+      <section id="no" class="mt-12 scroll-mt-6">
+        <h2 class="text-3xl sm:text-4xl hyphens-auto">{% trans "Saying no with care" %}</h2>
+        <p>{% trans "Being turned down by a community hurts. When you decline, start from a text for “Not now” (no room this year, apply again later) or for “No”, written for the stage the application is at. Fill in the part in brackets with what it's really about; the message can't be sent before that." %}</p>
+        <p>{% trans "The applicant sees no red “Declined”, only your answer, and a link to other communities looking for new members." %}</p>
+        <p class="p-4 rounded-lg bg-secondary bg-opacity-75 text-sm"><i class="fa-regular fa-lightbulb text-primary mr-1"></i>{% trans "If you've met them, say it in person or on a call first. The message follows that." %}</p>
+        <p>{% trans "Concerns about someone are talked through openly, with them or among you, not in anonymous notes. ecobasa has no place for those on purpose." %}</p>
+      </section>
+
+      <section id="members" class="mt-12 scroll-mt-6">
+        <h2 class="text-3xl sm:text-4xl hyphens-auto">{% trans "Members and the ambassador" %}</h2>
+        <p>{% trans "Members can edit the community's profile and add its offers and wishes. Each member decides whether their own offers and skills show on the community page." %}</p>
+        <p>{% trans "The ambassador answers stays, applications and requests, and can invite someone to become a member directly, without the onboarding process. Under Members, the ambassador can remove someone or make another member the ambassador: all applications and open requests then go to them, and the one before stays a member." %}</p>
+        <p>{% blocktrans %}Leaving a community is a button in the Members section. In your <a href="{{ settings_url }}">settings</a>, under My Communities, you choose what your memberships show.{% endblocktrans %}</p>
+      </section>
+
+      <section id="privacy" class="mt-12 scroll-mt-6">
+        <h2 class="text-3xl sm:text-4xl hyphens-auto">{% trans "Privacy and deleting" %}</h2>
+        <ul>
+          <li>{% trans "Only the ambassador and the applicant see an application. Whether someone applied, and how it went, is never shown publicly." %}</li>
+          <li>{% trans "When applying, you agree that the community's members may see your answers to decide together. Answers about health, debts and physical work need their own consent and stay with the ambassador." %}</li>
+          <li>{% trans "Those answers are never in an email or a notification." %}</li>
+          <li>{% trans "Nothing is deleted automatically. The applicant and the ambassador can each delete an application: the answers and the conversation go. What stays is who applied where, how it ended and when, so the ambassador sees it if they apply again." %}</li>
+        </ul>
+      </section>
+
+      <p class="mt-12">{% blocktrans %}Something missing or unclear? <a href="/contact">Write to us</a>, we are glad to hear it.{% endblocktrans %}</p>
+    </div>
+  </div>
+</div>
+{% endblock content %}

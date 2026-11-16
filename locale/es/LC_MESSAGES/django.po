@@ -8414,3 +8414,154 @@ msgstr "%(actor)s te ha hecho miembro de %(title)s"
 
 msgid "Read the application"
 msgstr "Leer la solicitud"
+
+msgid "Members and applications"
+msgstr "Miembros y solicitudes"
+
+msgid "How someone becomes a member"
+msgstr "Cómo se llega a ser miembro"
+
+msgid "For ambassadors: looking for new members"
+msgstr "Para embajadores·as: buscar nuevos miembros"
+
+msgid "Set up your onboarding process"
+msgstr "Preparar vuestro proceso de admisión"
+
+msgid "Read an application"
+msgstr "Leer una solicitud"
+
+msgid "Members and the ambassador"
+msgstr "Los miembros y el·la embajador·a"
+
+msgid "Privacy and deleting"
+msgstr "Privacidad y borrar"
+
+msgid "The community's profile says who we are: how we eat, whether children are welcome, what it costs, how we decide. The application asks who you are. So people see before they apply whether they fit, and nobody has to be turned down for something the profile could have told them."
+msgstr "El perfil de la comunidad dice quiénes somos: cómo comemos, si los niños son bienvenidos, cuánto cuesta, cómo decidimos. La solicitud pregunta quién eres tú. Así cada cual ve antes de solicitar si encaja, y nadie tiene que ser rechazado por algo que el perfil ya podría haber dicho."
+
+msgid "You answer the community's questions. The ambassador reads them and invites you to visit, or answers you otherwise."
+msgstr "Respondes a las preguntas de la comunidad. El·la embajador·a las lee y te invita a una visita, o te responde de otra manera."
+
+msgid "You agree on days, live with them for a while, and talk about what matters to both sides."
+msgstr "Acordáis unos días, vives con ellos un tiempo y habláis de lo que importa a ambas partes."
+
+msgid "What comes after the visit, a trial time, a plenum, buying in, each community does its own way, and describes it."
+msgstr "Lo que viene después de la visita, un tiempo de prueba, un plenario, la aportación, cada comunidad lo hace a su manera y lo describe."
+
+msgid "ecobasa accompanies you up to the visit. Nobody expects the community to come back and confirm the membership here: once you live there, you become a member the simple way, by an invitation or with “I already live here”."
+msgstr "ecobasa te acompaña hasta la visita. Nadie espera que la comunidad vuelva aquí para confirmar la membresía: cuando vives allí, te haces miembro de la manera sencilla, con una invitación o con «Ya vivo aquí»."
+
+msgid "First come the must-matches: what the community expects of everyone who lives there. Only when you agree to all of them can you send your application, so nobody writes long answers for a place that doesn't fit."
+msgstr "Primero vienen los requisitos: lo que la comunidad espera de todas las personas que viven allí. Solo cuando estás de acuerdo con todos puedes enviar tu solicitud, así nadie escribe respuestas largas para un lugar que no encaja."
+
+msgid "Then the community's questions. Some are marked “We'd like to talk about this when you visit”: you don't answer those now, they are topics for later."
+msgstr "Luego las preguntas de la comunidad. Algunas llevan la marca «De esto nos gustaría hablar en tu visita»: esas no las respondes ahora, son temas para más adelante."
+
+msgid "Questions about health, debts or what work you can do are always optional. You answer them only if you want to, and only the ambassador sees them."
+msgstr "Las preguntas sobre salud, deudas o qué trabajo puedes hacer son siempre opcionales. Solo las respondes si quieres, y solo el·la embajador·a las ve."
+
+msgid "Applying as a family or with friends? Every adult applies on their own. Add the others under “Applying together with”, by name or by email address, with the children's ages; they get a link and their application goes with yours."
+msgstr "¿Solicitas en familia o con amigos? Cada persona adulta hace su propia solicitud. Añade a los demás en «Junto con», por nombre o por correo electrónico, con la edad de los niños; reciben un enlace y su solicitud va con la tuya."
+
+msgid "Do you live there already? Tick “I already live here”: you skip the questions, and the ambassador confirms you as a member."
+msgstr "¿Ya vives allí? Marca «Ya vivo aquí»: te saltas las preguntas y el·la embajador·a te confirma como miembro."
+
+msgid "In your community's form, fill in “How we live” and tick “Looking for new members”. Then your community shows up when people filter the communities for it, and “Ask to become a member” appears on your page."
+msgstr "En el formulario de vuestra comunidad, rellena «Así vivimos» y marca «Buscamos nuevos miembros». Entonces vuestra comunidad aparece cuando la gente filtra por ello, y en vuestra página aparece «Pedir ser miembro»."
+
+msgid "The more your profile says, the fewer applications you have to turn down. A rule never needs to be a question: what the profile states, applicants agree to as a must-match."
+msgstr "Cuanto más dice vuestro perfil, menos solicitudes tenéis que rechazar. Una regla nunca tiene que ser una pregunta: lo que dice el perfil, quien solicita lo acepta como requisito."
+
+msgid "In the Members section of your community's page, open “Onboarding process”. There you choose what you'd like to know from people who apply."
+msgstr "En la sección Miembros de la página de vuestra comunidad, abre «Proceso de admisión». Allí eliges lo que os gustaría saber de quienes solicitan."
+
+msgid "Choose questions"
+msgstr "Elegir preguntas"
+
+msgid "The questions come in topics: motivation, conflict and communication, work, finances, everyday agreements, family, support, practical things and commitments. Switch on a topic, then switch off single questions you don't need. Add a short note under any question, for example about the school nearby, and add questions of your own."
+msgstr "Las preguntas van por temas: motivación, conflicto y comunicación, trabajo, finanzas, acuerdos cotidianos, familia, apoyo, cuestiones prácticas y compromisos. Activa un tema y luego desactiva las preguntas que no necesitéis. Bajo cada pregunta puedes añadir una nota breve, por ejemplo sobre la escuela cercana, y añadir preguntas propias."
+
+msgid "The questions are worded with care and translated, so everyone reads them in their own language. The must-matches come from your profile: a vegan kitchen becomes “Our shared kitchen is vegan. That's fine for me.”"
+msgstr "Las preguntas están redactadas con cuidado y traducidas, así cada cual las lee en su idioma. Los requisitos salen de vuestro perfil: una cocina vegana se convierte en «Nuestra cocina compartida es vegana. Me parece bien.»"
+
+msgid "Three kinds of questions"
+msgstr "Tres tipos de preguntas"
+
+msgid "Each question comes with a suggested kind; you can change it. Mark a question as required if you need the answer. Questions about health, debts and physical work stay optional."
+msgstr "Cada pregunta viene con un tipo sugerido; podéis cambiarlo. Marca una pregunta como obligatoria si necesitáis la respuesta. Las preguntas sobre salud, deudas y trabajo físico siguen siendo opcionales."
+
+msgid "Ask few questions in writing and keep the deep ones for the visit. What someone writes about a conflict says less than an evening together at the kitchen table."
+msgstr "Haced pocas preguntas por escrito y guardad las profundas para la visita. Lo que alguien escribe sobre un conflicto dice menos que una tarde juntos en la mesa de la cocina."
+
+msgid "Describe what happens after the visit: a trial time, who decides and how, when shares are bought. Applicants see it before they apply and again while they are invited to visit."
+msgstr "Describid lo que pasa después de la visita: un tiempo de prueba, quién decide y cómo, cuándo se compran participaciones. Quienes solicitan lo ven antes de solicitar y de nuevo mientras están invitados a la visita."
+
+msgid "Have questions? Write back in the conversation below the answers. Then answer the application:"
+msgstr "¿Tienes preguntas? Responde en la conversación debajo de las respuestas. Luego responde a la solicitud:"
+
+msgid "the usual way. You can suggest days for the visit right away."
+msgstr "el camino habitual. Puedes proponer días para la visita enseguida."
+
+msgid "when you already know them well enough."
+msgstr "cuando ya la conocéis lo bastante."
+
+msgid "see below, saying no with care."
+msgstr "ver abajo, decir que no con cuidado."
+
+msgid "The days for the visit are agreed in the application's conversation, so everything stays in one place. Either side suggests days, the other accepts them or suggests other days. Once agreed, the visit is a stay at your community like any other: it is in your calendar, the visitor sees the exact place, and afterwards you can write references for each other."
+msgstr "Los días de la visita se acuerdan en la conversación de la solicitud, así todo queda en un solo lugar. Una parte propone días, la otra los acepta o propone otros. Una vez acordados, la visita es una estancia en vuestra comunidad como cualquier otra: está en vuestro calendario, la persona ve el lugar exacto y después podéis escribiros referencias."
+
+msgid "The topics you want to talk about at the visit are shown with the application and with the stay, for both of you."
+msgstr "Los temas de los que queréis hablar en la visita aparecen con la solicitud y con la estancia, para ambas partes."
+
+msgid "Coming from far away? With agreed days, the application shows tours and rides going there, and you can start a Community-Tour with the stay. A tour visit or an earlier stay can count as the visit too."
+msgstr "¿Vienes de lejos? Con los días acordados, la solicitud muestra tours y viajes compartidos hacia allí, y puedes empezar un Community-Tour con la estancia. Una visita de un tour o una estancia anterior también puede contar como la visita."
+
+msgid "After the visit the community goes its own way. When the person becomes a member, press “Make member” on the application, invite them, or they say “I already live here”. A membership that started with a visit through ecobasa remembers it, and can show it if the member agrees."
+msgstr "Después de la visita, la comunidad sigue su propio camino. Cuando la persona se hace miembro, pulsa «Aceptar como miembro» en la solicitud, invítala, o ella dice «Ya vivo aquí». Una membresía que empezó con una visita a través de ecobasa lo recuerda, y puede mostrarlo si el miembro está de acuerdo."
+
+msgid "Being turned down by a community hurts. When you decline, start from a text for “Not now” (no room this year, apply again later) or for “No”, written for the stage the application is at. Fill in the part in brackets with what it's really about; the message can't be sent before that."
+msgstr "Ser rechazado por una comunidad duele. Cuando rechaces, empieza con un texto para «Ahora no» (no hay sitio este año, vuelve a solicitar más adelante) o para «No», escrito para la etapa en la que está la solicitud. Rellena la parte entre corchetes con lo que realmente importa; antes no se puede enviar el mensaje."
+
+msgid "The applicant sees no red “Declined”, only your answer, and a link to other communities looking for new members."
+msgstr "Quien solicita no ve ningún «Rechazado» en rojo, solo tu respuesta y un enlace a otras comunidades que buscan nuevos miembros."
+
+msgid "Concerns about someone are talked through openly, with them or among you, not in anonymous notes. ecobasa has no place for those on purpose."
+msgstr "Las dudas sobre alguien se hablan abiertamente, con esa persona o entre vosotros, no en notas anónimas. ecobasa no tiene un lugar para eso a propósito."
+
+msgid "Members can edit the community's profile and add its offers and wishes. Each member decides whether their own offers and skills show on the community page."
+msgstr "Los miembros pueden editar el perfil de la comunidad y añadir sus ofertas y deseos. Cada miembro decide si sus propias ofertas y habilidades aparecen en la página de la comunidad."
+
+msgid "The ambassador answers stays, applications and requests, and can invite someone to become a member directly, without the onboarding process. Under Members, the ambassador can remove someone or make another member the ambassador: all applications and open requests then go to them, and the one before stays a member."
+msgstr "El·la embajador·a responde a estancias, solicitudes y peticiones, y puede invitar a alguien a ser miembro directamente, sin el proceso de admisión. En Miembros, el·la embajador·a puede quitar a alguien o hacer embajador·a a otro miembro: todas las solicitudes y peticiones abiertas pasan entonces a esa persona, y la anterior sigue siendo miembro."
+
+msgid "Only the ambassador and the applicant see an application. Whether someone applied, and how it went, is never shown publicly."
+msgstr "Solo el·la embajador·a y quien solicita ven una solicitud. Si alguien ha solicitado, y cómo terminó, nunca se muestra públicamente."
+
+msgid "When applying, you agree that the community's members may see your answers to decide together. Answers about health, debts and physical work need their own consent and stay with the ambassador."
+msgstr "Al solicitar, aceptas que los miembros de la comunidad puedan ver tus respuestas para decidir juntos. Las respuestas sobre salud, deudas y trabajo físico necesitan su propio consentimiento y se quedan con el·la embajador·a."
+
+msgid "Those answers are never in an email or a notification."
+msgstr "Esas respuestas nunca aparecen en un correo ni en una notificación."
+
+msgid "Nothing is deleted automatically. The applicant and the ambassador can each delete an application: the answers and the conversation go. What stays is who applied where, how it ended and when, so the ambassador sees it if they apply again."
+msgstr "Nada se borra automáticamente. Quien solicita y el·la embajador·a pueden borrar cada uno una solicitud: las respuestas y la conversación desaparecen. Solo queda quién solicitó dónde, cómo terminó y cuándo, para que el·la embajador·a lo vea si vuelve a solicitar."
+
+msgid "Become a member of a community, and for ambassadors: set up your onboarding process and answer applications with care."
+msgstr "Hazte miembro de una comunidad, y para embajadores·as: preparar vuestro proceso de admisión y responder a las solicitudes con cuidado."
+
+#, python-format
+msgid "<a href=\"%(list_url)s?looking=1\">Communities looking for new members</a> have the button “Ask to become a member” on their page. Before you apply, filter the list by how they live, and read the profile: the kitchen, children, animals, the buy-in, the work, how they decide."
+msgstr "Las <a href=\"%(list_url)s?looking=1\">comunidades que buscan nuevos miembros</a> tienen el botón «Pedir ser miembro» en su página. Antes de solicitar, filtra la lista por cómo viven y lee el perfil: la cocina, los niños, los animales, la aportación, el trabajo, cómo deciden."
+
+#, python-format
+msgid "Your application and its answer are under <a href=\"%(matches_url)s?type=members\">Membership applications</a>. There you see the stage it is at, the topics for the visit and what the community does after it, and you can write to the ambassador."
+msgstr "Tu solicitud y su respuesta están en <a href=\"%(matches_url)s?type=members\">Solicitudes de membresía</a>. Allí ves en qué etapa está, los temas para la visita y lo que hace la comunidad después, y puedes escribir al·a la embajador·a."
+
+#, python-format
+msgid "New applications reach you by email and under <a href=\"%(matches_url)s?type=members\">Membership applications</a>. Open one to read the answers. Beside them you see what ecobasa knows anyway: the references on their profile, their stays and tour visits at your community, and the skills you look for that they have. If they applied before, a badge says how that ended, and when."
+msgstr "Las nuevas solicitudes te llegan por correo y en <a href=\"%(matches_url)s?type=members\">Solicitudes de membresía</a>. Abre una para leer las respuestas. Al lado ves lo que ecobasa ya sabe: las referencias de su perfil, sus estancias y visitas de tour en vuestra comunidad y las habilidades que buscáis y que tiene. Si ya solicitó antes, una insignia dice cómo terminó y cuándo."
+
+#, python-format
+msgid "Leaving a community is a button in the Members section. In your <a href=\"%(settings_url)s\">settings</a>, under My Communities, you choose what your memberships show."
+msgstr "Dejar una comunidad es un botón en la sección Miembros. En tus <a href=\"%(settings_url)s\">ajustes</a>, en Mis comunidades, eliges lo que muestran tus membresías."

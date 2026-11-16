@@ -27,6 +27,15 @@
         </span>
       </a>
     </li>
+    <li>
+      <a href="{% url 'help:members' %}" class="flex items-start gap-4 p-6 rounded-2xl bg-secondary bg-opacity-75 shadow hover:shadow-lg transition">
+        <span class="flex-none w-14 h-14 rounded-lg bg-green flex items-center justify-center"><i class="fa-solid fa-door-open text-2xl text-secondary"></i></span>
+        <span class="flex-1 min-w-0">
+          <span class="block font-serif text-2xl text-primary">{% trans "Members and applications" %}</span>
+          <span class="block text-brown">{% trans "Become a member of a community, and for ambassadors: set up your onboarding process and answer applications with care." %}</span>
+        </span>
+      </a>
+    </li>
   </ul>
 
   <p class="mt-8">{% blocktrans %}Something missing or unclear? <a href="/contact">Write to us</a>, we are glad to hear it.{% endblocktrans %}</p>
