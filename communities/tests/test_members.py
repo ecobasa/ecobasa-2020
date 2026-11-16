@@ -196,3 +196,16 @@ def test_application_cards_show_avatars(community, ambassador, ole):
     assert '<i class="fa fa-user">' in received
     sent = _client(ole).get(reverse("matches:list") + "?type=members&box=sent").content.decode()
     assert f'<i class="fa-solid {community.get_type_icon()}">' in sent
+
+
+def test_the_user_menu_puts_requests_under_the_community_for_ambassadors(community, ambassador, ole):
+    from django.utils import translation
+
+    with translation.override("en"):
+        # A page without the dashboard sidebar
+        own = _client(ambassador).get(community.get_absolute_url()).content.decode()
+        other = _client(ole).get(community.get_absolute_url()).content.decode()
+    # Under "My Communities", opening on what was sent to them
+    assert own.index("My Communities") < own.index("?type=members&box=received")
+    assert '?type=members"' not in own and '?type=volunteer"' not in own
+    assert '?type=members"' in other and "box=received" not in other

@@ -552,6 +552,10 @@ class Tour(models.Model):
     # The stretch is changed on the join page, not with a counter-proposal
     match_counter = False
 
+    def match_person(self, user, match):
+        """Only the organisers see what a traveller could bring along, not the other way round."""
+        return self.is_organiser(user)
+
     def can_answer_match(self, user, match):
         """Every organiser answers a join request. An invitation only the one invited."""
         traveller = getattr(match, "traveller", None)

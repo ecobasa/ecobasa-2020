@@ -7917,8 +7917,8 @@ msgstr "¿Qué trabajo físico puedes hacer, por ejemplo en la huerta o en la ob
 msgid "Do you have debts we should know about?"
 msgstr "¿Tienes deudas que deberíamos conocer?"
 
-msgid "Household"
-msgstr "Hogar"
+msgid "Family"
+msgstr "Familia"
 
 
 msgid "What are your plans for your children's school?"
@@ -8135,3 +8135,57 @@ msgstr "Cosas que deseamos"
 
 msgid "Add things you wish for"
 msgstr "Añadir cosas que deseáis"
+
+msgid "Families"
+msgstr "Familias"
+
+#, python-format
+msgid "I agree that %(name)s's members may see my answers to decide together. My application stays until the ambassador or I delete it."
+msgstr "Acepto que los miembros de %(name)s vean mis respuestas para decidir juntos. Mi solicitud se queda hasta que la persona embajadora o yo la borremos."
+
+msgid "I agree that the ambassador sees my answers to the questions marked with a lock. Only they see them; they're never sent by email or shown in notifications."
+msgstr "Acepto que la persona embajadora vea mis respuestas a las preguntas marcadas con un candado. Solo ella las ve; nunca se envían por correo ni aparecen en notificaciones."
+
+msgid "Agree first that the ambassador sees this answer, or leave it empty."
+msgstr "Acepta primero que la persona embajadora vea esta respuesta, o déjala vacía."
+
+msgid "Applying together with"
+msgstr "Junto con"
+
+msgid "Or their email addresses, if they aren't on ecobasa yet"
+msgstr "O sus direcciones de correo, si aún no están en ecobasa"
+
+msgid "Children coming along, and their ages"
+msgstr "Niños y niñas que vienen, y sus edades"
+
+msgid "e.g. 4, 9"
+msgstr "p. ej. 4, 9"
+
+#, python-format
+msgid "“%(email)s” isn't an email address."
+msgstr "«%(email)s» no es una dirección de correo."
+
+#, python-format
+msgid "%(name)s would like to apply together with you to become members of %(community)s"
+msgstr "%(name)s quiere solicitar contigo ser miembros de %(community)s"
+
+msgid "Every adult applies on their own. Your application goes with theirs."
+msgstr "Cada persona adulta hace su propia solicitud. La tuya va junto con la suya."
+
+#, python-format
+msgid "Waiting for %(name)s's application"
+msgstr "Esperando la solicitud de %(name)s"
+
+msgid "%(n)s reference on their profile"
+msgid_plural "%(n)s references on their profile"
+msgstr[0] "%(n)s referencia en su perfil"
+msgstr[1] "%(n)s referencias en su perfil"
+
+msgid "Stays and tour visits here"
+msgstr "Estancias y visitas del tour aquí"
+
+msgid "No stays or tour visits here yet"
+msgstr "Aún no hay estancias ni visitas del tour aquí"
+
+msgid "Skills you look for that they have"
+msgstr "Habilidades que buscáis y que tiene"

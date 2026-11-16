@@ -7943,8 +7943,8 @@ msgstr "Welche körperliche Arbeit kannst du machen, zum Beispiel auf dem Hof od
 msgid "Do you have debts we should know about?"
 msgstr "Hast du Schulden, von denen wir wissen sollten?"
 
-msgid "Household"
-msgstr "Haushalt"
+msgid "Family"
+msgstr "Familie"
 
 
 msgid "What are your plans for your children's school?"
@@ -8161,3 +8161,57 @@ msgstr "Dinge, die wir uns wünschen"
 
 msgid "Add things you wish for"
 msgstr "Gewünschte Dinge hinzufügen"
+
+msgid "Families"
+msgstr "Familien"
+
+#, python-format
+msgid "I agree that %(name)s's members may see my answers to decide together. My application stays until the ambassador or I delete it."
+msgstr "Ich bin einverstanden, dass die Mitglieder von %(name)s meine Antworten sehen, um gemeinsam zu entscheiden. Mein Antrag bleibt, bis die*der Botschafter*in oder ich ihn lösche."
+
+msgid "I agree that the ambassador sees my answers to the questions marked with a lock. Only they see them; they're never sent by email or shown in notifications."
+msgstr "Ich bin einverstanden, dass die*der Botschafter*in meine Antworten auf die mit einem Schloss markierten Fragen sieht. Nur sie*er sieht sie; sie werden nie per E-Mail verschickt oder in Benachrichtigungen gezeigt."
+
+msgid "Agree first that the ambassador sees this answer, or leave it empty."
+msgstr "Stimme zuerst zu, dass die*der Botschafter*in diese Antwort sieht, oder lass sie leer."
+
+msgid "Applying together with"
+msgstr "Gemeinsam mit"
+
+msgid "Or their email addresses, if they aren't on ecobasa yet"
+msgstr "Oder ihre E-Mail-Adressen, wenn sie noch nicht auf ecobasa sind"
+
+msgid "Children coming along, and their ages"
+msgstr "Kinder, die mitkommen, und ihr Alter"
+
+msgid "e.g. 4, 9"
+msgstr "z. B. 4, 9"
+
+#, python-format
+msgid "“%(email)s” isn't an email address."
+msgstr "„%(email)s“ ist keine E-Mail-Adresse."
+
+#, python-format
+msgid "%(name)s would like to apply together with you to become members of %(community)s"
+msgstr "%(name)s möchte mit dir gemeinsam einen Mitgliedsantrag bei %(community)s stellen"
+
+msgid "Every adult applies on their own. Your application goes with theirs."
+msgstr "Jede*r Erwachsene stellt einen eigenen Antrag. Deiner gehört zu ihrem."
+
+#, python-format
+msgid "Waiting for %(name)s's application"
+msgstr "Wartet auf den Antrag von %(name)s"
+
+msgid "%(n)s reference on their profile"
+msgid_plural "%(n)s references on their profile"
+msgstr[0] "%(n)s Referenz auf dem Profil"
+msgstr[1] "%(n)s Referenzen auf dem Profil"
+
+msgid "Stays and tour visits here"
+msgstr "Aufenthalte und Tour-Besuche hier"
+
+msgid "No stays or tour visits here yet"
+msgstr "Noch keine Aufenthalte oder Tour-Besuche hier"
+
+msgid "Skills you look for that they have"
+msgstr "Fähigkeiten, die ihr sucht und die sie*er hat"

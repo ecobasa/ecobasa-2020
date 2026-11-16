@@ -1,0 +1,11 @@
+{% load i18n %}{% blocktrans with name=recipient.name|default:email %}Hello {{ name }},{% endblocktrans %}
+
+{{ headline }}
+
+{% trans "Every adult applies on their own. Your application goes with theirs." %}
+
+{% trans "Ask to become a member" %}: {{ apply_url }}
+{{ community.name }}: {{ detail_url }}
+
+--
+ecobasa.org

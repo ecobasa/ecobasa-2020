@@ -99,10 +99,21 @@ def autocomplete(request):
     return JsonResponse(results, safe=False)
 
 
+def _next_url(request):
+    """Where to go once registered: a page on this site they came from (e.g. an
+    invitation's link), else the homepage."""
+    from django.utils.http import url_has_allowed_host_and_scheme
+
+    url = request.POST.get("next") or request.GET.get("next") or ""
+    if url and url_has_allowed_host_and_scheme(url, allowed_hosts={request.get_host()}, require_https=request.is_secure()):
+        return url
+    return reverse("homepage:homepage")
+
+
 def register(request):
     """register a new user"""
     if request.user.is_authenticated:
-        return redirect(reverse("homepage:homepage"))
+        return redirect(_next_url(request))
     if request.method == "POST":
         data = request.POST
         # allow legacy payloads with first_name/last_name by mapping to name
@@ -120,7 +131,7 @@ def register(request):
             user = authenticate(username=email, password=raw_password)
             auth_login(request, user)
             messages.success(request, _("Account created and logged in."))
-            return redirect("homepage:homepage")
+            return redirect(_next_url(request))
     else:
         form = RegisterForm()
     return render(request, "users/register.html", {"form": form})

@@ -616,8 +616,36 @@ class Membership(models.Model):
             return _("%(actor)s invited you to become a member of %(title)s")
         return _("%(actor)s asked to become a member of %(title)s")
 
-    # A membership is a yes or a no, there is nothing to counter-propose
+    # A membership is a yes or a no, there is nothing to counter-propose, and no gifts
+    # to ask for along with it
     match_counter = False
+    match_extras = False
+
+    def match_person(self, user, match):
+        """The ambassador sees what someone asking to become a member has to offer and
+        where else they are a member; the one asking doesn't need that of the ambassador."""
+        return not self.is_invitation and user.pk == self.community.ambassador_id
+
+    # ── What the ambassador sees with an application, without asking ──
+    def references_count(self):
+        from gift_economy.references.models import references_about
+
+        return references_about(self.user).count()
+
+    def stays_here(self):
+        """Their accepted stays at the community, tour visits included (they came along)."""
+        from gift_economy.matches.models import Match
+
+        return self.community.matches.filter(status=Match.STATUS_ACCEPTED).filter(
+            Q(from_user=self.user) | Q(stay_details__companions=self.user),
+        ).distinct().select_related("stay_details").order_by("-stay_details__stay_from")
+
+    def wished_skills(self):
+        """Their skill offers the community looks for."""
+        from gift_economy.gifts.models import Listing, skill_offers
+
+        wished = Listing.objects.of(self.community).filter(type=Listing.TYPE_WISH).exclude(skill=None).values("skill_id")
+        return list(skill_offers(self.user).filter(skill_id__in=wished).select_related("skill"))
 
     def get_match_summary_template(self):
         return "communities/_application_summary.html"
@@ -633,6 +661,12 @@ class MembershipApplication(models.Model):
     # [{"key", "type", "kind", "text", "sensitive", "answer"}], in the order asked
     answers = models.JSONField(default=list)
     created_at = models.DateTimeField(auto_now_add=True)
+    # When they agreed that the community may see their answers, and, apart from that,
+    # that the ambassador sees their answers to the sensitive questions
+    consented_at = models.DateTimeField(null=True, blank=True)
+    sensitive_consented_at = models.DateTimeField(null=True, blank=True)
+    # Applying together with others, each with an application of their own
+    family = models.ForeignKey("Family", on_delete=models.SET_NULL, null=True, blank=True, related_name="applications")
 
     class Meta:
         verbose_name = _("Membership application")
@@ -652,6 +686,51 @@ class MembershipApplication(models.Model):
 
     def talks(self):
         return self.of_type(onboarding.DISCUSSION)
+
+    def together(self):
+        """The others in its family: (person, their match) for who applied too, and
+        (person or address, None) for who is still to."""
+        if self.family_id is None:
+            return []
+        others = self.family.applications.exclude(pk=self.pk).select_related("membership__user", "membership__match")
+        return [(other.membership.user, other.membership.match) for other in others] + [
+            (waiting, None) for waiting in self.family.waiting()
+        ]
+
+
+class Family(models.Model):
+    """People who apply together to become members of a community. Every adult applies
+    on their own; the family keeps the children coming along, by age, and the email
+    addresses of those asked to apply too who haven't yet."""
+
+    community = models.ForeignKey(Community, on_delete=models.CASCADE, related_name="families")
+    children = ArrayField(models.PositiveSmallIntegerField(), default=list, blank=True)
+    invited = ArrayField(models.EmailField(), default=list, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = _("Family")
+        verbose_name_plural = _("Families")
+
+    def __str__(self):
+        return ", ".join(str(application.membership.user) for application in self.applications.all()) or str(self.pk)
+
+    def applicants(self):
+        return [application.membership.user for application in self.applications.select_related("membership__user")]
+
+    def waiting(self):
+        """Those asked to apply too who haven't yet: their account, or only the address."""
+        users = {user.email.lower(): user for user in User.objects.filter(email__in=self.invited)}
+        return [users.get(email.lower()) or email for email in self.invited]
+
+    def joined(self, application, email=""):
+        """Someone asked applied too (`email`: the address they were asked at, if their
+        account has another one): no longer waited for."""
+        gone = {application.membership.user.email.lower(), email.lower()}
+        self.invited = [invited for invited in self.invited if invited.lower() not in gone]
+        self.save(update_fields=["invited"])
+        application.family = self
+        application.save(update_fields=["family"])
 
 
 class OnboardingQuestion(models.Model):

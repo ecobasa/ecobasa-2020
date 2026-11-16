@@ -7,6 +7,7 @@ from django.db.models import F, Q, Prefetch
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
 from django.contrib import messages
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_GET, require_POST
 
@@ -257,7 +258,6 @@ def volunteer_request(request, community_slug):
         return redirect(community.get_absolute_url())
 
     import datetime
-    from django.utils import timezone
     from gift_economy.matches.models import create_stay
     from gift_economy.matches.emails import notify_match_created
 
@@ -711,8 +711,9 @@ def apply(request, slug):
     answers stay with the membership."""
     from django.db import transaction
     from gift_economy.matches.emails import notify_match_created
+    from .emails import read_family_token, send_family_invitations
     from .forms import ApplicationForm
-    from .models import MembershipApplication
+    from .models import Family, MembershipApplication
 
     community = get_object_or_404(Community, slug=slug)
     own = community.membership_of(request.user)
@@ -721,7 +722,15 @@ def apply(request, slug):
     if community.ambassador is None:
         messages.error(request, _("This community has no contact person."))
         return redirect(community.get_absolute_url())
-    form = ApplicationForm(community, request.POST or None)
+    # Asked to apply together with someone: by the link in their email, or at one's own address
+    token = request.POST.get("together_token") or request.GET.get("together") or ""
+    family_pk, invited_email = read_family_token(token) if token else (None, "")
+    families = Family.objects.filter(community=community)
+    family = (
+        families.filter(pk=family_pk).first() if family_pk
+        else families.filter(invited__contains=[request.user.email.lower()]).first()
+    )
+    form = ApplicationForm(community, request.POST or None, user=request.user, family=family)
     if request.method == "POST" and form.is_valid():
         with transaction.atomic():
             membership = Membership.objects.create(community=community, user=request.user)
@@ -734,12 +743,25 @@ def apply(request, slug):
             match.save()
             membership.match = match
             membership.save(update_fields=["match"])
+            invited = []
             if not form.lives_here_now:
-                MembershipApplication.objects.create(membership=membership, answers=form.answers())
+                now = timezone.now()
+                application = MembershipApplication.objects.create(
+                    membership=membership, answers=form.answers(), consented_at=now,
+                    sensitive_consented_at=now if form.cleaned_data.get("sensitive_consent") else None,
+                )
+                if family is not None:
+                    family.joined(application, invited_email)
+                elif form.invited_emails() or form.children_ages():
+                    invited = form.invited_emails()
+                    application.family = Family.objects.create(community=community, children=form.children_ages(), invited=invited)
+                    application.save(update_fields=["family"])
         notify_match_created(match, http_request=request)
+        if invited:
+            send_family_invitations(application.family, request.user, invited, request)
         messages.success(request, _("Your membership application has been sent to the ambassador."))
         return redirect(match.get_absolute_url())
-    return render(request, "communities/apply.html", {"community": community, "form": form})
+    return render(request, "communities/apply.html", {"community": community, "form": form, "token": token})
 
 
 @login_required
@@ -841,19 +863,20 @@ def invite(request, slug):
 @login_required
 @require_GET
 def api_people(request, slug):
-    """People whose name matches `q`, to invite into the community (its ambassador
-    only): their name, picture and town. Not those who are members or asked already."""
+    """People whose name matches `q`, to invite into the community or to apply together
+    with: their name, picture and town. Not those who are members or asked already."""
     from django.contrib.auth import get_user_model
     from django.core.exceptions import PermissionDenied
 
     community = get_object_or_404(Community, slug=slug)
-    if not community.is_ambassador(request.user):
+    # Also for whoever applies, to find the people they apply together with
+    if not (community.is_ambassador(request.user) or community.looking_for_members):
         raise PermissionDenied
     q = (request.GET.get("q") or "").strip()
     if len(q) < 2:
         return JsonResponse({"results": []})
     on = community.memberships.current().values_list("user_id", flat=True)
-    people = get_user_model().objects.filter(is_active=True, name__icontains=q).exclude(pk__in=on).order_by("name")[:8]
+    people = get_user_model().objects.filter(is_active=True, name__icontains=q).exclude(pk__in=on).exclude(pk=request.user.pk).order_by("name")[:8]
     return JsonResponse({"results": [
         {"id": person.pk, "name": person.name, "image": person.image.url if person.image else "",
          "place": town(person.location_name) or ""}

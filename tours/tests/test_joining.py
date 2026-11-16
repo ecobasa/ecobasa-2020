@@ -226,3 +226,11 @@ def test_a_traveller_who_is_an_ambassador_shows_their_community(four_stops, orga
     accept(traveller.match, organiser)
     html = login(organiser).get(page).content.decode()
     assert farm.get_absolute_url() + '" class="block text-sm' in html
+
+
+def test_only_the_organisers_see_what_a_traveller_could_bring(four_stops, organiser, other):
+    stops = four_stops.ordered_stops()
+    _, traveller = ask(other, four_stops, stops[0], stops[1])
+    url = traveller.match.get_absolute_url()
+    assert 'id="person"' in login(organiser).get(url).content.decode()
+    assert 'id="person"' not in login(other).get(url).content.decode()

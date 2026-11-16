@@ -206,12 +206,15 @@ class TestApplication:
         response = _client(ole).post(url, {f"q{why.pk}": ""})
         assert response.status_code == 200 and not community.memberships.filter(user=ole).exists()
 
+        data = {f"q{kitchen.pk}": "on", f"q{why.pk}": "The bread.", f"q{tractor.pk}": "yes", "message": "Hello!"}
+        # Not agreed that the community sees the answers
+        assert _client(ole).post(url, data).status_code == 200 and not community.memberships.filter(user=ole).exists()
+
         with translation.override("en"):
-            response = _client(ole).post(url, {
-                f"q{kitchen.pk}": "on", f"q{why.pk}": "The bread.", f"q{tractor.pk}": "yes", "message": "Hello!",
-            })
+            response = _client(ole).post(url, {**data, "consent": "on"})
         membership = community.memberships.get(user=ole)
         assert response.status_code == 302 and membership.match.message == "Hello!"
+        assert membership.application.consented_at and membership.application.sensitive_consented_at is None
         answers = {answer["key"] or answer["text"]: answer for answer in membership.application.answers}
         assert answers["kitchen"]["text"] == "Our shared kitchen cooks: Vegan. That's fine for me." and answers["kitchen"]["answer"] is True
         assert answers["why_here"]["answer"] == "The bread." and answers["Can you drive a tractor?"]["answer"] is True
@@ -224,6 +227,114 @@ class TestApplication:
         with translation.override("en"):
             page = _client(ambassador).get(membership.match.get_absolute_url()).content.decode()
         assert "Can you drive a tractor?" in page and "The bread." in page and "Can you drive a lorry?" not in page
+
+    def test_sensitive_answers_need_their_own_consent(self, community):
+        _process(community)
+        ole = _user("ole@example.com", "Ole")
+        kitchen, why, support = (community.onboarding_questions.get(key=key) for key in ["kitchen", "why_here", "support"])
+        url = reverse("communities:apply", args=[community.slug])
+        with translation.override("en"):
+            page = _client(ole).get(url).content.decode()
+        # Right before the first sensitive question
+        assert page.index('name="sensitive_consent"') < page.index(f'name="q{support.pk}"')
+        data = {f"q{kitchen.pk}": "on", f"q{why.pk}": "The bread.", f"q{support.pk}": "A quiet room.", "consent": "on"}
+        response = _client(ole).post(url, data)
+        assert response.status_code == 200 and not community.memberships.filter(user=ole).exists()
+
+        assert _client(ole).post(url, {**data, "sensitive_consent": "on"}).status_code == 302
+        application = community.memberships.get(user=ole).application
+        assert application.sensitive_consented_at
+        assert {answer["key"]: answer["answer"] for answer in application.answers}["support"] == "A quiet room."
+
+    def test_applying_together(self, community, ambassador, mailoutbox):
+        from ..emails import make_family_token
+        from ..models import Family
+
+        _process(community)
+        who = OnboardingQuestion.objects.create(community=community, key="who", type=onboarding.INFO, position=onboarding.POSITIONS["who"])
+        kitchen, why = (community.onboarding_questions.get(key=key) for key in ["kitchen", "why_here"])
+        ole, mara = _user("ole@example.com", "Ole"), _user("mara@example.com", "Mara")
+        url = reverse("communities:apply", args=[community.slug])
+        data = {f"q{kitchen.pk}": "on", f"q{why.pk}": "The bread.", "consent": "on"}
+        assert _client(ole).post(url, {**data, "together_emails": "not an address"}).status_code == 200
+
+        response = _client(ole).post(url, {
+            **data, "together": [str(mara.pk)], "together_emails": "kim@example.org", f"q{who.pk}": "4 and 9",
+        })
+        assert response.status_code == 302
+        application = community.memberships.get(user=ole).application
+        family = application.family
+        assert family.children == [4, 9] and family.invited == ["mara@example.com", "kim@example.org"]
+        answer = {answer["key"]: answer["answer"] for answer in application.answers}["who"]
+        assert answer == {"together": ["Mara", "kim@example.org"], "children": [4, 9]}
+        invitations = [mail for mail in mailoutbox if "apply together" in mail.subject]
+        assert sorted(mail.to[0] for mail in invitations) == ["kim@example.org", "mara@example.com"]
+
+        # Mara comes on her own, at the address she was asked at
+        with translation.override("en"):
+            page = _client(mara).get(url).content.decode()
+        assert "Applying together with" in page and "Ole" in page and f'name="q{who.pk}"' not in page
+        assert _client(mara).post(url, data).status_code == 302
+        family.refresh_from_db()
+        assert family.invited == ["kim@example.org"] and community.memberships.get(user=mara).application.family == family
+
+        # Kim signs up with another address and follows the link
+        kim = _user("kim.new@example.org", "Kim")
+        assert _client(kim).post(f"{url}?together={make_family_token(family, 'kim@example.org')}", {
+            **data, "together_token": make_family_token(family, "kim@example.org"),
+        }).status_code == 302
+        family.refresh_from_db()
+        assert family.invited == [] and family.applications.count() == 3
+
+        with translation.override("en"):
+            page = _client(ambassador).get(application.membership.match.get_absolute_url()).content.decode()
+        assert "Mara" in page and "Kim" in page and "4, 9" in page and "Waiting for" not in page
+
+    def test_waiting_for_the_others(self, community, ambassador):
+        from ..models import Family
+
+        ole = _user("ole@example.com", "Ole")
+        family = Family.objects.create(community=community, invited=["kim@example.org"])
+        membership = Membership.objects.create(community=community, user=ole)
+        from gift_economy.matches.models import Match
+        match = Match(from_user=ole, recipient=ambassador, location_type="")
+        match.target = membership
+        match.save()
+        membership.match = match
+        membership.save()
+        from ..models import MembershipApplication
+        MembershipApplication.objects.create(membership=membership, family=family, answers=[{
+            "key": "who", "type": onboarding.INFO, "kind": onboarding.FAMILY, "text": "Who would move in with you?",
+            "sensitive": False, "answer": {"together": ["kim@example.org"], "children": []},
+        }])
+        with translation.override("en"):
+            page = _client(ambassador).get(match.get_absolute_url()).content.decode()
+        assert "Waiting for kim@example.org" in page
+
+    def test_the_ambassador_sees_what_ecobasa_knows(self, community, ambassador):
+        from gift_economy.gifts.models import Listing, add_skill_offer
+        from gift_economy.gifts.skills.models import Skill
+        from gift_economy.matches.models import Match, create_stay
+
+        ole = _user("ole@example.com", "Ole")
+        carpentry = Skill.objects.create(name="Carpentry")
+        add_skill_offer(ole, carpentry)
+        Listing.objects.create(type=Listing.TYPE_WISH, kind=Listing.KIND_HANDS, skill=carpentry, community=community, title="Carpentry")
+        create_stay(ole, community, status=Match.STATUS_ACCEPTED)
+        # Came along on someone else's tour visit
+        create_stay(ambassador, community, status=Match.STATUS_ACCEPTED, companions=[ole])
+        create_stay(ole, community)  # still open: doesn't count
+        _client(ole).post(reverse("communities:apply", args=[community.slug]), {"lives_here": "on", "message": "Hi"})
+        membership = community.memberships.get(user=ole)
+        assert membership.stays_here().count() == 2 and [listing.skill for listing in membership.wished_skills()] == [carpentry]
+        with translation.override("en"):
+            page = _client(ambassador).get(membership.match.get_absolute_url()).content.decode()
+            own = _client(ole).get(membership.match.get_absolute_url()).content.decode()
+        assert "references on their profile" in page and "Skills you look for that they have" in page
+        assert "Skills you look for" not in own
+        # The ambassador sees what they have to offer, without asking for it along with the membership
+        assert 'id="person"' in page and 'name="action" value="extras"' not in page
+        assert 'id="person"' not in own
 
     def test_who_already_lives_here_skips_the_questions(self, community):
         _process(community)

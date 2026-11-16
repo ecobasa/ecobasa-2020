@@ -20,6 +20,7 @@
 
   <form enctype="multipart/form-data" method="post" class="w-full my-10 form-control-w-full">
     {% crispy form %}
+    {% if request.GET.next or request.POST.next %}<input type="hidden" name="next" value="{{ request.POST.next|default:request.GET.next }}">{% endif %}
     <div id="cropper" class="hidden"></div>
 
     <!-- Location section -->

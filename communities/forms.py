@@ -1,7 +1,9 @@
 import json
+import re
 
 from django import forms
 from django.contrib.auth import get_user_model
+from django.core.validators import validate_email
 from django.forms.widgets import ClearableFileInput
 from django.utils.translation import gettext_lazy as _
 from taggit.forms import TagWidget
@@ -317,9 +319,12 @@ class ApplicationForm(forms.Form):
                                      "placeholder": _("Who you are and how you belong to the community")}),
     )
 
-    def __init__(self, community, *args, **kwargs):
+    def __init__(self, community, *args, user=None, family=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.community = community
+        self.user = user
+        # Asked by someone to apply together with them: already in their family
+        self.family = family
         # Only people who live there already ask while it isn't looking for new members
         self.only_residents = not community.looking_for_members
         self.questions = community.onboarding()
@@ -331,6 +336,26 @@ class ApplicationForm(forms.Form):
             if field is not None:
                 field.question = question
                 self.fields[f"q{question.pk}"] = field
+                if question.kind == onboarding.FAMILY:
+                    self.family_name = f"q{question.pk}"
+                    self.fields["together"] = forms.ModelMultipleChoiceField(
+                        get_user_model().objects.filter(is_active=True), required=False,
+                        label=_("Applying together with"), widget=forms.MultipleHiddenInput,
+                    )
+                    self.fields["together_emails"] = forms.CharField(
+                        required=False, label=_("Or their email addresses, if they aren't on ecobasa yet"),
+                        widget=forms.TextInput(attrs={"class": "form-input w-full", "placeholder": "kim@example.org"}),
+                    )
+        self.fields["consent"] = forms.BooleanField(label=_(
+            "I agree that %(name)s's members may see my answers to decide together. "
+            "My application stays until the ambassador or I delete it."
+        ) % {"name": community.name})
+        # Answers to the sensitive questions only with a consent of their own, given before them
+        if self.sensitive_fields():
+            self.fields["sensitive_consent"] = forms.BooleanField(required=False, label=_(
+                "I agree that the ambassador sees my answers to the questions marked with a lock. "
+                "Only they see them; they're never sent by email or shown in notifications."
+            ))
 
     def _field_for(self, question):
         if question.type == onboarding.DISCUSSION:
@@ -348,6 +373,14 @@ class ApplicationForm(forms.Form):
             return forms.ChoiceField(choices=(("yes", _("Yes")), ("no", _("No"))), widget=forms.RadioSelect, **options)
         if kind == onboarding.CHOICE:
             return forms.ChoiceField(choices=library.choices, widget=forms.RadioSelect, **options)
+        if kind == onboarding.FAMILY:
+            if self.family is not None:
+                # Who they apply with and the children are given already
+                return None
+            return forms.CharField(
+                label=_("Children coming along, and their ages"), required=False, help_text=help_text,
+                widget=forms.TextInput(attrs={"class": "form-input w-full", "placeholder": _("e.g. 4, 9")}),
+            )
         if kind == onboarding.NUMBER:
             return forms.IntegerField(min_value=0, widget=forms.NumberInput(attrs={"class": "form-input w-28"}), **options)
         return forms.CharField(widget=forms.Textarea(attrs={"rows": 3, "class": "form-textarea w-full"}), **options)
@@ -384,6 +417,77 @@ class ApplicationForm(forms.Form):
     def info_fields(self):
         return self._fields_of(onboarding.INFO)
 
+    def sensitive_fields(self):
+        return [field for field in self._fields_of(onboarding.INFO) if field.field.question.sensitive]
+
+    @property
+    def first_sensitive_name(self):
+        """Where the sensitive questions' consent goes: right before the first of them."""
+        sensitive = self.sensitive_fields()
+        return sensitive[0].name if sensitive else ""
+
+    family_name = ""
+
+    @property
+    def family_field(self):
+        return self[self.family_name] if self.family_name else None
+
+    def chosen_together(self):
+        """The people picked so far to apply together with, to show them again."""
+        pks = [pk for pk in (self.data.getlist("together") if self.is_bound else []) if pk.isdigit()]
+        return list(get_user_model().objects.filter(pk__in=pks))
+
+    def clean_together(self):
+        together = self.cleaned_data.get("together") or []
+        return [person for person in together if person != self.user]
+
+    def clean_together_emails(self):
+        emails = []
+        for email in re.split(r"[\s,;]+", self.cleaned_data.get("together_emails", "").strip()):
+            if not email:
+                continue
+            try:
+                validate_email(email)
+            except forms.ValidationError:
+                raise forms.ValidationError(_("“%(email)s” isn't an email address.") % {"email": email})
+            if not (self.user and email.lower() == self.user.email.lower()):
+                emails.append(email.lower())
+        return emails
+
+    def children_ages(self):
+        if not self.family_name:
+            return []
+        return [int(age) for age in re.findall(r"\d+", self.cleaned_data.get(self.family_name) or "")]
+
+    def invited_emails(self):
+        """Everyone they apply together with, by email: who's on ecobasa and who isn't yet."""
+        emails = [person.email.lower() for person in self.cleaned_data.get("together", []) if person.email]
+        return list(dict.fromkeys(emails + self.cleaned_data.get("together_emails", [])))
+
+    def clean(self):
+        cleaned_data = super().clean()
+        if not cleaned_data.get("sensitive_consent"):
+            for field in self.sensitive_fields():
+                if cleaned_data.get(field.name) not in (None, ""):
+                    self.add_error(field.name, _("Agree first that the ambassador sees this answer, or leave it empty."))
+        return cleaned_data
+
+    def _family_answer(self):
+        """Who they apply together with (names, or addresses for who isn't on ecobasa)
+        and the children's ages; None if they come on their own."""
+        if self.family is not None:
+            together = [person.name for person in self.family.applicants()]
+            together += [getattr(waiting, "name", waiting) for waiting in self.family.waiting()
+                         if not (self.user and getattr(waiting, "pk", None) == self.user.pk)]
+            children = self.family.children
+        else:
+            people = self.cleaned_data.get("together", [])
+            known = {person.email.lower() for person in people}
+            together = [person.name for person in people]
+            together += [email for email in self.cleaned_data.get("together_emails", []) if email not in known]
+            children = self.children_ages()
+        return {"together": together, "children": children} if together or children else None
+
     def answers(self):
         """The answers, each with its question as it was worded now."""
         answers = []
@@ -391,7 +495,9 @@ class ApplicationForm(forms.Form):
             answer = None
             if question.type != onboarding.DISCUSSION:
                 value = self.cleaned_data.get(f"q{question.pk}")
-                if question.kind == onboarding.YES_NO:
+                if question.kind == onboarding.FAMILY:
+                    answer = self._family_answer()
+                elif question.kind == onboarding.YES_NO:
                     answer = {"yes": True, "no": False}.get(value)
                 elif question.kind == onboarding.CHOICE:
                     answer = str(dict(question.library.choices).get(value, "")) or None

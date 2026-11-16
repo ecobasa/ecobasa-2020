@@ -1,0 +1,62 @@
+{% load i18n %}
+{# On the apply page: who they apply together with (found by name, or by email for who isn't on ecobasa yet) and the children coming along #}
+<div class="space-y-3" x-data="applyTogether([{% for person in form.chosen_together %}{ id: {{ person.pk }}, name: '{{ person.name|escapejs }}' }{% if not forloop.last %}, {% endif %}{% endfor %}])">
+  <p class="form-label mb-0">{{ field.field.question.shown_text }}{% if not field.field.required %} <span class="text-xs font-normal opacity-70">({% trans "optional" %})</span>{% endif %}</p>
+  <div class="relative">
+    <label class="text-sm" for="together-search">{{ form.together.label }}</label>
+    <template x-for="person in chosen" :key="person.id">
+      <input type="hidden" name="{{ form.together.html_name }}" :value="person.id">
+    </template>
+    <div class="flex flex-wrap gap-2 mb-2" x-show="chosen.length" x-cloak>
+      <template x-for="person in chosen" :key="person.id">
+        <span class="pill bg-green text-sm">
+          <span x-text="person.name"></span>
+          <button type="button" class="ml-1" @click="chosen = chosen.filter(other => other.id !== person.id)" aria-label="{% trans 'Remove' %}"><i class="fa-solid fa-xmark"></i></button>
+        </span>
+      </template>
+    </div>
+    <input type="text" id="together-search" class="form-input w-full" autocomplete="off" x-model="query"
+           @input.debounce.300ms="search()" placeholder="{% trans 'Their name…' %}">
+    <div x-show="results.length" @click.outside="results = []" x-cloak
+         class="absolute z-20 inset-x-0 bg-secondary shadow-lg text-sm py-2 rounded-b border">
+      <template x-for="res in results" :key="res.id">
+        <a href="#" @click.prevent="choose(res)" class="flex items-center gap-2 px-3 py-2 hover:bg-primary hover:text-secondary">
+          <template x-if="res.image"><img :src="res.image" alt="" class="w-6 h-6 rounded-full object-cover"></template>
+          <template x-if="!res.image"><i class="fa fa-user w-6 text-center"></i></template>
+          <span x-text="res.name"></span>
+          <span class="opacity-70" x-show="res.place" x-text="'· ' + res.place"></span>
+        </a>
+      </template>
+    </div>
+    {% for error in form.together.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+  </div>
+  <div>
+    <label class="text-sm" for="{{ form.together_emails.id_for_label }}">{{ form.together_emails.label }}</label>
+    {{ form.together_emails }}
+    {% for error in form.together_emails.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+  </div>
+  <div>
+    <label class="text-sm" for="{{ field.id_for_label }}">{{ field.label }}</label>
+    {{ field }}
+  </div>
+</div>
+
+<script>
+document.addEventListener('alpine:init', () => {
+  Alpine.data('applyTogether', (chosen) => ({
+    chosen, query: '', results: [],
+    async search() {
+      const q = this.query.trim();
+      if (q.length < 2) { this.results = []; return; }
+      const response = await fetch('{% url "communities:api-people" community.slug %}?q=' + encodeURIComponent(q));
+      const ids = this.chosen.map(person => person.id);
+      this.results = (await response.json()).results.filter(res => !ids.includes(res.id));
+    },
+    choose(res) {
+      this.chosen.push({ id: res.id, name: res.name });
+      this.query = '';
+      this.results = [];
+    },
+  }));
+});
+</script>

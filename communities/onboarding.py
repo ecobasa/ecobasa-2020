@@ -27,7 +27,7 @@ TEXT = "text"
 YES_NO = "yes_no"
 CHOICE = "choice"
 NUMBER = "number"
-HOUSEHOLD = "household"  # who moves in along (adults, children, pets)
+FAMILY = "family"        # who applies together, and the children coming along
 AGREE = "agree"          # a statement to agree to
 # What a community's own questions can be
 OWN_KIND_CHOICES = (
@@ -141,7 +141,7 @@ def _kitchen(community):
 
 
 def _pets(community):
-    # Where they want to be asked first, the household's question about pets asks
+    # Where they want to be asked first, the family's question about pets asks
     return {
         community.PETS_NONE: gettext("There are no pets here. I'll come without any."),
     }.get(community.pets, "")
@@ -239,8 +239,8 @@ MODULES = (
         Question("house_agreements", kind=AGREE, type=MUST_MATCH, fact=_house_agreements, fact_label=_("House agreements")),
         Question("languages", kind=AGREE, type=MUST_MATCH, fact=_languages, fact_label=_("Languages")),
     )),
-    Module("household", _("Household"), (
-        Question("who", _("Who would move in with you?"), kind=HOUSEHOLD,
+    Module("family", _("Family"), (
+        Question("who", _("Who would move in with you?"), kind=FAMILY,
                  help_text=_("Adults and children. Every adult applies on their own.")),
         Question("pets_along", _("Will you bring any pets? If so, which ones, how many, and what are they like?"),
                  help_text=_("With people, children and other animals."),

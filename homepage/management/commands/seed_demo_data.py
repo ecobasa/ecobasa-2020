@@ -412,7 +412,7 @@ class Command(BaseCommand):
         self.stdout.write("Seeding onboarding processes…")
         processes = {
             "Sonnenkraut Ecovillage": dict(
-                modules=["motivation", "conflict", "finances", "everyday", "household", "commitments"],
+                modules=["motivation", "conflict", "finances", "everyday", "family", "commitments"],
                 off=["other_communities", "debts"],
                 types={"feedback": onboarding.INFO},
                 required=["why_here", "conflict_story"],
@@ -466,7 +466,7 @@ class Command(BaseCommand):
                     "answer": True if question.type == onboarding.MUST_MATCH
                     else replies.get(question.key) if question.type == onboarding.INFO else None,
                 } for question in community.onboarding()]
-                MembershipApplication.objects.create(membership=membership, answers=answers)
+                MembershipApplication.objects.create(membership=membership, answers=answers, consented_at=membership.created_at)
 
     # ── Listings ─────────────────────────────────────────────────────────
 

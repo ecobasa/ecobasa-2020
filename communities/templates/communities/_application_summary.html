@@ -1,5 +1,6 @@
 {% load i18n %}
 {# On a membership application's match page, for the ambassador and the applicant only: what they agreed to and answered, worded as they saw it, and what to talk about at the visit #}
+{% if is_owner and not target.is_invitation %}{% include "communities/_application_review.html" %}{% endif %}
 {% with application=target.application %}
 	{% if application %}
 		<div class="border rounded-xl bg-secondary p-4 mb-4 space-y-4 text-sm">
@@ -17,7 +18,11 @@
 					{% for answer in application.answered %}
 						<div>
 							<p class="font-semibold my-0">{{ answer.text }}{% if answer.sensitive %} <i class="fa-solid fa-lock text-purple ml-1" title="{% trans 'Only the ambassador sees this' %}"></i>{% endif %}</p>
+							{% if answer.kind == "family" %}
+								{% include "communities/_together_summary.html" %}
+							{% else %}
 							<p class="my-0 whitespace-pre-line">{% if answer.answer is None %}<span class="opacity-70">—</span>{% elif answer.answer is True %}{% trans "Yes" %}{% elif answer.answer is False %}{% trans "No" %}{% else %}{{ answer.answer }}{% endif %}</p>
+							{% endif %}
 						</div>
 					{% endfor %}
 				</div>

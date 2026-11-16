@@ -17,10 +17,18 @@
 
   {# Must-matches first: the rest of the form and sending wait until all are agreed to #}
   <form method="post" class="space-y-6"
-    x-data="{ livesHere: {{ form.lives_here.value|yesno:'true,false' }}, agreed: { {% for field in form.must_match_fields %}'{{ field.html_name }}': {{ field.value|yesno:'true,false' }}{% if not forloop.last %}, {% endif %}{% endfor %} },
+    x-data="{ livesHere: {{ form.lives_here.value|yesno:'true,false' }}, consent: {% if form.only_residents %}true{% else %}{{ form.consent.value|yesno:'true,false' }}{% endif %}, sensitiveOk: {{ form.sensitive_consent.value|yesno:'true,false' }}, agreed: { {% for field in form.must_match_fields %}'{{ field.html_name }}': {{ field.value|yesno:'true,false' }}{% if not forloop.last %}, {% endif %}{% endfor %} },
               get allAgreed() { return Object.values(this.agreed).every(Boolean) } }">
     {% csrf_token %}
+    {% if token %}<input type="hidden" name="together_token" value="{{ token }}">{% endif %}
     {{ form.non_field_errors }}
+
+    {% if form.family %}
+      <p class="pill bg-green">
+        <i class="fa-solid fa-people-roof mr-1"></i>{% trans "Applying together with" %}
+        {% for person in form.family.applicants %}{{ person.name }}{% if not forloop.last %}, {% endif %}{% endfor %}
+      </p>
+    {% endif %}
 
     {% if form.only_residents %}
       {% include "communities/_not_looking.html" %}
@@ -79,8 +87,18 @@
             <h2 class="mt-0">{% trans "What we'd like to know from you" %}</h2>
             <p x-show="!allAgreed" class="text-sm text-brown">{% trans "Agree to everything above first." %}</p>
             {% for field in form.info_fields %}
-              <div>
-                {% if field.widget_type == "checkbox" %}
+              {% if field.name == form.first_sensitive_name %}
+                <div class="border border-purple rounded-lg p-3">
+                  <label class="flex items-start gap-2 cursor-pointer">
+                    <input type="checkbox" name="{{ form.sensitive_consent.html_name }}" class="form-checkbox mt-1 flex-shrink-0" x-model="sensitiveOk">
+                    <span><i class="fa-solid fa-lock text-purple mr-1"></i>{{ form.sensitive_consent.label }}</span>
+                  </label>
+                </div>
+              {% endif %}
+              <div {% if field.field.question.sensitive %}:class="!sensitiveOk && 'opacity-50'"{% endif %}>
+                {% if field.name == form.family_name %}
+                  {% include "communities/_together_field.html" %}
+                {% elif field.widget_type == "checkbox" %}
                   <label class="flex items-start gap-2 cursor-pointer">{{ field }} <span>{{ field.label }}{% if not field.field.required %} <span class="text-xs opacity-70">({% trans "optional" %})</span>{% endif %}</span></label>
                 {% else %}
                   <label class="form-label" for="{{ field.id_for_label }}">
@@ -91,6 +109,8 @@
                     <div class="flex flex-wrap gap-x-4 gap-y-1">
                       {% for option in field %}<label class="inline-flex items-center gap-2 cursor-pointer">{{ option.tag }} {{ option.choice_label }}</label>{% endfor %}
                     </div>
+                  {% elif field.field.question.sensitive %}
+                    <fieldset :disabled="!sensitiveOk">{{ field }}</fieldset>
                   {% else %}
                     {{ field }}
                   {% endif %}
@@ -119,12 +139,20 @@
             <p class="whitespace-pre-line">{{ community.after_visit }}</p>
           </section>
         {% endif %}
+
+        <div :class="!allAgreed && 'opacity-50'">
+          <label class="flex items-start gap-2 cursor-pointer">
+            <input type="checkbox" name="{{ form.consent.html_name }}" id="{{ form.consent.id_for_label }}" class="form-checkbox mt-1 flex-shrink-0" x-model="consent" :disabled="!allAgreed">
+            <span>{{ form.consent.label }}</span>
+          </label>
+          {% for error in form.consent.errors %}<p class="field-error ml-7">{{ error }}</p>{% endfor %}
+        </div>
       </div>
     {% endif %}
 
     <div class="flex flex-wrap gap-2 justify-between">
       <a href="{{ community.get_absolute_url }}#members" class="btn btn-lg btn-purple"><i class="fa fa-ban mr-1"></i>{% trans "Cancel" %}</a>
-      <button type="submit" class="btn btn-lg" :disabled="!livesHere && !allAgreed" :class="!livesHere && !allAgreed && 'opacity-50 cursor-not-allowed'">
+      <button type="submit" class="btn btn-lg" :disabled="!livesHere && !(allAgreed && consent)" :class="!livesHere && !(allAgreed && consent) && 'opacity-50 cursor-not-allowed'">
         <i class="fa-solid fa-door-open mr-1"></i>{% trans "Send" %}
       </button>
     </div>

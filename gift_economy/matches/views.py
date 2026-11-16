@@ -310,6 +310,15 @@ def match_detail(request, pk):
     # declined or withdrawn; also after it was accepted, which the other side then answers.
     # Who just comes to an open event changes nothing here: they take it back and come
     # again with other days.
+    # Whether the viewer sees what the other side has to offer (match_person), and can
+    # ask for some of it along with the match (match_extras). A target says so for
+    # everyone (an attribute) or per viewer (a method taking the user and the match)
+    def target_says(name):
+        value = getattr(target, name, True)
+        return value(request.user, match) if callable(value) else value
+
+    shows_person = target_says("match_person")
+    can_ask_extras = shows_person and is_party and target_says("match_extras")
     can_counter = getattr(target, "match_counter", True) and (
         (is_owner and match.status != Match.STATUS_WITHDRAWN)
         or (is_requester and not match.is_closed and not match.is_coming)
@@ -327,7 +336,7 @@ def match_detail(request, pk):
                 notify_match_message(match, sender=request.user, message=body, http_request=request)
             return redirect(match.get_absolute_url())
 
-        if action == "extras" and is_party:
+        if action == "extras" and can_ask_extras:
             # Ask for more of the other side's gifts and skills as part of this exchange
             other = match.recipient if is_requester else match.from_user
             options = {
@@ -470,7 +479,8 @@ def match_detail(request, pk):
         "your_place":           match.place_of(match.recipient if is_requester else match.from_user),
         "message_form":         MatchMessageForm(),
         "loc_choices":          Match.LOC_CHOICES,
-        "person":               _person(match.recipient if is_requester else match.from_user),
+        "person":               _person(match.recipient if is_requester else match.from_user) if shows_person else None,
+        "can_ask_extras":       can_ask_extras,
         "asked_listing_ids":    {listing.pk for listing in match.listings.all()},
     })
 

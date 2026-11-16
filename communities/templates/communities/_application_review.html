@@ -1,0 +1,41 @@
+{% load i18n %}
+{# On a membership application's match page, for the ambassador only: what ecobasa knows about who asks, without asking them #}
+{% with person=target.user references=target.references_count stays=target.stays_here skills=target.wished_skills %}
+	<div class="border rounded-xl p-4 mb-4 space-y-2 text-sm">
+		<p class="flex items-start gap-2 my-0">
+			<i class="fa-solid fa-comment-dots text-primary mt-1"></i>
+			<a href="{{ person.get_absolute_url }}#references" class="underline">{% blocktrans count n=references %}{{ n }} reference on their profile{% plural %}{{ n }} references on their profile{% endblocktrans %}</a>
+		</p>
+		<div class="flex items-start gap-2">
+			<i class="fa-solid fa-house-chimney text-primary mt-1"></i>
+			{% if stays %}
+				<div>
+					<p class="my-0">{% trans "Stays and tour visits here" %}</p>
+					<ul class="my-0">
+						{% for stay in stays %}
+							<li><a href="{{ stay.get_absolute_url }}" class="underline">{% with details=stay.stay_details %}{% if details.stay_from %}{{ details.stay_from|date:"DATE_FORMAT" }}{% if details.stay_to %} – {{ details.stay_to|date:"DATE_FORMAT" }}{% endif %}{% else %}{{ stay.created_at|date:"DATE_FORMAT" }}{% endif %}{% endwith %}</a></li>
+						{% endfor %}
+					</ul>
+				</div>
+			{% else %}
+				<p class="my-0 opacity-70">{% trans "No stays or tour visits here yet" %}</p>
+			{% endif %}
+		</div>
+		{% if skills %}
+			<div class="flex items-start gap-2">
+				<i class="fa-solid fa-handshake-angle text-primary mt-1"></i>
+				<div>
+					<p class="my-0 mb-2">{% trans "Skills you look for that they have" %}</p>
+					<div class="flex flex-wrap gap-2">
+						{% for listing in skills %}
+							<a href="{{ listing.get_absolute_url }}" class="pill pill-lg bg-purple">
+								{% include "gifts/_listing_icon.html" %}{{ listing.display_title }}
+								{% if listing.level %}<span class="ml-1 text-xs opacity-80">· {{ listing.get_level_display }}</span>{% endif %}
+							</a>
+						{% endfor %}
+					</div>
+				</div>
+			</div>
+		{% endif %}
+	</div>
+{% endwith %}
