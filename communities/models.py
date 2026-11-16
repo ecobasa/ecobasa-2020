@@ -809,6 +809,21 @@ class Membership(models.Model):
             return None
         return _("%(actor)s answered your membership application: %(title)s")
 
+    def get_match_accepted_text(self):
+        """What the yes to an application was: an invitation to visit, or membership."""
+        if self.is_invitation:
+            return None
+        if self.stage == self.STAGE_VISIT:
+            return _("%(actor)s invited you to visit, for your membership application: %(title)s")
+        if self.stage == self.STAGE_MEMBER:
+            return _("%(actor)s made you a member of %(title)s")
+        return None
+
+    @property
+    def match_review_label(self):
+        """The ambassador's email leads to the answers rather than to a quick yes or no."""
+        return _("Read the application") if self.match_accept_choices() else None
+
     # ── The visit, agreed in the application's conversation ──
     # The days are messages with them (`counter_stay_from/to`): the invitation to visit
     # may bring the first ones, then each proposal from either side (the ambassador

@@ -91,6 +91,11 @@ class Notification(models.Model):
             # What is attached to the match (an invitation onto a tour) may say it better
             attached = next((a for a in self.match.attachments() if hasattr(a, "get_match_request_text")), target)
             template = attached.get_match_request_text()
+        elif self.tag == self.TAG_ACCEPTED and self.actor_id != self.match.from_user_id and getattr(
+            target, "get_match_accepted_text", lambda: None,
+        )():
+            # A target may say what the yes was (a membership application: a visit)
+            template = target.get_match_accepted_text()
         elif self.tag == self.TAG_ACCEPTED:
             # The requester can only accept/decline a counter-proposal from the owner.
             template = (_("%(actor)s accepted your counter-proposal for: %(title)s")

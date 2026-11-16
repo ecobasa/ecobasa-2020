@@ -1,4 +1,4 @@
-{% load i18n %}{% blocktrans with name=recipient.name|default:recipient.email %}Hello {{ name }},{% endblocktrans %}
+{% load i18n %}{% autoescape off %}{% blocktrans with name=recipient.name|default:recipient.email %}Hello {{ name }},{% endblocktrans %}
 
 {{ headline }}
 {% if match.summary %}{{ match.summary }}
@@ -26,10 +26,11 @@
 {{ match.message }}
 
 {% endif %}---
-{% trans "Accept" %}: {{ accept_url }}
+{% if review_label %}{{ review_label }}: {{ detail_url }}
+{% else %}{% trans "Accept" %}: {{ accept_url }}
 {% trans "Decline" %}: {{ decline_url }}
 
 {% trans "View" %}: {{ detail_url }}
-
+{% endif %}
 --
-ecobasa.org
+ecobasa.org{% endautoescape %}

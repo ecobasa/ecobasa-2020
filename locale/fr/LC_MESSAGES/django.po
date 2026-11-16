@@ -8438,3 +8438,14 @@ msgstr "Ses réponses et cette conversation seront supprimées, pour %(name)s au
 
 msgid "The membership stays."
 msgstr "L'adhésion reste."
+
+#, python-format
+msgid "%(actor)s invited you to visit, for your membership application: %(title)s"
+msgstr "%(actor)s t'invite à une visite, pour ta demande d'adhésion : %(title)s"
+
+#, python-format
+msgid "%(actor)s made you a member of %(title)s"
+msgstr "%(actor)s t'a fait membre de %(title)s"
+
+msgid "Read the application"
+msgstr "Lire la demande"

@@ -600,6 +600,9 @@ def email_action(request, token):
     if action == "decline" and getattr(target, "match_decline_fields", lambda: "")():
         # Saying no to it takes a few words first: the match page, with its texts
         return redirect(f"{match.get_absolute_url()}?decline=1#compose")
+    if action == "accept" and getattr(target, "match_accept_choices", lambda: [])():
+        # Saying yes is a choice between several ways, made on the match page
+        return redirect(f"{match.get_absolute_url()}#compose")
     if action == "accept" and match.is_loan and target is not None and target.lends_out and not target.is_free(
         match.loan.starts_at, match.loan.ends_at, exclude_match=match,
     ):

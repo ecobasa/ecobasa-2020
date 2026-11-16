@@ -8429,3 +8429,14 @@ msgstr "Die Antworten und dieses Gespräch werden gelöscht, auch für %(name)s.
 
 msgid "The membership stays."
 msgstr "Die Mitgliedschaft bleibt."
+
+#, python-format
+msgid "%(actor)s invited you to visit, for your membership application: %(title)s"
+msgstr "%(actor)s lädt dich zu einem Besuch ein, für deinen Mitgliedsantrag: %(title)s"
+
+#, python-format
+msgid "%(actor)s made you a member of %(title)s"
+msgstr "%(actor)s hat dich als Mitglied von %(title)s aufgenommen"
+
+msgid "Read the application"
+msgstr "Antrag lesen"

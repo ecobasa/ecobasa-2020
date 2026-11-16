@@ -85,13 +85,42 @@ class TestAccepting:
         membership = _accept(ambassador, _apply(ole, community), Membership.STAGE_MEMBER)
         assert community.is_member(ole) and membership.visit is None
 
-    def test_by_the_email_link_it_goes_to_the_visit(self, community, ole):
+    def test_the_email_link_leads_to_the_answers(self, community, ole):
         from gift_economy.matches.emails import make_action_token
 
         membership = _apply(ole, community)
-        Client().get(reverse("matches:email_action", args=[make_action_token(membership.match.pk, "accept")]))
+        response = Client().get(reverse("matches:email_action", args=[make_action_token(membership.match.pk, "accept")]))
         membership.refresh_from_db()
-        assert membership.is_visiting
+        assert membership.stage == Membership.STAGE_APPLICATION and membership.match.status == Match.STATUS_PENDING
+        assert response["Location"] == membership.match.get_absolute_url() + "#compose"
+
+    def test_the_ambassador_is_asked_to_read_it(self, community, ambassador, ole):
+        from django.core import mail
+        from django.test import RequestFactory
+        from gift_economy.matches.emails import notify_match_created
+
+        membership = _apply(ole, community)
+        notify_match_created(membership.match, http_request=RequestFactory().get("/"))
+        email = mail.outbox[-1]
+        assert email.to == [ambassador.email]
+        assert "Read the application" in email.body and "/matches/action/" not in email.body
+
+    def test_the_yes_says_what_it_was(self, community, ambassador, ole):
+        membership = _accept(ambassador, _apply(ole, community), Membership.STAGE_VISIT)
+        notification = Notification.objects.get(recipient=ole, match=membership.match, tag=Notification.TAG_ACCEPTED)
+        with translation.override("en"):
+            assert notification.text == "Rosa invited you to visit, for your membership application: Hof Kleeblatt"
+        _client(ambassador).post(reverse("communities:make_member", args=[community.slug, membership.pk]))
+        notification = Notification.objects.get(pk=notification.pk)
+        with translation.override("en"):
+            assert notification.text == "Rosa made you a member of Hof Kleeblatt"
+
+    def test_the_emails_keep_what_was_written(self, community, ambassador, ole):
+        from django.core import mail
+
+        membership = _apply(ole, community)
+        _client(ambassador).post(membership.match.get_absolute_url(), {"action": "message", "body": "Ole's caravan & ours"})
+        assert "Ole's caravan & ours" in mail.outbox[-1].body
 
     def test_who_lives_there_and_invitations_become_members(self, community, ambassador, ole):
         _client(ole).post(reverse("communities:apply", args=[community.slug]), {"message": "The green caravan.", "lives_here": "on"})
