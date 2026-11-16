@@ -800,6 +800,20 @@ def leave(request, slug):
 
 @login_required
 @require_POST
+def withdraw(request, slug):
+    """Take back a join request that is still open; a few words to the organisers are
+    welcome but not needed, nobody counts on them yet."""
+    tour = _tour(slug, request.user)
+    own = _own_request(tour, request.user)
+    if own is None or own.is_counted or own.is_invitation:
+        return redirect(tour.get_absolute_url())
+    _end(own, request, Match.STATUS_WITHDRAWN, request.POST.get("body", "").strip())
+    messages.success(request, _("Your join request has been withdrawn."))
+    return redirect(tour.get_absolute_url())
+
+
+@login_required
+@require_POST
 def remove(request, slug, pk):
     """An organiser takes someone off the tour, always with a few words to them."""
     tour = _editable(slug, request.user)
@@ -816,9 +830,9 @@ def remove(request, slug, pk):
 
 
 def _end(traveller, request, status, body):
-    """Take a traveller off the tour: their join request is withdrawn (they left) or
-    declined (an organiser took them off), with the words to the other side. Someone
-    added without a request is just removed."""
+    """Take a traveller off the tour: their join request is withdrawn (they left, or took
+    back a request still open) or declined (an organiser took them off), with the words
+    to the other side. Someone added without a request is just removed."""
     match = traveller.match
     if match is None:
         traveller.delete()

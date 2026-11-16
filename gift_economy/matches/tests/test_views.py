@@ -118,6 +118,20 @@ class TestMatchDetail:
 
 
 @pytest.mark.django_db
+def test_menu_badges_count_what_waits_for_an_answer(owner, requester, match):
+    from ..views import waiting_counts
+
+    badge = 'title="Waiting for your answer">1</span>'
+    assert waiting_counts(owner)["matches"] == 1 and waiting_counts(requester)["matches"] == 0
+    assert badge in _client_for(owner).get("/").content.decode()
+    # A counter-proposal waits for the one who asked
+    match.status = Match.STATUS_COUNTER
+    match.save()
+    assert waiting_counts(owner)["matches"] == 0 and waiting_counts(requester)["matches"] == 1
+    assert badge in _client_for(requester).get("/matches/").content.decode()
+
+
+@pytest.mark.django_db
 class TestVolunteerVisits:
     """One Volunteer Visits page: stays others asked for at your community are
     received, the ones you asked for are sent."""
@@ -145,6 +159,26 @@ class TestVolunteerVisits:
         # Without a community of their own nobody can ask them, so no received tab
         assert [(str(t.label), t.active) for t in response.context["tabs"]] == [("Your requests", True)]
         assert "Volunteer Visits" in response.content.decode()
+
+    def test_the_user_menu_lists_them_once_you_asked(self, requester, stranger, stay):
+        link = 'href="/matches/?type=volunteer"'
+        assert link in _client_for(requester).get("/").content.decode()
+        response = _client_for(stranger).get("/")
+        assert link not in response.content.decode()
+        assert not response.context["has_membership_applications"] and not response.context["attends_events"]
+
+    def test_menu_buttons_show_a_dot_while_something_waits(self, requester):
+        from notifications.models import Notification
+
+        dot = "Something is waiting for you"
+        client = _client_for(requester)
+        # Logging in may leave a nudge to add skills
+        Notification.objects.filter(recipient=requester).update(is_read=True)
+        assert dot not in client.get("/").content.decode()
+        Notification.objects.create(recipient=requester, verb="Hello")
+        page = client.get("/").content.decode()
+        # Unread notifications: on the mobile menu button only, with an entry in that menu
+        assert page.count(dot) == 2 and 'href="/notifications/"' in page
 
     def test_ambassador_without_requests_still_has_the_received_tab(self, owner):
         from communities.models import Community

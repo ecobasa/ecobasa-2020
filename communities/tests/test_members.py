@@ -203,8 +203,12 @@ def test_the_user_menu_puts_requests_under_the_community_for_ambassadors(communi
 
     with translation.override("en"):
         # A page without the dashboard sidebar
-        own = _client(ambassador).get(community.get_absolute_url()).content.decode()
-        other = _client(ole).get(community.get_absolute_url()).content.decode()
+        url = community.get_absolute_url()
+        # Only once they applied somewhere
+        assert '?type=members"' not in _client(ole).get(url).content.decode()
+        _apply(ole, community)
+        own = _client(ambassador).get(url).content.decode()
+        other = _client(ole).get(url).content.decode()
     # Under "My Communities", opening on what was sent to them
     assert own.index("My Communities") < own.index("?type=members&box=received")
     assert '?type=members"' not in own and '?type=volunteer"' not in own

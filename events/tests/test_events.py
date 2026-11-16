@@ -388,6 +388,9 @@ def test_events_have_a_main_menu_entry_and_going_to_in_ones_menu(project, helper
     content = Client().get(project.get_absolute_url()).content.decode()
     going = f'href="{reverse("events:going")}"'
     assert f'href="{reverse("events:list")}"' in content and going not in content
+    # Only once they come to one
+    assert going not in _client(helper).get(project.get_absolute_url()).content.decode()
+    _offer(project, helper, status=Match.STATUS_ACCEPTED)
     assert going in _client(helper).get(project.get_absolute_url()).content.decode()
 
 

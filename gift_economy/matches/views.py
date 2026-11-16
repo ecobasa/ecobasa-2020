@@ -156,10 +156,11 @@ def _volunteer_visits(request):
 
 def _membership_applications(request):
     """Asking to become a member of a community, received (as its ambassador) and sent."""
-    applications = _with_details(Match.objects.filter(
-        content_type__app_label="communities", content_type__model="membership",
-    ))
-    return _received_and_sent(request, applications, "members", _MEMBERS)
+    return _received_and_sent(request, _with_details(_applications()), "members", _MEMBERS)
+
+
+def _applications():
+    return Match.objects.filter(content_type__app_label="communities", content_type__model="membership")
 
 
 def _received_and_sent(request, matches, request_type, kind):
@@ -196,13 +197,7 @@ def _join_requests(request):
     """Requests to join a tour: received (as an organiser) and sent."""
     user = request.user
     tours = _with_details(Match.objects.filter(content_type__app_label=TOUR_APP_LABEL))
-    # Also those the user answers for the one they are addressed to (a tour's other organisers)
-    received = Q(recipient=user)
-    for content_type in ContentType.objects.filter(app_label=TOUR_APP_LABEL):
-        answered_by = getattr(content_type.model_class(), "matches_answered_by", None)
-        if answered_by is not None:
-            received |= answered_by(user)
-    boxes = {"received": tours.filter(received).distinct(), "sent": tours.filter(from_user=user)}
+    boxes = {"received": tours.filter(_tours_received(user)).distinct(), "sent": tours.filter(from_user=user)}
     # Tours that fit them, first
     suggestions = _suggestions_of(user).filter(kind=Suggestion.KIND_TOURS)
     waiting = {
@@ -232,6 +227,36 @@ def _join_requests(request):
     return render(request, "matches/matches_list.html", {
         **context, **_requests(request, boxes[box]), "show_from": box == "received", "empty": _TOURS["empty"],
     })
+
+
+def _tours_received(user):
+    """The join requests to `user`, also those they answer for the one they are addressed
+    to (a tour's other organisers): a Q on Match."""
+    received = Q(recipient=user)
+    for content_type in ContentType.objects.filter(app_label=TOUR_APP_LABEL):
+        answered_by = getattr(content_type.model_class(), "matches_answered_by", None)
+        if answered_by is not None:
+            received |= answered_by(user)
+    return received
+
+
+def waiting_counts(user):
+    """What waits for `user` to answer, by page, as the pages count it in their tabs:
+    requests to them still open, and counter-proposals to their own requests. The menus
+    show them as badges."""
+    def waiting(matches, received=None):
+        received = Q(recipient=user) if received is None else received
+        return matches.filter(
+            Q(received, status=Match.STATUS_PENDING) | Q(from_user=user, status=Match.STATUS_COUNTER),
+        ).distinct().count()
+
+    counts = {
+        "matches": waiting(Match.objects.filter(content_type__app_label="gifts")),
+        "volunteer": waiting(Match.objects.filter(stay_q())),
+        "members": waiting(_applications()),
+        "tours": waiting(Match.objects.filter(content_type__app_label=TOUR_APP_LABEL), _tours_received(user)),
+    }
+    return {**counts, "any": any(counts.values())}
 
 
 # ── Match detail ────────────────────────────────────────────────────────────────

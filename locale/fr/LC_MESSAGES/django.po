@@ -5870,6 +5870,27 @@ msgstr "Demande modifiée : %(summary)s"
 msgid "Your join request has been changed."
 msgstr "Ta demande pour voyager a été modifiée."
 
+msgid "Your join request has been withdrawn."
+msgstr "Ta demande pour voyager a été retirée."
+
+msgid "Withdraw"
+msgstr "Retirer"
+
+msgid "Something is waiting for you"
+msgstr "Quelque chose t’attend"
+
+msgid "Unread"
+msgstr "Non lues"
+
+msgid "Waiting for your answer"
+msgstr "Attend ta réponse"
+
+msgid "Menu"
+msgstr "Menu"
+
+msgid "A few words to the organisers, if you like"
+msgstr "Quelques mots aux organisateur·rices, si tu veux"
+
 #, python-format
 msgid "%(n)s person"
 msgid_plural "%(n)s people"

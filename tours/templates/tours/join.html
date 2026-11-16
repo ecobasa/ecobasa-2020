@@ -82,10 +82,18 @@
         {% endfor %}
       </fieldset>
     {% endif %}{% endwith %}
-    <div class="flex justify-end gap-3 pt-4">
-      <a href="{% if own %}{{ own.match.get_absolute_url }}{% else %}{{ tour.get_absolute_url }}{% endif %}" class="btn btn-lg btn-purple">{% trans "Cancel" %}</a>
-      <button type="submit" class="btn btn-lg"><i class="fa-solid fa-user-plus mr-2"></i>{% if own %}{% trans "Save" %}{% else %}{% trans "Ask to join" %}{% endif %}</button>
+    <div class="flex justify-between gap-2 pt-4">
+      {# Its own form below, as forms can't nest #}
+      {% if own %}
+        <button type="submit" form="withdraw" class="btn btn-red"
+          onclick="return confirm('{% trans "Withdraw your request?" as question %}{{ question|escapejs }}')">
+          <i class="fa-solid fa-rotate-left mr-2"></i>{% trans "Withdraw" %}
+        </button>
+      {% endif %}
+      <a href="{% if own %}{{ own.match.get_absolute_url }}{% else %}{{ tour.get_absolute_url }}{% endif %}" class="btn btn-purple ml-auto"><i class="fa-solid fa-ban mr-2"></i>{% trans "Cancel" %}</a>
+      <button type="submit" class="btn"><i class="fa-solid fa-user-plus mr-2"></i>{% if own %}{% trans "Save" %}{% else %}{% trans "Ask to join" %}{% endif %}</button>
     </div>
   </form>
+  {% if own %}<form id="withdraw" method="post" action="{% url 'tours:withdraw' tour.slug %}">{% csrf_token %}</form>{% endif %}
 </div>
 {% endblock %}

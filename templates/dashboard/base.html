@@ -4,9 +4,17 @@
 {% block content %}
 {# Same width as profile and community pages, with the sidebar grid #}
 <div class="container-page grid grid-cols-1 md:grid-cols-4 gap-6">
-  <aside class="md:col-span-1">
+  {# On phones collapsed to a bar named after the highlighted entry (or the page's heading), so the page starts at its content #}
+  <aside class="md:col-span-1" x-data="{ open: false, label: '' }"
+    x-init="const a = $refs.nav.querySelector('a.bg-secondary'); const c = a ? a.cloneNode(true) : document.querySelector('main h1'); if (c && a) c.querySelectorAll('[title]').forEach(e => e.remove()); label = c ? c.textContent.trim().replace(/\s+/g, ' ') : ''">
     <div class="bg-primary bg-opacity-75 p-4 rounded">
-      <nav class="space-y-1">
+      <button type="button" @click="open = !open" :aria-expanded="open" class="md:hidden w-full flex items-center px-3 py-2 rounded text-secondary font-semibold focus:outline-none">
+        <i class="fa-solid fa-bars mr-2"></i><span x-text="label"></span>
+        <i class="fa-solid fa-chevron-down ml-auto transition-transform duration-150" :class="open && 'rotate-180'"></i>
+      </button>
+      <nav x-ref="nav" class="space-y-1 hidden md:block" :class="{ 'hidden': !open, 'mt-2': open }">
+        {# Badges: what waits for their answer or confirmation #}
+        {% trans "Waiting for your answer" as answer_title %}{% trans "Waiting for your confirmation" as confirm_title %}
         {% with ns=request.resolver_match.namespace u=request.resolver_match.url_name %}
         <a href="{% url 'notifications:list' %}" class="block px-3 py-2 rounded {% if ns == 'notifications' %}bg-secondary text-primary font-semibold{% else %}text-secondary hover:bg-secondary hover:text-primary{% endif %}"><i class="fa fa-bell mr-2"></i>{% trans "Notifications" %}</a>
 
@@ -16,9 +24,9 @@
 
         <div class="pt-3"></div>
         <a href="{% url 'matches:list' %}"
-           class="flex items-center px-3 py-2 rounded {% if ns == 'matches' and request_type != 'volunteer' and request_type != 'tours' and request_type != 'members' and u != 'calendar' and u != 'lending' and u != 'community_lending' %}bg-secondary text-primary font-semibold{% else %}text-secondary hover:bg-secondary hover:text-primary{% endif %}">
+           class="group flex items-center px-3 py-2 rounded {% if ns == 'matches' and request_type != 'volunteer' and request_type != 'tours' and request_type != 'members' and u != 'calendar' and u != 'lending' and u != 'community_lending' %}bg-secondary text-primary font-semibold{% else %}text-secondary hover:bg-secondary hover:text-primary{% endif %}">
           <i class="fa-solid fa-handshake mr-2"></i>{% trans "Matches" %}
-          {% if new_suggestions_count %}<span class="ml-auto pill bg-purple text-secondary text-xs" title="{% trans 'New suggestions' %}">{{ new_suggestions_count }}</span>{% endif %}
+          {% include "_badge.html" with count=waiting.matches title=answer_title sidebar=True %}
         </a>
         <a href="{% url 'gifts:mine' %}"
            class="flex items-center px-3 py-2 rounded {% if ns == 'gifts' %}bg-secondary text-primary font-semibold{% else %}text-secondary hover:bg-secondary hover:text-primary{% endif %}">
@@ -39,15 +47,15 @@
         <div class="pt-4 pb-1 px-3 text-xs text-secondary opacity-60 uppercase tracking-wide">{% trans "References" %}</div>
         {% with on_references=request.resolver_match.namespace %}
         <a href="{% url 'references:list' %}"
-           class="flex items-center px-3 py-2 rounded {% if on_references == 'references' and not request.GET.community %}bg-secondary text-primary font-semibold{% else %}text-secondary hover:bg-secondary hover:text-primary{% endif %}">
+           class="group flex items-center px-3 py-2 rounded {% if on_references == 'references' and not request.GET.community %}bg-secondary text-primary font-semibold{% else %}text-secondary hover:bg-secondary hover:text-primary{% endif %}">
           <i class="fa fa-comments mr-2"></i>{% trans "Your references" %}
-          {% if pending_reference_skills %}<span class="ml-auto pill bg-purple text-secondary text-xs" title="{% trans 'Waiting for your confirmation' %}">{{ pending_reference_skills }}</span>{% endif %}
+          {% include "_badge.html" with count=pending_reference_skills title=confirm_title sidebar=True %}
         </a>
         {% for item in reference_communities %}
           <a href="{% url 'references:list' %}?community={{ item.community.slug }}"
-             class="flex items-center px-3 py-2 rounded {% if on_references == 'references' and request.GET.community == item.community.slug %}bg-secondary text-primary font-semibold{% else %}text-secondary hover:bg-secondary hover:text-primary{% endif %}">
+             class="group flex items-center px-3 py-2 rounded {% if on_references == 'references' and request.GET.community == item.community.slug %}bg-secondary text-primary font-semibold{% else %}text-secondary hover:bg-secondary hover:text-primary{% endif %}">
             <i class="fa-solid {{ item.community.get_type_icon }} mr-2 self-start mt-1"></i><span class="leading-snug">{{ item.community.name }}</span>
-            {% if item.pending %}<span class="ml-auto pl-2 pill bg-purple text-secondary text-xs" title="{% trans 'Waiting for your confirmation' %}">{{ item.pending }}</span>{% endif %}
+            {% include "_badge.html" with count=item.pending title=confirm_title sidebar=True %}
           </a>
         {% endfor %}
         {% endwith %}
@@ -55,8 +63,9 @@
         <div class="pt-4 pb-1 px-3 text-xs text-secondary opacity-60 uppercase tracking-wide">{% trans "Communities" %}</div>
 
         <a href="{% url 'matches:list' %}?type=volunteer"
-          class="flex items-center px-3 py-2 rounded {% if request_type == 'volunteer' %}bg-secondary text-primary font-semibold{% else %}text-secondary hover:bg-secondary hover:text-primary{% endif %}">
+          class="group flex items-center px-3 py-2 rounded {% if request_type == 'volunteer' %}bg-secondary text-primary font-semibold{% else %}text-secondary hover:bg-secondary hover:text-primary{% endif %}">
           <i class="fa-solid fa-campground mr-2"></i>{% trans "Volunteer Visits" %}
+          {% include "_badge.html" with count=waiting.volunteer title=answer_title sidebar=True %}
         </a>
         {% for item in reference_communities %}
           <a href="{% url 'matches:calendar' item.community.slug %}"
@@ -71,8 +80,9 @@
           </a>
         {% endfor %}
         <a href="{% url 'matches:list' %}?type=members"
-          class="flex items-center px-3 py-2 rounded {% if request_type == 'members' %}bg-secondary text-primary font-semibold{% else %}text-secondary hover:bg-secondary hover:text-primary{% endif %}">
+          class="group flex items-center px-3 py-2 rounded {% if request_type == 'members' %}bg-secondary text-primary font-semibold{% else %}text-secondary hover:bg-secondary hover:text-primary{% endif %}">
           <i class="fa-solid fa-door-open mr-2"></i>{% trans "Membership applications" %}
+          {% include "_badge.html" with count=waiting.members title=answer_title sidebar=True %}
         </a>
         <div class="pt-4 pb-1 px-3 text-xs text-secondary opacity-60 uppercase tracking-wide">{% trans "Tours" %}</div>
 
@@ -81,8 +91,9 @@
           <i class="fa-solid fa-route mr-2"></i>{% trans "Your tours" %}
         </a>
         <a href="{% url 'matches:list' %}?type=tours"
-          class="flex items-center px-3 py-2 rounded {% if request_type == 'tours' %}bg-secondary text-primary font-semibold{% else %}text-secondary hover:bg-secondary hover:text-primary{% endif %}">
+          class="group flex items-center px-3 py-2 rounded {% if request_type == 'tours' %}bg-secondary text-primary font-semibold{% else %}text-secondary hover:bg-secondary hover:text-primary{% endif %}">
           <i class="fa-solid fa-user-plus mr-2"></i>{% trans "Join requests" %}
+          {% include "_badge.html" with count=waiting.tours title=answer_title sidebar=True %}
         </a>
       </nav>
     </div>

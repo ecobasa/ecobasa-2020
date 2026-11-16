@@ -2,7 +2,7 @@ from django.utils.functional import SimpleLazyObject
 
 
 def pending_reference_skills(request):
-    """For the dashboard sidebar: how many skills tagged on references about you wait for
+    """For the dashboard sidebar and the user menu: how many skills tagged on references about you wait for
     your confirmation, and the same per community you are ambassador of. Lazy, so pages
     that don't show the sidebar don't query it."""
     from .models import ReferenceSkill, references_about
@@ -23,7 +23,12 @@ def pending_reference_skills(request):
             for community in request.user.ambassador_of.order_by("name")
         ]
 
+    reference_communities = SimpleLazyObject(communities)
     return {
         "pending_reference_skills": SimpleLazyObject(own),
-        "reference_communities": SimpleLazyObject(communities),
+        "reference_communities": reference_communities,
+        # For the dot on the user menu button
+        "pending_community_references": SimpleLazyObject(
+            lambda: any(item["pending"] for item in reference_communities),
+        ),
     }

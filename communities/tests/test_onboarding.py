@@ -288,7 +288,7 @@ class TestApplication:
 
         with translation.override("en"):
             page = _client(ambassador).get(application.membership.match.get_absolute_url()).content.decode()
-        assert "Mara" in page and "Kim" in page and "4, 9" in page and "Waiting for" not in page
+        assert "Mara" in page and "Kim" in page and "4, 9" in page and "'s application" not in page
 
     def test_waiting_for_the_others(self, community, ambassador):
         from ..models import Family

@@ -1,0 +1,5 @@
+{% load i18n %}{# On the menu buttons: something in the menu waits for them (a badge there), or, with `notifications`, unread notifications #}
+{% if notifications or waiting.any or pending_reference_skills or pending_community_references %}
+  <span class="absolute top-0 right-0 h-3 w-3 rounded-full bg-purple border-2 border-primary" title="{% trans 'Something is waiting for you' %}"></span>
+  <span class="sr-only">{% trans "Something is waiting for you" %}</span>
+{% endif %}

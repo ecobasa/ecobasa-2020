@@ -270,6 +270,7 @@
                 <a href="{{ join.match.get_absolute_url }}" class="btn">{% trans "See your request" %}</a>
                 <a href="{% url 'tours:join' tour.slug %}" class="btn btn-lg btn-purple">{% trans "Change it" %}</a>
               </div>
+              {% include "tours/_withdraw_request.html" %}
             {% elif join.state == "invited" %}
               <p class="m-0"><i class="fa-solid fa-envelope-open-text mr-1"></i>{% trans "You're invited to travel along." %}</p>
               <a href="{{ join.match.get_absolute_url }}" class="btn btn-lg w-full justify-center">{% trans "See the invitation" %}</a>
