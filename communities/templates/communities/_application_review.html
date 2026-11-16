@@ -2,6 +2,17 @@
 {# On a membership application's match page, for the ambassador only: what ecobasa knows about who asks, without asking them #}
 {% with person=target.user references=target.references_count stays=target.stays_here skills=target.wished_skills %}
 	<div class="border rounded-xl p-4 mb-4 space-y-2 text-sm">
+		{% with before=target.before %}
+			{% if before %}
+				<div class="flex flex-wrap gap-2">
+					{% for past in before %}
+						<span class="pill {% if past.outcome == 'accepted' %}bg-green{% else %}bg-primary{% endif %}">
+							<i class="fa-solid fa-clock-rotate-left mr-1"></i>{{ past.label }}{% if past.outcome == 'not_now' %} · {% trans "Not now" %}{% endif %} · {{ past.date|date:"DATE_FORMAT" }}
+						</span>
+					{% endfor %}
+				</div>
+			{% endif %}
+		{% endwith %}
 		<p class="flex items-start gap-2 my-0">
 			<i class="fa-solid fa-comment-dots text-primary mt-1"></i>
 			<a href="{{ person.get_absolute_url }}#references" class="underline">{% blocktrans count n=references %}{{ n }} reference on their profile{% plural %}{{ n }} references on their profile{% endblocktrans %}</a>

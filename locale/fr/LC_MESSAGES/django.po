@@ -8400,3 +8400,41 @@ msgstr "Remplacer ce que tu as écrit par ce texte ?"
 
 msgid "Communities looking for new members"
 msgstr "Communautés qui cherchent de nouveaux membres"
+
+msgid "Applied"
+msgstr "Demandé"
+
+msgid "Accepted before"
+msgstr "Déjà accepté·e"
+
+msgid "Declined before"
+msgstr "Déjà refusé·e"
+
+msgid "Applied before"
+msgstr "Déjà demandé"
+
+msgid "Outcome"
+msgstr "Résultat"
+
+msgid "Past application"
+msgstr "Demande passée"
+
+msgid "Past applications"
+msgstr "Demandes passées"
+
+msgid "The application is deleted."
+msgstr "La demande est supprimée."
+
+msgid "Delete application"
+msgstr "Supprimer la demande"
+
+#, python-format
+msgid "Your answers and this conversation will be deleted, for %(community)s too. What stays is that you applied, how it ended and when."
+msgstr "Tes réponses et cette conversation seront supprimées, pour %(community)s aussi. Il reste seulement que tu as fait une demande, comment elle s'est terminée et quand."
+
+#, python-format
+msgid "Their answers and this conversation will be deleted, for %(name)s too. What stays is that they applied, how it ended and when, so you'll see it if they apply again."
+msgstr "Ses réponses et cette conversation seront supprimées, pour %(name)s aussi. Il reste seulement qu'elle ou il a fait une demande, comment elle s'est terminée et quand, pour que tu le voies si elle ou il en refait une."
+
+msgid "The membership stays."
+msgstr "L'adhésion reste."

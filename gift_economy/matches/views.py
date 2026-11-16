@@ -523,6 +523,8 @@ def match_detail(request, pk):
         "decline_label":        getattr(target, "match_declined_label", lambda: None)(),
         # What the target adds to a message in the thread (a membership application: the visit)
         "answer_template":      getattr(target, "match_answer_template", ""),
+        # Buttons the target adds to the answer form's (a membership application: "Make member" while visiting)
+        "actions_template":     getattr(target, "match_actions_template", ""),
         "can_counter":          can_counter,
         "can_withdraw":         can_withdraw,
         "proposed_place":       _proposed_place(match, request.user, latest_counter_msg) if can_counter else None,

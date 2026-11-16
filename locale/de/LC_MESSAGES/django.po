@@ -8339,7 +8339,7 @@ msgid "Hello %(name)s,\n\nthank you for visiting us and for the days we shared. 
 msgstr "Hallo %(name)s,\n\ndanke für deinen Besuch und die Tage, die wir zusammen hatten. Ich schreibe dir für uns alle in %(community)s.\n\nNach deinem Besuch haben wir zusammengesessen, und vorerst gehen wir nicht weiter zur Mitgliedschaft: [worum es euch gerade geht, z. B. ihr möchtet euch länger kennenlernen, oder erst etwas untereinander klären]. Das ist kein endgültiges Nein.\n\nWenn du magst, [was als Nächstes sein könnte, z. B. ein weiterer, längerer Aufenthalt, oder ein neuer Antrag im Frühling]. Wie ist das für dich? Ich bin da, wenn du reden möchtest.\n\nHerzliche Grüße,\n%(ambassador)s"
 
 msgid "Hello %(name)s,\n\nthank you for the time you spent with us and for everything you gave during your visit. I'm writing for all of us at %(community)s.\n\nAfter your visit we talked a lot together, and we've decided not to go on with your membership application process. [What it's about for you: what you noticed in living together and what you need, without judging who they are. If you already told them in person, say so.]\n\nWe know this can hurt, all the more after living with us for a while. A few days show only a part of a whole life, and our decision is about how our living together and yours fit, not about what you're worth. If you'd like to talk about it, with me or someone else from us, we're open to that.\n\nWe wish you a place where you can arrive.\n%(ambassador)s"
-msgstr "Hallo %(name)s,\n\ndanke für die Zeit mit uns und für alles, was du während deines Besuchs gegeben hast. Ich schreibe dir für uns alle in %(community)s.\n\nNach deinem Besuch haben wir viel miteinander gesprochen und entschieden, dass wir den Weg zur Mitgliedschaft mit dir nicht weitergehen. [Worum es euch geht: was ihr im Zusammenleben bemerkt habt und was ihr braucht, ohne zu urteilen, wer die Person ist. Wenn ihr es schon persönlich gesagt habt, schreibt das dazu.]\n\nWir wissen, dass das wehtun kann, umso mehr, nachdem du eine Weile mit uns gelebt hast. Ein paar Tage zeigen nur einen Teil eines ganzen Lebens, und unsere Entscheidung sagt etwas darüber, wie unser und dein Leben zusammenpassen, nicht, was du wert bist. Wenn du darüber reden möchtest, mit mir oder jemand anderem von uns, sind wir offen dafür.\n\nWir wünschen dir einen Ort, an dem du ankommen kannst.\n%(ambassador)s"
+msgstr "Hallo %(name)s,\n\ndanke für die Zeit mit uns und für alles, was du während deines Besuchs gegeben hast. Ich schreibe dir für uns alle in %(community)s.\n\nNach deinem Besuch haben wir viel miteinander gesprochen und entschieden, dass wir deinen Aufnahmeprozess nicht weiter fortsetzen. [Worum es euch geht: was ihr im Zusammenleben bemerkt habt und was ihr braucht, ohne zu urteilen, wer die Person ist. Wenn ihr es schon persönlich gesagt habt, schreibt das dazu.]\n\nWir wissen, dass das wehtun kann, umso mehr, nachdem du eine Weile mit uns gelebt hast. Ein paar Tage zeigen nur einen Teil eines ganzen Lebens, und unsere Entscheidung sagt etwas darüber, wie unser und dein Leben zusammenpassen, nicht, was du wert bist. Wenn du darüber reden möchtest, mit mir oder jemand anderem von uns, sind wir offen dafür.\n\nWir wünschen dir einen Ort, an dem du ankommen kannst.\n%(ambassador)s"
 
 msgid "If you've met them, say it in person or on a call first. The message follows that."
 msgstr "Wenn ihr euch schon begegnet seid, sag es zuerst persönlich oder am Telefon. Die Nachricht kommt danach."
@@ -8391,3 +8391,41 @@ msgstr "Was du geschrieben hast, durch diesen Text ersetzen?"
 
 msgid "Communities looking for new members"
 msgstr "Gemeinschaften, die neue Mitglieder suchen"
+
+msgid "Applied"
+msgstr "Beantragt"
+
+msgid "Accepted before"
+msgstr "Schon einmal aufgenommen"
+
+msgid "Declined before"
+msgstr "Schon einmal abgelehnt"
+
+msgid "Applied before"
+msgstr "Schon einmal beantragt"
+
+msgid "Outcome"
+msgstr "Ergebnis"
+
+msgid "Past application"
+msgstr "Früherer Antrag"
+
+msgid "Past applications"
+msgstr "Frühere Anträge"
+
+msgid "The application is deleted."
+msgstr "Der Antrag ist gelöscht."
+
+msgid "Delete application"
+msgstr "Antrag löschen"
+
+#, python-format
+msgid "Your answers and this conversation will be deleted, for %(community)s too. What stays is that you applied, how it ended and when."
+msgstr "Deine Antworten und dieses Gespräch werden gelöscht, auch für %(community)s. Es bleibt nur, dass du einen Antrag gestellt hast, wie er ausging und wann."
+
+#, python-format
+msgid "Their answers and this conversation will be deleted, for %(name)s too. What stays is that they applied, how it ended and when, so you'll see it if they apply again."
+msgstr "Die Antworten und dieses Gespräch werden gelöscht, auch für %(name)s. Es bleibt nur, dass sie*er einen Antrag gestellt hat, wie er ausging und wann, damit du es siehst, wenn sie*er noch einmal einen stellt."
+
+msgid "The membership stays."
+msgstr "Die Mitgliedschaft bleibt."

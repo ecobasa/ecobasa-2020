@@ -924,6 +924,25 @@ def lives_here(request, slug, pk):
 
 @login_required
 @require_POST
+def delete_application(request, slug, pk):
+    """The one who applied or the ambassador deletes an application with its conversation;
+    only who applied, how it ended and when stays."""
+    from django.core.exceptions import PermissionDenied
+
+    community = get_object_or_404(Community, slug=slug)
+    membership = get_object_or_404(community.memberships.select_related("user", "match"), pk=pk)
+    if not membership.can_delete_application(request.user):
+        raise PermissionDenied
+    own = membership.user_id == request.user.pk
+    membership.delete_application()
+    messages.success(request, _("The application is deleted."))
+    if own:
+        return redirect(community.get_absolute_url())
+    return redirect(reverse("matches:list") + "?type=members")
+
+
+@login_required
+@require_POST
 def remove_member(request, slug, pk):
     community, membership = _ambassadors_member(request, slug, pk)
     if membership.user_id == community.ambassador_id:

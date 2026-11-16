@@ -55,5 +55,25 @@
 			</form>
 		{% endif %}
 	{% endif %}
+
+	{% if is_owner or is_requester %}
+		{# Either side may delete it; what stays is who applied, how it ended and when #}
+		<div x-data="{ deleting: false }" class="pt-1">
+			<button type="button" x-show="!deleting" @click="deleting = true" class="btn btn-red text-sm">
+				<i class="fa-regular fa-trash-can mr-1"></i>{% trans "Delete application" %}
+			</button>
+			<form x-show="deleting" style="display:none" method="post" action="{% url 'communities:delete_application' community.slug target.pk %}" class="space-y-3">{% csrf_token %}
+				<p class="my-0">
+					{% if is_requester %}{% blocktrans with community=community.name %}Your answers and this conversation will be deleted, for {{ community }} too. What stays is that you applied, how it ended and when.{% endblocktrans %}
+					{% else %}{% blocktrans with name=target.user.name %}Their answers and this conversation will be deleted, for {{ name }} too. What stays is that they applied, how it ended and when, so you'll see it if they apply again.{% endblocktrans %}{% endif %}
+					{% if target.is_counted %}{% trans "The membership stays." %}{% endif %}
+				</p>
+				<div class="flex flex-wrap justify-between gap-2">
+					<button type="button" @click="deleting = false" class="btn btn-purple text-sm"><i class="fa-solid fa-ban mr-2"></i>{% trans "Cancel" %}</button>
+					<button type="submit" class="btn btn-red text-sm"><i class="fa-regular fa-trash-can mr-2"></i>{% trans "Delete application" %}</button>
+				</div>
+			</form>
+		</div>
+	{% endif %}
 </div>
 {% endwith %}

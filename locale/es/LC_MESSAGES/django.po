@@ -8365,3 +8365,41 @@ msgstr "¿Reemplazar lo que escribiste por este texto?"
 
 msgid "Communities looking for new members"
 msgstr "Comunidades que buscan nuevos miembros"
+
+msgid "Applied"
+msgstr "Solicitado"
+
+msgid "Accepted before"
+msgstr "Ya aceptado antes"
+
+msgid "Declined before"
+msgstr "Ya rechazado antes"
+
+msgid "Applied before"
+msgstr "Ya lo solicitó antes"
+
+msgid "Outcome"
+msgstr "Resultado"
+
+msgid "Past application"
+msgstr "Solicitud anterior"
+
+msgid "Past applications"
+msgstr "Solicitudes anteriores"
+
+msgid "The application is deleted."
+msgstr "La solicitud se ha borrado."
+
+msgid "Delete application"
+msgstr "Borrar la solicitud"
+
+#, python-format
+msgid "Your answers and this conversation will be deleted, for %(community)s too. What stays is that you applied, how it ended and when."
+msgstr "Tus respuestas y esta conversación se borrarán, también para %(community)s. Solo queda que lo solicitaste, cómo terminó y cuándo."
+
+#, python-format
+msgid "Their answers and this conversation will be deleted, for %(name)s too. What stays is that they applied, how it ended and when, so you'll see it if they apply again."
+msgstr "Sus respuestas y esta conversación se borrarán, también para %(name)s. Solo queda que lo solicitó, cómo terminó y cuándo, para que lo veas si vuelve a solicitarlo."
+
+msgid "The membership stays."
+msgstr "La membresía se mantiene."

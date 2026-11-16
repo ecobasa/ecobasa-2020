@@ -1,0 +1,17 @@
+{% load i18n %}
+{# At the end of an application's answer form: "Make member" for the ambassador while they are invited to visit, as in the stage box above, and deleting it for both sides #}
+{% if is_owner and target.is_visiting %}
+	<button type="submit" formaction="{% url 'communities:make_member' target.community.slug target.pk %}"
+		x-show="!isCounter && !acceptAs && !declining" class="btn btn-green">
+		<i class="fa-solid fa-user-check mr-2"></i>{% trans "Make member" %}
+	</button>
+{% endif %}
+{% if not target.is_invitation and is_owner or not target.is_invitation and is_requester %}
+	{% if is_requester %}{% blocktrans with community=target.community.name asvar question %}Your answers and this conversation will be deleted, for {{ community }} too. What stays is that you applied, how it ended and when.{% endblocktrans %}
+	{% else %}{% blocktrans with name=target.user.name asvar question %}Their answers and this conversation will be deleted, for {{ name }} too. What stays is that they applied, how it ended and when, so you'll see it if they apply again.{% endblocktrans %}{% endif %}
+	<button type="submit" formaction="{% url 'communities:delete_application' target.community.slug target.pk %}"
+		x-show="!isCounter && !acceptAs && !declining" class="btn btn-red{% if not can_withdraw %} sm:ml-auto{% endif %}"
+		onclick="return confirm('{{ question|escapejs }}{% if target.is_counted %} {% trans "The membership stays." as stays %}{{ stays|escapejs }}{% endif %}')">
+		<i class="fa-regular fa-trash-can mr-2"></i>{% trans "Delete application" %}
+	</button>
+{% endif %}

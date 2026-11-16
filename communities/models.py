@@ -928,6 +928,8 @@ class Membership(models.Model):
 
     # Shown with the latest word on the visit: its days, and accepting or proposing others
     match_answer_template = "communities/_visit_answer.html"
+    # And at the end of the answer form, while visiting: "Make member"
+    match_actions_template = "communities/_application_actions.html"
 
     def match_person(self, user, match):
         """The ambassador sees what someone asking to become a member has to offer and
@@ -957,6 +959,98 @@ class Membership(models.Model):
 
     def get_match_summary_template(self):
         return "communities/_application_summary.html"
+
+    # ── Deleting an application, and what stays of it ──
+    def outcome(self):
+        """(outcome, date) of its application: accepted, declined as "not now" or "no",
+        or only applied (not answered yet, or withdrawn)."""
+        from gift_economy.matches.models import Match
+
+        match = self.match
+        if match.status == Match.STATUS_DECLINED:
+            return self.declined_as or declines.NO, match.responded_at or match.created_at
+        if match.status == Match.STATUS_ACCEPTED and self.stage != self.STAGE_APPLICATION:
+            return PastApplication.ACCEPTED, match.responded_at or match.created_at
+        return PastApplication.APPLIED, match.created_at
+
+    def can_delete_application(self, user):
+        """The one who applied and the ambassador may each delete it (not an invitation)."""
+        return self.match_id is not None and not self.is_invitation and (
+            user.pk == self.user_id or self.community.is_ambassador(user)
+        )
+
+    def delete_application(self):
+        """Delete the application with everything said in it: the answers, its family if
+        nobody else applies in it, the conversation. What stays is who applied where, how
+        it ended and when. A member stays a member; a visit already agreed stays a stay."""
+        from django.db import transaction
+
+        outcome, decided_at = self.outcome()
+        with transaction.atomic():
+            PastApplication.objects.create(
+                user=self.user, community=self.community, outcome=outcome, decided_at=decided_at,
+            )
+            if self.has_application():
+                family = self.application.family
+                self.application.delete()
+                if family is not None and not family.applications.exists():
+                    family.delete()
+            match = self.match
+            if self.stage == self.STAGE_MEMBER:
+                self.match = None
+                self.save(update_fields=["match"])
+            else:
+                self.delete()
+            match.delete()
+
+    def before(self):
+        """How their earlier applications to this community ended, newest first: the
+        records of deleted ones, and the ones still there."""
+        earlier = [
+            membership.outcome() for membership in self.community.memberships.filter(
+                user=self.user, created_at__lt=self.created_at, match__from_user=self.user,
+            ).exclude(pk=self.pk).select_related("match")
+        ] + [
+            (past.outcome, past.decided_at)
+            for past in PastApplication.objects.filter(user=self.user, community=self.community)
+        ]
+        return [
+            {"outcome": outcome, "date": date, "label": PastApplication.BADGES[outcome]}
+            for outcome, date in sorted(earlier, key=lambda each: each[1], reverse=True)
+        ]
+
+
+class PastApplication(models.Model):
+    """What stays of a deleted membership application: who applied where, how it ended
+    and when, so the ambassador sees it if they apply again. Nothing they wrote."""
+
+    ACCEPTED = "accepted"
+    APPLIED = "applied"
+    OUTCOME_CHOICES = (
+        (ACCEPTED, _("Accepted")),
+        (declines.NOT_NOW, _("Not now")),
+        (declines.NO, _("No")),
+        (APPLIED, _("Applied")),
+    )
+    BADGES = {
+        ACCEPTED: _("Accepted before"),
+        declines.NOT_NOW: _("Declined before"),
+        declines.NO: _("Declined before"),
+        APPLIED: _("Applied before"),
+    }
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="past_applications")
+    community = models.ForeignKey(Community, on_delete=models.CASCADE, related_name="past_applications")
+    outcome = models.CharField(_("Outcome"), max_length=8, choices=OUTCOME_CHOICES)
+    decided_at = models.DateTimeField()
+
+    class Meta:
+        ordering = ["-decided_at"]
+        verbose_name = _("Past application")
+        verbose_name_plural = _("Past applications")
+
+    def __str__(self):
+        return f"{self.user} in {self.community}: {self.outcome}"
 
 
 class MembershipApplication(models.Model):

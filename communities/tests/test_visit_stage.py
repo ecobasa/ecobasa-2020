@@ -311,3 +311,12 @@ class TestBecomingAMember:
             membership.refresh_from_db()
             assert membership.shows_visit
             assert "Became a member after this tour" in _client(ole).get(url).content.decode()
+
+
+@pytest.mark.django_db
+def test_make_member_also_ends_the_answer_form(community, ambassador, ole):
+    membership = _accept(ambassador, _apply(ole, community), Membership.STAGE_VISIT)
+    page = _client(ambassador).get(membership.match.get_absolute_url()).content.decode()
+    assert page.count(f'formaction="{_url("make_member", membership)}"') == 1
+    own = _client(ole).get(membership.match.get_absolute_url()).content.decode()
+    assert _url("make_member", membership) not in own
