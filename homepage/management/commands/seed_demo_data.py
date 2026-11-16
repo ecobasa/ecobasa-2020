@@ -29,7 +29,7 @@ from django.db.models import F, Q
 from django.utils import timezone
 
 from communities import onboarding
-from communities.models import Community, CommunityPhoto, Membership, MembershipApplication, OnboardingQuestion
+from communities.models import Community, CommunityPhoto, Family, Membership, MembershipApplication, OnboardingQuestion
 from gift_economy.gifts.models import Listing, ListingCategory
 from gift_economy.gifts.things import WHITELISTED_KINDS
 from gift_economy.matches.models import Contribution, Loan, Match, MatchMessage, StayDetails, loan_span
@@ -312,8 +312,9 @@ class Command(BaseCommand):
         return communities
 
     def _seed_members(self, users, communities):
-        """A few members besides the ambassadors, and membership applications: one
-        waiting, one invited to visit, and one accepted from someone who lives there."""
+        """A few members besides the ambassadors, and membership applications: two
+        waiting (applying together), one invited to visit, and one accepted from someone
+        who lives there."""
         self.stdout.write("Seeding members…")
         members = {
             "Sonnenkraut Ecovillage": ["bjorn@ecobasa.demo", "nils@ecobasa.demo"],
@@ -327,6 +328,8 @@ class Command(BaseCommand):
         applications = [
             ("Sonnenkraut Ecovillage", "jules@ecobasa.demo", Match.STATUS_PENDING, Membership.STAGE_APPLICATION,
              "I've visited twice for the harvest and I'd love to stay for good. I bring fermenting jars and patience."),
+            ("Sonnenkraut Ecovillage", "mireille@ecobasa.demo", Match.STATUS_PENDING, Membership.STAGE_APPLICATION,
+             "Jules and I would come with our two kids. I teach music and I'd love to start a choir."),
             ("Sonnenkraut Ecovillage", "valeria@ecobasa.demo", Match.STATUS_ACCEPTED, Membership.STAGE_VISIT,
              "Your seed library is why I found you. I'd like to come for a few weeks and see if we fit."),
             ("Three Goats and a Dream Farm", "valeria@ecobasa.demo", Match.STATUS_ACCEPTED, Membership.STAGE_MEMBER,
@@ -479,6 +482,21 @@ class Command(BaseCommand):
                     else replies.get(question.key) if question.type == onboarding.INFO else None,
                 } for question in community.onboarding()]
                 MembershipApplication.objects.create(membership=membership, answers=answers, consented_at=membership.created_at)
+
+        # Jules and Mireille apply together, with their children, and ask Jules's mother too
+        community = Community.objects.get(name="Sonnenkraut Ecovillage")
+        applications = list(MembershipApplication.objects.filter(
+            membership__community=community, membership__user__email__in=["jules@ecobasa.demo", "mireille@ecobasa.demo"],
+        ).select_related("membership__user"))
+        if len(applications) == 2 and not any(application.family_id for application in applications):
+            family = Family.objects.create(community=community, children=[6, 9], invited=["odile.arnaud@example.org"])
+            for application in applications:
+                other = next(each for each in applications if each is not application)
+                for answer in application.answers:
+                    if answer["key"] == "who":
+                        answer["answer"] = {"together": [other.membership.user.name, *family.invited], "children": family.children}
+                application.family = family
+                application.save(update_fields=["answers", "family"])
 
     # ── Listings ─────────────────────────────────────────────────────────
 
