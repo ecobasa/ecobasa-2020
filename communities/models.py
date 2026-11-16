@@ -429,8 +429,9 @@ class Community(UniqueSlugMixin, models.Model):
 
     def hand_over(self, user):
         """Make a member the ambassador. The open and accepted matches addressed to the
-        one before (stays, its events', offers' and wishes', membership applications)
-        move to them; the one before stays a member."""
+        one before (stays, its events', offers' and wishes') move to them, and the
+        membership applications whatever became of them: those belong to whoever is
+        ambassador. The one before stays a member."""
         from django.contrib.contenttypes.models import ContentType
         from django.db import transaction
         from gift_economy.matches.models import Match
@@ -447,10 +448,11 @@ class Community(UniqueSlugMixin, models.Model):
                 of(("communities", "community"), [self.pk])
                 | of(("events", "event"), self.events.values_list("pk", flat=True))
                 | of(("gifts", "listing"), self.listings.values_list("pk", flat=True))
-                | of(("communities", "membership"), self.memberships.values_list("pk", flat=True))
             )
+            applications = of(("communities", "membership"), self.memberships.values_list("pk", flat=True))
+            open_ = Q(status__in=[Match.STATUS_PENDING, Match.STATUS_COUNTER, Match.STATUS_ACCEPTED])
             Match.objects.filter(
-                ours, recipient=before, status__in=[Match.STATUS_PENDING, Match.STATUS_COUNTER, Match.STATUS_ACCEPTED],
+                (ours & open_) | applications, recipient=before,
             ).exclude(from_user=user).update(recipient=user)
 
     def get_reference_subjects(self):

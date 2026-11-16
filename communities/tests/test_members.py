@@ -175,6 +175,10 @@ class TestLeavingAndHandingOver:
         declined = Match(from_user=guest, recipient=ambassador, message="Earlier", status=Match.STATUS_DECLINED)
         declined.target = community
         declined.save()
+        _apply(guest, community)
+        application = _application(guest, community)
+        application.status = Match.STATUS_DECLINED
+        application.save(update_fields=["status"])
 
         _client(ambassador).post(reverse("communities:hand_over", args=[community.slug, membership.pk]))
         community.refresh_from_db()
@@ -183,6 +187,8 @@ class TestLeavingAndHandingOver:
         assert Match.objects.get(pk=stay.pk).recipient == ole
         assert Match.objects.get(pk=help_.pk).recipient == ole
         assert Match.objects.get(pk=declined.pk).recipient == ambassador
+        # Applications go along even once declined
+        assert Match.objects.get(pk=application.pk).recipient == ole
         # The one before can leave now
         _client(ambassador).post(reverse("communities:leave", args=[community.slug]))
         assert not community.is_member(ambassador)
