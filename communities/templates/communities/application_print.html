@@ -53,6 +53,28 @@
       <p class="whitespace-pre-line">{{ membership.match.message }}</p>
     {% endif %}
 
+    {# What the application page shows the ambassador about them, from ecobasa #}
+    {% with before=membership.before stays=membership.stays_here skills=membership.wished_skills %}
+      <ul class="text-sm">
+        {% for past in before %}<li>{{ past.label }}{% if past.outcome == 'not_now' %} · {% trans "Not now" %}{% endif %} · {{ past.date|date:"DATE_FORMAT" }}</li>{% endfor %}
+        <li>{% blocktrans count n=membership.references_count %}{{ n }} reference on their profile{% plural %}{{ n }} references on their profile{% endblocktrans %}</li>
+        <li>{% if stays %}{% trans "Stays and tour visits here" %}: {% for stay in stays %}{% with details=stay.stay_details %}{% if details.stay_from %}{{ details.stay_from|date:"DATE_FORMAT" }}{% if details.stay_to %} – {{ details.stay_to|date:"DATE_FORMAT" }}{% endif %}{% else %}{{ stay.created_at|date:"DATE_FORMAT" }}{% endif %}{% endwith %}{% if not forloop.last %}; {% endif %}{% endfor %}{% else %}{% trans "No stays or tour visits here yet" %}{% endif %}</li>
+        {% if skills %}<li>{% trans "Skills you look for that they have" %}: {% for listing in skills %}{{ listing.display_title }}{% if listing.level %} ({{ listing.get_level_display }}){% endif %}{% if not forloop.last %}, {% endif %}{% endfor %}</li>{% endif %}
+      </ul>
+    {% endwith %}
+
+    <h2 class="text-xl">{% blocktrans with name=membership.user.name %}What {{ name }} has to offer{% endblocktrans %}</h2>
+    <dl class="text-sm">
+      {% if person.communities %}
+        <dt class="font-semibold">{% trans "Member of these communities" %}</dt>
+        <dd class="ml-0 mb-2">{% for other in person.communities %}{{ other.name }}{% if not forloop.last %}, {% endif %}{% endfor %}</dd>
+      {% endif %}
+      <dt class="font-semibold">{% trans "Skills" %}</dt>
+      <dd class="ml-0 mb-2">{% for listing in person.skills %}{{ listing.display_title }}{% if listing.level %} ({{ listing.get_level_display }}){% endif %}{% if not forloop.last %}, {% endif %}{% empty %}{% trans "No skills on the profile yet." %}{% endfor %}</dd>
+      <dt class="font-semibold">{% trans "Gifts they could bring along" %}</dt>
+      <dd class="ml-0 mb-2">{% for listing in person.offers %}{{ listing.display_title }}{% if not forloop.last %}, {% endif %}{% empty %}{% trans "No gifts offered yet." %}{% endfor %}</dd>
+    </dl>
+
     {% if application.agreed %}
       <h2 class="text-xl">{% trans "Agreed to" %}</h2>
       <ul>

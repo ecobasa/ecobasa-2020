@@ -22,6 +22,9 @@ class TestPrinting:
         assert "The orchard." in page and "What would make you leave?" in page
         assert "My back pain." not in page
         assert "The answers only the ambassador sees are not included." in page
+        # What the application page shows about them from ecobasa
+        assert "What Ole has to offer" in page and "0 references on their profile" in page
+        assert "No stays or tour visits here yet" in page
 
     def test_the_ambassador_may_print_a_copy_for_themselves(self, community, ambassador, ole):
         membership = _with_answers(_apply(ole, community))

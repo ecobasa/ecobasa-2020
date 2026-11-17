@@ -947,6 +947,7 @@ def print_application(request, slug, pk):
     the members. The answers only the ambassador sees come along only when they ask for a
     copy for themselves."""
     from django.core.exceptions import PermissionDenied
+    from gift_economy.matches.views import _person
 
     community = get_object_or_404(Community, slug=slug)
     if not community.is_ambassador(request.user):
@@ -961,6 +962,7 @@ def print_application(request, slug, pk):
     return render(request, "communities/application_print.html", {
         "community": community, "membership": membership, "application": application,
         "answers": answers, "sensitive": sensitive, "has_sensitive": has_sensitive,
+        "person": _person(membership.user),
     })
 
 
