@@ -175,3 +175,62 @@ class TestMessageRecipientById:
         User.objects.create_user(email="arne2@example.com", password="pw", name="Arne")
         user_client.post(reverse("postman:write"), {"recipients": str(first.pk), "subject": "Hi", "body": "Hello"})
         assert list(Message.objects.values_list("recipient", flat=True)) == [first.pk]
+
+
+@pytest.mark.django_db
+class TestEmailChange:
+    def _ask(self, client, email="maxi@example.org", password="secret"):
+        return client.post(reverse("users:update"), {"new_email": email, "password": password})
+
+    def _link(self, mailbox):
+        return re.search(r"https?://\S+/users/email/\S+/", mailbox[0].body).group(0)
+
+    def test_the_edit_page_shows_the_account_section(self, user_client):
+        response = user_client.get(reverse("users:update"))
+        assert 'id="account"' in response.content.decode()
+
+    def test_a_link_goes_to_the_new_address_and_nothing_changes_yet(self, user_client, user, mailoutbox):
+        response = self._ask(user_client)
+        assert response.status_code == 302
+        assert [m.to for m in mailoutbox] == [["maxi@example.org"]]
+        user.refresh_from_db()
+        assert user.email == "max@mustermann.com"
+
+    def test_wrong_password_taken_or_same_address(self, user_client, user, mailoutbox):
+        User.objects.create_user(email="kim@example.org", password="secret", username="kim")
+        assert self._ask(user_client, password="nope").status_code == 200
+        assert self._ask(user_client, email="KIM@example.org").status_code == 200
+        assert self._ask(user_client, email="max@mustermann.com").status_code == 200
+        assert mailoutbox == []
+
+    def test_opening_the_link_changes_nothing_until_confirmed(self, user_client, user, mailoutbox):
+        self._ask(user_client)
+        path = urlparse(self._link(mailoutbox)).path
+        assert Client().get(path).status_code == 200
+        user.refresh_from_db()
+        assert user.email == "max@mustermann.com"
+
+    def test_confirming_changes_the_login_and_tells_the_old_address(self, user_client, user, mailoutbox):
+        self._ask(user_client)
+        path = urlparse(self._link(mailoutbox)).path
+        response = Client().post(path)
+        assertRedirects(response, reverse("users:login"))
+        user.refresh_from_db()
+        assert user.email == "maxi@example.org"
+        assert mailoutbox[-1].to == ["max@mustermann.com"]
+        assert authenticate(username="maxi@example.org", password="secret") == user
+
+    def test_the_link_works_only_once_and_not_once_the_address_is_taken(self, user_client, user, mailoutbox):
+        self._ask(user_client)
+        path = urlparse(self._link(mailoutbox)).path
+        User.objects.create_user(email="maxi@example.org", password="secret", username="maxi")
+        Client().post(path)
+        user.refresh_from_db()
+        assert user.email == "max@mustermann.com"
+        User.objects.filter(username="maxi").delete()
+        Client().post(path)
+        Client().post(reverse("users:confirm_email", args=["broken"]))
+        user.refresh_from_db()
+        assert user.email == "maxi@example.org"
+        assert user_client.post(path).status_code == 302
+        assert len(mailoutbox) == 2

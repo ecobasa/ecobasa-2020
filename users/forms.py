@@ -232,6 +232,35 @@ class ProfileUpdateForm(forms.ModelForm):
         return user
 
 
+class EmailChangeForm(forms.Form):
+    """A new email address (also their login), which only becomes theirs once they open
+    the link sent to it. The password keeps an open session from taking over the account."""
+    new_email = forms.EmailField(label=_("New email address"))
+    password = forms.CharField(
+        label=_("Your password"), strip=False,
+        widget=forms.PasswordInput(attrs={"autocomplete": "current-password"}),
+    )
+
+    def __init__(self, *args, user=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.user = user
+        self.fields["new_email"].widget.attrs.update({"autocomplete": "email"})
+
+    def clean_new_email(self):
+        email = User.objects.normalize_email(self.cleaned_data["new_email"])
+        if email.lower() == self.user.email.lower():
+            raise ValidationError(_("That's already your email address."))
+        if User.objects.filter(email__iexact=email).exclude(pk=self.user.pk).exists():
+            raise ValidationError(_("Someone on ecobasa already uses this email address."))
+        return email
+
+    def clean_password(self):
+        password = self.cleaned_data["password"]
+        if not self.user.check_password(password):
+            raise ValidationError(_("That's not your password."))
+        return password
+
+
 def tour_pause_choices(user):
     """(choices, initial) for pausing tour suggestions: while paused, the first choice
     keeps the pause as it is."""

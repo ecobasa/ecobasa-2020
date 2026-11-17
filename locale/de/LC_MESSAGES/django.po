@@ -8626,3 +8626,69 @@ msgstr "Die Antworten, die nur die Botschafter*in sieht, sind nicht enthalten."
 #, python-format
 msgid "Printed from ecobasa.org on %(date)s"
 msgstr "Gedruckt von ecobasa.org am %(date)s"
+
+msgid "Confirm your new email address for ecobasa"
+msgstr "Bestätige deine neue E-Mail-Adresse für ecobasa"
+
+#, python-format
+msgid "You'd like to use this address for ecobasa from now on. Until you confirm it, you keep logging in with %(email)s."
+msgstr "Du möchtest diese Adresse ab jetzt für ecobasa nutzen. Bis du sie bestätigst, meldest du dich weiter mit %(email)s an."
+
+msgid "The link works for 3 days. If you didn't ask for this, you can ignore this email."
+msgstr "Der Link gilt 3 Tage. Wenn du das nicht angefragt hast, kannst du diese E-Mail ignorieren."
+
+msgid "Confirm email address"
+msgstr "E-Mail-Adresse bestätigen"
+
+msgid "Your ecobasa email address was changed"
+msgstr "Deine E-Mail-Adresse bei ecobasa wurde geändert"
+
+#, python-format
+msgid "Your ecobasa email address is now %(email)s. Use it to log in from now on."
+msgstr "Deine E-Mail-Adresse bei ecobasa ist jetzt %(email)s. Melde dich ab jetzt damit an."
+
+msgid "If you didn't change it, please answer this email right away."
+msgstr "Wenn du sie nicht geändert hast, antworte bitte sofort auf diese E-Mail."
+
+msgid "New email address"
+msgstr "Neue E-Mail-Adresse"
+
+msgid "Your password"
+msgstr "Dein Passwort"
+
+msgid "That's already your email address."
+msgstr "Das ist schon deine E-Mail-Adresse."
+
+msgid "Someone on ecobasa already uses this email address."
+msgstr "Diese E-Mail-Adresse nutzt schon jemand bei ecobasa."
+
+msgid "That's not your password."
+msgstr "Das ist nicht dein Passwort."
+
+#, python-format
+msgid "We sent a link to %(email)s. Your email address changes once you open it."
+msgstr "Wir haben einen Link an %(email)s geschickt. Deine E-Mail-Adresse ändert sich, sobald du ihn öffnest."
+
+msgid "This link doesn't work any more. You can ask for a new one on your profile page."
+msgstr "Dieser Link funktioniert nicht mehr. Auf deiner Profilseite kannst du einen neuen anfordern."
+
+#, python-format
+msgid "Your email address is now %(email)s. Use it to log in."
+msgstr "Deine E-Mail-Adresse ist jetzt %(email)s. Melde dich damit an."
+
+msgid "Change your email address"
+msgstr "E-Mail-Adresse ändern"
+
+#, python-format
+msgid "From now on, you log in with <strong>%(new_email)s</strong> instead of %(old_email)s."
+msgstr "Ab jetzt meldest du dich mit <strong>%(new_email)s</strong> statt mit %(old_email)s an."
+
+msgid "Change email address"
+msgstr "E-Mail-Adresse ändern"
+
+#, python-format
+msgid "You log in with <strong>%(email)s</strong>. To change it, we send a link to the new address; it changes once you open it."
+msgstr "Du meldest dich mit <strong>%(email)s</strong> an. Zum Ändern schicken wir einen Link an die neue Adresse; sie ändert sich, sobald du ihn öffnest."
+
+msgid "Send confirmation link"
+msgstr "Bestätigungslink schicken"
