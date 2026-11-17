@@ -25,10 +25,11 @@ from django.contrib.contenttypes.models import ContentType
 from django.contrib.gis.geos import Point
 from django.core.files import File
 from django.core.management.base import BaseCommand
-from django.db.models import Q
+from django.db.models import F, Q
 from django.utils import timezone
 
-from communities.models import Community, CommunityPhoto
+from communities import onboarding
+from communities.models import Community, CommunityPhoto, Family, Membership, MembershipApplication, OnboardingQuestion
 from gift_economy.gifts.models import Listing, ListingCategory
 from gift_economy.gifts.things import WHITELISTED_KINDS
 from gift_economy.matches.models import Contribution, Loan, Match, MatchMessage, StayDetails, loan_span
@@ -93,6 +94,9 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         users = self._seed_users()
         communities = self._seed_communities(users)
+        self._seed_members(users, communities)
+        self._seed_how_we_live(communities)
+        self._seed_onboarding(communities)
         self._seed_listings(users)
         self._seed_seeds_and_plants(users, communities)
         self._seed_community_photos(communities)
@@ -221,7 +225,7 @@ class Command(BaseCommand):
         self.stdout.write("Seeding communities…")
         specs = [
             dict(
-                name="Sonnenkraut Ecovillage", owner="luna@ecobasa.demo",
+                name="Sonnenkraut Ecovillage", ambassador="luna@ecobasa.demo",
                 type=Community.COMMUNITY_TYPE_ECOVILLAGE, status=Community.COMMUNITY_STATUS_ESTABLISHED,
                 vision="A thriving mess of vegetables, opinions, and mostly-functional compost toilets.",
                 description="Est. long enough ago that nobody remembers who planted the first zucchini, or why so many.",
@@ -230,7 +234,7 @@ class Command(BaseCommand):
                 location_name="Görlitz, Germany", point=(14.9857, 51.1642),
             ),
             dict(
-                name="Kombucha Commune", owner="mireille@ecobasa.demo",
+                name="Kombucha Commune", ambassador="mireille@ecobasa.demo",
                 type=Community.COMMUNITY_TYPE_COMUNE, status=Community.COMMUNITY_STATUS_STARTING,
                 vision="Everything ferments eventually — vegetables, ideas, minor disagreements about chores.",
                 description="Three years in, still arguing about the chore wheel, deeply in love with our SCOBYs.",
@@ -239,7 +243,7 @@ class Command(BaseCommand):
                 location_name="Ariège, France", point=(1.6069, 42.9622),
             ),
             dict(
-                name="Barefoot Bureaucracy House Project", owner="sam@ecobasa.demo",
+                name="Barefoot Bureaucracy House Project", ambassador="sam@ecobasa.demo",
                 type=Community.COMMUNITY_TYPE_HOUSEPROJECT, status=Community.COMMUNITY_STATUS_ESTABLISHED,
                 vision="Consensus decisions, laminated meeting agendas, and surprisingly good soup.",
                 description="We turned a old bureaucracy building's paperwork obsession into a well-run household.",
@@ -250,7 +254,7 @@ class Command(BaseCommand):
                 location_public=True,
             ),
             dict(
-                name="Three Goats and a Dream Farm", owner="diego@ecobasa.demo",
+                name="Three Goats and a Dream Farm", ambassador="diego@ecobasa.demo",
                 type=Community.COMMUNITY_TYPE_FARM, status=Community.COMMUNITY_STATUS_ESTABLISHED,
                 vision="Regenerative grazing, mud architecture, and goats who run the place in all but name.",
                 description="Started with a dream and one goat. Now three goats, still one dream, more mud.",
@@ -259,7 +263,7 @@ class Command(BaseCommand):
                 location_name="Extremadura, Spain", point=(-6.3372, 39.4750),
             ),
             dict(
-                name="Cacao Tierra Viva", owner="valeria@ecobasa.demo",
+                name="Cacao Tierra Viva", ambassador="valeria@ecobasa.demo",
                 type=Community.COMMUNITY_TYPE_FARM, status=Community.COMMUNITY_STATUS_ESTABLISHED,
                 vision="Cacao under the shade of the old forest, and the forest staying old.",
                 description="Six families growing cacao, bananas and arguments about fermentation boxes, at the edge of the rainforest.",
@@ -268,7 +272,7 @@ class Command(BaseCommand):
                 location_name="Puerto Viejo de Talamanca, Costa Rica", point=(-82.7539, 9.6560),
             ),
             dict(
-                name="The Someday Ecovillage (Still Just a WhatsApp Group)", owner="ana@ecobasa.demo",
+                name="The Someday Ecovillage (Still Just a WhatsApp Group)", ambassador="ana@ecobasa.demo",
                 type=Community.COMMUNITY_TYPE_PROJECT, status=Community.COMMUNITY_STATUS_PLANNING,
                 vision="Land, community, purpose — we're 90% vision board, 10% actual plan.",
                 description="47 members strong. Zero hectares acquired. Group chat activity: extremely high.",
@@ -281,7 +285,7 @@ class Command(BaseCommand):
         communities = {}
         for spec in specs:
             defaults = {
-                "owner": users[spec["owner"]],
+                "ambassador": users[spec["ambassador"]],
                 "type": spec["type"],
                 "status": spec["status"],
                 "vision": spec["vision"],
@@ -306,6 +310,193 @@ class Command(BaseCommand):
                 community.save(update_fields=["location_public"])
             communities[spec["name"]] = community
         return communities
+
+    def _seed_members(self, users, communities):
+        """A few members besides the ambassadors, and membership applications: two
+        waiting (applying together), one invited to visit, and one accepted from someone
+        who lives there."""
+        self.stdout.write("Seeding members…")
+        members = {
+            "Sonnenkraut Ecovillage": ["bjorn@ecobasa.demo", "nils@ecobasa.demo"],
+            "Kombucha Commune": ["jules@ecobasa.demo"],
+            "The Someday Ecovillage (Still Just a WhatsApp Group)": ["freja@ecobasa.demo", "sam@ecobasa.demo"],
+        }
+        for name, emails in members.items():
+            for email in emails:
+                if not communities[name].memberships.filter(user=users[email]).exists():
+                    Membership.objects.create(community=communities[name], user=users[email])
+        applications = [
+            ("Sonnenkraut Ecovillage", "jules@ecobasa.demo", Match.STATUS_PENDING, Membership.STAGE_APPLICATION,
+             "I've visited twice for the harvest and I'd love to stay for good. I bring fermenting jars and patience."),
+            ("Sonnenkraut Ecovillage", "mireille@ecobasa.demo", Match.STATUS_PENDING, Membership.STAGE_APPLICATION,
+             "Jules and I would come with our two kids. I teach music and I'd love to start a choir."),
+            ("Sonnenkraut Ecovillage", "valeria@ecobasa.demo", Match.STATUS_ACCEPTED, Membership.STAGE_VISIT,
+             "Your seed library is why I found you. I'd like to come for a few weeks and see if we fit."),
+            ("Three Goats and a Dream Farm", "valeria@ecobasa.demo", Match.STATUS_ACCEPTED, Membership.STAGE_MEMBER,
+             "I helped with the mud house last spring. The goats already treat me like family."),
+        ]
+        for name, email, status, stage, message in applications:
+            community, user = communities[name], users[email]
+            if community.memberships.filter(user=user).exists():
+                continue
+            membership = Membership.objects.create(community=community, user=user, stage=stage)
+            match = Match(from_user=user, recipient=community.ambassador, message=message, status=status, location_type="")
+            match.target = membership
+            match.save()
+            membership.match = match
+            membership.save(update_fields=["match"])
+            if stage == Membership.STAGE_VISIT:
+                # Invited to visit, with days the ambassador suggests
+                start = timezone.make_aware(datetime.combine(timezone.localdate() + timedelta(days=24), datetime_time()))
+                MatchMessage.objects.create(
+                    match=match, sender=community.ambassador, status_to=Match.STATUS_ACCEPTED,
+                    body="We'd love to meet you. The harvest weeks are a good time to see how we live.",
+                    counter_stay_from=start, counter_stay_to=start + timedelta(days=14),
+                )
+
+        # Some show their offers and skills on the community page
+        Membership.objects.filter(
+            community=communities["Sonnenkraut Ecovillage"], user__email__in=["luna@ecobasa.demo", "bjorn@ecobasa.demo"],
+        ).update(shows_offers=True)
+        Membership.objects.filter(community=communities["Kombucha Commune"]).update(shows_offers=True)
+        # The ambassador invited someone, who hasn't answered yet
+        community, person = communities["Kombucha Commune"], users["freja@ecobasa.demo"]
+        if not community.memberships.filter(user=person).exists():
+            membership = Membership.objects.create(community=community, user=person, stage=Membership.STAGE_APPLICATION)
+            match = Match(
+                from_user=community.ambassador, recipient=person, location_type="",
+                message="You've fed our SCOBYs all summer. Want to stay and argue about the chore wheel with us?",
+            )
+            match.target = membership
+            match.save()
+            membership.match = match
+            membership.save(update_fields=["match"])
+
+    def _seed_how_we_live(self, communities):
+        """How the communities live, filled in differently, for the filters on the map."""
+        self.stdout.write("Seeding how communities live…")
+        lives = {
+            "Sonnenkraut Ecovillage": dict(
+                looking_for_members=True, kitchen=[Community.KITCHEN_VEGETARIAN], private_kitchens=True,
+                children_welcome=Community.CHILDREN_WELCOME, pets=Community.PETS_ASK,
+                currency="EUR", buy_in=12000, buy_in_kind=Community.BUY_IN_SHARES, monthly_contribution=350,
+                work_hours=12, decision_making=Community.DECISIONS_CONSENT, income_sharing=Community.INCOME_SHARING_NONE,
+                trial_months=12, languages=["de", "en"],
+                animals="Chickens for eggs, bees for honey. Nobody slaughters here; meat cooked at home stays in the private kitchens.",
+                exit_terms="Your shares are paid back within two years after you leave, as the cooperative's statutes say.",
+                house_agreements="No cars inside the village. Guests can stay up to two weeks, longer after asking the plenum. Quiet after 22:00.",
+            ),
+            "Kombucha Commune": dict(
+                looking_for_members=True, kitchen=[Community.KITCHEN_VEGAN, Community.KITCHEN_GLUTEN_FREE, Community.KITCHEN_SUGAR_FREE],
+                children_welcome=Community.CHILDREN_NO_ROOM,
+                pets=Community.PETS_NONE, work_hours=20, decision_making=Community.DECISIONS_CONSENSUS,
+                income_sharing=Community.INCOME_SHARING_FULLY, trial_months=6, languages=["fr", "en"],
+                house_agreements="Shared purse, shared chores (yes, the wheel). No alcohol in the common rooms.",
+            ),
+            "Barefoot Bureaucracy House Project": dict(
+                kitchen=[Community.KITCHEN_ANY], private_kitchens=True,
+                buy_in=2000, buy_in_kind=Community.BUY_IN_FOUNDATION,
+                children_welcome=Community.CHILDREN_ADULTS_ONLY,
+                pets=Community.PETS_WELCOME, currency="EUR", monthly_contribution=480, work_hours=4,
+                decision_making=Community.DECISIONS_MAJORITY, income_sharing=Community.INCOME_SHARING_NONE,
+                languages=["nl", "en"], statutes_url="https://example.org/barefoot-bureaucracy/house-agreement",
+            ),
+            "Three Goats and a Dream Farm": dict(
+                kitchen=[Community.KITCHEN_ANY], pets=Community.PETS_WELCOME, decision_making=Community.DECISIONS_DOOCRACY,
+                currency="EUR", buy_in=8000, buy_in_kind=Community.BUY_IN_RENT_TO_OWN,
+                exit_terms="What you paid in counts towards your share of the farm; leave and it's paid back over three years.",
+                languages=["es", "en"],
+                animals="Three goats for milk and cheese, a dozen hens. We slaughter old hens ourselves, once a year, together.",
+            ),
+            "Cacao Tierra Viva": dict(
+                looking_for_members=True, kitchen=[Community.KITCHEN_ANY, Community.KITCHEN_LACTOSE_FREE],
+                children_welcome=Community.CHILDREN_WELCOME,
+                pets=Community.PETS_WELCOME, currency="USD", buy_in=3000, buy_in_kind=Community.BUY_IN_LOAN,
+                work_hours=25, decision_making=Community.DECISIONS_COUNCIL, income_sharing=Community.INCOME_SHARING_PARTLY,
+                trial_months=3, languages=["es", "en"],
+                exit_terms="The loan is paid back in full within six months of leaving.",
+            ),
+        }
+        for name, fields in lives.items():
+            Community.objects.filter(pk=communities[name].pk).update(**fields)
+
+    def _seed_onboarding(self, communities):
+        """Two onboarding processes: a thorough one and a short one."""
+        self.stdout.write("Seeding onboarding processes…")
+        processes = {
+            "Sonnenkraut Ecovillage": dict(
+                modules=["motivation", "conflict", "finances", "everyday", "family", "commitments"],
+                off=["other_communities", "debts"],
+                types={"feedback": onboarding.INFO},
+                required=["why_here", "conflict_story"],
+                notes={"school": "The village school is a Freie Schule, ten minutes by bike."},
+                own=[("Which of our working groups would you like to join first?", onboarding.TEXT, onboarding.INFO)],
+                after_visit="After your visit you start a trial year. Halfway through we sit together and see how it feels; "
+                            "at the end the plenum decides by consent. Then you buy your cooperative shares.",
+            ),
+            "Kombucha Commune": dict(
+                modules=["motivation", "everyday"],
+                off=["community_meaning"],
+                own=[("Have you ever brewed anything?", onboarding.YES_NO, onboarding.INFO),
+                     ("How do you feel about a shared purse?", onboarding.TEXT, onboarding.DISCUSSION)],
+                after_visit="Six months of trial living, then we decide together, in consensus.",
+            ),
+        }
+        for name, process in processes.items():
+            community = communities[name]
+            if community.onboarding_questions.exists():
+                continue
+            for module in onboarding.MODULES:
+                if module.key not in process["modules"]:
+                    continue
+                for question in module.questions:
+                    if question.key in process.get("off", []):
+                        continue
+                    OnboardingQuestion.objects.create(
+                        community=community, key=question.key, position=onboarding.POSITIONS[question.key],
+                        type=process.get("types", {}).get(question.key, question.type),
+                        required=question.key in process.get("required", []),
+                        note=process.get("notes", {}).get(question.key, ""),
+                    )
+            for position, (text, kind, type) in enumerate(process["own"], start=len(onboarding.POSITIONS)):
+                OnboardingQuestion.objects.create(community=community, text=text, answer_kind=kind, type=type, position=position)
+            Community.objects.filter(pk=community.pk).update(after_visit=process["after_visit"])
+
+        # The open applications there went through it
+        replies = {
+            "why_here": "I helped at your harvest last year and never quite left in my head.",
+            "conflict_story": "Our flat share argued about the heating for a winter. A mediator helped; we still meet for dinner.",
+            "give_get": "Carpentry and patience. I hope for people to grow old with.",
+        }
+        for name in processes:
+            community = Community.objects.get(name=name)
+            for membership in community.memberships.filter(
+                stage__in=[Membership.STAGE_APPLICATION, Membership.STAGE_VISIT], application=None,
+            ).exclude(
+                match__recipient=F("user"),
+            ):
+                answers = [{
+                    "key": question.key, "type": question.type, "kind": question.kind, "text": question.shown_text,
+                    "sensitive": question.sensitive,
+                    "answer": True if question.type == onboarding.MUST_MATCH
+                    else replies.get(question.key) if question.type == onboarding.INFO else None,
+                } for question in community.onboarding()]
+                MembershipApplication.objects.create(membership=membership, answers=answers, consented_at=membership.created_at)
+
+        # Jules and Mireille apply together, with their children, and ask Jules's mother too
+        community = Community.objects.get(name="Sonnenkraut Ecovillage")
+        applications = list(MembershipApplication.objects.filter(
+            membership__community=community, membership__user__email__in=["jules@ecobasa.demo", "mireille@ecobasa.demo"],
+        ).select_related("membership__user"))
+        if len(applications) == 2 and not any(application.family_id for application in applications):
+            family = Family.objects.create(community=community, children=[6, 9], invited=["odile.arnaud@example.org"])
+            for application in applications:
+                other = next(each for each in applications if each is not application)
+                for answer in application.answers:
+                    if answer["key"] == "who":
+                        answer["answer"] = {"together": [other.membership.user.name, *family.invited], "children": family.children}
+                application.family = family
+                application.save(update_fields=["answers", "family"])
 
     # ── Listings ─────────────────────────────────────────────────────────
 
@@ -1053,7 +1244,7 @@ class Command(BaseCommand):
 
         def project(community, title, needs, learn=(), **fields):
             obj, created = Event.objects.get_or_create(
-                community=community, title=title, defaults={"created_by": community.owner, **fields},
+                community=community, title=title, defaults={"created_by": community.ambassador, **fields},
             )
             # What helpers can learn: the community's skills in the project, listed with it
             # while the project runs
@@ -1167,7 +1358,7 @@ class Command(BaseCommand):
         def event(community, title, **fields):
             obj, _created = Event.objects.get_or_create(
                 community=community, title=title,
-                defaults={"created_by": community.owner, "kind": Event.KIND_COMMUNITY_EVENT, **fields},
+                defaults={"created_by": community.ambassador, "kind": Event.KIND_COMMUNITY_EVENT, **fields},
             )
             return obj
 

@@ -1,9 +1,45 @@
+import json
+import re
+
 from django import forms
+from django.contrib.auth import get_user_model
+from django.core.validators import validate_email
 from django.forms.widgets import ClearableFileInput
 from django.utils.translation import gettext_lazy as _
 from taggit.forms import TagWidget
 
-from .models import Community
+from . import onboarding
+from .models import Community, Membership, OnboardingQuestion, language_choices
+
+
+# The "How we live" fields, in the order of their section on the form
+HOW_WE_LIVE_FIELDS = [
+    "looking_for_members", "kitchen", "private_kitchens", "pets", "animals",
+    "currency", "buy_in", "buy_in_kind", "exit_terms", "monthly_contribution", "work_hours",
+    "decision_making", "income_sharing", "trial_months", "languages", "house_agreements",
+    "statutes_url", "statutes_file",
+]
+CHECKBOX_FIELDS = ["location_public", "looking_for_members", "private_kitchens"]
+
+
+class LanguagesField(forms.Field):
+    """Language codes, picked by name with Tagify (only languages Django knows); the
+    input holds the codes, comma separated."""
+
+    widget = forms.TextInput
+
+    def prepare_value(self, value):
+        if isinstance(value, str):
+            return value
+        return ",".join(value or [])
+
+    def to_python(self, value):
+        known = dict(language_choices())
+        codes = [code.strip() for code in (value or "").split(",") if code.strip()]
+        unknown = [code for code in codes if code not in known]
+        if unknown:
+            raise forms.ValidationError(_("Unknown language: %(code)s") % {"code": ", ".join(unknown)})
+        return list(dict.fromkeys(codes))
 
 
 class MultiFileInput(ClearableFileInput):
@@ -38,12 +74,22 @@ class CommunityForm(forms.ModelForm):
     skill_wishes = forms.CharField(
         required=False,
         label=_("Skills we're looking for"),
-        widget=forms.TextInput(attrs={"data-skill-tags": _("Skills communities always need")}),
-        help_text=_("Comma-separated list of skills you're looking for in visitors or new members."),
+        widget=forms.TextInput(attrs={
+            "placeholder": _("Add skills, comma separated"), "data-skill-tags": _("Skills communities always need"),
+        }),
     )
+
+    kitchen = forms.MultipleChoiceField(
+        label=_("Shared kitchen"), choices=Community.KITCHEN_CHOICES, required=False,
+        widget=forms.CheckboxSelectMultiple, help_text=_("What the shared kitchen cooks. Tick all that fit."),
+    )
+    languages = LanguagesField(required=False, label=_("Languages"), help_text=_("The languages you speak together."))
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields["languages"].widget.attrs["data-languages"] = json.dumps(
+            [{"value": name, "code": code} for code, name in language_choices()]
+        )
         if self.instance and self.instance.pk:
             from gift_economy.gifts.models import Listing
             wishes_initial = ', '.join(
@@ -58,8 +104,14 @@ class CommunityForm(forms.ModelForm):
             field.widget.attrs["class"] = f"{css} form-input".strip()
         if "country" in self.fields:
             self.fields["country"].widget.attrs["class"] = "form-select"
-        if "location_public" in self.fields:
-            self.fields["location_public"].widget.attrs["class"] = "form-checkbox mt-1 flex-shrink-0"
+        for name in CHECKBOX_FIELDS:
+            self.fields[name].widget.attrs["class"] = "form-checkbox mt-1 flex-shrink-0"
+        self.fields["kitchen"].widget.attrs["class"] = "form-checkbox"
+        # The exit terms are asked for once a buy-in is set
+        self.fields["buy_in"].widget.attrs["x-model"] = "buyIn"
+        for name in [*HOW_WE_LIVE_FIELDS, "children_welcome"]:
+            if isinstance(self.fields[name].widget, forms.Select):
+                self.fields[name].widget.attrs["class"] = "form-select"
         if "inhabitants" in self.fields:
             self.fields["inhabitants"].widget.attrs.setdefault(
                 "placeholder", _("e.g. 25")
@@ -69,6 +121,19 @@ class CommunityForm(forms.ModelForm):
             self.fields["gallery"].widget.attrs["class"] = f"{css} form-input".strip()
 
     # inhabitants is an integer field on the model; no custom cleaning required.
+
+    def how_we_live(self):
+        """Its "How we live" section's fields, for the template."""
+        return [self[name] for name in HOW_WE_LIVE_FIELDS]
+
+    def clean_kitchen(self):
+        kitchen = self.cleaned_data.get("kitchen") or []
+        if Community.KITCHEN_ANY in kitchen and {Community.KITCHEN_VEGETARIAN, Community.KITCHEN_VEGAN} & set(kitchen):
+            raise forms.ValidationError(_("A kitchen that eats anything isn't vegetarian or vegan."))
+        return kitchen
+
+    def clean_currency(self):
+        return (self.cleaned_data.get("currency") or "EUR").strip().upper()
 
     def clean_gallery(self):
         files = self.cleaned_data.get("gallery") or []
@@ -97,6 +162,8 @@ class CommunityForm(forms.ModelForm):
             "website",
             "telephone",
             "skills",
+            "children_welcome",
+            *HOW_WE_LIVE_FIELDS,
         ]
         widgets = {
             "location": forms.HiddenInput(),
@@ -107,6 +174,10 @@ class CommunityForm(forms.ModelForm):
             "vision": forms.Textarea(attrs={"rows": 3}),
             "accomodation": forms.Textarea(attrs={"rows": 3}),
             "video": forms.URLInput(attrs={"placeholder": _("YouTube or Vimeo link")}),
+            "exit_terms": forms.Textarea(attrs={"rows": 3}),
+            "animals": forms.Textarea(attrs={"rows": 3}),
+            "house_agreements": forms.Textarea(attrs={"rows": 4}),
+            "statutes_file": forms.ClearableFileInput(attrs={"accept": "application/pdf"}),
             "skills": TagWidget(attrs={"placeholder": _("Add skills, comma separated"), "data-skill-tags": _("Popular skills to explore")}),
         }
         labels = {
@@ -119,3 +190,322 @@ class CommunityForm(forms.ModelForm):
             "offers_seminars": _("Do you offer any seminars that visitors could attend?"),
             "visitor_requirements": _("Requirements for visitors"),
         }
+        help_texts = {
+            "offers_seminars": _("List seminars, topics, and how visitors can join. Later you can add each one as an event on your community page, so people find it on the events map too."),
+        }
+
+
+class InviteForm(forms.Form):
+    """The ambassador invites someone to become a member: who (found by name) and a few
+    words."""
+
+    user = forms.ModelChoiceField(
+        get_user_model().objects.filter(is_active=True), label=_("Who"), widget=forms.HiddenInput,
+        error_messages={"required": _("Please choose someone."), "invalid_choice": _("Please choose someone.")},
+    )
+    message = forms.CharField(
+        label=_("A few words to them"), widget=forms.Textarea(attrs={"rows": 4, "class": "form-textarea w-full"}),
+        help_text=_("Why you'd like them to become a member."),
+    )
+
+    def __init__(self, community, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.community = community
+
+    def chosen_user(self):
+        """The person picked so far (or come from their profile), to show their name."""
+        pk = self.data.get("user") if self.is_bound else self.initial.get("user")
+        return get_user_model().objects.filter(pk=pk).first() if pk and str(pk).isdigit() else None
+
+    def clean_user(self):
+        user = self.cleaned_data["user"]
+        # Who is invited to visit can be invited: it makes them a member
+        if self.community.memberships.current().exclude(stage=Membership.STAGE_VISIT).filter(user=user).exists():
+            raise forms.ValidationError(_("They are a member already, or have been asked."))
+        return user
+
+
+class LibraryQuestionForm(forms.Form):
+    """A library question in the onboarding process editor: whether the community asks
+    it, and what it makes of it."""
+
+    on = forms.BooleanField(required=False)
+    type = forms.ChoiceField(label=_("Type"), widget=forms.RadioSelect)
+    required = forms.BooleanField(label=_("Required"), required=False,
+                                  widget=forms.CheckboxInput(attrs={"class": "form-checkbox"}))
+    note = forms.CharField(
+        label=_("Note"), required=False, help_text=_("Shown under the question"),
+        widget=forms.Textarea(attrs={"rows": 2, "class": "form-textarea w-full"}),
+    )
+
+    def __init__(self, question, community, row=None, *args, **kwargs):
+        initial = {
+            "on": row is not None,
+            "type": row.type if row else question.type,
+            "required": row.required if row else False,
+            "note": row.note if row else "",
+        }
+        super().__init__(*args, prefix=question.key, initial=initial, **kwargs)
+        self.question, self.row = question, row
+        self.fields["type"].choices = [choice for choice in onboarding.TYPE_CHOICES if choice[0] in question.types]
+        self.fields["type"].widget.attrs.update({"class": "form-radio", "x-model": "type"})
+        # Its wording here and now ("" while its fact isn't filled in)
+        self.shown_text = question.text_for(community)
+        self.not_asked = not question.is_asked(community)
+        self.country_note = question.note_for(community)
+
+    def clean(self):
+        cleaned = super().clean()
+        # Sensitive questions stay optional
+        if self.question.sensitive:
+            cleaned["required"] = False
+        return cleaned
+
+
+class OwnQuestionForm(forms.ModelForm):
+    """One of the community's own questions."""
+
+    class Meta:
+        model = OnboardingQuestion
+        fields = ["text", "answer_kind", "type", "required", "note"]
+        widgets = {
+            "text": forms.TextInput(attrs={"class": "form-input w-full"}),
+            "answer_kind": forms.Select(attrs={"class": "form-select"}),
+            "type": forms.Select(attrs={"class": "form-select"}),
+            "required": forms.CheckboxInput(attrs={"class": "form-checkbox"}),
+            "note": forms.Textarea(attrs={"rows": 2, "class": "form-textarea w-full"}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["text"].required = True
+        self.fields["answer_kind"].required = True
+        self.fields["answer_kind"].choices = onboarding.OWN_KIND_CHOICES
+
+
+class BaseOwnQuestionFormSet(forms.BaseModelFormSet):
+    def add_fields(self, form, index):
+        super().add_fields(form, index)
+        form.fields["ORDER"].label = _("Order")
+        form.fields["ORDER"].widget.attrs["class"] = "form-input w-20"
+        form.fields["DELETE"].label = _("Delete")
+        form.fields["DELETE"].widget.attrs["class"] = "form-checkbox"
+
+
+OwnQuestionFormSet = forms.modelformset_factory(
+    OnboardingQuestion, form=OwnQuestionForm, formset=BaseOwnQuestionFormSet, extra=1, can_delete=True, can_order=True,
+)
+
+
+class AfterVisitForm(forms.ModelForm):
+    class Meta:
+        model = Community
+        fields = ["after_visit"]
+        widgets = {"after_visit": forms.Textarea(attrs={"rows": 5, "class": "form-textarea w-full"})}
+
+
+class ApplicationForm(forms.Form):
+    """Asking to become a member. Someone who already lives there only writes a few
+    words; everyone else goes through the community's onboarding process: agrees to the
+    must-matches first, then answers its questions."""
+
+    # The questions are hidden for someone who already lives there and must not block sending
+    use_required_attribute = False
+
+    lives_here = forms.BooleanField(label=_("I already live here"), required=False,
+                                    widget=forms.CheckboxInput(attrs={"class": "form-checkbox", "x-model": "livesHere"}))
+    message = forms.CharField(
+        label=_("Message"), required=False,
+        widget=forms.Textarea(attrs={"rows": 4, "class": "form-textarea w-full",
+                                     "placeholder": _("Who you are and how you belong to the community")}),
+    )
+
+    def __init__(self, community, *args, user=None, family=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.community = community
+        self.user = user
+        # Asked by someone to apply together with them: already in their family
+        self.family = family
+        # Only people who live there already ask while it isn't looking for new members
+        self.only_residents = not community.looking_for_members
+        self.questions = community.onboarding()
+        self.talks = [question for question in self.questions if question.type == onboarding.DISCUSSION]
+        if self.only_residents or (self.is_bound and self.data.get("lives_here")):
+            return
+        for question in self.questions:
+            field = self._field_for(question)
+            if field is not None:
+                field.question = question
+                self.fields[f"q{question.pk}"] = field
+                if question.kind == onboarding.FAMILY:
+                    self.family_name = f"q{question.pk}"
+                    self.fields["together"] = forms.ModelMultipleChoiceField(
+                        get_user_model().objects.filter(is_active=True), required=False,
+                        label=_("Applying together with"), widget=forms.MultipleHiddenInput,
+                    )
+                    self.fields["together_emails"] = forms.CharField(
+                        required=False, label=_("Or their email addresses, if they aren't on ecobasa yet"),
+                        widget=forms.TextInput(attrs={"class": "form-input w-full", "placeholder": "kim@example.org"}),
+                    )
+        self.fields["consent"] = forms.BooleanField(label=_(
+            "I agree that %(name)s's members may see my answers to decide together. "
+            "My application stays until the ambassador or I delete it."
+        ) % {"name": community.name})
+        # Answers to the sensitive questions only with a consent of their own, given before them
+        if self.sensitive_fields():
+            self.fields["sensitive_consent"] = forms.BooleanField(required=False, label=_(
+                "I agree that the ambassador sees my answers to the questions marked with a lock. "
+                "Only they see them; they're never sent by email or shown in notifications."
+            ))
+
+    def _field_for(self, question):
+        if question.type == onboarding.DISCUSSION:
+            return None
+        library = question.library
+        help_text = " ".join(filter(None, [
+            question.note, str(library.help_text) if library and library.help_text else "",
+            library.note_for(self.community) if library else "",
+        ]))
+        options = {"label": question.shown_text, "required": question.is_required, "help_text": help_text}
+        kind = question.kind
+        if kind == onboarding.AGREE:
+            return forms.BooleanField(widget=forms.CheckboxInput(attrs={"class": "form-checkbox mt-1 flex-shrink-0"}), **options)
+        if kind == onboarding.YES_NO:
+            return forms.ChoiceField(choices=(("yes", _("Yes")), ("no", _("No"))), widget=forms.RadioSelect, **options)
+        if kind == onboarding.CHOICE:
+            return forms.ChoiceField(choices=library.choices, widget=forms.RadioSelect, **options)
+        if kind == onboarding.FAMILY:
+            if self.family is not None:
+                # Who they apply with and the children are given already
+                return None
+            return forms.CharField(
+                label=_("Children coming along, and their ages"), required=False, help_text=help_text,
+                widget=forms.TextInput(attrs={"class": "form-input w-full", "placeholder": _("e.g. 4, 9")}),
+            )
+        if kind == onboarding.NUMBER:
+            return forms.IntegerField(min_value=0, widget=forms.NumberInput(attrs={"class": "form-input w-28"}), **options)
+        return forms.CharField(widget=forms.Textarea(attrs={"rows": 3, "class": "form-textarea w-full"}), **options)
+
+    @property
+    def lives_here_now(self):
+        return self.only_residents or bool(self.cleaned_data.get("lives_here"))
+
+    def _fields_of(self, type):
+        return [field for field in self if getattr(field.field, "question", None) and field.field.question.type == type]
+
+    def must_match_fields(self):
+        return self._fields_of(onboarding.MUST_MATCH)
+
+    # Statements about a text of the community's, agreed to right under it
+    READ_KEYS = ("statutes", "house_agreements", "animals", "exit_terms")
+
+    def readings(self):
+        """The community's texts to read before applying, in the order of READ_KEYS, each
+        with its statement's field (None if the community doesn't ask it)."""
+        community = self.community
+        has = {
+            "statutes": community.statutes_url or community.statutes_file,
+            "house_agreements": community.house_agreements,
+            "animals": community.animals,
+            "exit_terms": community.buy_in is not None and community.exit_terms,
+        }
+        fields = {field.field.question.key: field for field in self.must_match_fields()}
+        return [(key, fields.get(key)) for key in self.READ_KEYS if has[key]]
+
+    def other_must_match_fields(self):
+        return [field for field in self.must_match_fields() if field.field.question.key not in self.READ_KEYS]
+
+    def info_fields(self):
+        return self._fields_of(onboarding.INFO)
+
+    def sensitive_fields(self):
+        return [field for field in self._fields_of(onboarding.INFO) if field.field.question.sensitive]
+
+    @property
+    def first_sensitive_name(self):
+        """Where the sensitive questions' consent goes: right before the first of them."""
+        sensitive = self.sensitive_fields()
+        return sensitive[0].name if sensitive else ""
+
+    family_name = ""
+
+    @property
+    def family_field(self):
+        return self[self.family_name] if self.family_name else None
+
+    def chosen_together(self):
+        """The people picked so far to apply together with, to show them again."""
+        pks = [pk for pk in (self.data.getlist("together") if self.is_bound else []) if pk.isdigit()]
+        return list(get_user_model().objects.filter(pk__in=pks))
+
+    def clean_together(self):
+        together = self.cleaned_data.get("together") or []
+        return [person for person in together if person != self.user]
+
+    def clean_together_emails(self):
+        emails = []
+        for email in re.split(r"[\s,;]+", self.cleaned_data.get("together_emails", "").strip()):
+            if not email:
+                continue
+            try:
+                validate_email(email)
+            except forms.ValidationError:
+                raise forms.ValidationError(_("“%(email)s” isn't an email address.") % {"email": email})
+            if not (self.user and email.lower() == self.user.email.lower()):
+                emails.append(email.lower())
+        return emails
+
+    def children_ages(self):
+        if not self.family_name:
+            return []
+        return [int(age) for age in re.findall(r"\d+", self.cleaned_data.get(self.family_name) or "")]
+
+    def invited_emails(self):
+        """Everyone they apply together with, by email: who's on ecobasa and who isn't yet."""
+        emails = [person.email.lower() for person in self.cleaned_data.get("together", []) if person.email]
+        return list(dict.fromkeys(emails + self.cleaned_data.get("together_emails", [])))
+
+    def clean(self):
+        cleaned_data = super().clean()
+        if not cleaned_data.get("sensitive_consent"):
+            for field in self.sensitive_fields():
+                if cleaned_data.get(field.name) not in (None, ""):
+                    self.add_error(field.name, _("Agree first that the ambassador sees this answer, or leave it empty."))
+        return cleaned_data
+
+    def _family_answer(self):
+        """Who they apply together with (names, or addresses for who isn't on ecobasa)
+        and the children's ages; None if they come on their own."""
+        if self.family is not None:
+            together = [person.name for person in self.family.applicants()]
+            together += [getattr(waiting, "name", waiting) for waiting in self.family.waiting()
+                         if not (self.user and getattr(waiting, "pk", None) == self.user.pk)]
+            children = self.family.children
+        else:
+            people = self.cleaned_data.get("together", [])
+            known = {person.email.lower() for person in people}
+            together = [person.name for person in people]
+            together += [email for email in self.cleaned_data.get("together_emails", []) if email not in known]
+            children = self.children_ages()
+        return {"together": together, "children": children} if together or children else None
+
+    def answers(self):
+        """The answers, each with its question as it was worded now."""
+        answers = []
+        for question in self.questions:
+            answer = None
+            if question.type != onboarding.DISCUSSION:
+                value = self.cleaned_data.get(f"q{question.pk}")
+                if question.kind == onboarding.FAMILY:
+                    answer = self._family_answer()
+                elif question.kind == onboarding.YES_NO:
+                    answer = {"yes": True, "no": False}.get(value)
+                elif question.kind == onboarding.CHOICE:
+                    answer = str(dict(question.library.choices).get(value, "")) or None
+                elif value not in (None, ""):
+                    answer = value
+            answers.append({
+                "key": question.key, "type": question.type, "kind": question.kind, "text": question.shown_text,
+                "sensitive": question.sensitive, "answer": answer,
+            })
+        return answers

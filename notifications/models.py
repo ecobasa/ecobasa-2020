@@ -91,11 +91,19 @@ class Notification(models.Model):
             # What is attached to the match (an invitation onto a tour) may say it better
             attached = next((a for a in self.match.attachments() if hasattr(a, "get_match_request_text")), target)
             template = attached.get_match_request_text()
+        elif self.tag == self.TAG_ACCEPTED and self.actor_id != self.match.from_user_id and getattr(
+            target, "get_match_accepted_text", lambda: None,
+        )():
+            # A target may say what the yes was (a membership application: a visit)
+            template = target.get_match_accepted_text()
         elif self.tag == self.TAG_ACCEPTED:
             # The requester can only accept/decline a counter-proposal from the owner.
             template = (_("%(actor)s accepted your counter-proposal for: %(title)s")
                         if self.actor_id == self.match.from_user_id
                         else _("%(actor)s accepted your request: %(title)s"))
+        elif self.tag == self.TAG_DECLINED and getattr(target, "get_match_declined_text", lambda: None)():
+            # A target may answer in gentler words (a membership application)
+            template = target.get_match_declined_text()
         elif self.tag == self.TAG_DECLINED:
             template = (_("%(actor)s declined your counter-proposal for: %(title)s")
                         if self.actor_id == self.match.from_user_id
@@ -143,6 +151,14 @@ class Notification(models.Model):
         if self.reference.skill_tags.filter(status="pending").exists():
             text = "%s %s" % (text, _("It mentions skills that wait for your confirmation."))
         return str(text)
+
+    @property
+    def is_red(self):
+        """A no shows red, unless the target answers in gentler words (a membership
+        application)."""
+        if self.tag != self.TAG_DECLINED:
+            return False
+        return not getattr(self._target(), "get_match_declined_text", lambda: None)()
 
     @property
     def icon(self):

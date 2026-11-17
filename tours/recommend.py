@@ -129,7 +129,7 @@ def _area(tour, stops, area_km):
     case), at most MAX_CANDIDATES."""
     stays = {stop.community_id for stop in stops if stop.community_id and not stop.event_id}
     communities = (
-        Community.objects.exclude(owner=None).exclude(location=None).exclude(pk__in=stays).select_related("owner")
+        Community.objects.exclude(ambassador=None).exclude(location=None).exclude(pk__in=stays).select_related("ambassador")
     )
     points = [p for p in _public_points(stops) if p is not None]
     where = tour.route if tour.route is not None else (points[0] if points else None)
@@ -210,7 +210,7 @@ def _rank_by_what_happens_there(tour, candidates):
     communities = {c.community.pk for c in candidates}
     listings = list(
         Listing.objects.current().filter(Q(community__in=communities) | Q(event__community__in=communities))
-        .select_related("skill", "owner", "community__owner", "event__community")
+        .select_related("skill", "owner", "community__ambassador", "event__community")
     )
     for candidate in candidates:
         if candidate.event:
@@ -314,14 +314,14 @@ def _rank_by_gifts(stops, candidates):
 def _things():
     return (
         Listing.objects.current().filter(skill=None, kind__in=Listing.THING_KINDS)
-        .select_related("owner", "community__owner", "event__community", "tour__organiser")
+        .select_related("owner", "community__ambassador", "event__community", "tour__organiser")
     )
 
 
 def _rank_by_trust(candidate):
     from gift_economy.references.models import references_about
 
-    ambassador = candidate.community.owner
+    ambassador = candidate.community.ambassador
     active = ambassador.last_active if ambassador else None
     if active and active >= timezone.now() - timedelta(days=ACTIVE_DAYS):
         candidate.add("active", _("Active lately"), "fa-circle-check", W_ACTIVE)

@@ -1,0 +1,26 @@
+{% load i18n %}
+{# A membership application's answer to who applies together: who sent theirs and who is still to, as it stands now; the children as they were given #}
+{% with together=application.together children=answer.answer.children %}
+	{% if together %}
+		<p class="my-0">{% trans "Applying together with" %}</p>
+		<ul class="my-1 space-y-1">
+			{% for person, match in together %}
+				<li class="flex items-start gap-2">
+					{% if match %}
+						<i class="fa-solid fa-check text-primary mt-1"></i>
+						<span>{% if is_owner %}<a href="{{ match.get_absolute_url }}" class="underline">{{ person.name }}</a>{% else %}{{ person.name }}{% endif %}</span>
+					{% else %}
+						<i class="fa-regular fa-hourglass-half opacity-70 mt-1"></i>
+						<span class="opacity-70">{% blocktrans with name=person.name|default:person %}Waiting for {{ name }}'s application{% endblocktrans %}</span>
+					{% endif %}
+				</li>
+			{% endfor %}
+		</ul>
+	{% elif answer.answer.together %}
+		<p class="my-0">{% trans "Applying together with" %} {{ answer.answer.together|join:", " }}</p>
+	{% endif %}
+	{% if children %}
+		<p class="my-0">{% trans "Children coming along, and their ages" %}: {{ children|join:", " }}</p>
+	{% endif %}
+	{% if not together and not answer.answer %}<p class="my-0"><span class="opacity-70">—</span></p>{% endif %}
+{% endwith %}

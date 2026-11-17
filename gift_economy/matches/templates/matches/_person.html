@@ -1,4 +1,4 @@
-{% load i18n %}{# What the other side has to offer: communities, skills with level and references, gifts. The two sides can tick skills and gifts to ask for them too. #}
+{% load i18n %}{# What the other side has to offer: communities, skills with level and references, gifts. Where the match allows it, skills and gifts can be ticked to ask for them too. #}
 {% with who=person.user %}
 <div id="person" class="border rounded-xl bg-secondary p-6 mb-6">
   <h2 class="text-lg mt-0 mb-4">{% blocktrans with name=who.name|default:who.email %}What {{ name }} has to offer{% endblocktrans %}</h2>
@@ -8,13 +8,13 @@
       <div class="text-xs font-bold uppercase tracking-wider opacity-70 mb-2">{% trans "Member of these communities" %}</div>
       <div class="flex flex-wrap gap-2">
         {% for community in person.communities %}
-          <a href="{{ community.get_absolute_url }}" class="pill pill-lg bg-green"><i class="fa-solid {{ community.get_type_icon }} mr-1"></i>{{ community.name }}<span class="ml-2 inline-flex items-center rounded-full bg-secondary text-green text-[10px] font-semibold px-2 py-0.5"><i class="fa-solid fa-award mr-1"></i>{% trans "Ambassador" %}</span></a>
+          <a href="{{ community.get_absolute_url }}" class="pill pill-lg bg-green"><i class="fa-solid {{ community.get_type_icon }} mr-1"></i>{{ community.name }}{% if community.ambassador_id == who.pk %}<span class="ml-2 inline-flex items-center rounded-full bg-secondary text-green text-[10px] font-semibold px-2 py-0.5"><i class="fa-solid fa-award mr-1"></i>{% trans "Ambassador" %}</span>{% endif %}</a>
         {% endfor %}
       </div>
     </div>
   {% endif %}
 
-  {% if is_party and person.skills or is_party and person.offers %}<form method="post">{% csrf_token %}<input type="hidden" name="action" value="extras">{% endif %}
+  {% if can_ask_extras and person.skills or can_ask_extras and person.offers %}<form method="post">{% csrf_token %}<input type="hidden" name="action" value="extras">{% endif %}
 
   <div class="mb-4">
     <div class="text-xs font-bold uppercase tracking-wider opacity-70 mb-2">{% trans "Skills" %}</div>
@@ -22,7 +22,7 @@
       <div class="flex flex-wrap gap-x-4 gap-y-2">
         {% for listing in person.skills %}
           <span class="inline-flex items-center gap-2">
-            {% if is_party %}<input type="checkbox" name="listing" value="{{ listing.pk }}" class="form-checkbox" aria-label="{% trans 'Ask for this too' %}"{% if listing.pk in asked_listing_ids %} checked{% endif %}>{% endif %}
+            {% if can_ask_extras %}<input type="checkbox" name="listing" value="{{ listing.pk }}" class="form-checkbox" aria-label="{% trans 'Ask for this too' %}"{% if listing.pk in asked_listing_ids %} checked{% endif %}>{% endif %}
             <a href="{{ listing.get_absolute_url }}" class="pill pill-lg bg-purple{% if not listing.available %} bg-opacity-60{% endif %}">
               {% include "gifts/_listing_icon.html" %}{{ listing.display_title }}
               {% if listing.level %}<span class="ml-1 text-xs opacity-80">· {{ listing.get_level_display }}</span>{% endif %}
@@ -42,7 +42,7 @@
       <div class="flex flex-wrap gap-x-4 gap-y-2">
         {% for listing in person.offers %}
           <span class="inline-flex items-center gap-2">
-            {% if is_party %}<input type="checkbox" name="listing" value="{{ listing.pk }}" class="form-checkbox" aria-label="{% trans 'Ask for this too' %}"{% if listing.pk in asked_listing_ids %} checked{% endif %}>{% endif %}
+            {% if can_ask_extras %}<input type="checkbox" name="listing" value="{{ listing.pk }}" class="form-checkbox" aria-label="{% trans 'Ask for this too' %}"{% if listing.pk in asked_listing_ids %} checked{% endif %}>{% endif %}
             <a href="{{ listing.get_absolute_url }}" class="pill pill-lg {{ listing.colour }}">{% include "gifts/_listing_icon.html" %}{{ listing.display_title|truncatechars:50 }}{% if listing.amount %}<span class="ml-1 text-xs opacity-80">· {{ listing.amount }}</span>{% endif %}</a>
           </span>
         {% endfor %}
@@ -52,7 +52,7 @@
     {% endif %}
   </div>
 
-  {% if is_party and person.skills or is_party and person.offers %}
+  {% if can_ask_extras and person.skills or can_ask_extras and person.offers %}
     <p class="text-xs opacity-80 mt-4 mb-2">{% trans "Tick what you would like too: it becomes part of this exchange, shows with the match and can be named in your references." %}</p>
     <button type="submit" class="btn text-sm py-1 px-3"><i class="fa-solid fa-hand-holding-heart mr-1"></i>{% trans "Ask for these too" %}</button>
     </form>

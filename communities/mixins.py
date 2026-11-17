@@ -13,9 +13,11 @@ class UniqueSlugMixin:
     UNIQUE_SLUG_FROM_FIELD = "name"
 
     def _slug_is_available(self, slug):
-        return not self.__class__.objects.filter(slug=slug).exists()
+        return not self.__class__.objects.filter(slug=slug).exclude(pk=self.pk).exists()
 
     def save(self, *args, **kwargs):
+        if self.slug:
+            return super().save(*args, **kwargs)
         base_slug = slugify(getattr(self, self.UNIQUE_SLUG_FROM_FIELD))
         new_slug = base_slug
         suffix = 1

@@ -67,10 +67,21 @@ def notify_match_created(match, http_request=None):
     others = [user for user in answerers if user.pk not in (match.recipient_id, match.from_user_id)]
     for recipient in [match.recipient, *others]:
         notification = _notify(match, recipient, match.from_user, Notification.TAG_REQUESTED)
-        if http_request:
+        # A target may want it read first rather than answered from the email (an application)
+        review_label = getattr(match.target, "match_review_label", None)
+        if http_request and review_label:
+            _send_email(notification, "matches/email/match_request", http_request, {
+                "review_label": review_label, "kind": match.target.get_match_kind()[0],
+            })
+        elif http_request:
             _send_email(notification, "matches/email/match_request", http_request, {
                 "accept_url":  _action_url(http_request, match.pk, "accept"),
-                "decline_url": _action_url(http_request, match.pk, "decline"),
+                # Saying no may take a few words first, on the match page
+                "decline_url": (
+                    http_request.build_absolute_uri(f"{match.get_absolute_url()}?decline=1#compose")
+                    if getattr(match.target, "match_decline_fields", lambda: "")()
+                    else _action_url(http_request, match.pk, "decline")
+                ),
             })
 
 

@@ -1,0 +1,10 @@
+{% load i18n %}
+{# One must-match on the apply page: a statement to agree to #}
+<div class="mt-2">
+	<label class="flex items-start gap-2 cursor-pointer">
+		<input type="checkbox" name="{{ field.html_name }}" id="{{ field.id_for_label }}" class="form-checkbox mt-1 flex-shrink-0" x-model="agreed['{{ field.html_name }}']">
+		<span>{{ field.label }}</span>
+	</label>
+	{% if field.help_text %}<p class="text-xs text-brown ml-7">{{ field.help_text }}</p>{% endif %}
+	{% for error in field.errors %}<p class="field-error ml-7">{{ error }}</p>{% endfor %}
+</div>

@@ -1,7 +1,8 @@
 {% load i18n %}
-{# On a stay's match page: tours that stop there around its days (tours.templatetags.tours_tags.tours_going_there) #}
-{% if fits %}
+{# On a stay's match page: tours that stop there around its days, and starting one there (tours.templatetags.tours_tags.tours_going_there) #}
+{% if fits or start_url %}
 <div class="rounded-xl p-4 mb-6 border bg-secondary bg-opacity-50">
+  {% if fits %}
   <h2 class="mt-0">{% trans "Tours going there around your days" %}</h2>
   <ul class="list-none p-0 m-0 space-y-2">
     {% for fit in fits %}{% with tour=fit.tour %}
@@ -18,5 +19,16 @@
       </li>
     {% endwith %}{% endfor %}
   </ul>
+  {% endif %}
+  {% if start_url %}
+    <div class="flex flex-wrap items-center gap-3 text-sm{% if fits %} mt-4 pt-4 border-t{% endif %}">
+      <i class="fa-solid fa-route text-xl text-primary w-6 text-center"></i>
+      <span class="flex-1 min-w-0">
+        {% trans "Make a tour out of it: others can come along, and the packing list shows what you could bring. Gifts a community wishes for can often be picked up from other communities along the way." %}
+        {% if for_application %}<span class="block mt-1">{% trans "Good for your application, too: more experience of community life, good references and gifts you bring along make a good impression." %}</span>{% endif %}
+      </span>
+      <a href="{{ start_url }}" class="btn text-sm py-1 px-3"><i class="fa-solid fa-route mr-1"></i>{% trans "Start a Community-Tour with this stay" %}</a>
+    </div>
+  {% endif %}
 </div>
 {% endif %}

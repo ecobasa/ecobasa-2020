@@ -140,6 +140,29 @@ def test_leave_and_remove_need_a_few_words(four_stops, organiser, other):
     assert login(organiser).post(reverse("tours:remove", args=[four_stops.slug, own.pk]), {"body": "x"}).status_code == 403
 
 
+def test_an_open_request_can_be_withdrawn(four_stops, organiser, other):
+    stops = four_stops.ordered_stops()
+    _r, traveller = ask(other, four_stops, stops[0], stops[1])
+    withdraw_url = reverse("tours:withdraw", args=[four_stops.slug])
+    assert withdraw_url in login(other).get(four_stops.get_absolute_url()).content.decode()
+    assert withdraw_url in login(other).get(reverse("tours:join", args=[four_stops.slug])).content.decode()
+    mail.outbox.clear()
+    # No words needed, nobody counts on them yet
+    response = login(other).post(withdraw_url, {"body": ""})
+    assert response.url == four_stops.get_absolute_url()
+    traveller.match.refresh_from_db()
+    assert traveller.match.status == Match.STATUS_WITHDRAWN
+    assert [m.to for m in mail.outbox] == [[organiser.email]]
+    assert "Ask to join" in login(other).get(four_stops.get_absolute_url()).content.decode()
+
+    # Once accepted they leave the tour instead, with a few words
+    _r, again = ask(other, four_stops, stops[0], stops[1])
+    accept(again.match, organiser)
+    login(other).post(withdraw_url)
+    again.match.refresh_from_db()
+    assert again.match.status == Match.STATUS_ACCEPTED
+
+
 def test_the_tour_page_shows_the_join_button_by_state(four_stops, organiser, other):
     url = four_stops.get_absolute_url()
     stops = four_stops.ordered_stops()
@@ -220,9 +243,28 @@ def test_a_profile_lists_the_tours_someone_is_on(four_stops, organiser, other):
 
 def test_a_traveller_who_is_an_ambassador_shows_their_community(four_stops, organiser, farm):
     stops = four_stops.ordered_stops()
-    _, traveller = ask(farm.owner, four_stops, stops[0], stops[1])
+    _, traveller = ask(farm.ambassador, four_stops, stops[0], stops[1])
     page = reverse("tours:detail", args=[four_stops.slug])
     assert farm.get_absolute_url() + '" class="block text-sm' not in login(organiser).get(page).content.decode()
     accept(traveller.match, organiser)
     html = login(organiser).get(page).content.decode()
     assert farm.get_absolute_url() + '" class="block text-sm' in html
+
+
+def test_only_the_organisers_see_what_a_traveller_could_bring(four_stops, organiser, other):
+    stops = four_stops.ordered_stops()
+    _, traveller = ask(other, four_stops, stops[0], stops[1])
+    url = traveller.match.get_absolute_url()
+    assert 'id="person"' in login(organiser).get(url).content.decode()
+    assert 'id="person"' not in login(other).get(url).content.decode()
+
+
+def test_the_user_menu_lists_your_tours_once_you_are_on_one(four_stops, organiser, other):
+    mine = reverse("tours:mine")
+    assert mine not in login(other).get("/").content.decode()
+    assert mine in login(organiser).get("/").content.decode()
+    stops = four_stops.ordered_stops()
+    _r, traveller = ask(other, four_stops, stops[0], stops[1])
+    assert mine in login(other).get("/").content.decode()
+    login(other).post(reverse("tours:withdraw", args=[four_stops.slug]))
+    assert mine not in login(other).get("/").content.decode()

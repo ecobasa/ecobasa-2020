@@ -137,7 +137,7 @@ def references_list(request):
     community = None
     tabs = []
     if request.GET.get("community"):
-        community = get_object_or_404(user.communities.prefetch_related("photos"), slug=request.GET["community"])
+        community = get_object_or_404(user.ambassador_of.prefetch_related("photos"), slug=request.GET["community"])
         tab = "community"
         references = _load(references_about(community), user, "received", holder=community)
     else:

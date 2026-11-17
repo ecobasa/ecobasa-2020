@@ -36,13 +36,13 @@
         </div>
       {% endif %}
 
-      <div class="flex gap-3">
+      <div class="flex justify-between gap-3">
+        <a href="{{ request.user.get_absolute_url }}" class="btn btn-purple">
+          <i class="fa fa-ban mr-2"></i>{% trans "Cancel" %}
+        </a>
         <button type="submit" class="btn">
           <i class="fa fa-check mr-2"></i>{% trans "Add to my profile" %}
         </button>
-        <a href="{{ request.user.get_absolute_url }}" class="btn btn-purple">
-          <i class="fa fa-times mr-2"></i>{% trans "Cancel" %}
-        </a>
       </div>
     </form>
   </div>

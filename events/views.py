@@ -7,7 +7,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.core import signing
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
-from django.db.models import Prefetch, Q
+from django.db.models import F, Prefetch, Q
 from django.http import HttpResponseBadRequest, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
@@ -18,7 +18,7 @@ from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_POST
 
 from communities.models import Community
-from dashboard_lists import paginate
+from dashboard_lists import Choice, paginate, query_url
 from gift_economy.matches.emails import notify_match_created
 from gift_economy.gifts.models import Listing
 from gift_economy.matches.models import Match, StayDetails, create_stay
@@ -26,7 +26,7 @@ from gift_economy.gifts.skills.models import Skill, skill_name_q
 
 from . import kinds
 from .forms import ComingForm, EventForm, HelpOfferForm, NeedForm, NeedFormSet
-from .filters import EventFilters
+from .filters import EventFilters, going_to
 from .freshness import read_confirm_token
 from .models import Event
 
@@ -39,7 +39,7 @@ _LISTINGS = Prefetch(
 
 
 def _events():
-    return Event.objects.select_related("community", "community__owner").prefetch_related(_LISTINGS, "community__photos")
+    return Event.objects.select_related("community", "community__ambassador").prefetch_related(_LISTINGS, "community__photos")
 
 
 def _event(community_slug, slug, events=None):
@@ -48,19 +48,38 @@ def _event(community_slug, slug, events=None):
 
 def event_list(request):
     """Events on a map, the list in a modal, with a search and filters (EventFilters),
-    as on the communities. The map starts around where one asked (?near=) or the place in
-    one's profile."""
+    as on the communities. The map starts on the whole world, or around where one asked
+    (?near=)."""
     user = request.user
     filters = EventFilters(request.GET, user)
-    home = filters.near or (user.location if user.is_authenticated else None)
     return render(request, "events/event_list.html", {
         "filters": filters,
         "countries": _countries(filters),
         "kind_choices": [(value, kinds.TEXTS[value]["plural"], kinds.ICONS[value]) for value, _label in kinds.CHOICES],
         "need_choices": [(value, label) for value, label in NeedForm.KIND_CHOICES],
         "flag_choices": _flag_choices(user),
-        "home": home,
+        "home": filters.near,
         "radius": user.match_radius if user.is_authenticated else None,
+    })
+
+
+@login_required
+def going(request):
+    """The events one comes to or whose help was accepted, as cards in the dashboard:
+    those not over yet, the soonest first, or the past ones, the latest first."""
+    past = request.GET.get("when") == "past"
+    mine = _events().filter(pk__in=going_to(request.user))
+    today = timezone.localdate()
+    upcoming = mine.current().order_by(F("starts_on").asc(nulls_first=True), F("ends_on").asc(nulls_last=True))
+    over = mine.filter(ends_on__lt=today).order_by("-ends_on", "-starts_on")
+    page = paginate(request, over if past else upcoming)
+    return render(request, "events/going.html", {
+        "page": page,
+        "past": past,
+        "whens": [
+            Choice(_("Upcoming"), query_url(request, when=None), active=not past, count=upcoming.count()),
+            Choice(_("Past"), query_url(request, when="past"), active=past, count=over.count()),
+        ],
     })
 
 
@@ -243,7 +262,7 @@ def create(request, community_slug):
 
 @login_required
 def edit(request, community_slug, slug):
-    event = _event(community_slug, slug, Event.objects.select_related("community__owner"))
+    event = _event(community_slug, slug, Event.objects.select_related("community__ambassador"))
     if not event.can_edit(request.user):
         raise PermissionDenied
     return _save_event(request, event, {"community": event.community, "event": event})
@@ -252,7 +271,7 @@ def edit(request, community_slug, slug):
 @login_required
 @require_POST
 def archive(request, community_slug, slug):
-    event = _event(community_slug, slug, Event.objects.select_related("community__owner"))
+    event = _event(community_slug, slug, Event.objects.select_related("community__ambassador"))
     if not event.can_edit(request.user):
         raise PermissionDenied
     event.archived_at = timezone.now()
@@ -266,7 +285,7 @@ def archive(request, community_slug, slug):
 def confirm(request, community_slug, slug):
     """The ambassador says the event is still current (also brings back an archived one
     that hasn't ended)."""
-    event = _event(community_slug, slug, Event.objects.select_related("community__owner"))
+    event = _event(community_slug, slug, Event.objects.select_related("community__ambassador"))
     if not event.can_edit(request.user):
         raise PermissionDenied
     if event.is_over:
@@ -298,7 +317,7 @@ def confirm_by_email(request, community_slug, slug, token):
 @require_POST
 def toggle_need(request, community_slug, slug, need_pk):
     """Mark a need as covered (however it was covered), or open it again."""
-    event = _event(community_slug, slug, Event.objects.select_related("community__owner"))
+    event = _event(community_slug, slug, Event.objects.select_related("community__ambassador"))
     if not event.can_edit(request.user):
         raise PermissionDenied
     need = get_object_or_404(event.listings.filter(type=Listing.TYPE_WISH), pk=need_pk)

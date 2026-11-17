@@ -8,16 +8,16 @@
 </script>
 {% endblock %}
 
-<nav class="bg-primary bg-opacity-75 text-secondary font-bold shadow-sm z-40" x-data="{ mobileMenuOpen: false }">
+<nav class="bg-primary bg-opacity-75 text-secondary font-bold shadow-sm z-40" x-data="{ mobileMenuOpen: false, mobileUserOpen: false }">
   <div class="mx-auto px-4">
     <div class="flex justify-between h-16">
       <div class="flex">
         {% comment %} Logo {% endcomment %}
-        <div class="relative flex-shrink-0 h-16 flex items-center md:mr-6" x-data="{ open: false }"
+        <div class="relative flex-shrink-0 h-16 flex items-center" x-data="{ open: false }"
              @mouseenter="if (window.matchMedia('(hover: hover)').matches) open = true" @mouseleave="open = false"
              @keydown.escape="open = false" @click.away="open = false">
           <a href="/" class="flex items-center" @click.prevent="open = true" :aria-expanded="open" aria-haspopup="true">
-            <svg class="fill-current h-7 w-7 mt-1 mr-2" viewbox="0 0 180 205"><path d="M83 199.78C72.2 191.8 63.73 177 61.5 162.27c-.55-3.72-.42-4.57.67-4.18.75.27 7.26 2.07 14.47 4l13.1 3.52 11.75-3.01c6.47-1.66 12.58-3.45 13.59-4 2.97-1.58 3.14-1.25 2.4 4.78-1.79 14.67-9 27.71-20.21 36.5-3.34 2.61-6.44 4.74-6.9 4.73-.46 0-3.77-2.18-7.36-4.83zm-67.64-40.66a68.23 68.23 0 01-10.77-3.37L0 153.72l.59-4.3c1.78-13.09 4.43-20.21 10.9-29.28 5.05-7.08 15.36-16.38 15.9-14.34.35 1.32 2.1 8.16 5.41 21.14 1.68 6.6 2.07 7.14 11.99 16.81 5.64 5.5 10.25 10.19 10.25 10.42 0 1-7.94 4.3-12.8 5.33-6.95 1.48-19.15 1.3-26.88-.38zm119.21-.1c-3.28-.8-6.95-2.1-8.16-2.89-2.16-1.41-1.98-1.65 8.54-11.72 9.6-9.2 10.82-10.75 11.5-14.72a58.48 58.48 0 012.74-9.44 52.28 52.28 0 002.66-10.33l.69-5.33 6.15 4.98c10.96 8.88 18.94 23.86 20.1 37.72l.5 6.16-4.23 2.17c-9.38 4.78-28.21 6.37-40.49 3.4zM21.6 94.57C9.56 84.63 1.04 67.75 1.04 53.88c0-4.14.18-4.4 4.28-6.16 12.6-5.4 35.1-5.6 47.53-.4l3.5 1.46-8.41 8.48c-4.62 4.66-9.86 9.39-11.65 10.5-2.84 1.77-3.25 2.57-3.25 6.27 0 2.34-1.13 7.55-2.5 11.6-1.38 4.04-2.5 8.62-2.5 10.17 0 1.56-.35 2.83-.77 2.83-.42 0-2.98-1.83-5.68-4.06zm130.45 1.03c0-1.67-.9-5.72-2.01-9-1.1-3.29-2.48-8.1-3.05-10.72-.86-3.93-2.37-6.14-8.74-12.75-4.24-4.4-9.23-9.2-11.1-10.65l-3.4-2.64 3.1-1.6c5.5-2.85 14.4-4.61 23.27-4.61 10.68 0 17.65 1.27 24.7 4.5l5.4 2.47-.63 4.26c-2 13.43-5.32 22.15-11.6 30.46-3.5 4.63-13.46 13.3-15.28 13.3-.36 0-.66-1.36-.66-3.02zM62.42 41.05c1.86-15.82 10.16-29.5 23.44-38.64 4.02-2.77 4.6-2.9 7.02-1.65 4.7 2.42 15.57 14.2 18.82 20.37a67.53 67.53 0 016.78 21.37c.56 3.92.44 4.29-1.16 3.6-.98-.43-6.5-2.04-12.28-3.58-5.78-1.54-11.3-3.28-12.27-3.87a3.42 3.42 0 00-3.63-.07c-1.03.54-6 1.91-11.06 3.04-5.06 1.13-10.8 2.72-12.76 3.53l-3.56 1.5.66-5.6z"/></svg>
+            {% include "_logo_mark.html" with class="h-7 w-7 mt-1 mr-2" %}
             <span class="font-serif font-normal text-3xl mb-1">ecobasa.org</span>
           </a>
           <div x-show="open" x-cloak
@@ -32,8 +32,8 @@
           </div>
         </div>
         {% comment %} Desktop Menu {% endcomment %}
-        <div class="hidden sm:ml-6 sm:flex">
-          <a href="{% url "communities:list" %}" class="{% if namespace == "communities" %}text-brown{% endif %} ml-8 inline-flex items-center px-1 pt-1 border-b-2 border-transparent leading-5 focus:outline-none focus:text-brown transition duration-150 ease-in-out">
+        <div class="hidden xl:ml-6 min-[1200px]:ml-4 min-[1200px]:flex">
+          <a href="{% url "communities:list" %}" class="{% if namespace == "communities" %}text-brown{% endif %} ml-4 inline-flex items-center px-1 pt-1 border-b-2 border-transparent leading-5 focus:outline-none focus:text-brown transition duration-150 ease-in-out">
             <i class="fa fa-home mr-2"></i>
             {% trans "Communities" %}
           </a>
@@ -56,9 +56,9 @@
         </div>
       </div>
       <div class="flex items-center">
-      {% include "_language_switcher.html" with form_class="hidden sm:flex sm:items-center sm:ml-6" %}
+      {% include "_language_switcher.html" with form_class="hidden min-[1200px]:flex min-[1200px]:items-center min-[1200px]:ml-4" %}
       {% if request.user.is_authenticated %}
-        <div class="hidden sm:ml-6 sm:flex sm:items-center">
+        <div class="hidden min-[1200px]:ml-4 min-[1200px]:flex min-[1200px]:items-center">
           {% comment %} Notification Bell {% endcomment %}
           <div class="relative mr-1 h-16 flex items-center" x-data="{
                  open: false, notifications: [], unread: {{ unread_notifications_count }}, hasMore: false,
@@ -126,11 +126,12 @@
           {% comment %} Profile dropdown {% endcomment %}
           <div class="ml-3 relative h-16 flex items-center" x-data="{ open: false }" @close-user-menu.window="open = false">
             <div>
-                <button @click="open = !open" @keydown.escape="open = false" :aria-expanded="open" class="flex rounded-full transition duration-150 ease-in-out" id="user-menu" aria-label="{% trans 'User menu' %}" aria-haspopup="true">
+                <button @click="open = !open" @keydown.escape="open = false" :aria-expanded="open" class="relative flex rounded-full transition duration-150 ease-in-out" id="user-menu" aria-label="{% trans 'User menu' %}" aria-haspopup="true">
+               {% include "_menu_waiting_dot.html" %}
                {% if request.user.image %}
                 <img class="h-8 w-8 rounded-full" src="{{ request.user.image.url }}" alt="" width="32" height="32">
                {% else %}
-                <i class="fa-solid fa-user p-3 text-lg text-primary rounded-full bg-secondary"></i>
+                <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-secondary text-primary"><i class="fa-solid fa-user"></i></span>
                {% endif %}
               </button>
             </div>
@@ -152,25 +153,44 @@
                   <i class="fa fa-envelope mr-2"></i>
                   {% trans "Messages" %}
                 </a>
-                <a href="{% url 'matches:list' %}" class="dropdown-link">
+                {# Badges: what waits for their answer or confirmation #}
+                {% trans "Waiting for your answer" as answer_title %}{% trans "Waiting for your confirmation" as confirm_title %}
+                <a href="{% url 'matches:list' %}" class="group dropdown-link">
                   <span class="flex items-center"><i class="fa-solid fa-handshake mr-2"></i>{% trans "Matches" %}
-                  {% if new_suggestions_count %}<span class="ml-auto pill bg-purple text-secondary text-xs" title="{% trans 'New suggestions' %}">{{ new_suggestions_count }}</span>{% endif %}</span>
+                  {% include "_badge.html" with count=waiting.matches title=answer_title %}</span>
                 </a>
-                <a href="{% url 'matches:list' %}?type=volunteer" class="dropdown-link">
-                  <i class="fa-solid fa-campground mr-2"></i>{% trans "Volunteer Visits" %}
-                </a>
-                <a href="{% url 'tours:mine' %}" class="dropdown-link">
-                  <i class="fa-solid fa-route mr-2"></i>{% trans "Your tours" %}
-                </a>
-                <a href="{% url 'events:list' %}?going=1&amp;view=list" class="dropdown-link">
-                  <i class="fa-solid fa-calendar-check mr-2"></i>{% trans "Going to" %}
-                </a>
+                {# Ambassadors find them under their community; their own requests elsewhere are a tab there #}
+                {% if not owned_communities %}
+                  {% if has_volunteer_visits %}
+                    <a href="{% url 'matches:list' %}?type=volunteer" class="group dropdown-link">
+                      <span class="flex items-center"><i class="fa-solid fa-campground mr-2"></i>{% trans "Volunteer Visits" %}
+                      {% include "_badge.html" with count=waiting.volunteer title=answer_title %}</span>
+                    </a>
+                  {% endif %}
+                  {% if has_membership_applications %}
+                    <a href="{% url 'matches:list' %}?type=members" class="group dropdown-link">
+                      <span class="flex items-center"><i class="fa-solid fa-door-open mr-2"></i>{% trans "Membership applications" %}
+                      {% include "_badge.html" with count=waiting.members title=answer_title %}</span>
+                    </a>
+                  {% endif %}
+                {% endif %}
+                {% if on_tours %}
+                  <a href="{% url 'tours:mine' %}" class="group dropdown-link">
+                    <span class="flex items-center"><i class="fa-solid fa-route mr-2"></i>{% trans "Your tours" %}
+                    {% include "_badge.html" with count=waiting.tours title=answer_title %}</span>
+                  </a>
+                {% endif %}
+                {% if attends_events %}
+                  <a href="{% url 'events:going' %}" class="dropdown-link">
+                    <i class="fa-solid fa-calendar-check mr-2"></i>{% trans "Events you are attending" %}
+                  </a>
+                {% endif %}
                 <a href="{% url 'gifts:mine' %}" class="dropdown-link">
                   <span class="flex items-center"><i class="fa-solid fa-gift mr-2"></i>{% trans "Your gifts and wishes" %}</span>
                 </a>
-                <a href="{% url 'references:list' %}" class="dropdown-link">
+                <a href="{% url 'references:list' %}" class="group dropdown-link">
                   <span class="flex items-center"><i class="fa fa-comments mr-2"></i>{% trans "References" %}
-                  {% if pending_reference_skills %}<span class="ml-auto pill bg-purple text-secondary text-xs" title="{% trans 'Waiting for your confirmation' %}">{{ pending_reference_skills }}</span>{% endif %}</span>
+                  {% include "_badge.html" with count=pending_reference_skills title=confirm_title %}</span>
                 </a>
                 {% if owned_communities %}
                   <div class="border-t border-secondary border-opacity-20 mt-1 pt-1">
@@ -179,13 +199,21 @@
                       <a href="{{ item.community.get_absolute_url }}" class="dropdown-link">
                         <i class="fa-solid {{ item.community.get_type_icon }} mr-2"></i>{{ item.community.name }}
                       </a>
+                      <a href="{% url 'matches:list' %}?type=volunteer&box=received" class="group dropdown-link">
+                        <span class="flex items-center"><i class="fa-solid fa-campground mr-2"></i>{% trans "Volunteer Visits" %}
+                        {% include "_badge.html" with count=waiting.volunteer title=answer_title %}</span>
+                      </a>
+                      <a href="{% url 'matches:list' %}?type=members&box=received" class="group dropdown-link">
+                        <span class="flex items-center"><i class="fa-solid fa-door-open mr-2"></i>{% trans "Membership applications" %}
+                        {% include "_badge.html" with count=waiting.members title=answer_title %}</span>
+                      </a>
                       <a href="{% url 'matches:calendar' item.community.slug %}" class="dropdown-link">
                         <i class="fa-regular fa-calendar mr-2"></i>{% trans "Calendar" %}
                       </a>
                       {# Its references, seen as ambassador #}
-                      <a href="{% url 'references:list' %}?community={{ item.community.slug }}" class="dropdown-link">
+                      <a href="{% url 'references:list' %}?community={{ item.community.slug }}" class="group dropdown-link">
                         <span class="flex items-center"><i class="fa fa-comments mr-2"></i>{% trans "References" %}
-                        {% if item.pending %}<span class="ml-auto pill bg-purple text-secondary text-xs" title="{% trans 'Waiting for your confirmation' %}">{{ item.pending }}</span>{% endif %}</span>
+                        {% include "_badge.html" with count=item.pending title=confirm_title %}</span>
                       </a>
                     {% endfor %}
                   </div>
@@ -217,7 +245,7 @@
         </div>
       {% else %}
         {% comment %} Login button {% endcomment %}
-        <div class="flex-shrink-0 hidden sm:ml-6 sm:flex sm:items-center">
+        <div class="flex-shrink-0 hidden min-[1200px]:ml-6 min-[1200px]:flex min-[1200px]:items-center">
           <a href="{% url "users:login" %}?next={{ request.path }}" class="px-1 py-5 leading-5 focus:outline-none focus:text-brown transition duration-150 ease-in-out">
             <i class="fa fa-sign-in-alt mr-2"></i>
             <span>{% trans "Log in" %}</span>
@@ -225,9 +253,21 @@
         </div>
       {% endif %}
       </div>
-      <div class="-mr-2 flex items-center sm:hidden">
+      <div class="-mr-2 flex items-center min-[1200px]:hidden">
+        {% comment %} mobile user menu button, apart from the main menu {% endcomment %}
+        {% if request.user.is_authenticated %}
+          <button @click="mobileUserOpen = !mobileUserOpen; mobileMenuOpen = false" :aria-expanded="mobileUserOpen" class="relative mr-2 flex rounded-full focus:outline-none" aria-label="{% trans 'User menu' %}">
+            {# The dot also for unread notifications: there's no bell here #}
+            {% include "_menu_waiting_dot.html" with notifications=unread_notifications_count %}
+            {% if request.user.image %}
+              <img class="h-8 w-8 rounded-full" src="{{ request.user.image.url }}" alt="" width="32" height="32">
+            {% else %}
+              <span class="flex items-center justify-center w-8 h-8 rounded-full bg-secondary text-primary"><i class="fa-solid fa-user"></i></span>
+            {% endif %}
+          </button>
+        {% endif %}
         {% comment %} mobile menu button {% endcomment %}
-        <button @click="mobileMenuOpen = !mobileMenuOpen" class="inline-flex items-center justify-center p-2 rounded-md focus:outline-none">
+        <button @click="mobileMenuOpen = !mobileMenuOpen; mobileUserOpen = false" :aria-expanded="mobileMenuOpen" class="inline-flex items-center justify-center p-2 rounded-md focus:outline-none" aria-label="{% trans 'Menu' %}">
           <i x-show="!mobileMenuOpen" class="fa-solid fa-bars text-xl w-6 text-center"></i>
           <i x-show="mobileMenuOpen" class="fa-solid fa-xmark text-xl w-6 text-center"></i>
         </button>
@@ -243,7 +283,7 @@
       x-transition:leave="transition ease-in duration-75"
       x-transition:leave-start="opacity-100 transform scale-y-100"
       x-transition:leave-end="opacity-0 transform scale-y-95"
-      class="sm:hidden origin-top-right">
+      class="min-[1200px]:hidden origin-top-right">
     <div class="pt-2 pb-3">
       <a href="{% url "gifts:search" %}" class="mt-1 block pl-3 pr-4 py-2 border-l-4 border-transparent {% if namespace == "gifts" %}border-brown text-brown focus:text-brown focus:border-brown{% else %}text-secondary hover:text-primary hover:bg-secondary hover:border-brown focus:text-brown focus:bg-secondary focus:border-brown{% endif %} text-base focus:outline-none"><i class="fa fa-recycle mr-2"></i>{% trans "Gifts" %}</a>
       <a href="{% url "communities:list" %}" class="mt-1 block pl-3 pr-4 py-2 border-l-4 border-transparent {% if namespace == "communities" %}border-brown text-brown focus:text-brown focus:border-brown{% else %}text-secondary hover:text-primary hover:bg-secondary hover:border-brown focus:text-brown focus:bg-secondary focus:border-brown{% endif %} text-base focus:outline-none"><i class="fa fa-home mr-2"></i>{% trans "Communities" %}</a>
@@ -254,14 +294,34 @@
       <a href="{% url 'help:index' %}" class="mt-1 block pl-3 pr-4 py-2 border-l-4 border-transparent {% if namespace == "help" %}border-brown text-brown focus:text-brown focus:border-brown{% else %}text-secondary hover:text-primary hover:bg-secondary hover:border-brown focus:text-brown focus:bg-secondary focus:border-brown{% endif %} text-base focus:outline-none"><i class="fa-regular fa-circle-question mr-2"></i>{% trans "Help" %}</a>
     </div>
 
-    {% if request.user.is_authenticated %}
-      <div class="pt-4 pb-3 border-t border-gray-200">
+    {% if not request.user.is_authenticated %}
+      <a href="{% url "users:login" %}?next={{ request.path }}" class="mt-1 block px-4 py-2 text-base text-secondary hover:text-primary hover:bg-secondary focus:text-primary focus:bg-secondary">
+            <i class="fa fa-sign-in-alt mr-2"></i>
+            <span>{% trans "Log in" %}</span>
+          </a>
+    {% endif %}
+    <div class="border-t border-gray-200 py-2">
+      {% include "_language_switcher.html" with mobile=True %}
+    </div>
+  </div>
+
+  {% comment %} mobile user menu {% endcomment %}
+  {% if request.user.is_authenticated %}
+  <div x-show="mobileUserOpen" x-cloak
+      x-transition:enter="transition ease-out duration-200"
+      x-transition:enter-start="opacity-0 transform scale-y-95"
+      x-transition:enter-end="opacity-100 transform scale-y-100"
+      x-transition:leave="transition ease-in duration-75"
+      x-transition:leave-start="opacity-100 transform scale-y-100"
+      x-transition:leave-end="opacity-0 transform scale-y-95"
+      class="min-[1200px]:hidden origin-top-right">
+      <div class="pt-4 pb-3">
         <div class="flex items-center px-4">
           <div class="flex-shrink-0">
              {% if request.user.image %}
               <img class="h-8 w-8 rounded-full" src="{{ request.user.image.url }}" alt="" width="32" height="32">
              {% else %}
-              <i class="fa-solid fa-user inline-flex items-center justify-center w-8 h-8 text-base text-primary rounded-full bg-secondary"></i>
+              <span class="flex items-center justify-center w-8 h-8 rounded-full bg-secondary text-primary"><i class="fa-solid fa-user"></i></span>
              {% endif %}
           </div>
           <div class="ml-3">
@@ -270,20 +330,35 @@
           </div>
         </div>
         <div class="mt-3" role="menu" aria-orientation="vertical" aria-labelledby="user-menu">
+          {% trans "Waiting for your answer" as answer_title %}{% trans "Waiting for your confirmation" as confirm_title %}
           <a href="{{ request.user.get_absolute_url }}" class="block px-4 py-2 text-base text-secondary hover:text-primary hover:bg-secondary focus:text-primary focus:bg-secondary" role="menuitem"><i class="fa fa-user mr-2"></i>{% trans "Your Profile" %}</a>
           <a href="{% url 'postman:inbox' %}" class="mt-1 block px-4 py-2 text-base text-secondary hover:text-primary hover:bg-secondary focus:text-primary focus:bg-secondary" role="menuitem"><i class="fa fa-envelope mr-2"></i>{% trans "Messages" %}</a>
-          <a href="{% url 'matches:list' %}" class="mt-1 flex items-center px-4 py-2 text-base text-secondary hover:text-primary hover:bg-secondary focus:text-primary focus:bg-secondary" role="menuitem"><i class="fa-solid fa-handshake mr-2"></i>{% trans "Matches" %}{% if new_suggestions_count %}<span class="ml-auto pill bg-purple text-secondary text-xs">{{ new_suggestions_count }}</span>{% endif %}</a>
-          <a href="{% url 'matches:list' %}?type=volunteer" class="mt-1 block px-4 py-2 text-base text-secondary hover:text-primary hover:bg-secondary focus:text-primary focus:bg-secondary" role="menuitem"><i class="fa-solid fa-campground mr-2"></i>{% trans "Volunteer Visits" %}</a>
-          <a href="{% url 'tours:mine' %}" class="mt-1 block px-4 py-2 text-base text-secondary hover:text-primary hover:bg-secondary focus:text-primary focus:bg-secondary" role="menuitem"><i class="fa-solid fa-route mr-2"></i>{% trans "Your tours" %}</a>
-          <a href="{% url 'events:list' %}?going=1&amp;view=list" class="mt-1 block px-4 py-2 text-base text-secondary hover:text-primary hover:bg-secondary focus:text-primary focus:bg-secondary" role="menuitem"><i class="fa-solid fa-calendar-check mr-2"></i>{% trans "Going to" %}</a>
-          <a href="{% url 'references:list' %}" class="mt-1 flex items-center px-4 py-2 text-base text-secondary hover:text-primary hover:bg-secondary focus:text-primary focus:bg-secondary" role="menuitem"><i class="fa fa-comments mr-2"></i>{% trans "References" %}{% if pending_reference_skills %}<span class="ml-auto pill bg-purple text-secondary text-xs">{{ pending_reference_skills }}</span>{% endif %}</a>
+          <a href="{% url 'notifications:list' %}" class="group mt-1 flex items-center px-4 py-2 text-base text-secondary hover:text-primary hover:bg-secondary focus:text-primary focus:bg-secondary" role="menuitem"><i class="fa-regular fa-bell mr-2"></i>{% trans "Notifications" %}{% trans "Unread" as unread_title %}{% include "_badge.html" with count=unread_notifications_count title=unread_title %}</a>
+          <a href="{% url 'matches:list' %}" class="group mt-1 flex items-center px-4 py-2 text-base text-secondary hover:text-primary hover:bg-secondary focus:text-primary focus:bg-secondary" role="menuitem"><i class="fa-solid fa-handshake mr-2"></i>{% trans "Matches" %}{% include "_badge.html" with count=waiting.matches title=answer_title %}</a>
+          {% if not owned_communities %}
+            {% if has_volunteer_visits %}
+              <a href="{% url 'matches:list' %}?type=volunteer" class="group mt-1 flex items-center px-4 py-2 text-base text-secondary hover:text-primary hover:bg-secondary focus:text-primary focus:bg-secondary" role="menuitem"><i class="fa-solid fa-campground mr-2"></i>{% trans "Volunteer Visits" %}{% include "_badge.html" with count=waiting.volunteer title=answer_title %}</a>
+            {% endif %}
+            {% if has_membership_applications %}
+              <a href="{% url 'matches:list' %}?type=members" class="group mt-1 flex items-center px-4 py-2 text-base text-secondary hover:text-primary hover:bg-secondary focus:text-primary focus:bg-secondary" role="menuitem"><i class="fa-solid fa-door-open mr-2"></i>{% trans "Membership applications" %}{% include "_badge.html" with count=waiting.members title=answer_title %}</a>
+            {% endif %}
+          {% endif %}
+          {% if on_tours %}
+            <a href="{% url 'tours:mine' %}" class="group mt-1 flex items-center px-4 py-2 text-base text-secondary hover:text-primary hover:bg-secondary focus:text-primary focus:bg-secondary" role="menuitem"><i class="fa-solid fa-route mr-2"></i>{% trans "Your tours" %}{% include "_badge.html" with count=waiting.tours title=answer_title %}</a>
+          {% endif %}
+          {% if attends_events %}
+            <a href="{% url 'events:going' %}" class="mt-1 block px-4 py-2 text-base text-secondary hover:text-primary hover:bg-secondary focus:text-primary focus:bg-secondary" role="menuitem"><i class="fa-solid fa-calendar-check mr-2"></i>{% trans "Events you are attending" %}</a>
+          {% endif %}
+          <a href="{% url 'references:list' %}" class="group mt-1 flex items-center px-4 py-2 text-base text-secondary hover:text-primary hover:bg-secondary focus:text-primary focus:bg-secondary" role="menuitem"><i class="fa fa-comments mr-2"></i>{% trans "References" %}{% include "_badge.html" with count=pending_reference_skills title=confirm_title %}</a>
           {% if owned_communities %}
             <div class="border-t border-gray-200 mt-2 pt-2">
               <span class="block px-4 py-1 text-xs opacity-50 uppercase tracking-wide">{% trans "My Communities" %}</span>
               {% for item in reference_communities %}
                 <a href="{{ item.community.get_absolute_url }}" class="mt-1 block px-4 py-2 text-base text-secondary hover:text-primary hover:bg-secondary focus:text-primary focus:bg-secondary" role="menuitem"><i class="fa-solid {{ item.community.get_type_icon }} mr-2"></i>{{ item.community.name }}</a>
+                <a href="{% url 'matches:list' %}?type=volunteer&box=received" class="group mt-1 flex items-center px-4 py-2 text-base text-secondary hover:text-primary hover:bg-secondary focus:text-primary focus:bg-secondary" role="menuitem"><i class="fa-solid fa-campground mr-2"></i>{% trans "Volunteer Visits" %}{% include "_badge.html" with count=waiting.volunteer title=answer_title %}</a>
+                <a href="{% url 'matches:list' %}?type=members&box=received" class="group mt-1 flex items-center px-4 py-2 text-base text-secondary hover:text-primary hover:bg-secondary focus:text-primary focus:bg-secondary" role="menuitem"><i class="fa-solid fa-door-open mr-2"></i>{% trans "Membership applications" %}{% include "_badge.html" with count=waiting.members title=answer_title %}</a>
                 <a href="{% url 'matches:calendar' item.community.slug %}" class="mt-1 block px-4 py-2 text-base text-secondary hover:text-primary hover:bg-secondary focus:text-primary focus:bg-secondary" role="menuitem"><i class="fa-regular fa-calendar mr-2"></i>{% trans "Calendar" %}</a>
-                <a href="{% url 'references:list' %}?community={{ item.community.slug }}" class="mt-1 flex items-center px-4 py-2 text-base text-secondary hover:text-primary hover:bg-secondary focus:text-primary focus:bg-secondary" role="menuitem"><i class="fa fa-comments mr-2"></i>{% trans "References" %}{% if item.pending %}<span class="ml-auto pill bg-purple text-secondary text-xs">{{ item.pending }}</span>{% endif %}</a>
+                <a href="{% url 'references:list' %}?community={{ item.community.slug }}" class="group mt-1 flex items-center px-4 py-2 text-base text-secondary hover:text-primary hover:bg-secondary focus:text-primary focus:bg-secondary" role="menuitem"><i class="fa fa-comments mr-2"></i>{% trans "References" %}{% include "_badge.html" with count=item.pending title=confirm_title %}</a>
               {% endfor %}
             </div>
           {% endif %}
@@ -297,16 +372,8 @@
           <a href="{% url "users:logout" %}" class="mt-1 block px-4 py-2 text-base text-secondary hover:text-primary hover:bg-secondary focus:text-primary focus:bg-secondary" role="menuitem"><i class="fa fa-sign-out-alt mr-2"></i>{% trans "Log out" %}</a>
         </div>
       </div>
-    {% else %}
-      <a href="{% url "users:login" %}?next={{ request.path }}" class="mt-1 block px-4 py-2 text-base text-secondary hover:text-primary hover:bg-secondary focus:text-primary focus:bg-secondary">
-            <i class="fa fa-sign-in-alt mr-2"></i>
-            <span>{% trans "Log in" %}</span>
-          </a>
-    {% endif %}
-    <div class="border-t border-gray-200 py-2">
-      {% include "_language_switcher.html" with mobile=True %}
-    </div>
   </div>
+  {% endif %}
 </nav>
 
 {% endwith %}

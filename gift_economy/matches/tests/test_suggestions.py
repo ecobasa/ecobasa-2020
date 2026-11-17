@@ -98,7 +98,7 @@ def test_things_match_by_title_not_by_gift_category(anna, ben):
     wish.categories.add(building)
     offer = _listing(ben, "Firewood", "offer")
     offer.categories.add(building)
-    community = Community.objects.create(name="Hof", owner=anna, location=GOERLITZ)
+    community = Community.objects.create(name="Hof", ambassador=anna, location=GOERLITZ)
     project = Event.objects.create(community=community, title="Oven")
     need(project, kind=Listing.KIND_MATERIAL, title="Chimney pipe", category=building)
     assert match(offer, notify=False) == []
@@ -144,7 +144,7 @@ def test_a_material_does_not_fit_a_tool(anna, ben):
 def test_skill_wishes_and_needs_meet_the_skills_of_people_and_communities(anna, ben):
     masonry = _skill("Masonry")
     wish = skill_wish(anna, masonry)
-    community = Community.objects.create(name="Hof", owner=_user("amb@example.com", "Amb"), location=BAUTZEN)
+    community = Community.objects.create(name="Hof", ambassador=_user("amb@example.com", "Amb"), location=BAUTZEN)
     community_wish = skill_wish(community, masonry)
     project = Event.objects.create(community=community, title="Oven")
     project_need = need(project, kind=Listing.KIND_HANDS, title="Masonry", skill=masonry)
@@ -239,7 +239,7 @@ def test_nothing_between_own_things_too_far_unavailable_skills_or_covered_needs(
     skill_wish(anna, masonry)
     assert match(skill_offer(ben, masonry, available=False), notify=False) == []
 
-    community = Community.objects.create(name="Hof", owner=ben, location=BAUTZEN)
+    community = Community.objects.create(name="Hof", ambassador=ben, location=BAUTZEN)
     project = Event.objects.create(community=community, title="Oven")
     covered = need(project, kind=Listing.KIND_MATERIAL, title="Clay", covered_at=timezone.now())
     assert match(covered, notify=False) == []
@@ -331,7 +331,7 @@ def test_moving_closer_matches_again(anna, ben, django_capture_on_commit_callbac
 def test_a_community_moving_closer_matches_its_skills_wishes_and_needs(anna, django_capture_on_commit_callbacks):
     masonry = _skill("Masonry")
     owner = _user("owner@example.com", "Owner", PARIS)
-    community = Community.objects.create(name="Hof", owner=owner, location=PARIS)
+    community = Community.objects.create(name="Hof", ambassador=owner, location=PARIS)
     project = Event.objects.create(community=community, title="Oven")
     with django_capture_on_commit_callbacks(execute=True):
         skill_offer(anna, masonry)
@@ -408,7 +408,7 @@ def test_matches_page_shows_suggestions_first_by_type_marks_seen_and_hides(anna,
 @pytest.mark.django_db
 def test_project_needs_are_gifts_or_skills_by_what_they_need(anna, ben):
     masonry = _skill("Masonry")
-    community = Community.objects.create(name="Hof", owner=anna, location=GOERLITZ)
+    community = Community.objects.create(name="Hof", ambassador=anna, location=GOERLITZ)
     project = Event.objects.create(community=community, title="Oven")
     need(project, kind=Listing.KIND_HANDS, title="Masonry", skill=masonry)
     need(project, kind=Listing.KIND_MATERIAL, title="Clay")

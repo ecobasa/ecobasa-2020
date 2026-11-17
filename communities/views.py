@@ -7,13 +7,15 @@ from django.db.models import F, Q, Prefetch
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
 from django.contrib import messages
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_GET, require_POST
 
-from .models import Community, public_location
+from .models import Community, Membership, public_location
 from .models import CommunityPhoto
 from .forms import CommunityForm
 from gift_economy.gifts.models import Listing, skill_offers, sync_skill_listings
+from gift_economy.matches.models import Match
 from gift_economy.gifts.skills.models import Skill, skill_name_q, skill_slug_for_name
 
 from django.contrib.gis.geos import Polygon, Point
@@ -22,7 +24,7 @@ from django.contrib.gis.db.models.functions import Distance
 from django.db.models.functions import Cast
 from users.places import town
 from django.core.paginator import Paginator
-from django.http import JsonResponse
+from django.http import Http404, JsonResponse
 
 
 def index(request):
@@ -61,8 +63,63 @@ def index(request):
             "countries": countries,
             "community_types": Community.COMMUNITY_TYPE_CHOICES,
             "community_statuses": Community.COMMUNITY_STATUS_CHOICES,
+            "life_filters": _life_filters(),
         },
     )
+
+
+def _life_filters():
+    """The "How we live" filters for the map and list: (param, label, choices), and
+    the ones for an amount up to (param, label, None). One with a single choice is a
+    checkbox with the label; the kitchen's diets are checkboxes, all to fit."""
+    from .models import language_name
+
+    used = sorted(
+        {code for codes in Community.objects.exclude(languages=[]).values_list("languages", flat=True) for code in codes},
+        key=lambda code: language_name(code).lower(),
+    )
+    return [
+        ("looking", _("Looking for new members"), [("1", _("Yes"))]),
+        ("kitchen", _("Shared kitchen"), [
+            (code, label) for code, label in Community.KITCHEN_CHOICES if code != Community.KITCHEN_ANY
+        ]),
+        ("children", _("Children welcome"), [(Community.CHILDREN_WELCOME, _("Welcome"))]),
+        ("pets", _("Pets"), [(Community.PETS_WELCOME, _("Welcome")), (Community.PETS_ASK, _("Ask us first"))]),
+        ("decisions", _("Decision making"), Community.DECISION_CHOICES),
+        ("language", _("Languages"), [(code, language_name(code)) for code in used if language_name(code)]),
+        ("buy_in", _("Buy-in up to"), None),
+        ("work", _("Work commitment up to (hours per week)"), None),
+    ]
+
+
+def _life_q(params):
+    """Communities that fit the "How we live" filters in `params` (a QueryDict)."""
+    found = Q()
+    if params.get("looking"):
+        found &= Q(looking_for_members=True)
+    # Diets, comma separated: the kitchen cooks all of them (a vegan one is vegetarian too)
+    for diet in filter(None, (params.get("kitchen") or "").split(",")):
+        if diet == Community.KITCHEN_VEGETARIAN:
+            found &= Q(kitchen__overlap=[Community.KITCHEN_VEGETARIAN, Community.KITCHEN_VEGAN])
+        elif diet in dict(Community.KITCHEN_CHOICES):
+            found &= Q(kitchen__contains=[diet])
+    if params.get("children") == Community.CHILDREN_WELCOME:
+        found &= Q(children_welcome=Community.CHILDREN_WELCOME)
+    pets = params.get("pets")
+    if pets == Community.PETS_WELCOME:
+        found &= Q(pets=Community.PETS_WELCOME)
+    elif pets == Community.PETS_ASK:
+        found &= Q(pets__in=[Community.PETS_WELCOME, Community.PETS_ASK])
+    if params.get("decisions") in dict(Community.DECISION_CHOICES):
+        found &= Q(decision_making=params["decisions"])
+    if params.get("language"):
+        found &= Q(languages__contains=[params["language"]])
+    # Up to an amount: none asked counts as fitting
+    for param, field in (("buy_in", "buy_in"), ("work", "work_hours")):
+        value = (params.get(param) or "").strip()
+        if value.isdigit():
+            found &= Q(**{f"{field}__isnull": True}) | Q(**{f"{field}__lte": int(value)})
+    return found
 
 
 def detail(request, slug):
@@ -82,9 +139,10 @@ def detail(request, slug):
     community_skills.sort(key=lambda listing: listing.display_title)
     # Its members' skills join them, each skill once (the community's own listing wins);
     # their other offers are listed as the community's gifts
-    members = community.members()
+    member_list = community.member_list()
+    showing = [membership.user for membership in member_list if membership.shows_offers]
     member_offers = list(
-        Listing.objects.open().filter(owner__in=members, community=None, type=Listing.TYPE_OFFER)
+        Listing.objects.open().filter(owner__in=showing, community=None, type=Listing.TYPE_OFFER)
         .exclude(type=Listing.TYPE_OFFER, skill__isnull=False, available=False).select_related("owner", "skill")
     )
     holders = {}
@@ -114,7 +172,7 @@ def detail(request, slug):
     # Build a {skill_id: level_display} map for the visiting user so the modal can show their level
     user_levels_json = "{}"
     help_wish = learn_skill = None
-    if request.user.is_authenticated and request.user != community.owner:
+    if request.user.is_authenticated and request.user != community.ambassador:
         # ?help=<skill slug> (from a suggestion) opens the volunteer form for that wish,
         # ?learn=<skill slug> (from a skill's page) for learning that skill here
         help_wish = next((sw for sw in skill_wishes if sw.skill.slug == request.GET.get("help")), None)
@@ -132,7 +190,10 @@ def detail(request, slug):
             "listings", queryset=Listing.objects.select_related("skill").prefetch_related("contributions__match"),
         ))
     )
-    is_ambassador = request.user.is_authenticated and (request.user.is_staff or request.user == community.owner)
+    is_ambassador = community.is_ambassador(request.user)
+    membership = community.membership_of(request.user)
+
+    thing_wishes = _community_wishes(community)
 
     shows_place = community.shows_place_to(request.user)
     place_name, place_point = community.place_for(request.user)
@@ -148,6 +209,18 @@ def detail(request, slug):
         # The ambassador also sees archived and ended events, to bring one back
         "past_events":    events.exclude(pk__in=events.current()).order_by("-updated_at")[:10] if is_ambassador else [],
         "is_ambassador":    is_ambassador,
+        # Members edit its page and its offers and wishes
+        "can_edit":         community.can_edit(request.user),
+        "member_list":      member_list,
+        "membership":       membership,
+        # Who asked to become a member and waits for an answer, for its ambassador
+        "applications":     community.memberships.current().exclude(match=None).exclude(
+            match__status=Match.STATUS_ACCEPTED,
+        ).exclude(match__recipient=F("user")).select_related("user", "match") if is_ambassador else [],
+        # And who is invited to visit
+        "visiting":         community.memberships.current().filter(
+            stage=Membership.STAGE_VISIT, match__status=Match.STATUS_ACCEPTED,
+        ).select_related("user", "match") if is_ambassador else [],
         "photos":           photos,
         "hero_image":       hero_image,
         "community_skills": community_skills,
@@ -158,6 +231,8 @@ def detail(request, slug):
         "seeds_plants":     seeds_plants,
         "learn_skill":      learn_skill,
         "skill_wishes":     skill_wishes,
+        # Its wishes for materials, tools, food…
+        "thing_wishes":     thing_wishes,
         "user_levels_json": user_levels_json,
         "own_skill_names":  ", ".join(
             l.display_title for l in skill_offers(request.user).select_related("skill")
@@ -166,7 +241,7 @@ def detail(request, slug):
         # What the volunteer form offers to bring along: open needs of current events
         # and the ambassador's gift wishes
         "bring_events":   [(p, needs) for p in events.current() if (needs := [n for n in p.needs() if not n.is_done])],
-        "bring_wishes":     _community_wishes(community),
+        "bring_wishes":     thing_wishes,
     })
 
 
@@ -182,15 +257,13 @@ def _community_wishes(community):
 @require_POST
 def volunteer_request(request, community_slug):
     community = get_object_or_404(Community, slug=community_slug)
-    owner = community.owner
-    if not owner:
+    if not community.ambassador:
         messages.error(request, _("This community has no contact person."))
         return redirect(community.get_absolute_url())
 
     import datetime
-    from django.utils import timezone
     from gift_economy.matches.models import create_stay
-    from gift_economy.matches.emails import notify_match_created
+    from gift_economy.matches.emails import notify_match_created, notify_match_message
 
     volunteer_mode       = request.POST.get("volunteer_mode", "")
     practice_skills      = request.POST.get("practice_skills", "").strip()
@@ -227,7 +300,13 @@ def volunteer_request(request, community_slug):
         ] + [(listing, None) for listing in wishes],
     )
 
-    notify_match_created(vr, http_request=request)
+    # Invited to visit: the stay is the visit, its days a proposal in the application
+    visiting = community.membership_of(request.user)
+    if visiting is not None and visiting.is_visiting and not visiting.visit_agreed():
+        proposal = visiting.adopt_stay(vr)
+        notify_match_message(visiting.match, sender=request.user, message=proposal.body, http_request=request)
+    else:
+        notify_match_created(vr, http_request=request)
 
     messages.success(request, str(_("Your request has been sent to %(community)s!") % {"community": community.name}))
 
@@ -317,7 +396,7 @@ def create(request):
         if form.is_valid():
             community = form.save(commit=False)
             if request.user.is_authenticated:
-                community.owner = request.user
+                community.ambassador = request.user
             community.save()
             if hasattr(form, "save_m2m"):
                 form.save_m2m()
@@ -345,7 +424,7 @@ def create(request):
 
 def delete(request, slug):
     community = get_object_or_404(Community, slug=slug)
-    if not request.user.is_authenticated or (community.owner and request.user != community.owner and not request.user.is_staff):
+    if not request.user.is_authenticated or (community.ambassador and request.user != community.ambassador and not request.user.is_staff):
         return redirect(community.get_absolute_url())
     if request.method == "POST":
         community.delete()
@@ -356,7 +435,7 @@ def delete(request, slug):
 
 def update(request, slug):
     community = get_object_or_404(Community, slug=slug)
-    if not request.user.is_authenticated or (community.owner and request.user != community.owner and not request.user.is_staff):
+    if not community.can_edit(request.user) and not (community.ambassador is None and request.user.is_authenticated):
         return redirect(community.get_absolute_url())
 
     if request.method == "POST":
@@ -447,6 +526,7 @@ def _base_qs(request, require_location=True):
     selected_statuses = request.GET.getlist("status")
     if selected_statuses:
         qs = qs.filter(status__in=selected_statuses)
+    qs = qs.filter(_life_q(request.GET))
 
     return qs.distinct()
 
@@ -515,6 +595,7 @@ def community_markers(request):
                 "children":    c.children,
                 "max_guests":  c.max_guests,
                 "skills":      sorted({cs.skill.get_name() for cs in c.skill_offers}),
+                "looking":     c.looking_for_members,
             },
         })
 
@@ -629,3 +710,417 @@ def community_suggest(request):
         add(skill.get_name(), "skill")
 
     return JsonResponse(suggestions[:12], safe=False)
+
+
+# ── Members ──────────────────────────────────────────────────────────────
+
+@login_required
+def apply(request, slug):
+    """Ask to become a member: a match with the membership as target, answered by the
+    ambassador. Who doesn't live there yet goes through the onboarding process; their
+    answers stay with the membership."""
+    from django.db import transaction
+    from gift_economy.matches.emails import notify_match_created
+    from .emails import read_family_token, send_family_invitations
+    from .forms import ApplicationForm
+    from .models import Family, MembershipApplication
+
+    community = get_object_or_404(Community, slug=slug)
+    own = community.membership_of(request.user)
+    if own is not None:
+        return redirect(own.match.get_absolute_url() if own.match_id else community.get_absolute_url())
+    if community.ambassador is None:
+        messages.error(request, _("This community has no contact person."))
+        return redirect(community.get_absolute_url())
+    # Asked to apply together with someone: by the link in their email, or at one's own address
+    token = request.POST.get("together_token") or request.GET.get("together") or ""
+    family_pk, invited_email = read_family_token(token) if token else (None, "")
+    families = Family.objects.filter(community=community)
+    family = (
+        families.filter(pk=family_pk).first() if family_pk
+        else families.filter(invited__contains=[request.user.email.lower()]).first()
+    )
+    form = ApplicationForm(community, request.POST or None, user=request.user, family=family)
+    if request.method == "POST" and form.is_valid():
+        with transaction.atomic():
+            membership = Membership.objects.create(community=community, user=request.user, stage=Membership.STAGE_APPLICATION)
+            # No meeting place to agree on: it's about belonging to the community
+            match = Match(
+                from_user=request.user, recipient=community.ambassador,
+                message=form.cleaned_data["message"].strip(), location_type="",
+            )
+            match.target = membership
+            match.save()
+            membership.match = match
+            membership.save(update_fields=["match"])
+            invited = []
+            if not form.lives_here_now:
+                now = timezone.now()
+                application = MembershipApplication.objects.create(
+                    membership=membership, answers=form.answers(), consented_at=now,
+                    sensitive_consented_at=now if form.cleaned_data.get("sensitive_consent") else None,
+                )
+                if family is not None:
+                    family.joined(application, invited_email)
+                elif form.invited_emails() or form.children_ages():
+                    invited = form.invited_emails()
+                    application.family = Family.objects.create(community=community, children=form.children_ages(), invited=invited)
+                    application.save(update_fields=["family"])
+        notify_match_created(match, http_request=request)
+        if invited:
+            send_family_invitations(application.family, request.user, invited, request)
+        messages.success(request, _("Your membership application has been sent to the ambassador."))
+        return redirect(match.get_absolute_url())
+    return render(request, "communities/apply.html", {"community": community, "form": form, "token": token})
+
+
+@login_required
+@require_POST
+def leave(request, slug):
+    """End one's own membership. The ambassador hands the role over first."""
+    community = get_object_or_404(Community, slug=slug)
+    own = community.memberships.counted().filter(user=request.user).first()
+    if own is None:
+        return redirect(community.get_absolute_url())
+    if request.user.pk == community.ambassador_id:
+        messages.error(request, _("Make another member the ambassador before you leave."))
+        return redirect(community.get_absolute_url())
+    own.end()
+    messages.success(request, _("You left %(name)s.") % {"name": community.name})
+    return redirect(community.get_absolute_url())
+
+
+def _ambassadors_member(request, slug, pk):
+    """(community, membership) for its ambassador acting on another member."""
+    from django.core.exceptions import PermissionDenied
+
+    community = get_object_or_404(Community, slug=slug)
+    if not community.is_ambassador(request.user):
+        raise PermissionDenied
+    membership = get_object_or_404(community.memberships.counted().select_related("user"), pk=pk)
+    return community, membership
+
+
+def _visiting(request, slug, pk):
+    """(community, membership) of an application accepted for a visit, for its ambassador
+    or the one who applied."""
+    from django.core.exceptions import PermissionDenied
+
+    community = get_object_or_404(Community, slug=slug)
+    membership = get_object_or_404(community.memberships.select_related("user", "match"), pk=pk)
+    if not membership.is_visiting:
+        return community, None
+    if not (community.is_ambassador(request.user) or membership.user_id == request.user.pk):
+        raise PermissionDenied
+    return community, membership
+
+
+def _made_member(request, membership):
+    """Make someone invited to visit a member, and tell them in their application."""
+    from gift_economy.matches.emails import notify_match_message
+    from gift_economy.matches.models import MatchMessage
+
+    membership.make_member()
+    name = membership.user.name or membership.user.email
+    body = _("%(name)s is a member of %(community)s now.") % {"name": name, "community": membership.community.name}
+    MatchMessage.objects.create(match=membership.match, sender=request.user, body=body)
+    notify_match_message(membership.match, sender=request.user, message=body, http_request=request)
+    messages.success(request, body)
+
+
+@login_required
+@require_POST
+def make_member(request, slug, pk):
+    """The ambassador makes someone invited to visit a member."""
+    from django.core.exceptions import PermissionDenied
+
+    community, membership = _visiting(request, slug, pk)
+    if membership is None:
+        return redirect(community.get_absolute_url())
+    if not community.is_ambassador(request.user):
+        raise PermissionDenied
+    _made_member(request, membership)
+    return redirect(membership.match.get_absolute_url())
+
+
+def _days_text(start, end):
+    """Whole days, as a stay's period reads ("Mon 3 May – Mon 17 May")."""
+    from datetime import timedelta
+    from gift_economy.matches.models import period_text
+
+    return period_text(start or end, (end or start) + timedelta(days=1))
+
+
+@login_required
+@require_POST
+def visit_days(request, slug, pk):
+    """Either side proposes days for the visit, in the application's conversation; the
+    ambassador first."""
+    from django.core.exceptions import PermissionDenied
+    from gift_economy.matches.emails import notify_match_message
+    from .models import _day
+
+    community, membership = _visiting(request, slug, pk)
+    if membership is None:
+        return redirect(community.get_absolute_url())
+    if not membership.can_propose_visit(request.user):
+        raise PermissionDenied
+    visit_from, visit_to = _day(request.POST.get("visit_from")), _day(request.POST.get("visit_to"))
+    if not (visit_from or visit_to) or (visit_from and visit_to and visit_to < visit_from):
+        messages.error(request, _("Please suggest when the stay could start or end."))
+        return redirect(membership.match.get_absolute_url())
+    body = request.POST.get("body", "").strip()
+    membership.propose_visit(request.user, visit_from, visit_to, body)
+    notify_match_message(
+        membership.match, sender=request.user, http_request=request,
+        message=body or f"{_('Suggested stay')}: {_days_text(visit_from, visit_to)}",
+    )
+    return redirect(membership.match.get_absolute_url() + "#compose")
+
+
+@login_required
+@require_POST
+def accept_visit_days(request, slug, pk):
+    """The other side accepts the days proposed last: the visit is agreed, as an accepted
+    stay at the community."""
+    from django.core.exceptions import PermissionDenied
+    from django.db import transaction
+    from gift_economy.matches.emails import notify_match_message
+
+    community, membership = _visiting(request, slug, pk)
+    if membership is None:
+        return redirect(community.get_absolute_url())
+    if not membership.visit_waits_for(request.user):
+        raise PermissionDenied
+    from .models import agreed_text
+
+    with transaction.atomic():
+        membership.agree_on_visit(request.user)
+        days = membership.suggested_visit()
+        # The agreed days stand in the latest message
+        membership.propose_visit(request.user, *days, agreed=True)
+    body = agreed_text(*days)
+    notify_match_message(membership.match, sender=request.user, message=body, http_request=request)
+    messages.success(request, body)
+    return redirect(membership.match.get_absolute_url() + "#compose")
+
+
+@login_required
+@require_POST
+def lives_here(request, slug, pk):
+    """Someone invited to visit says they live there now; the ambassador then makes them
+    a member."""
+    from gift_economy.matches.emails import notify_match_message
+    from gift_economy.matches.models import MatchMessage
+
+    community, membership = _visiting(request, slug, pk)
+    if membership is None or membership.user_id != request.user.pk:
+        return redirect(community.get_absolute_url())
+    body = str(_("I already live here"))
+    MatchMessage.objects.create(match=membership.match, sender=request.user, body=body)
+    notify_match_message(membership.match, sender=request.user, message=body, http_request=request)
+    return redirect(membership.match.get_absolute_url())
+
+
+@login_required
+@require_POST
+def delete_application(request, slug, pk):
+    """The one who applied or the ambassador deletes an application with its conversation;
+    only who applied, how it ended and when stays."""
+    from django.core.exceptions import PermissionDenied
+
+    community = get_object_or_404(Community, slug=slug)
+    membership = get_object_or_404(community.memberships.select_related("user", "match"), pk=pk)
+    if not membership.can_delete_application(request.user):
+        raise PermissionDenied
+    own = membership.user_id == request.user.pk
+    membership.delete_application()
+    messages.success(request, _("The application is deleted."))
+    if own:
+        return redirect(community.get_absolute_url())
+    return redirect(reverse("matches:list") + "?type=members")
+
+
+@login_required
+def print_application(request, slug, pk):
+    """The ambassador's printable copy of an application, to decide about it together with
+    the members. The answers only the ambassador sees come along only when they ask for a
+    copy for themselves."""
+    from django.core.exceptions import PermissionDenied
+    from gift_economy.gifts.models import Listing
+    from gift_economy.matches.views import _person
+    from gift_economy.references.models import references_about, with_card_data
+
+    community = get_object_or_404(Community, slug=slug)
+    if not community.is_ambassador(request.user):
+        raise PermissionDenied
+    membership = get_object_or_404(community.memberships.select_related("user", "match"), pk=pk)
+    if membership.match_id is None or membership.is_invitation or not membership.has_application():
+        raise Http404
+    application = membership.application
+    has_sensitive = any(answer["sensitive"] for answer in application.answered())
+    sensitive = has_sensitive and request.GET.get("sensitive") == "1"
+    answers = [answer for answer in application.answered() if sensitive or not answer["sensitive"]]
+    return render(request, "communities/application_print.html", {
+        "community": community, "membership": membership, "application": application,
+        "answers": answers, "sensitive": sensitive, "has_sensitive": has_sensitive,
+        # And what their profile says: about them, their wishes, the references in full
+        "person": _person(membership.user),
+        "place": town(membership.user.location_name) or (membership.user.country.name if membership.user.country else ""),
+        "wishes": list(Listing.objects.of(membership.user).filter(type=Listing.TYPE_WISH).select_related("skill")),
+        "references": list(with_card_data(references_about(membership.user)).order_by("-created_at")),
+    })
+
+
+@login_required
+@require_POST
+def remove_member(request, slug, pk):
+    community, membership = _ambassadors_member(request, slug, pk)
+    if membership.user_id == community.ambassador_id:
+        messages.error(request, _("Make another member the ambassador first."))
+    else:
+        membership.end()
+        messages.success(request, _("%(name)s is no longer a member.") % {"name": membership.user.name})
+    return redirect(community.get_absolute_url() + "#members")
+
+
+@login_required
+@require_POST
+def hand_over(request, slug, pk):
+    """Make another member the ambassador."""
+    community, membership = _ambassadors_member(request, slug, pk)
+    if membership.user_id != community.ambassador_id:
+        community.hand_over(membership.user)
+        messages.success(request, _("%(name)s is the ambassador now.") % {"name": membership.user.name})
+    return redirect(community.get_absolute_url() + "#members")
+
+
+@login_required
+@require_POST
+def show_offers(request, slug):
+    """A member chooses whether their offers and skills show on the community page."""
+    community = get_object_or_404(Community, slug=slug)
+    own = community.memberships.counted().filter(user=request.user).first()
+    if own is not None:
+        own.shows_offers = request.POST.get("shows_offers") == "1"
+        own.save(update_fields=["shows_offers"])
+    return redirect(community.get_absolute_url() + "#show-offers")
+
+
+@login_required
+def invite(request, slug):
+    """The ambassador invites someone to become a member: a match from them to the one
+    invited, with a new membership as target. They count once they accept; an
+    invitation asks nothing more of them."""
+    from django.core.exceptions import PermissionDenied
+    from django.db import transaction
+    from gift_economy.matches.emails import notify_match_created
+    from .forms import InviteForm
+
+    community = get_object_or_404(Community, slug=slug)
+    if not community.is_ambassador(request.user) or community.ambassador is None:
+        raise PermissionDenied
+    form = InviteForm(community, request.POST or None, initial={"user": request.GET.get("user", "")})
+    if request.method == "POST" and form.is_valid():
+        person = form.cleaned_data["user"]
+        visiting = community.membership_of(person)
+        if visiting is not None and visiting.is_visiting:
+            # They asked already: inviting them completes their application
+            _made_member(request, visiting)
+            return redirect(community.get_absolute_url() + "#members")
+        with transaction.atomic():
+            membership = Membership.objects.create(community=community, user=person, stage=Membership.STAGE_APPLICATION)
+            match = Match(
+                from_user=community.ambassador, recipient=person, message=form.cleaned_data["message"],
+                location_type="",
+            )
+            match.target = membership
+            match.save()
+            membership.match = match
+            membership.save(update_fields=["match"])
+        notify_match_created(match, http_request=request)
+        messages.success(request, _("Your invitation has been sent to %(name)s.") % {"name": person.name or person.email})
+        return redirect(community.get_absolute_url() + "#members")
+    return render(request, "communities/invite.html", {
+        "community": community, "form": form, "chosen": form.chosen_user(),
+    })
+
+
+@login_required
+@require_GET
+def api_people(request, slug):
+    """People whose name matches `q`, to invite into the community or to apply together
+    with: their name, picture and town. Not those who are members or asked already."""
+    from django.contrib.auth import get_user_model
+    from django.core.exceptions import PermissionDenied
+
+    community = get_object_or_404(Community, slug=slug)
+    # Also for whoever applies, to find the people they apply together with
+    if not (community.is_ambassador(request.user) or community.looking_for_members):
+        raise PermissionDenied
+    q = (request.GET.get("q") or "").strip()
+    if len(q) < 2:
+        return JsonResponse({"results": []})
+    on = community.memberships.current().exclude(stage=Membership.STAGE_VISIT).values_list("user_id", flat=True)
+    people = get_user_model().objects.filter(is_active=True, name__icontains=q).exclude(pk__in=on).exclude(pk=request.user.pk).order_by("name")[:8]
+    return JsonResponse({"results": [
+        {"id": person.pk, "name": person.name, "image": person.image.url if person.image else "",
+         "place": town(person.location_name) or ""}
+        for person in people
+    ]})
+
+
+@login_required
+def onboarding(request, slug):
+    """The ambassador sets up the onboarding process: which library questions the
+    community asks and as what, its own questions, and what comes after the visit."""
+    from django.core.exceptions import PermissionDenied
+    from django.db import transaction
+    from . import onboarding as library
+    from .forms import AfterVisitForm, LibraryQuestionForm, OwnQuestionFormSet
+    from .models import OnboardingQuestion
+
+    community = get_object_or_404(Community, slug=slug)
+    if not community.is_ambassador(request.user):
+        raise PermissionDenied
+    data = request.POST if request.method == "POST" else None
+    rows = {row.key: row for row in community.onboarding_questions.exclude(key="")}
+    forms_of = {
+        module.key: [LibraryQuestionForm(question, community, rows.get(question.key), data) for question in module.questions]
+        for module in library.MODULES
+    }
+    # The statements to agree to come first, as in the application; then the questions by module
+    must_matches = [form for module in library.MODULES for form in forms_of[module.key] if form.question.kind == library.AGREE]
+    modules = [
+        (module, questions) for module in library.MODULES
+        if (questions := [form for form in forms_of[module.key] if form.question.kind != library.AGREE])
+    ]
+    own = OwnQuestionFormSet(data, prefix="own", queryset=community.onboarding_questions.filter(key=""))
+    after_visit = AfterVisitForm(data, instance=community)
+    forms = [form for module_forms in forms_of.values() for form in module_forms]
+    if data is not None and all([form.is_valid() for form in forms]) and own.is_valid() and after_visit.is_valid():
+        with transaction.atomic():
+            for form in forms:
+                key, cleaned = form.question.key, form.cleaned_data
+                if not cleaned["on"]:
+                    if form.row:
+                        form.row.delete()
+                    continue
+                row = form.row or OnboardingQuestion(community=community, key=key)
+                row.type, row.required, row.note = cleaned["type"], cleaned["required"], cleaned["note"]
+                row.position = library.POSITIONS[key]
+                row.save()
+            for form in own.deleted_forms:
+                if form.instance.pk:
+                    form.instance.delete()
+            # Its own questions after the library's, in the order it gave
+            for position, form in enumerate(own.ordered_forms, start=len(library.POSITIONS)):
+                question = form.save(commit=False)
+                question.community, question.position = community, position
+                question.save()
+            after_visit.save()
+        messages.success(request, _("Your onboarding process has been saved."))
+        return redirect(community.get_absolute_url() + "#members")
+    return render(request, "communities/onboarding.html", {
+        "community": community, "must_matches": must_matches, "modules": modules, "own": own, "after_visit": after_visit,
+    })

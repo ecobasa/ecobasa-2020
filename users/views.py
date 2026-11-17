@@ -51,7 +51,7 @@ class DetailView(LoginRequiredMixin, DetailView):
             listings = list(Listing.objects.of(user).current().select_related("skill"))
             with_skill = sorted((l for l in listings if l.skill_id), key=lambda l: l.display_title)
             ctx["listings"] = [l for l in listings if not l.skill_id]
-            ctx["communities"] = user.communities.prefetch_related("photos").order_by("name")
+            ctx["communities"] = user.member_communities_qs().prefetch_related("photos").order_by("name")
             ctx["user_skills"] = [l for l in with_skill if l.is_offer]
             ctx["skill_wishes"] = [l for l in with_skill if l.is_wish]
             # Others see only about where they live (users.places)
@@ -99,10 +99,21 @@ def autocomplete(request):
     return JsonResponse(results, safe=False)
 
 
+def _next_url(request):
+    """Where to go once registered: a page on this site they came from (e.g. an
+    invitation's link), else the homepage."""
+    from django.utils.http import url_has_allowed_host_and_scheme
+
+    url = request.POST.get("next") or request.GET.get("next") or ""
+    if url and url_has_allowed_host_and_scheme(url, allowed_hosts={request.get_host()}, require_https=request.is_secure()):
+        return url
+    return reverse("homepage:homepage")
+
+
 def register(request):
     """register a new user"""
     if request.user.is_authenticated:
-        return redirect(reverse("homepage:homepage"))
+        return redirect(_next_url(request))
     if request.method == "POST":
         data = request.POST
         # allow legacy payloads with first_name/last_name by mapping to name
@@ -120,7 +131,7 @@ def register(request):
             user = authenticate(username=email, password=raw_password)
             auth_login(request, user)
             messages.success(request, _("Account created and logged in."))
-            return redirect("homepage:homepage")
+            return redirect(_next_url(request))
     else:
         form = RegisterForm()
     return render(request, "users/register.html", {"form": form})
@@ -156,11 +167,25 @@ class UpdateView(LoginRequiredMixin, django_views.FormView):
 
     def form_valid(self, form):
         self.object = form.save()
+        # Whether their offers and skills show on each of their communities' pages, and
+        # (for those they came to on a visit) that they found it through ecobasa
+        for field in ("shows_offers", "shows_visit"):
+            chosen = set(self.request.POST.getlist(field))
+            for membership in self._memberships():
+                if field == "shows_visit" and not membership.visit_id:
+                    continue
+                if getattr(membership, field) != (str(membership.pk) in chosen):
+                    setattr(membership, field, not getattr(membership, field))
+                    membership.save(update_fields=[field])
         return redirect(self.get_success_url())
+
+    def _memberships(self):
+        return self.request.user.memberships.counted().select_related("community")
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx["user_obj"] = self.request.user
+        ctx["memberships"] = self._memberships()
         return ctx
 
     def get_success_url(self):

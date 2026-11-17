@@ -44,7 +44,7 @@ def helper():
 
 @pytest.fixture
 def community(ambassador):
-    return Community.objects.create(name="Sonnenhof", owner=ambassador, max_guests=2)
+    return Community.objects.create(name="Sonnenhof", ambassador=ambassador, max_guests=2)
 
 
 @pytest.fixture
@@ -66,7 +66,7 @@ def _client(user):
 
 
 def _offer(project, user, status=Match.STATUS_PENDING, needs=(), stay=(None, None)):
-    match = Match(from_user=user, recipient=project.community.owner, message="Hi", status=status)
+    match = Match(from_user=user, recipient=project.community.ambassador, message="Hi", status=status)
     match.target = project
     match.save()
     StayDetails.objects.create(match=match, stay_from=stay[0], stay_to=stay[1])
@@ -162,7 +162,7 @@ def test_event_list_finds_events_by_skill_to_learn(project, helper):
 
 @pytest.mark.django_db
 def test_communities_are_found_by_their_current_projects(community, project):
-    other = Community.objects.create(name="Elsewhere", owner=User.objects.create_user(email="o@example.com", password="x"))
+    other = Community.objects.create(name="Elsewhere", ambassador=User.objects.create_user(email="o@example.com", password="x"))
     list_url = reverse("communities:api-list")
     content = Client().get(list_url + "?q=rocket").content.decode()
     assert "Sonnenhof" in content and "Elsewhere" not in content
@@ -247,7 +247,7 @@ def test_event_list_is_a_map_open_to_everyone_with_current_events_only(community
 @pytest.mark.django_db
 def test_event_markers_are_where_everyone_sees_them_in_the_visible_area(community, project, ambassador):
     Community.objects.filter(pk=community.pk).update(location=Point(13.4, 52.5), location_public=True, location_name="Sonnendorf")
-    far = Community.objects.create(name="Waldgarten", owner=ambassador, location=Point(2.35, 48.85), location_public=True)
+    far = Community.objects.create(name="Waldgarten", ambassador=ambassador, location=Point(2.35, 48.85), location_public=True)
     Event.objects.create(community=far, title="Forest garden days")
     features = Client().get(_MARKERS).json()["features"]
     assert {f["properties"]["title"] for f in features} == {"Rocket stove", "Forest garden days"}
@@ -267,7 +267,7 @@ def test_event_markers_are_where_everyone_sees_them_in_the_visible_area(communit
 @pytest.mark.django_db
 def test_event_list_is_nearest_first(community, project, ambassador, helper):
     Community.objects.filter(pk=community.pk).update(location=Point(13.4, 52.5), location_public=True)
-    far = Community.objects.create(name="Waldgarten", owner=ambassador, location=Point(2.35, 48.85), location_public=True)
+    far = Community.objects.create(name="Waldgarten", ambassador=ambassador, location=Point(2.35, 48.85), location_public=True)
     Event.objects.create(community=far, title="Forest garden days")
     # From the place in one's profile
     User.objects.filter(pk=helper.pk).update(location=Point(13.0, 52.4))
@@ -319,7 +319,7 @@ def test_event_list_shows_upcoming_or_past_events(community, project):
 def test_event_list_filters_by_country_dates_and_what_is_provided(community, project, ambassador):
     today = timezone.localdate()
     Community.objects.filter(pk=community.pk).update(country="DE")
-    elsewhere = Community.objects.create(name="Finca", owner=ambassador, country="ES")
+    elsewhere = Community.objects.create(name="Finca", ambassador=ambassador, country="ES")
     Event.objects.create(community=elsewhere, title="Olive harvest", is_open=True, bed_provided=True,
                          starts_on=today + timedelta(days=60), ends_on=today + timedelta(days=70))
     assert _titles(Client().get(_LIST, {"country": "ES"})) == ["Olive harvest"]
@@ -367,7 +367,7 @@ def test_event_list_filters_by_room_left(community, project, helper, ambassador)
     StayDetails.objects.filter(match=match).update(stay_to=_aware(today + timedelta(days=1)))
     assert set(_titles(Client().get(_LIST, {"room": "1"}))) == {"Rocket stove", "Small course"}
     # Nobody to answer: none
-    Community.objects.filter(pk=community.pk).update(owner=None)
+    Community.objects.filter(pk=community.pk).update(ambassador=None)
     assert _titles(Client().get(_LIST, {"room": "1"})) == []
 
 
@@ -386,9 +386,34 @@ def test_event_search_suggests_events_hosts_skills_and_places(community, project
 @pytest.mark.django_db
 def test_events_have_a_main_menu_entry_and_going_to_in_ones_menu(project, helper):
     content = Client().get(project.get_absolute_url()).content.decode()
-    going = f'{reverse("events:list")}?going=1&amp;view=list'
+    going = f'href="{reverse("events:going")}"'
     assert f'href="{reverse("events:list")}"' in content and going not in content
+    # Only once they come to one
+    assert going not in _client(helper).get(project.get_absolute_url()).content.decode()
+    _offer(project, helper, status=Match.STATUS_ACCEPTED)
     assert going in _client(helper).get(project.get_absolute_url()).content.decode()
+
+
+@pytest.mark.django_db
+def test_going_to_page_lists_upcoming_soonest_first_and_past_latest_first(community, project, helper):
+    today = timezone.localdate()
+    running = Event.objects.create(community=community, title="Running now", starts_on=today - timedelta(days=3))
+    soon = Event.objects.create(community=community, title="Open day", starts_on=today + timedelta(days=1), ends_on=today + timedelta(days=1))
+    last_year = Event.objects.create(community=community, title="Last year", ends_on=today - timedelta(days=300))
+    last_month = Event.objects.create(community=community, title="Last month", ends_on=today - timedelta(days=30), archived_at=timezone.now())
+    Event.objects.create(community=community, title="Not mine", starts_on=today + timedelta(days=2))
+    for event in (project, running, soon, last_year, last_month):
+        _offer(event, helper, status=Match.STATUS_ACCEPTED)
+
+    def titles(**params):
+        return [event.title for event in _client(helper).get(reverse("events:going"), params).context["page"]]
+
+    assert titles() == ["Running now", "Open day", "Rocket stove"]
+    assert titles(when="past") == ["Last month", "Last year"]
+    content = _client(helper).get(reverse("events:going")).content.decode()
+    assert f'{reverse("events:list")}?going=1&amp;view=list' in content
+    # Only logged in
+    assert Client().get(reverse("events:going")).status_code == 302
 
 
 @pytest.mark.django_db
@@ -840,7 +865,7 @@ def test_an_event_lives_under_its_community_with_a_slug_of_its_own(community, am
     new = Event.objects.create(community=community, title="New")
     assert (again.slug, new.slug) == ("rocket-stove-2", "new-2")
     # Another community can use the same slug; the address stays when the title changes
-    other = Community.objects.create(name="Waldgarten", owner=ambassador)
+    other = Community.objects.create(name="Waldgarten", ambassador=ambassador)
     assert Event.objects.create(community=other, title="Rocket stove").slug == "rocket-stove"
     project.title = "Rocket mass heater"
     project.save()

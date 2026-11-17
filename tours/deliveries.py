@@ -99,7 +99,7 @@ class Pair:
 def _things():
     return (
         Listing.objects.current().things().exclude(lend=True)
-        .select_related("owner", "community__owner", "event__community", "thing")
+        .select_related("owner", "community__ambassador", "event__community", "thing")
         .prefetch_related("contributions__match")
     )
 

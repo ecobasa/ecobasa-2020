@@ -1,0 +1,18 @@
+{% load i18n %}
+{# Who we are, under its statistics: the facts seekers filter on, and the vision and statutes they read before they ask to become a member #}
+{% with facts=community.lives %}
+	{% if facts or community.statutes_url or community.statutes_file %}
+		<h2 id="how-we-live">{% trans "How we live" %}</h2>
+		{% if facts %}
+			<dl class="grid grid-cols-2 sm:grid-cols-1 lg:grid-cols-2 gap-x-4 gap-y-2 mb-4">
+				{% for icon, label, value in facts %}{% include "communities/_fact.html" %}{% endfor %}
+			</dl>
+		{% endif %}
+		{% if community.statutes_url or community.statutes_file %}
+			<div class="flex flex-wrap gap-2 mb-4">
+				{% if community.statutes_url %}<a href="{{ community.statutes_url }}" target="_blank" rel="noopener" class="btn text-sm"><i class="fa-solid fa-link mr-1"></i>{% trans "Vision and statutes" %}</a>{% endif %}
+				{% if community.statutes_file %}<a href="{{ community.statutes_file.url }}" target="_blank" rel="noopener" class="btn text-sm"><i class="fa-solid fa-file-pdf mr-1"></i>{% trans "Vision and statutes (PDF)" %}</a>{% endif %}
+			</div>
+		{% endif %}
+	{% endif %}
+{% endwith %}

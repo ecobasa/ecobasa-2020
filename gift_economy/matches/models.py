@@ -2,6 +2,7 @@ from django.conf import settings
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
+from django.db.models import Q
 from django.urls import reverse
 from django.utils.formats import date_format
 from django.utils.html import escape, format_html
@@ -10,9 +11,25 @@ from django.utils.translation import gettext_lazy as _
 from users.places import approximate, town
 
 
-# Matches whose target is in one of these apps are stays: at a community, or at one of
-# its events (helping with a project, coming to a community event).
-STAY_APP_LABELS = ("communities", "events")
+# Matches whose target is one of these (app label, model) are stays: at a community, or
+# at one of its events (helping with a project, coming to a community event). By model,
+# not by app: a membership is in the communities app too, and isn't a stay.
+STAY_TARGETS = (("communities", "community"), ("events", "event"))
+
+
+def stay_q():
+    """The matches that are stays (a Q on Match)."""
+    q = Q(pk__in=[])
+    for app_label, model in STAY_TARGETS:
+        q |= Q(content_type__app_label=app_label, content_type__model=model)
+    return q
+
+
+def talked_over_elsewhere_q():
+    """Stays whose days are talked over in another conversation, so the lists leave them
+    out: the visit for a membership application while its applicant is invited to visit
+    (communities.Membership.visit). Their pages lead to that conversation."""
+    return Q(visit_memberships__stage="visit", visit_memberships__ended_at=None)
 
 
 class Match(models.Model):
@@ -105,7 +122,7 @@ class Match(models.Model):
     def is_community_stay(self):
         """A stay happens at the community itself (also at one of its events), so only
         its dates are open to a counter-proposal, never the place."""
-        return self.content_type.app_label in STAY_APP_LABELS
+        return (self.content_type.app_label, self.content_type.model) in STAY_TARGETS
 
     @property
     def community(self):
@@ -187,6 +204,14 @@ class Match(models.Model):
     @property
     def is_closed(self):
         return self.status in self.CLOSED_STATUSES
+
+    @property
+    def gentle_decline(self):
+        """What a target says instead of a red "Declined" (a membership application:
+        "Not now"), or None."""
+        if self.status != self.STATUS_DECLINED:
+            return None
+        return getattr(self.target, "match_declined_label", lambda: None)()
 
     def _extras(self):
         """The contributions beyond what the match is about (its target listing)."""
@@ -401,9 +426,11 @@ class StayDetails(models.Model):
 
     # Said "I'm coming" to an open event: accepted at once, nobody answers
     MODE_COME = "come"
+    # The visit for a membership application, its days agreed in the application's conversation
+    MODE_APPLICATION = "application"
 
     match = models.OneToOneField(Match, on_delete=models.CASCADE, related_name="stay_details")
-    volunteer_mode = models.CharField(max_length=20, blank=True)  # 'offer' | 'wish' | 'come'
+    volunteer_mode = models.CharField(max_length=20, blank=True)  # 'offer' | 'wish' | 'come' | 'application'
     stay_from = models.DateTimeField(null=True, blank=True)
     stay_to = models.DateTimeField(null=True, blank=True)
     # Who asked and those they bring (children, friends without an account)

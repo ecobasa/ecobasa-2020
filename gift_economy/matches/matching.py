@@ -40,7 +40,7 @@ MAX_RADIUS_KM = 2000
 
 # The places a listing can have: its own, its person's, its community's, its tour's route
 PLACES = ("location", "owner__location", "community__location", "tour__route")
-WORLDWIDE = ("owner__match_global", "community__owner__match_global", "tour__organiser__match_global")
+WORLDWIDE = ("owner__match_global", "community__ambassador__match_global", "tour__organiser__match_global")
 
 
 @dataclass
@@ -119,7 +119,7 @@ def candidates(side):
         for path in WORLDWIDE:
             near |= Q(**{path: True})
         others = others.filter(near)
-    return others.select_related("owner", "community__owner", "event__community", "tour__organiser", "skill").prefetch_related(
+    return others.select_related("owner", "community__ambassador", "event__community", "tour__organiser", "skill").prefetch_related(
         "contributions__match",
     )
 

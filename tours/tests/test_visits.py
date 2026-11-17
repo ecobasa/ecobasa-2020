@@ -25,7 +25,7 @@ SOON = timezone.localdate() + timedelta(days=30)
 @pytest.fixture
 def tour(organiser, farm, village):
     """Olga's tour: a meeting point, two weeks at the farm, then the village."""
-    village.owner = person("Vince")
+    village.ambassador = person("Vince")
     village.save()
     return published(
         organiser, "Clay and seeds",
@@ -66,15 +66,15 @@ def test_a_group_of_four_stays_two_weeks(tour, organiser, farm, django_capture_o
     response = ask_host(organiser, tour, stop)
     stop.refresh_from_db()
     match = stop.visit_match
-    assert response.status_code == 302 and match.recipient == farm.owner
+    assert response.status_code == 302 and match.recipient == farm.ambassador
     assert match.people == 4 and list(match.stay_details.companions.all()) == [otto]
     assert stop.host_status == Stop.HOST_ASKED
     assert len(mail.outbox) == 1 and "Clay and seeds" in mail.outbox[0].body
     # The ambassador sees who comes on the match page
-    page = login(farm.owner).get(match.get_absolute_url()).content.decode()
+    page = login(farm.ambassador).get(match.get_absolute_url()).content.decode()
     assert "Tour visit" in page and "Otto" in page
 
-    accept(match, farm.owner)
+    accept(match, farm.ambassador)
     stop.refresh_from_db()
     assert stop.host_status == Stop.HOST_AGREED
     # The calendar counts four people, every one of the group sees the address
@@ -88,7 +88,7 @@ def test_the_status_is_shown_to_everyone(tour, organiser, farm):
     stop = farm_stop(tour)
     ask_host(organiser, tour, stop)
     stop.refresh_from_db()
-    accept(stop.visit_match, farm.owner)
+    accept(stop.visit_match, farm.ambassador)
     page = login(person("Vera")).get(tour.get_absolute_url()).content.decode()
     assert "Agreed" in page and "Not asked yet" in page
     from django.test import Client
@@ -113,7 +113,7 @@ def test_the_group_changes_and_the_host_is_told(tour, organiser, farm, django_ca
     stop = farm_stop(tour)
     ask_host(organiser, tour, stop)
     stop.refresh_from_db()
-    accept(stop.visit_match, farm.owner)
+    accept(stop.visit_match, farm.ambassador)
     otto = person("Otto")
     joined(tour, otto, stops[1], stops[2], 2, django_capture_on_commit_callbacks)
     match = Match.objects.get(pk=stop.visit_match_id)
@@ -134,7 +134,7 @@ def test_other_days_agreed_move_the_stop(tour, organiser, farm, django_capture_o
     ask_host(organiser, tour, stop)
     stop.refresh_from_db()
     later = stop.arrive_on + timedelta(days=5), stop.leave_on + timedelta(days=5)
-    login(farm.owner).post(stop.visit_match.get_absolute_url(), {
+    login(farm.ambassador).post(stop.visit_match.get_absolute_url(), {
         "action": "counter", "body": "Better a bit later",
         "counter_stay_from": later[0].isoformat(), "counter_stay_to": later[1].isoformat(),
     })
@@ -169,9 +169,9 @@ def test_an_open_event_just_hears_the_tour_is_coming(tour, organiser, village):
 
 def test_a_personal_tour_is_visible_to_the_hosts_it_asked(organiser, farm):
     tour = published(organiser, "Just me", {"community": farm}, open_to_join=False, listed=False)
-    assert login(farm.owner).get(tour.get_absolute_url()).status_code == 404
+    assert login(farm.ambassador).get(tour.get_absolute_url()).status_code == 404
     ask_host(organiser, tour, farm_stop_of(tour))
-    assert login(farm.owner).get(tour.get_absolute_url()).status_code == 200
+    assert login(farm.ambassador).get(tour.get_absolute_url()).status_code == 200
 
 
 def farm_stop_of(tour):

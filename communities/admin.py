@@ -1,5 +1,19 @@
 from django.contrib.gis import admin
-from .models import Community, CommunityPhoto
+from .models import Community, CommunityPhoto, Membership, OnboardingQuestion
+
+
+class MembershipInline(admin.TabularInline):
+    model = Membership
+    extra = 0
+    fields = ("user", "match", "created_at", "ended_at")
+    readonly_fields = ("match", "created_at")
+    raw_id_fields = ("user",)
+
+
+class OnboardingQuestionInline(admin.TabularInline):
+    model = OnboardingQuestion
+    extra = 0
+    fields = ("key", "text", "type", "answer_kind", "required", "position", "note")
 
 
 class CommunityPhotoInline(admin.TabularInline):
@@ -12,9 +26,9 @@ class CommunityPhotoInline(admin.TabularInline):
 class CommunityAdmin(admin.GISModelAdmin):
     list_display = (
         "name",
-        "owner",
+        "ambassador",
     )
     search_fields = ("name",)
     ordering = ("name",)
     readonly_fields=('slug',)
-    inlines = [CommunityPhotoInline]
+    inlines = [MembershipInline, OnboardingQuestionInline, CommunityPhotoInline]

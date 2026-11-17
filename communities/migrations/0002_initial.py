@@ -19,13 +19,13 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AddField(
             model_name="community",
-            name="owner",
+            name="ambassador",
             field=models.ForeignKey(
                 null=True,
                 on_delete=django.db.models.deletion.SET_NULL,
-                related_name="communities",
+                related_name="ambassador_of",
                 to=settings.AUTH_USER_MODEL,
-                verbose_name="Owner",
+                verbose_name="Ambassador",
             ),
         ),
         migrations.AddField(

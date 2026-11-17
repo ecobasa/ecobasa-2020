@@ -20,7 +20,7 @@ from django.core.cache import cache
 from .forms import ListingForm
 from .filters import ListingFilter
 from .models import Listing, public_spot
-from communities.models import Community
+from communities.models import Community, with_member_communities
 from gift_economy.references.models import Reference
 from users.models import User
 from users.places import approximate, town
@@ -57,7 +57,7 @@ def detail(request, pk):
     volunteer form. A tour's need with the request form too (someone gives or lends it)
     and with joining the tour (someone comes along and covers it)."""
     listing = get_object_or_404(
-        Listing.objects.select_related("owner", "community__owner", "event", "skill", "thing")
+        Listing.objects.select_related("owner", "community__ambassador", "event", "skill", "thing")
         .prefetch_related("categories", "contributions__match__from_user"),
         pk=pk,
     )
@@ -166,13 +166,13 @@ def mine(request):
 
 
 def _holder_for(request):
-    """Who a new listing is for: a community its ambassador names (?community=<slug>),
-    else the person."""
+    """Who a new listing is for: a community one of its members names
+    (?community=<slug>), else the person."""
     slug = request.POST.get("community") or request.GET.get("community")
     if not slug:
         return None
     community = get_object_or_404(Community, slug=slug)
-    if not (request.user.is_staff or request.user == community.owner):
+    if not community.can_edit(request.user):
         raise PermissionDenied
     return community
 
@@ -336,7 +336,7 @@ def gifts_markers(request):
     """
     features = []
     signed_in = request.user.is_authenticated
-    listings = _apply_bbox(_filtered_listings(request), request.GET.get("bbox", "")).prefetch_related("owner__communities")
+    listings = _apply_bbox(_filtered_listings(request), request.GET.get("bbox", "")).prefetch_related(with_member_communities("owner__"))
     for listing in listings[:700]:
         holder = listing.holder
         photo = listing.image.url if listing.image else None
@@ -370,7 +370,7 @@ def gifts_markers(request):
                 "user_name":      "" if listing.community_id or listing.tour_id or not signed_in else _public_name(holder),
                 "user_url":       "" if listing.community_id or listing.tour_id or not signed_in or not holder else holder.get_absolute_url(),
                 "user_image":     "" if listing.community_id or listing.tour_id or not signed_in or not holder or not holder.image else holder.image.url,
-                # The communities a person is ambassador of: [[name, url]]
+                # The communities a person belongs to: [[name, url]]
                 "member_of":      [] if listing.community_id or listing.tour_id or not holder or not signed_in else [
                     [c.name, c.get_absolute_url()] for c in holder.member_communities()
                 ],
@@ -382,13 +382,13 @@ def gifts_markers(request):
 @require_GET
 def gifts_list_partial(request):
     listings_queryset = _filtered_listings(request, require_location=False).prefetch_related(
-        "categories", "community__photos", "owner__communities__photos",
+        "categories", "community__photos", with_member_communities("owner__"),
     )
     # Your own (and your communities') are nearest, so they would always come first; the
     # map still shows them
     if request.user.is_authenticated:
         listings_queryset = listings_queryset.exclude(
-            Q(owner=request.user) | Q(community__owner=request.user) | Q(tour__organiser=request.user)
+            Q(owner=request.user) | Q(community__ambassador=request.user) | Q(tour__organiser=request.user)
         )
     if not request.GET.get("location"):
         listings_queryset = listings_queryset.order_by("-created_at")

@@ -132,12 +132,12 @@ def joinable(user):
 def stays_of(user):
     """Their stays at communities and events that are open or accepted and not over (not
     the tour visits they asked for as organisers: those are the tour's own)."""
-    from gift_economy.matches.models import STAY_APP_LABELS, Match
+    from gift_economy.matches.models import Match, stay_q
 
     today = timezone.localdate()
     return (
         Match.objects.filter(
-            from_user=user, content_type__app_label__in=STAY_APP_LABELS,
+            stay_q(), from_user=user,
             status__in=(Match.STATUS_PENDING, Match.STATUS_COUNTER, Match.STATUS_ACCEPTED),
         )
         .filter(tour_stop=None)
@@ -386,7 +386,7 @@ def by_gifts(user, tours, travel=True):
         for index, stop in enumerate(stops):
             if not stop.community_id:
                 continue
-            for theirs in _at_stop(stop).select_related("owner", "community__owner", "event__community", "skill"):
+            for theirs in _at_stop(stop).select_related("owner", "community__ambassador", "event__community", "skill"):
                 side = side_of(theirs)
                 if side is None or side.owner == user:
                     continue
@@ -608,7 +608,7 @@ def _people_for(tour):
     tours_for then decides for each."""
     from django.contrib.auth import get_user_model
 
-    from gift_economy.matches.models import STAY_APP_LABELS, Match
+    from gift_economy.matches.models import Match, stay_q
 
     from events.models import Event
 
@@ -627,7 +627,7 @@ def _people_for(tour):
                     location__dwithin=(point, D(km=RIDE_END_KM + 5)),
                 ).values_list("pk", flat=True))
     events = Event.objects.filter(community__in=communities).values_list("pk", flat=True)
-    stays = Match.objects.filter(content_type__app_label__in=STAY_APP_LABELS).filter(
+    stays = Match.objects.filter(stay_q()).filter(
         Q(content_type__model="community", object_id__in=[str(pk) for pk in communities])
         | Q(content_type__model="event", object_id__in=[str(pk) for pk in events])
     )
@@ -763,8 +763,8 @@ def suggest_everything():
     Returns how many suggestions were created."""
     from .models import Tour
 
-    from gift_economy.matches.models import STAY_APP_LABELS, Match
+    from gift_economy.matches.models import Match, stay_q
 
     count = sum(len(suggest_tour(tour, notify=False)) for tour in Tour.objects.published().listed().current())
-    stays = Match.objects.filter(content_type__app_label__in=STAY_APP_LABELS, status=Match.STATUS_ACCEPTED, tour_stop=None)
+    stays = Match.objects.filter(stay_q(), status=Match.STATUS_ACCEPTED, tour_stop=None)
     return count + sum(len(suggest_together(stay, notify=False)) for stay in stays.select_related("from_user", "content_type"))

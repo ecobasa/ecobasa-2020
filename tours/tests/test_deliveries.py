@@ -32,7 +32,7 @@ MUNICH = Point(11.58, 48.14, srid=4326)
 @pytest.fixture
 def east(organiser, farm, village, project):
     """Lindenhof (1), Leipzig (2), the rocket stove at Elbtal (3), with days."""
-    village.owner = User.objects.create_user(email="elke@example.com", password="secret", name="Elke")
+    village.ambassador = User.objects.create_user(email="elke@example.com", password="secret", name="Elke")
     village.save()
     today = timezone.localdate()
     return published(
@@ -87,11 +87,11 @@ def test_seeds_respect_the_climate_rule(organiser):
     """Seeds from the tropics don't grow in Brandenburg; cocoa beans to eat travel anyway."""
     cacao = Community.objects.create(
         name="Selva Viva", location=Point(-60.02, -3.12, srid=4326), country="BR", location_public=True,
-        owner=User.objects.create_user(email="rio@example.com", password="secret", name="Rio"),
+        ambassador=User.objects.create_user(email="rio@example.com", password="secret", name="Rio"),
     )
     garden = Community.objects.create(
         name="Gartenhof", location=Point(13.06, 52.40, srid=4326), country="DE", location_public=True,
-        owner=User.objects.create_user(email="gerd@example.com", password="secret", name="Gerd"),
+        ambassador=User.objects.create_user(email="gerd@example.com", password="secret", name="Gerd"),
     )
     tour = published(organiser, "Across", {"community": cacao}, {"community": garden})
     thing("offer", "Cacao", kind=Listing.KIND_SEEDS_PLANTS, community=cacao)
@@ -136,7 +136,7 @@ def test_a_travellers_own_gift_goes_to_a_host_and_to_someone_by_the_route(east, 
     response = take(east, other, pairs[1])
     delivery = Delivery.objects.get()
     assert response.status_code == 302 and delivery.pickup_match is None and not delivery.needs_pickup
-    assert delivery.handover_match.recipient == project.community.owner
+    assert delivery.handover_match.recipient == project.community.ambassador
     assert {c.listing.title for c in delivery.handover_match.contributions.all()} == {"Cargo bike"}
 
 
@@ -180,16 +180,16 @@ def test_clay_from_the_first_stop_to_the_project_at_the_third(east, farm, villag
     take(east, organiser, pair, quantity=15)
     delivery = Delivery.objects.get()
     giver, receiver = delivery.pickup_match, delivery.handover_match
-    assert (giver.target, giver.recipient, receiver.target, receiver.recipient) == (clay, farm.owner, need, village.owner)
+    assert (giver.target, giver.recipient, receiver.target, receiver.recipient) == (clay, farm.ambassador, need, village.ambassador)
     assert [c.quantity for c in giver.contributions.all()] == [15]
     assert [c.quantity for c in receiver.contributions.all()] == [15]
     # With the stops' days
     assert timezone.localdate(giver.proposed_date) == east.ordered_stops()[0].arrive_on
-    assert sorted(m.to[0] for m in mail.outbox) == sorted([farm.owner.email, village.owner.email])
+    assert sorted(m.to[0] for m in mail.outbox) == sorted([farm.ambassador.email, village.ambassador.email])
     assert "would take your offer along on their tour" in mail.outbox[0].subject + mail.outbox[0].body + mail.outbox[1].body
     assert delivery.status == Delivery.STATUS_ASKED
     # The match page says what it is
-    assert "Clay and seeds" in login(farm.owner).get(giver.get_absolute_url()).content.decode()
+    assert "Clay and seeds" in login(farm.ambassador).get(giver.get_absolute_url()).content.decode()
     assert giver.kind[0] == "Delivery"
 
     accept(giver)
@@ -219,18 +219,18 @@ def test_clay_from_the_first_stop_to_the_project_at_the_third(east, farm, villag
     due = timezone.now() + timedelta(days=settings.REFERENCE_REQUEST_DELAY_DAYS, hours=1)
     assert send_reference_requests(now=due) == 4
     asked = {(r.match_id, r.user_id) for r in ReferenceRequest.objects.all()}
-    assert asked == {(giver.pk, organiser.pk), (giver.pk, farm.owner.pk), (receiver.pk, organiser.pk), (receiver.pk, village.owner.pk)}
+    assert asked == {(giver.pk, organiser.pk), (giver.pk, farm.ambassador.pk), (receiver.pk, organiser.pk), (receiver.pk, village.ambassador.pk)}
     # The bringer writes about the communities, with the gift's name; the giver and the
     # receiver about the tour or the one who brought it
     assert match_reference_subject(giver, organiser) == (farm, "Clay", "")
     assert match_reference_subject(receiver, organiser) == (village, "Clay", "")
-    assert [subject for _key, subject in reference_choices(receiver, village.owner)] == [east, organiser]
-    assert match_reference_subject(receiver, village.owner) == (east, "Clay", "")
+    assert [subject for _key, subject in reference_choices(receiver, village.ambassador)] == [east, organiser]
+    assert match_reference_subject(receiver, village.ambassador) == (east, "Clay", "")
 
     # Shown where it matters
     assert "Rocket stove" in login(organiser).get(east.get_absolute_url()).content.decode()
-    assert "Clay and seeds" in login(farm.owner).get(clay.get_absolute_url()).content.decode()
-    assert "Clay and seeds" in login(farm.owner).get(village.get_absolute_url()).content.decode()
+    assert "Clay and seeds" in login(farm.ambassador).get(clay.get_absolute_url()).content.decode()
+    assert "Clay and seeds" in login(farm.ambassador).get(village.get_absolute_url()).content.decode()
 
 
 def test_a_wish_handed_over_in_full_counts_as_covered(east, farm, project, organiser):
@@ -262,20 +262,20 @@ def test_a_declined_side_marks_the_delivery_as_fallen_through(east, farm, projec
     delivery.pickup_match.refresh_from_db()
     assert delivery.pickup_match.status == Match.STATUS_WITHDRAWN
     # Not on the tour page for others any more, nor suggested again
-    assert 'id="deliveries"' not in login(farm.owner).get(east.get_absolute_url()).content.decode()
+    assert 'id="deliveries"' not in login(farm.ambassador).get(east.get_absolute_url()).content.decode()
     assert suggested(east) == set()
 
 
 def test_a_personal_tour_is_seen_by_the_givers_and_receivers_of_its_deliveries(organiser, farm, village, project):
-    village.owner = User.objects.create_user(email="elke@example.com", password="secret", name="Elke")
+    village.ambassador = User.objects.create_user(email="elke@example.com", password="secret", name="Elke")
     village.save()
     tour = published(organiser, "Just me", {"community": farm}, {"event": project}, open_to_join=False, listed=False)
     thing("offer", "Clay", community=farm)
     thing("wish", "Clay", event=project)
     stranger = person("Sven")
-    assert not tour.can_view(farm.owner) and not tour.can_view(stranger)
+    assert not tour.can_view(farm.ambassador) and not tour.can_view(stranger)
     take(tour, organiser, deliveries.delivery_suggestions(tour)[0])
-    assert tour.can_view(farm.owner) and tour.can_view(village.owner)
+    assert tour.can_view(farm.ambassador) and tour.can_view(village.ambassador)
     assert not tour.can_view(stranger)
 
 
@@ -296,12 +296,12 @@ def test_arcs_on_the_tour_map(east, farm, project, organiser):
 
 def test_an_ambassador_takes_their_communitys_gift_without_asking_themself(east, farm, project):
     stops = east.ordered_stops()
-    Traveller.objects.create(tour=east, user=farm.owner, from_stop=stops[0], to_stop=stops[2])
+    Traveller.objects.create(tour=east, user=farm.ambassador, from_stop=stops[0], to_stop=stops[2])
     thing("offer", "Clay", community=farm)
     thing("wish", "Clay", event=project)
     pair = deliveries.delivery_suggestions(east)[0]
-    assert farm.owner.pk in pair.bringers
-    take(east, farm.owner, pair, to_giver="")
+    assert farm.ambassador.pk in pair.bringers
+    take(east, farm.ambassador, pair, to_giver="")
     delivery = Delivery.objects.get()
     assert delivery.pickup_match is None and not delivery.needs_pickup
     accept(delivery.handover_match)

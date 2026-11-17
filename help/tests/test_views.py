@@ -35,6 +35,14 @@ def test_the_menu_and_the_tour_pages_lead_to_help(client):
 
 
 @pytest.mark.django_db
+def test_the_members_help_is_linked_from_the_index(client):
+    index = client.get("/help/", HTTP_ACCEPT_LANGUAGE="en").content.decode()
+    assert 'href="/help/members/"' in index
+    page = client.get("/help/members/", HTTP_ACCEPT_LANGUAGE="en").content.decode()
+    assert 'id="process"' in page and 'href="/matches/?type=members"' in page
+
+
+@pytest.mark.django_db
 def test_the_travelling_tips_are_linked_from_the_tours_help(client):
     page = client.get("/help/community-tours/", HTTP_ACCEPT_LANGUAGE="en").content.decode()
     assert 'href="/help/community-tours/travelling-tips/"' in page

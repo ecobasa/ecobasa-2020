@@ -1,15 +1,16 @@
 from django.utils.functional import SimpleLazyObject
 
 
-def new_suggestions(request):
-    """How many suggestions they haven't looked at yet, for the menus. Lazy, so pages that
-    don't show it don't query it."""
-    def count():
+def waiting(request):
+    """What waits for their answer, by page (views.waiting_counts), for the badges in the
+    menus. Lazy, so pages that don't show them don't query them."""
+    def counts():
         if not request.user.is_authenticated:
-            return 0
-        return request.user.suggestions.filter(seen_at=None, dismissed_at=None).count()
+            return {}
+        from .views import waiting_counts
+        return waiting_counts(request.user)
 
-    return {"new_suggestions_count": SimpleLazyObject(count)}
+    return {"waiting": SimpleLazyObject(counts)}
 
 
 def lending_calendar(request):
@@ -30,10 +31,32 @@ def lending_calendar(request):
         if not request.user.is_authenticated:
             return []
         from gift_economy.gifts.models import Listing
-        lending = Listing.objects.to_lend().filter(community__owner=request.user).values("community")
-        return list(request.user.communities.filter(pk__in=lending).order_by("name"))
+        lending = Listing.objects.to_lend().filter(community__ambassador=request.user).values("community")
+        return list(request.user.ambassador_of.filter(pk__in=lending).order_by("name"))
 
     return {
         "has_lending_calendar": SimpleLazyObject(own),
         "lending_communities": SimpleLazyObject(communities),
+    }
+
+
+def sent_requests(request):
+    """Whether they ever asked for a volunteer visit, to become a member of a community,
+    or came to an event, for the menu entries that list them. Lazy, so pages that don't
+    show them don't query them."""
+    def sent(q):
+        def any_():
+            if not request.user.is_authenticated:
+                return False
+            return Match.objects.filter(q, from_user=request.user).exists()
+        return SimpleLazyObject(any_)
+
+    from django.db.models import Q
+    from .models import Match, stay_q
+    return {
+        "has_volunteer_visits": sent(stay_q()),
+        "has_membership_applications": sent(Q(content_type__app_label="communities", content_type__model="membership")),
+        "attends_events": sent(Q(
+            content_type__app_label="events", content_type__model="event", status=Match.STATUS_ACCEPTED,
+        )),
     }

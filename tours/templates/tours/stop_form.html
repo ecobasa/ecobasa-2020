@@ -24,8 +24,8 @@
   <form method="post" class="border rounded-xl bg-secondary p-6 space-y-4">
     {% csrf_token %}
     {% include "tours/_stop_fields.html" %}
-    <div class="flex justify-end gap-3 pt-2">
-      <a href="{% url 'tours:plan' tour.slug %}" class="btn btn-lg btn-purple">{% trans "Cancel" %}</a>
+    <div class="flex justify-between gap-3 pt-2">
+      <a href="{% url 'tours:plan' tour.slug %}" class="btn btn-lg btn-purple"><i class="fa fa-ban mr-2"></i>{% trans "Cancel" %}</a>
       <button type="submit" class="btn btn-lg"><i class="fa fa-save mr-2"></i>{% trans "Save" %}</button>
     </div>
   </form>

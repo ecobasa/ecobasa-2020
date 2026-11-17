@@ -494,7 +494,7 @@ class HostForm(forms.Form):
 
     def _taught(self):
         """Ids of the skills one can learn at the stop: what its event or community offers
-        to teach (its events' too), and its members' skills."""
+        to teach (its events' too), and the skills of its members who show theirs."""
         from gift_economy.gifts.models import Listing
 
         stop = self.stop
@@ -504,7 +504,7 @@ class HostForm(forms.Form):
         else:
             found = [
                 Listing.objects.of(stop.community).filter(type=Listing.TYPE_OFFER, kind=Listing.KIND_SKILL),
-                offers.filter(owner__in=stop.community.members(), community=None),
+                offers.filter(owner__in=stop.community.showing_offers(), community=None),
             ]
         return {pk for queryset in found for pk in queryset.values_list("skill_id", flat=True) if pk}
 

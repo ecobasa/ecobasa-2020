@@ -344,8 +344,7 @@ document.addEventListener('DOMContentLoaded', function () {
   // Only events at the very same spot are clustered
   const markersLayer = new ol.layer.Vector({ source: new ol.source.Cluster({ distance: 0, source: eventMarkers }), style: clusterStyle });
   {% if home %}
-    // Around where one asked or the place in one's profile, as far as one looks for
-    // matches (map units grow away from the equator, hence over the cosine)
+    // Around where one asked, as far as one looks for matches (map units grow away from the equator, hence over the cosine)
     const home = ol.proj.fromLonLat([{{ home.x|stringformat:".4f" }}, {{ home.y|stringformat:".4f" }}]);
     const reach = {{ radius|default:100 }} * 1000 / Math.cos({{ home.y|stringformat:".4f" }} * Math.PI / 180);
     const view = new ol.View({ center: home, zoom: 8, maxZoom: 18 });

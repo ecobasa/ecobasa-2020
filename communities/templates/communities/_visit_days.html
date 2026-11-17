@@ -1,0 +1,12 @@
+{% load i18n %}
+{# Accepting a membership application with an invitation to visit: the days the ambassador suggests, if they like #}
+<p class="text-sm font-semibold my-0">{% trans "Suggest days for the visit (optional)" %}</p>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+  <label class="form-group text-sm">{% trans "Stay from" %}
+    <input type="date" name="visit_from" class="form-input w-full mt-1">
+  </label>
+  <label class="form-group text-sm">{% trans "Stay until" %}
+    <input type="date" name="visit_to" class="form-input w-full mt-1">
+  </label>
+</div>
+<p class="text-xs my-0">{% trans "They can accept these days or suggest others. Once you agree on them, the visit is an accepted stay." %}</p>

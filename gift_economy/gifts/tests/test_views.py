@@ -239,7 +239,7 @@ def test_the_list_leaves_out_your_own_but_the_map_shows_them(user, user_client):
     from communities.models import Community
     here = Point(14.9857, 51.1642, srid=4326)
     other = User.objects.create_user(email="other@example.com", password="x", location=here)
-    hof = Community.objects.create(name="Hof", owner=user, location=here)
+    hof = Community.objects.create(name="Hof", ambassador=user, location=here)
     Listing.objects.create(type="offer", title="Mine", owner=user, location=here)
     Listing.objects.create(type="offer", title="My community's", community=hof)
     Listing.objects.create(type="offer", title="Theirs", owner=other)
@@ -281,7 +281,7 @@ def test_a_persons_gifts_name_their_community(user, user_client, listing):
     here = Point(14.9857, 51.1642, srid=4326)
     user.name, user.location = "Max", here
     user.save()
-    hof = Community.objects.create(name="Hof Sonnenschein", owner=user, location=here)
+    hof = Community.objects.create(name="Hof Sonnenschein", ambassador=user, location=here)
 
     assert "Hof Sonnenschein" in Client().get(reverse("gifts:api-list")).content.decode()
     props = user_client.get(reverse("gifts:api-markers")).json()["features"][0]["properties"]
@@ -295,7 +295,7 @@ def test_a_persons_gifts_name_their_community(user, user_client, listing):
 def test_a_communitys_gift_links_to_the_community_on_the_map(user, user_client):
     from django.contrib.gis.geos import Point
     from communities.models import Community
-    hof = Community.objects.create(name="Hof", owner=user, location=Point(14.9857, 51.1642, srid=4326))
+    hof = Community.objects.create(name="Hof", ambassador=user, location=Point(14.9857, 51.1642, srid=4326))
     Listing.objects.create(community=hof, type="wish", kind="material", title="Clay")
     props = Client().get(reverse("gifts:api-markers")).json()["features"][0]["properties"]
     assert props["community_name"] == "Hof" and props["community_url"] == hof.get_absolute_url()
@@ -352,7 +352,7 @@ class TestAPersonsPlace:
     def test_a_communitys_is_rough_too_unless_public(self, user, home):
         from communities.models import Community
         from users.places import approximate
-        community = Community.objects.create(name="Hof Lindenblüte", owner=user, location=home)
+        community = Community.objects.create(name="Hof Lindenblüte", ambassador=user, location=home)
         Listing.objects.create(type="offer", title="Seeds", community=community)
         coordinates = lambda: Client().get(reverse("gifts:api-markers")).json()["features"][0]["geometry"]["coordinates"]
         shown = approximate(home, community.place_seed)
@@ -463,7 +463,7 @@ def test_knowledge_and_helping_hands_have_no_amount(user_client, kind):
 def test_a_projects_helping_hands_keep_their_amount(user, user_client):
     from communities.models import Community
     from events.models import Event
-    project = Event.objects.create(community=Community.objects.create(name="Hof Sonnenschein", owner=user), title="Roof")
+    project = Event.objects.create(community=Community.objects.create(name="Hof Sonnenschein", ambassador=user), title="Roof")
     hands = need(project, kind=Listing.KIND_HANDS, title="Roofers", quantity=2, unit="people")
     user_client.post(reverse("gifts:edit", args=[hands.pk]), {
         "type": "wish", "kind": "hands", "title": "Roofers", "quantity": "3", "unit": "people",

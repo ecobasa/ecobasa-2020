@@ -1,0 +1,8 @@
+{% load i18n %}{# Taking back an open join request, on the tour page #}
+<details class="text-left text-sm">
+  <summary class="cursor-pointer underline text-center">{% trans "Withdraw request" %}</summary>
+  <form method="post" action="{% url 'tours:withdraw' tour.slug %}" class="mt-2 space-y-2">{% csrf_token %}
+    <textarea name="body" rows="3" class="form-textarea w-full text-sm" placeholder="{% trans 'A few words to the organisers, if you like' %}"></textarea>
+    <button type="submit" class="btn btn-lg btn-purple"><i class="fa-solid fa-rotate-left mr-2"></i>{% trans "Withdraw request" %}</button>
+  </form>
+</details>

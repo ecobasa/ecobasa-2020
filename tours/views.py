@@ -18,7 +18,7 @@ from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_POST
 from django_countries import countries as all_countries
 
-from communities.models import Community
+from communities.models import Community, Membership, with_member_communities
 from dashboard_lists import paginate
 from events.models import Event
 from gift_economy.gifts.models import Listing
@@ -198,8 +198,15 @@ def tour_detail(request, slug):
     stops = tour.ordered_stops()
     for traveller in travellers:
         traveller.stretch = "" if traveller.whole_route else _stretch_text(traveller)
-    # The communities they are ambassador of, shown with them
-    prefetch_related_objects([traveller.user for traveller in travellers], "communities")
+    # The communities they belong to, shown with them; those they became a member of
+    # after visiting them on this tour, if they want that shown
+    prefetch_related_objects([traveller.user for traveller in travellers], with_member_communities())
+    found_here = set(
+        Membership.objects.counted().filter(shows_visit=True, visit__tour_stop__tour=tour)
+        .values_list("user_id", "community_id")
+    )
+    for traveller in travellers:
+        traveller.found_here = {community_id for user_id, community_id in found_here if user_id == traveller.user_id}
     team = tour.team_skill_ids()
     needs = [(need, matching.role(need, team)) for need in tour.needs()]
     # The way to each stop in a maps app, only for those who travel along
@@ -241,7 +248,7 @@ def _wrap_up(tour, user, stops, needs, gifts, travellers):
             hosts = {stop.community_id: stop.community for stop in agreed if stop.community_id}
             references += [
                 (community.name, f"{community.get_absolute_url()}#references")
-                for community in hosts.values() if community.owner_id != user.pk
+                for community in hosts.values() if community.ambassador_id != user.pk
             ]
             others = {t.user_id: t.user for t in travellers if t.user_id != user.pk}
             references += [(person.name or person.email, f"{person.get_absolute_url()}#references") for person in others.values()]
@@ -359,6 +366,9 @@ def _save_tour(request, tour, template, context, going_to=None):
                     stop = Stop(tour=tour, event=host, arrive_on=first or host.starts_on, leave_on=last or host.ends_on)
                 else:
                     stop = Stop(tour=tour, community=host, arrive_on=first, leave_on=last)
+                    # An accepted stay there is the stop's visit: the host isn't asked again
+                    if stay.status == Match.STATUS_ACCEPTED and not hasattr(stay, "tour_stop"):
+                        stop.visit_match = stay
                 append_stop(stop)
         if is_new:
             messages.success(request, _("Your tour is saved as a draft. Now add its stops."))
@@ -508,7 +518,7 @@ def plan_add(request, slug):
         event = get_object_or_404(Event.objects.current().select_related("community"), pk=request.POST["event"])
         community = event.community
     else:
-        community = get_object_or_404(Community.objects.exclude(owner=None), pk=request.POST.get("community") or 0)
+        community = get_object_or_404(Community.objects.exclude(ambassador=None), pk=request.POST.get("community") or 0)
     stop = Stop(tour=tour, event=event, community=community)
     if event and event.ends_on:
         stop.arrive_on, stop.leave_on = event.starts_on or event.ends_on, event.ends_on
@@ -800,6 +810,20 @@ def leave(request, slug):
 
 @login_required
 @require_POST
+def withdraw(request, slug):
+    """Take back a join request that is still open; a few words to the organisers are
+    welcome but not needed, nobody counts on them yet."""
+    tour = _tour(slug, request.user)
+    own = _own_request(tour, request.user)
+    if own is None or own.is_counted or own.is_invitation:
+        return redirect(tour.get_absolute_url())
+    _end(own, request, Match.STATUS_WITHDRAWN, request.POST.get("body", "").strip())
+    messages.success(request, _("Your join request has been withdrawn."))
+    return redirect(tour.get_absolute_url())
+
+
+@login_required
+@require_POST
 def remove(request, slug, pk):
     """An organiser takes someone off the tour, always with a few words to them."""
     tour = _editable(slug, request.user)
@@ -816,9 +840,9 @@ def remove(request, slug, pk):
 
 
 def _end(traveller, request, status, body):
-    """Take a traveller off the tour: their join request is withdrawn (they left) or
-    declined (an organiser took them off), with the words to the other side. Someone
-    added without a request is just removed."""
+    """Take a traveller off the tour: their join request is withdrawn (they left, or took
+    back a request still open) or declined (an organiser took them off), with the words
+    to the other side. Someone added without a request is just removed."""
     match = traveller.match
     if match is None:
         traveller.delete()
@@ -1134,7 +1158,7 @@ def _delivery_rows(deliveries):
     """Taken up (not set aside), with what their status, ends and links need."""
     return list(
         deliveries.active().select_related(
-            "offer__owner", "offer__community__owner", "offer__event", "wish__owner", "wish__community__owner",
+            "offer__owner", "offer__community__ambassador", "offer__event", "wish__owner", "wish__community__ambassador",
             "wish__event", "wish__tour", "pickup_stop__community", "pickup_stop__event", "dropoff_stop__community",
             "dropoff_stop__event", "bringer", "pickup_match", "handover_match",
         )

@@ -14,7 +14,7 @@
     Suggestions: what people, communities and projects anywhere offer or need that fits your
     wishes, offers and skills. It becomes a match once one of you asks.
   {% endblocktrans %}{% endif %}
-  <a href="{% url 'users:update' %}#matches" class="underline">{% trans "Change" %}</a>
+  <a href="{% url 'users:update' %}#matches" class="underline">{% trans "Change matching distance" %}</a>
 </p>
 {% if not user.match_global and not user.location and not user.country %}
   <p class="text-sm mb-4 p-3 rounded border border-yellow bg-yellow bg-opacity-10">

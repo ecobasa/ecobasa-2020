@@ -1,0 +1,85 @@
+{% load i18n %}
+{# Where a membership application stands, for the ambassador and the applicant. Invited to visit: the visit (asked for as part of it, or how to ask for it), what comes after it, and the ways to become a member #}
+{% with community=target.community %}
+<div class="border rounded-xl p-4 mb-4 space-y-3 text-sm">
+	<p class="flex flex-wrap items-center gap-2 my-0">
+		<span class="font-semibold">{% trans "Stage" %}:</span>
+		{% if target.ended_at %}
+			<span class="pill bg-primary">{% trans "Not a member any more" %}</span>
+		{% elif match.gentle_decline %}
+			<span class="pill bg-primary">{{ match.gentle_decline }}</span>
+		{% elif match.status == "declined" or match.status == "withdrawn" %}
+			<span class="pill bg-red">{{ match.get_status_display }}</span>
+		{% elif target.is_counted %}
+			<span class="pill bg-green"><i class="fa-solid fa-user-check mr-1"></i>{% trans "Member" %}</span>
+		{% elif target.is_visiting %}
+			<span class="pill bg-green"><i class="fa-solid fa-campground mr-1"></i>{% trans "Invited to visit" %}</span>
+		{% else %}
+			<span class="pill bg-primary"><i class="fa-solid fa-paper-plane mr-1"></i>{% trans "Sent" context "application" %}</span>
+		{% endif %}
+	</p>
+
+	{% if match.gentle_decline and is_requester %}
+		{# Where else they might be at home #}
+		<p class="my-0"><a href="{% url 'communities:list' %}?looking=1" class="underline"><i class="fa-solid fa-map-location-dot mr-1"></i>{% trans "Communities looking for new members" %}</a></p>
+	{% endif %}
+
+	{% if target.is_visiting %}
+		<div class="flex items-start gap-2">
+			<i class="fa-solid fa-campground text-primary mt-1"></i>
+			{# Its days are talked over in this conversation; the stay's page leads here #}
+			{% if target.visit_agreed %}
+				{% with days=target.suggested_visit %}
+					<p class="my-0">{% if is_requester %}{% trans "Your visit" %}{% else %}{% trans "The visit" %}{% endif %}:
+						<a href="#compose" class="underline">{% include "matches/_stay_period.html" with stay_from=days.0 stay_to=days.1 %}</a></p>
+				{% endwith %}
+			{% else %}
+				<p class="my-0 opacity-70"><a href="#compose" class="underline">{% trans "No days agreed for the visit yet" %}</a></p>
+			{% endif %}
+		</div>
+
+		{% if community.after_visit %}
+			<div>
+				<h3 class="text-base mt-0">{% trans "Our process after the visit" %}</h3>
+				<p class="my-0 whitespace-pre-line">{{ community.after_visit }}</p>
+			</div>
+		{% endif %}
+
+		{% if is_owner %}
+			<form method="post" action="{% url 'communities:make_member' community.slug target.pk %}">{% csrf_token %}
+				<button type="submit" class="btn btn-green text-sm"><i class="fa-solid fa-user-check mr-1"></i>{% trans "Make member" %}</button>
+			</form>
+		{% elif is_requester %}
+			<form method="post" action="{% url 'communities:lives_here' community.slug target.pk %}">{% csrf_token %}
+				<button type="submit" class="btn text-sm"><i class="fa-solid fa-house mr-1"></i>{% trans "I already live here" %}</button>
+			</form>
+		{% endif %}
+	{% endif %}
+
+	{% if is_owner and target.has_application %}
+		<div class="pt-1">
+			<a href="{% url 'communities:print_application' community.slug target.pk %}" target="_blank" class="btn text-sm"><i class="fa-solid fa-print mr-1"></i>{% trans "Print application" %}</a>
+		</div>
+	{% endif %}
+
+	{% if is_owner or is_requester %}
+		{# Either side may delete it; what stays is who applied, how it ended and when #}
+		<div x-data="{ deleting: false }" class="pt-1">
+			<button type="button" x-show="!deleting" @click="deleting = true" class="btn btn-red text-sm">
+				<i class="fa-regular fa-trash-can mr-1"></i>{% trans "Delete application" %}
+			</button>
+			<form x-show="deleting" style="display:none" method="post" action="{% url 'communities:delete_application' community.slug target.pk %}" class="space-y-3">{% csrf_token %}
+				<p class="my-0">
+					{% if is_requester %}{% blocktrans with community=community.name %}Your answers and this conversation will be deleted, for {{ community }} too. What stays is that you applied, how it ended and when.{% endblocktrans %}
+					{% else %}{% blocktrans with name=target.user.name %}Their answers and this conversation will be deleted, for {{ name }} too. What stays is that they applied, how it ended and when, so you'll see it if they apply again.{% endblocktrans %}{% endif %}
+					{% if target.is_counted %}{% trans "The membership stays." %}{% endif %}
+				</p>
+				<div class="flex flex-wrap justify-between gap-2">
+					<button type="button" @click="deleting = false" class="btn btn-purple text-sm"><i class="fa-solid fa-ban mr-2"></i>{% trans "Cancel" %}</button>
+					<button type="submit" class="btn btn-red text-sm"><i class="fa-regular fa-trash-can mr-2"></i>{% trans "Delete application" %}</button>
+				</div>
+			</form>
+		</div>
+	{% endif %}
+</div>
+{% endwith %}

@@ -30,7 +30,7 @@ OFF_THE_WAY = Point(12.40, 51.75, srid=4326)
 def host(name, point=ON_THE_WAY, public=True, **fields):
     ambassador = User.objects.create_user(email=f"{name.lower()}@example.org", password="secret", name=f"Ambassador {name}")
     return Community.objects.create(
-        name=name, owner=ambassador, location=point, country="DE", location_name=f"{name}, Deutschland",
+        name=name, ambassador=ambassador, location=point, country="DE", location_name=f"{name}, Deutschland",
         location_public=public, **fields,
     )
 
@@ -113,14 +113,14 @@ def test_gifts_that_could_travel_move_one_up(east, twins, farm):
 
 
 def test_an_active_ambassador_moves_one_up(east, twins):
-    ambassador = twins[1].owner
+    ambassador = twins[1].ambassador
     ambassador.last_seen = timezone.now()
     ambassador.save()
     assert names(east)[0] == "Zzz"
 
 
 def test_references_move_one_up(east, twins, other):
-    Reference.objects.create(author=other, recipient=twins[1].owner, subject=twins[1], text="Warm welcome.")
+    Reference.objects.create(author=other, recipient=twins[1].ambassador, subject=twins[1], text="Warm welcome.")
     assert names(east)[0] == "Zzz"
     assert "references" in reason_keys(east, "Zzz")
 

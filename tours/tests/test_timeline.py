@@ -39,7 +39,7 @@ def write(author, subject, match, text, **fields):
 def test_what_happened_is_told_at_the_stop_where_it_happened(visited, organiser, farm):
     tour = visited.tour
     visit = visited.visit_match
-    write(farm.owner, tour, visit, "A lovely group, the jars still stand.")
+    write(farm.ambassador, tour, visit, "A lovely group, the jars still stand.")
     otto = tour.travellers.get(user__name="Otto").user
     write(otto, farm, visit, "We felt at home.")
     # Rita got off at the farm: what she and the organiser wrote is told there
@@ -63,7 +63,7 @@ def test_what_happened_is_told_at_the_stop_where_it_happened(visited, organiser,
 def test_visitors_see_the_group_and_what_was_shared(visited, organiser, farm):
     tour = visited.tour
     visit = visited.visit_match
-    write(farm.owner, tour, visit, "A lovely group, the jars still stand.")
+    write(farm.ambassador, tour, visit, "A lovely group, the jars still stand.")
     otto = tour.travellers.get(user__name="Otto").user
     write(otto, farm, visit, "We felt at home.")
     write(organiser, farm, visit, "The best compost we ever turned.", share_publicly=True)

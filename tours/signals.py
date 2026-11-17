@@ -6,7 +6,7 @@ from django.dispatch import receiver
 
 from communities.models import Community
 from gift_economy.gifts.models import Listing
-from gift_economy.matches.models import STAY_APP_LABELS, Match
+from gift_economy.matches.models import STAY_TARGETS, Match
 
 logger = logging.getLogger(__name__)
 
@@ -139,7 +139,7 @@ def stay_changed(sender, instance, raw=False, **kwargs):
     suggested; once it is declined or withdrawn, no longer."""
     from .matching import forget_stay
 
-    if raw or instance.content_type.app_label not in STAY_APP_LABELS or getattr(instance, "tour_stop", None):
+    if raw or (instance.content_type.app_label, instance.content_type.model) not in STAY_TARGETS or getattr(instance, "tour_stop", None):
         return
     if instance.is_closed:
         forget_stay(instance)

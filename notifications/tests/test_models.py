@@ -66,6 +66,6 @@ class TestNotificationIcon:
         assert Notification.objects.get(recipient=owner).icon == icon
 
     def test_volunteer_request(self, owner, requester):
-        community = Community.objects.create(name="Goat Farm", owner=owner)
+        community = Community.objects.create(name="Goat Farm", ambassador=owner)
         notify_match_created(_match(requester, community))
         assert Notification.objects.get(recipient=owner).icon == "fa-campground"

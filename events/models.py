@@ -174,7 +174,7 @@ class Event(models.Model):
     @property
     def manager(self):
         """Who answers for it: matches are addressed to them."""
-        return self.community.owner
+        return self.community.ambassador
 
     @property
     def place(self):

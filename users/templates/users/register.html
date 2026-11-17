@@ -20,6 +20,7 @@
 
   <form enctype="multipart/form-data" method="post" class="w-full my-10 form-control-w-full">
     {% crispy form %}
+    {% if request.GET.next or request.POST.next %}<input type="hidden" name="next" value="{{ request.POST.next|default:request.GET.next }}">{% endif %}
     <div id="cropper" class="hidden"></div>
 
     <!-- Location section -->
@@ -32,8 +33,8 @@
       <p class="text-xs text-brown">{% trans "Others see only roughly where you live (about 1–2 km, without the street). Your exact place shows only once a match between you is accepted, so that you meet through ecobasa." %}</p>
     </div>
 
-    <div class="flex items-center justify-end gap-4 my-5">
-      <a class="btn btn-lg btn-purple flex" href="{% url "users:login" %}"><i class="fa fa-times mr-2"></i>{% trans "Cancel" %}</a>
+    <div class="flex items-center justify-between gap-4 my-5">
+      <a class="btn btn-lg btn-purple flex" href="{% url "users:login" %}"><i class="fa fa-ban mr-2"></i>{% trans "Cancel" %}</a>
       <button class="btn btn-lg" type="submit">
         <i class="fa fa-user-check mr-2"></i>
         {% trans "Register" %}

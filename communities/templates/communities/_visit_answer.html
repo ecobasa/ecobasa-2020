@@ -1,0 +1,43 @@
+{% load i18n community_filters tours_tags %}
+{# With the latest word on the visit to a membership application (the latest days proposed or agreed, else the invitation to visit), while the person is invited to visit: the days, accepting them (the other side) or proposing others (either side, the ambassador first). A proposal's days the thread shows already, as for any counter-proposal #}
+{% if target.is_visiting and msg == target.visit_answer %}
+	{% with days=target.suggested_visit community=target.community agreed=target.visit_agreed %}
+		{% if msg.status_to == "accepted" and days.0 or msg.status_to == "accepted" and days.1 %}
+			<p class="text-sm my-0 mb-3 flex flex-wrap items-center gap-2"><i class="fa fa-campground text-primary"></i>
+				<strong>{% if agreed %}{% trans "Agreed stay" %}{% else %}{% trans "Suggested stay" %}{% endif %}:</strong>
+				{% include "matches/_stay_period.html" with stay_from=days.0 stay_to=days.1 %}
+			</p>
+		{% elif not days.0 and not days.1 and is_requester %}
+			<p class="text-sm my-0 mb-3 opacity-80">{% blocktrans with name=community.name %}{{ name }} will suggest days for your visit here.{% endblocktrans %}</p>
+		{% endif %}
+		{# Agreed: rides and tours going there, or starting one with the stay (its page leads here meanwhile) #}
+		{% if agreed and is_requester and target.visit_is_own %}{% tours_going_there target.visit True %}{% endif %}
+		<div x-data="{ open: false }" class="flex flex-wrap gap-2">
+			{% if target|visit_waits_for:request.user %}
+				<form method="post" action="{% url 'communities:accept_visit_days' community.slug target.pk %}" x-show="!open">{% csrf_token %}
+					<button type="submit" class="btn btn-green"><i class="fa fa-check mr-2"></i>{% trans "Accept these days" %}</button>
+				</form>
+			{% endif %}
+			{% if target|can_propose_visit:request.user %}
+				<button type="button" x-show="!open" @click="open = true" class="btn btn-yellow">
+					<i class="fa-solid fa-calendar-days mr-2"></i>{% if days.0 or days.1 %}{% trans "Suggest other days" %}{% else %}{% trans "Suggest days for the visit" %}{% endif %}
+				</button>
+				<form x-show="open" style="display:none" method="post" action="{% url 'communities:visit_days' community.slug target.pk %}" class="w-full space-y-3">{% csrf_token %}
+					<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+						<label class="form-group text-sm">{% trans "Stay from" %}
+							<input type="date" name="visit_from" class="form-input w-full mt-1" value="{{ days.0|date:'Y-m-d' }}">
+						</label>
+						<label class="form-group text-sm">{% trans "Stay until" %}
+							<input type="date" name="visit_to" class="form-input w-full mt-1" value="{{ days.1|date:'Y-m-d' }}">
+						</label>
+					</div>
+					<textarea name="body" rows="2" class="form-textarea w-full" placeholder="{% trans 'A few words, if you like' %}"></textarea>
+					<div class="flex flex-wrap justify-between gap-2">
+						<button type="button" @click="open = false" class="btn btn-purple text-sm"><i class="fa-solid fa-ban mr-1"></i>{% trans "Cancel" %}</button>
+						<button type="submit" class="btn btn-green text-sm"><i class="fa fa-paper-plane mr-1"></i>{% trans "Send" %}</button>
+					</div>
+				</form>
+			{% endif %}
+		</div>
+	{% endwith %}
+{% endif %}

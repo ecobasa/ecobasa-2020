@@ -1,0 +1,134 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block head_title %}{% trans "Membership application" %}: {{ membership.user.name }} — ecobasa{% endblock %}
+
+{% block extrahead %}
+<style>
+  /* Printed, the page is only the application */
+  @media print {
+    body * { visibility: hidden; }
+    #sheet, #sheet * { visibility: visible; }
+    #sheet { position: absolute; left: 0; top: 0; width: 100%; border: 0; box-shadow: none; background: none; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-content">
+  <div class="no-print mb-6 space-y-3">
+    <a href="{{ membership.match.get_absolute_url }}" class="text-sm"><i class="fa fa-arrow-left mr-1"></i>{% trans "Membership application" %}</a>
+    <form method="get" class="p-4 rounded-lg bg-secondary bg-opacity-75 text-sm">
+      {% if has_sensitive %}
+        <label class="flex items-start gap-2 cursor-pointer">
+          <input type="checkbox" name="sensitive" value="1" {% if sensitive %}checked{% endif %} onchange="this.form.submit()" class="mt-1">
+          <span>
+            <strong>{% trans "Include the answers only I see" %}</strong><br>
+            {% blocktrans with name=membership.user.name %}{{ name }} agreed that only you see them. A copy with them is for you alone, not for the members: keep it safe and destroy it after reading.{% endblocktrans %}
+          </span>
+        </label>
+      {% endif %}
+      <p class="{% if has_sensitive %}mt-3 {% endif %}mb-0">{% trans "To save it as a PDF, choose “Save as PDF” in the print dialog." %}</p>
+    </form>
+    <div class="flex justify-end">
+      <button type="button" onclick="window.print()" class="btn"><i class="fa-solid fa-print mr-1"></i>{% trans "Print" %}</button>
+    </div>
+  </div>
+
+  <article id="sheet" class="p-6 rounded-xl border bg-white text-brown">
+    <p class="flex items-center justify-end text-primary mt-0 mb-3">{% include "_logo_mark.html" with class="h-5 w-5 mr-1" %}<span class="font-serif text-lg">ecobasa.org</span></p>
+    <p class="border-2 border-red rounded-lg p-3 text-sm mt-0">
+      <strong>{% trans "Confidential" %}.</strong>
+      {% if sensitive %}
+        {% blocktrans with name=membership.user.name %}This copy contains answers {{ name }} entrusted to the ambassador alone, among them special categories of personal data such as health. It is for the ambassador only: don't pass it on, keep it locked away, and destroy it (shred the paper, delete the file) as soon as you no longer need it.{% endblocktrans %}
+      {% else %}
+        {% blocktrans with community=community.name %}This application contains personal data. It is only for the members of {{ community }}, to decide about it together. Don't pass it on, keep it safe, and destroy it (shred the paper, delete the file) once you have decided.{% endblocktrans %}
+      {% endif %}
+    </p>
+
+    <h1 class="mb-1">{{ membership.user.name }}</h1>
+    <p class="mt-0">{% blocktrans with community=community.name date=membership.match.created_at|date:"DATE_FORMAT" %}Membership application to {{ community }}, sent on {{ date }}{% endblocktrans %}</p>
+
+    {% if membership.match.message %}
+      <p class="whitespace-pre-line">{{ membership.match.message }}</p>
+    {% endif %}
+
+    {% if application.agreed %}
+      <h2 class="text-xl">{% trans "Agreed to" %}</h2>
+      <ul>
+        {% for answer in application.agreed %}<li>{{ answer.text }}</li>{% endfor %}
+      </ul>
+    {% endif %}
+
+    {% if answers %}
+      <h2 class="text-xl">{% trans "Answers" %}</h2>
+      {% for answer in answers %}
+        <div class="mb-3" style="break-inside: avoid;">
+          <p class="font-semibold my-0">{{ answer.text }}{% if answer.sensitive %} <i class="fa-solid fa-lock ml-1" title="{% trans 'Only the ambassador sees this' %}"></i>{% endif %}</p>
+          {% if answer.kind == "family" %}
+            {% include "communities/_together_summary.html" %}
+          {% else %}
+            <p class="my-0 whitespace-pre-line">{% if answer.answer is None %}—{% elif answer.answer is True %}{% trans "Yes" %}{% elif answer.answer is False %}{% trans "No" %}{% else %}{{ answer.answer }}{% endif %}</p>
+          {% endif %}
+        </div>
+      {% endfor %}
+    {% endif %}
+    {% if has_sensitive and not sensitive %}
+      <p class="text-sm italic">{% trans "The answers only the ambassador sees are not included." %}</p>
+    {% endif %}
+
+    {% if application.talks %}
+      <h2 class="text-xl">{% trans "We'd like to talk about this when you visit" %}</h2>
+      <ul>
+        {% for answer in application.talks %}<li>{{ answer.text }}</li>{% endfor %}
+      </ul>
+    {% endif %}
+
+    {# What the application page shows the ambassador about them, from ecobasa #}
+    {% with before=membership.before stays=membership.stays_here skills=membership.wished_skills %}
+      <ul>
+        {% for past in before %}<li>{{ past.label }}{% if past.outcome == 'not_now' %} · {% trans "Not now" %}{% endif %} · {{ past.date|date:"DATE_FORMAT" }}</li>{% endfor %}
+        <li>{% if stays %}{% trans "Stays and tour visits here" %}: {% for stay in stays %}{% with details=stay.stay_details %}{% if details.stay_from %}{{ details.stay_from|date:"DATE_FORMAT" }}{% if details.stay_to %} – {{ details.stay_to|date:"DATE_FORMAT" }}{% endif %}{% else %}{{ stay.created_at|date:"DATE_FORMAT" }}{% endif %}{% endwith %}{% if not forloop.last %}; {% endif %}{% endfor %}{% else %}{% trans "No stays or tour visits here yet" %}{% endif %}</li>
+        {% if skills %}<li>{% trans "Skills you look for that they have" %}: {% for listing in skills %}{{ listing.display_title }}{% if listing.level %} ({{ listing.get_level_display }}){% endif %}{% if not forloop.last %}, {% endif %}{% endfor %}</li>{% endif %}
+      </ul>
+    {% endwith %}
+
+    <h2 class="text-xl">{% blocktrans with name=membership.user.name %}What {{ name }} has to offer{% endblocktrans %}</h2>
+    <dl>
+      {% if person.communities %}
+        <dt class="font-semibold">{% trans "Member of these communities" %}</dt>
+        <dd class="ml-0 mb-2">{% for other in person.communities %}{{ other.name }}{% if not forloop.last %}, {% endif %}{% endfor %}</dd>
+      {% endif %}
+      <dt class="font-semibold">{% trans "Skills" %}</dt>
+      <dd class="ml-0 mb-2">{% for listing in person.skills %}{{ listing.display_title }}{% if listing.level %} ({{ listing.get_level_display }}){% endif %}{% if not forloop.last %}, {% endif %}{% empty %}{% trans "No skills on the profile yet." %}{% endfor %}</dd>
+      <dt class="font-semibold">{% trans "Gifts they could bring along" %}</dt>
+      <dd class="ml-0 mb-2">{% for listing in person.offers %}{{ listing.display_title }}{% if not forloop.last %}, {% endif %}{% empty %}{% trans "No gifts offered yet." %}{% endfor %}</dd>
+    </dl>
+
+    {% with who=membership.user %}
+      {% if place or who.about or who.world or who.ecobasa_what or wishes %}
+        <dl>
+          {% if place %}<dt class="font-semibold">{% trans "Location" %}</dt><dd class="ml-0 mb-2">{{ place }}</dd>{% endif %}
+          {% if who.about %}<dt class="font-semibold">{% trans "About me" %}</dt><dd class="ml-0 mb-2 whitespace-pre-line">{{ who.about }}</dd>{% endif %}
+          {% if who.world %}<dt class="font-semibold">{% trans "What do you do to make the world a better place?" %}</dt><dd class="ml-0 mb-2 whitespace-pre-line">{{ who.world }}</dd>{% endif %}
+          {% if who.ecobasa_what %}<dt class="font-semibold">{% trans "What would you like to use ecobasa mainly for?" %}</dt><dd class="ml-0 mb-2 whitespace-pre-line">{{ who.ecobasa_what }}</dd>{% endif %}
+          {% if wishes %}<dt class="font-semibold">{% trans "Wishes" %}</dt><dd class="ml-0 mb-2">{% for listing in wishes %}{{ listing.display_title }}{% if not forloop.last %}, {% endif %}{% endfor %}</dd>{% endif %}
+        </dl>
+      {% endif %}
+    {% endwith %}
+
+    <h2 class="text-xl">{% trans "References" %}</h2>
+    {% for ref in references %}
+      <div class="mb-3" style="break-inside: avoid;">
+        <p class="font-semibold my-0">{{ ref.author.name|default:ref.author.email }} · {{ ref.get_impression_display }} · {{ ref.created_at|date:"DATE_FORMAT" }}{% if ref.subject and ref.subject != membership.user %} · {% translate "about" context "reference subject" %} {{ ref.subject.display_title|default:ref.subject }}{% endif %}</p>
+        <p class="my-0 whitespace-pre-line">{{ ref.text }}</p>
+        {% with present=ref.people.all %}{% if present %}<p class="my-0 text-sm">{% trans "Who was there" %}: {% for person in present %}{{ person.name|default:person.email }}{% if not forloop.last %}, {% endif %}{% endfor %}</p>{% endif %}{% endwith %}
+      </div>
+    {% empty %}
+      <p>{% trans "No references yet." %}</p>
+    {% endfor %}
+
+    <p class="text-xs opacity-70 mt-8 mb-0">{% now "DATE_FORMAT" as today %}{% blocktrans with date=today %}Printed from ecobasa.org on {{ date }}{% endblocktrans %}</p>
+  </article>
+</div>
+{% endblock content %}

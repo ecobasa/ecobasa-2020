@@ -23,7 +23,7 @@ from gift_economy.gifts.models import Listing
 
 from .emails import notify_match_message, notify_match_response, read_action_token, read_suggestions_unsubscribe_token
 from .forms import MatchMessageForm
-from .models import STAY_APP_LABELS, Loan, Match, MatchMessage, Suggestion, loan_span
+from .models import Loan, Match, MatchMessage, Suggestion, loan_span, stay_q, talked_over_elsewhere_q
 
 # What the matches page can show, by its "type" query param: gifts (things) and skills
 # (and knowledge and helping hands) together on one page (with suggestions first),
@@ -34,6 +34,10 @@ _TYPES = {
 }
 _VOLUNTEER = {
     "title": _("Volunteer Visits"), "icon": "fa-solid fa-campground", "empty": _("No volunteer visits yet."),
+}
+# Asking to become a member of a community (the membership is the target)
+_MEMBERS = {
+    "title": _("Membership applications"), "icon": "fa-solid fa-door-open", "empty": _("No membership applications yet."),
 }
 # Asking to join a tour (the tours app is the target; matches doesn't import it)
 TOUR_APP_LABEL = "tours"
@@ -64,7 +68,7 @@ def _listing_matches(kinds=None):
 
 
 def _stays():
-    return _with_details(Match.objects.filter(content_type__app_label__in=STAY_APP_LABELS))
+    return _with_details(Match.objects.filter(stay_q()).exclude(talked_over_elsewhere_q()))
 
 
 # ── Matches page ───────────────────────────────────────────────────────────────
@@ -77,6 +81,8 @@ def matches_list(request):
     kind = request.GET.get("type", "")
     if kind == "volunteer":
         return _volunteer_visits(request)
+    if kind == "members":
+        return _membership_applications(request)
     if kind == "tours":
         return _join_requests(request)
     if kind not in _TYPES:
@@ -144,14 +150,28 @@ def _requests(request, matches):
 
 
 def _volunteer_visits(request):
-    """Volunteer stays and help with events, received and sent. Only ambassadors
-    receive them, so the others (who never did) see just their own requests."""
+    """Volunteer stays and help with events, received and sent."""
+    return _received_and_sent(request, _stays(), "volunteer", _VOLUNTEER)
+
+
+def _membership_applications(request):
+    """Asking to become a member of a community, received (as its ambassador) and sent."""
+    return _received_and_sent(request, _with_details(_applications()), "members", _MEMBERS)
+
+
+def _applications():
+    return Match.objects.filter(content_type__app_label="communities", content_type__model="membership")
+
+
+def _received_and_sent(request, matches, request_type, kind):
+    """Requests to a community, received and sent. Only ambassadors receive them, so the
+    others (who never did) see just their own requests."""
     user = request.user
     boxes = {
-        "received": _stays().filter(recipient=user),
-        "sent":     _stays().filter(from_user=user),
+        "received": matches.filter(recipient=user),
+        "sent":     matches.filter(from_user=user),
     }
-    if not user.communities.exists() and not boxes["received"].exists():
+    if not user.ambassador_of.exists() and not boxes["received"].exists():
         del boxes["received"]
     # The owner answers a request, the requester a counter-proposal
     answers = {"received": Match.STATUS_PENDING, "sent": Match.STATUS_COUNTER}
@@ -168,8 +188,8 @@ def _volunteer_visits(request):
         if key in boxes
     ]
     return render(request, "matches/matches_list.html", {
-        "request_type": "volunteer", "kind": _VOLUNTEER, "tabs": tabs, "box": box,
-        **_requests(request, boxes[box]), "show_from": box == "received", "empty": _VOLUNTEER["empty"],
+        "request_type": request_type, "kind": kind, "tabs": tabs, "box": box,
+        **_requests(request, boxes[box]), "show_from": box == "received", "empty": kind["empty"],
     })
 
 
@@ -177,13 +197,7 @@ def _join_requests(request):
     """Requests to join a tour: received (as an organiser) and sent."""
     user = request.user
     tours = _with_details(Match.objects.filter(content_type__app_label=TOUR_APP_LABEL))
-    # Also those the user answers for the one they are addressed to (a tour's other organisers)
-    received = Q(recipient=user)
-    for content_type in ContentType.objects.filter(app_label=TOUR_APP_LABEL):
-        answered_by = getattr(content_type.model_class(), "matches_answered_by", None)
-        if answered_by is not None:
-            received |= answered_by(user)
-    boxes = {"received": tours.filter(received).distinct(), "sent": tours.filter(from_user=user)}
+    boxes = {"received": tours.filter(_tours_received(user)).distinct(), "sent": tours.filter(from_user=user)}
     # Tours that fit them, first
     suggestions = _suggestions_of(user).filter(kind=Suggestion.KIND_TOURS)
     waiting = {
@@ -213,6 +227,36 @@ def _join_requests(request):
     return render(request, "matches/matches_list.html", {
         **context, **_requests(request, boxes[box]), "show_from": box == "received", "empty": _TOURS["empty"],
     })
+
+
+def _tours_received(user):
+    """The join requests to `user`, also those they answer for the one they are addressed
+    to (a tour's other organisers): a Q on Match."""
+    received = Q(recipient=user)
+    for content_type in ContentType.objects.filter(app_label=TOUR_APP_LABEL):
+        answered_by = getattr(content_type.model_class(), "matches_answered_by", None)
+        if answered_by is not None:
+            received |= answered_by(user)
+    return received
+
+
+def waiting_counts(user):
+    """What waits for `user` to answer, by page, as the pages count it in their tabs:
+    requests to them still open, and counter-proposals to their own requests. The menus
+    show them as badges."""
+    def waiting(matches, received=None):
+        received = Q(recipient=user) if received is None else received
+        return matches.filter(
+            Q(received, status=Match.STATUS_PENDING) | Q(from_user=user, status=Match.STATUS_COUNTER),
+        ).distinct().count()
+
+    counts = {
+        "matches": waiting(Match.objects.filter(content_type__app_label="gifts")),
+        "volunteer": waiting(Match.objects.filter(stay_q()).exclude(talked_over_elsewhere_q())),
+        "members": waiting(_applications()),
+        "tours": waiting(Match.objects.filter(content_type__app_label=TOUR_APP_LABEL), _tours_received(user)),
+    }
+    return {**counts, "any": any(counts.values())}
 
 
 # ── Match detail ────────────────────────────────────────────────────────────────
@@ -253,6 +297,10 @@ def match_detail(request, pk):
     target = match.target
     if target is None:
         raise Http404
+    # A target may have it talked over elsewhere for now (a membership application's visit)
+    elsewhere = getattr(target, "match_redirect", lambda match: "")(match)
+    if elsewhere:
+        return redirect(elsewhere)
 
     # Only the two sides act on a match; staff may open it too. A target may let others
     # answer for its owner (a tour's other organisers)
@@ -291,6 +339,15 @@ def match_detail(request, pk):
     # declined or withdrawn; also after it was accepted, which the other side then answers.
     # Who just comes to an open event changes nothing here: they take it back and come
     # again with other days.
+    # Whether the viewer sees what the other side has to offer (match_person), and can
+    # ask for some of it along with the match (match_extras). A target says so for
+    # everyone (an attribute) or per viewer (a method taking the user and the match)
+    def target_says(name):
+        value = getattr(target, name, True)
+        return value(request.user, match) if callable(value) else value
+
+    shows_person = target_says("match_person")
+    can_ask_extras = shows_person and is_party and target_says("match_extras")
     can_counter = getattr(target, "match_counter", True) and (
         (is_owner and match.status != Match.STATUS_WITHDRAWN)
         or (is_requester and not match.is_closed and not match.is_coming)
@@ -308,7 +365,7 @@ def match_detail(request, pk):
                 notify_match_message(match, sender=request.user, message=body, http_request=request)
             return redirect(match.get_absolute_url())
 
-        if action == "extras" and is_party:
+        if action == "extras" and can_ask_extras:
             # Ask for more of the other side's gifts and skills as part of this exchange
             other = match.recipient if is_requester else match.from_user
             options = {
@@ -337,6 +394,12 @@ def match_detail(request, pk):
                     if error:
                         flash.error(request, error)
                         return redirect(match.get_absolute_url())
+                if new_status == Match.STATUS_DECLINED:
+                    # A target may want more said first (the part to fill in of a text)
+                    error = getattr(target, "match_decline_error", lambda match, data: "")(match, request.POST)
+                    if error:
+                        flash.error(request, error)
+                        return redirect(f"{match.get_absolute_url()}?decline=1#compose")
                 if new_status == Match.STATUS_ACCEPTED and match.is_loan:
                     # The agreed time is the loan's from now on; a tool is lent once at a time
                     starts_at, ends_at = match.loan_period()
@@ -346,10 +409,20 @@ def match_detail(request, pk):
                     match.loan.starts_at, match.loan.ends_at = starts_at, ends_at
                     match.loan.save()
                 body = request.POST.get("body", "").strip()
-                MatchMessage.objects.create(match=match, sender=request.user, body=body, status_to=new_status)
+                answer = MatchMessage(match=match, sender=request.user, body=body, status_to=new_status)
+                if new_status == Match.STATUS_ACCEPTED and match.is_community_stay:
+                    # The agreed days stand with the acceptance, the latest word on them
+                    answer.counter_stay_from, answer.counter_stay_to = match.stay_period()
+                answer.save()
                 match.status       = new_status
                 match.responded_at = timezone.now()
                 match.save()
+                # A target may go on from here (a membership application: to the visit,
+                # or straight to being a member, as the one accepting chose)
+                if new_status == Match.STATUS_ACCEPTED and hasattr(target, "match_accepted"):
+                    target.match_accepted(match, request.POST)
+                if new_status == Match.STATUS_DECLINED and hasattr(target, "match_declined"):
+                    target.match_declined(match, request.POST)
             notify_match_response(match, actor=request.user, http_request=request, message=body)
             flash.success(request, _("Response sent."))
             return redirect(match.get_absolute_url())
@@ -441,6 +514,17 @@ def match_detail(request, pk):
             else target.get_match_verb()
         ),
         "can_decide":           can_decide,
+        # More than one way to accept it (a membership application: invite to visit, or make member)
+        "accept_choices":       getattr(target, "match_accept_choices", lambda: [])() if can_decide else [],
+        # What comes with declining (a membership application: texts to start from)
+        "decline_fields":       getattr(target, "match_decline_fields", lambda: "")() if can_decide else "",
+        "declining":            request.GET.get("decline") == "1",
+        # And what its no is called in the thread, instead of a red "Declined"
+        "decline_label":        getattr(target, "match_declined_label", lambda: None)(),
+        # What the target adds to a message in the thread (a membership application: the visit)
+        "answer_template":      getattr(target, "match_answer_template", ""),
+        # Buttons the target adds to the answer form's (a membership application: "Make member" while visiting)
+        "actions_template":     getattr(target, "match_actions_template", ""),
         "can_counter":          can_counter,
         "can_withdraw":         can_withdraw,
         "proposed_place":       _proposed_place(match, request.user, latest_counter_msg) if can_counter else None,
@@ -451,7 +535,8 @@ def match_detail(request, pk):
         "your_place":           match.place_of(match.recipient if is_requester else match.from_user),
         "message_form":         MatchMessageForm(),
         "loc_choices":          Match.LOC_CHOICES,
-        "person":               _person(match.recipient if is_requester else match.from_user),
+        "person":               _person(match.recipient if is_requester else match.from_user) if shows_person else None,
+        "can_ask_extras":       can_ask_extras,
         "asked_listing_ids":    {listing.pk for listing in match.listings.all()},
     })
 
@@ -491,7 +576,7 @@ def _person(user):
         "user": user,
         "skills": skills,
         "offers": list(offers.exclude(kind=Listing.KIND_SKILL).order_by("-updated_at")),
-        "communities": list(user.communities.order_by("name")),
+        "communities": user.member_communities(),
     }
 
 
@@ -512,6 +597,12 @@ def email_action(request, token):
         return redirect(match.get_absolute_url())
 
     target = match.target
+    if action == "decline" and getattr(target, "match_decline_fields", lambda: "")():
+        # Saying no to it takes a few words first: the match page, with its texts
+        return redirect(f"{match.get_absolute_url()}?decline=1#compose")
+    if action == "accept" and getattr(target, "match_accept_choices", lambda: [])():
+        # Saying yes is a choice between several ways, made on the match page
+        return redirect(f"{match.get_absolute_url()}#compose")
     if action == "accept" and match.is_loan and target is not None and target.lends_out and not target.is_free(
         match.loan.starts_at, match.loan.ends_at, exclude_match=match,
     ):
@@ -528,7 +619,12 @@ def email_action(request, token):
         match.status       = Match.STATUS_ACCEPTED if action == "accept" else Match.STATUS_DECLINED
         match.responded_at = timezone.now()
         match.save(update_fields=["status", "responded_at"])
-        MatchMessage.objects.create(match=match, sender=actor, body="", status_to=match.status)
+        answer = MatchMessage(match=match, sender=actor, body="", status_to=match.status)
+        if match.status == Match.STATUS_ACCEPTED and match.is_community_stay:
+            answer.counter_stay_from, answer.counter_stay_to = match.stay_period()
+        answer.save()
+        if action == "accept" and hasattr(target, "match_accepted"):
+            target.match_accepted(match)
     notify_match_response(match, actor=actor, http_request=request)
 
     return render(request, "matches/email_action_done.html", {

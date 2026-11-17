@@ -396,8 +396,8 @@ msgid "Gifts on offer"
 msgstr "Angebotene Geschenke"
 
 #: communities/templates/communities/community_detail.html:160
-msgid "Seeds & plants to swap"
-msgstr "Saatgut & Pflanzen zum Tauschen"
+msgid "Seeds & plants to share"
+msgstr "Saatgut & Pflanzen zum Teilen"
 
 #: communities/templates/communities/community_detail.html:173
 msgid ""
@@ -2440,10 +2440,6 @@ msgstr ""
 "anbieten oder brauchen und zu deinen Wünschen, Angeboten und Fähigkeiten "
 "passt. Ein Match wird daraus, sobald eine*r von euch anfragt."
 
-#: gift_economy/matches/templates/matches/_suggestions_intro.html:17
-msgid "Change"
-msgstr "Ändern"
-
 #: gift_economy/matches/templates/matches/_suggestions_intro.html:22
 #: notifications/models.py:14
 msgid ""
@@ -3644,10 +3640,10 @@ msgstr "Geschenke und Wünsche – wir schlagen Matches in der Nähe vor"
 
 #: homepage/templates/homepage/homepage.html:33
 msgid ""
-"Swap seeds & plants: open-pollinated, with variety and harvest year, as well "
+"Share seeds & plants: open-pollinated, with variety and harvest year, as well "
 "as young plants, cuttings and scion wood"
 msgstr ""
-"Saatgut & Pflanzen tauschen: samenfest, mit Sorte und Erntejahr, dazu "
+"Saatgut & Pflanzen teilen: samenfest, mit Sorte und Erntejahr, dazu "
 "Jungpflanzen, Stecklinge und Edelreiser"
 
 #: homepage/templates/homepage/homepage.html:34
@@ -5865,6 +5861,27 @@ msgstr "Anfrage geändert: %(summary)s"
 msgid "Your join request has been changed."
 msgstr "Deine Mitreise-Anfrage ist geändert."
 
+msgid "Your join request has been withdrawn."
+msgstr "Deine Mitreise-Anfrage ist zurückgezogen."
+
+msgid "Withdraw"
+msgstr "Zurückziehen"
+
+msgid "Something is waiting for you"
+msgstr "Hier wartet etwas auf dich"
+
+msgid "Unread"
+msgstr "Ungelesen"
+
+msgid "Waiting for your answer"
+msgstr "Wartet auf deine Antwort"
+
+msgid "Menu"
+msgstr "Menü"
+
+msgid "A few words to the organisers, if you like"
+msgstr "Ein paar Worte an die Organisator*innen, wenn du magst"
+
 #, python-format
 msgid "%(n)s person"
 msgid_plural "%(n)s people"
@@ -7492,3 +7509,1120 @@ msgstr "frag freundlich, was am Ende des Abends übrig ist, oder nimm, was Gäst
 #: templates/_navbar.html
 msgid "Home"
 msgstr "Startseite"
+
+#: gift_economy/matches/templates/matches/_suggestions_intro.html:17
+#: gift_economy/matches/templates/matches/matches_list.html:26
+msgid "Change matching distance"
+msgstr "Match-Entfernung ändern"
+
+#: events/templates/events/going.html:11
+msgid "Show on map"
+msgstr "Auf der Karte zeigen"
+
+#: templates/_navbar.html:166 templates/_navbar.html:278
+#: templates/dashboard/base.html:29 events/templates/events/going.html:4
+#: events/templates/events/going.html:10
+msgid "Events you are attending"
+msgstr "Events, an denen du teilnimmst"
+
+msgid "Membership"
+msgstr "Mitgliedschaft"
+
+msgid "Memberships"
+msgstr "Mitgliedschaften"
+
+msgid "Membership application"
+msgstr "Mitgliedsantrag"
+
+msgid "asked to become a member of"
+msgstr "möchte Mitglied werden bei"
+
+#, python-format
+msgid "%(actor)s asked to become a member of %(title)s"
+msgstr "%(actor)s möchte Mitglied werden bei %(title)s"
+
+msgid "Membership applications"
+msgstr "Mitgliedsanträge"
+
+msgid "No membership applications yet."
+msgstr "Noch keine Mitgliedsanträge."
+
+msgid "Your membership application has been sent to the ambassador."
+msgstr "Dein Mitgliedsantrag ist an die*den Botschafter*in gegangen."
+
+msgid "Make another member the ambassador before you leave."
+msgstr "Mach ein anderes Mitglied zur*zum Botschafter*in, bevor du gehst."
+
+#, python-format
+msgid "You left %(name)s."
+msgstr "Du hast %(name)s verlassen."
+
+msgid "Make another member the ambassador first."
+msgstr "Mach zuerst ein anderes Mitglied zur*zum Botschafter*in."
+
+#, python-format
+msgid "%(name)s is no longer a member."
+msgstr "%(name)s ist kein Mitglied mehr."
+
+#, python-format
+msgid "%(name)s is the ambassador now."
+msgstr "%(name)s ist jetzt Botschafter*in."
+
+msgid "Members"
+msgstr "Mitglieder"
+
+msgid "Manage"
+msgstr "Verwalten"
+
+#, python-format
+msgid "Make %(name)s the ambassador? Requests to the community then go to them; you stay a member."
+msgstr "%(name)s zur*zum Botschafter*in machen? Anfragen an die Gemeinschaft gehen dann an %(name)s; du bleibst Mitglied."
+
+msgid "Make ambassador"
+msgstr "Zur*zum Botschafter*in machen"
+
+#, python-format
+msgid "Remove %(name)s from the community?"
+msgstr "%(name)s aus der Gemeinschaft nehmen?"
+
+msgid "Remove from community"
+msgstr "Aus der Gemeinschaft nehmen"
+
+msgid "Ask to become a member"
+msgstr "Mitglied werden"
+
+msgid "Leave this community?"
+msgstr "Diese Gemeinschaft verlassen?"
+
+msgid "Leave community"
+msgstr "Gemeinschaft verlassen"
+
+msgid "Your membership application waits for an answer."
+msgstr "Dein Mitgliedsantrag wartet auf Antwort."
+
+msgid "Who you are and how you belong to the community"
+msgstr "Wer du bist und wie du zur Gemeinschaft gehörst"
+
+#, python-format
+msgid "Unknown language: %(code)s"
+msgstr "Unbekannte Sprache: %(code)s"
+
+msgid "Languages"
+msgstr "Sprachen"
+
+msgid "The languages you speak together."
+msgstr "Die Sprachen, die ihr miteinander sprecht."
+
+msgid "Why you'd like them to become a member."
+msgstr "Warum du sie gern als Mitglied hättest."
+
+msgid "They are a member already, or have been asked."
+msgstr "Diese Person ist schon Mitglied oder wurde schon gefragt."
+
+msgid "Looking for new members"
+msgstr "Wir suchen neue Mitglieder"
+
+msgid "Eats anything"
+msgstr "Wir essen alles"
+
+msgid "Vegetarian"
+msgstr "Vegetarisch"
+
+msgid "Vegan"
+msgstr "Vegan"
+
+msgid "Shared kitchen"
+msgstr "Gemeinsame Küche"
+
+msgid "Private kitchens too"
+msgstr "Auch eigene Küchen"
+
+msgid "Welcome"
+msgstr "Willkommen"
+
+msgid "No room for more right now"
+msgstr "Gerade kein Platz für weitere"
+
+msgid "Adults-only"
+msgstr "Nur Erwachsene"
+
+msgid "Children"
+msgstr "Kinder"
+
+msgid "Ask us first"
+msgstr "Frag uns vorher"
+
+msgid "None"
+msgstr "Keine"
+
+msgid "Pets"
+msgstr "Haustiere"
+
+msgid "Currency"
+msgstr "Währung"
+
+msgid "For the buy-in and the monthly contribution, e.g. EUR"
+msgstr "Für die Einlage und den monatlichen Beitrag, z. B. EUR"
+
+msgid "Buy-in"
+msgstr "Einlage"
+
+msgid "Cooperative shares"
+msgstr "Genossenschaftsanteile"
+
+msgid "A loan"
+msgstr "Ein Darlehen"
+
+msgid "A donation"
+msgstr "Eine Spende"
+
+msgid "What the buy-in is"
+msgstr "Was die Einlage ist"
+
+msgid "Monthly contribution"
+msgstr "Monatlicher Beitrag"
+
+msgid "Work commitment"
+msgstr "Mitarbeit"
+
+msgid "Hours per week"
+msgstr "Stunden pro Woche"
+
+msgid "Consensus"
+msgstr "Konsens"
+
+msgid "Consent (sociocracy)"
+msgstr "Konsent (Soziokratie)"
+
+msgid "Majority vote"
+msgstr "Mehrheitsentscheid"
+
+msgid "Decision making"
+msgstr "Entscheidungsfindung"
+
+msgid "Partly"
+msgstr "Teilweise"
+
+msgid "Fully"
+msgstr "Vollständig"
+
+msgid "Income sharing"
+msgstr "Gemeinsame Kasse"
+
+msgid "Trial period"
+msgstr "Probezeit"
+
+msgid "Months"
+msgstr "Monate"
+
+msgid "Exit terms"
+msgstr "Wenn du gehst"
+
+msgid "What happens to the buy-in when someone leaves, and how long the payout takes."
+msgstr "Was mit der Einlage passiert, wenn jemand geht, und wie lange die Auszahlung dauert."
+
+msgid "House agreements"
+msgstr "Hausvereinbarungen"
+
+msgid "Alcohol, smoking, drugs, cars, flying, guests and partners staying over, noise, cleanliness, phone and wifi zones, rituals and spiritual practice …"
+msgstr "Alkohol, Rauchen, Drogen, Autos, Fliegen, Gäste und Partner*innen über Nacht, Lärm, Sauberkeit, Handy- und WLAN-Zonen, Rituale und spirituelle Praxis …"
+
+msgid "Vision and statutes"
+msgstr "Vision und Satzung"
+
+msgid "A link"
+msgstr "Ein Link"
+
+msgid "Vision and statutes (PDF)"
+msgstr "Vision und Satzung (PDF)"
+
+msgid "Show my offers and skills on the community page"
+msgstr "Meine Angebote und Fähigkeiten auf der Gemeinschaftsseite zeigen"
+
+msgid "invited you to become a member of"
+msgstr "lädt dich ein, Mitglied zu werden bei"
+
+#, python-format
+msgid "%(actor)s invited you to become a member of %(title)s"
+msgstr "%(actor)s lädt dich ein, Mitglied zu werden bei %(title)s"
+
+msgid "How we live"
+msgstr "So leben wir"
+
+
+
+msgid "Any"
+msgstr "Egal"
+
+msgid "You are invited to become a member: answer the invitation"
+msgstr "Du bist eingeladen, Mitglied zu werden: auf die Einladung antworten"
+
+msgid "Not looking for new members right now. Only if you live here already, you can ask to be added."
+msgstr "Sucht gerade keine neuen Mitglieder. Nur wenn du schon hier lebst, kannst du fragen, ob du aufgenommen wirst."
+
+msgid "People looking for a community find you by these, so they know before they ask whether it fits."
+msgstr "Wer eine Gemeinschaft sucht, findet euch darüber und weiß schon vor der Anfrage, ob es passt."
+
+msgid "They get your invitation and become a member once they accept it."
+msgstr "Die Person bekommt deine Einladung und wird Mitglied, sobald sie sie annimmt."
+
+msgid "Yes"
+msgstr "Ja"
+
+msgid "Buy-in up to"
+msgstr "Einlage bis"
+
+msgid "Work commitment up to (hours per week)"
+msgstr "Mitarbeit bis (Stunden pro Woche)"
+
+#, python-format
+msgid "%(n)s hour per week"
+msgid_plural "%(n)s hours per week"
+msgstr[0] "%(n)s Stunde pro Woche"
+msgstr[1] "%(n)s Stunden pro Woche"
+
+#, python-format
+msgid "%(n)s month"
+msgid_plural "%(n)s months"
+msgstr[0] "%(n)s Monat"
+msgstr[1] "%(n)s Monate"
+
+msgid "Systemic consensing"
+msgstr "Systemisches Konsensieren"
+
+msgid "Council (talking circle)"
+msgstr "Council (Redekreis)"
+
+msgid "Competence hierarchy"
+msgstr "Kompetenzhierarchie"
+
+msgid "Do-ocracy (who does it decides)"
+msgstr "Do-ocracy (wer es macht, entscheidet)"
+
+msgid "Holacracy"
+msgstr "Holakratie"
+
+msgid "An elected leader decides"
+msgstr "Eine gewählte Leitung entscheidet"
+
+msgid "A leader decides"
+msgstr "Eine Leitung entscheidet"
+
+msgid "Animals and animal products"
+msgstr "Tiere und tierische Produkte"
+
+msgid "Do you keep animals, and what for? Which animal products are used here (milk, eggs, honey, meat, leather, wool)? Do you slaughter?"
+msgstr "Haltet ihr Tiere, und wofür? Welche tierischen Produkte werden bei euch genutzt (Milch, Eier, Honig, Fleisch, Leder, Wolle)? Schlachtet ihr?"
+
+msgid "Are more children welcome?"
+msgstr "Sind weitere Kinder willkommen?"
+
+msgid "List seminars, topics, and how visitors can join. Later you can add each one as an event on your community page, so people find it on the events map too."
+msgstr "Nenne Seminare, Themen und wie Besucher*innen teilnehmen können. Später kannst du jedes als Event auf eurer Gemeinschaftsseite anlegen, dann findet man es auch auf der Event-Karte."
+
+msgid "Gluten-free"
+msgstr "Glutenfrei"
+
+msgid "Lactose-free"
+msgstr "Laktosefrei"
+
+msgid "Sugar-free"
+msgstr "Zuckerfrei"
+
+msgid "Raw food"
+msgstr "Rohkost"
+
+msgid "Ayurvedic"
+msgstr "Ayurvedisch"
+
+msgid "Halal"
+msgstr "Halal"
+
+msgid "Kosher"
+msgstr "Koscher"
+
+
+
+
+msgid "Rent-to-own"
+msgstr "Mietkauf"
+
+
+
+
+msgid "What the shared kitchen cooks. Tick all that fit."
+msgstr "Was die gemeinsame Küche kocht. Kreuz alles an, was passt."
+
+msgid "A kitchen that eats anything isn't vegetarian or vegan."
+msgstr "Eine Küche, in der alles gegessen wird, ist nicht vegetarisch oder vegan."
+
+msgid "Shares in a stock corporation"
+msgstr "Aktien einer Aktiengesellschaft"
+
+msgid "A contribution to a foundation"
+msgstr "Eine Zustiftung"
+
+msgid "Other ways communities do it: a direct loan, a share of the property, a one-off fee, or work instead of money."
+msgstr "Andere Wege, wie Gemeinschaften es machen: ein Direktkredit, ein Anteil am Eigentum, ein einmaliger Beitrag oder Arbeit statt Geld."
+
+# Onboarding process
+msgid "Note"
+msgstr "Hinweis"
+
+msgid "Our process after the visit"
+msgstr "Unser Weg nach dem Besuch"
+
+msgid "Trial period, plenum, buying in: what comes after the visit you handle yourselves. Describe it here, so people know what's coming."
+msgstr "Probezeit, Plenum, Einlage: Was nach dem Besuch kommt, regelt ihr selbst. Beschreibt es hier, damit alle wissen, was sie erwartet."
+
+msgid "Answered as"
+msgstr "Antwort als"
+
+msgid "Onboarding question"
+msgstr "Aufnahmefrage"
+
+msgid "Info"
+msgstr "Info"
+
+msgid "Text"
+msgstr "Text"
+
+msgid "Yes or no"
+msgstr "Ja oder nein"
+
+
+#, python-format
+msgid "The buy-in is %(amount)s. I can bring at least that."
+msgstr "Die Einlage beträgt %(amount)s. Mindestens so viel kann ich einbringen."
+
+#, python-format
+msgid "The monthly contribution is %(amount)s. My income covers it."
+msgstr "Der monatliche Beitrag beträgt %(amount)s. Mein Einkommen deckt ihn."
+
+msgid "We share part of our income. I'm open to that."
+msgstr "Wir teilen einen Teil unseres Einkommens. Dafür bin ich offen."
+
+msgid "We share all our income. I'm open to that."
+msgstr "Wir teilen unser ganzes Einkommen. Dafür bin ich offen."
+
+#, python-format
+msgid "Our shared kitchen cooks: %(diets)s. That's fine for me."
+msgstr "Unsere gemeinsame Küche kocht: %(diets)s. Das ist für mich in Ordnung."
+
+
+msgid "There are no pets here. I'll come without any."
+msgstr "Hier leben keine Haustiere. Ich komme ohne."
+
+msgid "I've read what you say about animals and animal products, and it's fine for me."
+msgstr "Ich habe gelesen, was ihr über Tiere und tierische Produkte schreibt, und bin damit einverstanden."
+
+msgid "We have no room for more children right now. I'll come without children."
+msgstr "Wir haben gerade keinen Platz für weitere Kinder. Ich komme ohne Kinder."
+
+msgid "We live adults-only. I'll come without children."
+msgstr "Bei uns leben nur Erwachsene. Ich komme ohne Kinder."
+
+msgid "I've read your house agreements and will keep to them."
+msgstr "Ich habe eure Hausvereinbarungen gelesen und halte mich daran."
+
+msgid "Motivation and fit"
+msgstr "Motivation und Passung"
+
+msgid "Which other communities have you visited or lived in, and what made you leave?"
+msgstr "In welchen anderen Gemeinschaften warst du zu Besuch oder hast gelebt, und warum bist du gegangen?"
+
+msgid "Communication and conflict"
+msgstr "Kommunikation und Konflikte"
+
+msgid "Tell us about a real conflict you were part of, and how it ended."
+msgstr "Erzähl uns von einem echten Konflikt, an dem du beteiligt warst, und wie er ausgegangen ist."
+
+msgid "Which ways of talking and deciding together do you know from experience?"
+msgstr "Welche Formen, gemeinsam zu sprechen und zu entscheiden, kennst du aus eigener Erfahrung?"
+
+msgid "For example consensus, sociocracy, nonviolent communication, Forum"
+msgstr "Zum Beispiel Konsens, Soziokratie, Gewaltfreie Kommunikation, Forum"
+
+msgid "How do you take critical feedback?"
+msgstr "Wie gehst du mit kritischem Feedback um?"
+
+msgid "When a conflict gets stuck, I'm willing to go into mediation."
+msgstr "Wenn ein Konflikt festgefahren ist, bin ich zu einer Mediation bereit."
+
+msgid "How many hours a week can you realistically give, and does that change with the seasons?"
+msgstr "Wie viele Stunden pro Woche kannst du realistisch einbringen, und ändert sich das mit den Jahreszeiten?"
+
+msgid "How will you earn your living?"
+msgstr "Wovon wirst du leben?"
+
+msgid "A local job"
+msgstr "Eine Arbeit vor Ort"
+
+msgid "What physical work can you do, for example on the farm or on building sites?"
+msgstr "Welche körperliche Arbeit kannst du machen, zum Beispiel auf dem Hof oder auf der Baustelle?"
+
+msgid "Do you have debts we should know about?"
+msgstr "Hast du Schulden, von denen wir wissen sollten?"
+
+msgid "Family"
+msgstr "Familie"
+
+
+msgid "What are your plans for your children's school?"
+msgstr "Was hast du für die Schule deiner Kinder vor?"
+
+msgid "School is compulsory in Germany, so homeschooling isn't an option."
+msgstr "In Deutschland gilt Schulpflicht, Hausunterricht ist also keine Option."
+
+msgid "What do you expect from shared childcare?"
+msgstr "Was erwartest du von gemeinsamer Kinderbetreuung?"
+
+msgid "Is there anything we should know so we can support you well?"
+msgstr "Gibt es etwas, das wir wissen sollten, damit wir dich gut unterstützen können?"
+
+
+msgid "Practical"
+msgstr "Praktisches"
+
+msgid "How long is the notice period where you live now?"
+msgstr "Wie lang ist die Kündigungsfrist dort, wo du jetzt wohnst?"
+
+msgid "Do you need to register your address here?"
+msgstr "Brauchst du hier eine Meldeadresse?"
+
+msgid "Everyone here has to register where they live (Meldeadresse)."
+msgstr "Hier gilt Meldepflicht: Alle müssen sich dort anmelden, wo sie wohnen."
+
+msgid "What you'd share can also become your offers on ecobasa."
+msgstr "Was du teilen würdest, kann auch zu deinen Angeboten auf ecobasa werden."
+
+msgid "Onboarding process"
+msgstr "Aufnahmeverfahren"
+
+msgid "What you agree to when you apply"
+msgstr "Dem stimmst du mit deinem Antrag zu"
+
+msgid "We'd like to talk about this when you visit"
+msgstr "Darüber möchten wir bei deinem Besuch sprechen"
+
+
+
+msgid "comes first in the application; nobody can send it before agreeing to all of them."
+msgstr "steht im Antrag ganz vorn; niemand kann ihn abschicken, ohne allen zuzustimmen."
+
+msgid "answered in the application, read by you."
+msgstr "wird im Antrag beantwortet, ihr lest es."
+
+msgid "not answered in the application; you talk about it when they visit."
+msgstr "wird nicht im Antrag beantwortet; ihr sprecht beim Besuch darüber."
+
+msgid "Shows once it's filled in under How we live."
+msgstr "Erscheint, sobald es unter „So leben wir“ ausgefüllt ist."
+
+msgid "Sensitive: always optional, only you see the answer"
+msgstr "Vertraulich: immer freiwillig, nur ihr seht die Antwort"
+
+msgid "Save to add another question."
+msgstr "Speichert, um eine weitere Frage hinzuzufügen."
+
+msgid "Required"
+msgstr "Pflichtfrage"
+
+msgid "Shown under the question"
+msgstr "Steht unter der Frage"
+
+msgid "Question"
+msgstr "Frage"
+
+msgid "Onboarding questions"
+msgstr "Aufnahmefragen"
+
+msgid "Must-match"
+msgstr "Voraussetzung"
+
+
+msgid "I've read what happens to the buy-in when someone leaves, and I accept it."
+msgstr "Ich habe gelesen, was mit der Einlage passiert, wenn jemand geht, und bin damit einverstanden."
+
+msgid "I've read your vision and statutes."
+msgstr "Ich habe eure Vision und Satzung gelesen."
+
+msgid "Why this community, and why now?"
+msgstr "Warum diese Gemeinschaft, und warum jetzt?"
+
+msgid "What does living in community mean to you?"
+msgstr "Was bedeutet Gemeinschaftsleben für dich?"
+
+msgid "What do you hope to give here, and what do you hope to get?"
+msgstr "Was möchtest du hier geben, und was erhoffst du dir?"
+
+msgid "What would make you leave this community?"
+msgstr "Was würde dich dazu bringen, diese Gemeinschaft zu verlassen?"
+
+msgid "Work and contribution"
+msgstr "Mitarbeit und Beitrag"
+
+msgid "Remote work"
+msgstr "Ortsunabhängige Arbeit"
+
+msgid "A business inside the community"
+msgstr "Ein eigenes Gewerbe in der Gemeinschaft"
+
+msgid "Nothing yet"
+msgstr "Noch nichts"
+
+msgid "Finances"
+msgstr "Finanzen"
+
+msgid "Everyday agreements"
+msgstr "Alltag und Vereinbarungen"
+
+msgid "Who would move in with you?"
+msgstr "Wer würde mit dir einziehen?"
+
+msgid "Support needs"
+msgstr "Unterstützung"
+
+msgid "When would you like to move in?"
+msgstr "Wann möchtest du einziehen?"
+
+msgid "What would you bring into the commons?"
+msgstr "Was würdest du zum Teilen mitbringen?"
+
+msgid "Commitments"
+msgstr "Zusagen"
+
+msgid "What we'd like to know from you"
+msgstr "Was wir gern von dir wissen möchten"
+
+msgid "You aren't looking for new members right now. Your onboarding process shows once you are (under How we live)."
+msgstr "Ihr sucht gerade keine neuen Mitglieder. Euer Aufnahmeverfahren erscheint, sobald ihr sucht (unter „So leben wir“)."
+
+msgid "Our own questions"
+msgstr "Unsere eigenen Fragen"
+
+msgid "Your onboarding process has been saved."
+msgstr "Euer Aufnahmeverfahren ist gespeichert."
+
+#, python-format
+msgid "We each give about %(n)s hour a week to the community. That works for me."
+msgid_plural "We each give about %(n)s hours a week to the community. That works for me."
+msgstr[0] "Jede*r von uns bringt etwa %(n)s Stunde pro Woche für die Gemeinschaft ein. Das passt für mich."
+msgstr[1] "Jede*r von uns bringt etwa %(n)s Stunden pro Woche für die Gemeinschaft ein. Das passt für mich."
+
+#, python-format
+msgid "We mainly speak %(languages)s. I speak it or I'm willing to learn it."
+msgid_plural "We mainly speak %(languages)s. I speak at least one of them or I'm willing to learn."
+msgstr[0] "Wir sprechen vor allem %(languages)s. Ich spreche die Sprache oder bin bereit, sie zu lernen."
+msgstr[1] "Wir sprechen vor allem %(languages)s. Ich spreche mindestens eine davon oder bin bereit, sie zu lernen."
+
+#, python-format
+msgid "Everyone starts with a trial period of %(n)s month. I accept that."
+msgid_plural "Everyone starts with a trial period of %(n)s months. I accept that."
+msgstr[0] "Alle beginnen mit einer Probezeit von %(n)s Monat. Damit bin ich einverstanden."
+msgstr[1] "Alle beginnen mit einer Probezeit von %(n)s Monaten. Damit bin ich einverstanden."
+
+msgid "I already live here"
+msgstr "Ich wohne schon hier"
+
+msgid "Only the ambassador sees this"
+msgstr "Nur der*die Botschafter*in sieht das"
+
+msgid "Agree to everything above first."
+msgstr "Stimme zuerst allem oben zu."
+
+msgid "No"
+msgstr "Nein"
+
+msgid "Talk at the visit"
+msgstr "Beim Besuch besprechen"
+
+msgid "Agreed to"
+msgstr "Zugestimmt"
+
+msgid "Answers"
+msgstr "Antworten"
+
+msgid "Already lives here"
+msgstr "Wohnt schon hier"
+
+msgid "Must-matches"
+msgstr "Voraussetzungen"
+
+msgid "Choose what you'd like to know from people who want to become members. People see it when they ask to become a member, unless they already live with you."
+msgstr "Wählt aus, was ihr von Menschen wissen möchtet, die Mitglied werden wollen. Sie sehen es, wenn sie fragen, ob sie Mitglied werden können, außer sie wohnen schon bei euch."
+
+#, python-format
+msgid "Show my (%(name)s) personal offers and skills on this community page"
+msgstr "Meine (%(name)s) persönlichen Angebote und Fähigkeiten auf dieser Gemeinschaftsseite zeigen"
+
+msgid "Adults and children. Every adult applies on their own."
+msgstr "Erwachsene und Kinder. Jede*r Erwachsene stellt einen eigenen Antrag."
+
+msgid "Will you bring any pets? If so, which ones, how many, and what are they like?"
+msgstr "Bringst du Haustiere mit? Wenn ja, welche, wie viele, und wie sind sie so?"
+
+msgid "With people, children and other animals."
+msgstr "Mit Menschen, Kindern und anderen Tieren."
+
+msgid "Not asked with what you filled in under How we live."
+msgstr "Wird bei dem, was ihr unter „So leben wir“ ausgefüllt habt, nicht gefragt."
+
+msgid "Add gifts"
+msgstr "Geschenke hinzufügen"
+
+msgid "What we offer"
+msgstr "Was wir anbieten"
+
+msgid "What we wish for"
+msgstr "Was wir uns wünschen"
+
+msgid "Things we wish for"
+msgstr "Dinge, die wir uns wünschen"
+
+msgid "Add things you wish for"
+msgstr "Gewünschte Dinge hinzufügen"
+
+msgid "Families"
+msgstr "Familien"
+
+#, python-format
+msgid "I agree that %(name)s's members may see my answers to decide together. My application stays until the ambassador or I delete it."
+msgstr "Ich bin einverstanden, dass die Mitglieder von %(name)s meine Antworten sehen, um gemeinsam zu entscheiden. Mein Antrag bleibt, bis die*der Botschafter*in oder ich ihn lösche."
+
+msgid "I agree that the ambassador sees my answers to the questions marked with a lock. Only they see them; they're never sent by email or shown in notifications."
+msgstr "Ich bin einverstanden, dass die*der Botschafter*in meine Antworten auf die mit einem Schloss markierten Fragen sieht. Nur sie*er sieht sie; sie werden nie per E-Mail verschickt oder in Benachrichtigungen gezeigt."
+
+msgid "Agree first that the ambassador sees this answer, or leave it empty."
+msgstr "Stimme zuerst zu, dass die*der Botschafter*in diese Antwort sieht, oder lass sie leer."
+
+msgid "Applying together with"
+msgstr "Gemeinsam mit"
+
+msgid "Or their email addresses, if they aren't on ecobasa yet"
+msgstr "Oder ihre E-Mail-Adressen, wenn sie noch nicht auf ecobasa sind"
+
+msgid "Children coming along, and their ages"
+msgstr "Kinder, die mitkommen, und ihr Alter"
+
+msgid "e.g. 4, 9"
+msgstr "z. B. 4, 9"
+
+#, python-format
+msgid "“%(email)s” isn't an email address."
+msgstr "„%(email)s“ ist keine E-Mail-Adresse."
+
+#, python-format
+msgid "%(name)s would like to apply together with you to become members of %(community)s"
+msgstr "%(name)s möchte mit dir gemeinsam einen Mitgliedsantrag bei %(community)s stellen"
+
+msgid "Every adult applies on their own. Your application goes with theirs."
+msgstr "Jede*r Erwachsene stellt einen eigenen Antrag. Deiner gehört zu ihrem."
+
+#, python-format
+msgid "Waiting for %(name)s's application"
+msgstr "Wartet auf den Antrag von %(name)s"
+
+msgid "%(n)s reference on their profile"
+msgid_plural "%(n)s references on their profile"
+msgstr[0] "%(n)s Referenz auf dem Profil"
+msgstr[1] "%(n)s Referenzen auf dem Profil"
+
+msgid "Stays and tour visits here"
+msgstr "Aufenthalte und Tour-Besuche hier"
+
+msgid "No stays or tour visits here yet"
+msgstr "Noch keine Aufenthalte oder Tour-Besuche hier"
+
+msgid "Skills you look for that they have"
+msgstr "Fähigkeiten, die ihr sucht und die sie*er hat"
+
+msgid "Stage"
+msgstr "Stand"
+
+msgid "Application"
+msgstr "Antrag"
+
+msgid "Visit"
+msgstr "Besuch"
+
+msgid "Member"
+msgstr "Mitglied"
+
+msgctxt "application"
+msgid "Sent"
+msgstr "Gesendet"
+
+msgid "Show that I found this community through ecobasa"
+msgstr "Zeigen, dass ich diese Gemeinschaft über ecobasa gefunden habe"
+
+msgid "Became a member after this tour"
+msgstr "Nach dieser Tour Mitglied geworden"
+
+msgid "Invite to visit"
+msgstr "Zum Besuch einladen"
+
+msgid "Make member"
+msgstr "Als Mitglied aufnehmen"
+
+msgid "Invited to visit"
+msgstr "Zum Besuch eingeladen"
+
+msgid "Not a member any more"
+msgstr "Kein Mitglied mehr"
+
+msgid "Your visit"
+msgstr "Dein Besuch"
+
+msgid "The visit"
+msgstr "Der Besuch"
+
+msgid "%(name)s is a member of %(community)s now."
+msgstr "%(name)s ist jetzt Mitglied von %(community)s."
+
+msgid "The visit for %(name)s's membership application"
+msgstr "Der Besuch zum Mitgliedsantrag von %(name)s"
+
+msgid "You are invited to visit."
+msgstr "Du bist zum Besuch eingeladen."
+
+msgid "Suggest days for the visit (optional)"
+msgstr "Tage für den Besuch vorschlagen (optional)"
+
+msgid "Suggest other days"
+msgstr "Andere Tage vorschlagen"
+
+msgid "Suggest days for the visit"
+msgstr "Tage für den Besuch vorschlagen"
+
+msgid "A few words, if you like"
+msgstr "Ein paar Worte, wenn du magst"
+
+msgid "Accept these days"
+msgstr "Diese Tage annehmen"
+
+msgid "%(name)s will suggest days for your visit here."
+msgstr "%(name)s schlägt dir hier Tage für deinen Besuch vor."
+
+msgid "No days agreed for the visit yet"
+msgstr "Noch keine Tage für den Besuch vereinbart"
+
+msgid "They can accept these days or suggest others. Once you agree on them, the visit is an accepted stay."
+msgstr "Sie*er kann diese Tage annehmen oder andere vorschlagen. Sobald ihr euch einig seid, ist der Besuch ein angenommener Aufenthalt."
+
+msgid "Agreed on the days for the visit: %(days)s"
+msgstr "Tage für den Besuch vereinbart: %(days)s"
+
+
+msgid "I asked for a volunteer stay on these days."
+msgstr "Ich habe einen Gemeinschaftsaufenthalt an diesen Tagen angefragt."
+
+msgid "Agreed stay"
+msgstr "Vereinbarter Zeitraum"
+
+msgid "Start a Community-Tour with this stay"
+msgstr "Mit diesem Aufenthalt eine Community-Tour starten"
+
+msgid "Make a tour out of it: others can come along, and the packing list shows what you could bring. Gifts a community wishes for can often be picked up from other communities along the way."
+msgstr "Mach eine Tour daraus: Andere können mitkommen, und die Packliste zeigt, was du mitbringen könntest. Geschenke, die sich eine Gemeinschaft wünscht, kannst du oft bei anderen Gemeinschaften auf dem Weg abholen."
+
+msgid "Good for your application, too: more experience of community life, good references and gifts you bring along make a good impression."
+msgstr "Gut für deinen Antrag: Mehr Erfahrung mit dem Leben in Gemeinschaft, gute Referenzen und mitgebrachte Geschenke machen einen guten Eindruck."
+
+msgid "Hello %(name)s,\n\nthank you for your application and for the care you put into your answers. I'm writing for all of us at %(community)s.\n\nWe talked about it together, and right now we can't take in new members: [in a few words what's going on with you, e.g. no free room this year, or a time of big changes among yourselves]. So it's a \"not now\" from us. It's about where we are at the moment, not about you.\n\nIf you're still looking later, we'd be glad to hear from you again [when, if you know]. And if you have a question or would like to talk, just write here.\n\nWarm wishes,\n%(ambassador)s"
+msgstr "Hallo %(name)s,\n\ndanke für deinen Antrag und die Sorgfalt in deinen Antworten. Ich schreibe dir für uns alle in %(community)s.\n\nWir haben gemeinsam darüber gesprochen, und gerade können wir keine neuen Mitglieder aufnehmen: [in ein paar Worten, was bei euch los ist, z. B. dieses Jahr kein freies Zimmer, oder eine Zeit großer Veränderungen bei euch]. Darum ist es von uns ein „gerade nicht“. Das hat mit unserer Lage gerade zu tun, nicht mit dir.\n\nWenn du später noch suchst, freuen wir uns, wieder von dir zu hören [wann, falls ihr es wisst]. Und wenn du eine Frage hast oder reden möchtest, schreib einfach hier.\n\nHerzliche Grüße,\n%(ambassador)s"
+
+msgid "Hello %(name)s,\n\nthank you for your application, and for being so open with us about who you are and what you're looking for. I'm writing for all of us at %(community)s.\n\nWe read your answers carefully and talked about them together, and we've decided not to invite you for a visit. What mattered most to us: [in a few honest words what it's about for you: what you need in your life together, not what's wrong with them].\n\nWe imagine this may be hard to read, especially after you opened up to us. An application shows only a small part of a person, and our decision isn't a judgment of who you are. It's about whether our way of living and yours fit together right now. If you'd like to understand it better, I'm glad to talk with you, here or on a call.\n\nOther communities are looking for new members too, and one of them may fit better what you're looking for.\n\nAll the best on your way,\n%(ambassador)s"
+msgstr "Hallo %(name)s,\n\ndanke für deinen Antrag und dafür, wie offen du uns erzählt hast, wer du bist und was du suchst. Ich schreibe dir für uns alle in %(community)s.\n\nWir haben deine Antworten aufmerksam gelesen und gemeinsam besprochen, und wir haben entschieden, dich nicht zu einem Besuch einzuladen. Am wichtigsten war uns dabei: [in ein paar ehrlichen Worten, worum es euch geht: was ihr in eurem Zusammenleben braucht, nicht was an der Person falsch wäre].\n\nWir können uns vorstellen, dass das schwer zu lesen ist, gerade nachdem du dich uns geöffnet hast. Ein Antrag zeigt nur einen kleinen Teil eines Menschen, und unsere Entscheidung ist kein Urteil darüber, wer du bist. Es geht darum, ob unsere und deine Art zu leben gerade zusammenpassen. Wenn du sie besser verstehen möchtest, rede ich gern mit dir, hier oder am Telefon.\n\nAuch andere Gemeinschaften suchen neue Mitglieder, und vielleicht passt eine davon besser zu dem, was du suchst.\n\nAlles Gute auf deinem Weg,\n%(ambassador)s"
+
+msgid "Hello %(name)s,\n\nthank you for visiting us and for the days we shared. I'm writing for all of us at %(community)s.\n\nAfter your visit we sat together, and for now we won't go on with your membership application process: [what it's about for you right now, e.g. you'd like to get to know each other longer, or have things to settle among yourselves first]. This isn't a final no.\n\nIf you like, [what could come next, e.g. another, longer stay, or applying again in spring]. How is this for you? I'm here if you want to talk.\n\nWarm wishes,\n%(ambassador)s"
+msgstr "Hallo %(name)s,\n\ndanke für deinen Besuch und die Tage, die wir zusammen hatten. Ich schreibe dir für uns alle in %(community)s.\n\nNach deinem Besuch haben wir zusammengesessen, und vorerst gehen wir nicht weiter zur Mitgliedschaft: [worum es euch gerade geht, z. B. ihr möchtet euch länger kennenlernen, oder erst etwas untereinander klären]. Das ist kein endgültiges Nein.\n\nWenn du magst, [was als Nächstes sein könnte, z. B. ein weiterer, längerer Aufenthalt, oder ein neuer Antrag im Frühling]. Wie ist das für dich? Ich bin da, wenn du reden möchtest.\n\nHerzliche Grüße,\n%(ambassador)s"
+
+msgid "Hello %(name)s,\n\nthank you for the time you spent with us and for everything you gave during your visit. I'm writing for all of us at %(community)s.\n\nAfter your visit we talked a lot together, and we've decided not to go on with your membership application process. [What it's about for you: what you noticed in living together and what you need, without judging who they are. If you already told them in person, say so.]\n\nWe know this can hurt, all the more after living with us for a while. A few days show only a part of a whole life, and our decision is about how our living together and yours fit, not about what you're worth. If you'd like to talk about it, with me or someone else from us, we're open to that.\n\nWe wish you a place where you can arrive.\n%(ambassador)s"
+msgstr "Hallo %(name)s,\n\ndanke für die Zeit mit uns und für alles, was du während deines Besuchs gegeben hast. Ich schreibe dir für uns alle in %(community)s.\n\nNach deinem Besuch haben wir viel miteinander gesprochen und entschieden, dass wir deinen Aufnahmeprozess nicht weiter fortsetzen. [Worum es euch geht: was ihr im Zusammenleben bemerkt habt und was ihr braucht, ohne zu urteilen, wer die Person ist. Wenn ihr es schon persönlich gesagt habt, schreibt das dazu.]\n\nWir wissen, dass das wehtun kann, umso mehr, nachdem du eine Weile mit uns gelebt hast. Ein paar Tage zeigen nur einen Teil eines ganzen Lebens, und unsere Entscheidung sagt etwas darüber, wie unser und dein Leben zusammenpassen, nicht, was du wert bist. Wenn du darüber reden möchtest, mit mir oder jemand anderem von uns, sind wir offen dafür.\n\nWir wünschen dir einen Ort, an dem du ankommen kannst.\n%(ambassador)s"
+
+msgid "If you've met them, say it in person or on a call first. The message follows that."
+msgstr "Wenn ihr euch schon begegnet seid, sag es zuerst persönlich oder am Telefon. Die Nachricht kommt danach."
+
+msgid "Speak for yourselves: what you need and what you noticed, not what they are."
+msgstr "Sprich für euch: was ihr braucht und was ihr bemerkt habt, nicht was die Person ist."
+
+msgid "Say the decision early and plainly; a vague no keeps people hoping."
+msgstr "Sag die Entscheidung früh und klar; ein vages Nein lässt Menschen weiter hoffen."
+
+msgid "Write only what is true, but not everything that is true."
+msgstr "Schreib nur, was wahr ist, aber nicht alles, was wahr ist."
+
+msgid "\"Not now\" means you'd gladly read a new application from them. If it's about something fundamental, say so kindly, so they don't hope and apply again in vain."
+msgstr "„Gerade nicht“ heißt, dass ihr einen neuen Antrag gern lesen würdet. Geht es um etwas Grundsätzliches, sag es freundlich, damit niemand vergeblich hofft und sich noch einmal bewirbt."
+
+msgid "Offer a conversation only if someone will really have it, and keep it if they come."
+msgstr "Biete ein Gespräch nur an, wenn es wirklich jemand führt, und halte es, wenn die Person kommt."
+
+msgid "Don't write it alone or in a hurry: let someone else from the community read it first."
+msgstr "Schreib es nicht allein und nicht in Eile: Lass vorher jemand anderen aus der Gemeinschaft drüberlesen."
+
+msgid "Not now"
+msgstr "Gerade nicht"
+
+msgid "Not this time"
+msgstr "Diesmal nicht"
+
+msgid "Declined as"
+msgstr "Abgesagt als"
+
+msgid "Please fill in or delete the part in brackets first."
+msgstr "Bitte füll zuerst den Teil in eckigen Klammern aus oder lösch ihn."
+
+msgid "%(actor)s answered your membership application: %(title)s"
+msgstr "%(actor)s hat auf deinen Mitgliedsantrag geantwortet: %(title)s"
+
+msgid "Start from a text"
+msgstr "Mit einem Text beginnen"
+
+msgid "Saying no with care"
+msgstr "Mit Sorgfalt absagen"
+
+msgid "Send and decline"
+msgstr "Senden und absagen"
+
+msgid "Replace what you wrote with this text?"
+msgstr "Was du geschrieben hast, durch diesen Text ersetzen?"
+
+msgid "Communities looking for new members"
+msgstr "Gemeinschaften, die neue Mitglieder suchen"
+
+msgid "Applied"
+msgstr "Beantragt"
+
+msgid "Accepted before"
+msgstr "Schon einmal aufgenommen"
+
+msgid "Declined before"
+msgstr "Schon einmal abgelehnt"
+
+msgid "Applied before"
+msgstr "Schon einmal beantragt"
+
+msgid "Outcome"
+msgstr "Ergebnis"
+
+msgid "Past application"
+msgstr "Früherer Antrag"
+
+msgid "Past applications"
+msgstr "Frühere Anträge"
+
+msgid "The application is deleted."
+msgstr "Der Antrag ist gelöscht."
+
+msgid "Delete application"
+msgstr "Antrag löschen"
+
+#, python-format
+msgid "Your answers and this conversation will be deleted, for %(community)s too. What stays is that you applied, how it ended and when."
+msgstr "Deine Antworten und dieses Gespräch werden gelöscht, auch für %(community)s. Es bleibt nur, dass du einen Antrag gestellt hast, wie er ausging und wann."
+
+#, python-format
+msgid "Their answers and this conversation will be deleted, for %(name)s too. What stays is that they applied, how it ended and when, so you'll see it if they apply again."
+msgstr "Die Antworten und dieses Gespräch werden gelöscht, auch für %(name)s. Es bleibt nur, dass sie*er einen Antrag gestellt hat, wie er ausging und wann, damit du es siehst, wenn sie*er noch einmal einen stellt."
+
+msgid "The membership stays."
+msgstr "Die Mitgliedschaft bleibt."
+
+#, python-format
+msgid "%(actor)s invited you to visit, for your membership application: %(title)s"
+msgstr "%(actor)s lädt dich zu einem Besuch ein, für deinen Mitgliedsantrag: %(title)s"
+
+#, python-format
+msgid "%(actor)s made you a member of %(title)s"
+msgstr "%(actor)s hat dich als Mitglied von %(title)s aufgenommen"
+
+msgid "Read the application"
+msgstr "Antrag lesen"
+
+msgid "Members and applications"
+msgstr "Mitglieder und Anträge"
+
+msgid "How someone becomes a member"
+msgstr "Wie man Mitglied wird"
+
+msgid "For ambassadors: looking for new members"
+msgstr "Für Botschafter*innen: neue Mitglieder suchen"
+
+msgid "Set up your onboarding process"
+msgstr "Euer Aufnahmeverfahren einrichten"
+
+msgid "Read an application"
+msgstr "Einen Antrag lesen"
+
+msgid "Members and the ambassador"
+msgstr "Mitglieder und die Botschafter*in"
+
+msgid "Privacy and deleting"
+msgstr "Privatsphäre und Löschen"
+
+msgid "The community's profile tells how the community lives: what its kitchen cooks, whether children are welcome, what it costs, how decisions are made. The application asks who you are. So you see before you apply whether you fit, and nobody has to be turned down for something the profile could have told them."
+msgstr "Das Profil der Gemeinschaft zeigt, wie die Gemeinschaft lebt: was in ihrer Küche gekocht wird, ob Kinder willkommen sind, was es kostet, wie entschieden wird. Der Antrag fragt, wer du bist. So siehst du schon vor dem Antrag, ob du passt, und niemand muss wegen etwas abgelehnt werden, das das Profil schon hätte sagen können."
+
+msgid "You answer the community's questions. The ambassador reads them and invites you to visit, or answers you otherwise."
+msgstr "Du beantwortest die Fragen der Gemeinschaft. Die Botschafter*in liest sie und lädt dich zu einem Besuch ein oder antwortet dir anders."
+
+msgid "You agree on days, live with them for a while, and talk about what matters to both sides."
+msgstr "Ihr einigt euch auf Tage, du lebst eine Weile mit ihnen, und ihr sprecht über das, was beiden Seiten wichtig ist."
+
+msgid "What comes after the visit, a trial time, a plenum, buying in, each community does its own way, and describes it."
+msgstr "Was nach dem Besuch kommt, eine Probezeit, ein Plenum, die Einlage, macht jede Gemeinschaft auf ihre Weise und beschreibt es."
+
+msgid "ecobasa accompanies the application up to the visit. After it, you and the community get to know each other further in person, and the community decides in its own way. Once you belong, the ambassador makes you a member here, or you let them know with “I already live here”."
+msgstr "ecobasa begleitet den Antrag bis zum Besuch. Danach lernt ihr euch persönlich weiter kennen, und die Gemeinschaft entscheidet auf ihre Weise. Gehörst du dazu, nimmt dich die Botschafter*in hier als Mitglied auf, oder du sagst Bescheid mit „Ich wohne schon hier“."
+
+msgid "First come the must-matches: what the community expects of everyone who lives there. Only when you agree to all of them can you send your application, so nobody writes long answers for a place that doesn't fit."
+msgstr "Zuerst kommen die Voraussetzungen: was die Gemeinschaft von allen erwartet, die dort leben. Erst wenn du allen zustimmst, kannst du deinen Antrag senden, so schreibt niemand lange Antworten für einen Ort, der nicht passt."
+
+msgid "Then the community's questions. Some are marked “We'd like to talk about this when you visit”: you don't answer those now, they are topics for later."
+msgstr "Dann die Fragen der Gemeinschaft. Manche sind mit „Darüber möchten wir bei deinem Besuch sprechen“ markiert: Die beantwortest du jetzt nicht, sie sind Themen für später."
+
+msgid "Questions about health, debts or what work you can do are always optional. You answer them only if you want to, and only the ambassador sees them."
+msgstr "Fragen zu Gesundheit, Schulden oder welche Arbeit du machen kannst, sind immer freiwillig. Du beantwortest sie nur, wenn du möchtest, und nur die Botschafter*in sieht sie."
+
+msgid "Applying as a family or with friends? Every adult applies on their own. Add the others under “Applying together with”, by name or by email address, with the children's ages; they get a link and their application goes with yours."
+msgstr "Ihr beantragt als Familie oder mit Freund*innen? Jede erwachsene Person stellt ihren eigenen Antrag. Füge die anderen unter „Gemeinsam mit“ hinzu, mit Namen oder E-Mail-Adresse, dazu das Alter der Kinder; sie bekommen einen Link, und ihr Antrag gehört zu deinem."
+
+msgid "Do you live there already? Then you don't need to apply. Tick “I already live here” and skip the questions, but write a few words so the ambassador recognises you. They then confirm you as a member."
+msgstr "Du wohnst schon dort? Dann brauchst du keinen Antrag. Kreuz „Ich wohne schon hier“ an und überspring die Fragen, aber schreib ein paar Worte, damit die Botschafter*in dich erkennt. Sie*er bestätigt dich dann als Mitglied."
+
+msgid "In your community's form, fill in “How we live” and tick “Looking for new members”. Then your community shows up when people filter the communities for it, and “Ask to become a member” appears on your page."
+msgstr "Füll im Formular eurer Gemeinschaft „So leben wir“ aus und kreuz „Wir suchen neue Mitglieder“ an. Dann erscheint eure Gemeinschaft, wenn Leute danach filtern, und auf eurer Seite steht „Mitglied werden“."
+
+msgid "The more your profile says, the fewer applications you have to turn down. A rule never needs to be a question: what the profile states, applicants agree to as a must-match."
+msgstr "Je mehr euer Profil sagt, desto weniger Anträge müsst ihr ablehnen. Eine Regel muss nie eine Frage sein: Was im Profil steht, bestätigen die Antragstellenden als Voraussetzung."
+
+msgid "In the Members section of your community's page, open “Onboarding process”. There you choose what you'd like to know from people who apply."
+msgstr "Öffne im Abschnitt Mitglieder auf der Seite eurer Gemeinschaft „Aufnahmeverfahren“. Dort wählst du, was ihr von Menschen wissen möchtet, die einen Antrag stellen."
+
+msgid "Choose questions"
+msgstr "Fragen auswählen"
+
+msgid "The questions come in topics: motivation, conflict and communication, work, finances, everyday agreements, family, support, practical things and commitments. Switch on a topic, then switch off single questions you don't need. Add a short note under any question, for example about the school nearby, and add questions of your own."
+msgstr "Die Fragen sind nach Themen geordnet: Motivation, Konflikt und Kommunikation, Arbeit, Finanzen, Alltagsvereinbarungen, Familie, Unterstützung, Praktisches und Verpflichtungen. Schalte ein Thema ein und dann einzelne Fragen aus, die ihr nicht braucht. Unter jede Frage kannst du eine kurze Notiz schreiben, etwa zur Schule in der Nähe, und eigene Fragen hinzufügen."
+
+msgid "The questions are worded with care and translated, so everyone reads them in their own language. The must-matches come from your profile: a vegan kitchen becomes “Our shared kitchen is vegan. That's fine for me.”"
+msgstr "Die Fragen sind sorgfältig formuliert und übersetzt, so liest sie jede*r in der eigenen Sprache. Die Voraussetzungen kommen aus eurem Profil: Aus einer veganen Küche wird „Unsere gemeinsame Küche ist vegan. Das passt für mich.“"
+
+msgid "Three kinds of questions"
+msgstr "Drei Arten von Fragen"
+
+msgid "Each question comes with a suggested kind; you can change it. Mark a question as required if you need the answer. Questions about health, debts and physical work stay optional."
+msgstr "Jede Frage kommt mit einer vorgeschlagenen Art; ihr könnt sie ändern. Markiere eine Frage als Pflicht, wenn ihr die Antwort braucht. Fragen zu Gesundheit, Schulden und körperlicher Arbeit bleiben freiwillig."
+
+msgid "Ask few questions in writing and keep the deep ones for the visit. What someone writes about a conflict says less than an evening together at the kitchen table."
+msgstr "Stellt wenige Fragen schriftlich und hebt die tiefen für den Besuch auf. Was jemand über einen Konflikt schreibt, sagt weniger als ein gemeinsamer Abend am Küchentisch."
+
+msgid "Describe what happens after the visit: a trial time, who decides and how, when shares are bought. Applicants see it before they apply and again while they are invited to visit."
+msgstr "Beschreibt, was nach dem Besuch passiert: eine Probezeit, wer wie entscheidet, wann Anteile gekauft werden. Antragstellende sehen es, bevor sie den Antrag stellen, und wieder, während sie zum Besuch eingeladen sind."
+
+msgid "Have questions? Write back in the conversation below the answers. Then answer the application:"
+msgstr "Fragen? Schreib im Gespräch unter den Antworten zurück. Dann beantworte den Antrag:"
+
+msgid "the usual way. You can suggest days for the visit right away."
+msgstr "der übliche Weg. Du kannst gleich Tage für den Besuch vorschlagen."
+
+msgid "when you already know them well enough."
+msgstr "wenn ihr die Person schon gut genug kennt."
+
+msgid "see below, saying no with care."
+msgstr "siehe unten, mit Sorgfalt absagen."
+
+msgid "The days for the visit are agreed in the application's conversation, so everything stays in one place. Either side suggests days, the other accepts them or suggests other days. Once agreed, the visit is a stay at your community like any other: it is in your calendar, the visitor sees the exact place, and afterwards you can write references for each other."
+msgstr "Die Tage für den Besuch werden im Gespräch zum Antrag vereinbart, so bleibt alles an einem Ort. Eine Seite schlägt Tage vor, die andere nimmt sie an oder schlägt andere Tage vor. Sind sie vereinbart, ist der Besuch ein Aufenthalt bei eurer Gemeinschaft wie jeder andere: Er steht in eurem Kalender, die Person sieht den genauen Ort, und danach könnt ihr euch gegenseitig Referenzen schreiben."
+
+msgid "The topics you want to talk about at the visit are shown with the application and with the stay, for both of you."
+msgstr "Die Themen, über die ihr beim Besuch sprechen möchtet, stehen beim Antrag und beim Aufenthalt, für euch beide."
+
+msgid "Coming from far away? With agreed days, the application shows tours and rides going there, and you can start a Community-Tour with the stay. A tour visit or an earlier stay can count as the visit too."
+msgstr "Kommst du von weit her? Sind die Tage vereinbart, zeigt der Antrag Touren und Mitfahrten dorthin, und du kannst mit dem Aufenthalt eine Community-Tour starten. Ein Tour-Besuch oder ein früherer Aufenthalt kann auch als Besuch zählen."
+
+msgid "After the visit the community goes its own way. When the person becomes a member, press “Make member” on the application, invite them, or they say “I already live here”. A membership that started with a visit through ecobasa remembers it, and can show it if the member agrees."
+msgstr "Nach dem Besuch geht die Gemeinschaft ihren eigenen Weg. Wenn die Person Mitglied wird, drück im Antrag „Als Mitglied aufnehmen“, lade sie ein, oder sie sagt „Ich wohne schon hier“. Eine Mitgliedschaft, die mit einem Besuch über ecobasa begann, erinnert sich daran und kann es zeigen, wenn das Mitglied einverstanden ist."
+
+msgid "Being turned down by a community hurts. When you decline, start from a text for “Not now” (no room this year, apply again later) or for “No”, written for the stage the application is at. Fill in the part in brackets with what it's really about; the message can't be sent before that."
+msgstr "Von einer Gemeinschaft abgelehnt zu werden, tut weh. Wenn du absagst, beginne mit einem Text für „Gerade nicht“ (dieses Jahr kein Platz, später gern noch einmal) oder für „Nein“, geschrieben für den Stand, an dem der Antrag ist. Füll den Teil in Klammern mit dem aus, worum es wirklich geht; vorher lässt sich die Nachricht nicht senden."
+
+msgid "The applicant sees no red “Declined”, only your answer, and a link to other communities looking for new members."
+msgstr "Die antragstellende Person sieht kein rotes „Abgelehnt“, nur deine Antwort und einen Link zu anderen Gemeinschaften, die neue Mitglieder suchen."
+
+msgid "Concerns about someone are talked through openly, with them or among you, not in anonymous notes. ecobasa has no place for those on purpose."
+msgstr "Bedenken über jemanden werden offen besprochen, mit der Person oder untereinander, nicht in anonymen Notizen. Dafür hat ecobasa bewusst keinen Platz."
+
+msgid "Members can edit the community's profile and add its offers and wishes. Each member decides whether their own offers and skills show on the community page."
+msgstr "Mitglieder können das Profil der Gemeinschaft bearbeiten und ihre Angebote und Wünsche hinzufügen. Jedes Mitglied entscheidet selbst, ob die eigenen Angebote und Fähigkeiten auf der Gemeinschaftsseite erscheinen."
+
+msgid "The ambassador answers stays, applications and requests, and can invite someone to become a member directly, without the onboarding process. Under Members, the ambassador can remove someone or make another member the ambassador: all applications and open requests then go to them, and the one before stays a member."
+msgstr "Die Botschafter*in beantwortet Aufenthalte, Anträge und Anfragen und kann jemanden direkt einladen, Mitglied zu werden, ohne das Aufnahmeverfahren. Unter Mitglieder kann die Botschafter*in jemanden entfernen oder ein anderes Mitglied zur Botschafter*in machen: Alle Anträge und offenen Anfragen gehen dann an diese Person, und die bisherige bleibt Mitglied."
+
+msgid "Only the ambassador and the applicant see an application. Whether someone applied, and how it went, is never shown publicly."
+msgstr "Nur die Botschafter*in und die antragstellende Person sehen einen Antrag. Ob jemand einen Antrag gestellt hat und wie er ausging, wird nie öffentlich gezeigt."
+
+msgid "When applying, you agree that the community's members may see your answers to decide together. Answers about health, debts and physical work need their own consent and stay with the ambassador."
+msgstr "Mit dem Antrag bist du einverstanden, dass die Mitglieder der Gemeinschaft deine Antworten sehen dürfen, um gemeinsam zu entscheiden. Antworten zu Gesundheit, Schulden und körperlicher Arbeit brauchen eine eigene Zustimmung und bleiben bei der Botschafter*in."
+
+msgid "Those answers are never in an email or a notification."
+msgstr "Diese Antworten stehen nie in einer E-Mail oder Benachrichtigung."
+
+msgid "Nothing is deleted automatically. The applicant and the ambassador can each delete an application: the answers and the conversation go. What stays is who applied where, how it ended and when, so the ambassador sees it if they apply again."
+msgstr "Nichts wird automatisch gelöscht. Die antragstellende Person und die Botschafter*in können einen Antrag jeweils löschen: Die Antworten und das Gespräch verschwinden. Es bleibt nur, wer wo einen Antrag gestellt hat, wie er ausging und wann, damit die Botschafter*in es sieht, wenn die Person noch einmal einen stellt."
+
+msgid "Become a member of a community, and for ambassadors: set up your onboarding process and answer applications with care."
+msgstr "Werde Mitglied einer Gemeinschaft, und für Botschafter*innen: euer Aufnahmeverfahren einrichten und Anträge mit Sorgfalt beantworten."
+
+#, python-format
+msgid "<a href=\"%(list_url)s?looking=1\">Communities looking for new members</a> have the button “Ask to become a member” on their page. Before you apply, filter the list by how they live, and read the profile: the kitchen, children, animals, the buy-in, the work, how they decide."
+msgstr "<a href=\"%(list_url)s?looking=1\">Gemeinschaften, die neue Mitglieder suchen</a>, haben auf ihrer Seite den Button „Mitglied werden“. Bevor du einen Antrag stellst, filtere die Liste danach, wie sie leben, und lies das Profil: die Küche, Kinder, Tiere, die Einlage, die Arbeit, wie sie entscheiden."
+
+#, python-format
+msgid "Your application and its answer are under <a href=\"%(matches_url)s?type=members\">Membership applications</a>. There you see the stage it is at, the topics for the visit and what the community does after it, and you can write to the ambassador."
+msgstr "Dein Antrag und die Antwort darauf sind unter <a href=\"%(matches_url)s?type=members\">Mitgliedsanträge</a>. Dort siehst du, an welchem Stand er ist, die Themen für den Besuch und was die Gemeinschaft danach macht, und du kannst der Botschafter*in schreiben."
+
+#, python-format
+msgid "New applications reach you by email and under <a href=\"%(matches_url)s?type=members\">Membership applications</a>. Open one to read the answers. Beside them you see what ecobasa knows anyway: the references on their profile, their stays and tour visits at your community, and the skills you look for that they have. If they applied before, a badge says how that ended, and when."
+msgstr "Neue Anträge erreichen dich per E-Mail und unter <a href=\"%(matches_url)s?type=members\">Mitgliedsanträge</a>. Öffne einen, um die Antworten zu lesen. Daneben siehst du, was ecobasa ohnehin weiß: die Referenzen in ihrem Profil, ihre Aufenthalte und Tour-Besuche bei eurer Gemeinschaft und die Fähigkeiten, die ihr sucht und die sie haben. Hat die Person schon einmal einen Antrag gestellt, zeigt ein Abzeichen, wie er ausging und wann."
+
+#, python-format
+msgid "Leaving a community is a button in the Members section. In your <a href=\"%(settings_url)s\">settings</a>, under My Communities, you choose what your memberships show."
+msgstr "Eine Gemeinschaft verlassen ist ein Button im Abschnitt Mitglieder. In deinen <a href=\"%(settings_url)s\">Einstellungen</a> wählst du unter Meine Gemeinschaften, was deine Mitgliedschaften zeigen."
+
+msgid "Print application"
+msgstr "Antrag drucken"
+
+msgid "Include the answers only I see"
+msgstr "Die Antworten mitdrucken, die nur ich sehe"
+
+#, python-format
+msgid "%(name)s agreed that only you see them. A copy with them is for you alone, not for the members: keep it safe and destroy it after reading."
+msgstr "%(name)s hat zugestimmt, dass nur du sie siehst. Eine Kopie mit ihnen ist nur für dich, nicht für die Mitglieder: Bewahre sie sicher auf und vernichte sie nach dem Lesen."
+
+msgid "To save it as a PDF, choose “Save as PDF” in the print dialog."
+msgstr "Um es als PDF zu speichern, wähle im Druckdialog „Als PDF speichern“."
+
+msgid "Confidential"
+msgstr "Vertraulich"
+
+#, python-format
+msgid "This copy contains answers %(name)s entrusted to the ambassador alone, among them special categories of personal data such as health. It is for the ambassador only: don't pass it on, keep it locked away, and destroy it (shred the paper, delete the file) as soon as you no longer need it."
+msgstr "Diese Kopie enthält Antworten, die %(name)s allein der Botschafter*in anvertraut hat, darunter besondere Kategorien personenbezogener Daten wie Gesundheit. Sie ist nur für die Botschafter*in: Gib sie nicht weiter, bewahre sie verschlossen auf und vernichte sie (Papier schreddern, Datei löschen), sobald du sie nicht mehr brauchst."
+
+#, python-format
+msgid "This application contains personal data. It is only for the members of %(community)s, to decide about it together. Don't pass it on, keep it safe, and destroy it (shred the paper, delete the file) once you have decided."
+msgstr "Dieser Antrag enthält personenbezogene Daten. Er ist nur für die Mitglieder von %(community)s bestimmt, um gemeinsam darüber zu entscheiden. Gib ihn nicht weiter, bewahre ihn sicher auf und vernichte ihn (Papier schreddern, Datei löschen), sobald ihr entschieden habt."
+
+#, python-format
+msgid "Membership application to %(community)s, sent on %(date)s"
+msgstr "Mitgliedsantrag bei %(community)s, gesendet am %(date)s"
+
+msgid "The answers only the ambassador sees are not included."
+msgstr "Die Antworten, die nur die Botschafter*in sieht, sind nicht enthalten."
+
+#, python-format
+msgid "Printed from ecobasa.org on %(date)s"
+msgstr "Gedruckt von ecobasa.org am %(date)s"

@@ -1,4 +1,4 @@
-{% load i18n %}{% blocktrans with name=recipient.name|default:recipient.email %}Hello {{ name }},{% endblocktrans %}
+{% load i18n %}{% autoescape off %}{% blocktrans with name=recipient.name|default:recipient.email %}Hello {{ name }},{% endblocktrans %}
 
 {{ headline }}
 
@@ -7,4 +7,4 @@
 {% trans "Reply" %}: {{ detail_url }}
 
 --
-ecobasa.org
+ecobasa.org{% endautoescape %}

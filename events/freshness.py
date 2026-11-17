@@ -84,7 +84,7 @@ def archive_stale_events(now=None):
     archived += stale.filter(stale_reminder_sent_at__lt=grace_before).update(archived_at=now)
 
     reminded = 0
-    for event in stale.filter(stale_reminder_sent_at=None).select_related("community__owner"):
+    for event in stale.filter(stale_reminder_sent_at=None).select_related("community__ambassador"):
         if send_stale_reminder(event):
             reminded += 1
         # Also without anybody to ask, so the grace period starts

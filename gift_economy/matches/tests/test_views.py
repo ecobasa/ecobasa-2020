@@ -118,6 +118,20 @@ class TestMatchDetail:
 
 
 @pytest.mark.django_db
+def test_menu_badges_count_what_waits_for_an_answer(owner, requester, match):
+    from ..views import waiting_counts
+
+    badge = 'title="Waiting for your answer">1</span>'
+    assert waiting_counts(owner)["matches"] == 1 and waiting_counts(requester)["matches"] == 0
+    assert badge in _client_for(owner).get("/").content.decode()
+    # A counter-proposal waits for the one who asked
+    match.status = Match.STATUS_COUNTER
+    match.save()
+    assert waiting_counts(owner)["matches"] == 0 and waiting_counts(requester)["matches"] == 1
+    assert badge in _client_for(requester).get("/matches/").content.decode()
+
+
+@pytest.mark.django_db
 class TestVolunteerVisits:
     """One Volunteer Visits page: stays others asked for at your community are
     received, the ones you asked for are sent."""
@@ -125,7 +139,7 @@ class TestVolunteerVisits:
     @pytest.fixture
     def stay(self, owner, requester):
         from communities.models import Community
-        community = Community.objects.create(name="Hof Lindenblüte", owner=owner)
+        community = Community.objects.create(name="Hof Lindenblüte", ambassador=owner)
         m = Match(from_user=requester, message="May I come in May?")
         m.target = community
         m.recipient = community.get_match_owner()
@@ -146,15 +160,35 @@ class TestVolunteerVisits:
         assert [(str(t.label), t.active) for t in response.context["tabs"]] == [("Your requests", True)]
         assert "Volunteer Visits" in response.content.decode()
 
+    def test_the_user_menu_lists_them_once_you_asked(self, requester, stranger, stay):
+        link = 'href="/matches/?type=volunteer"'
+        assert link in _client_for(requester).get("/").content.decode()
+        response = _client_for(stranger).get("/")
+        assert link not in response.content.decode()
+        assert not response.context["has_membership_applications"] and not response.context["attends_events"]
+
+    def test_menu_buttons_show_a_dot_while_something_waits(self, requester):
+        from notifications.models import Notification
+
+        dot = "Something is waiting for you"
+        client = _client_for(requester)
+        # Logging in may leave a nudge to add skills
+        Notification.objects.filter(recipient=requester).update(is_read=True)
+        assert dot not in client.get("/").content.decode()
+        Notification.objects.create(recipient=requester, verb="Hello")
+        page = client.get("/").content.decode()
+        # Unread notifications: on the mobile menu button only, with an entry in that menu
+        assert page.count(dot) == 2 and 'href="/notifications/"' in page
+
     def test_ambassador_without_requests_still_has_the_received_tab(self, owner):
         from communities.models import Community
-        Community.objects.create(name="Gut Wiesengrund", owner=owner)
+        Community.objects.create(name="Gut Wiesengrund", ambassador=owner)
         context = _client_for(owner).get("/matches/?type=volunteer").context
         assert [str(t.label) for t in context["tabs"]] == ["Requests to you", "Your requests"]
 
     def test_received_tab_stays_after_giving_up_the_community(self, owner, stay):
         from communities.models import Community
-        Community.objects.filter(owner=owner).update(owner=None)
+        Community.objects.filter(ambassador=owner).update(ambassador=None)
         context = _client_for(owner).get("/matches/?type=volunteer").context
         assert [str(t.label) for t in context["tabs"]] == ["Requests to you", "Your requests"]
 
@@ -212,7 +246,7 @@ def stay(requester, owner):
 
     from ..models import StayDetails
 
-    community = Community.objects.create(name="Green Valley", owner=owner)
+    community = Community.objects.create(name="Green Valley", ambassador=owner)
     m = Match(from_user=requester, message="Can I come help?")
     m.target = community
     m.recipient = community.get_match_owner()
@@ -303,7 +337,7 @@ def test_the_match_shows_what_the_other_side_brings(owner, requester, stay):
                              content_type=ContentType.objects.get_for_model(Listing), object_id=str(masonry.pk))
     Listing.objects.create(title="Lime mortar", type="offer", kind=Listing.KIND_MATERIAL, owner=requester)
     Listing.objects.create(title="A tent", type="wish", owner=requester)
-    Community.objects.create(name="Other Hof", owner=requester)
+    Community.objects.create(name="Other Hof", ambassador=requester)
     stay.stay_details.sender_skills = "Masonry, Juggling"
     stay.stay_details.save()
 
@@ -363,7 +397,7 @@ def test_accepting_a_stay_updates_the_project_needs(owner, requester):
     from communities.models import Community
     from events.models import Event
 
-    community = Community.objects.create(name="Hof", owner=owner)
+    community = Community.objects.create(name="Hof", ambassador=owner)
     project = Event.objects.create(community=community, title="Oven")
     hands = need(project, kind=Listing.KIND_HANDS, title="Helping hands", quantity=2, unit="people")
     clay = need(project, kind=Listing.KIND_MATERIAL, title="Clay")

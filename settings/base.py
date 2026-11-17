@@ -199,8 +199,10 @@ TEMPLATES = [
                 "django.contrib.messages.context_processors.messages",
                 "notifications.context_processors.unread_notifications",
                 "gift_economy.references.context_processors.pending_reference_skills",
-                "gift_economy.matches.context_processors.new_suggestions",
+                "gift_economy.matches.context_processors.waiting",
                 "gift_economy.matches.context_processors.lending_calendar",
+                "gift_economy.matches.context_processors.sent_requests",
+                "tours.context_processors.on_tours",
             ],
         },
     }

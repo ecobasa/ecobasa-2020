@@ -46,6 +46,7 @@
       </div>
       <div class="text-right flex-shrink-0">
         <span class="pill bg-primary">{{ community.get_status_display }}</span>
+        {% if community.looking_for_members %}<span class="pill bg-green mt-1"><i class="fa-solid fa-door-open mr-1"></i>{% trans "Looking for new members" %}</span>{% endif %}
         <div class="mt-2 flex justify-end gap-3 text-sm">
           {% if community.inhabitants %}<span><i class="fa fa-users mr-1"></i>{{ community.inhabitants }}</span>{% endif %}
           {% if community.children %}<span><i class="fa fa-child mr-1"></i>{{ community.children }}</span>{% endif %}

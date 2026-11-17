@@ -18,7 +18,7 @@ def user():
 
 @pytest.fixture
 def community(user):
-    return Community.objects.create(name="Test Community", owner=user)
+    return Community.objects.create(name="Test Community", ambassador=user)
 
 
 @pytest.fixture
@@ -114,7 +114,7 @@ def test_volunteers_can_bring_what_the_community_needs(user, community):
 
     project = Event.objects.create(community=community, title="Rocket stove")
     clay = need(project, kind=Listing.KIND_MATERIAL, title="Clay")
-    other_project = Event.objects.create(community=Community.objects.create(name="Elsewhere", owner=user), title="X")
+    other_project = Event.objects.create(community=Community.objects.create(name="Elsewhere", ambassador=user), title="X")
     foreign = need(other_project, kind=Listing.KIND_TOOL, title="Spade")
     wish = Listing.objects.create(title="Wheelbarrow", type="wish", community=community)
     Listing.objects.create(title="Old bike", type="offer", community=community)
@@ -140,6 +140,20 @@ def test_volunteers_can_bring_what_the_community_needs(user, community):
     owner.login(username=user.email, password="secret")
     content = owner.get("/matches/?type=volunteer").content.decode()
     assert "Clay" in content and "Wheelbarrow" in content
+
+
+@pytest.mark.django_db
+def test_page_groups_offers_and_wishes(community):
+    """Its offers come under one heading, its wishes for skills and things under another."""
+    from gift_economy.gifts.models import Listing
+
+    Listing.objects.create(title="Wheelbarrow", type="wish", community=community)
+    Listing.objects.create(title="Hammock", type="wish", owner=community.ambassador)  # not the community's
+
+    html = Client().get(community.get_absolute_url()).content.decode()
+    assert 'id="wishes"' in html and "Things we wish for" in html
+    assert "Wheelbarrow" in html and "Hammock" not in html
+    assert 'id="offers"' not in html  # nothing on offer, and the visitor can't add any
 
 
 @pytest.mark.django_db
