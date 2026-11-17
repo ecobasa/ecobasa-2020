@@ -8600,3 +8600,38 @@ msgstr "Les nouvelles demandes t'arrivent par e-mail et sous <a href=\"%(matches
 #, python-format
 msgid "Leaving a community is a button in the Members section. In your <a href=\"%(settings_url)s\">settings</a>, under My Communities, you choose what your memberships show."
 msgstr "Quitter une communauté est un bouton dans la section Membres. Dans tes <a href=\"%(settings_url)s\">paramètres</a>, sous Mes communautés, tu choisis ce que montrent tes adhésions."
+
+msgid "Print application"
+msgstr "Imprimer la demande"
+
+msgid "Include the answers only I see"
+msgstr "Inclure les réponses que je suis seul·e à voir"
+
+#, python-format
+msgid "%(name)s agreed that only you see them. A copy with them is for you alone, not for the members: keep it safe and destroy it after reading."
+msgstr "%(name)s a accepté que toi seul·e les voies. Une copie avec elles est pour toi seul·e, pas pour les membres : garde-la en lieu sûr et détruis-la après lecture."
+
+msgid "To save it as a PDF, choose “Save as PDF” in the print dialog."
+msgstr "Pour l'enregistrer en PDF, choisis « Enregistrer au format PDF » dans la fenêtre d'impression."
+
+msgid "Confidential"
+msgstr "Confidentiel"
+
+#, python-format
+msgid "This copy contains answers %(name)s entrusted to the ambassador alone, among them special categories of personal data such as health. It is for the ambassador only: don't pass it on, keep it locked away, and destroy it (shred the paper, delete the file) as soon as you no longer need it."
+msgstr "Cette copie contient des réponses que %(name)s a confiées à l'ambassadeur·rice seul·e, dont des catégories particulières de données personnelles comme la santé. Elle est réservée à l'ambassadeur·rice : ne la transmets pas, garde-la sous clé et détruis-la (déchiqueter le papier, supprimer le fichier) dès que tu n'en as plus besoin."
+
+#, python-format
+msgid "This application contains personal data. It is only for the members of %(community)s, to decide about it together. Don't pass it on, keep it safe, and destroy it (shred the paper, delete the file) once you have decided."
+msgstr "Cette demande contient des données personnelles. Elle est réservée aux membres de %(community)s, pour en décider ensemble. Ne la transmets pas, garde-la en lieu sûr et détruis-la (déchiqueter le papier, supprimer le fichier) une fois que vous avez décidé."
+
+#, python-format
+msgid "Membership application to %(community)s, sent on %(date)s"
+msgstr "Demande d'adhésion à %(community)s, envoyée le %(date)s"
+
+msgid "The answers only the ambassador sees are not included."
+msgstr "Les réponses que seul·e l'ambassadeur·rice voit ne sont pas incluses."
+
+#, python-format
+msgid "Printed from ecobasa.org on %(date)s"
+msgstr "Imprimé depuis ecobasa.org le %(date)s"

@@ -24,7 +24,7 @@ from django.contrib.gis.db.models.functions import Distance
 from django.db.models.functions import Cast
 from users.places import town
 from django.core.paginator import Paginator
-from django.http import JsonResponse
+from django.http import Http404, JsonResponse
 
 
 def index(request):
@@ -939,6 +939,29 @@ def delete_application(request, slug, pk):
     if own:
         return redirect(community.get_absolute_url())
     return redirect(reverse("matches:list") + "?type=members")
+
+
+@login_required
+def print_application(request, slug, pk):
+    """The ambassador's printable copy of an application, to decide about it together with
+    the members. The answers only the ambassador sees come along only when they ask for a
+    copy for themselves."""
+    from django.core.exceptions import PermissionDenied
+
+    community = get_object_or_404(Community, slug=slug)
+    if not community.is_ambassador(request.user):
+        raise PermissionDenied
+    membership = get_object_or_404(community.memberships.select_related("user", "match"), pk=pk)
+    if membership.match_id is None or membership.is_invitation or not membership.has_application():
+        raise Http404
+    application = membership.application
+    has_sensitive = any(answer["sensitive"] for answer in application.answered())
+    sensitive = has_sensitive and request.GET.get("sensitive") == "1"
+    answers = [answer for answer in application.answered() if sensitive or not answer["sensitive"]]
+    return render(request, "communities/application_print.html", {
+        "community": community, "membership": membership, "application": application,
+        "answers": answers, "sensitive": sensitive, "has_sensitive": has_sensitive,
+    })
 
 
 @login_required

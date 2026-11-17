@@ -8565,3 +8565,38 @@ msgstr "Las nuevas solicitudes te llegan por correo y en <a href=\"%(matches_url
 #, python-format
 msgid "Leaving a community is a button in the Members section. In your <a href=\"%(settings_url)s\">settings</a>, under My Communities, you choose what your memberships show."
 msgstr "Dejar una comunidad es un botón en la sección Miembros. En tus <a href=\"%(settings_url)s\">ajustes</a>, en Mis comunidades, eliges lo que muestran tus membresías."
+
+msgid "Print application"
+msgstr "Imprimir la solicitud"
+
+msgid "Include the answers only I see"
+msgstr "Incluir las respuestas que solo veo yo"
+
+#, python-format
+msgid "%(name)s agreed that only you see them. A copy with them is for you alone, not for the members: keep it safe and destroy it after reading."
+msgstr "%(name)s aceptó que solo tú las veas. Una copia con ellas es solo para ti, no para los miembros: guárdala bien y destrúyela después de leerla."
+
+msgid "To save it as a PDF, choose “Save as PDF” in the print dialog."
+msgstr "Para guardarlo como PDF, elige «Guardar como PDF» en el diálogo de impresión."
+
+msgid "Confidential"
+msgstr "Confidencial"
+
+#, python-format
+msgid "This copy contains answers %(name)s entrusted to the ambassador alone, among them special categories of personal data such as health. It is for the ambassador only: don't pass it on, keep it locked away, and destroy it (shred the paper, delete the file) as soon as you no longer need it."
+msgstr "Esta copia contiene respuestas que %(name)s confió solo al·a la embajador·a, entre ellas categorías especiales de datos personales como la salud. Es solo para el·la embajador·a: no la pases a nadie, guárdala bajo llave y destrúyela (tritura el papel, borra el archivo) en cuanto ya no la necesites."
+
+#, python-format
+msgid "This application contains personal data. It is only for the members of %(community)s, to decide about it together. Don't pass it on, keep it safe, and destroy it (shred the paper, delete the file) once you have decided."
+msgstr "Esta solicitud contiene datos personales. Es solo para los miembros de %(community)s, para decidir juntos sobre ella. No la pases a nadie, guárdala bien y destrúyela (tritura el papel, borra el archivo) cuando hayáis decidido."
+
+#, python-format
+msgid "Membership application to %(community)s, sent on %(date)s"
+msgstr "Solicitud de membresía a %(community)s, enviada el %(date)s"
+
+msgid "The answers only the ambassador sees are not included."
+msgstr "Las respuestas que solo ve el·la embajador·a no están incluidas."
+
+#, python-format
+msgid "Printed from ecobasa.org on %(date)s"
+msgstr "Impreso desde ecobasa.org el %(date)s"

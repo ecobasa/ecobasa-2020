@@ -56,6 +56,10 @@
 		{% endif %}
 	{% endif %}
 
+	{% if is_owner and target.has_application %}
+		<a href="{% url 'communities:print_application' community.slug target.pk %}" target="_blank" class="btn text-sm"><i class="fa-solid fa-print mr-1"></i>{% trans "Print application" %}</a>
+	{% endif %}
+
 	{% if is_owner or is_requester %}
 		{# Either side may delete it; what stays is who applied, how it ended and when #}
 		<div x-data="{ deleting: false }" class="pt-1">

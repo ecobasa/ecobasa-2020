@@ -20,6 +20,7 @@ urlpatterns = [
     path('<slug:slug>/members/<int:pk>/make-member/', views.make_member, name='make_member'),
     path('<slug:slug>/members/<int:pk>/lives-here/', views.lives_here, name='lives_here'),
     path('<slug:slug>/members/<int:pk>/delete/', views.delete_application, name='delete_application'),
+    path('<slug:slug>/members/<int:pk>/print/', views.print_application, name='print_application'),
     path('<slug:slug>/members/<int:pk>/visit-days/', views.visit_days, name='visit_days'),
     path('<slug:slug>/members/<int:pk>/visit-days/accept/', views.accept_visit_days, name='accept_visit_days'),
     path('volunteer-request/<slug:community_slug>/', views.volunteer_request, name='volunteer_request'),
