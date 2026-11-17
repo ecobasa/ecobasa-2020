@@ -57,7 +57,9 @@
 	{% endif %}
 
 	{% if is_owner and target.has_application %}
-		<a href="{% url 'communities:print_application' community.slug target.pk %}" target="_blank" class="btn text-sm"><i class="fa-solid fa-print mr-1"></i>{% trans "Print application" %}</a>
+		<div class="pt-1">
+			<a href="{% url 'communities:print_application' community.slug target.pk %}" target="_blank" class="btn text-sm"><i class="fa-solid fa-print mr-1"></i>{% trans "Print application" %}</a>
+		</div>
 	{% endif %}
 
 	{% if is_owner or is_requester %}
