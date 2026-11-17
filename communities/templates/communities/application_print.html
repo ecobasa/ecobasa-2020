@@ -86,7 +86,7 @@
 
     {# What the application page shows the ambassador about them, from ecobasa #}
     {% with before=membership.before stays=membership.stays_here skills=membership.wished_skills %}
-      <ul class="text-sm">
+      <ul>
         {% for past in before %}<li>{{ past.label }}{% if past.outcome == 'not_now' %} · {% trans "Not now" %}{% endif %} · {{ past.date|date:"DATE_FORMAT" }}</li>{% endfor %}
         <li>{% if stays %}{% trans "Stays and tour visits here" %}: {% for stay in stays %}{% with details=stay.stay_details %}{% if details.stay_from %}{{ details.stay_from|date:"DATE_FORMAT" }}{% if details.stay_to %} – {{ details.stay_to|date:"DATE_FORMAT" }}{% endif %}{% else %}{{ stay.created_at|date:"DATE_FORMAT" }}{% endif %}{% endwith %}{% if not forloop.last %}; {% endif %}{% endfor %}{% else %}{% trans "No stays or tour visits here yet" %}{% endif %}</li>
         {% if skills %}<li>{% trans "Skills you look for that they have" %}: {% for listing in skills %}{{ listing.display_title }}{% if listing.level %} ({{ listing.get_level_display }}){% endif %}{% if not forloop.last %}, {% endif %}{% endfor %}</li>{% endif %}
@@ -94,7 +94,7 @@
     {% endwith %}
 
     <h2 class="text-xl">{% blocktrans with name=membership.user.name %}What {{ name }} has to offer{% endblocktrans %}</h2>
-    <dl class="text-sm">
+    <dl>
       {% if person.communities %}
         <dt class="font-semibold">{% trans "Member of these communities" %}</dt>
         <dd class="ml-0 mb-2">{% for other in person.communities %}{{ other.name }}{% if not forloop.last %}, {% endif %}{% endfor %}</dd>
@@ -107,7 +107,7 @@
 
     {% with who=membership.user %}
       {% if place or who.about or who.world or who.ecobasa_what or wishes %}
-        <dl class="text-sm">
+        <dl>
           {% if place %}<dt class="font-semibold">{% trans "Location" %}</dt><dd class="ml-0 mb-2">{{ place }}</dd>{% endif %}
           {% if who.about %}<dt class="font-semibold">{% trans "About me" %}</dt><dd class="ml-0 mb-2 whitespace-pre-line">{{ who.about }}</dd>{% endif %}
           {% if who.world %}<dt class="font-semibold">{% trans "What do you do to make the world a better place?" %}</dt><dd class="ml-0 mb-2 whitespace-pre-line">{{ who.world }}</dd>{% endif %}
@@ -119,13 +119,13 @@
 
     <h2 class="text-xl">{% trans "References" %}</h2>
     {% for ref in references %}
-      <div class="mb-3 text-sm" style="break-inside: avoid;">
+      <div class="mb-3" style="break-inside: avoid;">
         <p class="font-semibold my-0">{{ ref.author.name|default:ref.author.email }} · {{ ref.get_impression_display }} · {{ ref.created_at|date:"DATE_FORMAT" }}{% if ref.subject and ref.subject != membership.user %} · {% translate "about" context "reference subject" %} {{ ref.subject.display_title|default:ref.subject }}{% endif %}</p>
         <p class="my-0 whitespace-pre-line">{{ ref.text }}</p>
-        {% with present=ref.people.all %}{% if present %}<p class="my-0 text-xs">{% trans "Who was there" %}: {% for person in present %}{{ person.name|default:person.email }}{% if not forloop.last %}, {% endif %}{% endfor %}</p>{% endif %}{% endwith %}
+        {% with present=ref.people.all %}{% if present %}<p class="my-0 text-sm">{% trans "Who was there" %}: {% for person in present %}{{ person.name|default:person.email }}{% if not forloop.last %}, {% endif %}{% endfor %}</p>{% endif %}{% endwith %}
       </div>
     {% empty %}
-      <p class="text-sm">{% trans "No references yet." %}</p>
+      <p>{% trans "No references yet." %}</p>
     {% endfor %}
 
     <p class="text-xs opacity-70 mt-8 mb-0">{% now "DATE_FORMAT" as today %}{% blocktrans with date=today %}Printed from ecobasa.org on {{ date }}{% endblocktrans %}</p>

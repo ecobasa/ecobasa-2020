@@ -31,7 +31,7 @@
     <div class="lg:col-span-3 max-w-3xl min-w-0">
       <section id="what" class="scroll-mt-6">
         <h2 class="text-3xl sm:text-4xl hyphens-auto">{% trans "How someone becomes a member" %}</h2>
-        <p class="text-lg">{% trans "The community's profile says who we are: how we eat, whether children are welcome, what it costs, how we decide. The application asks who you are. So people see before they apply whether they fit, and nobody has to be turned down for something the profile could have told them." %}</p>
+        <p class="text-lg">{% trans "The community's profile tells how the community lives: what its kitchen cooks, whether children are welcome, what it costs, how decisions are made. The application asks who you are. So you see before you apply whether you fit, and nobody has to be turned down for something the profile could have told them." %}</p>
         <ul class="list-none p-0 mt-6 grid sm:grid-cols-3 gap-4">
           <li class="p-4 rounded-lg bg-secondary bg-opacity-75">
             <i class="fa-solid fa-envelope-open-text text-purple mr-1"></i><strong>{% trans "Application" %}</strong><br>
@@ -46,11 +46,12 @@
             {% trans "What comes after the visit, a trial time, a plenum, buying in, each community does its own way, and describes it." %}
           </li>
         </ul>
-        <p class="mt-4">{% trans "ecobasa accompanies you up to the visit. Nobody expects the community to come back and confirm the membership here: once you live there, you become a member the simple way, by an invitation or with “I already live here”." %}</p>
+        <p class="mt-4">{% trans "ecobasa accompanies the application up to the visit. After it, you and the community get to know each other further in person, and the community decides in its own way. Once you belong, the ambassador makes you a member here, or you let them know with “I already live here”." %}</p>
       </section>
 
       <section id="apply" class="mt-12 scroll-mt-6">
         <h2 class="text-3xl sm:text-4xl hyphens-auto">{% trans "Ask to become a member" %}</h2>
+        <p>{% trans "Do you live there already? Then you don't need to apply. Tick “I already live here” and skip the questions, but write a few words so the ambassador recognises you. They then confirm you as a member." %}</p>
         <p>{% blocktrans %}<a href="{{ list_url }}?looking=1">Communities looking for new members</a> have the button “Ask to become a member” on their page. Before you apply, filter the list by how they live, and read the profile: the kitchen, children, animals, the buy-in, the work, how they decide.{% endblocktrans %}</p>
         <ol>
           <li>{% trans "First come the must-matches: what the community expects of everyone who lives there. Only when you agree to all of them can you send your application, so nobody writes long answers for a place that doesn't fit." %}</li>
@@ -59,7 +60,6 @@
           <li>{% trans "Applying as a family or with friends? Every adult applies on their own. Add the others under “Applying together with”, by name or by email address, with the children's ages; they get a link and their application goes with yours." %}</li>
         </ol>
         <p>{% blocktrans %}Your application and its answer are under <a href="{{ matches_url }}?type=members">Membership applications</a>. There you see the stage it is at, the topics for the visit and what the community does after it, and you can write to the ambassador.{% endblocktrans %}</p>
-        <p>{% trans "Do you live there already? Tick “I already live here”: you skip the questions, and the ambassador confirms you as a member." %}</p>
       </section>
 
       <section id="looking" class="mt-12 scroll-mt-6">

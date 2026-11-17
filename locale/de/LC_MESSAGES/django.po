@@ -8462,8 +8462,8 @@ msgstr "Mitglieder und die Botschafter*in"
 msgid "Privacy and deleting"
 msgstr "Privatsphäre und Löschen"
 
-msgid "The community's profile says who we are: how we eat, whether children are welcome, what it costs, how we decide. The application asks who you are. So people see before they apply whether they fit, and nobody has to be turned down for something the profile could have told them."
-msgstr "Das Profil der Gemeinschaft sagt, wer wir sind: wie wir essen, ob Kinder willkommen sind, was es kostet, wie wir entscheiden. Der Antrag fragt, wer du bist. So sehen alle schon vor dem Antrag, ob sie passen, und niemand muss wegen etwas abgelehnt werden, das das Profil schon hätte sagen können."
+msgid "The community's profile tells how the community lives: what its kitchen cooks, whether children are welcome, what it costs, how decisions are made. The application asks who you are. So you see before you apply whether you fit, and nobody has to be turned down for something the profile could have told them."
+msgstr "Das Profil der Gemeinschaft zeigt, wie die Gemeinschaft lebt: was in ihrer Küche gekocht wird, ob Kinder willkommen sind, was es kostet, wie entschieden wird. Der Antrag fragt, wer du bist. So siehst du schon vor dem Antrag, ob du passt, und niemand muss wegen etwas abgelehnt werden, das das Profil schon hätte sagen können."
 
 msgid "You answer the community's questions. The ambassador reads them and invites you to visit, or answers you otherwise."
 msgstr "Du beantwortest die Fragen der Gemeinschaft. Die Botschafter*in liest sie und lädt dich zu einem Besuch ein oder antwortet dir anders."
@@ -8474,8 +8474,8 @@ msgstr "Ihr einigt euch auf Tage, du lebst eine Weile mit ihnen, und ihr sprecht
 msgid "What comes after the visit, a trial time, a plenum, buying in, each community does its own way, and describes it."
 msgstr "Was nach dem Besuch kommt, eine Probezeit, ein Plenum, die Einlage, macht jede Gemeinschaft auf ihre Weise und beschreibt es."
 
-msgid "ecobasa accompanies you up to the visit. Nobody expects the community to come back and confirm the membership here: once you live there, you become a member the simple way, by an invitation or with “I already live here”."
-msgstr "ecobasa begleitet dich bis zum Besuch. Niemand erwartet, dass die Gemeinschaft später hierher zurückkommt und die Mitgliedschaft bestätigt: Wenn du dort lebst, wirst du auf dem einfachen Weg Mitglied, mit einer Einladung oder mit „Ich wohne schon hier“."
+msgid "ecobasa accompanies the application up to the visit. After it, you and the community get to know each other further in person, and the community decides in its own way. Once you belong, the ambassador makes you a member here, or you let them know with “I already live here”."
+msgstr "ecobasa begleitet den Antrag bis zum Besuch. Danach lernt ihr euch persönlich weiter kennen, und die Gemeinschaft entscheidet auf ihre Weise. Gehörst du dazu, nimmt dich die Botschafter*in hier als Mitglied auf, oder du sagst Bescheid mit „Ich wohne schon hier“."
 
 msgid "First come the must-matches: what the community expects of everyone who lives there. Only when you agree to all of them can you send your application, so nobody writes long answers for a place that doesn't fit."
 msgstr "Zuerst kommen die Voraussetzungen: was die Gemeinschaft von allen erwartet, die dort leben. Erst wenn du allen zustimmst, kannst du deinen Antrag senden, so schreibt niemand lange Antworten für einen Ort, der nicht passt."
@@ -8489,8 +8489,8 @@ msgstr "Fragen zu Gesundheit, Schulden oder welche Arbeit du machen kannst, sind
 msgid "Applying as a family or with friends? Every adult applies on their own. Add the others under “Applying together with”, by name or by email address, with the children's ages; they get a link and their application goes with yours."
 msgstr "Ihr beantragt als Familie oder mit Freund*innen? Jede erwachsene Person stellt ihren eigenen Antrag. Füge die anderen unter „Gemeinsam mit“ hinzu, mit Namen oder E-Mail-Adresse, dazu das Alter der Kinder; sie bekommen einen Link, und ihr Antrag gehört zu deinem."
 
-msgid "Do you live there already? Tick “I already live here”: you skip the questions, and the ambassador confirms you as a member."
-msgstr "Du wohnst schon dort? Kreuz „Ich wohne schon hier“ an: Du überspringst die Fragen, und die Botschafter*in bestätigt dich als Mitglied."
+msgid "Do you live there already? Then you don't need to apply. Tick “I already live here” and skip the questions, but write a few words so the ambassador recognises you. They then confirm you as a member."
+msgstr "Du wohnst schon dort? Dann brauchst du keinen Antrag. Kreuz „Ich wohne schon hier“ an und überspring die Fragen, aber schreib ein paar Worte, damit die Botschafter*in dich erkennt. Sie*er bestätigt dich dann als Mitglied."
 
 msgid "In your community's form, fill in “How we live” and tick “Looking for new members”. Then your community shows up when people filter the communities for it, and “Ask to become a member” appears on your page."
 msgstr "Füll im Formular eurer Gemeinschaft „So leben wir“ aus und kreuz „Wir suchen neue Mitglieder“ an. Dann erscheint eure Gemeinschaft, wenn Leute danach filtern, und auf eurer Seite steht „Mitglied werden“."
