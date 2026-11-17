@@ -947,7 +947,9 @@ def print_application(request, slug, pk):
     the members. The answers only the ambassador sees come along only when they ask for a
     copy for themselves."""
     from django.core.exceptions import PermissionDenied
+    from gift_economy.gifts.models import Listing
     from gift_economy.matches.views import _person
+    from gift_economy.references.models import references_about, with_card_data
 
     community = get_object_or_404(Community, slug=slug)
     if not community.is_ambassador(request.user):
@@ -962,7 +964,11 @@ def print_application(request, slug, pk):
     return render(request, "communities/application_print.html", {
         "community": community, "membership": membership, "application": application,
         "answers": answers, "sensitive": sensitive, "has_sensitive": has_sensitive,
+        # And what their profile says: about them, their wishes, the references in full
         "person": _person(membership.user),
+        "place": town(membership.user.location_name) or (membership.user.country.name if membership.user.country else ""),
+        "wishes": list(Listing.objects.of(membership.user).filter(type=Listing.TYPE_WISH).select_related("skill")),
+        "references": list(with_card_data(references_about(membership.user)).order_by("-created_at")),
     })
 
 

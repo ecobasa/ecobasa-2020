@@ -23,8 +23,17 @@ class TestPrinting:
         assert "My back pain." not in page
         assert "The answers only the ambassador sees are not included." in page
         # What the application page shows about them from ecobasa
-        assert "What Ole has to offer" in page and "0 references on their profile" in page
+        assert "What Ole has to offer" in page and "No references yet." in page
         assert "No stays or tour visits here yet" in page
+
+    def test_it_has_their_profile_and_references(self, community, ambassador, ole):
+        from gift_economy.references.models import Reference
+
+        ole.about = "I build with straw and clay."
+        ole.save(update_fields=["about"])
+        Reference.objects.create(author=ambassador, subject=ole, text="Ole fixed our roof in a week.")
+        page = _client(ambassador).get(_url("print_application", _apply(ole, community)), HTTP_ACCEPT_LANGUAGE="en").content.decode()
+        assert "I build with straw and clay." in page and "Ole fixed our roof in a week." in page
 
     def test_the_ambassador_may_print_a_copy_for_themselves(self, community, ambassador, ole):
         membership = _with_answers(_apply(ole, community))
