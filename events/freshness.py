@@ -47,7 +47,7 @@ def send_stale_reminder(event):
             "event": event,
             "recipient": manager,
             "headline": subject,
-            "question": texts["reminder_question"] % {"title": event.title, "community": event.community.name},
+            "question": texts["reminder_question"] % {"title": event.title, "community": event.host_name},
             "archive_on": timezone.now() + timedelta(days=settings.EVENT_ARCHIVE_GRACE_DAYS),
             "confirm_url": _absolute(event.url("confirm_by_email", make_confirm_token(event))),
             "edit_url": _absolute(event.url("edit")),
@@ -84,7 +84,7 @@ def archive_stale_events(now=None):
     archived += stale.filter(stale_reminder_sent_at__lt=grace_before).update(archived_at=now)
 
     reminded = 0
-    for event in stale.filter(stale_reminder_sent_at=None).select_related("community__ambassador"):
+    for event in stale.filter(stale_reminder_sent_at=None).select_related("community__ambassador", "host_user", "host_tour__organiser"):
         if send_stale_reminder(event):
             reminded += 1
         # Also without anybody to ask, so the grace period starts

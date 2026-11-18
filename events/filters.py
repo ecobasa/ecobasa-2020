@@ -86,7 +86,7 @@ class EventFilters:
                 | skill_name_q(self.q, "listings__skill__")
             )
         if self.country:
-            events = events.filter(community__country=self.country)
+            events = events.filter(Q(community__country=self.country) | Q(country=self.country))
         if self.kinds:
             events = events.filter(kind__in=self.kinds)
         if self.since:
@@ -121,7 +121,7 @@ class EventFilters:
         sees it."""
         found = []
         for event in events:
-            event.point = event.place.rough_place()[1]
+            event.point = event.rough_place()[1]
             if event.point is not None and (self.bbox is None or self.bbox.contains(event.point)):
                 found.append(event)
         return found
@@ -131,7 +131,7 @@ class EventFilters:
         Among equals: the soonest upcoming, the latest past, otherwise the freshest."""
         origin = self.near or home
         for event in events:
-            point = event.place.rough_place()[1]
+            point = event.rough_place()[1]
             event.km = round(distance_km(origin, point)) if origin is not None and point is not None else None
         if self.when == "upcoming":
             tie = lambda event: event.starts_on.toordinal()

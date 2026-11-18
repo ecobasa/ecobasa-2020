@@ -10,11 +10,12 @@ from django.db import transaction
 from django.db.models import F, Prefetch, Q
 from django.http import HttpResponseBadRequest, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.template.loader import render_to_string
 from django.utils import timezone
 from django.utils.html import strip_tags
 from django.utils.text import Truncator
-from django.utils.translation import gettext_lazy as _
+from django.utils.translation import gettext_lazy as _, ngettext
 from django.views.decorators.http import require_POST
 
 from communities.models import Community
@@ -39,11 +40,19 @@ _LISTINGS = Prefetch(
 
 
 def _events():
-    return Event.objects.select_related("community", "community__ambassador").prefetch_related(_LISTINGS, "community__photos")
+    return Event.objects.select_related(
+        "community", "community__ambassador", "host_user", "host_tour__organiser",
+    ).prefetch_related(_LISTINGS, "community__photos")
 
 
-def _event(community_slug, slug, events=None):
-    return get_object_or_404(_events() if events is None else events, community__slug=community_slug, slug=slug)
+def _event(slug, community_slug=None, kind=None, events=None):
+    """The event at an address: under its kind's own one (`kind`), else under its
+    community's."""
+    events = _events() if events is None else events
+    if kind:
+        return get_object_or_404(events, kind=kind, slug=slug)
+    events = events.exclude(kind__in=list(kinds.ADDRESSES))
+    return get_object_or_404(events, community__slug=community_slug, slug=slug)
 
 
 def event_list(request):
@@ -65,10 +74,13 @@ def event_list(request):
 
 @login_required
 def going(request):
-    """The events one comes to or whose help was accepted, as cards in the dashboard:
+    """The events one comes to, hosts or whose help was accepted, as cards in the dashboard:
     those not over yet, the soonest first, or the past ones, the latest first."""
     past = request.GET.get("when") == "past"
-    mine = _events().filter(pk__in=going_to(request.user))
+    # Also those one hosts oneself, or with one's tour
+    mine = _events().filter(
+        Q(pk__in=going_to(request.user)) | Q(host_user=request.user) | Q(host_tour__organiser=request.user)
+    )
     today = timezone.localdate()
     upcoming = mine.current().order_by(F("starts_on").asc(nulls_first=True), F("ends_on").asc(nulls_last=True))
     over = mine.filter(ends_on__lt=today).order_by("-ends_on", "-starts_on")
@@ -76,6 +88,10 @@ def going(request):
     return render(request, "events/going.html", {
         "page": page,
         "past": past,
+        # What one may invite to oneself
+        "own_kinds": [
+            (reverse(f"events:{kind}_create"), label, icon) for kind, label, icon in kinds.event_kind_buttons(kinds.HOST_PERSON)
+        ],
         "whens": [
             Choice(_("Upcoming"), query_url(request, when=None), active=not past, count=upcoming.count()),
             Choice(_("Past"), query_url(request, when="past"), active=past, count=over.count()),
@@ -111,7 +127,7 @@ def api_markers(request):
     filters = EventFilters(request.GET, request.user)
     features = []
     for event in filters.in_view(filters.apply(filters.base(_events()))):
-        glyph, colour = kinds.PINS.get(event.kind, kinds.PINS[kinds.COMMUNITY_EVENT])
+        glyph, colour = event.kind_pin
         features.append({
             "type": "Feature",
             "geometry": {"type": "Point", "coordinates": [event.point.x, event.point.y]},
@@ -142,7 +158,8 @@ def _countries(filters):
     """The countries with events of the time asked for, by name: (code, name)."""
     from django_countries import countries
 
-    codes = set(filters.base(Event.objects.all()).values_list("community__country", flat=True))
+    events = filters.base(Event.objects.all())
+    codes = set(events.values_list("community__country", flat=True)) | set(events.values_list("country", flat=True))
     return sorted(((code, countries.name(code)) for code in codes if code and countries.name(code)), key=lambda pair: pair[1])
 
 
@@ -172,8 +189,8 @@ def api_suggest(request):
     return JsonResponse(suggestions, safe=False)
 
 
-def detail(request, community_slug, slug):
-    event = _event(community_slug, slug)
+def detail(request, slug, community_slug=None, kind=None):
+    event = _event(slug, community_slug, kind)
     can_edit = event.can_edit(request.user)
     if event.archived_at and not can_edit:
         messages.info(request, event.texts["archived"])
@@ -188,7 +205,7 @@ def detail(request, community_slug, slug):
     return render(request, "events/event_detail.html", {
         "event": event,
         "community": event.community,
-        "place": event.place.rough_place()[0],
+        "place": event.place_for(request.user)[0],
         "needs": event.needs(),
         "can_edit": can_edit,
         # What waits for the host's answer or was answered; who just comes is under "Who is coming"
@@ -219,73 +236,93 @@ def _references(event):
     return references
 
 
-def _save_event(request, event, template_context):
+def save_event(request, event, cancel_url, on_saved=None):
+    """The event's form, and saving it with its needs. `on_saved(event)` runs in the same
+    transaction after the event is saved (e.g. a tour's stop pointing at it)."""
+    editing = bool(event.pk)
     form = EventForm(request.POST or None, request.FILES or None, instance=event)
-    formset = NeedFormSet(request.POST or None, instance=event, prefix="needs")
-    if request.method == "POST" and form.is_valid() and formset.is_valid():
+    formset = NeedFormSet(request.POST or None, instance=event, prefix="needs") if event.takes_needs else None
+    if request.method == "POST" and form.is_valid() and (formset is None or formset.is_valid()):
         with transaction.atomic():
             event = form.save(commit=False)
             if not event.pk:
                 event.created_by = request.user
             event.touch(save=False)
             event.save()
-            form.save_skills_to_learn(event)
-            formset.instance = event
-            formset.save(commit=False)
-            for need in formset.deleted_objects:
-                need.delete()
-            # Keep the needs in the order they were entered
-            kept = [f for f in formset.forms if f.has_changed() or f.instance.pk]
-            for order, need_form in enumerate(f for f in kept if f not in formset.deleted_forms):
-                need = need_form.save(commit=False)
-                need.event = event
-                need.order = order
-                need.save()
-                need_form.save_category(need)
+            if formset is not None:
+                form.save_skills_to_learn(event)
+                _save_needs(event, formset)
+            if on_saved is not None:
+                on_saved(event)
         messages.success(request, event.texts["saved"])
         return redirect(event.get_absolute_url())
     return render(request, "events/event_form.html", {
-        **template_context, "form": form, "formset": formset, "texts": event.texts,
+        "event": event, "editing": editing, "form": form, "formset": formset, "texts": event.texts,
+        "cancel_url": event.get_absolute_url() if editing else cancel_url,
     })
 
 
-@login_required
-def create(request, community_slug):
-    community = get_object_or_404(Community, slug=community_slug)
-    event = Event(community=community)
-    if request.GET.get("kind") in kinds.TEXTS:
-        event.kind = request.GET["kind"]
-    if not event.can_edit(request.user):
-        raise PermissionDenied
-    return _save_event(request, event, {"community": community})
+def _save_needs(event, formset):
+    formset.instance = event
+    formset.save(commit=False)
+    for need in formset.deleted_objects:
+        need.delete()
+    # Keep the needs in the order they were entered
+    kept = [f for f in formset.forms if f.has_changed() or f.instance.pk]
+    for order, need_form in enumerate(f for f in kept if f not in formset.deleted_forms):
+        need = need_form.save(commit=False)
+        need.event = event
+        need.order = order
+        need.save()
+        need_form.save_category(need)
 
 
 @login_required
-def edit(request, community_slug, slug):
-    event = _event(community_slug, slug, Event.objects.select_related("community__ambassador"))
+def create(request, community_slug=None, kind=None):
+    """A new event: a community's (?kind= one of those it may host), or one of a kind
+    with its own address, which the person who starts it hosts."""
+    if community_slug:
+        community = get_object_or_404(Community, slug=community_slug)
+        event = Event(community=community)
+        if request.GET.get("kind") in dict(kinds.choices_for(kinds.HOST_COMMUNITY)):
+            event.kind = request.GET["kind"]
+        cancel_url = community.get_absolute_url()
+    else:
+        if kinds.HOST_PERSON not in kinds.HOSTS[kind]:
+            raise PermissionDenied
+        event = Event(kind=kind, host_user=request.user)
+        cancel_url = reverse("events:list")
     if not event.can_edit(request.user):
         raise PermissionDenied
-    return _save_event(request, event, {"community": event.community, "event": event})
+    return save_event(request, event, cancel_url)
+
+
+@login_required
+def edit(request, slug, community_slug=None, kind=None):
+    event = _event(slug, community_slug, kind, Event.objects.select_related("community__ambassador", "host_user", "host_tour"))
+    if not event.can_edit(request.user):
+        raise PermissionDenied
+    return save_event(request, event, event.get_absolute_url())
 
 
 @login_required
 @require_POST
-def archive(request, community_slug, slug):
-    event = _event(community_slug, slug, Event.objects.select_related("community__ambassador"))
+def archive(request, slug, community_slug=None, kind=None):
+    event = _event(slug, community_slug, kind, Event.objects.select_related("community__ambassador", "host_user", "host_tour"))
     if not event.can_edit(request.user):
         raise PermissionDenied
     event.archived_at = timezone.now()
     event.save(update_fields=["archived_at"])
     messages.success(request, event.texts["archived_by_you"])
-    return redirect(event.community.get_absolute_url())
+    return redirect(event.host.get_absolute_url())
 
 
 @login_required
 @require_POST
-def confirm(request, community_slug, slug):
+def confirm(request, slug, community_slug=None, kind=None):
     """The ambassador says the event is still current (also brings back an archived one
     that hasn't ended)."""
-    event = _event(community_slug, slug, Event.objects.select_related("community__ambassador"))
+    event = _event(slug, community_slug, kind, Event.objects.select_related("community__ambassador", "host_user", "host_tour"))
     if not event.can_edit(request.user):
         raise PermissionDenied
     if event.is_over:
@@ -296,9 +333,9 @@ def confirm(request, community_slug, slug):
     return redirect(event.get_absolute_url())
 
 
-def confirm_by_email(request, community_slug, slug, token):
+def confirm_by_email(request, slug, token, community_slug=None, kind=None):
     """One click from the "Is this still current?" email, no login needed."""
-    event = _event(community_slug, slug, Event.objects.select_related("community"))
+    event = _event(slug, community_slug, kind, Event.objects.select_related("community", "host_user", "host_tour"))
     try:
         pk = read_confirm_token(token)
     except signing.BadSignature:
@@ -315,9 +352,9 @@ def confirm_by_email(request, community_slug, slug, token):
 
 @login_required
 @require_POST
-def toggle_need(request, community_slug, slug, need_pk):
+def toggle_need(request, slug, need_pk, community_slug=None, kind=None):
     """Mark a need as covered (however it was covered), or open it again."""
-    event = _event(community_slug, slug, Event.objects.select_related("community__ambassador"))
+    event = _event(slug, community_slug, kind, Event.objects.select_related("community__ambassador", "host_user", "host_tour"))
     if not event.can_edit(request.user):
         raise PermissionDenied
     need = get_object_or_404(event.listings.filter(type=Listing.TYPE_WISH), pk=need_pk)
@@ -328,8 +365,8 @@ def toggle_need(request, community_slug, slug, need_pk):
 
 
 @login_required
-def offer_help(request, community_slug, slug):
-    event = _event(community_slug, slug)
+def offer_help(request, slug, community_slug=None, kind=None):
+    event = _event(slug, community_slug, kind)
     if not event.is_current or event.manager is None:
         messages.error(request, event.texts["no_offers"])
         return redirect(event.get_absolute_url())
@@ -346,7 +383,7 @@ def offer_help(request, community_slug, slug):
                 contributions=form.chosen_needs(),
             )
         notify_match_created(match, http_request=request)
-        messages.success(request, _("Your offer has been sent to %(community)s!") % {"community": event.community.name})
+        messages.success(request, _("Your offer has been sent to %(community)s!") % {"community": event.host_name})
         return redirect(match.get_absolute_url())
 
     return render(request, "events/offer_help.html", {
@@ -356,17 +393,23 @@ def offer_help(request, community_slug, slug):
 
 @login_required
 @require_POST
-def come(request, community_slug, slug):
+def come(request, slug, community_slug=None, kind=None):
     """"I'm coming" on an open event: a match that is accepted at once, with the days
     and the number of people. Nobody has to answer it, and the host gets no message per
     person: they see who comes on the event's page and in their calendar."""
-    event = _event(community_slug, slug)
+    event = _event(slug, community_slug, kind)
     if not (event.is_open and event.takes_people(request.user)):
         messages.error(request, event.texts["no_offers"])
         return redirect(event.get_absolute_url())
     form = ComingForm(event, request.POST)
     if not form.is_valid():
         messages.error(request, _("Please check how many you are and the days."))
+        return redirect(event.get_absolute_url())
+    free = event.free_places()
+    if free is not None and form.cleaned_data["people"] > free:
+        messages.error(request, ngettext(
+            "Only %(count)s more person can come.", "Only %(count)s more people can come.", free,
+        ) % {"count": free})
         return redirect(event.get_absolute_url())
     stay_from, stay_to = form.days()
     with transaction.atomic():
@@ -388,9 +431,9 @@ def come(request, community_slug, slug):
 
 @login_required
 @require_POST
-def not_coming(request, community_slug, slug):
+def not_coming(request, slug, community_slug=None, kind=None):
     """Take "I'm coming" back."""
-    event = _event(community_slug, slug)
+    event = _event(slug, community_slug, kind)
     own = event.matches.filter(from_user=request.user, stay_details__volunteer_mode=StayDetails.MODE_COME)
     if own.exists():
         own.delete()

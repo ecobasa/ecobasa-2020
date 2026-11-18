@@ -1,22 +1,26 @@
 from django.urls import include, path
 
-from . import views
+from . import kinds, views
 
 app_name = "events"
 
-# An event's pages live under its host's: /communities/<community>/events/<event>/
-community_patterns = [
-    path("new/", views.create, name="create"),
-    path("<slug:slug>/", views.detail, name="detail"),
-    path("<slug:slug>/edit/", views.edit, name="edit"),
-    path("<slug:slug>/archive/", views.archive, name="archive"),
-    path("<slug:slug>/confirm/", views.confirm, name="confirm"),
-    path("<slug:slug>/confirm/<str:token>/", views.confirm_by_email, name="confirm_by_email"),
-    path("<slug:slug>/help/", views.offer_help, name="offer_help"),
-    path("<slug:slug>/come/", views.come, name="come"),
-    path("<slug:slug>/not-coming/", views.not_coming, name="not_coming"),
-    path("<slug:slug>/needs/<str:need_pk>/toggle/", views.toggle_need, name="toggle_need"),
-]
+
+def event_patterns(prefix=""):
+    """An event's pages, under its community's address or its kind's own one (named
+    "<kind>_detail" etc. there, see Event.url)."""
+    return [
+        path("new/", views.create, name=f"{prefix}create"),
+        path("<slug:slug>/", views.detail, name=f"{prefix}detail"),
+        path("<slug:slug>/edit/", views.edit, name=f"{prefix}edit"),
+        path("<slug:slug>/archive/", views.archive, name=f"{prefix}archive"),
+        path("<slug:slug>/confirm/", views.confirm, name=f"{prefix}confirm"),
+        path("<slug:slug>/confirm/<str:token>/", views.confirm_by_email, name=f"{prefix}confirm_by_email"),
+        path("<slug:slug>/help/", views.offer_help, name=f"{prefix}offer_help"),
+        path("<slug:slug>/come/", views.come, name=f"{prefix}come"),
+        path("<slug:slug>/not-coming/", views.not_coming, name=f"{prefix}not_coming"),
+        path("<slug:slug>/needs/<str:need_pk>/toggle/", views.toggle_need, name=f"{prefix}toggle_need"),
+    ]
+
 
 urlpatterns = [
     # All current events, nearest first, and those one is going to
@@ -25,5 +29,11 @@ urlpatterns = [
     path("events/suggest/",views.api_suggest, name="api-suggest"),
     path("events/list/", views.api_list, name="api-list"),
     path("events/markers/", views.api_markers, name="api-markers"),
-    path("communities/<slug:community_slug>/events/", include(community_patterns)),
+    # Under its community: /communities/<community>/events/<event>/
+    path("communities/<slug:community_slug>/events/", include(event_patterns())),
+    # Kinds with an address of their own, whoever hosts them: /gift-circles/<event>/
+    *(
+        path(f"{address}/", include(event_patterns(f"{kind}_")), {"kind": kind})
+        for kind, address in kinds.ADDRESSES.items()
+    ),
 ]

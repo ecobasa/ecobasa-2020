@@ -732,6 +732,11 @@ class Stop(models.Model):
     }
 
     @property
+    def can_host_gift_circle(self):
+        """At another place, with no event yet, the tour can invite to a gift-circle there."""
+        return not self.event_id and not self.community_id and self.location is not None
+
+    @property
     def joins_open_event(self):
         """An event where people just come: the tour says it is coming, nobody answers."""
         return bool(self.event_id and self.event.is_open)

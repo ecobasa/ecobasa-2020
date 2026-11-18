@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% load i18n embed_video_tags static l10n references_tags tours_tags %}
+{% load i18n embed_video_tags static l10n references_tags tours_tags events_tags %}
 
 {% block extrahead %}
 	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.css">
@@ -440,7 +440,7 @@
 									<div class="flex flex-wrap items-center gap-x-2 text-xs">
 										<a href="{{ event.get_absolute_url }}" class="font-semibold hover:underline" target="_blank"><i class="fa-solid {{ event.kind_icon }} mr-1"></i>{{ event.title }}</a>
 										<span class="opacity-70">{% include "events/_event_dates.html" %}</span>
-										<a href="{% url 'events:offer_help' community.slug event.slug %}" class="underline">{{ event.texts.join }}</a>
+										<a href="{% event_url event "offer_help" %}" class="underline">{{ event.texts.join }}</a>
 									</div>
 									{% for need in needs %}
 										<label class="flex items-center gap-2 cursor-pointer py-0.5">

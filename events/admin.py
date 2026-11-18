@@ -15,9 +15,9 @@ class ListingInline(admin.TabularInline):
 
 @admin.register(Event)
 class EventAdmin(admin.ModelAdmin):
-    list_display = ("title", "kind", "community", "starts_on", "ends_on", "is_open", "updated_at", "archived_at")
-    list_filter = ("kind", "is_open", "archived_at")
-    search_fields = ("title", "description", "community__name")
-    raw_id_fields = ("community", "created_by")
+    list_display = ("title", "kind", "host", "starts_on", "ends_on", "is_open", "is_online", "updated_at", "archived_at")
+    list_filter = ("kind", "is_open", "is_online", "archived_at")
+    search_fields = ("title", "description", "community__name", "host_user__name", "host_tour__title")
+    raw_id_fields = ("community", "host_user", "host_tour", "created_by")
     readonly_fields = ("slug", "created_at")
     inlines = [ListingInline]

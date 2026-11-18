@@ -2,13 +2,16 @@ from datetime import timedelta
 
 from django.conf import settings
 from django.contrib.contenttypes.fields import GenericRelation
-from django.db import models
+from django.contrib.gis.db import models
+from django.db.models import Q
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
+from django_countries.fields import CountryField
 
 from communities.models import Community
+from users.places import approximate, town
 
 from . import kinds
 
@@ -28,29 +31,44 @@ class Event(models.Model):
       "Build a rocket stove, March–April": what it needs (volunteers with skills,
       materials, tools, knowledge) and what the community provides in return;
     - a community event: something a community invites to, e.g. an open day, a workshop
-      or a festival.
+      or a festival;
+    - a gift-circle: people meet in a circle and say what they wish for and what they
+      can give.
 
     Dated events end with their end date; ongoing ones have none and stay current as long
     as someone keeps them up to date (see freshness.py). People take part through a match:
     one the host answers, or, on an open event, one that needs no answer.
 
-    Hosted by a community for now. Who answers for an event, where it is and who may edit
-    it is asked of the event (`manager`, `place`, `can_edit`), so another host changes
-    this model only.
+    Hosted by a community, a person or a tour (exactly one of them; its kind says which it
+    allows, kinds.HOSTS). Who answers for an event, where it is and who may edit it is
+    asked of the event (`manager`, `place`, `can_edit`). It happens at its community's
+    place, at a place of its own (`location`), or online.
     """
 
     KIND_PROJECT = kinds.PROJECT
     KIND_COMMUNITY_EVENT = kinds.COMMUNITY_EVENT
+    KIND_GIFT_CIRCLE = kinds.GIFT_CIRCLE
 
     # Not usable as a slug: they are paths beside an event's page
     RESERVED_SLUGS = ("new",)
 
     community = models.ForeignKey(
-        Community, on_delete=models.CASCADE, related_name="events", verbose_name=_("Community"),
+        Community, on_delete=models.CASCADE, null=True, blank=True, related_name="events",
+        verbose_name=_("Community"),
+    )
+    # Another host than a community: a person, or a tour (its organisers). A string
+    # reference, so this app imports nothing from tours
+    host_user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True, blank=True,
+        related_name="hosted_events", verbose_name=_("Host"),
+    )
+    host_tour = models.ForeignKey(
+        "tours.Tour", on_delete=models.CASCADE, null=True, blank=True, related_name="hosted_events",
+        verbose_name=_("Tour"),
     )
     kind = models.CharField(_("Kind"), max_length=20, choices=kinds.CHOICES, default=kinds.PROJECT)
-    # Set from the title once, unique within the community: its address stays when the
-    # title changes
+    # Set from the title once, unique within the community (or among its kind, if its kind
+    # has an address of its own): its address stays when the title changes
     slug = models.SlugField(_("Slug"), max_length=255, blank=True)
     title = models.CharField(_("Title"), max_length=255)
     description = models.TextField(_("Description"), blank=True)
@@ -77,6 +95,12 @@ class Event(models.Model):
     volunteers_wanted = models.PositiveSmallIntegerField(
         _("How many volunteers at the same time?"), null=True, blank=True,
     )
+    max_people = models.PositiveSmallIntegerField(_("How many people can come?"), null=True, blank=True)
+    # A place of its own, e.g. a park or a café; otherwise its community's. Everyone but
+    # who comes sees it roughly (rough_place)
+    location_name = models.CharField(_("Place"), max_length=255, blank=True)
+    location = models.PointField(_("Geo Location"), null=True, blank=True, geography=True)
+    country = CountryField(_("Country"), null=True, blank=True)
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="+",
     )
@@ -86,6 +110,11 @@ class Event(models.Model):
     updated_at = models.DateTimeField(_("Updated"), default=timezone.now)
     stale_reminder_sent_at = models.DateTimeField(null=True, blank=True)
     archived_at = models.DateTimeField(_("Archived"), null=True, blank=True)
+    # Online: no place; the video link goes to who comes. Its times are in `timezone`
+    # (last: the field hides the timezone module in this class body)
+    is_online = models.BooleanField(_("Online, as a video call"), default=False)
+    video_url = models.URLField(_("Video link"), blank=True)
+    timezone = models.CharField(_("Timezone"), max_length=64, blank=True)
     matches = GenericRelation("matches.Match")
 
     objects = EventQuerySet.as_manager()
@@ -96,19 +125,42 @@ class Event(models.Model):
         verbose_name_plural = _("Events")
         constraints = [
             models.UniqueConstraint(fields=["community", "slug"], name="one_event_slug_per_community"),
+            models.UniqueConstraint(
+                fields=["kind", "slug"], name="one_event_slug_per_own_address",
+                condition=Q(kind__in=list(kinds.ADDRESSES)),
+            ),
+            models.CheckConstraint(
+                name="event_has_one_host",
+                check=Q(community__isnull=False, host_user=None, host_tour=None)
+                | Q(community=None, host_user__isnull=False, host_tour=None)
+                | Q(community=None, host_user=None, host_tour__isnull=False),
+            ),
         ]
 
     def __str__(self):
         return self.title
 
     def save(self, *args, **kwargs):
-        if not self.slug:
+        # Also when its kind changed to one with an address of its own, where the slug
+        # may be taken
+        if not self.slug or (kwargs.get("update_fields") is None and self._slug_taken()):
             self.slug = self._free_slug()
         super().save(*args, **kwargs)
 
+    def _same_address(self):
+        """The events whose slugs this one's must differ from."""
+        if self.kind in kinds.ADDRESSES:
+            events = Event.objects.filter(kind=self.kind)
+        else:
+            events = Event.objects.filter(community_id=self.community_id)
+        return events.exclude(pk=self.pk) if self.pk else events
+
+    def _slug_taken(self):
+        return self._same_address().filter(slug=self.slug).exists()
+
     def _free_slug(self):
         base = slugify(self.title)[:240] or "event"
-        taken = set(Event.objects.filter(community_id=self.community_id).values_list("slug", flat=True))
+        taken = set(self._same_address().values_list("slug", flat=True))
         taken.update(self.RESERVED_SLUGS)
         slug, suffix = base, 1
         while slug in taken:
@@ -117,7 +169,10 @@ class Event(models.Model):
         return slug
 
     def url(self, name="detail", *args):
-        """The address of one of its pages: they live under its host's."""
+        """The address of one of its pages: under its kind's own address, else under its
+        community's."""
+        if self.kind in kinds.ADDRESSES:
+            return reverse(f"events:{self.kind}_{name}", args=[self.slug, *args])
         return reverse(f"events:{name}", args=[self.community.slug, self.slug, *args])
 
     def get_absolute_url(self):
@@ -135,6 +190,11 @@ class Event(models.Model):
     @property
     def kind_colour(self):
         return kinds.COLOURS[self.kind]
+
+    @property
+    def kind_pin(self):
+        """(the icon's code point, colour) for a map."""
+        return kinds.PINS[self.kind]
 
     @property
     def texts(self):
@@ -170,25 +230,116 @@ class Event(models.Model):
     def stale_since(self):
         return self.updated_at + timedelta(days=settings.EVENT_STALE_DAYS)
 
-    # ── Who answers for it, where it is, who may edit ───────────────
+    # ── Who hosts it and answers for it, where it is, who may edit ──
+    @property
+    def host(self):
+        """The community, person or tour that invites to it."""
+        return self.community or self.host_user or self.host_tour
+
+    @property
+    def host_type(self):
+        """kinds.HOST_COMMUNITY, HOST_PERSON or HOST_TOUR."""
+        if self.community_id:
+            return kinds.HOST_COMMUNITY
+        if self.host_user_id:
+            return kinds.HOST_PERSON
+        return kinds.HOST_TOUR
+
+    @property
+    def host_name(self):
+        if self.community_id:
+            return self.community.name
+        if self.host_user_id:
+            return self.host_user.name or self.host_user.username
+        return self.host_tour.title
+
     @property
     def manager(self):
         """Who answers for it: matches are addressed to them."""
-        return self.community.ambassador
+        if self.community_id:
+            return self.community.ambassador
+        if self.host_user_id:
+            return self.host_user
+        return self.host_tour.organiser
+
+    @property
+    def takes_needs(self):
+        """Whether it lists needs and skills to learn: they are its community's wishes and
+        offers in it."""
+        return self.community_id is not None
+
+    def can_edit(self, user):
+        if not user.is_authenticated:
+            return False
+        if user.is_staff or user == self.manager:
+            return True
+        # A tour's organisers share the role
+        return bool(self.host_tour_id and self.host_tour.can_edit(user))
 
     @property
     def place(self):
         """Where it happens: something with a name, a rough place for everyone and an
-        exact one for those who may know (rough_place, place_for)."""
+        exact one for those who may know (rough_place, place_for). Itself if it has a
+        place of its own, else its community; nothing online."""
+        if self.is_online:
+            return None
+        if self.location is not None:
+            return self
         return self.community
 
-    def can_edit(self, user):
-        return user.is_authenticated and (user.is_staff or user == self.manager)
+    @property
+    def name(self):
+        """Its name as a place."""
+        return self.title
+
+    def rough_place(self):
+        """(name, point) as everyone sees it; ("", None) without a place."""
+        place = self.place
+        if place is None:
+            return "", None
+        if place is not self:
+            return place.rough_place()
+        return town(self.location_name), approximate(self.location, self.place_seed)
+
+    def place_for(self, user):
+        """(name, point) as `user` sees it."""
+        place = self.place
+        if place is not None and place is not self:
+            return place.place_for(user)
+        return (self.location_name, self.location) if self.shows_place_to(user) else self.rough_place()
+
+    def shows_place_to(self, user):
+        """Whether `user` sees its exact place: whoever may edit it, and who comes (an
+        accepted match)."""
+        place = self.place
+        if place is not None and place is not self:
+            return place.shows_place_to(user)
+        if self.can_edit(user):
+            return True
+        if not user.is_authenticated:
+            return False
+        from gift_economy.matches.models import Match
+        return self.matches.filter(from_user=user, status=Match.STATUS_ACCEPTED).exists()
+
+    def people_coming(self):
+        """How many come: everyone accepted, with whoever they bring."""
+        from gift_economy.matches.models import Match
+        accepted = self.matches.filter(status=Match.STATUS_ACCEPTED).select_related("stay_details")
+        return sum(match.people for match in accepted)
+
+    def free_places(self):
+        """How many more can come, None without a limit."""
+        if not self.max_people:
+            return None
+        return max(0, self.max_people - self.people_coming())
 
     def takes_people(self, user=None):
         """Whether someone (or `user`) can offer help or say they come: it is current,
-        somebody answers for it, and it is not their own."""
-        return self.is_current and self.manager is not None and user != self.manager
+        somebody answers for it, it is not their own, and it isn't full."""
+        return (
+            self.is_current and self.manager is not None and user != self.manager
+            and self.free_places() != 0
+        )
 
     # Its needs are the community's wishes in it, and what you can learn here its skill
     # offers in it (gifts.Listing.event). Both are listed only while it runs.
@@ -214,16 +365,24 @@ class Event(models.Model):
 
     def get_match_location(self):
         place = self.place
+        if place is None:
+            return self.title, "", None
         return place.name, place.location_name, place.location
 
-    # Where it is, and who may know: its place's
+    # Where it is, and who may know: its place's. A place of its own only roughly
     @property
     def place_seed(self):
-        return self.place.place_seed
+        place = self.place
+        if place is None or place is self:
+            return f"event:{self.pk}"
+        return place.place_seed
 
     @property
     def place_is_public(self):
-        return self.place.place_is_public
+        place = self.place
+        if place is None:
+            return True
+        return False if place is self else place.place_is_public
 
     def get_match_icon(self):
         return self.kind_icon

@@ -16,16 +16,23 @@ class EventForm(forms.ModelForm):
         widget=forms.TextInput(attrs={"data-skill-tags": _("Popular skills to explore")}),
         help_text=_("Comma-separated. People looking for these skills find your community through it."),
     )
-    field_order = ["kind", "title", "image", "description", "skills_to_learn", "starts_on", "ends_on", "starts_at", "ends_at", "is_open"]
+    field_order = [
+        "kind", "title", "image", "description", "skills_to_learn", "starts_on", "ends_on", "starts_at", "ends_at",
+        "is_online", "location_name", "location", "country", "max_people", "is_open",
+    ]
+    # What only a community's events ask: they take volunteers and provide for them
+    COMMUNITY_FIELDS = ("skills_to_learn", "volunteers_wanted", "food_provided", "bed_provided", "provided_note")
 
     class Meta:
         model = Event
         fields = [
-            "kind", "title", "image", "description", "starts_on", "ends_on", "starts_at", "ends_at", "is_open",
+            "kind", "title", "image", "description", "starts_on", "ends_on", "starts_at", "ends_at",
+            "is_online", "location_name", "location", "country", "max_people", "is_open",
             "volunteers_wanted", "food_provided", "bed_provided", "provided_note",
         ]
         widgets = {
             "kind": forms.RadioSelect,
+            "location": forms.HiddenInput(),
             "starts_on": forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
             "ends_on": forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
             "starts_at": forms.TimeInput(attrs={"type": "time"}, format="%H:%M"),
@@ -36,7 +43,7 @@ class EventForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         texts = self.instance.texts
-        self.fields["kind"].choices = kinds.CHOICES
+        self.fields["kind"].choices = kinds.choices_for(self.instance.host_type)
         self.fields["title"].widget.attrs["placeholder"] = texts["title_placeholder"]
         self.fields["description"].widget.attrs["placeholder"] = texts["description_placeholder"]
         self.fields["skills_to_learn"].widget.attrs["placeholder"] = _("e.g. Clay building, Welding")
@@ -46,7 +53,7 @@ class EventForm(forms.ModelForm):
             # A new event starts with its kind's settings
             self.initial.update(kinds.DEFAULTS[self.instance.kind])
         for name, field in self.fields.items():
-            if isinstance(field.widget, (forms.RadioSelect, forms.ClearableFileInput)):
+            if isinstance(field.widget, (forms.RadioSelect, forms.ClearableFileInput, forms.HiddenInput)):
                 continue
             if isinstance(field.widget, forms.CheckboxInput):
                 field.widget.attrs["class"] = "form-checkbox"
@@ -54,16 +61,28 @@ class EventForm(forms.ModelForm):
                 field.widget.attrs["class"] = "form-textarea w-full"
             else:
                 field.widget.attrs["class"] = "form-input w-full"
+        if not self.instance.takes_needs:
+            for name in self.COMMUNITY_FIELDS:
+                del self.fields[name]
+
+    def one_day_kinds(self):
+        return [kind for kind in kinds.ONE_DAY if kind in dict(self.fields["kind"].choices)]
 
     def kind_choices(self):
-        """(value, label, icon, hint, the settings a new one starts with) per kind."""
+        """(value, label, icon, hint, the settings a new one starts with) per kind its host
+        may host."""
         return [
             (value, label, kinds.ICONS[value], kinds.HINTS[value], kinds.DEFAULTS[value])
-            for value, label in kinds.CHOICES
+            for value, label in kinds.choices_for(self.instance.host_type)
         ]
 
     def clean(self):
         cleaned = super().clean()
+        if cleaned.get("kind") in kinds.ONE_DAY:
+            # It ends the day it starts
+            if not cleaned.get("starts_on"):
+                self.add_error("starts_on", _("Which day?"))
+            cleaned["ends_on"] = cleaned.get("starts_on")
         starts_on, ends_on = cleaned.get("starts_on"), cleaned.get("ends_on")
         if starts_on and ends_on and ends_on < starts_on:
             self.add_error("ends_on", _("It can't end before it starts."))
@@ -71,7 +90,26 @@ class EventForm(forms.ModelForm):
         one_day = ends_on and (starts_on or ends_on) == ends_on
         if starts_at and ends_at and one_day and ends_at <= starts_at:
             self.add_error("ends_at", _("It can't end before it starts."))
+        if cleaned.get("is_online"):
+            # Online it has no place
+            cleaned["location_name"], cleaned["location"], cleaned["country"] = "", None, None
+        elif cleaned.get("location") is None:
+            cleaned["location_name"], cleaned["country"] = "", None
+            # Without a place of its own it is at its community's
+            if not self.instance.community_id:
+                self.add_error("location_name", _("Choose the place on the map, or make it online."))
         return cleaned
+
+    def clean_image(self):
+        """A new picture as a JPEG of a size a page needs, not a camera's."""
+        image = self.cleaned_data.get("image")
+        if image and hasattr(image, "content_type"):
+            from gift_economy.references.reference_requests import shrink_photo
+            try:
+                image = shrink_photo(image)
+            except ValueError:
+                raise forms.ValidationError(_("Please choose a picture."))
+        return image
 
     def save_skills_to_learn(self, event):
         """Make the community's skill offers in the event the skills named (in any
