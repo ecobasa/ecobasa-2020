@@ -23,7 +23,7 @@ from gift_economy.gifts.models import Listing
 
 from .emails import notify_match_message, notify_match_response, read_action_token, read_suggestions_unsubscribe_token
 from .forms import MatchMessageForm
-from .models import Loan, Match, MatchMessage, Suggestion, loan_span, stay_q, talked_over_elsewhere_q
+from .models import Loan, Match, MatchMessage, Suggestion, joining_q, loan_span, stay_q, talked_over_elsewhere_q
 
 # What the matches page can show, by its "type" query param: gifts (things) and skills
 # (and knowledge and helping hands) together on one page (with suggestions first),
@@ -68,7 +68,7 @@ def _listing_matches(kinds=None):
 
 
 def _stays():
-    return _with_details(Match.objects.filter(stay_q()).exclude(talked_over_elsewhere_q()))
+    return _with_details(Match.objects.filter(stay_q()).exclude(talked_over_elsewhere_q()).exclude(joining_q()))
 
 
 # ── Matches page ───────────────────────────────────────────────────────────────
@@ -252,7 +252,8 @@ def waiting_counts(user):
 
     counts = {
         "matches": waiting(Match.objects.filter(content_type__app_label="gifts")),
-        "volunteer": waiting(Match.objects.filter(stay_q()).exclude(talked_over_elsewhere_q())),
+        "volunteer": waiting(Match.objects.filter(stay_q()).exclude(talked_over_elsewhere_q()).exclude(joining_q())),
+        "events": waiting(Match.objects.filter(joining_q())),
         "members": waiting(_applications()),
         "tours": waiting(Match.objects.filter(content_type__app_label=TOUR_APP_LABEL), _tours_received(user)),
     }
@@ -491,9 +492,10 @@ def match_detail(request, pk):
     attached_verb = match.attached_verb
     return render(request, "matches/match_detail.html", {
         "match":                match,
-        # Volunteer visits and join requests have their own place in the sidebar and breadcrumb
+        # Volunteer visits, join requests and asking to join an event have their own place
+        # in the sidebar and breadcrumb (an event says which)
         "request_type":         (
-            "volunteer" if match.is_community_stay
+            (getattr(target, "match_request_type", "") or "volunteer") if match.is_community_stay
             else "tours" if match.content_type.app_label == TOUR_APP_LABEL else ""
         ),
         # What the target shows about the match itself (a tour: the stretch and people)

@@ -24,7 +24,7 @@
 
         <div class="pt-3"></div>
         <a href="{% url 'matches:list' %}"
-           class="group flex items-center px-3 py-2 rounded {% if ns == 'matches' and request_type != 'volunteer' and request_type != 'tours' and request_type != 'members' and u != 'calendar' and u != 'lending' and u != 'community_lending' %}bg-secondary text-primary font-semibold{% else %}text-secondary hover:bg-secondary hover:text-primary{% endif %}">
+           class="group flex items-center px-3 py-2 rounded {% if ns == 'matches' and request_type != 'volunteer' and request_type != 'tours' and request_type != 'members' and request_type != 'events' and u != 'calendar' and u != 'lending' and u != 'community_lending' %}bg-secondary text-primary font-semibold{% else %}text-secondary hover:bg-secondary hover:text-primary{% endif %}">
           <i class="fa-solid fa-handshake mr-2"></i>{% trans "Matches" %}
           {% include "_badge.html" with count=waiting.matches title=answer_title sidebar=True %}
         </a>
@@ -33,8 +33,9 @@
           <i class="fa fa-gift mr-2"></i>{% trans "Your gifts and wishes" %}
         </a>
         <a href="{% url 'events:going' %}"
-           class="flex items-center px-3 py-2 rounded {% if ns == 'events' and u == 'going' %}bg-secondary text-primary font-semibold{% else %}text-secondary hover:bg-secondary hover:text-primary{% endif %}">
+           class="group flex items-center px-3 py-2 rounded {% if ns == 'events' and u == 'going' or request_type == 'events' %}bg-secondary text-primary font-semibold{% else %}text-secondary hover:bg-secondary hover:text-primary{% endif %}">
           <i class="fa-solid fa-calendar-check mr-2"></i>{% trans "Events you are attending" %}
+          {% include "_badge.html" with count=waiting.events title=answer_title sidebar=True %}
         </a>
         {% if has_lending_calendar %}
         <a href="{% url 'matches:lending' %}"

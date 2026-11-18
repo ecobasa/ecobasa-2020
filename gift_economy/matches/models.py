@@ -25,6 +25,20 @@ def stay_q():
     return q
 
 
+def joining_q():
+    """Asking to join (or coming to) an event that needs nothing but people, a gift-circle:
+    not volunteer visits, they are listed with the events one attends."""
+    from django.apps import apps
+    from django.db.models import CharField
+    from django.db.models.functions import Cast
+
+    events = apps.get_model("events", "Event").objects.asking_to_join()
+    return Q(
+        content_type__app_label="events", content_type__model="event",
+        object_id__in=events.annotate(key=Cast("pk", CharField())).values("key"),
+    )
+
+
 def talked_over_elsewhere_q():
     """Stays whose days are talked over in another conversation, so the lists leave them
     out: the visit for a membership application while its applicant is invited to visit
@@ -158,6 +172,12 @@ class Match(models.Model):
         """Someone said they come to an open event: accepted at once, nobody answers."""
         details = getattr(self, "stay_details", None)
         return details is not None and details.is_coming
+
+    @property
+    def stay_label(self):
+        """What the days it asks for are called: a stay, unless its target says otherwise
+        (a gift-circle: its kind)."""
+        return getattr(self.target, "get_match_stay_label", lambda: _("Proposed stay"))()
 
     @property
     def people(self):

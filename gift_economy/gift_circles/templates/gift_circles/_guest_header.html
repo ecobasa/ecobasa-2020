@@ -1,0 +1,6 @@
+{% load i18n %}{# Above a guest's pages: where it belongs, the gift-circle and its day #}
+<div class="mb-2 text-sm">
+  <a href="{{ event.host.get_absolute_url }}" class="hover:underline">{{ event.host_name }}</a>
+  <span class="mx-1">/</span>
+  <a href="{{ event.get_absolute_url }}" class="hover:underline">{{ event.title }}</a>
+</div>

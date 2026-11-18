@@ -7,7 +7,7 @@ from django.db.models import Q
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.text import slugify
-from django.utils.translation import gettext_lazy as _
+from django.utils.translation import gettext_lazy as _, ngettext
 from django_countries.fields import CountryField
 
 from communities.models import Community
@@ -21,6 +21,10 @@ class EventQuerySet(models.QuerySet):
         """Not archived and not over yet. Events without an end date are ongoing."""
         today = timezone.localdate()
         return self.filter(archived_at=None).filter(models.Q(ends_on=None) | models.Q(ends_on__gte=today))
+
+    def asking_to_join(self):
+        """Those where who can't just come asks to join (kinds.ASK_TO_JOIN)."""
+        return self.filter(kind__in=kinds.ASK_TO_JOIN)
 
 
 class Event(models.Model):
@@ -335,10 +339,11 @@ class Event(models.Model):
         return self.matches.filter(from_user=user, status=Match.STATUS_ACCEPTED).exists()
 
     def people_coming(self):
-        """How many come: everyone accepted, with whoever they bring."""
+        """How many come: everyone accepted, with whoever they bring, and the guests
+        without an account (gift_circles.Guest)."""
         from gift_economy.matches.models import Match
         accepted = self.matches.filter(status=Match.STATUS_ACCEPTED).select_related("stay_details")
-        return sum(match.people for match in accepted)
+        return sum(match.people for match in accepted) + sum(guest.people for guest in self.guests.coming())
 
     def free_places(self):
         """How many more can come, None without a limit."""
@@ -352,6 +357,21 @@ class Event(models.Model):
         return (
             self.is_current and self.manager is not None and user != self.manager
             and self.free_places() != 0
+        )
+
+    @property
+    def asks_to_join(self):
+        """Whether who can't just come asks to join in a few words, rather than offering
+        help with its needs: nothing is needed but people (kinds.ASK_TO_JOIN)."""
+        return self.kind in kinds.ASK_TO_JOIN
+
+    def may_just_come(self, user):
+        """Whether `user` comes without asking: it is open, or it is their tour's."""
+        if self.is_open:
+            return True
+        return bool(
+            self.host_tour_id and user.is_authenticated
+            and self.host_tour.travellers.counted().filter(user=user).exists()
         )
 
     # Its needs are the community's wishes in it, and what you can learn here its skill
@@ -405,7 +425,48 @@ class Event(models.Model):
         return self.kind_label, self.kind_icon, "bg-green"
 
     def get_match_verb(self):
+        if self.asks_to_join:
+            return _("asked to join")
         return _("offered to help with")
 
     def get_match_request_text(self):
+        if self.asks_to_join:
+            return self.texts["join_request"]
         return self.texts["help_request"]
+
+    def get_match_stay_label(self):
+        """What the days a match asks for are called: its kind where one asks to join (a
+        gift-circle), else a stay."""
+        return self.kind_label if self.asks_to_join else _("Proposed stay")
+
+    def get_match_summary(self, match):
+        """How many come, for the emails, where one asks to join."""
+        if not self.asks_to_join:
+            return ""
+        return ngettext("%(n)s person", "%(n)s people", match.people) % {"n": match.people}
+
+    @property
+    def match_counter(self):
+        """Where one asks to join, the host says yes or no: its day is its own."""
+        return not self.asks_to_join
+
+    @property
+    def match_request_type(self):
+        """Where its matches are listed in the dashboard: asking to join with the events one
+        attends, help with the volunteer visits."""
+        return "events" if self.asks_to_join else "volunteer"
+
+    def match_accept_error(self, match):
+        """Why it can't be accepted now: no room left for them."""
+        free = self.free_places()
+        if free is not None and match.people > free:
+            return ngettext(
+                "Only %(count)s more person can come.", "Only %(count)s more people can come.", free,
+            ) % {"count": free}
+        return ""
+
+    def match_accepted(self, match, data=None):
+        """Whoever was accepted comes."""
+        from .signals import coming
+
+        coming.send(sender=Event, event=self, user=match.from_user, match=match, data=None)

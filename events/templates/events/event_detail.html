@@ -142,8 +142,8 @@
         {% endif %}
       {% endif %}
 
-      {% if coming %}
-        {# Everyone accepted, and on an open event everyone who said they come. Names for logged-in people only #}
+      {% if coming or guests %}
+        {# Everyone accepted, and on an open event everyone who said they come, guests too. Names for logged-in people only #}
         <h2 id="coming">{% trans "Who is coming" %}</h2>
         <p class="text-sm">{% blocktrans count count=coming_people %}{{ count }} person so far{% plural %}{{ count }} people so far{% endblocktrans %}</p>
         {% if request.user.is_authenticated %}
@@ -153,9 +153,16 @@
                 {% if person.image %}<img src="{{ person.image.url }}" class="rounded-full h-6 w-6 object-cover" alt="">{% else %}<i class="fa fa-user text-primary"></i>{% endif %}
                 <a href="{{ person.get_absolute_url }}" class="hover:underline">{{ person.name|default:person.email }}</a>
                 {% if match.people > 1 %}<span class="opacity-70">+{{ match.people|add:"-1" }}</span>{% endif %}
-                {% if can_edit and not match.is_coming %}<a href="{{ match.get_absolute_url }}" class="underline text-xs">{% trans "Match" %}</a>{% endif %}
+                {% if can_edit and not match.is_coming %}<a href="{{ match.get_absolute_url }}" class="underline text-xs">{% trans "Application" %}</a>{% endif %}
               </li>
             {% endwith %}{% endfor %}
+            {% for guest in guests %}
+              <li class="flex items-center gap-2 px-3 py-1 rounded-full border bg-secondary bg-opacity-50 text-sm">
+                <i class="fa fa-user text-primary"></i>{{ guest.name }}
+                {% if guest.people > 1 %}<span class="opacity-70">+{{ guest.people|add:"-1" }}</span>{% endif %}
+                <span class="text-xs opacity-70">{% trans "Guest" %}</span>
+              </li>
+            {% endfor %}
           </ul>
         {% else %}
           <p class="text-sm italic">{% trans "Log in to see who is coming." %}</p>
@@ -166,8 +173,13 @@
       {% tour_visits_to event %}
       {% deliveries_with event %}
 
-      {% if can_edit and not event.is_open or offers %}
-        <h2>{% trans "Offers" %}</h2>
+      {# Where people ask to join, what waits for the host's answer; who was accepted is under "Who is coming" #}
+      {% if event.asks_to_join and offers %}
+        <h2 id="offers">{% trans "Waiting for your answer" %}</h2>
+      {% elif can_edit and not event.is_open and not event.asks_to_join or offers %}
+        <h2 id="offers">{% trans "Offers" %}</h2>
+      {% endif %}
+      {% if can_edit and not event.is_open and not event.asks_to_join or offers %}
         {% if offers %}
           <div class="space-y-2">
             {% for match in offers %}
@@ -234,19 +246,29 @@
         </div>
       {% endif %}{% endwith %}
 
-      {% if takes_people %}
-        {% if own_match and own_match.is_coming %}
-          <div class="mt-8 p-4 rounded-xl border border-green text-center text-sm">
-            <p class="font-semibold mb-2"><i class="fa fa-check mr-1 text-green"></i>{% blocktrans count count=own_match.people %}You are coming.{% plural %}You are coming, {{ count }} people.{% endblocktrans %}</p>
+      {% if own_coming and event.is_current %}
+        {# Also when it is full: who comes can still say they can't #}
+        <div class="mt-8 p-4 rounded-xl border border-green text-center text-sm">
+          <p class="font-semibold mb-2"><i class="fa fa-check mr-1 text-green"></i>{% blocktrans count count=own_match.people %}You are coming.{% plural %}You are coming, {{ count }} people.{% endblocktrans %}</p>
+          {% if own_match.is_coming %}
             <form method="post" action="{% event_url event "not_coming" %}">{% csrf_token %}
               <button type="submit" class="underline">{% trans "I can't come after all" %}</button>
             </form>
-          </div>
+          {% else %}
+            <a href="{{ own_match.get_absolute_url }}" class="underline">{% trans "See your request" %}</a>
+          {% endif %}
+          {% if coming_fields %}{% include coming_fields with changing=True %}{% endif %}
+        </div>
+      {% elif takes_people %}
+        {% if own_match and event.asks_to_join %}
+          <p class="text-sm text-center mt-8">
+            {% trans "You asked to join." %} <a href="{{ own_match.get_absolute_url }}" class="underline">{% trans "See your request" %}</a>
+          </p>
         {% elif own_match %}
           <p class="text-sm text-center mt-8">
             {% trans "You already offered help." %} <a href="{{ own_match.get_absolute_url }}" class="underline">{% trans "See your offer" %}</a>
           </p>
-        {% elif event.is_open %}
+        {% elif may_just_come %}
           {% if request.user.is_authenticated %}
             <form method="post" action="{% event_url event "come" %}" class="mt-8 p-4 rounded-xl border bg-secondary bg-opacity-50 space-y-3">{% csrf_token %}
               <label class="flex items-center justify-between gap-2 text-sm">{{ coming_form.people.label }} {{ coming_form.people }}</label>
@@ -256,15 +278,23 @@
                   <label>{{ coming_form.stay_to.label }} {{ coming_form.stay_to }}</label>
                 </div>
               {% endif %}
+              {% if coming_fields %}{% include coming_fields %}{% endif %}
               <button type="submit" class="btn btn-lg block w-full text-center"><i class="fa fa-check mr-1"></i>{% trans "I'm coming" %}</button>
             </form>
           {% else %}
             <a href="{% url 'users:login' %}?next={{ event.get_absolute_url|urlencode }}" class="btn btn-lg block w-full mt-8 text-center"><i class="fa fa-check mr-1"></i>{% trans "I'm coming" %}</a>
+            {% if guest_sign_up %}{% include guest_sign_up %}{% endif %}
           {% endif %}
           {% if needs %}
             {% event_url event "offer_help" as help_url %}
             <p class="text-sm text-center mt-2"><a href="{% if request.user.is_authenticated %}{{ help_url }}{% else %}{% url 'users:login' %}?next={{ help_url|urlencode }}{% endif %}" class="underline">{{ event.texts.support }}</a></p>
           {% endif %}
+        {% elif event.asks_to_join %}
+          {% event_url event "ask_to_join" as ask_url %}
+          <a href="{% if request.user.is_authenticated %}{{ ask_url }}{% else %}{% url 'users:login' %}?next={{ ask_url|urlencode }}{% endif %}"
+             class="btn btn-lg block w-full mt-8 text-center">
+            <i class="fa-solid fa-hand mr-1"></i>{% trans "Ask to join" %}
+          </a>
         {% else %}
           {% event_url event "offer_help" as help_url %}
           <a href="{% if request.user.is_authenticated %}{{ help_url }}{% else %}{% url 'users:login' %}?next={{ help_url|urlencode }}{% endif %}"

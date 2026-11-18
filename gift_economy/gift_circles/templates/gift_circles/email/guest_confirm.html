@@ -1,0 +1,7 @@
+{% extends "gift_circles/email/_layout.html" %}{% load i18n %}
+{% block body %}
+<p style="margin:0 0 16px;font-size:15px;line-height:1.6;">{% blocktrans with title=event.title %}You signed up for the gift-circle {{ title }} on ecobasa. Please confirm it's you:{% endblocktrans %}</p>
+<p style="margin:0 0 16px;"><a href="{{ confirm_url }}" style="display:inline-block;background-color:#da6137;color:#fcf3e5;text-decoration:none;padding:10px 20px;border-radius:6px;font-size:15px;font-weight:bold;">{% trans "Yes, I'm coming" %}</a></p>
+<p style="margin:0 0 16px;font-size:15px;line-height:1.6;">{% trans "Only after that do you count as coming, and only then do we write to you again. If it wasn't you, ignore this email and we won't write again." %}</p>
+{% include "gift_circles/_when_where.html" with with_title=True %}
+{% endblock %}

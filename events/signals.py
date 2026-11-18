@@ -6,5 +6,9 @@ from django.dispatch import Signal
 # An event was created through its form: event, user (who created it)
 event_created = Signal()
 
-# Someone said "I'm coming": event, user, match
+# Someone comes: they said "I'm coming", or the host accepted their request. event, user,
+# match, data (what they sent with "I'm coming", None when the host accepted)
 coming = Signal()
+
+# Someone asked to join: event, user, match, data (what they sent)
+asked_to_join = Signal()

@@ -52,11 +52,12 @@ def sent_requests(request):
         return SimpleLazyObject(any_)
 
     from django.db.models import Q
-    from .models import Match, stay_q
+    from .models import Match, joining_q, stay_q
     return {
-        "has_volunteer_visits": sent(stay_q()),
+        "has_volunteer_visits": sent(stay_q() & ~joining_q()),
         "has_membership_applications": sent(Q(content_type__app_label="communities", content_type__model="membership")),
+        # Also while asking to join one
         "attends_events": sent(Q(
             content_type__app_label="events", content_type__model="event", status=Match.STATUS_ACCEPTED,
-        )),
+        ) | joining_q() & Q(status__in=(Match.STATUS_PENDING, Match.STATUS_COUNTER))),
     }

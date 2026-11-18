@@ -17,6 +17,7 @@ def event_patterns(prefix=""):
         path("<slug:slug>/confirm/", views.confirm, name=f"{prefix}confirm"),
         path("<slug:slug>/confirm/<str:token>/", views.confirm_by_email, name=f"{prefix}confirm_by_email"),
         path("<slug:slug>/help/", views.offer_help, name=f"{prefix}offer_help"),
+        path("<slug:slug>/ask/", views.ask_to_join, name=f"{prefix}ask_to_join"),
         path("<slug:slug>/come/", views.come, name=f"{prefix}come"),
         path("<slug:slug>/not-coming/", views.not_coming, name=f"{prefix}not_coming"),
         path("<slug:slug>/needs/<str:need_pk>/toggle/", views.toggle_need, name=f"{prefix}toggle_need"),

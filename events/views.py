@@ -1,4 +1,5 @@
 import html
+from collections import Counter
 from datetime import datetime, time
 
 from django.contrib import messages
@@ -22,15 +23,15 @@ from communities.models import Community
 from dashboard_lists import Choice, paginate, query_url
 from gift_economy.matches.emails import notify_match_created
 from gift_economy.gifts.models import Listing
-from gift_economy.matches.models import Match, StayDetails, create_stay
+from gift_economy.matches.models import Match, StayDetails, create_stay, joining_q
 from gift_economy.gifts.skills.models import Skill, skill_name_q
 
 from . import kinds
-from .forms import ComingForm, EventForm, HelpOfferForm, NeedForm, NeedFormSet
+from .forms import AskToJoinForm, ComingForm, EventForm, HelpOfferForm, NeedForm, NeedFormSet
 from .filters import EventFilters, going_to
 from .freshness import read_confirm_token
 from .models import Event
-from .signals import coming, event_created
+from .signals import asked_to_join, coming, event_created
 
 # An event's needs and skills to learn, with how far each is covered
 _LISTINGS = Prefetch(
@@ -79,18 +80,33 @@ def going(request):
     """The events one comes to, hosts or whose help was accepted, as cards in the dashboard:
     those not over yet, the soonest first, or the past ones, the latest first."""
     past = request.GET.get("when") == "past"
+    user = request.user
+    # Asking to join one, not answered yet: on the list, with the conversation
+    open_statuses = (Match.STATUS_PENDING, Match.STATUS_COUNTER)
+    asked = {
+        int(match.object_id): match
+        for match in Match.objects.filter(joining_q(), from_user=user, status__in=open_statuses)
+    }
     # Also those one hosts oneself, or with one's tour
     mine = _events().filter(
-        Q(pk__in=going_to(request.user)) | Q(host_user=request.user) | Q(host_tour__organiser=request.user)
+        Q(pk__in=going_to(user)) | Q(pk__in=list(asked)) | Q(host_user=user) | Q(host_tour__organiser=user)
     )
     today = timezone.localdate()
     upcoming = mine.current().order_by(F("starts_on").asc(nulls_first=True), F("ends_on").asc(nulls_last=True))
     over = mine.filter(ends_on__lt=today).order_by("-ends_on", "-starts_on")
     page = paginate(request, over if past else upcoming)
+    # What waits for one's answer where people ask to join one's own
+    waiting = Counter(
+        int(pk) for pk in Match.objects.filter(joining_q(), recipient=user, status=Match.STATUS_PENDING)
+        .values_list("object_id", flat=True)
+    )
+    for event in page:
+        event.own_request = asked.get(event.pk)
+        event.waiting_answers = waiting.get(event.pk, 0)
     return render(request, "events/going.html", {
         "page": page,
         "past": past,
-        "create_buttons": _create_buttons(request.user),
+        "create_buttons": _create_buttons(user),
         "whens": [
             Choice(_("Upcoming"), query_url(request, when=None), active=not past, count=upcoming.count()),
             Choice(_("Past"), query_url(request, when="past"), active=past, count=over.count()),
@@ -218,6 +234,7 @@ def detail(request, slug, community_slug=None, kind=None):
         .prefetch_related("contributions__listing__skill").exclude(status__in=Match.CLOSED_STATUSES)
     )
     coming = [match for match in matches if match.status == Match.STATUS_ACCEPTED]
+    guests = list(event.guests.coming())
     own_match = None
     if request.user.is_authenticated:
         own_match = next((match for match in matches if match.from_user == request.user), None)
@@ -229,13 +246,25 @@ def detail(request, slug, community_slug=None, kind=None):
         "can_edit": can_edit,
         # Its community's calendar is the ambassador's
         "is_ambassador": bool(event.community_id and event.community.is_ambassador(request.user)),
-        # What waits for the host's answer or was answered; who just comes is under "Who is coming"
-        "offers": [match for match in matches if not match.is_coming] if can_edit else [],
+        # What waits for the host's answer or was answered; who just comes is under "Who is
+        # coming", and so is who was accepted where people ask to join
+        "offers": [
+            match for match in matches
+            if not match.is_coming and not (event.asks_to_join and match.status == Match.STATUS_ACCEPTED)
+        ] if can_edit else [],
         "coming": coming,
-        "coming_people": sum(match.people for match in coming),
+        "guests": guests,
+        "coming_people": sum(match.people for match in coming) + sum(guest.people for guest in guests),
         "own_match": own_match,
+        # Said "I'm coming", or was accepted where people ask to join
+        "own_coming": bool(
+            own_match and own_match.status == Match.STATUS_ACCEPTED and (own_match.is_coming or event.asks_to_join)
+        ),
         "takes_people": event.takes_people(request.user),
+        "may_just_come": event.may_just_come(request.user),
         "coming_form": ComingForm(event),
+        "coming_fields": kinds.COMING_FIELDS.get(event.kind),
+        "guest_sign_up": kinds.GUEST_SIGN_UPS.get(event.kind),
         "references": _references(event),
     })
 
@@ -405,6 +434,8 @@ def toggle_need(request, slug, need_pk, community_slug=None, kind=None):
 @login_required
 def offer_help(request, slug, community_slug=None, kind=None):
     event = _event(slug, community_slug, kind)
+    if event.asks_to_join:
+        return redirect(event.url("ask_to_join"))
     if not event.is_current or event.manager is None:
         messages.error(request, event.texts["no_offers"])
         return redirect(event.get_absolute_url())
@@ -430,13 +461,44 @@ def offer_help(request, slug, community_slug=None, kind=None):
 
 
 @login_required
+def ask_to_join(request, slug, community_slug=None, kind=None):
+    """Asking to join an event that needs nothing but people and isn't open: how many and
+    a few words, no days. The host accepts or declines in the match's conversation;
+    accepted, they come."""
+    event = _event(slug, community_slug, kind)
+    if not event.asks_to_join:
+        return redirect(event.url("offer_help"))
+    if event.may_just_come(request.user) or not event.takes_people(request.user):
+        return redirect(event.get_absolute_url())
+    own = event.matches.filter(from_user=request.user).exclude(status__in=Match.CLOSED_STATUSES).first()
+    if own is not None:
+        return redirect(own.get_absolute_url())
+    form = AskToJoinForm(request.POST or None)
+    if request.method == "POST" and form.is_valid():
+        day = _day_start(event.starts_on)
+        with transaction.atomic():
+            match = create_stay(
+                request.user, event, message=form.cleaned_data["message"], people=form.cleaned_data["people"],
+                stay_from=day, stay_to=_day_start(event.ends_on) or day,
+            )
+            asked_to_join.send(sender=Event, event=event, user=request.user, match=match, data=request.POST)
+        notify_match_created(match, http_request=request)
+        messages.success(request, _("Your request has been sent to %(host)s!") % {"host": event.host_name})
+        return redirect(match.get_absolute_url())
+    return render(request, "events/ask_to_join.html", {
+        "event": event, "form": form, "coming_fields": kinds.COMING_FIELDS.get(event.kind),
+    })
+
+
+@login_required
 @require_POST
 def come(request, slug, community_slug=None, kind=None):
-    """"I'm coming" on an open event: a match that is accepted at once, with the days
-    and the number of people. Nobody has to answer it, and the host gets no message per
-    person: they see who comes on the event's page and in their calendar."""
+    """"I'm coming" on an open event (or one's own tour's): a match that is accepted at
+    once, with the days and the number of people. Nobody has to answer it, and the host
+    gets no message per person: they see who comes on the event's page and in their
+    calendar."""
     event = _event(slug, community_slug, kind)
-    if not (event.is_open and event.takes_people(request.user)):
+    if not (event.may_just_come(request.user) and event.takes_people(request.user)):
         messages.error(request, event.texts["no_offers"])
         return redirect(event.get_absolute_url())
     form = ComingForm(event, request.POST)
@@ -463,7 +525,7 @@ def come(request, slug, community_slug=None, kind=None):
                 match=match, volunteer_mode=StayDetails.MODE_COME, people=form.cleaned_data["people"],
                 stay_from=_day_start(stay_from), stay_to=_day_start(stay_to),
             )
-            coming.send(sender=Event, event=event, user=request.user, match=match)
+            coming.send(sender=Event, event=event, user=request.user, match=match, data=request.POST)
     messages.success(request, _("Great, you are on the list!"))
     return redirect(event.get_absolute_url())
 

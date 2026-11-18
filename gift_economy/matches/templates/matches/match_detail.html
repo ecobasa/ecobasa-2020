@@ -16,6 +16,8 @@
       <a href="{% url 'matches:list' %}?type=volunteer" class="hover:underline">{% trans "Volunteer Visits" %}</a>
     {% elif request_type == "tours" %}
       <a href="{% url 'matches:list' %}?type=tours" class="hover:underline">{% trans "Join requests" %}</a>
+    {% elif request_type == "events" %}
+      <a href="{% url 'events:going' %}" class="hover:underline">{% trans "Events you are attending" %}</a>
     {% else %}
       <a href="{% url 'matches:list' %}" class="hover:underline">{% trans "Matches" %}</a>
     {% endif %}
@@ -179,7 +181,7 @@
       {% if vd.stay_from or vd.stay_to %}
         <div class="text-sm mb-2">
           <i class="fa fa-campground mr-1 text-primary"></i>
-          <strong>{% trans "Proposed stay" %}:</strong>
+          <strong>{{ match.stay_label }}:</strong>
           {% include "matches/_stay_period.html" with stay_from=vd.stay_from stay_to=vd.stay_to %}
         </div>
       {% endif %}

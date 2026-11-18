@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block head_title %}{% trans "Ask to join" %} — {{ event.title }} — ecobasa{% endblock %}
+
+{% block content %}
+<div class="container-form">
+  <div class="mb-2 text-sm">
+    <a href="{{ event.host.get_absolute_url }}" class="hover:underline">{{ event.host_name }}</a>
+    <span class="mx-1">/</span>
+    <a href="{{ event.get_absolute_url }}" class="hover:underline">{{ event.title }}</a>
+  </div>
+  <h1>{% trans "Ask to join" %}</h1>
+  <p class="text-sm"><i class="fa-regular fa-calendar mr-1"></i>{% include "events/_event_dates.html" %}</p>
+
+  <form method="post" class="border rounded-xl bg-secondary p-6 space-y-4">
+    {% csrf_token %}
+    <div class="form-group flex items-center gap-3">
+      <label class="form-label mb-0" for="{{ form.people.id_for_label }}">{{ form.people.label }}</label>
+      {{ form.people }}
+      {% for error in form.people.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="{{ form.message.id_for_label }}">{{ form.message.label }}</label>
+      <p class="text-xs mb-1">{{ form.message.help_text }}</p>
+      {{ form.message }}
+      {% for error in form.message.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+    </div>
+
+    {% if coming_fields %}{% include coming_fields %}{% endif %}
+
+    <div class="flex justify-between gap-3">
+      <a href="{{ event.get_absolute_url }}" class="btn btn-lg btn-purple"><i class="fa-solid fa-ban mr-2"></i>{% trans "Cancel" %}</a>
+      <button type="submit" class="btn btn-lg"><i class="fa-solid fa-paper-plane mr-2"></i>{% trans "Ask to join" %}</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

@@ -66,6 +66,16 @@ ON_PROFILES = (GIFT_CIRCLE,)
 # Kinds with a potluck note: what people could bring to share
 POTLUCK = (GIFT_CIRCLE,)
 
+# Kinds where nothing is needed but people: who can't just come asks to join in a few
+# words, without days or what they bring
+ASK_TO_JOIN = (GIFT_CIRCLE,)
+
+# Fields of an add-on in "I'm coming" and "Ask to join", and on the page for who comes
+COMING_FIELDS = {GIFT_CIRCLE: "gift_circles/_attendee_fields.html"}
+
+# How visitors without an account come, beside "I'm coming"
+GUEST_SIGN_UPS = {GIFT_CIRCLE: "gift_circles/_guest_sign_up.html"}
+
 # How long one usually takes, in minutes: the form fills in "Until" from "From"
 DURATIONS = {GIFT_CIRCLE: 90}
 
@@ -115,6 +125,7 @@ TEXTS = {
         "need": _("Project need"),
         "own_need": _("your project %(project)s: %(title)s"),
         "help_request": _("%(actor)s offered to help with your project: %(title)s"),
+        "join_request": _("%(actor)s asked to join your project: %(title)s"),
         "reminder_subject": _("Is your project “%(title)s” still current?"),
         "reminder_headline": _("Is your project still current?"),
         "reminder_question": _("nobody has updated the project “%(title)s” of %(community)s for a while. Is it still current?"),
@@ -143,6 +154,7 @@ TEXTS = {
         "need": _("Community event need"),
         "own_need": _("your community event %(project)s: %(title)s"),
         "help_request": _("%(actor)s offered to help with your community event: %(title)s"),
+        "join_request": _("%(actor)s asked to join your community event: %(title)s"),
         "reminder_subject": _("Is your community event “%(title)s” still current?"),
         "reminder_headline": _("Is your community event still current?"),
         "reminder_question": _("nobody has updated the community event “%(title)s” of %(community)s for a while. Is it still current?"),
@@ -171,6 +183,7 @@ TEXTS = {
         "need": _("Gift-circle need"),
         "own_need": _("your gift-circle %(project)s: %(title)s"),
         "help_request": _("%(actor)s offered to help with your gift-circle: %(title)s"),
+        "join_request": _("%(actor)s asked to join your gift-circle: %(title)s"),
         "reminder_subject": _("Is your gift-circle “%(title)s” still current?"),
         "reminder_headline": _("Is your gift-circle still current?"),
         "reminder_question": _("nobody has updated the gift-circle “%(title)s” of %(community)s for a while. Is it still current?"),

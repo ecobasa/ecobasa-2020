@@ -309,6 +309,20 @@ class HelpOfferForm(forms.Form):
         return cleaned
 
 
+class AskToJoinForm(forms.Form):
+    """Someone asks to join an event that needs nothing but people: how many they are and
+    a few words. The host answers in the match's conversation."""
+
+    people = forms.IntegerField(
+        label=_("How many are you?"), min_value=1, max_value=50, initial=1,
+        widget=forms.NumberInput(attrs={"class": "form-input w-20", "min": "1", "max": "50"}),
+    )
+    message = forms.CharField(
+        label=_("Message"), help_text=_("Who you are, and why you'd like to come."),
+        widget=forms.Textarea(attrs={"rows": 4, "class": "form-textarea w-full"}),
+    )
+
+
 class ComingForm(forms.Form):
     """Someone says they come to an open event: how many they are and, if it runs for
     more than a day, on which days."""

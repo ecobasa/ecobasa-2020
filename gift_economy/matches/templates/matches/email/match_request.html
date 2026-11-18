@@ -40,9 +40,9 @@
                     <p style="margin:0 0 16px;font-size:15px;">{{ match.loan.period }}</p>
                     {% endif %}
                     {% if vd and vd.stay_from or vd and vd.stay_to %}
-                    <p style="margin:0 0 4px;font-size:11px;text-transform:uppercase;letter-spacing:0.06em;opacity:0.6;">{% trans "Proposed stay" %}</p>
+                    <p style="margin:0 0 4px;font-size:11px;text-transform:uppercase;letter-spacing:0.06em;opacity:0.6;">{{ match.stay_label }}</p>
                     <p style="margin:0 0 16px;font-size:15px;">
-                      {% if vd.stay_from %}{{ vd.stay_from|date:"N j, Y" }}{% endif %}{% if vd.stay_from and vd.stay_to %} &ndash; {% endif %}{% if vd.stay_to %}{{ vd.stay_to|date:"N j, Y" }}{% endif %}
+                      {% if vd.stay_from %}{{ vd.stay_from|date:"N j, Y" }}{% endif %}{% if vd.stay_to and vd.stay_to|date:"Ymd" != vd.stay_from|date:"Ymd" %}{% if vd.stay_from %} &ndash; {% endif %}{{ vd.stay_to|date:"N j, Y" }}{% endif %}
                     </p>
                     {% endif %}
                     {% if vd.practice_skills %}

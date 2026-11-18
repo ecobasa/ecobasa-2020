@@ -29,6 +29,14 @@
       </div>
     {% endif %}
   {% endwith %}
+  {# On the events one attends: one's own request not answered yet, or requests waiting for one's answer #}
+  {% if event.own_request %}
+    <p class="text-sm m-0"><span class="pill bg-yellow text-xs mr-1"><i class="fa-solid fa-hourglass-half mr-1"></i>{% trans "Not approved yet" %}</span>
+      <a href="{{ event.own_request.get_absolute_url }}" class="underline">{% trans "See your request" %}</a></p>
+  {% endif %}
+  {% if event.waiting_answers %}
+    <p class="text-sm m-0"><a href="{{ event.get_absolute_url }}#offers" class="underline"><i class="fa-solid fa-hand mr-1"></i>{% blocktrans count count=event.waiting_answers %}{{ count }} request waits for your answer{% plural %}{{ count }} requests wait for your answer{% endblocktrans %}</a></p>
+  {% endif %}
   <div class="text-xs mt-auto flex flex-wrap items-center gap-2">
     {% include "events/_freshness.html" with when=event.updated_at label_updated=True %}
   </div>
