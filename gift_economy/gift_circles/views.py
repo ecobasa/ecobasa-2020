@@ -1,8 +1,10 @@
 from datetime import timedelta
 
 from django.contrib import messages
+from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
@@ -15,9 +17,10 @@ from events.models import Event
 from gift_economy.matches.models import Match
 
 from .emails import exact_place, send_guest_confirmation, send_guest_welcome
-from .forms import GuestChangeForm, GuestForm
+from .forms import GuestChangeForm, GuestForm, InviteForm
 from .guests import GUEST_SESSION_KEY, link_to_account
-from .models import Attendee, Guest
+from .invitations import EMAIL_LIMIT, answer, emails_left, invite as send_invitations, may_invite, taken_users
+from .models import Attendee, Guest, Invitation
 from .timings import timings
 
 # Empty lines on the printed Giftsheet's front (below its heading) and back: one sheet of
@@ -90,26 +93,52 @@ def guest_sign_up(request, slug):
         return redirect(event.get_absolute_url())
     form = GuestForm(request.POST or None)
     if request.method == "POST" and form.is_valid():
-        error = _too_many(event, form.cleaned_data["people"])
-        if error:
-            form.add_error("people", error)
-        else:
-            email = form.cleaned_data["email"]
-            guest = event.guests.filter(email__iexact=email).first()
-            if guest is None:
-                guest = form.save(commit=False)
-                guest.event = event
-                guest.language = get_language() or ""
-                guest.save()
-            elif not guest.confirmed_at:
-                # Signed up before without confirming: what they say now counts
-                for field in ("name", "people", "keep_on_ecobasa", "share_email"):
-                    setattr(guest, field, form.cleaned_data[field])
-                guest.save()
-            # Already confirmed: the link to change it goes out again, nothing changes
-            _mail_again(guest, send_guest_welcome if guest.confirmed_at else send_guest_confirmation)
-            return render(request, "gift_circles/guest_sent.html", {"event": event, "email": email})
+        response = _sign_up(request, event, form)
+        if response is not None:
+            return response
     return render(request, "gift_circles/guest_sign_up.html", {"event": event, "form": form})
+
+
+def _sign_up(request, event, form, invitation=None):
+    """The guest row of a valid sign-up and its email; the response, None when too many
+    come. Through an invitation by email to the same address, it needs no confirming: the
+    link in it proves the address."""
+    error = _too_many(event, form.cleaned_data["people"])
+    if error:
+        form.add_error("people", error)
+        return None
+    email = form.cleaned_data["email"]
+    guest = event.guests.filter(email__iexact=email).first()
+    if guest is None:
+        guest = form.save(commit=False)
+        guest.event = event
+        guest.language = get_language() or ""
+        guest.save()
+    elif not guest.confirmed_at:
+        # Signed up before without confirming: what they say now counts
+        for field in ("name", "people", "keep_on_ecobasa", "share_email"):
+            setattr(guest, field, form.cleaned_data[field])
+        guest.save()
+    if invitation is not None:
+        # Answered: the guest row keeps the address now
+        invitation.delete()
+        if invitation.email.lower() == email.lower():
+            if not guest.confirmed_at:
+                _confirm(request, guest)
+            return redirect(_guest_url(guest))
+    # Already confirmed: the link to change it goes out again, nothing changes
+    _mail_again(guest, send_guest_welcome if guest.confirmed_at else send_guest_confirmation)
+    return render(request, "gift_circles/guest_sent.html", {"event": event, "email": email})
+
+
+def _confirm(request, guest):
+    """A guest counts from now on: the welcome email, and an invitation of their address
+    is answered."""
+    guest.confirmed_at = guest.mailed_at = timezone.now()
+    guest.save(update_fields=["confirmed_at", "mailed_at"])
+    guest.event.invitations.filter(email__iexact=guest.email).delete()
+    transaction.on_commit(lambda: send_guest_welcome(guest))
+    messages.success(request, _("You're in. See you on %(day)s!") % {"day": _day(guest.event)})
 
 
 def _guest(slug, token):
@@ -133,10 +162,7 @@ def guest_confirm(request, slug, token):
         if error:
             messages.error(request, error)
             return redirect(event.get_absolute_url())
-        guest.confirmed_at = guest.mailed_at = timezone.now()
-        guest.save(update_fields=["confirmed_at", "mailed_at"])
-        transaction.on_commit(lambda: send_guest_welcome(guest))
-        messages.success(request, _("You're in. See you on %(day)s!") % {"day": _day(event)})
+        _confirm(request, guest)
         return redirect(_guest_url(guest))
     return render(request, "gift_circles/guest_confirm.html", {"guest": guest, "event": event})
 
@@ -186,3 +212,85 @@ def guest_account(request, slug, token):
         return redirect(event_url)
     request.session[GUEST_SESSION_KEY] = token
     return redirect(f"{reverse('users:register')}?{urlencode({'name': guest.name, 'email': guest.email, 'next': event_url})}")
+
+
+# ── Inviting ────────────────────────────────────────────────────────
+
+@login_required
+def invite(request, slug):
+    """Its host and who comes invite members found by name and anyone by email. The host
+    sees everyone invited so far, the others whom they invited."""
+    event = _gift_circle(slug)
+    if not may_invite(event, request.user):
+        return redirect(event.get_absolute_url())
+    form = InviteForm(event, request.POST or None)
+    if request.method == "POST" and form.is_valid():
+        made = send_invitations(
+            event, request.user, form.cleaned_data["users"], form.cleaned_data["people"], form.cleaned_data["message"],
+        )
+        if made:
+            messages.success(request, ngettext(
+                "Your invitation has been sent.", "Your %(count)s invitations have been sent.", len(made),
+            ) % {"count": len(made)})
+        else:
+            messages.info(request, _("They were invited already."))
+        return redirect(event.get_absolute_url())
+    invited = event.invitations.select_related("user").order_by("-created_at")
+    if not event.can_edit(request.user):
+        invited = invited.filter(invited_by=request.user)
+    return render(request, "gift_circles/invite.html", {
+        "event": event, "form": form, "invited": invited, "emails_left": emails_left(event),
+        "email_limit": EMAIL_LIMIT,
+        # Picked before the form came back with an error
+        "chosen_people": [
+            {"id": user.pk, "name": user.name or user.email} for user in form.cleaned_data.get("users", [])
+        ] if form.is_bound else [],
+    })
+
+
+@login_required
+def invite_people(request, slug):
+    """Members whose name matches `q`, to invite: their name, picture and town. Not who
+    comes or was invited already."""
+    event = _gift_circle(slug)
+    q = (request.GET.get("q") or "").strip()
+    if not may_invite(event, request.user) or len(q) < 2:
+        return JsonResponse({"results": []})
+    from users.places import town
+
+    taken = taken_users(event) | {request.user.pk}
+    people = get_user_model().objects.filter(is_active=True, name__icontains=q).exclude(pk__in=taken).order_by("name")[:8]
+    return JsonResponse({"results": [
+        {"id": person.pk, "name": person.name, "image": person.image.url if person.image else "",
+         "place": town(person.location_name) or ""}
+        for person in people
+    ]})
+
+
+def invitation(request, slug, token):
+    """The link in an invitation by email: coming as a guest, or with one's account, also
+    when it isn't open; or "I'm not coming", which deletes the address."""
+    invitation = get_object_or_404(
+        Invitation.objects.select_related("event__community", "event__host_user", "event__host_tour", "invited_by"),
+        token=token, user=None, event__kind=kinds.GIFT_CIRCLE, event__slug=slug,
+    )
+    event = invitation.event
+    action = request.POST.get("action") if request.method == "POST" else None
+    if action == "decline":
+        invitation.delete()
+        messages.success(request, _("We deleted your address. Thank you for letting us know."))
+        return redirect(event.get_absolute_url())
+    takes_people = event.takes_people()
+    if action == "account" and request.user.is_authenticated:
+        answer(invitation, request.user)
+        return redirect(event.get_absolute_url())
+    form = None
+    if not request.user.is_authenticated and takes_people:
+        form = GuestForm(request.POST or None, initial={"name": invitation.name, "email": invitation.email})
+        if action == "guest" and form.is_valid():
+            response = _sign_up(request, event, form, invitation)
+            if response is not None:
+                return response
+    return render(request, "gift_circles/invitation.html", {
+        "invitation": invitation, "event": event, "form": form, "takes_people": takes_people,
+    })

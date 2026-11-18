@@ -70,3 +70,49 @@ class Attendee(models.Model):
 
     def __str__(self):
         return f"{self.user} at {self.event}"
+
+
+class Invitation(models.Model):
+    """Someone invited to a gift-circle by its host or by someone who comes: a member
+    (`user`), or anyone by email (`email`, a `name` if it was given). Who was invited comes
+    without asking, also when it isn't open. An address is kept for this gift-circle only,
+    so the Giftsheet knows it, and deleted when they say they don't come (`token`, the link
+    in their email) or sign up as a guest (then the guest row has it)."""
+
+    event = models.ForeignKey("events.Event", on_delete=models.CASCADE, related_name="invitations")
+    invited_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="+",
+    )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True, blank=True, related_name="gift_circle_invitations",
+    )
+    name = models.CharField(_("Name"), max_length=100, blank=True)
+    email = models.EmailField(_("Email"), blank=True)
+    token = models.CharField(max_length=64, unique=True, default=new_token)
+    # The inviter's, who writes the few words: an address has no language of its own
+    language = models.CharField(max_length=10, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["created_at"]
+        verbose_name = _("Invitation")
+        verbose_name_plural = _("Invitations")
+        constraints = [
+            models.CheckConstraint(
+                name="invitation_to_a_member_or_an_email",
+                check=models.Q(user__isnull=False, email="") | models.Q(user=None) & ~models.Q(email=""),
+            ),
+            models.UniqueConstraint(
+                fields=["event", "user"], condition=models.Q(user__isnull=False), name="one_invitation_per_member",
+            ),
+            models.UniqueConstraint(
+                fields=["event", "email"], condition=~models.Q(email=""), name="one_invitation_per_email",
+            ),
+        ]
+
+    def __str__(self):
+        return f"{self.user or self.email} to {self.event}"
+
+    def inviter_name(self):
+        """Who invites, as the one invited reads it: never their email."""
+        return (self.invited_by.name if self.invited_by else "") or self.event.host_name

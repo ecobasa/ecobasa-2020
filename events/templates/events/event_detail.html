@@ -303,6 +303,7 @@
           </a>
         {% endif %}
       {% endif %}
+      {% if inviting and event.is_current %}{% include inviting %}{% endif %}
     </aside>
   </div>
 </div>

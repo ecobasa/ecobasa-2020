@@ -301,6 +301,11 @@ function eventPopup(props) {
   const dates = add(el, 'div', 'mt-1');
   add(dates, 'i', 'fa-regular fa-calendar mr-1');
   dates.append(props.dates);
+  if (props.coming) {
+    const coming = add(el, 'div', 'text-sm text-brown mt-1');
+    add(coming, 'i', 'fa-solid fa-users mr-1');
+    coming.append(props.coming);
+  }
   if (props.description) add(el, 'p', 'text-sm text-brown mt-2 mb-0', props.description);
   // Rendered by the server from the avatar snippet, everything in it escaped there
   add(el, 'div', 'mt-2').innerHTML = props.host;

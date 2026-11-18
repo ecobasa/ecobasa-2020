@@ -38,6 +38,10 @@
     <p class="text-sm m-0"><a href="{{ event.get_absolute_url }}#offers" class="underline"><i class="fa-solid fa-hand mr-1"></i>{% blocktrans count count=event.waiting_answers %}{{ count }} request waits for your answer{% plural %}{{ count }} requests wait for your answer{% endblocktrans %}</a></p>
   {% endif %}
   <div class="text-xs mt-auto flex flex-wrap items-center gap-2">
+    {# How many come, where the list counted them (`show_coming`) #}
+    {% if show_coming and event.is_current %}{% if event.coming_people or event.max_people %}
+      <span class="text-brown"><i class="fa-solid fa-users mr-1"></i>{% include "events/_coming.html" %}</span>
+    {% endif %}{% endif %}
     {% include "events/_freshness.html" with when=event.updated_at label_updated=True %}
   </div>
 </article>

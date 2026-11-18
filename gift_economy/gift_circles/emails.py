@@ -1,6 +1,7 @@
 """The emails of a gift-circle: to whoever invites to one (the facilitator card), to
 whoever comes (how it goes), each with the calendar file; to a tour's travellers where it
-invites to one; and to guests, who confirm their email first."""
+invites to one, and to people invited to one; and to guests, who confirm their email
+first."""
 
 from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
@@ -27,8 +28,9 @@ def exact_place(event):
     return event.get_match_location()[1]
 
 
-def _send(event, recipient, template, subject, place_name=None, calendar=True, **extra):
-    """`recipient`: a user or a guest. Without `place_name` its place as a user may see it."""
+def _send(event, recipient, template, subject, place_name=None, calendar=True, subject_args=None, **extra):
+    """`recipient`: a user, a guest or an invitation by email. Without `place_name` its
+    place as a user may see it."""
     with translation.override(recipient.language or settings.LANGUAGE_CODE):
         if place_name is None:
             # Its exact place: the host and who comes may know it
@@ -41,7 +43,7 @@ def _send(event, recipient, template, subject, place_name=None, calendar=True, *
             "place_name": place_name,
             "event_url": _absolute(event.get_absolute_url()),
             "print_url": _absolute(reverse("gift_circles:print", args=[event.slug])),
-            "headline": _(subject) % {"title": event.title},
+            "headline": _(subject) % {"title": event.title, **(subject_args or {})},
             "timings": timings(event),
             **extra,
         }
@@ -73,6 +75,27 @@ def send_tour_invitation(event, traveller):
     _send(
         event, traveller, "tour_invitation", gettext_noop("Your tour invites to a gift-circle: %(title)s"),
         calendar=False, tour=event.host_tour,
+    )
+
+
+def send_member_invitation(invitation, message):
+    """To a member invited by name: what a gift-circle is, and "I'm coming"."""
+    _send(
+        invitation.event, invitation.user, "invitation", gettext_noop("%(name)s invites you to a gift-circle: %(title)s"),
+        calendar=False, subject_args={"name": invitation.inviter_name()}, invitation=invitation, message=message,
+    )
+
+
+def send_email_invitation(invitation, message):
+    """To an address someone invited: what a gift-circle is, coming as a guest, and where
+    to say they don't come, which deletes the address. Its place roughly: they don't come
+    yet."""
+    event = invitation.event
+    _send(
+        event, invitation, "invitation", gettext_noop("%(name)s invites you to a gift-circle: %(title)s"),
+        place_name=None if event.is_online else event.rough_place()[0], calendar=False,
+        subject_args={"name": invitation.inviter_name()}, invitation=invitation, message=message,
+        answer_url=_absolute(reverse("gift_circles:invitation", args=[event.slug, invitation.token])),
     )
 
 

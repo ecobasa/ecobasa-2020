@@ -76,6 +76,9 @@ COMING_FIELDS = {GIFT_CIRCLE: "gift_circles/_attendee_fields.html"}
 # How visitors without an account come, beside "I'm coming"
 GUEST_SIGN_UPS = {GIFT_CIRCLE: "gift_circles/_guest_sign_up.html"}
 
+# On its page: how the host and who comes invite others, and anyone shares it
+INVITING = {GIFT_CIRCLE: "gift_circles/_invite.html"}
+
 # How long one usually takes, in minutes: the form fills in "Until" from "From"
 DURATIONS = {GIFT_CIRCLE: 90}
 

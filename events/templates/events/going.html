@@ -17,7 +17,7 @@
   {% if page.object_list %}
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
       {% for event in page %}
-        {% include "events/_event_card.html" with show_community=True %}
+        {% include "events/_event_card.html" with show_community=True show_coming=True %}
       {% endfor %}
     </div>
     {% include "dashboard/_pager.html" %}

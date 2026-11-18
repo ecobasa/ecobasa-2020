@@ -4,7 +4,7 @@
 {% if events %}
   <div class="flex flex-col gap-4">
     {% for event in events %}
-      {% include "events/_event_card.html" with show_community=True %}
+      {% include "events/_event_card.html" with show_community=True show_coming=True %}
     {% endfor %}
   </div>
   {% if page.paginator.num_pages > 1 %}

@@ -28,7 +28,7 @@ from gift_economy.gifts.skills.models import Skill, skill_name_q
 
 from . import kinds
 from .forms import AskToJoinForm, ComingForm, EventForm, HelpOfferForm, NeedForm, NeedFormSet
-from .filters import EventFilters, going_to
+from .filters import EventFilters, count_coming, going_to
 from .freshness import read_confirm_token
 from .models import Event
 from .signals import asked_to_join, coming, event_created
@@ -100,6 +100,7 @@ def going(request):
         int(pk) for pk in Match.objects.filter(joining_q(), recipient=user, status=Match.STATUS_PENDING)
         .values_list("object_id", flat=True)
     )
+    count_coming(page)
     for event in page:
         event.own_request = asked.get(event.pk)
         event.waiting_answers = waiting.get(event.pk, 0)
@@ -153,6 +154,7 @@ def api_list(request):
     home = user.location if user.is_authenticated else None
     events = filters.order(list(filters.apply(filters.base(_events()))), home)
     page = paginate(request, events)
+    count_coming(page.object_list)
     return render(request, "events/_results.html", {"page": page, "events": page.object_list, "filters": filters})
 
 
@@ -161,7 +163,9 @@ def api_markers(request):
     everyone sees them, with what their popup shows."""
     filters = EventFilters(request.GET, request.user)
     features = []
-    for event in filters.in_view(filters.apply(filters.base(_events()))):
+    events = list(filters.in_view(filters.apply(filters.base(_events()))))
+    count_coming(events)
+    for event in events:
         glyph, colour = event.kind_pin
         features.append({
             "type": "Feature",
@@ -176,6 +180,7 @@ def api_markers(request):
                 # As text: the popup sets it as such
                 "dates": " ".join(html.unescape(strip_tags(render_to_string("events/_event_dates.html", {"event": event}))).split()),
                 "description": Truncator(event.description).chars(150),
+                "coming": " ".join(html.unescape(render_to_string("events/_coming.html", {"event": event})).split()),
                 # Its host as on its card, with the avatar; where it is, the map shows
                 "host": render_to_string("events/_host.html", {"event": event, "without_place": True}),
                 "image": event.image.url if event.image else "",
@@ -265,6 +270,7 @@ def detail(request, slug, community_slug=None, kind=None):
         "coming_form": ComingForm(event),
         "coming_fields": kinds.COMING_FIELDS.get(event.kind),
         "guest_sign_up": kinds.GUEST_SIGN_UPS.get(event.kind),
+        "inviting": kinds.INVITING.get(event.kind),
         "references": _references(event),
     })
 

@@ -262,6 +262,26 @@ def test_one_s_own_gift_circles_are_among_the_events_one_goes_to(host):
     assert reverse("events:gift_circle_create") in response.content.decode()
 
 
+def test_the_user_menu_lists_events_once_one_hosts_one(host):
+    link = f'href="{reverse("events:going")}"'
+    assert link not in _client(host).get("/").content.decode()
+    _circle(host_user=host)
+    assert link in _client(host).get("/").content.decode()
+
+
+def test_the_cards_say_how_many_come(host, guest):
+    from gift_economy.gift_circles.models import Guest
+
+    event = _circle(host_user=host, max_people=12)
+    _come(event, guest, people=2)
+    Guest.objects.create(event=event, name="Ayla", email="ayla@example.com", confirmed_at=timezone.now())
+    Guest.objects.create(event=event, name="Theo", email="theo@example.com")
+    for page in (_client(host).get(reverse("events:going")), Client().get(reverse("events:api-list"))):
+        assert "3 people so far · Room for 12 people" in page.content.decode()
+    [marker] = Client().get(reverse("events:api-markers")).json()["features"]
+    assert marker["properties"]["coming"] == "3 people so far · Room for 12 people"
+
+
 def test_the_map_offers_gift_circles_to_everyone_and_more_to_ambassadors(host, community):
     response = _client(host).get(reverse("events:list"))
     assert [url for url, _label, _icon in response.context["create_buttons"]] == [reverse("events:gift_circle_create")]

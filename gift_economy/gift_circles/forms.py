@@ -1,5 +1,12 @@
-from django import forms
+from email.utils import parseaddr
 
+from django import forms
+from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError
+from django.core.validators import validate_email
+from django.utils.translation import gettext_lazy as _, ngettext
+
+from .invitations import emails_left, taken_emails
 from .models import Guest
 
 
@@ -30,3 +37,64 @@ class GuestForm(GuestChangeForm):
             "name": forms.TextInput(attrs={"class": "form-input w-full", "autocomplete": "name"}),
             "email": forms.EmailInput(attrs={"class": "form-input w-full", "autocomplete": "email"}),
         }
+
+
+def _person(line):
+    """(name, email) of "Mila, mila@example.org", "Mila <mila@example.org>" or an
+    address alone."""
+    if "," in line:
+        name, rest = line.rsplit(",", 1)
+        return name.strip(), parseaddr(rest)[1].strip()
+    name, email = parseaddr(line)
+    return name.strip(), email.strip()
+
+
+class InviteForm(forms.Form):
+    """Inviting to a gift-circle: members found by name, and anyone by email, one person
+    per line, with a few words to them."""
+
+    users = forms.ModelMultipleChoiceField(
+        get_user_model().objects.filter(is_active=True), required=False, widget=forms.MultipleHiddenInput,
+    )
+    people = forms.CharField(
+        label=_("By email"), required=False,
+        widget=forms.Textarea(attrs={"rows": 4, "class": "form-input w-full", "placeholder": "Mila, mila@example.org"}),
+        help_text=_("One person per line: their name, a comma and their email. The name may be left out."),
+    )
+    message = forms.CharField(
+        label=_("A few words to them"), required=False,
+        widget=forms.Textarea(attrs={"rows": 3, "class": "form-input w-full"}),
+        help_text=_("They get it with the invitation."),
+    )
+
+    def __init__(self, event, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.event = event
+
+    def clean_people(self):
+        people, seen = [], set()
+        for line in self.cleaned_data["people"].splitlines():
+            if not line.strip():
+                continue
+            name, email = _person(line)
+            try:
+                validate_email(email)
+            except ValidationError:
+                raise ValidationError(_("This line has no email address: %(line)s") % {"line": line.strip()})
+            if email.lower() not in seen:
+                seen.add(email.lower())
+                people.append((name[:100], email))
+        new = len(seen - taken_emails(self.event))
+        left = emails_left(self.event)
+        if new > left:
+            raise ValidationError(ngettext(
+                "A gift-circle can invite %(count)s more person by email.",
+                "A gift-circle can invite %(count)s more people by email.", left,
+            ) % {"count": left})
+        return people
+
+    def clean(self):
+        cleaned = super().clean()
+        if not self.errors and not cleaned.get("users") and not cleaned.get("people"):
+            raise ValidationError(_("Please choose someone, or write an email address."))
+        return cleaned

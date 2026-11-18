@@ -366,13 +366,15 @@ class Event(models.Model):
         return self.kind in kinds.ASK_TO_JOIN
 
     def may_just_come(self, user):
-        """Whether `user` comes without asking: it is open, or it is their tour's."""
+        """Whether `user` comes without asking: it is open, it is their tour's, or they
+        were invited (gift_circles.Invitation)."""
         if self.is_open:
             return True
+        if not user.is_authenticated:
+            return False
         return bool(
-            self.host_tour_id and user.is_authenticated
-            and self.host_tour.travellers.counted().filter(user=user).exists()
-        )
+            self.host_tour_id and self.host_tour.travellers.counted().filter(user=user).exists()
+        ) or self.invitations.filter(user=user).exists()
 
     # Its needs are the community's wishes in it, and what you can learn here its skill
     # offers in it (gifts.Listing.event). Both are listed only while it runs.

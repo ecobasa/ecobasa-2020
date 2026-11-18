@@ -1,0 +1,16 @@
+{% extends "gift_circles/email/_layout.html" %}{% load i18n %}
+{% block body %}
+<p style="margin:0 0 16px;font-size:15px;line-height:1.6;">{% blocktrans with name=invitation.inviter_name title=event.title %}{{ name }} invites you to the gift-circle {{ title }}.{% endblocktrans %}</p>
+{% if message %}<p style="margin:0 0 16px;padding:12px 16px;border-left:3px solid #d4b896;background-color:#f5ede0;font-size:15px;line-height:1.6;">{{ message|linebreaksbr }}</p>{% endif %}
+{% include "gift_circles/_when_where.html" with with_title=True %}
+<p style="margin:0 0 24px;"><a href="{% if answer_url %}{{ answer_url }}{% else %}{{ event_url }}{% endif %}" style="display:inline-block;background-color:#da6137;color:#fcf3e5;text-decoration:none;padding:10px 20px;border-radius:6px;font-size:15px;font-weight:bold;">{% if answer_url %}{% trans "Coming as a guest" %}{% else %}{% trans "I'm coming" %}{% endif %}</a></p>
+
+<h3 style="margin:24px 0 8px;font-size:17px;font-family:'Bree Serif',Georgia,serif;font-weight:normal;">{% trans "What is a gift-circle?" %}</h3>
+<p style="margin:0 0 16px;font-size:15px;line-height:1.6;">{% trans "People sit in a circle and share what they wish for and what they can give. Things, time, skills, knowledge, contacts. Nothing is bought or sold." %} {% trans "Strangers often leave as neighbours who help each other." %}</p>
+
+{% include "gift_circles/_rounds.html" %}
+{% if answer_url %}
+<p style="margin:0 0 16px;font-size:13px;line-height:1.6;opacity:0.8;">{% blocktrans with name=invitation.inviter_name %}{{ name }} gave us your address for this gift-circle only. Not coming? Tell us, and we delete it:{% endblocktrans %} <a href="{{ answer_url }}" style="color:#452912;">{% trans "I'm not coming" %}</a></p>
+{% endif %}
+<p style="margin:0;font-size:15px;line-height:1.6;">{% trans "Happy giving!" %}</p>
+{% endblock %}

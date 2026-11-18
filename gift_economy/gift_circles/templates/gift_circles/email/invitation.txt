@@ -1,0 +1,24 @@
+{% load i18n %}{% autoescape off %}{% blocktrans with name=recipient.name|default:recipient.email %}Hello {{ name }},{% endblocktrans %}
+
+{% blocktrans with name=invitation.inviter_name title=event.title %}{{ name }} invites you to the gift-circle {{ title }}.{% endblocktrans %}
+{% if message %}
+{{ message }}
+{% endif %}
+{{ event.title }}
+{% include "gift_circles/_when.txt" %}{% if place_name %}
+{{ place_name }}{% endif %}
+
+{% if answer_url %}{% trans "Coming as a guest" %}: {{ answer_url }}{% else %}{% trans "I'm coming" %}: {{ event_url }}{% endif %}
+
+{% trans "What is a gift-circle?" %}
+
+{% trans "People sit in a circle and share what they wish for and what they can give. Things, time, skills, knowledge, contacts. Nothing is bought or sold." %} {% trans "Strangers often leave as neighbours who help each other." %}
+
+{% include "gift_circles/_rounds.txt" %}
+{% if answer_url %}
+{% blocktrans with name=invitation.inviter_name %}{{ name }} gave us your address for this gift-circle only. Not coming? Tell us, and we delete it:{% endblocktrans %} {{ answer_url }}
+{% endif %}
+{% trans "Happy giving!" %}
+
+--
+ecobasa.org{% endautoescape %}

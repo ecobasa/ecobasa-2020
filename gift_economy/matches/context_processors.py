@@ -42,8 +42,8 @@ def lending_calendar(request):
 
 def sent_requests(request):
     """Whether they ever asked for a volunteer visit, to become a member of a community,
-    or came to an event, for the menu entries that list them. Lazy, so pages that don't
-    show them don't query them."""
+    or came to or host an event, for the menu entries that list them. Lazy, so pages that
+    don't show them don't query them."""
     def sent(q):
         def any_():
             if not request.user.is_authenticated:
@@ -53,11 +53,22 @@ def sent_requests(request):
 
     from django.db.models import Q
     from .models import Match, joining_q, stay_q
+
+    coming = sent(Q(
+        content_type__app_label="events", content_type__model="event", status=Match.STATUS_ACCEPTED,
+    ) | joining_q() & Q(status__in=(Match.STATUS_PENDING, Match.STATUS_COUNTER)))
+
+    def attends():
+        # Also while asking to join one, and those they host themselves or with their tour,
+        # as "Events you are attending" lists them
+        if not request.user.is_authenticated:
+            return False
+        from events.models import Event
+        hosted = Event.objects.filter(Q(host_user=request.user) | Q(host_tour__organiser=request.user))
+        return bool(coming) or hosted.exists()
+
     return {
         "has_volunteer_visits": sent(stay_q() & ~joining_q()),
         "has_membership_applications": sent(Q(content_type__app_label="communities", content_type__model="membership")),
-        # Also while asking to join one
-        "attends_events": sent(Q(
-            content_type__app_label="events", content_type__model="event", status=Match.STATUS_ACCEPTED,
-        ) | joining_q() & Q(status__in=(Match.STATUS_PENDING, Match.STATUS_COUNTER))),
+        "attends_events": SimpleLazyObject(attends),
     }

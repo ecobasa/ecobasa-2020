@@ -1,0 +1,54 @@
+{% load i18n %}{# On a gift-circle's page while it is ahead: its host and who comes invite people, anyone shares its link #}
+<div class="mt-8 text-center" x-data="shareLink('{{ event.get_absolute_url|escapejs }}')">
+  {% if can_edit or own_coming %}
+    <a href="{% url 'gift_circles:invite' event.slug %}" class="btn btn-purple block w-full text-center"><i class="fa-solid fa-user-plus mr-1"></i>{% trans "Invite people" %}</a>
+  {% endif %}
+  <div class="flex flex-wrap justify-center gap-x-4 gap-y-1 mt-2 text-sm">
+    <button type="button" class="underline" @click="copy()">
+      <i class="fa-solid fa-link mr-1"></i><span x-show="!copied">{% trans "Copy link" %}</span><span x-show="copied" x-cloak>{% trans "Copied" %}</span>
+    </button>
+    <button type="button" class="underline" x-show="canShare" x-cloak @click="navigator.share({ title: '{{ event.title|escapejs }}', url })">
+      <i class="fa-solid fa-share-nodes mr-1"></i>{% trans "Share" %}
+    </button>
+  </div>
+  {# Where the browser lets nothing copy (no https, an embedded browser): the link, selected, to copy by hand #}
+  <input type="text" readonly x-ref="field" x-show="manual" x-cloak :value="url" @focus="$event.target.select()"
+         class="form-input w-full mt-2 text-sm" aria-label="{% trans 'Copy link' %}">
+</div>
+<script>
+document.addEventListener('alpine:init', () => {
+  Alpine.data('shareLink', (path) => ({
+    url: window.location.origin + path,
+    copied: false,
+    manual: false,
+    canShare: Boolean(navigator.share),
+    copy() {
+      const done = () => { this.copied = true; setTimeout(() => { this.copied = false; }, 2000); };
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(this.url).then(done, () => this.copyOld(done));
+      } else {
+        this.copyOld(done);
+      }
+    },
+    // The older way, which works without https: copy from a field selected for it
+    copyOld(done) {
+      const field = document.createElement('textarea');
+      field.value = this.url;
+      field.setAttribute('readonly', '');
+      field.style.position = 'fixed';
+      field.style.opacity = '0';
+      document.body.append(field);
+      field.select();
+      let copied = false;
+      try { copied = document.execCommand('copy'); } catch (error) { copied = false; }
+      field.remove();
+      if (copied) {
+        done();
+      } else {
+        this.manual = true;
+        this.$nextTick(() => this.$refs.field.select());
+      }
+    },
+  }));
+});
+</script>
