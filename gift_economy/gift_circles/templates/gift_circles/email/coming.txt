@@ -7,7 +7,9 @@
 
 {% trans "Think of a wish and an offer" %}
 
-{% trans "Before you come, think of one thing you wish for and one thing you can give. Small or big, a thing, some time, a skill." %}
+{% trans "Before you come, think of one thing you wish for and one thing you can give. Small or big, a thing, some time, a skill." %} {% trans "You can add them on the page now, so others see them before:" %} {{ event_url }}#bring
+
+{% trans "Already have offers or wishes on ecobasa? Press “Bring it to the gift-circle” on them." %}
 
 {% include "gift_circles/_rounds.txt" %}
 

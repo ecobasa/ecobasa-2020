@@ -1,0 +1,29 @@
+{% load i18n %}{% autoescape off %}{% blocktrans with name=recipient.name|default:recipient.email %}Hello {{ name }},{% endblocktrans %}
+
+{% blocktrans with title=event.title host=event.host_name %}Tomorrow is the gift-circle {{ title }}, hosted by {{ host }}.{% endblocktrans %}
+
+{% include "gift_circles/_when.txt" %}{% if place_name %}
+{{ place_name }}{% endif %}
+{% if suggestions %}
+{% trans "Others who come have what you wish for, or wish for what you have. Bring it up in the circle:" %}
+{% for s in suggestions %}
+- {{ s.text }} ({% blocktrans with own=s.own_text %}fits {{ own }}{% endblocktrans %})
+{% endfor %}{% endif %}{% if brought %}
+{% trans "See what the others bring:" %} {{ event_url }}#bring
+{% endif %}{% if not brings %}
+{% trans "Think of a wish and an offer" %}
+
+{% trans "Before you come, think of one thing you wish for and one thing you can give. Small or big, a thing, some time, a skill." %}{% if not is_guest %} {% trans "You can add them on the page now, so others see them before:" %} {{ event_url }}#bring{% endif %}
+{% endif %}{% if is_host %}
+{% trans "Found a scribe yet? Your card and the Giftsheet to print:" %} {{ print_url }}
+{% endif %}{% if event.potluck_note %}
+{% blocktrans with note=event.potluck_note %}Bring something for the potluck: {{ note }}{% endblocktrans %}
+{% endif %}{% if is_guest %}
+{% trans "Change or cancel your sign-up:" %} {{ manage_url }}
+{% elif not is_host %}
+{% trans "Can't come after all? Please say so on the page, so someone else can have your place:" %} {{ event_url }}
+{% endif %}
+{% trans "See you there!" %}
+
+--
+ecobasa.org{% endautoescape %}

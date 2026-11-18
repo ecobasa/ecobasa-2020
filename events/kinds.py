@@ -79,6 +79,9 @@ GUEST_SIGN_UPS = {GIFT_CIRCLE: "gift_circles/_guest_sign_up.html"}
 # On its page: how the host and who comes invite others, and anyone shares it
 INVITING = {GIFT_CIRCLE: "gift_circles/_invite.html"}
 
+# On its page: the offers and wishes people bring, and how who comes or hosts brings theirs
+BRINGING = {GIFT_CIRCLE: "gift_circles/_bring.html"}
+
 # How long one usually takes, in minutes: the form fills in "Until" from "From"
 DURATIONS = {GIFT_CIRCLE: 90}
 

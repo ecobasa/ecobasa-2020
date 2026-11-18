@@ -1,7 +1,8 @@
 """Gift-circles listen to what happens to events: whoever invites to one and whoever
 comes gets the instructions, once the request is saved; a tour's travellers are invited
-to its own; what someone said yes to when coming is kept. A guest who creates an account
-through their link brings their sign-ups along."""
+to its own; what someone said yes to when coming is kept, and what others bring is
+matched with theirs. A guest who creates an account through their link brings their
+sign-ups along."""
 
 from django.conf import settings
 from django.contrib.auth.signals import user_logged_in
@@ -13,6 +14,7 @@ from django.utils.translation import gettext as _
 from events import kinds
 from events.signals import asked_to_join, coming, event_created
 
+from .bringing import suggest_for_newcomer
 from .emails import send_coming_confirmation, send_host_confirmation, send_tour_invitation
 from .guests import GUEST_SESSION_KEY, link_to_account
 from .models import Attendee
@@ -65,6 +67,7 @@ def confirm_coming(sender, event, user, data=None, **kwargs):
     _keep_answer(event, user, data)
     if user.email:
         transaction.on_commit(lambda: send_coming_confirmation(event, user))
+    transaction.on_commit(lambda: suggest_for_newcomer(event, user))
 
 
 @receiver(asked_to_join)

@@ -7,6 +7,7 @@
     <div class="text-xs mt-1 opacity-80">
       {% blocktrans with own=suggestion.own_text %}fits {{ own }}{% endblocktrans %}
       {% if suggestion.distance_km is not None %}· {% blocktrans with km=suggestion.distance_km %}{{ km }} km away{% endblocktrans %}{% endif %}
+      {% with circle=suggestion.gift_circle %}{% if circle %}· <a href="{{ circle.get_absolute_url }}#bring" class="underline"><i class="fa-solid fa-hands-holding-circle mr-1"></i>{{ suggestion.get_reason_display }}: {{ circle.title }}</a>{% endif %}{% endwith %}
     </div>
     {% if not suggestion.hardy_enough %}<div class="text-xs mt-1 text-yellow"><i class="fa-solid fa-snowflake mr-1"></i>{% trans "Might not survive the winter here" %}</div>{% endif %}
     <div class="flex flex-wrap items-center gap-3 mt-2">

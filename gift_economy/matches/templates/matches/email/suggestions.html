@@ -27,7 +27,7 @@
                 <tr>
                   <td style="padding:14px 18px;">
                     <p style="margin:0;font-size:15px;font-weight:bold;"><a href="{{ site_url }}{{ s.url }}" style="color:#da6137;text-decoration:none;">{{ s.text }}</a></p>
-                    <p style="margin:4px 0 0;font-size:13px;opacity:0.75;">{% blocktrans with own=s.own_text %}fits {{ own }}{% endblocktrans %}{% if s.distance_km is not None %} · {% blocktrans with km=s.distance_km %}{{ km }} km away{% endblocktrans %}{% endif %}</p>
+                    <p style="margin:4px 0 0;font-size:13px;opacity:0.75;">{% blocktrans with own=s.own_text %}fits {{ own }}{% endblocktrans %}{% if s.distance_km is not None %} · {% blocktrans with km=s.distance_km %}{{ km }} km away{% endblocktrans %}{% endif %}{% if s.gift_circle %} · {{ s.get_reason_display }}: {{ s.gift_circle.title }}{% endif %}</p>
                   </td>
                 </tr>
               </table>
@@ -39,7 +39,7 @@
                 <tr>
                   <td style="padding:14px 18px;">
                     <p style="margin:0;font-size:15px;font-weight:bold;"><a href="{{ site_url }}{{ s.action_url }}" style="color:#da6137;text-decoration:none;">{{ s.text }}</a></p>
-                    <p style="margin:4px 0 0;font-size:13px;opacity:0.75;">{% blocktrans with own=s.own_text %}fits {{ own }}{% endblocktrans %}{% if s.distance_km is not None %} · {% blocktrans with km=s.distance_km %}{{ km }} km away{% endblocktrans %}{% endif %}</p>
+                    <p style="margin:4px 0 0;font-size:13px;opacity:0.75;">{% blocktrans with own=s.own_text %}fits {{ own }}{% endblocktrans %}{% if s.distance_km is not None %} · {% blocktrans with km=s.distance_km %}{{ km }} km away{% endblocktrans %}{% endif %}{% if s.gift_circle %} · {{ s.get_reason_display }}: {{ s.gift_circle.title }}{% endif %}</p>
                   </td>
                 </tr>
               </table>

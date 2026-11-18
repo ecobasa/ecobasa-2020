@@ -9,7 +9,7 @@
 {% block content %}
 <div class="container-content">
 
-  <a class="btn inline-flex items-center text-sm leading-5 font-medium mb-10" href="{% if listing.pk %}{% url "gifts:detail" listing.pk %}{% elif community %}{{ community.get_absolute_url }}{% else %}{% url "gifts:search" %}{% endif %}">
+  <a class="btn inline-flex items-center text-sm leading-5 font-medium mb-10" href="{% if listing.pk %}{% url "gifts:detail" listing.pk %}{% elif community %}{{ community.get_absolute_url }}{% elif gift_circle %}{{ gift_circle.get_absolute_url }}{% else %}{% url "gifts:search" %}{% endif %}">
     <i class="fa-solid fa-chevron-left mr-2"></i>
     {% trans "Back" %}
   </a>
@@ -22,6 +22,7 @@
     {% endif %}
   </h1>
   {% if community %}<p class="text-sm"><i class="fa fa-home mr-1"></i>{% blocktrans with name=community.name %}For {{ name }}{% endblocktrans %}{% if listing.event %} · <a href="{{ listing.event.get_absolute_url }}" class="underline">{{ listing.event.title }}</a>{% endif %}</p>{% endif %}
+  {% if gift_circle %}<p class="text-sm"><i class="fa-solid fa-hands-holding-circle mr-1"></i>{% blocktrans with name=gift_circle.title %}For {{ name }}{% endblocktrans %}</p>{% endif %}
 
   {# Which fields show depends on the kind: things have a title, amount and categories; a skill names the skill, with a level #}
   <form enctype="multipart/form-data" method="post" class="w-full form-control-w-full space-y-4"
@@ -33,6 +34,7 @@
                   recognized: null, recognizedCategories: [] }">
     {% csrf_token %}
     {% if community %}<input type="hidden" name="community" value="{{ community.slug }}">{% endif %}
+    {% if gift_circle %}<input type="hidden" name="gift_circle" value="{{ gift_circle.slug }}">{% endif %}
     {{ form.non_field_errors }}
 
     <fieldset class="form-group" x-on:change="type = $event.target.value">
@@ -142,7 +144,7 @@
     </div>
 
     <div class="flex flex-wrap items-center gap-4 mt-12">
-      <a class="btn btn-lg btn-purple flex" href="{% if listing.pk %}{% url "gifts:detail" listing.pk %}{% elif community %}{{ community.get_absolute_url }}{% else %}{% url "gifts:search" %}{% endif %}"><i class="fa fa-ban mr-2"></i>{% trans "Cancel" %}</a>
+      <a class="btn btn-lg btn-purple flex" href="{% if listing.pk %}{% url "gifts:detail" listing.pk %}{% elif community %}{{ community.get_absolute_url }}{% elif gift_circle %}{{ gift_circle.get_absolute_url }}{% else %}{% url "gifts:search" %}{% endif %}"><i class="fa fa-ban mr-2"></i>{% trans "Cancel" %}</a>
       {% if listing.pk %}
       <a href="{% url "gifts:delete" listing.pk %}" class="btn btn-lg btn-red ml-auto"><i class="fa fa-recycle mr-2"></i>{% trans "Delete" %}</a>
       {% endif %}

@@ -149,16 +149,16 @@
         {% if request.user.is_authenticated %}
           <ul class="list-none p-0 flex flex-wrap gap-2">
             {% for match in coming %}{% with person=match.from_user %}
-              <li class="flex items-center gap-2 px-3 py-1 rounded-full border bg-secondary bg-opacity-50 text-sm">
-                {% if person.image %}<img src="{{ person.image.url }}" class="rounded-full h-6 w-6 object-cover" alt="">{% else %}<i class="fa fa-user text-primary"></i>{% endif %}
+              <li class="flex items-center gap-2 pl-1 pr-3 py-1 rounded-full border bg-secondary bg-opacity-50 text-sm">
+                <a href="{{ person.get_absolute_url }}">{% include "_avatar.html" with who=person %}</a>
                 <a href="{{ person.get_absolute_url }}" class="hover:underline">{{ person.name|default:person.email }}</a>
                 {% if match.people > 1 %}<span class="opacity-70">+{{ match.people|add:"-1" }}</span>{% endif %}
                 {% if can_edit and not match.is_coming %}<a href="{{ match.get_absolute_url }}" class="underline text-xs">{% trans "Application" %}</a>{% endif %}
               </li>
             {% endwith %}{% endfor %}
             {% for guest in guests %}
-              <li class="flex items-center gap-2 px-3 py-1 rounded-full border bg-secondary bg-opacity-50 text-sm">
-                <i class="fa fa-user text-primary"></i>{{ guest.name }}
+              <li class="flex items-center gap-2 pl-1 pr-3 py-1 rounded-full border bg-secondary bg-opacity-50 text-sm">
+                {% include "_avatar.html" with who=guest %}{{ guest.name }}
                 {% if guest.people > 1 %}<span class="opacity-70">+{{ guest.people|add:"-1" }}</span>{% endif %}
                 <span class="text-xs opacity-70">{% trans "Guest" %}</span>
               </li>
@@ -168,6 +168,8 @@
           <p class="text-sm italic">{% trans "Log in to see who is coming." %}</p>
         {% endif %}
       {% endif %}
+
+      {% if bringing %}{% include bringing %}{% endif %}
 
       {% go_together event %}
       {% tour_visits_to event %}

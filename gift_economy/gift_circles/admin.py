@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Attendee, Guest, Invitation
+from .models import Attendee, Brought, Guest, Invitation
 
 
 @admin.register(Guest)
@@ -25,3 +25,10 @@ class InvitationAdmin(admin.ModelAdmin):
     search_fields = ("name", "email", "user__name", "event__title")
     raw_id_fields = ("event", "user", "invited_by")
     readonly_fields = ("token", "created_at")
+
+
+@admin.register(Brought)
+class BroughtAdmin(admin.ModelAdmin):
+    list_display = ("listing", "event", "created_at")
+    search_fields = ("listing__title", "event__title")
+    raw_id_fields = ("event", "listing")

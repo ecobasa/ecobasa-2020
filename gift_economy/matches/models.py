@@ -699,6 +699,9 @@ class Suggestion(models.Model):
     # community in the same days (the other side is their stay, not a tour)
     REASON_HOME = "home"
     REASON_TOGETHER = "together"
+    # Both come to the same gift-circle, and one of them brings it there: they meet in
+    # person, however far apart they live (the gift-circle is the detail)
+    REASON_GIFT_CIRCLE = "gift_circle"
     # Those that are about travelling along: silenced while someone pauses tour suggestions
     TRAVEL_REASONS = (REASON_ROUTE, REASON_LEARN, REASON_HAS)
     REASON_CHOICES = [
@@ -712,6 +715,7 @@ class Suggestion(models.Model):
         (REASON_WANTS, _("A stop wishes for what you have")),
         (REASON_HOME, _("A ride towards your home")),
         (REASON_TOGETHER, _("Someone from near you comes too")),
+        (REASON_GIFT_CIRCLE, _("Comes to the same gift-circle")),
     ]
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="suggestions")
@@ -723,7 +727,8 @@ class Suggestion(models.Model):
     other_type = models.ForeignKey(ContentType, on_delete=models.CASCADE, related_name="+")
     other_id = models.CharField(max_length=255)
     other = GenericForeignKey("other_type", "other_id")
-    # For a tour: the offer or wish at one of its stops it is about (REASON_HAS, REASON_WANTS)
+    # For a tour: the offer or wish at one of its stops it is about (REASON_HAS,
+    # REASON_WANTS); the gift-circle both come to (REASON_GIFT_CIRCLE)
     detail_type = models.ForeignKey(ContentType, on_delete=models.CASCADE, null=True, blank=True, related_name="+")
     detail_id = models.CharField(max_length=255, blank=True)
     detail = GenericForeignKey("detail_type", "detail_id")
@@ -824,6 +829,11 @@ class Suggestion(models.Model):
                 return _("The tour %(tour)s goes to %(place)s, which offers: %(title)s"), values
             return _("The tour %(tour)s goes to %(place)s, which is looking for: %(title)s"), values
         return _("The tour %(tour)s passes near you"), {}
+
+    @property
+    def gift_circle(self):
+        """The gift-circle both come to, where it is the reason."""
+        return self.detail if self.reason == self.REASON_GIFT_CIRCLE else None
 
     @property
     def gives_along(self):

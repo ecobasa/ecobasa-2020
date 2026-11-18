@@ -116,3 +116,22 @@ class Invitation(models.Model):
     def inviter_name(self):
         """Who invites, as the one invited reads it: never their email."""
         return (self.invited_by.name if self.invited_by else "") or self.event.host_name
+
+
+class Brought(models.Model):
+    """An offer or a wish of someone's own that they bring to a gift-circle they come to
+    or host: linked, nothing copied, so it stays one listing on ecobasa. Its page lists
+    what people bring while they still come."""
+
+    event = models.ForeignKey("events.Event", on_delete=models.CASCADE, related_name="brought")
+    listing = models.ForeignKey("gifts.Listing", on_delete=models.CASCADE, related_name="brought_to")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["created_at"]
+        verbose_name = _("Brought offer or wish")
+        verbose_name_plural = _("Brought offers and wishes")
+        constraints = [models.UniqueConstraint(fields=["event", "listing"], name="bring_a_listing_once")]
+
+    def __str__(self):
+        return f"{self.listing} to {self.event}"

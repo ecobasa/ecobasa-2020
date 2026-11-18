@@ -14,6 +14,8 @@
   </div>
 
   {% if event.is_current %}
+    <h2 class="mt-0">{% trans "Think of a wish and an offer" %}</h2>
+    <p>{% trans "Before you come, think of one thing you wish for and one thing you can give. Small or big, a thing, some time, a skill." %}</p>
     <form method="post" class="border rounded-xl bg-secondary p-6 space-y-4">
       {% csrf_token %}
       {% include "gift_circles/_guest_fields.html" %}

@@ -21,6 +21,8 @@ from .forms import ListingForm
 from .filters import ListingFilter
 from .models import Listing, public_spot
 from communities.models import Community, with_member_communities
+from events import kinds
+from events.models import Event
 from gift_economy.references.models import Reference
 from users.models import User
 from users.places import approximate, town
@@ -177,11 +179,24 @@ def _holder_for(request):
     return community
 
 
+def _gift_circle_for(request, community):
+    """The gift-circle a person's new offer or wish is brought to (?gift_circle=<slug>),
+    if they come to it or host it."""
+    from gift_economy.gift_circles.bringing import may_bring
+
+    slug = request.POST.get("gift_circle") or request.GET.get("gift_circle")
+    if not slug or community is not None:
+        return None
+    event = Event.objects.filter(kind=kinds.GIFT_CIRCLE, slug=slug).first()
+    return event if event is not None and may_bring(event, request.user) else None
+
+
 @login_required
 def create(request):
     """A new offer or wish: ?type=offer|wish, ?kind=…, ?skill=<name>, ?lend=1 and
-    ?community=<slug> preset it."""
+    ?community=<slug> preset it; ?gift_circle=<slug> brings it to that gift-circle."""
     community = _holder_for(request)
+    gift_circle = _gift_circle_for(request, community)
     initial = {
         "type": request.GET.get("type") if request.GET.get("type") in ("offer", "wish") else "offer",
         "kind": request.GET.get("kind") if request.GET.get("kind") in dict(Listing.KIND_CHOICES) else Listing.KIND_OTHER,
@@ -204,8 +219,15 @@ def create(request):
         messages.success(
             request, _("%(listing_type)s created") % {"listing_type": listing.get_type_display()}
         )
+        if gift_circle is not None:
+            from gift_economy.gift_circles.bringing import bring
+
+            bring(gift_circle, listing)
+            return redirect(f"{gift_circle.get_absolute_url()}#bring")
         return redirect(listing.get_absolute_url())
-    return render(request, "gifts/listing_form.html", {"form": form, "community": community, **_form_context()})
+    return render(request, "gifts/listing_form.html", {
+        "form": form, "community": community, "gift_circle": gift_circle, **_form_context(),
+    })
 
 
 def _holder_place(holder):

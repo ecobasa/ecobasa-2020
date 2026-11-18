@@ -8,14 +8,16 @@ from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
-from django.utils.http import urlencode
+from django.utils.http import url_has_allowed_host_and_scheme, urlencode
 from django.utils.translation import get_language, gettext as _, ngettext
 from django.views.decorators.http import require_POST
 
 from events import kinds
 from events.models import Event
+from gift_economy.gifts.models import Listing
 from gift_economy.matches.models import Match
 
+from . import bringing
 from .emails import exact_place, send_guest_confirmation, send_guest_welcome
 from .forms import GuestChangeForm, GuestForm, InviteForm
 from .guests import GUEST_SESSION_KEY, link_to_account
@@ -57,6 +59,36 @@ def attendee(request, slug):
         )
         messages.success(request, _("Saved."))
     return redirect(event.get_absolute_url())
+
+
+# ── What people bring ───────────────────────────────────────────────
+
+def _back(request, event):
+    """Where bringing or taking back leads: the page it was done on, else the gift-circle's."""
+    target = request.POST.get("next", "")
+    if target and url_has_allowed_host_and_scheme(target, allowed_hosts={request.get_host()}, require_https=request.is_secure()):
+        return redirect(target)
+    return redirect(f"{event.get_absolute_url()}#bring")
+
+
+@login_required
+@require_POST
+def bring(request, slug):
+    """Who comes or hosts brings an offer or a wish of their own."""
+    event = _gift_circle(slug)
+    listing = get_object_or_404(bringing.own_listings(request.user), pk=request.POST.get("listing", ""))
+    if bringing.may_bring(event, request.user):
+        bringing.bring(event, listing)
+    return _back(request, event)
+
+
+@login_required
+@require_POST
+def take_back(request, slug, pk):
+    event = _gift_circle(slug)
+    listing = get_object_or_404(Listing, pk=pk, owner=request.user)
+    bringing.take_back(event, listing)
+    return _back(request, event)
 
 
 # ── Guests ──────────────────────────────────────────────────────────

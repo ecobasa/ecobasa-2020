@@ -140,6 +140,7 @@ skips a job while its previous run is still going.
 | --- | --- |
 | every 5 minutes | `fetch_reference_replies` |
 | daily, 9:00 | `archive_stale_events` |
+| daily, 9:00 | `send_gift_circle_reminders` |
 | daily, 9:05 | `archive_stale_tours` |
 | daily, 10:00 | `send_reference_requests` |
 | Thursdays, 17:00 | `send_suggestion_emails` |

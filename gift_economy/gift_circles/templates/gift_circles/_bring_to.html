@@ -1,0 +1,27 @@
+{% load i18n %}{# On an offer or wish of one's own: the gift-circles ahead one comes to or hosts, to bring it to or take it back #}
+{% if circles %}
+  <div class="mt-6 space-y-2">
+    {% for circle in circles %}
+      <div class="flex flex-wrap items-center gap-3 p-3 rounded-xl border bg-secondary bg-opacity-50">
+        <i class="fa-solid fa-hands-holding-circle text-primary"></i>
+        <div class="flex-1 min-w-0 text-sm">
+          <a href="{{ circle.get_absolute_url }}" class="font-semibold hover:underline">{{ circle.title }}</a>
+          <span class="block text-xs opacity-80">{% include "events/_event_dates.html" with event=circle %}</span>
+        </div>
+        {% if circle.has_it %}
+          <span class="text-sm"><i class="fa fa-check text-green mr-1"></i><a href="{{ circle.get_absolute_url }}#bring" class="underline">{% trans "What people bring" %}</a></span>
+          <form method="post" action="{% url 'gift_circles:take_back' circle.slug listing.pk %}">{% csrf_token %}
+            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+            <button type="submit" class="px-2 py-1 rounded text-sm text-red hover:opacity-80" title="{% trans 'Take it back' %}" aria-label="{% trans 'Take it back' %}"><i class="fa-solid fa-trash-can"></i></button>
+          </form>
+        {% else %}
+          <form method="post" action="{% url 'gift_circles:bring' circle.slug %}">{% csrf_token %}
+            <input type="hidden" name="listing" value="{{ listing.pk }}">
+            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+            <button type="submit" class="btn text-sm py-1 px-3"><i class="fa-solid fa-hand-holding-heart mr-1"></i>{% trans "Bring it to the gift-circle" %}</button>
+          </form>
+        {% endif %}
+      </div>
+    {% endfor %}
+  </div>
+{% endif %}
