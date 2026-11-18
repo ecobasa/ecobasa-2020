@@ -13,6 +13,7 @@ def event_patterns(prefix=""):
         path("<slug:slug>/", views.detail, name=f"{prefix}detail"),
         path("<slug:slug>/edit/", views.edit, name=f"{prefix}edit"),
         path("<slug:slug>/archive/", views.archive, name=f"{prefix}archive"),
+        path("<slug:slug>/delete/", views.delete, name=f"{prefix}delete"),
         path("<slug:slug>/confirm/", views.confirm, name=f"{prefix}confirm"),
         path("<slug:slug>/confirm/<str:token>/", views.confirm_by_email, name=f"{prefix}confirm_by_email"),
         path("<slug:slug>/help/", views.offer_help, name=f"{prefix}offer_help"),

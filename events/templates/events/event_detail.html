@@ -87,7 +87,8 @@
               <button type="submit" class="btn btn-purple"><i class="fa-solid fa-box-archive mr-1"></i>{% trans "Archive" %}</button>
             </form>
           {% endif %}
-          {% if community %}<a href="{% url 'matches:calendar' community.slug %}" class="btn btn-purple"><i class="fa-regular fa-calendar mr-1"></i>{% trans "Calendar" %}</a>{% endif %}
+          {% for url, label, icon in event.tools %}<a href="{{ url }}" class="btn btn-purple"><i class="fa-solid {{ icon }} mr-1"></i>{{ label }}</a>{% endfor %}
+          {% if is_ambassador %}<a href="{% url 'matches:calendar' community.slug %}" class="btn btn-purple"><i class="fa-regular fa-calendar mr-1"></i>{% trans "Calendar" %}</a>{% endif %}
         </div>
       {% endif %}
 

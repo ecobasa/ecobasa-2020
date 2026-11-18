@@ -9,7 +9,7 @@
   <div class="flex flex-wrap items-center gap-3 mb-4">
     <h1 class="text-4xl font-semibold flex items-center gap-2 m-0"><i class="fa-solid fa-calendar-check text-primary"></i>{% trans "Events you are attending" %}</h1>
     <span class="flex flex-wrap gap-2 ml-auto">
-      {% for url, label, icon in own_kinds %}<a href="{{ url }}" class="btn"><i class="fa-solid {{ icon }} mr-1"></i>{{ label }}</a>{% endfor %}
+      {% for url, label, icon in create_buttons %}<a href="{{ url }}" class="btn"><i class="fa-solid {{ icon }} mr-1"></i>{{ label }}</a>{% endfor %}
       <a href="{% url 'events:list' %}?going=1&amp;view=list" class="btn btn-purple"><i class="fa-solid fa-map mr-1"></i>{% trans "Show on map" %}</a>
     </span>
   </div>

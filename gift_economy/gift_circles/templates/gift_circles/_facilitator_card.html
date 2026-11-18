@@ -1,0 +1,41 @@
+{% load i18n %}{# The facilitator card: in the host's email and on the printed page; the rounds' minutes from gift_circles.timings #}
+<h3 style="margin:24px 0 8px;font-size:17px;font-family:'Bree Serif',Georgia,serif;font-weight:normal;">{% trans "Before you start" %}</h3>
+<ul style="margin:0 0 12px;padding-left:22px;list-style:disc;font-size:15px;line-height:1.6;">
+  <li style="margin:0 0 6px;">{% trans "Find a scribe. They write the Giftsheet: on paper, or straight into ecobasa on a phone or laptop so open wishes can still be matched after the circle by other people." %}</li>
+  <li style="margin:0 0 6px;">{% trans "Optional: a timekeeper, who says when a round should end." %}</li>
+  <li style="margin:0 0 6px;">{% trans "Sit or stand in a circle, so everyone sees everyone." %}</li>
+</ul>
+
+<h3 style="margin:24px 0 8px;font-size:17px;font-family:'Bree Serif',Georgia,serif;font-weight:normal;">{% trans "The rounds" %} <span style="font-weight:normal;">{% if timings.duration %}({{ timings.duration }}){% else %}{% trans "(maximum 1.5 hours)" %}{% endif %}</span></h3>
+<ol style="margin:0 0 12px;padding-left:22px;list-style:decimal;font-size:15px;line-height:1.6;">
+  <li style="margin:0 0 6px;"><strong>{% trans "Welcome" context "gift-circle round" %}</strong> {% blocktrans with minutes=timings.welcome %}({{ minutes }} minutes){% endblocktrans %}. {% trans "Names. Explain the rounds and the karma rules. Say that offers and wishes go on ecobasa only for those who said yes, and emails go only between the two sides of a match." %}</li>
+  <li style="margin:0 0 6px;"><strong>{% trans "Wishes" context "gift-circle round" %}</strong> {% blocktrans with minutes=timings.wishes %}({{ minutes }} minutes){% endblocktrans %}. {% trans "Go round the circle. Each person says one wish, or passes. After each wish, ask:" %}
+    <ul style="margin:4px 0;padding-left:22px;list-style:circle;">
+      <li>{% trans "Who can help?" %}</li>
+      <li>{% trans "Nobody? Who knows someone who can?" %}</li>
+      <li>{% trans "Still nobody? Who has an idea how we could do it together?" %}</li>
+    </ul>
+    {% trans "Stay with one wish until it is solved or you let it go, then the next person. If there is time, go round again." %}</li>
+  <li style="margin:0 0 6px;"><strong>{% trans "Offers" context "gift-circle round" %}</strong> {% blocktrans with minutes=timings.offers %}({{ minutes }} minutes){% endblocktrans %}. {% trans "Round again. Each person says what they can give. Who would like it?" %}</li>
+  <li style="margin:0 0 6px;"><strong>{% trans "Thanks" context "gift-circle round" %}</strong> {% blocktrans with minutes=timings.thanks %}({{ minutes }} minutes){% endblocktrans %}. {% trans "Each person thanks someone: for a gift from last time, for something today, or just for being here." %}</li>
+  <li style="margin:0 0 6px;"><strong>{% trans "Close" context "gift-circle round" %}</strong> {% blocktrans with minutes=timings.close %}({{ minutes }} minutes){% endblocktrans %}. {% trans "The scribe reads out the matches. Remind everyone: the one who wished follows up." %}</li>
+</ol>
+
+<h3 style="margin:24px 0 8px;font-size:17px;font-family:'Bree Serif',Georgia,serif;font-weight:normal;">{% trans "Tips" %}</h3>
+<ul style="margin:0 0 12px;padding-left:22px;list-style:disc;font-size:15px;line-height:1.6;">
+  <li style="margin:0 0 6px;">{% trans "Help the shy ones. If nobody starts, suggest an easy wish: a hug, a book tip, help carrying something." %}</li>
+  <li style="margin:0 0 6px;">{% trans "Keep wishes short. One sentence is enough for the Giftsheet." %}</li>
+  <li style="margin:0 0 6px;">{% trans "Offers can come up in the wish round. That's fine: the scribe writes them down too." %}</li>
+  <li style="margin:0 0 6px;">{% trans "If a wish finds nobody, let it go kindly. It stays on the Giftsheet and on ecobasa if they want and may still find a match." %}</li>
+</ul>
+
+{% include "gift_circles/_karma_rules.html" with credit=True %}
+
+<h3 style="margin:24px 0 8px;font-size:17px;font-family:'Bree Serif',Georgia,serif;font-weight:normal;">{% trans "What to bring" %}</h3>
+<ul style="margin:0 0 12px;padding-left:22px;list-style:disc;font-size:15px;line-height:1.6;">
+  <li style="margin:0 0 6px;">{% trans "The printed Giftsheet, or big paper" %}</li>
+  <li style="margin:0 0 6px;">{% trans "Markers in two colours: one for wishes, one for offers" %}</li>
+  <li style="margin:0 0 6px;">{% trans "Pens and small paper, so people can note contacts" %}</li>
+  <li style="margin:0 0 6px;">{% trans "A phone or laptop for the scribe, if you type the Giftsheet into ecobasa" %}</li>
+  {% if event.potluck_note %}<li style="margin:0 0 6px;">{% blocktrans with note=event.potluck_note %}Something for the potluck: {{ note }}{% endblocktrans %}</li>{% endif %}
+</ul>

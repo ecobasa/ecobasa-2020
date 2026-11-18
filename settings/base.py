@@ -86,6 +86,7 @@ LOCAL_APPS = [
     "notifications",
     "gift_economy.matches",
     "gift_economy.references",
+    "gift_economy.gift_circles",
     "events",
     "tours",
     "help",

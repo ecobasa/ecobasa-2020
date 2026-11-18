@@ -272,17 +272,17 @@
 			{% endif %}
 
 			<!-- Its events: projects and community events -->
-			{% if events or is_ambassador %}
+			{% if events or can_edit %}
 				<h2 id="events">{% trans "Projects and events" %}</h2>
 				{% if events %}
 					<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
 						{% for event in events %}{% include "events/_event_card.html" %}{% endfor %}
 					</div>
 				{% endif %}
-				{% if is_ambassador %}
+				{% if can_edit %}
 					<div class="flex flex-wrap gap-2">
 						{% for kind, label, icon in event_kinds %}<a href="{% url 'events:create' community.slug %}?kind={{ kind }}" class="btn"><i class="fa-solid {{ icon }} mr-1"></i>{{ label }}</a>{% endfor %}
-						<a href="{% url 'matches:calendar' community.slug %}" class="btn btn-purple"><i class="fa-regular fa-calendar mr-1"></i>{% trans "Calendar" %}</a>
+						{% if is_ambassador %}<a href="{% url 'matches:calendar' community.slug %}" class="btn btn-purple"><i class="fa-regular fa-calendar mr-1"></i>{% trans "Calendar" %}</a>{% endif %}
 					</div>
 					{% if past_events %}
 						<details class="mt-4">

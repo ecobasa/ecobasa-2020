@@ -1,0 +1,28 @@
+{% load i18n %}{% autoescape off %}{% blocktrans with name=recipient.name|default:recipient.email %}Hello {{ name }},{% endblocktrans %}
+
+{% trans "Thank you for inviting to a gift-circle! Here is everything you need on the day." %}
+
+{{ event.title }}
+{% include "gift_circles/_when.txt" %}{% if place_name %}
+{{ place_name }}{% endif %}
+
+{% trans "Share this page so people can come:" %} {{ event_url }}
+
+
+{% trans "Your facilitator card" %}
+
+{% trans "Print it, or keep this email open on your phone." %}
+
+{% include "gift_circles/_facilitator_card.txt" %}
+
+{% trans "Links" %}
+
+{% trans "Printable Giftsheet and this card:" %} {{ print_url }}
+{% trans "Your gift-circle's page:" %} {{ event_url }}
+
+{% trans "The calendar file is attached." %}
+
+{% trans "Happy giving!" %}
+
+--
+ecobasa.org{% endautoescape %}

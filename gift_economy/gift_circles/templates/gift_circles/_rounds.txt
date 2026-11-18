@@ -1,0 +1,8 @@
+{% load i18n %}{% autoescape off %}{% trans "How a gift-circle goes" %}
+
+1. {% trans "Welcome." %} {% trans "Everyone says their name. The facilitator explains the rounds and the karma rules." %}
+2. {% trans "Wishes." %} {% trans "We go round the circle. Each person says one wish, or passes. Who can help? Who knows someone who can? Who has an idea how we could do it together?" %}
+3. {% trans "Offers." %} {% trans "Round again. Each person says something they can give: a thing, some time, a skill. Who would like it?" %}
+4. {% trans "Thanks." %} {% trans "A last round. Thank someone: for a gift from last time, for something today, or just for being here." %}
+
+{% trans "The scribe writes it all down on the Giftsheet: who wished or offered what, and who said yes." %}{% endautoescape %}

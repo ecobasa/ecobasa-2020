@@ -204,10 +204,10 @@ def detail(request, slug):
         "place_name":       place_name,
         "place_point":      place_point,
         "events":         events.current(),
-        # What the ambassador can add: one button per kind
+        # What members can add: one button per kind
         "event_kinds":    event_kind_buttons(),
-        # The ambassador also sees archived and ended events, to bring one back
-        "past_events":    events.exclude(pk__in=events.current()).order_by("-updated_at")[:10] if is_ambassador else [],
+        # Members also see archived and ended events, to bring one back
+        "past_events":    events.exclude(pk__in=events.current()).order_by("-updated_at")[:10] if community.can_edit(request.user) else [],
         "is_ambassador":    is_ambassador,
         # Members edit its page and its offers and wishes
         "can_edit":         community.can_edit(request.user),

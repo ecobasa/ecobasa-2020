@@ -18,7 +18,7 @@ class EventForm(forms.ModelForm):
     )
     field_order = [
         "kind", "title", "image", "description", "skills_to_learn", "starts_on", "ends_on", "starts_at", "ends_at",
-        "is_online", "location_name", "location", "country", "max_people", "is_open",
+        "is_online", "location_name", "location", "country", "max_people", "is_open", "potluck_note",
     ]
     # What only a community's events ask: they take volunteers and provide for them
     COMMUNITY_FIELDS = ("skills_to_learn", "volunteers_wanted", "food_provided", "bed_provided", "provided_note")
@@ -27,7 +27,7 @@ class EventForm(forms.ModelForm):
         model = Event
         fields = [
             "kind", "title", "image", "description", "starts_on", "ends_on", "starts_at", "ends_at",
-            "is_online", "location_name", "location", "country", "max_people", "is_open",
+            "is_online", "location_name", "location", "country", "max_people", "is_open", "potluck_note",
             "volunteers_wanted", "food_provided", "bed_provided", "provided_note",
         ]
         widgets = {
@@ -35,8 +35,9 @@ class EventForm(forms.ModelForm):
             "location": forms.HiddenInput(),
             "starts_on": forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
             "ends_on": forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
-            "starts_at": forms.TimeInput(attrs={"type": "time"}, format="%H:%M"),
-            "ends_at": forms.TimeInput(attrs={"type": "time"}, format="%H:%M"),
+            # In steps of a quarter of an hour
+            "starts_at": forms.TimeInput(attrs={"type": "time", "step": 900}, format="%H:%M"),
+            "ends_at": forms.TimeInput(attrs={"type": "time", "step": 900}, format="%H:%M"),
             "description": forms.Textarea(attrs={"rows": 5}),
         }
 
@@ -65,8 +66,22 @@ class EventForm(forms.ModelForm):
             for name in self.COMMUNITY_FIELDS:
                 del self.fields[name]
 
+    def _offered(self, kind_list):
+        return [kind for kind in kind_list if kind in dict(self.fields["kind"].choices)]
+
     def one_day_kinds(self):
-        return [kind for kind in kinds.ONE_DAY if kind in dict(self.fields["kind"].choices)]
+        return self._offered(kinds.ONE_DAY)
+
+    def potluck_kinds(self):
+        return self._offered(kinds.POTLUCK)
+
+    def durations(self):
+        """{kind: minutes} of the kinds offered that usually take that long."""
+        return {kind: kinds.DURATIONS[kind] for kind in self._offered(kinds.DURATIONS)}
+
+    def guides(self):
+        """(kind, template) of the kinds offered that have a guide for whoever invites."""
+        return [(kind, kinds.GUIDES[kind]) for kind in self._offered(kinds.GUIDES)]
 
     def kind_choices(self):
         """(value, label, icon, hint, the settings a new one starts with) per kind its host
@@ -83,6 +98,8 @@ class EventForm(forms.ModelForm):
             if not cleaned.get("starts_on"):
                 self.add_error("starts_on", _("Which day?"))
             cleaned["ends_on"] = cleaned.get("starts_on")
+        if cleaned.get("kind") not in kinds.POTLUCK:
+            cleaned["potluck_note"] = ""
         starts_on, ends_on = cleaned.get("starts_on"), cleaned.get("ends_on")
         if starts_on and ends_on and ends_on < starts_on:
             self.add_error("ends_on", _("It can't end before it starts."))
@@ -99,6 +116,18 @@ class EventForm(forms.ModelForm):
             if not self.instance.community_id:
                 self.add_error("location_name", _("Choose the place on the map, or make it online."))
         return cleaned
+
+    def _quarter_hour(self, name):
+        hour = self.cleaned_data.get(name)
+        if hour and (hour.minute % 15 or hour.second):
+            raise forms.ValidationError(_("Please choose a time in steps of 15 minutes."))
+        return hour
+
+    def clean_starts_at(self):
+        return self._quarter_hour("starts_at")
+
+    def clean_ends_at(self):
+        return self._quarter_hour("ends_at")
 
     def clean_image(self):
         """A new picture as a JPEG of a size a page needs, not a camera's."""

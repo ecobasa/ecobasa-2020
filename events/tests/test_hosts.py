@@ -9,7 +9,7 @@ from django.test import Client
 from django.urls import reverse
 from django.utils import timezone
 
-from communities.models import Community
+from communities.models import Community, Membership
 from gift_economy.matches.models import Match, StayDetails
 from tours.models import Stop, Tour, append_stop
 from users.models import User
@@ -110,6 +110,11 @@ def test_a_gift_circle_happens_on_one_day(host):
     _client(host).post(reverse("events:gift_circle_create"), {**data, "starts_on": day, "ends_on": day + timedelta(days=5)})
     event = Event.objects.get()
     assert (event.starts_on, event.ends_on) == (day, day) and not event.is_ongoing
+
+
+def test_a_gift_circle_saved_without_an_end_ends_the_day_it_starts(host):
+    event = _circle(host_user=host, ends_on=None)
+    assert event.ends_on == event.starts_on and not event.is_ongoing
 
 
 def test_an_event_has_exactly_one_host(host, community):
@@ -255,6 +260,83 @@ def test_one_s_own_gift_circles_are_among_the_events_one_goes_to(host):
     response = _client(host).get(reverse("events:going"))
     assert list(response.context["page"]) == [event]
     assert reverse("events:gift_circle_create") in response.content.decode()
+
+
+def test_the_map_offers_gift_circles_to_everyone_and_more_to_ambassadors(host, community):
+    response = _client(host).get(reverse("events:list"))
+    assert [url for url, _label, _icon in response.context["create_buttons"]] == [reverse("events:gift_circle_create")]
+    response = _client(community.ambassador).get(reverse("events:list"))
+    urls = [url for url, _label, _icon in response.context["create_buttons"]]
+    create = reverse("events:create", args=[community.slug])
+    assert urls == [
+        reverse("events:gift_circle_create"), f"{create}?kind={kinds.PROJECT}", f"{create}?kind={kinds.COMMUNITY_EVENT}",
+    ]
+    assert _client(community.ambassador).get(urls[1]).status_code == 200
+
+
+def test_members_invite_to_their_community_s_events(guest, community):
+    Membership.objects.create(community=community, user=guest, stage=Membership.STAGE_MEMBER)
+    urls = [url for url, _label, _icon in _client(guest).get(reverse("events:list")).context["create_buttons"]]
+    create = reverse("events:create", args=[community.slug])
+    assert f"{create}?kind={kinds.PROJECT}" in urls
+    day = timezone.localdate() + timedelta(days=4)
+    _client(guest).post(f"{create}?kind={kinds.COMMUNITY_EVENT}", {
+        "kind": kinds.COMMUNITY_EVENT, "title": "Open day", "starts_on": day, "ends_on": day, "is_open": "on",
+        "needs-TOTAL_FORMS": "0", "needs-INITIAL_FORMS": "0",
+    })
+    event = Event.objects.get()
+    assert event.community == community and event.manager == community.ambassador and event.can_edit(guest)
+    # The community's calendar stays the ambassador's
+    page = _client(guest).get(event.get_absolute_url()).content.decode()
+    assert reverse("matches:calendar", args=[community.slug]) not in page
+
+
+# ── Deleting ────────────────────────────────────────────────────────
+
+def test_the_host_deletes_a_gift_circle_with_who_comes(host, guest):
+    event = _circle(host_user=host)
+    _come(event, guest)
+    edit_page = _client(host).get(event.url("edit")).content.decode()
+    assert event.url("delete") in edit_page
+    assert _client(guest).post(event.url("delete")).status_code == 403
+    response = _client(host).post(event.url("delete"))
+    assert response.status_code == 302 and response.url == host.get_absolute_url()
+    assert not Event.objects.exists() and not Match.objects.exists()
+
+
+def test_a_deleted_gift_circle_leaves_its_tour_s_stop(tour, host):
+    event = _circle(host_tour=tour)
+    stop = Stop(tour=tour, name="Market square, Esslingen", location=PARK, arrive_on=event.starts_on, event=event)
+    append_stop(stop)
+    _client(host).post(event.url("delete"))
+    stop.refresh_from_db()
+    assert stop.event is None
+
+
+# ── Profiles ────────────────────────────────────────────────────────
+
+def test_a_profile_lists_the_gift_circles_one_hosts_and_comes_to(host, guest, community):
+    today = timezone.localdate()
+    hosted = _circle(host_user=host, title="In the park")
+    came = _circle(host_user=guest, title="At Tomek's", starts_on=today - timedelta(days=30))
+    _come(came, host)
+    _circle(host_user=guest, title="Not coming")
+    project = Event.objects.create(kind=kinds.PROJECT, community=community, title="Straw-bale wall")
+    _come(project, host)
+    response = _client(guest).get(host.get_absolute_url())
+    page = response.content.decode()
+    assert [(e, e.hosted) for e in response.context["events"]] == [(hosted, True), (came, False)]
+    assert "Not coming" not in page and "Straw-bale wall" not in page
+    # Where it is shows on its page
+    assert PARK_ADDRESS not in page
+
+
+def test_a_profile_lists_only_the_latest_past_gift_circles(host):
+    today = timezone.localdate()
+    for weeks in range(1, 8):
+        _circle(host_user=host, title=f"{weeks} weeks ago", starts_on=today - timedelta(weeks=weeks))
+    response = _client(host).get(host.get_absolute_url())
+    assert [e.title for e in response.context["events"]] == [f"{weeks} weeks ago" for weeks in range(1, 6)]
 
 
 # ── Its picture ─────────────────────────────────────────────────────

@@ -60,6 +60,22 @@ PINS = {
 # never ongoing
 ONE_DAY = (GIFT_CIRCLE,)
 
+# Kinds a person's profile lists, those they host and those they came to
+ON_PROFILES = (GIFT_CIRCLE,)
+
+# Kinds with a potluck note: what people could bring to share
+POTLUCK = (GIFT_CIRCLE,)
+
+# How long one usually takes, in minutes: the form fills in "Until" from "From"
+DURATIONS = {GIFT_CIRCLE: 90}
+
+# A short guide for whoever invites, beside the form
+GUIDES = {GIFT_CIRCLE: "gift_circles/_host_guide.html"}
+
+# Pages of an add-on for whoever may edit one, as buttons on its page: (URL name taking
+# its slug, what the button says, icon)
+TOOLS = {GIFT_CIRCLE: (("gift_circles:print", _("Print the Giftsheet and card"), "fa-print"),)}
+
 # What the form of a new event of this kind starts with
 DEFAULTS = {
     PROJECT: {"is_open": False},

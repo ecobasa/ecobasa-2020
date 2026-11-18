@@ -30,6 +30,7 @@ from .forms import ComingForm, EventForm, HelpOfferForm, NeedForm, NeedFormSet
 from .filters import EventFilters, going_to
 from .freshness import read_confirm_token
 from .models import Event
+from .signals import coming, event_created
 
 # An event's needs and skills to learn, with how far each is covered
 _LISTINGS = Prefetch(
@@ -67,6 +68,7 @@ def event_list(request):
         "kind_choices": [(value, kinds.TEXTS[value]["plural"], kinds.ICONS[value]) for value, _label in kinds.CHOICES],
         "need_choices": [(value, label) for value, label in NeedForm.KIND_CHOICES],
         "flag_choices": _flag_choices(user),
+        "create_buttons": _create_buttons(user),
         "home": filters.near,
         "radius": user.match_radius if user.is_authenticated else None,
     })
@@ -88,15 +90,32 @@ def going(request):
     return render(request, "events/going.html", {
         "page": page,
         "past": past,
-        # What one may invite to oneself
-        "own_kinds": [
-            (reverse(f"events:{kind}_create"), label, icon) for kind, label, icon in kinds.event_kind_buttons(kinds.HOST_PERSON)
-        ],
+        "create_buttons": _create_buttons(request.user),
         "whens": [
             Choice(_("Upcoming"), query_url(request, when=None), active=not past, count=upcoming.count()),
             Choice(_("Past"), query_url(request, when="past"), active=past, count=over.count()),
         ],
     })
+
+
+def _create_buttons(user):
+    """(url, what the button says, icon) for "add an event": the kinds one may host
+    oneself, and those of the communities one is a member of, named after the community
+    when there are several."""
+    if not user.is_authenticated:
+        return []
+    buttons = [
+        (reverse(f"events:{kind}_create"), label, icon) for kind, label, icon in kinds.event_kind_buttons(kinds.HOST_PERSON)
+    ]
+    own = {kind for kind, _label in kinds.choices_for(kinds.HOST_PERSON)}
+    communities = list(user.member_communities_qs().order_by("name"))
+    for kind, label, icon in kinds.event_kind_buttons(kinds.HOST_COMMUNITY):
+        if kind in own:
+            continue
+        for community in communities:
+            url = f"{reverse('events:create', args=[community.slug])}?kind={kind}"
+            buttons.append((url, f"{label} ({community.name})" if len(communities) > 1 else label, icon))
+    return buttons
 
 
 def _flag_choices(user):
@@ -208,6 +227,8 @@ def detail(request, slug, community_slug=None, kind=None):
         "place": event.place_for(request.user)[0],
         "needs": event.needs(),
         "can_edit": can_edit,
+        # Its community's calendar is the ambassador's
+        "is_ambassador": bool(event.community_id and event.community.is_ambassador(request.user)),
         # What waits for the host's answer or was answered; who just comes is under "Who is coming"
         "offers": [match for match in matches if not match.is_coming] if can_edit else [],
         "coming": coming,
@@ -254,6 +275,8 @@ def save_event(request, event, cancel_url, on_saved=None):
                 _save_needs(event, formset)
             if on_saved is not None:
                 on_saved(event)
+            if not editing:
+                event_created.send(sender=Event, event=event, user=request.user)
         messages.success(request, event.texts["saved"])
         return redirect(event.get_absolute_url())
     return render(request, "events/event_form.html", {
@@ -303,6 +326,21 @@ def edit(request, slug, community_slug=None, kind=None):
     if not event.can_edit(request.user):
         raise PermissionDenied
     return save_event(request, event, event.get_absolute_url())
+
+
+@login_required
+@require_POST
+def delete(request, slug, community_slug=None, kind=None):
+    """Whoever may edit an event deletes it, with who comes and the conversations about
+    it; references written about it stay. Nothing is deleted on its own: past events are
+    archived."""
+    event = _event(slug, community_slug, kind, Event.objects.select_related("community__ambassador", "host_user", "host_tour"))
+    if not event.can_edit(request.user):
+        raise PermissionDenied
+    host_url = event.host.get_absolute_url()
+    event.delete()
+    messages.success(request, _("“%(title)s” is deleted.") % {"title": event.title})
+    return redirect(host_url)
 
 
 @login_required
@@ -425,6 +463,7 @@ def come(request, slug, community_slug=None, kind=None):
                 match=match, volunteer_mode=StayDetails.MODE_COME, people=form.cleaned_data["people"],
                 stay_from=_day_start(stay_from), stay_to=_day_start(stay_to),
             )
+            coming.send(sender=Event, event=event, user=request.user, match=match)
     messages.success(request, _("Great, you are on the list!"))
     return redirect(event.get_absolute_url())
 

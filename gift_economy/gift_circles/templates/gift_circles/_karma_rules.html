@@ -1,0 +1,12 @@
+{% load i18n %}{# The karma rules; with `credit`, where they come from #}
+<h3 style="margin:24px 0 8px;font-size:17px;font-family:'Bree Serif',Georgia,serif;font-weight:normal;">{% trans "The karma rules" %}</h3>
+<ul style="margin:0 0 12px;padding-left:22px;list-style:disc;font-size:15px;line-height:1.6;">
+  <li style="margin:0 0 6px;"><strong>{% trans "No guarantee." %}</strong> {% trans "Not every wish comes true, and that's okay." %}</li>
+  <li style="margin:0 0 6px;"><strong>{% trans "Wish big." %}</strong> {% trans "Big wishes are welcome. Sometimes the circle can do more than you think." %}</li>
+  <li style="margin:0 0 6px;"><strong>{% trans "Only good intentions." %}</strong> {% trans "Nothing that harms anyone." %}</li>
+  <li style="margin:0 0 6px;"><strong>{% trans "The one who wished follows up." %}</strong> {% trans "If someone offers to help with your wish, you get in touch with them, not the other way round." %}</li>
+  <li style="margin:0 0 6px;"><strong>{% trans "No money." %}</strong> {% trans "Nothing is bought or sold. Things, time, skills, ideas and contacts are all welcome." %}</li>
+  <li style="margin:0 0 6px;"><strong>{% trans "Give freely." %}</strong> {% trans "Nobody owes anything back." %}</li>
+  <li style="margin:0 0 6px;"><strong>{% trans "Give only what you can." %}</strong> {% trans "Say no when it doesn't feel right. Give what you can keep giving." %}</li>
+</ul>
+{% if credit %}<p style="margin:0 0 16px;font-size:13px;line-height:1.6;opacity:0.7;">{% trans "The karma rules are inspired by Pierre Lischke's KarmaKreis." %}</p>{% endif %}

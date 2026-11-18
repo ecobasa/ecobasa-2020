@@ -96,6 +96,10 @@ class Event(models.Model):
         _("How many volunteers at the same time?"), null=True, blank=True,
     )
     max_people = models.PositiveSmallIntegerField(_("How many people can come?"), null=True, blank=True)
+    potluck_note = models.CharField(
+        _("Potluck"), max_length=200, blank=True,
+        help_text=_("What people could bring to share. Leave it empty if there is no potluck."),
+    )
     # A place of its own, e.g. a park or a café; otherwise its community's. Everyone but
     # who comes sees it roughly (rough_place)
     location_name = models.CharField(_("Place"), max_length=255, blank=True)
@@ -141,6 +145,9 @@ class Event(models.Model):
         return self.title
 
     def save(self, *args, **kwargs):
+        # Kinds on one day are never ongoing: they end the day they start
+        if self.kind in kinds.ONE_DAY and self.starts_on:
+            self.ends_on = self.starts_on
         # Also when its kind changed to one with an address of its own, where the slug
         # may be taken
         if not self.slug or (kwargs.get("update_fields") is None and self._slug_taken()):
@@ -202,6 +209,10 @@ class Event(models.Model):
         return kinds.TEXTS[self.kind]
 
     # ── When ────────────────────────────────────────────────────────
+    def tools(self):
+        """(url, label, icon) of its kind's add-on pages for whoever may edit it."""
+        return [(reverse(name, args=[self.slug]), label, icon) for name, label, icon in kinds.TOOLS.get(self.kind, ())]
+
     @property
     def is_ongoing(self):
         return self.ends_on is None
@@ -273,7 +284,9 @@ class Event(models.Model):
             return False
         if user.is_staff or user == self.manager:
             return True
-        # A tour's organisers share the role
+        # A community's members, as they edit its page; a tour's organisers share the role
+        if self.community_id:
+            return self.community.can_edit(user)
         return bool(self.host_tour_id and self.host_tour.can_edit(user))
 
     @property

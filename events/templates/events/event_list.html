@@ -168,6 +168,12 @@
           <button type="button" x-cloak x-show="$store.eventMap.anything" class="underline opacity-70 hover:opacity-100" @click="$store.eventMap.clear(true)">{% trans "Clear all filters" %}</button>
         </div>
       </div>
+
+      {% if create_buttons %}
+        <div class="flex flex-wrap gap-2">
+          {% for url, label, icon in create_buttons %}<a href="{{ url }}" class="btn shadow self-start text-sm"><i class="fa-solid {{ icon }} mr-1"></i>{{ label }}</a>{% endfor %}
+        </div>
+      {% endif %}
     </div>
 
     <div x-show="$store.eventMap.loading" x-cloak class="absolute bottom-16 left-1/2 -translate-x-1/2 z-10 bg-primary text-secondary px-3 py-1 rounded-full shadow text-xs">

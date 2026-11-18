@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% load i18n %}
+{% load i18n events_tags %}
 
 {% block head_title %}{% if editing %}{{ texts.edit }}{% else %}{{ texts.new }}{% endif %} — {{ event.host_name }} — ecobasa{% endblock %}
 
@@ -14,7 +14,17 @@
         <p class="text-sm">{{ hint }}</p>
       </div>
     {% endfor %}
-    <p class="text-sm">{% trans "Keep it short and current: what nobody updates is archived after a while." %}</p>
+    {# What whoever invites to it does, for kinds that have a guide #}
+    {% for value, guide in form.guides %}
+      <div x-show="kind === '{{ value }}'" {% if value != form.kind.value %}style="display:none"{% endif %}>{% include guide %}</div>
+    {% endfor %}
+    {# Kinds on one day end with it; ongoing ones are archived when nobody keeps them current #}
+    {% with one_day=form.one_day_kinds %}
+      <p class="text-sm" x-data="{ oneDay: [{% for kind in one_day %}'{{ kind }}'{% if not forloop.last %}, {% endif %}{% endfor %}] }">
+        <span x-show="!oneDay.includes(kind)" {% if form.kind.value in one_day %}style="display:none"{% endif %}>{% trans "Keep it short and current: what nobody updates is archived after a while." %}</span>
+        <span x-show="oneDay.includes(kind)" {% if form.kind.value not in one_day %}style="display:none"{% endif %}>{% trans "It is archived once it is over, and stays on ecobasa as a record." %}</span>
+      </p>
+    {% endwith %}
   </div>
 
   <form method="post" enctype="multipart/form-data" class="border rounded-xl bg-secondary p-6 space-y-4" {% if formset %}x-data="needRows()"{% endif %}>
@@ -73,6 +83,16 @@
           {% for error in field.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
         </div>
         {% endwith %}
+      {% elif field.name == "potluck_note" %}
+        {% with potluck=form.potluck_kinds %}
+        <div class="form-group" x-data="{ kind: '{{ form.kind.value }}', potluck: [{% for kind in potluck %}'{{ kind }}'{% if not forloop.last %}, {% endif %}{% endfor %}] }" @kind-chosen.window="kind = $event.detail"
+             x-show="potluck.includes(kind)" {% if form.kind.value not in potluck %}style="display:none"{% endif %}>
+          <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+          {{ field }}
+          <p class="text-xs mt-1">{{ field.help_text }}</p>
+          {% for error in field.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+        </div>
+        {% endwith %}
       {% elif field.name != "bed_provided" %}
         <div class="form-group {% if field.name == 'starts_at' or field.name == 'ends_at' %}inline-block w-full sm:w-[48%] sm:mr-[2%] align-top{% endif %}">
           <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
@@ -97,9 +117,18 @@
     <button type="button" class="btn btn-purple" @click="add()"><i class="fa fa-plus mr-1"></i>{% trans "Add a need" %}</button>
     {% endif %}
 
-    <div class="flex justify-between gap-3 pt-4">
+    <div class="flex flex-wrap justify-between gap-3 pt-4">
       <a href="{{ cancel_url }}" class="btn btn-lg btn-purple"><i class="fa fa-ban mr-2"></i>{% trans "Cancel" %}</a>
-      <button type="submit" class="btn btn-lg"><i class="fa fa-save mr-2"></i>{% trans "Save" %}</button>
+      <div class="flex flex-wrap gap-3">
+        {% if editing %}
+          {# Asks once more before it deletes #}
+          <button type="submit" formaction="{% event_url event "delete" %}" formnovalidate class="btn btn-lg btn-red"
+                  x-data="{ sure: false }" @click="if (!sure) { $event.preventDefault(); sure = true }" @click.outside="sure = false">
+            <i class="fa fa-recycle mr-2"></i><span x-text="sure ? '{% trans "Sure?" %}' : '{% trans "Delete" %}'">{% trans "Delete" %}</span>
+          </button>
+        {% endif %}
+        <button type="submit" class="btn btn-lg"><i class="fa fa-save mr-2"></i>{% trans "Save" %}</button>
+      </div>
     </div>
   </form>
 </div>
@@ -120,6 +149,18 @@
 <script src="https://cdn.jsdelivr.net/npm/ol@v7.2.2/dist/ol.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
+  // "Until" from "From", for kinds that usually take a set time
+  const durations = { {% for kind, minutes in form.durations.items %}'{{ kind }}': {{ minutes }}{% if not forloop.last %}, {% endif %}{% endfor %} };
+  const startsAt = document.getElementById('{{ form.starts_at.id_for_label }}');
+  const endsAt = document.getElementById('{{ form.ends_at.id_for_label }}');
+  startsAt.addEventListener('change', () => {
+    const kind = (document.querySelector('input[name="{{ form.kind.html_name }}"]:checked') || {}).value;
+    if (!durations[kind] || endsAt.value || !startsAt.value) return;
+    const [h, m] = startsAt.value.split(':').map(Number);
+    const end = (h * 60 + m + durations[kind]) % (24 * 60);
+    endsAt.value = String(Math.floor(end / 60)).padStart(2, '0') + ':' + String(end % 60).padStart(2, '0');
+  });
+
   const locationInput = document.getElementById('{{ form.location.id_for_label }}');
   window.eventPicker = EcoMap.initLocationPicker({
     mapTarget: 'event-location-map',
