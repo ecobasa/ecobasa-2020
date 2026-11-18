@@ -1,5 +1,9 @@
 {% load i18n gift_circles_tags %}{# On a gift-circle's page: the offers and wishes people bring, for everyone; who brings them for logged-in people, what was promised among who comes for them and the host. Who comes or hosts adds theirs while it is ahead #}
 {% brought_to event request.user as bring %}
+{% sees_giftsheet event request.user as sees %}
+{% if sees %}
+  <a href="{% url 'gift_circles:giftsheet' event.slug %}" class="btn btn-purple mt-6"><i class="fa-solid fa-table-list mr-1"></i>{% trans "Open the Giftsheet" %}</a>
+{% endif %}
 {% if bring.offers or bring.wishes or bring.may_bring %}
   <h2 id="bring">{% trans "What people bring" %}</h2>
   {% if bring.offers or bring.wishes %}

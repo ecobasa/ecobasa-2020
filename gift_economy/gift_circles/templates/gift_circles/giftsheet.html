@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block head_title %}{% trans "Giftsheet" %}: {{ event.title }} — ecobasa{% endblock %}
+
+{% block content %}
+<div class="container-form">
+  {% include "gift_circles/_guest_header.html" with here=_("Giftsheet") %}
+  <h1 class="mb-1">{% trans "Giftsheet" %}</h1>
+  <p class="text-sm"><i class="fa-regular fa-calendar mr-1"></i>{% include "events/_event_dates.html" %}</p>
+
+  {% if sheet.is_closed %}
+    <p class="p-4 rounded-lg bg-secondary text-sm"><i class="fa fa-lock mr-1"></i>{% trans "The Giftsheet is closed." %}</p>
+  {% elif writes or adds_own %}
+    {# One line at a time: a wish or an offer, and from whom (the host and scribes choose; everyone else adds their own) #}
+    <form method="post" action="{{ here }}" id="new" class="border rounded-xl bg-secondary p-4 sm:p-6 mb-6 space-y-3" x-data="{ who: '{{ form.who.value|default_if_none:''|escapejs }}' }">
+      {% csrf_token %}
+      <div class="flex gap-4">
+        {% for radio in form.type %}
+          <label class="flex items-center gap-2 cursor-pointer">{{ radio.tag }}<i class="fa-solid {% if radio.data.value == 'offer' %}fa-gift text-primary{% else %}fa-heart text-yellow{% endif %}"></i>{{ radio.choice_label }}</label>
+        {% endfor %}
+      </div>
+      <div class="form-group">
+        {{ form.text }}
+        {% for error in form.text.errors %}<p class="field-error"><i class="fa-solid fa-circle-exclamation mr-1"></i>{{ error }}</p>{% endfor %}
+      </div>
+      {% if form.picks %}
+        <div class="form-group">
+          <label class="form-label" for="{{ form.who.id_for_label }}">{{ form.who.label }}</label>
+          <select name="who" id="{{ form.who.id_for_label }}" class="form-select w-full" x-model="who" required>
+            {% for value, name in form.who.field.choices %}<option value="{{ value }}"{% if value|stringformat:"s" == form.who.value|stringformat:"s" %} selected{% endif %}>{{ name }}</option>{% endfor %}
+          </select>
+          {% for error in form.who.errors %}<p class="field-error"><i class="fa-solid fa-circle-exclamation mr-1"></i>{{ error }}</p>{% endfor %}
+        </div>
+        <div x-show="who === 'new'" x-cloak class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div class="form-group">
+            <label class="form-label" for="{{ form.name.id_for_label }}">{{ form.name.label }}</label>
+            {{ form.name }}
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="{{ form.email.id_for_label }}">{{ form.email.label }}</label>
+            {{ form.email }}
+            <p class="text-xs mt-1">{% trans "With an email they get the results too." %}</p>
+            {% for error in form.email.errors %}<p class="field-error"><i class="fa-solid fa-circle-exclamation mr-1"></i>{{ error }}</p>{% endfor %}
+          </div>
+        </div>
+      {% endif %}
+      <div class="flex justify-end">
+        <button type="submit" class="btn"><i class="fa fa-plus mr-1"></i>{% trans "Add" %}</button>
+      </div>
+    </form>
+  {% endif %}
+
+  {% include "gift_circles/_giftsheet_entries.html" %}
+
+  {% if not guest and not sheet.is_closed %}
+    {# Whether one's own lines go on ecobasa when it closes #}
+    <form method="post" action="{% url 'gift_circles:attendee' event.slug %}" class="mt-6 text-sm space-y-2">{% csrf_token %}
+      <input type="hidden" name="next" value="{{ here }}">
+      <label class="flex items-start gap-2 cursor-pointer"><input type="checkbox" name="keep_on_ecobasa" class="form-checkbox mt-1" {% if keeps %}checked{% endif %} onchange="this.form.submit()"><span>{% trans "Keep my offers and wishes from this gift-circle on ecobasa" %}</span></label>
+      <noscript><button type="submit" class="underline">{% trans "Save" %}</button></noscript>
+    </form>
+  {% endif %}
+
+  {% if photos or writes %}
+    <h2 id="photos">{% trans "Photos of the Giftsheet" %}</h2>
+    {% if photos %}
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {% for photo in photos %}
+          <figure class="m-0">
+            <a href="{{ photo.image.url }}"><img src="{{ photo.image.url }}" alt="{% trans 'Photo of the Giftsheet' %}" loading="lazy" class="w-full rounded-lg border"></a>
+            {% if writes %}
+              <form method="post" action="{% url 'gift_circles:giftsheet_photo_delete' event.slug photo.pk %}" class="text-sm mt-1" onsubmit="return confirm('{{ _("Delete this photo?")|escapejs }}')">{% csrf_token %}
+                <button type="submit" class="underline"><i class="fa-regular fa-trash-can mr-1"></i>{% trans "Delete" %}</button>
+              </form>
+            {% endif %}
+          </figure>
+        {% endfor %}
+      </div>
+    {% endif %}
+    {% if writes and photos|length < photo_limit %}
+      <form method="post" action="{% url 'gift_circles:giftsheet_photo' event.slug %}" enctype="multipart/form-data" class="mt-3 space-y-2">{% csrf_token %}
+        <label class="form-label" for="{{ photo_form.image.id_for_label }}">{% trans "Add a photo of the Giftsheet" %}</label>
+        <p class="text-xs m-0">{% trans "Filled in on paper? Take a photo of each side." %}</p>
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          {{ photo_form.image }}
+          <button type="submit" class="btn"><i class="fa-solid fa-camera mr-1"></i>{% trans "Add a photo of the Giftsheet" %}</button>
+        </div>
+      </form>
+    {% endif %}
+  {% endif %}
+
+  <div class="flex flex-wrap justify-between items-center gap-3 mt-8 pt-4 border-t">
+    <a href="{% if guest %}{% url 'gift_circles:guest_print' event.slug guest.token %}{% else %}{% url 'gift_circles:print' event.slug %}{% endif %}" class="text-sm underline"><i class="fa-solid fa-print mr-1"></i>{% trans "Print the Giftsheet and card" %}</a>
+    {% if can_edit and not guest %}
+      <form method="post" action="{% url 'gift_circles:giftsheet_close' event.slug %}"{% if not sheet.is_closed %} onsubmit="return confirm('{{ _("Close the Giftsheet? The offers and wishes of everyone who said yes go on ecobasa, and what was fulfilled becomes a match.")|escapejs }}')"{% endif %}>{% csrf_token %}
+        {% if sheet.is_closed %}
+          <button type="submit" name="action" value="reopen" class="btn btn-purple"><i class="fa fa-lock-open mr-1"></i>{% trans "Open it again" %}</button>
+        {% else %}
+          <button type="submit" name="action" value="close" class="btn"><i class="fa fa-lock mr-1"></i>{% trans "Close the Giftsheet" %}</button>
+        {% endif %}
+      </form>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

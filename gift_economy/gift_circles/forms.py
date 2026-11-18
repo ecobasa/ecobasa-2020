@@ -7,7 +7,7 @@ from django.core.validators import validate_email
 from django.utils.translation import gettext_lazy as _, ngettext
 
 from .invitations import emails_left, taken_emails
-from .models import Guest
+from .models import Entry, GiftsheetPhoto, Guest
 
 
 class GuestChangeForm(forms.ModelForm):
@@ -98,3 +98,46 @@ class InviteForm(forms.Form):
         if not self.errors and not cleaned.get("users") and not cleaned.get("people"):
             raise ValidationError(_("Please choose someone, or write an email address."))
         return cleaned
+
+
+class EntryForm(forms.Form):
+    """A line of the Giftsheet: a wish or an offer in one line. The host and scribes pick
+    whom it is from (`people`, see giftsheet.people), or write someone new."""
+
+    type = forms.ChoiceField(choices=Entry.TYPE_CHOICES, initial=Entry.TYPE_WISH, widget=forms.RadioSelect)
+    text = forms.CharField(
+        max_length=255,
+        widget=forms.TextInput(attrs={"class": "form-input w-full", "autocomplete": "off", "enterkeyhint": "done"}),
+    )
+    who = forms.ChoiceField(label=_("Who said it?"), required=False, widget=forms.Select(attrs={"class": "form-select w-full"}))
+    name = forms.CharField(
+        label=_("Name"), max_length=100, required=False,
+        widget=forms.TextInput(attrs={"class": "form-input w-full", "autocomplete": "off"}),
+    )
+    email = forms.EmailField(
+        label=_("Email (optional)"), required=False,
+        widget=forms.EmailInput(attrs={"class": "form-input w-full", "autocomplete": "off"}),
+    )
+
+    def __init__(self, *args, people=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.picks = people is not None
+        if self.picks:
+            from .giftsheet import NEW
+
+            self.fields["who"].required = True
+            self.fields["who"].choices = [("", "")] + list(people) + [(NEW, _("Someone new"))]
+        else:
+            del self.fields["who"], self.fields["name"], self.fields["email"]
+
+
+class PhotoForm(forms.ModelForm):
+    class Meta:
+        model = GiftsheetPhoto
+        fields = ["image"]
+        widgets = {"image": forms.ClearableFileInput(attrs={"accept": "image/*"})}
+
+    def clean_image(self):
+        from gift_economy.gifts.forms import shrunk
+
+        return shrunk(self.cleaned_data.get("image"))

@@ -28,10 +28,10 @@
   </div>
 {% endif %}
 <div class="container-page">
-  <div class="mb-2 text-sm">
+  <div class="mb-2 text-sm flex flex-wrap items-center gap-x-2 gap-y-1">
     {% if community %}
       <a href="{{ community.get_absolute_url }}" class="hover:underline">{{ community.name }}</a>
-      <span class="mx-1">/</span>
+      <i class="fa-solid fa-chevron-right text-xs opacity-50" aria-hidden="true"></i>
       <a href="{{ community.get_absolute_url }}#events" class="hover:underline">{{ event.texts.plural }}</a>
     {% else %}
       <a href="{% url 'events:list' %}?kind={{ event.kind }}" class="hover:underline">{{ event.texts.plural }}</a>
@@ -154,6 +154,7 @@
                 <a href="{{ person.get_absolute_url }}" class="hover:underline">{{ person.name|default:person.email }}</a>
                 {% if match.people > 1 %}<span class="opacity-70">+{{ match.people|add:"-1" }}</span>{% endif %}
                 {% if can_edit and not match.is_coming %}<a href="{{ match.get_absolute_url }}" class="underline text-xs">{% trans "Application" %}</a>{% endif %}
+                {% if coming_tools %}{% include coming_tools %}{% endif %}
               </li>
             {% endwith %}{% endfor %}
             {% for guest in guests %}

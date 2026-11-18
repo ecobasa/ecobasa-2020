@@ -74,15 +74,22 @@ def brought(event):
 
 
 def bring(event, listing):
-    """Bring `listing` to it, and suggest what fits it among who comes."""
+    """Bring `listing` to it, and suggest what fits it among who comes. Once its
+    Giftsheet is made, it goes on it too."""
+    from .giftsheet import brought_now
+
     _, created = Brought.objects.get_or_create(event=event, listing=listing)
     if created:
+        brought_now(event, listing)
         transaction.on_commit(lambda: suggest_at(event, listing))
     return created
 
 
 def take_back(event, listing):
+    from .giftsheet import taken_back
+
     Brought.objects.filter(event=event, listing=listing).delete()
+    taken_back(event, listing)
 
 
 def suggest_at(event, listing, notify=True):

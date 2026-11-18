@@ -24,7 +24,9 @@ def may_invite(event, user):
 
 
 def emails_left(event):
-    return max(0, EMAIL_LIMIT - event.invitations.exclude(email="").count())
+    """Addresses invited, and those of who came without signing up, added by its scribe."""
+    used = event.invitations.exclude(email="").count() + event.guests.exclude(added_by=None).count()
+    return max(0, EMAIL_LIMIT - used)
 
 
 def taken_users(event):

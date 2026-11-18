@@ -5,10 +5,12 @@
 
 {% block content %}
 <div class="container-form">
-  <div class="mb-2 text-sm">
+  <div class="mb-2 text-sm flex flex-wrap items-center gap-x-2 gap-y-1">
     <a href="{{ event.host.get_absolute_url }}" class="hover:underline">{{ event.host_name }}</a>
-    <span class="mx-1">/</span>
+    <i class="fa-solid fa-chevron-right text-xs opacity-50" aria-hidden="true"></i>
     <a href="{{ event.get_absolute_url }}" class="hover:underline">{{ event.title }}</a>
+    <i class="fa-solid fa-chevron-right text-xs opacity-50" aria-hidden="true"></i>
+    <span class="opacity-70">{% trans "Ask to join" %}</span>
   </div>
   <h1>{% trans "Ask to join" %}</h1>
   <p class="text-sm"><i class="fa-regular fa-calendar mr-1"></i>{% include "events/_event_dates.html" %}</p>

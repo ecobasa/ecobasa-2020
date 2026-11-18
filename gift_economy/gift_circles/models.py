@@ -40,6 +40,11 @@ class Guest(models.Model):
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="guest_rows",
     )
     language = models.CharField(max_length=10, blank=True)
+    # Came without signing up, added to the Giftsheet with an email by its scribe: counts
+    # as confirmed (they were there), and among the addresses the gift-circle may mail
+    added_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="+",
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     objects = GuestQuerySet.as_manager()
@@ -135,3 +140,184 @@ class Brought(models.Model):
 
     def __str__(self):
         return f"{self.listing} to {self.event}"
+
+
+class Giftsheet(models.Model):
+    """The table the scribe keeps at a gift-circle: its lines are its `entries`. Made when
+    someone first opens it, with what people bring already on it. When the host closes
+    it, its lines become offers, wishes and matches on ecobasa."""
+
+    event = models.OneToOneField("events.Event", on_delete=models.CASCADE, related_name="giftsheet")
+    closed_at = models.DateTimeField(null=True, blank=True)
+    closed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="+",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = _("Giftsheet")
+        verbose_name_plural = _("Giftsheets")
+
+    def __str__(self):
+        return f"Giftsheet of {self.event}"
+
+    @property
+    def is_closed(self):
+        return self.closed_at is not None
+
+
+class Scribe(models.Model):
+    """Someone the host lets write the Giftsheet, besides themselves."""
+
+    event = models.ForeignKey("events.Event", on_delete=models.CASCADE, related_name="scribes")
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="+")
+
+    class Meta:
+        verbose_name = _("Scribe")
+        verbose_name_plural = _("Scribes")
+        constraints = [models.UniqueConstraint(fields=["event", "user"], name="one_scribe_per_gift_circle")]
+
+    def __str__(self):
+        return f"{self.user} at {self.event}"
+
+
+class Entry(models.Model):
+    """One line of the Giftsheet: an offer or a wish, from someone with an account, a
+    guest, or someone known only by name; and who fulfilled the wish or took the offer
+    (`for_…`). Ideas how it could happen are its `ideas`."""
+
+    TYPE_OFFER = "offer"
+    TYPE_WISH = "wish"
+    TYPE_CHOICES = [(TYPE_OFFER, _("Offer")), (TYPE_WISH, _("Wish"))]
+
+    STATE_OPEN = "open"
+    STATE_FULFILLED = "fulfilled"
+    STATE_CHOICES = [(STATE_OPEN, _("Still open")), (STATE_FULFILLED, _("Fulfilled"))]
+
+    event = models.ForeignKey("events.Event", on_delete=models.CASCADE, related_name="entries")
+    type = models.CharField(max_length=10, choices=TYPE_CHOICES)
+    text = models.CharField(max_length=255)
+    from_user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True, blank=True, related_name="+",
+    )
+    from_guest = models.ForeignKey(Guest, on_delete=models.CASCADE, null=True, blank=True, related_name="entries")
+    from_name = models.CharField(max_length=100, blank=True)
+    state = models.CharField(max_length=10, choices=STATE_CHOICES, default=STATE_OPEN)
+    for_user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True, blank=True, related_name="+",
+    )
+    for_guest = models.ForeignKey(Guest, on_delete=models.CASCADE, null=True, blank=True, related_name="answers")
+    for_name = models.CharField(max_length=100, blank=True)
+    # The offer or wish it is on ecobasa: brought to the circle, or made when it closed
+    listing = models.ForeignKey("gifts.Listing", on_delete=models.SET_NULL, null=True, blank=True, related_name="entries")
+    match = models.ForeignKey("matches.Match", on_delete=models.SET_NULL, null=True, blank=True, related_name="+")
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="+",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["created_at", "pk"]
+        verbose_name = _("Entry")
+        verbose_name_plural = _("Entries")
+        constraints = [
+            models.CheckConstraint(
+                name="entry_from_one_person",
+                check=(
+                    models.Q(from_user__isnull=False, from_guest=None, from_name="")
+                    | models.Q(from_user=None, from_guest__isnull=False, from_name="")
+                    | models.Q(from_user=None, from_guest=None) & ~models.Q(from_name="")
+                ),
+            ),
+        ]
+
+    def __str__(self):
+        return self.text
+
+    @property
+    def is_offer(self):
+        return self.type == self.TYPE_OFFER
+
+    @property
+    def from_label(self):
+        return _person_name(self.from_user, self.from_guest, self.from_name)
+
+    @property
+    def from_choice(self):
+        """Whom it is from, as the person picker says it."""
+        return _person_choice(self.from_user_id, self.from_guest_id, self.from_name)
+
+    @property
+    def for_label(self):
+        return _person_name(self.for_user, self.for_guest, self.for_name)
+
+
+class Idea(models.Model):
+    """An idea how a line of the Giftsheet could happen when nobody can do it right away,
+    and whose it is. A line can have several, from several people."""
+
+    entry = models.ForeignKey(Entry, on_delete=models.CASCADE, related_name="ideas")
+    text = models.CharField(max_length=255)
+    from_user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True, blank=True, related_name="+",
+    )
+    from_guest = models.ForeignKey(Guest, on_delete=models.CASCADE, null=True, blank=True, related_name="ideas")
+    from_name = models.CharField(max_length=100, blank=True)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="+",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["created_at", "pk"]
+        verbose_name = _("Idea")
+        verbose_name_plural = _("Ideas")
+        constraints = [
+            models.CheckConstraint(
+                name="idea_from_one_person",
+                check=(
+                    models.Q(from_user__isnull=False, from_guest=None, from_name="")
+                    | models.Q(from_user=None, from_guest__isnull=False, from_name="")
+                    | models.Q(from_user=None, from_guest=None) & ~models.Q(from_name="")
+                ),
+            ),
+        ]
+
+    def __str__(self):
+        return self.text
+
+    @property
+    def from_label(self):
+        return _person_name(self.from_user, self.from_guest, self.from_name)
+
+
+def _person_name(user, guest, name):
+    if user is not None:
+        return user.name or user.email
+    if guest is not None:
+        return guest.name
+    return name
+
+
+def _person_choice(user_id, guest_id, name):
+    if user_id is not None:
+        return f"user:{user_id}"
+    if guest_id is not None:
+        return f"guest:{guest_id}"
+    return f"name:{name}"
+
+
+class GiftsheetPhoto(models.Model):
+    """A photo of the Giftsheet filled in on paper."""
+
+    event = models.ForeignKey("events.Event", on_delete=models.CASCADE, related_name="giftsheet_photos")
+    image = models.ImageField(_("Photo"), upload_to="giftsheet-photos/")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["created_at"]
+        verbose_name = _("Photo of the Giftsheet")
+        verbose_name_plural = _("Photos of the Giftsheet")
+
+    def __str__(self):
+        return f"Photo of the Giftsheet of {self.event}"

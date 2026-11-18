@@ -17,12 +17,12 @@ from events.models import Event
 from gift_economy.gifts.models import Listing
 from gift_economy.matches.models import Match
 
-from . import bringing
+from . import bringing, giftsheet as sheets
 from .emails import exact_place, send_guest_confirmation, send_guest_welcome
-from .forms import GuestChangeForm, GuestForm, InviteForm
+from .forms import EntryForm, GuestChangeForm, GuestForm, InviteForm, PhotoForm
 from .guests import GUEST_SESSION_KEY, link_to_account
 from .invitations import EMAIL_LIMIT, answer, emails_left, invite as send_invitations, may_invite, taken_users
-from .models import Attendee, Guest, Invitation
+from .models import Attendee, Entry, Guest, Idea, Invitation, Scribe
 from .timings import timings
 
 # Empty lines on the printed Giftsheet's front (below its heading) and back: one sheet of
@@ -37,13 +37,38 @@ def _gift_circle(slug):
     return get_object_or_404(Event.objects.select_related("community", "host_user", "host_tour"), kind=kinds.GIFT_CIRCLE, slug=slug)
 
 
-def print_giftsheet(request, slug):
-    """The facilitator card and an empty Giftsheet, to print. Nothing in it is private:
-    the title and the day are on the gift-circle's page too."""
-    event = _gift_circle(slug)
+def print_giftsheet(request, slug, token=None):
+    """The facilitator card and the Giftsheet, to print: empty for anyone (the title and
+    the day are on the gift-circle's page too), filled in so far for who may see it, to
+    take home on paper. Names only, no addresses."""
+    if token is None:
+        event = _gift_circle(slug)
+        filled = sheets.may_see(event, request.user)
+        giftsheet_url = reverse("gift_circles:giftsheet", args=[slug]) if filled else ""
+    else:
+        guest = _guest(slug, token)
+        event, filled = guest.event, guest.confirmed_at is not None
+        giftsheet_url = _guest_url(guest, "guest_giftsheet") if filled else ""
+    if filled:
+        sheets.sheet_of(event)
+    entries = list(sheets.entries(event)) if filled else []
     return render(request, "gift_circles/print.html", {
-        "event": event, "timings": timings(event), "pages": [range(rows) for rows in GIFTSHEET_ROWS],
+        "event": event, "timings": timings(event), "pages": _pages(entries), "filled": bool(entries),
+        "giftsheet_url": giftsheet_url,
     })
+
+
+def _pages(rows):
+    """The Giftsheet's lines over its pages: the front holds fewer (below its heading),
+    every page after more; at least a front and a back, the rest of the last one empty
+    lines to write on."""
+    front, back = GIFTSHEET_ROWS
+    pages = [rows[:front]]
+    rest = rows[front:]
+    while rest or len(pages) < 2:
+        pages.append(rest[:back])
+        rest = rest[back:]
+    return [page + [None] * ((front if number == 0 else back) - len(page)) for number, page in enumerate(pages)]
 
 
 # ── People with an account ──────────────────────────────────────────
@@ -51,13 +76,16 @@ def print_giftsheet(request, slug):
 @login_required
 @require_POST
 def attendee(request, slug):
-    """Who comes changes whether their offers and wishes from it stay on ecobasa."""
+    """Who comes, and its host, change whether their offers and wishes from it stay on
+    ecobasa."""
     event = _gift_circle(slug)
-    if event.matches.filter(from_user=request.user, status=Match.STATUS_ACCEPTED).exists():
+    if bringing.is_in(event, request.user):
         Attendee.objects.update_or_create(
             event=event, user=request.user, defaults={"keep_on_ecobasa": bool(request.POST.get("keep_on_ecobasa"))},
         )
         messages.success(request, _("Saved."))
+    if request.POST.get("next"):
+        return _back(request, event)
     return redirect(event.get_absolute_url())
 
 
@@ -326,3 +354,212 @@ def invitation(request, slug, token):
     return render(request, "gift_circles/invitation.html", {
         "invitation": invitation, "event": event, "form": form, "takes_people": takes_people,
     })
+
+
+# ── The Giftsheet ───────────────────────────────────────────────────
+
+def giftsheet(request, slug):
+    """The Giftsheet for who came, its host and scribes."""
+    event = _gift_circle(slug)
+    if not sheets.may_see(event, request.user):
+        if not request.user.is_authenticated:
+            return redirect(f"{reverse('users:login')}?{urlencode({'next': request.path})}")
+        return redirect(event.get_absolute_url())
+    return _giftsheet(request, event, here=reverse("gift_circles:giftsheet", args=[slug]))
+
+
+def guest_giftsheet(request, slug, token):
+    """The Giftsheet for a guest, through their link: they add lines of their own."""
+    guest = _guest(slug, token)
+    if not guest.confirmed_at:
+        return redirect(_guest_url(guest, "guest_confirm"))
+    return _giftsheet(request, guest.event, here=_guest_url(guest, "guest_giftsheet"), guest=guest)
+
+
+def _giftsheet(request, event, here, guest=None):
+    sheet = sheets.sheet_of(event)
+    user = request.user
+    writes = guest is None and sheets.may_write(event, user)
+    adds_own = sheets.may_add_own(event, None if guest else user, guest, sheet)
+    if request.method == "POST":
+        if sheet.is_closed or not (writes or adds_own):
+            return redirect(here)
+        form = EntryForm(request.POST, people=sheets.people(event) if writes else None)
+        if form.is_valid():
+            try:
+                _add_entry(request, event, form, writes, guest)
+            except sheets.PickError as error:
+                form.add_error("who", str(error))
+        if form.is_valid():
+            return redirect(f"{here}#new")
+    else:
+        form = EntryForm(people=sheets.people(event) if writes else None)
+    entries = list(sheets.entries(event))
+    for entry in entries:
+        entry.is_own = _is_own(entry, user, guest)
+    context = {
+        "event": event, "sheet": sheet, "here": here, "guest": guest, "entries": entries,
+        "writes": writes, "adds_own": adds_own, "people": sheets.people(event) if writes else [],
+        "refreshes": sheets.refreshes(event, sheet),
+    }
+    if request.headers.get("HX-Request"):
+        return render(request, "gift_circles/_giftsheet_entries.html", context)
+    context.update({
+        "form": form, "photos": event.giftsheet_photos.all(), "photo_form": PhotoForm(),
+        "photo_limit": sheets.PHOTO_LIMIT, "can_edit": event.can_edit(user),
+        "keeps": guest is None and Attendee.objects.filter(event=event, user=user, keep_on_ecobasa=True).exists(),
+    })
+    return render(request, "gift_circles/giftsheet.html", context)
+
+
+def _add_entry(request, event, form, writes, guest):
+    data = form.cleaned_data
+    entry = Entry(event=event, type=data["type"], text=data["text"])
+    if guest is not None:
+        entry.from_guest = guest
+    elif writes:
+        entry.from_user, entry.from_guest, entry.from_name = sheets.pick(
+            event, data["who"], data.get("name", ""), data.get("email", ""), by=request.user,
+        )
+        entry.created_by = request.user
+    else:
+        entry.from_user = entry.created_by = request.user
+    entry.save()
+
+
+@require_POST
+def giftsheet_entry(request, slug, pk, token=None):
+    """A line changed, answered ("Fulfilled by …", "Taken by …"), open again, given an
+    idea how it could happen, or taken back. The host and scribes do anything; who wrote
+    a line of their own changes it or takes it back while it is open."""
+    if token is None:
+        event = _gift_circle(slug)
+        guest = None
+        here = reverse("gift_circles:giftsheet", args=[slug])
+    else:
+        guest = _guest(slug, token)
+        event = guest.event
+        here = _guest_url(guest, "guest_giftsheet")
+    entry = get_object_or_404(Entry, event=event, pk=pk)
+    sheet = sheets.sheet_of(event)
+    writes = guest is None and sheets.may_write(event, request.user)
+    own = entry.state == Entry.STATE_OPEN and _is_own(entry, request.user, guest)
+    action = request.POST.get("action")
+    back = redirect(f"{here}#entry-{entry.pk}")
+    if sheet.is_closed or entry.match_id:
+        return back
+    try:
+        if action == "delete" and (writes or own):
+            entry.delete()
+            return redirect(here)
+        if action == "edit" and (writes or own):
+            _edit_entry(request, event, entry, writes)
+        elif action == "open" and writes:
+            entry.state = Entry.STATE_OPEN
+            entry.for_user, entry.for_guest, entry.for_name = None, None, ""
+            entry.save()
+        elif action == Entry.STATE_FULFILLED and writes:
+            who = _picked(request, event)
+            if sheets.same_person(entry, *who):
+                raise sheets.PickError(_("That is who it is from. Please choose someone else."))
+            entry.state = Entry.STATE_FULFILLED
+            entry.for_user, entry.for_guest, entry.for_name = who
+            entry.save()
+        elif action == "idea" and writes:
+            text = request.POST.get("idea", "").strip()
+            if not text:
+                raise sheets.PickError(_("Please write the idea."))
+            from_user, from_guest, from_name = _picked(request, event)
+            Idea.objects.create(
+                entry=entry, text=text[:255], from_user=from_user, from_guest=from_guest, from_name=from_name,
+                created_by=request.user,
+            )
+        elif action == "idea_delete" and writes:
+            entry.ideas.filter(pk=request.POST.get("idea") or 0).delete()
+    except sheets.PickError as error:
+        messages.error(request, str(error))
+    return back
+
+
+def _picked(request, event):
+    return sheets.pick(
+        event, request.POST.get("who"), request.POST.get("name", ""), request.POST.get("email", ""), by=request.user,
+    )
+
+
+def _edit_entry(request, event, entry, writes):
+    """Its words, and while it isn't an offer or wish on ecobasa already, whether it is a
+    wish or an offer and (for the host and scribes) whom it is from."""
+    text = request.POST.get("text", "").strip()
+    if not text:
+        raise sheets.PickError(_("Please write the wish or offer."))
+    entry.text = text[:255]
+    if entry.listing_id is None:
+        if request.POST.get("type") in (Entry.TYPE_OFFER, Entry.TYPE_WISH):
+            entry.type = request.POST["type"]
+        if writes and request.POST.get("who") and request.POST["who"] != entry.from_choice:
+            entry.from_user, entry.from_guest, entry.from_name = _picked(request, event)
+    entry.save()
+
+
+def _is_own(entry, user, guest):
+    """A line someone wrote themselves: they may take it back while it is open."""
+    if guest is not None:
+        return entry.from_guest_id == guest.pk and entry.created_by_id is None
+    return user.is_authenticated and entry.from_user_id == user.pk and entry.created_by_id == user.pk
+
+
+@login_required
+@require_POST
+def giftsheet_close(request, slug):
+    """The host closes the Giftsheet, or opens it again."""
+    event = _gift_circle(slug)
+    here = reverse("gift_circles:giftsheet", args=[slug])
+    if not event.can_edit(request.user):
+        return redirect(here)
+    sheet = sheets.sheet_of(event)
+    if request.POST.get("action") == "reopen" and sheet.is_closed:
+        sheets.reopen(sheet)
+    elif not sheet.is_closed:
+        sheets.close(event, sheet, request.user)
+        messages.success(request, _("The Giftsheet is closed."))
+    return redirect(here)
+
+
+@login_required
+@require_POST
+def giftsheet_photo(request, slug, pk=None):
+    """The host and scribes add a photo of the paper Giftsheet, or delete one."""
+    event = _gift_circle(slug)
+    here = reverse("gift_circles:giftsheet", args=[slug])
+    if not sheets.may_write(event, request.user):
+        return redirect(here)
+    if pk is not None:
+        event.giftsheet_photos.filter(pk=pk).delete()
+        return redirect(f"{here}#photos")
+    if event.giftsheet_photos.count() >= sheets.PHOTO_LIMIT:
+        return redirect(f"{here}#photos")
+    form = PhotoForm(request.POST, request.FILES)
+    if form.is_valid():
+        photo = form.save(commit=False)
+        photo.event = event
+        photo.save()
+    else:
+        for error in form.errors.get("image", []):
+            messages.error(request, error)
+    return redirect(f"{here}#photos")
+
+
+@login_required
+@require_POST
+def scribe(request, slug):
+    """The host makes someone who comes a scribe, or no longer one."""
+    event = _gift_circle(slug)
+    if event.can_edit(request.user):
+        user_id = request.POST.get("user", "")
+        if user_id.isdigit() and int(user_id) in bringing.coming_ids(event):
+            if request.POST.get("action") == "remove":
+                Scribe.objects.filter(event=event, user_id=user_id).delete()
+            else:
+                Scribe.objects.get_or_create(event=event, user_id=user_id)
+    return redirect(f"{event.get_absolute_url()}#coming")

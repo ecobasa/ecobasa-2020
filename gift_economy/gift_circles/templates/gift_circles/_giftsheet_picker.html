@@ -1,0 +1,10 @@
+{% load i18n %}{# Whom a line or an idea is from or for: someone on the list, or someone new with a name and an optional email. `selected`: the value chosen; `label`: what the list is called for screen readers. Inside an element with x-data="{ who: … }" #}
+<select name="who" class="form-select w-full" x-model="who" aria-label="{{ label }}"{% if required %} required{% endif %}>
+  <option value=""></option>
+  {% for value, name in people %}<option value="{{ value }}"{% if value == selected %} selected{% endif %}>{{ name }}</option>{% endfor %}
+  <option value="new">{% trans "Someone new" %}</option>
+</select>
+<div x-show="who === 'new'" x-cloak class="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
+  <input type="text" name="name" maxlength="100" class="form-input w-full" placeholder="{% trans 'Name' %}" aria-label="{% trans 'Name' %}" autocomplete="off">
+  <input type="email" name="email" class="form-input w-full" placeholder="{% trans 'Email (optional)' %}" aria-label="{% trans 'Email (optional)' %}" autocomplete="off">
+</div>

@@ -1,0 +1,101 @@
+{% load i18n %}{# The Giftsheet's lines. While the circle is on, it fetches itself again every few seconds, but not while the tab is hidden or someone has one of a line's forms open here (data-open) #}
+<div id="entries"{% if refreshes %} hx-get="{{ here }}" hx-trigger="every 5s [document.visibilityState === 'visible' && !document.querySelector('#entries [data-open]')]" hx-swap="outerHTML"{% endif %}>
+  {% if entries %}
+    <ol class="list-none p-0 m-0 divide-y border-y">
+      {% for entry in entries %}
+        <li id="entry-{{ entry.pk }}" class="py-3 flex items-start gap-3">
+          <i class="fa-solid {% if entry.is_offer %}fa-gift text-primary{% else %}fa-heart text-yellow{% endif %} mt-1 w-4 text-center" title="{{ entry.get_type_display }}"></i>
+          <div class="flex-1 min-w-0">
+            <p class="m-0"><span class="font-semibold">{{ entry.text }}</span> <span class="opacity-80">({{ entry.from_label }})</span></p>
+            <p class="m-0 text-sm">
+              {% if entry.state == "fulfilled" %}
+                <i class="fa fa-check text-green mr-1"></i>{% if entry.is_offer %}{% blocktrans with name=entry.for_label %}Taken by {{ name }}{% endblocktrans %}{% else %}{% blocktrans with name=entry.for_label %}Fulfilled by {{ name }}{% endblocktrans %}{% endif %}
+              {% else %}
+                <span class="opacity-70">{% trans "Still open" %}</span>
+              {% endif %}
+            </p>
+            {% url 'gift_circles:giftsheet_entry' event.slug entry.pk as entry_url %}
+            {% if entry.ideas.all %}
+              <ul class="list-none p-0 m-0 mt-1 space-y-1 text-sm">
+                {% for idea in entry.ideas.all %}
+                  <li class="flex items-start gap-2">
+                    <i class="fa-regular fa-lightbulb mt-1"></i>
+                    <span class="flex-1">{% blocktrans with name=idea.from_label text=idea.text %}An idea from {{ name }}: {{ text }}{% endblocktrans %}</span>
+                    {% if writes and not sheet.is_closed %}
+                      <form method="post" action="{{ entry_url }}" onsubmit="return confirm('{{ _("Remove this idea?")|escapejs }}')">{% csrf_token %}
+                        <input type="hidden" name="idea" value="{{ idea.pk }}">
+                        <button type="submit" name="action" value="idea_delete" class="opacity-70 hover:opacity-100" aria-label="{% trans 'Remove' %}"><i class="fa-solid fa-xmark"></i></button>
+                      </form>
+                    {% endif %}
+                  </li>
+                {% endfor %}
+              </ul>
+            {% endif %}
+
+            {% if not sheet.is_closed and not entry.match_id %}
+              {% if writes or entry.is_own and entry.state == "open" %}
+                {% if guest %}{% url 'gift_circles:guest_giftsheet_entry' event.slug guest.token entry.pk as entry_url %}{% endif %}
+                {# Three things one can do with a line, each with its own form: say who said yes, add an idea, edit it #}
+                <div x-data="{ open: '' }" :data-open="open || null" class="mt-1 text-sm">
+                  <div class="flex flex-wrap gap-x-4 gap-y-1">
+                    {% if writes %}
+                      <button type="button" class="underline" @click="open = open === 'yes' ? '' : 'yes'" :aria-expanded="open === 'yes'"><i class="fa fa-check mr-1 text-green"></i>{% if entry.is_offer %}{% trans "Taken by …" %}{% else %}{% trans "Fulfilled by …" %}{% endif %}</button>
+                      <button type="button" class="underline" @click="open = open === 'idea' ? '' : 'idea'" :aria-expanded="open === 'idea'"><i class="fa-regular fa-lightbulb mr-1"></i>{% trans "Add an idea" %}</button>
+                    {% endif %}
+                    <button type="button" class="underline" @click="open = open === 'edit' ? '' : 'edit'" :aria-expanded="open === 'edit'"><i class="fa-solid fa-pen mr-1"></i>{% trans "Edit" %}</button>
+                  </div>
+
+                  {% if writes %}
+                    <form method="post" action="{{ entry_url }}" x-show="open === 'yes'" x-cloak class="mt-2 p-3 rounded-lg bg-secondary space-y-2" x-data="{ who: '' }">{% csrf_token %}
+                      <label class="form-label">{% trans "Who said yes?" %}</label>
+                      {% include "gift_circles/_giftsheet_picker.html" with selected="" label=_("Who said yes?") required=True %}
+                      <div class="flex flex-wrap justify-between gap-2">
+                        {% if entry.state != "open" %}
+                          <button type="submit" name="action" value="open" formnovalidate class="underline">{% trans "Still open" %}</button>
+                        {% else %}<span></span>{% endif %}
+                        <button type="submit" name="action" value="fulfilled" class="btn text-sm py-1 px-3"><i class="fa fa-check mr-1"></i>{% trans "Save" %}</button>
+                      </div>
+                    </form>
+
+                    <form method="post" action="{{ entry_url }}" x-show="open === 'idea'" x-cloak class="mt-2 p-3 rounded-lg bg-secondary space-y-2" x-data="{ who: '' }">{% csrf_token %}
+                      <label class="form-label" for="idea-{{ entry.pk }}">{% trans "What is the idea?" %}</label>
+                      <input type="text" name="idea" id="idea-{{ entry.pk }}" maxlength="255" required class="form-input w-full" autocomplete="off">
+                      <label class="form-label">{% trans "Whose idea is it?" %}</label>
+                      {% include "gift_circles/_giftsheet_picker.html" with selected="" label=_("Whose idea is it?") required=True %}
+                      <div class="flex justify-end">
+                        <button type="submit" name="action" value="idea" class="btn btn-purple text-sm py-1 px-3"><i class="fa-regular fa-lightbulb mr-1"></i>{% trans "Add an idea" %}</button>
+                      </div>
+                    </form>
+                  {% endif %}
+
+                  {# Its words; while it isn't on ecobasa yet, also wish or offer, and from whom. Removing it is here too #}
+                  <form method="post" action="{{ entry_url }}" id="remove-{{ entry.pk }}" onsubmit="return confirm('{{ _("Take this line off the Giftsheet?")|escapejs }}')">{% csrf_token %}</form>
+                  <form method="post" action="{{ entry_url }}" x-show="open === 'edit'" x-cloak class="mt-2 p-3 rounded-lg bg-secondary space-y-2" x-data="{ who: '{{ entry.from_choice|escapejs }}' }">{% csrf_token %}
+                    {% if not entry.listing_id %}
+                      <div class="flex gap-4">
+                        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="type" value="wish" {% if not entry.is_offer %}checked{% endif %}><i class="fa-solid fa-heart text-yellow"></i>{% trans "Wish" %}</label>
+                        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="type" value="offer" {% if entry.is_offer %}checked{% endif %}><i class="fa-solid fa-gift text-primary"></i>{% trans "Offer" %}</label>
+                      </div>
+                    {% endif %}
+                    <label class="form-label" for="text-{{ entry.pk }}">{% trans "Wish or offer" %}</label>
+                    <input type="text" name="text" id="text-{{ entry.pk }}" value="{{ entry.text }}" maxlength="255" required class="form-input w-full">
+                    {% if writes and not entry.listing_id %}
+                      <label class="form-label">{% trans "Who said it?" %}</label>
+                      {% include "gift_circles/_giftsheet_picker.html" with selected=entry.from_choice label=_("Who said it?") %}
+                    {% endif %}
+                    <div class="flex flex-wrap justify-between gap-2">
+                      <button type="submit" form="remove-{{ entry.pk }}" name="action" value="delete" class="underline"><i class="fa-regular fa-trash-can mr-1"></i>{% trans "Remove" %}</button>
+                      <button type="submit" name="action" value="edit" class="btn text-sm py-1 px-3"><i class="fa fa-check mr-1"></i>{% trans "Save" %}</button>
+                    </div>
+                  </form>
+                </div>
+              {% endif %}
+            {% endif %}
+          </div>
+        </li>
+      {% endfor %}
+    </ol>
+  {% else %}
+    <p class="italic">{% trans "Nothing on the Giftsheet yet." %}</p>
+  {% endif %}
+</div>

@@ -11,7 +11,7 @@
 {% block giving_content %}
 <div>
 
-  <div class="mb-2 text-sm">
+  <div class="mb-2 text-sm flex flex-wrap items-center gap-x-2 gap-y-1">
     {% if request_type == "volunteer" %}
       <a href="{% url 'matches:list' %}?type=volunteer" class="hover:underline">{% trans "Volunteer Visits" %}</a>
     {% elif request_type == "tours" %}
@@ -21,10 +21,10 @@
     {% else %}
       <a href="{% url 'matches:list' %}" class="hover:underline">{% trans "Matches" %}</a>
     {% endif %}
-    <span class="mx-1">/</span>
+    <i class="fa-solid fa-chevron-right text-xs opacity-50" aria-hidden="true"></i>
     <a href="{{ target.get_absolute_url }}" class="hover:underline">{{ target.get_match_display_name }}</a>
-    <span class="mx-1">/</span>
-    <span>{% trans "Match" %} #{{ match.pk }}</span>
+    <i class="fa-solid fa-chevron-right text-xs opacity-50" aria-hidden="true"></i>
+    <span class="opacity-70">{% trans "Match" %} #{{ match.pk }}</span>
   </div>
 
   {# ── Status summary banner ────────────────────────────────────────── #}

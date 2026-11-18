@@ -5,7 +5,7 @@
 
 {% block content %}
 <div class="container-form">
-  {% include "gift_circles/_guest_header.html" %}
+  {% include "gift_circles/_guest_header.html" with here=_("Invite people") %}
   <h1>{% trans "Invite people" %}</h1>
   <p class="text-sm"><i class="fa-regular fa-calendar mr-1"></i>{% include "events/_event_dates.html" %}</p>
   <p class="text-sm">{% trans "They get your invitation with what a gift-circle is, and come without asking." %}</p>

@@ -73,6 +73,9 @@ ASK_TO_JOIN = (GIFT_CIRCLE,)
 # Fields of an add-on in "I'm coming" and "Ask to join", and on the page for who comes
 COMING_FIELDS = {GIFT_CIRCLE: "gift_circles/_attendee_fields.html"}
 
+# Beside each person under "Who is coming", for whoever may edit it
+COMING_TOOLS = {GIFT_CIRCLE: "gift_circles/_scribe.html"}
+
 # How visitors without an account come, beside "I'm coming"
 GUEST_SIGN_UPS = {GIFT_CIRCLE: "gift_circles/_guest_sign_up.html"}
 

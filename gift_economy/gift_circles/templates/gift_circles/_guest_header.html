@@ -1,6 +1,14 @@
-{% load i18n %}{# Above a guest's pages: where it belongs, the gift-circle and its day #}
-<div class="mb-2 text-sm">
+{% load i18n %}{# Above a gift-circle's own pages: where it belongs, the gift-circle, a page in between if any (`parent`, `parent_url`), and the page (`here`) #}
+<div class="mb-2 text-sm flex flex-wrap items-center gap-x-2 gap-y-1">
   <a href="{{ event.host.get_absolute_url }}" class="hover:underline">{{ event.host_name }}</a>
-  <span class="mx-1">/</span>
+  <i class="fa-solid fa-chevron-right text-xs opacity-50" aria-hidden="true"></i>
   <a href="{{ event.get_absolute_url }}" class="hover:underline">{{ event.title }}</a>
+  {% if parent_url %}
+    <i class="fa-solid fa-chevron-right text-xs opacity-50" aria-hidden="true"></i>
+    <a href="{{ parent_url }}" class="hover:underline">{{ parent }}</a>
+  {% endif %}
+  {% if here %}
+    <i class="fa-solid fa-chevron-right text-xs opacity-50" aria-hidden="true"></i>
+    <span class="opacity-70">{{ here }}</span>
+  {% endif %}
 </div>

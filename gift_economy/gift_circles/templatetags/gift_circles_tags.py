@@ -1,7 +1,7 @@
 from django import template
 
-from .. import bringing
-from ..models import Attendee
+from .. import bringing, giftsheet
+from ..models import Attendee, Scribe
 
 register = template.Library()
 
@@ -12,6 +12,17 @@ def keeps_on_ecobasa(event, user):
     if not user.is_authenticated:
         return False
     return Attendee.objects.filter(event=event, user=user, keep_on_ecobasa=True).exists()
+
+
+@register.simple_tag
+def sees_giftsheet(event, user):
+    """Whether `user` may open its Giftsheet: who comes, its host and scribes."""
+    return giftsheet.may_see(event, user)
+
+
+@register.simple_tag
+def is_scribe(event, user):
+    return Scribe.objects.filter(event=event, user=user).exists()
 
 
 @register.simple_tag
