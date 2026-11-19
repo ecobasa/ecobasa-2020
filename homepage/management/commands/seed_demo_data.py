@@ -6,7 +6,8 @@ does), seeds & plants (every plant form, from temperate to tropical climates, wi
 hardiness zones), vehicles and tools to lend and borrow (with loans, by the day and by
 the hour, also a community's), a public good, things salvaged from houses taken down
 and common goods in places of their own around the map (every kind), skills (every
-level), skill wishes (user + community), matches (every status, every target type), match messages,
+level), skill wishes (user + community), skills and knowledge shared from afar (with an
+online skill-sharing), matches (every status, every target type), match messages,
 volunteer details, notifications (every tag), and references (every impression and
 subject type, with confirmed/pending/declined skill tags and gift names).
 
@@ -110,6 +111,7 @@ class Command(BaseCommand):
         self._seed_projects(users, communities)
         self._seed_community_events(users, communities)
         self._seed_gift_circles(users, communities)
+        self._seed_skill_sharing(users)
         self._seed_goods_around(users, communities)
         self._seed_tours(users, communities)
 
@@ -810,7 +812,7 @@ class Command(BaseCommand):
 
         zucchini = Listing.objects.get(title="Zucchini", owner=luna)
         starter_wish = Listing.objects.get(title__startswith="Wish: someone who understands sourdough", owner=mireille)
-        luna_permaculture = Listing.objects.get(owner=luna, type="offer", skill__name="Permaculture Design")
+        luna_permaculture = Listing.objects.get(owner=luna, type="offer", kind=Listing.KIND_SKILL, skill__name="Permaculture Design")
         kombucha_fermentation = Listing.objects.get(
             community=communities["Kombucha Commune"], event=None, type="offer", skill__name="Fermentation",
         )
@@ -1529,6 +1531,66 @@ class Command(BaseCommand):
         )
         coming(jules, online)
         coming(freja, online)
+
+    # ── Skill-sharing from afar ──────────────────────────────────────────
+
+    def _seed_skill_sharing(self, users):
+        """Skills and knowledge shared from afar, matched however far apart: Valeria in
+        Costa Rica offers Spanish to Sam in Utrecht (Sam can start an online skill-sharing
+        from the suggestion), Luna gives advice on food forests to Nils in Panama, and
+        Mireille's online skill-sharing on fermentation invites Björn and is suggested to
+        Freja in Copenhagen, who wishes to learn it from afar too."""
+        from events import kinds
+        from events.models import Event
+        from gift_economy.gift_circles.bringing import bring
+        from gift_economy.gift_circles.invitations import invite
+
+        self.stdout.write("Seeding skill-sharing from afar…")
+        luna, bjorn, mireille = users["luna@ecobasa.demo"], users["bjorn@ecobasa.demo"], users["mireille@ecobasa.demo"]
+        sam, valeria, nils = users["sam@ecobasa.demo"], users["valeria@ecobasa.demo"], users["nils@ecobasa.demo"]
+        freja = users["freja@ecobasa.demo"]
+        spanish = get_or_create_skill("Spanish")[0]
+        permaculture = get_or_create_skill("Permaculture Design")[0]
+        fermentation = get_or_create_skill("Fermentation")[0]
+
+        def from_afar(owner, type, skill, kind=Listing.KIND_SKILL, **fields):
+            listing, _created = Listing.objects.get_or_create(
+                owner=owner, community=None, event=None, tour=None, type=type, kind=kind, skill=skill, defaults=fields,
+            )
+            if not listing.from_afar:
+                # Saved, so the matching finds what fits it from afar
+                listing.from_afar = True
+                listing.save()
+            return listing
+
+        from_afar(valeria, Listing.TYPE_OFFER, spanish, level=Listing.LEVEL_EXPERT,
+                  description="Native speaker. Happy to chat over video while the howler monkeys provide ambience.")
+        from_afar(sam, Listing.TYPE_WISH, spanish, level=Listing.LEVEL_BEGINNER,
+                  description="Enough to order coffee and apologise for my accent.")
+        from_afar(luna, Listing.TYPE_OFFER, permaculture, kind=Listing.KIND_KNOWLEDGE,
+                  title="Planning a food forest", description="Send me a sketch of your land and we'll go through it on a call.")
+        from_afar(nils, Listing.TYPE_WISH, permaculture, kind=Listing.KIND_KNOWLEDGE,
+                  title="Which trees for a tropical food forest?", description="Half an acre, lots of rain, very curious neighbours.")
+        offer = from_afar(mireille, Listing.TYPE_OFFER, fermentation)
+        from_afar(bjorn, Listing.TYPE_WISH, fermentation)
+
+        day = timezone.localdate() + timedelta(days=12)
+        circle, created = Event.objects.get_or_create(
+            kind=kinds.GIFT_CIRCLE, title="Online skill-sharing: Fermentation",
+            defaults=dict(
+                created_by=mireille, host_user=mireille, is_open=True, is_online=True,
+                description="Sauerkraut, kombucha and whatever is bubbling in your kitchen: we share "
+                            "what we know over a video call. Bring your questions and your jars.",
+                starts_on=day, ends_on=day, starts_at=datetime_time(18, 0), ends_at=datetime_time(19, 0),
+                timezone="Europe/Paris", languages=["en", "fr"], max_people=12,
+            ),
+        )
+        if created:
+            invite(circle, mireille, [bjorn], [], "")
+            bring(circle, offer)
+        # Freja wishes to learn it from afar too: she hears about the circle
+        from_afar(freja, Listing.TYPE_WISH, fermentation, level=Listing.LEVEL_BEGINNER,
+                  description="My kombucha tastes like vinegar and regret.")
 
     # ── Community-Tours ──────────────────────────────────────────────────
 

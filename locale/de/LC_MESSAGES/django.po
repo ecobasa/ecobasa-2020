@@ -2061,10 +2061,10 @@ msgstr "Matches"
 
 #: gift_economy/matches/emails.py:218
 #, python-format
-msgid "%(count)s new suggestion near you"
-msgid_plural "%(count)s new suggestions near you"
-msgstr[0] "%(count)s neuer Vorschlag in deiner Nähe"
-msgstr[1] "%(count)s neue Vorschläge in deiner Nähe"
+msgid "%(count)s new suggestion"
+msgid_plural "%(count)s new suggestions"
+msgstr[0] "%(count)s neuer Vorschlag"
+msgstr[1] "%(count)s neue Vorschläge"
 
 #: gift_economy/matches/forms.py:16
 msgid "How much?"
@@ -3874,24 +3874,15 @@ msgid "Someone"
 msgstr "Jemand"
 
 #: notifications/models.py:116
-msgid "Suggestions near you: what fits your wishes, offers and skills."
-msgstr ""
-"Vorschläge in deiner Nähe: was zu deinen Wünschen, Angeboten und Fähigkeiten "
-"passt."
+msgid "Suggestions: what fits your wishes, offers and skills."
+msgstr "Vorschläge: was zu deinen Wünschen, Angeboten und Fähigkeiten passt."
 
 #: notifications/models.py:118
 #, python-format
-msgid ""
-"%(count)s new suggestion near you: something fits your wishes, offers or "
-"skills."
-msgid_plural ""
-"%(count)s new suggestions near you: things fit your wishes, offers or skills."
-msgstr[0] ""
-"%(count)s neuer Vorschlag in deiner Nähe: etwas passt zu deinen Wünschen, "
-"Angeboten oder Fähigkeiten."
-msgstr[1] ""
-"%(count)s neue Vorschläge in deiner Nähe: einiges passt zu deinen Wünschen, "
-"Angeboten oder Fähigkeiten."
+msgid "%(count)s new suggestion: something fits your wishes, offers or skills."
+msgid_plural "%(count)s new suggestions: things fit your wishes, offers or skills."
+msgstr[0] "%(count)s neuer Vorschlag: etwas passt zu deinen Wünschen, Angeboten oder Fähigkeiten."
+msgstr[1] "%(count)s neue Vorschläge: einiges passt zu deinen Wünschen, Angeboten oder Fähigkeiten."
 
 #: notifications/models.py:129
 #, python-format
@@ -10482,3 +10473,64 @@ msgstr "Die Uhrzeiten gelten in der Zeitzone des Orts unten."
 #: homepage/templates/homepage/homepage.html
 msgid "Find new members for your community: applications, trial visits and onboarding"
 msgstr "Neue Mitglieder für deine Gemeinschaft finden: Bewerbungen, Probebesuche und Einstieg"
+
+msgid "Also from afar"
+msgstr "Auch aus der Ferne"
+
+msgid "By video call or phone. You also find people far away who say so too, beyond your distance."
+msgstr "Per Videoanruf oder Telefon. Du findest auch Leute weit weg, die das auch sagen, über deine Entfernung hinaus."
+
+msgid "By video call or phone"
+msgstr "Per Videoanruf oder Telefon"
+
+msgid "Shared at an online gift-circle"
+msgstr "Geteilt in einem Online-Schenkkreis"
+
+msgid "Start an online skill-sharing"
+msgstr "Online-Skillsharing starten"
+
+msgid "Online skill-sharing: %(skills)s"
+msgstr "Online-Skillsharing: %(skills)s"
+
+
+msgid "Skill-sharing."
+msgstr "Skillsharing."
+
+msgid "If there is time, those who matched over a skill or knowledge share it right away, in small groups."
+msgstr "Wenn Zeit ist, teilen alle, die über eine Fähigkeit oder Wissen zusammengefunden haben, es gleich in kleinen Gruppen."
+
+msgid "More below"
+msgstr "Mehr dazu unten"
+
+msgid "Skill-sharing"
+msgstr "Skillsharing"
+
+msgid "Every gift-circle can end with skill-sharing. After the rounds, who matched over a skill or knowledge sits together and starts: show how the sourdough is fed, sketch the food forest, practise the first sentences of Spanish. The rest can listen in or join a group of their own."
+msgstr "Jeder Schenkkreis kann mit Skillsharing enden. Nach den Runden setzen sich alle zusammen, die über eine Fähigkeit oder Wissen zusammengefunden haben, und fangen an: zeigen, wie der Sauerteig gefüttert wird, den Waldgarten skizzieren, die ersten Sätze Spanisch üben. Die anderen können zuhören oder sich einer Gruppe anschließen."
+
+msgid "In a room, each group takes a corner or a table. Online, open a breakout room for each group: whoever is first in the call can, in the participants list. Or go one after another. What doesn't fit into the evening, the two go on with afterwards: the match is on ecobasa."
+msgstr "In einem Raum nimmt sich jede Gruppe eine Ecke oder einen Tisch. Online öffnet ihr für jede Gruppe einen Breakout-Raum: Wer zuerst in der Videokonferenz ist, kann das, in der Liste der Teilnehmenden. Oder ihr geht nacheinander vor. Was nicht in den Abend passt, machen die beiden danach weiter: Der Match ist auf ecobasa."
+
+msgid "Offers and wishes of a skill or knowledge can say “Also from afar”: by video call or phone. Two that both say so are suggested to each other however far apart they live, and from the suggestion either of them can start an online skill-sharing: an online gift-circle that invites the other and brings their offers and wishes along. Everyone else who shares the same from afar hears about it and can join."
+msgstr "Angebote und Wünsche einer Fähigkeit oder von Wissen können „Auch aus der Ferne“ sagen: per Videoanruf oder Telefon. Zwei, die das beide sagen, werden einander vorgeschlagen, egal wie weit sie auseinander wohnen, und aus dem Vorschlag heraus kann jede*r von beiden ein Online-Skillsharing starten: einen Online-Schenkkreis, der die andere Person einlädt und ihre Angebote und Wünsche mitbringt. Alle anderen, die dasselbe aus der Ferne teilen, erfahren davon und können dazukommen."
+
+msgid "Skills and knowledge marked “Also from afar” are matched however far away, when the other side marked it too."
+msgstr "Fähigkeiten und Wissen mit „Auch aus der Ferne“ werden über jede Entfernung vorgeschlagen, wenn die andere Seite es auch angekreuzt hat."
+
+msgid "%(time)s your time"
+msgstr "%(time)s bei dir"
+
+msgid "Agree on a day and time here first. Everyone sees the times in their own timezone."
+msgstr "Einigt euch hier zuerst auf einen Tag und eine Uhrzeit. Alle sehen die Uhrzeiten in ihrer eigenen Zeitzone."
+
+msgid "Agree on a day and time in your conversation first: the button is there too. Everyone sees an online gift-circle's times also in their own timezone."
+msgstr "Einigt euch zuerst in eurer Unterhaltung auf einen Tag und eine Uhrzeit: Der Button ist dort auch. Alle sehen die Uhrzeiten eines Online-Schenkkreises auch in ihrer eigenen Zeitzone."
+
+msgid "%(city)s time"
+msgstr "Ortszeit %(city)s"
+
+msgid "Online — by video call or phone"
+msgstr "Online – per Videoanruf oder Telefon"
+
+msgid "Online, by video call or phone"
+msgstr "Online, per Videoanruf oder Telefon"

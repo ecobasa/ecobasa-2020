@@ -94,7 +94,11 @@ def detail(request, pk):
         initial = {"message": suggestion.message} if suggestion else {}
         # At the giver's place: who fulfils a wish (the one asking here), the owner of an offer
         initial["location_type"] = Match.LOC_YOUR_PLACE if listing.is_offer else Match.LOC_MY_PLACE
-        form = MatchForm(request.POST or None, loan_of=listing if listing.lend else None, initial=initial)
+        # A skill or knowledge can also be shared online; from afar it starts so
+        online = listing.kind in Listing.FROM_AFAR_KINDS
+        if online and listing.from_afar:
+            initial["location_type"] = Match.LOC_ONLINE
+        form = MatchForm(request.POST or None, loan_of=listing if listing.lend else None, online=online, initial=initial)
         if request.method == "POST" and form.is_valid():
             match = form.save(commit=False)
             match.from_user = request.user

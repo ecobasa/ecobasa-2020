@@ -53,7 +53,7 @@
         <fieldset class="form-group space-y-3" x-data="{ online: {{ form.is_online.value|yesno:'true,false' }}, kind: '{{ form.kind.value }}', apart: '{{ form.countries_apart }}'.split(','), byTown: {{ form.times_from_town|yesno:'true,false' }}, town() { const country = document.getElementById('{{ form.country.id_for_label }}').value; this.byTown = !!document.getElementById('{{ form.location.id_for_label }}').value && !!country && !this.apart.includes(country) } }"
                   @kind-chosen.window="kind = $event.detail" @location-set.window="town()" @location-country.window="town()" @location-cleared.window="byTown = false">
           <legend class="form-label">{% trans "Where" %}</legend>
-          <label class="inline-flex items-center gap-2"><input type="checkbox" name="{{ form.is_online.html_name }}" id="{{ form.is_online.id_for_label }}" class="form-checkbox" x-model="online"> {{ form.is_online.label }}</label>
+          <label class="inline-flex items-center gap-2"><input type="checkbox" name="{{ form.is_online.html_name }}" id="{{ form.is_online.id_for_label }}" class="form-checkbox" x-model="online" @change="$dispatch('online-chosen', online)"> {{ form.is_online.label }}</label>
           {# Its times are in a timezone: its own, else its host's place's, else the browser's (browser_zones: [] any, else only one of these) #}
           {% if form.browser_zones is not None and not form.is_bound %}{{ form.browser_zones|json_script:"browser-zones" }}{% endif %}
           <div x-show="online" {% if not form.is_online.value %}style="display:none"{% endif %}
@@ -73,7 +73,8 @@
             <p class="text-xs mt-1">{{ form.languages.help_text }}</p>
             {% for error in form.languages.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
           </div>
-          <div>
+          {# An online skill-sharing (event.skill_sharing, from a suggestion) is from afar: no town #}
+          <div {% if event.skill_sharing %}x-show="!online" {% if form.is_online.value %}style="display:none"{% endif %}{% endif %}>
             <label class="form-label" for="{{ form.location_name.id_for_label }}">
               <span x-show="!online" {% if form.is_online.value %}style="display:none"{% endif %}>{{ form.location_name.label }}</span>
               <span x-show="online" {% if not form.is_online.value %}style="display:none"{% endif %}>{% trans "For people around" %}</span>
@@ -113,8 +114,9 @@
         {% endwith %}
       {% elif field.name == "potluck_note" %}
         {% with potluck=form.potluck_kinds %}
-        <div class="form-group" x-data="{ kind: '{{ form.kind.value }}', potluck: [{% for kind in potluck %}'{{ kind }}'{% if not forloop.last %}, {% endif %}{% endfor %}] }" @kind-chosen.window="kind = $event.detail"
-             x-show="potluck.includes(kind)" {% if form.kind.value not in potluck %}style="display:none"{% endif %}>
+        {# Not online: nobody shares a table #}
+        <div class="form-group" x-data="{ kind: '{{ form.kind.value }}', online: {{ form.is_online.value|yesno:'true,false' }}, potluck: [{% for kind in potluck %}'{{ kind }}'{% if not forloop.last %}, {% endif %}{% endfor %}] }" @kind-chosen.window="kind = $event.detail" @online-chosen.window="online = $event.detail"
+             x-show="potluck.includes(kind) && !online" {% if form.kind.value not in potluck or form.is_online.value %}style="display:none"{% endif %}>
           <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
           {{ field }}
           <p class="text-xs mt-1">{{ field.help_text }}</p>

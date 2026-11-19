@@ -57,10 +57,14 @@ class Match(models.Model):
     LOC_MY_PLACE = "my_place"
     LOC_YOUR_PLACE = "your_place"
     LOC_CUSTOM = "custom"
+    # A skill or knowledge shared by video call or phone: no place (MatchForm offers it
+    # for those only)
+    LOC_ONLINE = "online"
     LOC_CHOICES = [
         (LOC_MY_PLACE, _("My place — come visit me")),
         (LOC_YOUR_PLACE, _("Your place — I will visit you")),
         (LOC_CUSTOM, _("Somewhere else")),
+        (LOC_ONLINE, _("Online — by video call or phone")),
     ]
 
     STATUS_PENDING = "pending"
@@ -166,6 +170,12 @@ class Match(models.Model):
         if model == "community":
             return _("Volunteer stay"), "fa-campground", "bg-green"
         return _("Match"), "fa-handshake", "bg-primary"
+
+    @property
+    def can_be_online(self):
+        """Whether its place can be online: about a skill or knowledge, or proposed so."""
+        target = self.target
+        return self.location_type == self.LOC_ONLINE or getattr(target, "kind", None) in getattr(target, "FROM_AFAR_KINDS", ())
 
     @property
     def is_coming(self):
@@ -331,6 +341,8 @@ class Match(models.Model):
 
     def resolved_location(self):
         """Human-readable meeting location, resolving my/your place from profiles."""
+        if self.location_type == self.LOC_ONLINE:
+            return str(_("Online, by video call or phone"))
         if self.location_type == self.LOC_MY_PLACE:
             loc = self.person_place(self.from_user)[0] or self.proposed_location or ""
             name = self.from_user.name or self.from_user.email
@@ -416,6 +428,8 @@ class MatchMessage(models.Model):
 
     def resolved_counter_location(self):
         """Human-readable counter-proposed meeting location, resolving my/your place."""
+        if self.counter_location_type == Match.LOC_ONLINE:
+            return str(_("Online, by video call or phone"))
         if self.counter_location:
             return self.counter_location
         match = self.match
@@ -716,6 +730,9 @@ class Suggestion(models.Model):
     # Both come to the same gift-circle, and one of them brings it there: they meet in
     # person, however far apart they live (the gift-circle is the detail)
     REASON_GIFT_CIRCLE = "gift_circle"
+    # One of them shares it at an online gift-circle the other can join from afar (the
+    # gift-circle is the detail)
+    REASON_SHARED_ONLINE = "shared_online"
     # Those that are about travelling along: silenced while someone pauses tour suggestions
     TRAVEL_REASONS = (REASON_ROUTE, REASON_LEARN, REASON_HAS)
     REASON_CHOICES = [
@@ -730,6 +747,7 @@ class Suggestion(models.Model):
         (REASON_HOME, _("A ride towards your home")),
         (REASON_TOGETHER, _("Someone from near you comes too")),
         (REASON_GIFT_CIRCLE, _("Comes to the same gift-circle")),
+        (REASON_SHARED_ONLINE, _("Shared at an online gift-circle")),
     ]
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="suggestions")
@@ -742,7 +760,8 @@ class Suggestion(models.Model):
     other_id = models.CharField(max_length=255)
     other = GenericForeignKey("other_type", "other_id")
     # For a tour: the offer or wish at one of its stops it is about (REASON_HAS,
-    # REASON_WANTS); the gift-circle both come to (REASON_GIFT_CIRCLE)
+    # REASON_WANTS); the gift-circle both come to (REASON_GIFT_CIRCLE) or one shares it at
+    # (REASON_SHARED_ONLINE)
     detail_type = models.ForeignKey(ContentType, on_delete=models.CASCADE, null=True, blank=True, related_name="+")
     detail_id = models.CharField(max_length=255, blank=True)
     detail = GenericForeignKey("detail_type", "detail_id")
@@ -846,8 +865,27 @@ class Suggestion(models.Model):
 
     @property
     def gift_circle(self):
-        """The gift-circle both come to, where it is the reason."""
-        return self.detail if self.reason == self.REASON_GIFT_CIRCLE else None
+        """The gift-circle both come to, or one shares it at, where it is the reason."""
+        return self.detail if self.reason in (self.REASON_GIFT_CIRCLE, self.REASON_SHARED_ONLINE) else None
+
+    @property
+    def from_afar(self):
+        """Both can share it from afar (Listing.from_afar): it was found however far apart."""
+        own, other = self.own, self.other
+        if self.other_model != "listing" or self.own_type.model != "listing" or None in (own, other):
+            return False
+        return all(listing.from_afar and listing.kind in listing.FROM_AFAR_KINDS for listing in (own, other))
+
+    @property
+    def starts_skill_sharing(self):
+        """Whether its reader can start an online skill-sharing from it: both share it from
+        afar, both are a person's own (not a community's, a tour's or an event's), and no
+        gift-circle brought them together yet."""
+        if self.gift_circle is not None or self.other_user_id is None or not self.from_afar:
+            return False
+        return all(
+            not (listing.community_id or listing.tour_id or listing.event_id) for listing in (self.own, self.other)
+        ) and self.own.owner_id == self.user_id
 
     @property
     def gives_along(self):
@@ -1025,10 +1063,13 @@ class Suggestion(models.Model):
 
     @property
     def action_url(self):
-        """Where to act on it: the offer form for an event need, the join page for a
-        tour's need, the volunteer form for a community's wish for a skill, else the thing's page (where it can be asked for or
+        """Where to act on it: the online gift-circle where it is shared, the offer form for
+        an event need, the join page for a tour's need, the volunteer form for a community's wish for a skill, else the thing's page (where it can be asked for or
         offered)."""
         other = self.other
+        if self.reason == self.REASON_SHARED_ONLINE and self.detail is not None:
+            # The online gift-circle, to join it
+            return self.detail.get_absolute_url()
         if self.is_together:
             # Start a tour or ride there, prefilled from their own stay
             return f"{reverse('tours:create')}?stay={self.own.pk}"

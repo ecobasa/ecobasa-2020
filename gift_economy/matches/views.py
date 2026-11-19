@@ -472,6 +472,9 @@ def match_detail(request, pk):
                     msg.counter_stay_from, msg.counter_stay_to = span
                 msg.counter_location_type = request.POST.get("counter_location_type", "")
                 msg.counter_location      = request.POST.get("counter_location", "")
+                if msg.counter_location_type == Match.LOC_ONLINE:
+                    # Online is no place
+                    msg.counter_location = ""
                 try:
                     msg.counter_lat = float(request.POST.get("counter_lat") or "")
                 except (ValueError, TypeError):
@@ -480,6 +483,8 @@ def match_detail(request, pk):
                     msg.counter_lon = float(request.POST.get("counter_lon") or "")
                 except (ValueError, TypeError):
                     msg.counter_lon = None
+                if msg.counter_location_type == Match.LOC_ONLINE:
+                    msg.counter_lat = msg.counter_lon = None
                 raw_dt = request.POST.get("counter_date", "")
                 try:
                     msg.counter_date = _dt.fromisoformat(raw_dt) if raw_dt else None
@@ -494,7 +499,17 @@ def match_detail(request, pk):
             return redirect(match.get_absolute_url())
 
     attached_verb = match.attached_verb
+    # A skill or knowledge both share from afar: they agree on a time here and start an
+    # online skill-sharing from the suggestion between them
+    skill_sharing = None
+    other_party = match.recipient if is_requester else match.from_user
+    if is_party and other_party is not None and isinstance(target, Listing) and target.from_afar:
+        skill_sharing = next((
+            suggestion for suggestion in request.user.suggestions.filter(other_user=other_party, dismissed_at=None)
+            if suggestion.starts_skill_sharing
+        ), None)
     return render(request, "matches/match_detail.html", {
+        "skill_sharing":        skill_sharing,
         "match":                match,
         # Volunteer visits, join requests and asking to join an event have their own place
         # in the sidebar and breadcrumb (an event says which)
@@ -540,7 +555,10 @@ def match_detail(request, pk):
         "my_place":             match.place_of(request.user, viewer=request.user),
         "your_place":           match.place_of(match.recipient if is_requester else match.from_user),
         "message_form":         MatchMessageForm(),
-        "loc_choices":          Match.LOC_CHOICES,
+        # Online only for a skill or knowledge, or where it was proposed so
+        "loc_choices":          [
+            choice for choice in Match.LOC_CHOICES if choice[0] != Match.LOC_ONLINE or match.can_be_online
+        ],
         "person":               _person(match.recipient if is_requester else match.from_user) if shows_person else None,
         "can_ask_extras":       can_ask_extras,
         "asked_listing_ids":    {listing.pk for listing in match.listings.all()},

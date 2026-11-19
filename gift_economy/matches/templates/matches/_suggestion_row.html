@@ -7,11 +7,13 @@
     <div class="text-xs mt-1 opacity-80">
       {% blocktrans with own=suggestion.own_text %}fits {{ own }}{% endblocktrans %}
       {% if suggestion.distance_km is not None %}· {% blocktrans with km=suggestion.distance_km %}{{ km }} km away{% endblocktrans %}{% endif %}
-      {% with circle=suggestion.gift_circle %}{% if circle %}· <a href="{{ circle.get_absolute_url }}#bring" class="underline"><i class="fa-solid fa-hands-holding-circle mr-1"></i>{{ suggestion.get_reason_display }}: {{ circle.title }}</a>{% endif %}{% endwith %}
+      {% if suggestion.from_afar %}· <i class="fa-solid fa-globe mr-1"></i>{% trans "Also from afar" %}{% endif %}
+      {% with circle=suggestion.gift_circle %}{% if circle %}· <a href="{{ circle.get_absolute_url }}{% if not circle.is_online %}#bring{% endif %}" class="underline"><i class="fa-solid fa-hands-holding-circle mr-1"></i>{{ suggestion.get_reason_display }}: {{ circle.title }}</a>{% endif %}{% endwith %}
     </div>
     {% if not suggestion.hardy_enough %}<div class="text-xs mt-1 text-yellow"><i class="fa-solid fa-snowflake mr-1"></i>{% trans "Might not survive the winter here" %}</div>{% endif %}
     <div class="flex flex-wrap items-center gap-3 mt-2">
       <a href="{{ suggestion.action_url }}" class="btn text-sm py-1 px-3">{% if suggestion.is_together %}<i class="fa-solid fa-route mr-1"></i>{% trans "Go there together" %}{% elif suggestion.gives_along %}<i class="fa-solid fa-box mr-1"></i>{% trans "Give it along" %}{% elif suggestion.is_tour %}<i class="fa-solid fa-route mr-1"></i>{% trans "Ask to join" %}{% elif suggestion.helps %}<i class="fa fa-hands-helping mr-1"></i>{% trans "Help with this" %}{% else %}{% trans "Have a look" %}{% endif %}</a>
+      {% if suggestion.starts_skill_sharing %}<a href="{% url 'events:gift_circle_create' %}?suggestion={{ suggestion.pk }}" class="btn text-sm py-1 px-3"><i class="fa-solid fa-video mr-1"></i>{% trans "Start an online skill-sharing" %}</a>{% endif %}
       {% if suggestion.other_user %}<a href="{{ suggestion.other_user.get_absolute_url }}" class="text-sm underline">{{ suggestion.other_user.name|default:suggestion.other_user.email }}</a>{% endif %}
       <form method="post" action="{% url 'matches:dismiss_suggestion' suggestion.pk %}" class="ml-auto">{% csrf_token %}
         <input type="hidden" name="next" value="{{ request.get_full_path }}">

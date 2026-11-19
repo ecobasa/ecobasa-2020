@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from django.conf import settings
@@ -253,6 +253,21 @@ class Event(models.Model):
         """"Berlin" of Europe/Berlin, to say "19:00 Berlin time"; empty at a place."""
         zone = self.zone
         return zone.key.rsplit("/", 1)[-1].replace("_", " ") if zone else ""
+
+    @property
+    def zoned_hours(self):
+        """(start, end) of an online event's (first) day's hours in its timezone, so each
+        reader's page can also show them in their own (end None without an end); None without
+        them."""
+        zone = self.zone
+        if zone is None or not (self.starts_on and self.starts_at):
+            return None
+        start = datetime.combine(self.starts_on, self.starts_at, tzinfo=zone)
+        if not self.ends_at:
+            return start, None
+        # The hours of its first day; past midnight they end the next day
+        end = datetime.combine(self.starts_on, self.ends_at, tzinfo=zone)
+        return start, end if end > start else end + timedelta(days=1)
 
     @property
     def language_names(self):

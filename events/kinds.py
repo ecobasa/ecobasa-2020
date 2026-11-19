@@ -92,6 +92,10 @@ HOW_IT_WENT = {GIFT_CIRCLE: "gift_circles/_after.html"}
 # How long one usually takes, in minutes: the form fills in "Until" from "From"
 DURATIONS = {GIFT_CIRCLE: 90}
 
+# A new one filled in from the query string: an add-on's function (request, event) that
+# presets the event and returns what runs once it is saved, or None
+PRESETS = {GIFT_CIRCLE: "gift_economy.gift_circles.skill_sharing.start"}
+
 # A short guide for whoever invites, beside the form
 GUIDES = {GIFT_CIRCLE: "gift_circles/_host_guide.html"}
 

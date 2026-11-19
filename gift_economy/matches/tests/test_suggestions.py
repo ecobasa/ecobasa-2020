@@ -299,14 +299,14 @@ def test_saving_matches_and_notifies_right_away(anna, ben, django_capture_on_com
     notification = Notification.objects.get(recipient=anna)
     assert notification.tag == Notification.TAG_SUGGESTION and notification.link == reverse("matches:list")
     with translation.override("en"):
-        assert notification.text.startswith("1 new suggestion near you")
+        assert notification.text.startswith("1 new suggestion:")
 
     # More matches bump the unread notification instead of adding one
     with django_capture_on_commit_callbacks(execute=True):
         _listing(ben, "Clay from the river", "offer")
     assert Notification.objects.filter(recipient=anna).count() == 1
     with translation.override("en"):
-        assert Notification.objects.get(recipient=anna).text.startswith("2 new suggestions near you")
+        assert Notification.objects.get(recipient=anna).text.startswith("2 new suggestions:")
 
 
 @pytest.mark.django_db
@@ -428,7 +428,7 @@ def test_people_with_only_wishes_get_the_email_too(anna, ben):
     match(_listing(ben, "Clay from the pond", "offer"), notify=False)
     assert send_suggestion_emails() == 2
     to_anna = next(m for m in mail.outbox if m.to == ["anna@example.com"])
-    assert to_anna.subject == "1 new suggestion near you"
+    assert to_anna.subject == "1 new suggestion"
     assert "Ben gives away: Clay from the pond" in to_anna.body and "List-Unsubscribe" in to_anna.extra_headers
 
     # Once a week, and only what's new

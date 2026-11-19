@@ -160,7 +160,7 @@ class EventForm(forms.ModelForm):
             if not cleaned.get("starts_on"):
                 self.add_error("starts_on", _("Which day?"))
             cleaned["ends_on"] = cleaned.get("starts_on")
-        if cleaned.get("kind") not in kinds.POTLUCK:
+        if cleaned.get("kind") not in kinds.POTLUCK or cleaned.get("is_online"):
             cleaned["potluck_note"] = ""
         starts_on, ends_on = cleaned.get("starts_on"), cleaned.get("ends_on")
         if starts_on and ends_on and ends_on < starts_on:

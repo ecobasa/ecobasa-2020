@@ -487,3 +487,25 @@ def test_a_picture_is_shrunk_to_what_a_page_needs(host, settings, tmp_path):
     with Image.open(event.image.path) as image:
         assert max(image.size) == 1600
     assert 'View fullscreen' in _client(host).get(event.get_absolute_url()).content.decode()
+
+
+def test_an_online_event_has_no_potluck(host):
+    day = timezone.localdate() + timedelta(days=3)
+    _client(host).post(reverse("events:gift_circle_create"), {
+        "kind": kinds.GIFT_CIRCLE, "title": "Circle", "starts_on": day, "ends_on": day, "is_online": "on",
+        "potluck_note": "Bring soup",
+    })
+    assert Event.objects.get().potluck_note == ""
+
+
+def test_an_online_event_s_hours_are_also_shown_in_the_reader_s_own_time(host):
+    from datetime import time
+    day = timezone.localdate() + timedelta(days=3)
+    event = _circle(host_user=host, is_online=True, timezone="America/Mexico_City", starts_on=day, ends_on=day,
+                    starts_at=time(23, 0), ends_at=time(0, 30))
+    start, end = event.zoned_hours
+    assert start.isoformat().endswith(("-06:00", "-05:00")) and end - start == timedelta(minutes=90)
+    page = Client().get(event.get_absolute_url(), HTTP_ACCEPT_LANGUAGE="en").content.decode()
+    assert 'data-own-time data-zone="America/Mexico_City"' in page and "TIME your time" in page
+    # At a place its hours are local: nothing to convert
+    assert _circle(host_user=host, title="In the park").zoned_hours is None

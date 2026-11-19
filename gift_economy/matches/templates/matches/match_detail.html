@@ -170,6 +170,10 @@
 
     <div class="prose text-sm mb-4">{{ match.message|linebreaksbr }}</div>
 
+    {% if skill_sharing %}
+      <p class="text-sm mb-4"><a href="{% url 'events:gift_circle_create' %}?suggestion={{ skill_sharing.pk }}" class="btn text-sm py-1 px-3"><i class="fa-solid fa-video mr-1"></i>{% trans "Start an online skill-sharing" %}</a>
+        <span class="block text-xs mt-1">{% trans "Agree on a day and time here first. Everyone sees the times in their own timezone." %}</span></p>
+    {% endif %}
     {% if summary_template %}{% include summary_template %}{% endif %}
     {% for attachment in match.attachments %}{% include attachment.match_attachment_template %}{% endfor %}
 
@@ -230,7 +234,7 @@
 
     {% if match.location_type %}
       <div class="text-sm mb-2">
-        <i class="fa fa-map-marker mr-1 text-primary"></i>
+        <i class="fa {% if match.location_type == 'online' %}fa-video{% else %}fa-map-marker{% endif %} mr-1 text-primary"></i>
         <strong>{% trans "Location" %}:</strong>
         {% with community=match.community %}{% if community %}<a href="{{ community.get_absolute_url }}" class="underline hover:text-primary">{{ match.resolved_location }}</a>{% else %}{{ match.resolved_location }}{% endif %}{% endwith %}
       </div>
@@ -439,7 +443,8 @@
         <input type="hidden" name="counter_lat" id="counter-lat">
         <input type="hidden" name="counter_lon" id="counter-lon">
 
-        <div class="rounded shadow overflow-hidden h-[220px]">
+        {# Online is no place: no map #}
+        <div class="rounded shadow overflow-hidden h-[220px]" x-show="counterLocType !== 'online'" {% if proposed_place.type == 'online' %}style="display:none"{% endif %}>
           <div id="counter-pick-map" class="w-full h-full bg-secondary bg-opacity-40"></div>
         </div>
 
@@ -691,7 +696,12 @@ document.fonts.ready.then(function () {
 
     window.updateCounterMode = function (locType) {
       counterMapInst.removeInteraction(modify);
-      if (locType === 'custom') {
+      // Shown again after online: the map has to measure itself
+      setTimeout(function () { counterMapInst.updateSize(); });
+      if (locType === 'online') {
+        counterFeature.setGeometry(null);
+        setHidden('', '', '');
+      } else if (locType === 'custom') {
         counterFeature.setGeometry(null);
         counterVectorLayer.setStyle(EcoMap.makeIconStyle(0xF111, '#da6137'));
         counterMapInst.addInteraction(modify);

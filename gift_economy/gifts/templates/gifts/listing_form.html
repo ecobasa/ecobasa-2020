@@ -47,7 +47,8 @@
       {% for error in form.type.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
     </fieldset>
 
-    <fieldset class="form-group" x-on:change="kind = $event.target.value">
+    {# New knowledge starts as "Also from afar": advice usually works by call #}
+    <fieldset class="form-group" x-on:change="kind = $event.target.value{% if not form.instance.pk %}; $refs.afar.checked = kind === 'knowledge'{% endif %}">
       <legend class="form-label">{% trans "What is it?" %}</legend>
       <div class="flex flex-wrap gap-2">
         {% for radio, icon, colour, text in form.kind_radios %}
@@ -98,6 +99,16 @@
           <span x-show="type === 'wish'" x-cloak>{% trans "Borrow it: you need it for some days or hours and bring it back" %}</span>
           <span class="block text-xs" x-show="type === 'offer'">{% trans "Requests say from when until when. You get a lending calendar in your dashboard." %}</span>
           <span class="block text-xs">{% trans "For things to share rather than give away: a ladder, a concrete mixer, a cargo bike, a car, a trailer, a van." %}</span>
+        </span>
+      </label>
+    </div>
+    {# A skill or knowledge that also works by video call or phone: matched however far apart, if the other side says so too #}
+    <div x-show="['skill', 'knowledge'].includes(kind)" x-cloak class="form-group">
+      <label class="flex items-start gap-2 cursor-pointer">
+        <input type="checkbox" name="{{ form.from_afar.html_name }}" id="{{ form.from_afar.id_for_label }}" x-ref="afar" class="form-checkbox mt-1 flex-shrink-0"{% if form.from_afar.value %} checked{% endif %}>
+        <span>
+          {{ form.from_afar.label }}
+          <span class="block text-xs">{% trans "By video call or phone. You also find people far away who say so too, beyond your distance." %}</span>
         </span>
       </label>
     </div>

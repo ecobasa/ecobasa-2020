@@ -74,14 +74,17 @@ def brought(event):
 
 
 def bring(event, listing):
-    """Bring `listing` to it, and suggest what fits it among who comes. Once its
-    Giftsheet is made, it goes on it too."""
+    """Bring `listing` to it, and suggest what fits it among who comes (and online, from
+    afar, to anyone: skill_sharing). Once its Giftsheet is made, it goes on it too."""
     from .giftsheet import brought_now
+
+    from .skill_sharing import share_online
 
     _, created = Brought.objects.get_or_create(event=event, listing=listing)
     if created:
         brought_now(event, listing)
         transaction.on_commit(lambda: suggest_at(event, listing))
+        transaction.on_commit(lambda: share_online(event, listing))
     return created
 
 

@@ -15,6 +15,7 @@ from django.urls import reverse
 from django.template.loader import render_to_string
 from django.utils import timezone
 from django.utils.html import strip_tags
+from django.utils.module_loading import import_string
 from django.utils.text import Truncator
 from django.utils.translation import gettext_lazy as _, ngettext
 from django.views.decorators.http import require_POST
@@ -356,7 +357,9 @@ def create(request, community_slug=None, kind=None):
         cancel_url = reverse("events:list")
     if not event.can_edit(request.user):
         raise PermissionDenied
-    return save_event(request, event, cancel_url)
+    preset = kinds.PRESETS.get(event.kind)
+    on_saved = import_string(preset)(request, event) if preset else None
+    return save_event(request, event, cancel_url, on_saved)
 
 
 @login_required

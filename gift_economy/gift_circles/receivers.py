@@ -1,11 +1,13 @@
 """Gift-circles listen to what happens to events: whoever invites to one and whoever
 comes gets the instructions, once the request is saved; a tour's travellers are invited
 to its own; what someone said yes to when coming is kept, and what others bring is
-matched with theirs. A guest who creates an account through their link brings their
+matched with theirs, and what is shared from afar at an online one with anyone's who can
+share it from afar too. A guest who creates an account through their link brings their
 sign-ups along."""
 
 from django.conf import settings
 from django.contrib.auth.signals import user_logged_in
+from django.db.models.signals import post_save
 from django.db import transaction
 from django.dispatch import receiver
 from django.utils import translation
@@ -13,11 +15,13 @@ from django.utils.translation import gettext as _
 
 from events import kinds
 from events.signals import asked_to_join, coming, event_created
+from gift_economy.gifts.models import Listing
 
 from .bringing import suggest_for_newcomer
 from .emails import send_coming_confirmation, send_host_confirmation, send_tour_invitation
 from .guests import GUEST_SESSION_KEY, link_to_account
 from .models import Attendee
+from .skill_sharing import schedule_share_with
 
 
 @receiver(event_created)
@@ -82,3 +86,9 @@ def take_guest_rows_along(sender, request, user, **kwargs):
     token = request.session.pop(GUEST_SESSION_KEY, None) if request is not None else None
     if token:
         link_to_account(token, user)
+
+
+@receiver(post_save, sender=Listing)
+def share_with_from_afar(sender, instance, raw=False, **kwargs):
+    if not raw and instance.from_afar:
+        schedule_share_with(instance)
