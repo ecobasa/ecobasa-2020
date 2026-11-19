@@ -3623,13 +3623,9 @@ msgid "ecobasa is made for"
 msgstr "ecobasa est fait pour"
 
 #: homepage/templates/homepage/homepage.html:22
-msgid ""
-"Communities, permaculture projects and farms – and everyone who wants to "
-"visit them, support them or start something of their own."
-msgstr ""
-"Les communautés, les projets en permaculture et les fermes – et toutes "
-"celles et ceux qui veulent les visiter, les soutenir ou lancer leur propre "
-"projet."
+#, python-format
+msgid "Communities, permaculture projects and farms – and everyone who wants to <a href=\"%(communities_url)s\">visit them</a>, <a href=\"%(communities_url)s?looking=1\">join them</a>, <a href=\"%(events_url)s\">support them</a> or <a href=\"%(create_url)s\">start something of their own</a>."
+msgstr "Les communautés, les projets en permaculture et les fermes – et toutes celles et ceux qui veulent <a href=\"%(communities_url)s\">les visiter</a>, <a href=\"%(communities_url)s?looking=1\">les rejoindre</a>, <a href=\"%(events_url)s\">les soutenir</a> ou <a href=\"%(create_url)s\">lancer leur propre projet</a>."
 
 #: homepage/templates/homepage/homepage.html:23
 msgid ""
@@ -3683,8 +3679,8 @@ msgid "Make your life more moneyless"
 msgstr "Rends ta vie moins dépendante de l'argent"
 
 #: homepage/templates/homepage/homepage.html:44
-msgid "Knowledge & helping out"
-msgstr "Savoir & coup de main"
+msgid "Communities & Volunteering"
+msgstr "Communautés & bénévolat"
 
 #: homepage/templates/homepage/homepage.html:47
 msgid "Share skills: teach and learn by doing"
@@ -3705,8 +3701,8 @@ msgid "soon"
 msgstr "bientôt"
 
 #: homepage/templates/homepage/homepage.html:50
-msgid "Find inspiring places to visit and live in"
-msgstr "Trouver des lieux inspirants à visiter et où vivre"
+msgid "Find a community to live in: apply with the member form, visit first and grow into it"
+msgstr "Trouver une communauté où vivre : postuler avec le formulaire de membre, venir d'abord en visite et s'y intégrer peu à peu"
 
 #: homepage/templates/homepage/homepage.html:51
 msgid "Start a new community with the people and resources you need"
@@ -3719,8 +3715,9 @@ msgid "Coming together"
 msgstr "Se rassembler"
 
 #: homepage/templates/homepage/homepage.html:60
-msgid "Gift circles, in person and online"
-msgstr "Cercles de dons, en personne et en ligne"
+#, python-format
+msgid "<a href=\"%(host_url)s\">Host gift circles</a>: strengthen your community and become more independent from money. <a href=\"%(circles_url)s?kind=gift_circle\">Next gift circles</a>, in person and online"
+msgstr "<a href=\"%(host_url)s\">Organiser des cercles de dons</a> : ils renforcent votre communauté et vous rendent plus indépendants de l'argent. <a href=\"%(circles_url)s?kind=gift_circle\">Les prochains cercles de dons</a>, en personne et en ligne"
 
 #: homepage/templates/homepage/homepage.html:61
 msgid "Communities-Convergences"
@@ -10489,3 +10486,7 @@ msgstr "Qui vient de loin peut offrir des compétences, des savoirs, des idées,
 
 msgid "The times are in the timezone of the town below."
 msgstr "Les heures sont celles du fuseau horaire de la ville ci-dessous."
+
+#: homepage/templates/homepage/homepage.html
+msgid "Find new members for your community: applications, trial visits and onboarding"
+msgstr "Trouver de nouveaux membres pour ta communauté : candidatures, visites d'essai et intégration"
