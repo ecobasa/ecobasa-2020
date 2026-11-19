@@ -10,6 +10,7 @@
             <p class="m-0 text-sm">
               {% if entry.state == "fulfilled" %}
                 <i class="fa fa-check text-green mr-1"></i>{% if entry.is_offer %}{% blocktrans with name=entry.for_label %}Taken by {{ name }}{% endblocktrans %}{% else %}{% blocktrans with name=entry.for_label %}Fulfilled by {{ name }}{% endblocktrans %}{% endif %}
+                {% if entry.lends %}<span class="block opacity-80"><i class="fa-solid fa-right-left mr-1"></i>{% if entry.borrow_from %}{% blocktrans with start=entry.borrow_from|date:"D j M" end=entry.borrow_to|date:"D j M" %}Borrowed from {{ start }} until {{ end }}{% endblocktrans %}{% else %}{% trans "To lend, the days come later" %}{% endif %}</span>{% endif %}
               {% else %}
                 <span class="opacity-70">{% trans "Still open" %}</span>
               {% endif %}
@@ -49,6 +50,15 @@
                     <form method="post" action="{{ entry_url }}" x-show="open === 'yes'" x-cloak class="mt-2 p-3 rounded-lg bg-secondary space-y-2" x-data="{ who: '' }">{% csrf_token %}
                       <label class="form-label">{% trans "Who said yes?" %}</label>
                       {% include "gift_circles/_giftsheet_picker.html" with selected="" label=_("Who said yes?") required=True %}
+                      {# A tool to lend: from when until when it is borrowed #}
+                      <div x-data="{ lends: {% if entry.lends or entry.listing.lend %}true{% else %}false{% endif %} }" class="space-y-2">
+                        <label class="flex items-center gap-2"><input type="checkbox" name="lends" x-model="lends"> {% trans "To lend" %}</label>
+                        <div x-show="lends" x-cloak class="grid grid-cols-2 gap-2">
+                          <label class="text-sm">{% trans "Borrow from" %}<input type="date" name="borrow_from" class="form-input w-full" value="{{ entry.borrow_from|date:'Y-m-d' }}"></label>
+                          <label class="text-sm">{% trans "Borrow until" %}<input type="date" name="borrow_to" class="form-input w-full" value="{{ entry.borrow_to|date:'Y-m-d' }}"></label>
+                        </div>
+                        <p x-show="lends" x-cloak class="text-xs m-0">{% trans "Not sure yet? Leave the days empty: they agree on them afterwards on ecobasa." %}</p>
+                      </div>
                       <div class="flex flex-wrap justify-between gap-2">
                         {% if entry.state != "open" %}
                           <button type="submit" name="action" value="open" formnovalidate class="underline">{% trans "Still open" %}</button>

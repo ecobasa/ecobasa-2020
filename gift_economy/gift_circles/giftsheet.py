@@ -14,7 +14,7 @@ from django.utils.translation import gettext as _
 
 from gift_economy.gifts.models import Listing
 from gift_economy.gifts.things import recognize
-from gift_economy.matches.models import Contribution, Match
+from gift_economy.matches.models import Contribution, Loan, Match, loan_span
 
 from .bringing import coming_ids, is_in
 from .models import Attendee, Entry, Giftsheet, Guest, Idea, Scribe
@@ -201,23 +201,40 @@ def same_person(entry, user, guest, name):
 
 # ── Closing ─────────────────────────────────────────────────────────
 
-def close(event, sheet, user):
-    """The host closes it: lines of people with an account who said yes become offers
-    and wishes, and what one of them fulfilled for another an accepted match. Nobody is
-    mailed about it here: the results email says it all. Closing again after opening it
-    again only adds what is new."""
-    keeps = set(Attendee.objects.filter(event=event, keep_on_ecobasa=True).values_list("user_id", flat=True))
+def close(event, sheet, user=None):
+    """The host closes it (or the morning-after job, without `user`): lines of people
+    with an account who said yes become offers and wishes, and what one of them fulfilled
+    for another an accepted match. Nobody is mailed about those: the results email, sent
+    on the first closing, says it all. Closing again after opening it again only adds what
+    is new."""
+    from .results import send_results
+
     with transaction.atomic():
         sheet.closed_at = timezone.now()
         sheet.closed_by = user
-        sheet.save(update_fields=["closed_at", "closed_by"])
-        for entry in entries(event).filter(match=None):
-            if entry.listing is None and entry.from_user_id in keeps:
-                entry.listing = _listing(entry)
-            if _matches(entry):
-                entry.match = _match(event, entry)
-            if entry.listing_id or entry.match_id:
-                entry.save(update_fields=["listing", "match"])
+        fields = ["closed_at", "closed_by"]
+        first = sheet.results_sent_at is None
+        if first:
+            sheet.results_sent_at = sheet.closed_at
+            fields.append("results_sent_at")
+        sheet.save(update_fields=fields)
+        settle(event, entries(event).filter(match=None))
+    if first:
+        transaction.on_commit(lambda: send_results(event))
+
+
+def settle(event, lines):
+    """Offers, wishes and matches on ecobasa for `lines` of a closed Giftsheet, as far as
+    their people have an account and said yes."""
+    keeps = set(Attendee.objects.filter(event=event, keep_on_ecobasa=True).values_list("user_id", flat=True))
+    for entry in lines:
+        if entry.listing is None:
+            entry.listing = _listing(entry, keeps)
+        if entry.match_id is None and _matches(entry):
+            entry.match = _match(event, entry)
+        if entry.listing_id or entry.match_id:
+            entry.save(update_fields=["listing", "match"])
+        _cover(entry)
 
 
 def reopen(sheet):
@@ -226,12 +243,23 @@ def reopen(sheet):
     sheet.save(update_fields=["closed_at", "closed_by"])
 
 
-def _listing(entry):
+def _listing(entry, keeps):
+    """Its offer or wish on ecobasa, if its person said yes to that. A wish fulfilled by
+    lending something is the lender's offer to lend instead, if they said yes: the tool
+    stays there for others to borrow, the wish is met."""
+    if entry.lends and not entry.is_offer and entry.state == Entry.STATE_FULFILLED and entry.for_user_id in keeps:
+        return _new_listing(entry.for_user, Entry.TYPE_OFFER, entry.text, lend=True)
+    if entry.from_user_id in keeps:
+        return _new_listing(entry.from_user, entry.type, entry.text, lend=entry.lends)
+    return None
+
+
+def _new_listing(owner, type, title, lend=False):
     """An offer or wish of its own on ecobasa, at its person's place, with what it names
     recognized as any listing's title."""
-    thing_id = recognize(entry.text, Listing.KIND_OTHER)
+    thing_id = recognize(title, Listing.KIND_OTHER)
     listing = Listing.objects.create(
-        owner=entry.from_user, type=entry.type, kind=Listing.KIND_OTHER, title=entry.text, thing_id=thing_id,
+        owner=owner, type=type, kind=Listing.KIND_OTHER, title=title, thing_id=thing_id, lend=lend,
     )
     if thing_id is not None:
         listing.categories.set(Listing.thing_categories(listing.thing, Listing.KIND_OTHER))
@@ -240,24 +268,47 @@ def _listing(entry):
 
 def _matches(entry):
     """Fulfilled (a wish) or taken (an offer) between two people with an account, and on
-    ecobasa."""
+    ecobasa as one of theirs."""
+    listing = entry.listing
     return (
-        entry.state == Entry.STATE_FULFILLED and entry.listing is not None and entry.for_user_id is not None
-        and entry.listing.owner_id is not None and entry.for_user_id != entry.listing.owner_id
+        entry.state == Entry.STATE_FULFILLED and listing is not None and entry.from_user_id and entry.for_user_id
+        and entry.from_user_id != entry.for_user_id and listing.owner_id in (entry.from_user_id, entry.for_user_id)
     )
+
+
+def _cover(entry):
+    """A fulfilled wish is met: no longer current on ecobasa. If it comes up again, its
+    person wishes for it anew."""
+    listing = entry.listing
+    if entry.state == Entry.STATE_FULFILLED and not entry.is_offer and listing is not None and listing.is_wish and listing.covered_at is None:
+        listing.covered_at = timezone.now()
+        listing.save(update_fields=["covered_at"])
 
 
 def _match(event, entry):
     """The exchange between the two, accepted at once, as "I'm coming" is."""
     listing = entry.listing
     owner = listing.owner
+    asking = entry.from_user if owner.pk == entry.for_user_id else entry.for_user
+    # The giver: who fulfilled a wish, whose offer was taken
+    giver_id = entry.from_user_id if entry.is_offer else entry.for_user_id
     with translation.override(owner.language or settings.LANGUAGE_CODE):
         message = _("At the gift-circle %(title)s.") % {"title": event.title}
     match = Match(
-        from_user=entry.for_user, recipient=owner, message=message,
+        from_user=asking, recipient=owner, message=message,
         status=Match.STATUS_ACCEPTED, responded_at=timezone.now(),
+        # At the giver's place
+        location_type=Match.LOC_YOUR_PLACE if giver_id == owner.pk else Match.LOC_MY_PLACE,
     )
     match.target = listing
     match.save()
     Contribution.objects.create(match=match, listing=listing)
+    if entry.lends:
+        if not listing.lend:
+            listing.lend = True
+            listing.save(update_fields=["lend"])
+        # Without days yet they propose them on the match (Match.lends_later)
+        if entry.borrow_from is not None:
+            starts_at, ends_at = loan_span(entry.borrow_from, entry.borrow_to)
+            Loan.objects.create(match=match, starts_at=starts_at, ends_at=ends_at)
     return match

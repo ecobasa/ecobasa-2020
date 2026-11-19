@@ -56,3 +56,23 @@ def bring_to_gift_circles(context, listing):
         for circle in circles:
             circle.has_it = circle.pk in brought
     return {"circles": circles, "listing": listing, "request": request, "csrf_token": context.get("csrf_token")}
+
+
+@register.inclusion_tag("gift_circles/_stories.html", takes_context=True)
+def stories_of(context, event):
+    """How it went: its stories, and for who came or hosted the form to tell one."""
+    from gift_economy.references.forms import ReferenceForm
+
+    from .. import stories
+
+    request = context["request"]
+    user = request.user
+    writes = event.can_be_referenced_by(user)
+    return {
+        "request": request,
+        "csrf_token": context.get("csrf_token"),
+        "event": event,
+        "stories": stories.stories(event),
+        "destinies": stories.destinies(event, user) if writes else [],
+        "form": ReferenceForm(story=True) if writes else None,
+    }

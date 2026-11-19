@@ -7,10 +7,14 @@ app_name = "gift_circles"
 urlpatterns = [
     path("gift-circles/<slug:slug>/giftsheet/", views.giftsheet, name="giftsheet"),
     path("gift-circles/<slug:slug>/giftsheet/entries/<int:pk>/", views.giftsheet_entry, name="giftsheet_entry"),
+    path("gift-circles/<slug:slug>/giftsheet/entries/<int:pk>/write/", views.write, name="write"),
     path("gift-circles/<slug:slug>/giftsheet/close/", views.giftsheet_close, name="giftsheet_close"),
     path("gift-circles/<slug:slug>/giftsheet/photos/", views.giftsheet_photo, name="giftsheet_photo"),
     path("gift-circles/<slug:slug>/giftsheet/photos/<int:pk>/delete/", views.giftsheet_photo, name="giftsheet_photo_delete"),
     path("gift-circles/<slug:slug>/giftsheet/print/", views.print_giftsheet, name="print"),
+    path("gift-circles/<slug:slug>/next/", views.plan_next, name="next"),
+    path("gift-circles/<slug:slug>/stories/", views.story, name="story"),
+    path("gift-circles/<slug:slug>/wishes/<str:key>/", views.wishes, name="wishes"),
     path("gift-circles/<slug:slug>/scribes/", views.scribe, name="scribe"),
     path("gift-circles/<slug:slug>/attendee/", views.attendee, name="attendee"),
     path("gift-circles/<slug:slug>/bring/", views.bring, name="bring"),
@@ -27,5 +31,9 @@ urlpatterns = [
     path(
         "gift-circles/<slug:slug>/guests/<str:token>/giftsheet/entries/<int:pk>/", views.giftsheet_entry,
         name="guest_giftsheet_entry",
+    ),
+    path(
+        "gift-circles/<slug:slug>/guests/<str:token>/giftsheet/entries/<int:pk>/write/", views.guest_write,
+        name="guest_write",
     ),
 ]

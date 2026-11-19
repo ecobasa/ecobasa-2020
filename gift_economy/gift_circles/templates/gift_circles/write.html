@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block head_title %}{% blocktrans with name=other_name %}Write to {{ name }}{% endblocktrans %} — {{ event.title }} — ecobasa{% endblock %}
+
+{% block content %}
+<div class="container-form">
+  {% blocktrans with name=other_name asvar here %}Write to {{ name }}{% endblocktrans %}
+  {% include "gift_circles/_guest_header.html" with parent=_("Giftsheet") parent_url=giftsheet_url here=here %}
+  <h1>{{ here }}</h1>
+  <p>{% blocktrans with text=entry.text title=event.title %}About “{{ text }}” at the gift-circle {{ title }}.{% endblocktrans %}</p>
+  <form method="post" class="border rounded-xl bg-secondary p-6 space-y-4">
+    {% csrf_token %}
+    <div>
+      <label class="form-label" for="{{ form.message.id_for_label }}">{{ form.message.label }}</label>
+      {{ form.message }}
+      {% for error in form.message.errors %}<p class="text-red text-sm mt-1"><i class="fa-solid fa-circle-exclamation mr-1"></i>{{ error }}</p>{% endfor %}
+      <p class="text-sm mt-1">{% blocktrans with name=other_name email=sender_email %}We send it to {{ name }} by email, without their address. They get yours to answer: {{ email }}{% endblocktrans %}</p>
+    </div>
+    <div class="flex justify-between gap-3">
+      <a href="{{ giftsheet_url }}" class="btn btn-purple"><i class="fa-solid fa-ban mr-2"></i>{% trans "Cancel" %}</a>
+      <button type="submit" class="btn"><i class="fa-solid fa-paper-plane mr-2"></i>{% trans "Send" %}</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

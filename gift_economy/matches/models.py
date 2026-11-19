@@ -292,27 +292,41 @@ class Match(models.Model):
         return hasattr(self, "loan")
 
     @property
+    def lends_later(self):
+        """About a tool to lend whose days aren't agreed yet (promised at a gift-circle):
+        either side proposes them in a counter-proposal, and accepting it makes the Loan."""
+        target = self.target
+        return not self.is_loan and bool(getattr(target, "lend", False))
+
+    @property
+    def takes_loan_days(self):
+        return self.is_loan or self.lends_later
+
+    @property
     def lender(self):
         """Who lends the tool: the owner of a tool to lend, the one who answers a wish to borrow."""
-        if not self.is_loan:
+        if not self.takes_loan_days:
             return None
         target = self.target
         return self.recipient if target is not None and target.is_offer else self.from_user
 
     @property
     def borrower(self):
-        if not self.is_loan:
+        if not self.takes_loan_days:
             return None
         return self.from_user if self.lender == self.recipient else self.recipient
 
     def loan_period(self):
         """(start, end) of a loan as currently proposed: the latest counter-proposed one,
-        else the agreed or asked for one. (None, None) if it isn't a loan."""
-        if not self.is_loan:
+        else the agreed or asked for one. (None, None) if it isn't a loan, or its days are
+        still to be proposed."""
+        if not self.takes_loan_days:
             return None, None
         counter = self._counter_period()
         if counter and counter.counter_stay_from and counter.counter_stay_to:
             return counter.counter_stay_from, counter.counter_stay_to
+        if not self.is_loan:
+            return None, None
         return self.loan.starts_at, self.loan.ends_at
 
     def resolved_location(self):

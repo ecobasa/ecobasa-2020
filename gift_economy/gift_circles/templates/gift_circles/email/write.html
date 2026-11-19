@@ -1,0 +1,6 @@
+{% extends "gift_circles/email/_layout.html" %}{% load i18n %}
+{% block body %}
+<p style="margin:0 0 16px;font-size:15px;line-height:1.6;">{% blocktrans with name=sender_name text=entry.text title=event.title %}{{ name }} writes to you about “{{ text }}” at the gift-circle {{ title }}:{% endblocktrans %}</p>
+<div style="margin:0 0 16px;padding:10px 14px;border-left:3px solid #da6137;background-color:#f5ede0;font-size:15px;line-height:1.6;">{{ message|linebreaksbr }}</div>
+<p style="margin:0;font-size:15px;line-height:1.6;">{% blocktrans with name=sender_name %}Answer this email to write back to {{ name }}.{% endblocktrans %}</p>
+{% endblock %}

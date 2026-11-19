@@ -1,0 +1,31 @@
+{% extends "gift_circles/email/_layout.html" %}{% load i18n %}
+{% block body %}
+<p style="margin:0 0 16px;font-size:15px;line-height:1.6;">{% blocktrans with title=event.title day=event.starts_on|date:"DATE_FORMAT" %}Thank you for coming to the gift-circle {{ title }} on {{ day }}! Here is what happened.{% endblocktrans %}</p>
+
+{% if parts %}
+  <h3 style="margin:24px 0 8px;font-size:17px;font-family:'Bree Serif',Georgia,serif;">{% trans "Your part" %}</h3>
+  {% for part in parts %}
+    <div style="margin:0 0 12px;padding:10px 14px;border-left:3px solid #da6137;background-color:#f5ede0;font-size:15px;line-height:1.6;">
+      <strong>{{ part.entry.text }}</strong><br>
+      {% include "gift_circles/email/_part.html" %}
+    </div>
+  {% endfor %}
+  <p style="margin:16px 0;font-size:15px;line-height:1.6;"><strong>{% trans "Remember: the one who wished follows up." %}</strong> {% trans "Got a yes for your wish? Get in touch in the next few days, while everyone still remembers." %}</p>
+{% endif %}
+{% if staying %}<p style="margin:0 0 16px;font-size:15px;line-height:1.6;">{% trans "Your wishes and offers that found nobody today stay on ecobasa. They keep finding people near you." %}</p>{% endif %}
+
+<h3 style="margin:24px 0 8px;font-size:17px;font-family:'Bree Serif',Georgia,serif;">{% trans "The whole Giftsheet" %}</h3>
+<ul style="margin:0 0 16px;padding-left:20px;font-size:15px;line-height:1.6;">
+  {% for entry in entries %}<li>{% include "gift_circles/email/_line.txt" %}</li>{% empty %}<li>{% trans "Nothing on the Giftsheet yet." %}</li>{% endfor %}
+</ul>
+{% if has_photos %}<p style="margin:0 0 16px;font-size:15px;line-height:1.6;">{% trans "A photo of the Giftsheet is on its page:" %} <a href="{{ giftsheet_url }}" style="color:#da6137;">{{ giftsheet_url }}</a></p>{% endif %}
+
+{% if is_guest %}
+  {% include "gift_circles/_account.html" %}
+{% else %}
+  <h3 style="margin:24px 0 8px;font-size:17px;font-family:'Bree Serif',Georgia,serif;">{% trans "Plan the next one" %}</h3>
+  <p style="margin:0 0 16px;font-size:15px;line-height:1.6;">{% trans "Gift-circles grow when they happen again. Anyone who came can plan the next one: choose a date, and everyone who came gets an invitation, and you can invite new people. Whoever plans it hosts it." %}</p>
+  <p style="margin:0 0 16px;"><a href="{{ next_url }}" style="display:inline-block;background-color:#da6137;color:#fcf3e5;text-decoration:none;padding:10px 20px;border-radius:6px;font-size:15px;font-weight:bold;">{% trans "Plan the next one" %}</a></p>
+{% endif %}
+<p style="margin:0;font-size:15px;line-height:1.6;">{% trans "Something good came out of it? Share the story on the page, it shows others what a gift-circle can do:" %} <a href="{{ stories_url }}" style="color:#da6137;">{{ stories_url }}</a></p>
+{% endblock %}

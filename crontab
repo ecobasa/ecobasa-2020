@@ -14,6 +14,12 @@
 # Remind who comes to a gift-circle tomorrow
 0 9 * * *    python manage.py send_gift_circle_reminders
 
+# Close the Giftsheets of yesterday's gift-circles nobody closed, and send the results
+10 9 * * *   python manage.py send_gift_circle_results
+
+# Ask who got a yes for a wish at a gift-circle two weeks ago whether it came true
+20 9 * * *   python manage.py ask_if_wishes_came_true
+
 # Ask both sides of a past match for their story
 0 10 * * *   python manage.py send_reference_requests
 

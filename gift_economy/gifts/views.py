@@ -91,10 +91,10 @@ def detail(request, pk):
     if request.user.is_authenticated and manager is not None and request.user != manager and givable and not listing.public_good:
         # From a tour's suggestion to give a thing along to this wish: a message ready
         suggestion = _giving_along(request, listing)
-        form = MatchForm(
-            request.POST or None, loan_of=listing if listing.lend else None,
-            initial={"message": suggestion.message} if suggestion else None,
-        )
+        initial = {"message": suggestion.message} if suggestion else {}
+        # At the giver's place: who fulfils a wish (the one asking here), the owner of an offer
+        initial["location_type"] = Match.LOC_YOUR_PLACE if listing.is_offer else Match.LOC_MY_PLACE
+        form = MatchForm(request.POST or None, loan_of=listing if listing.lend else None, initial=initial)
         if request.method == "POST" and form.is_valid():
             match = form.save(commit=False)
             match.from_user = request.user

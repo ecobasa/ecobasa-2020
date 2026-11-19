@@ -177,9 +177,11 @@ class User(AbstractUser):
         return Community.objects.filter(pk__in=Membership.objects.counted().filter(user=self).values("community"))
 
     def get_reference_subjects(self):
-        """What references on this profile can be about: the person and their offers and
-        wishes (things and skills)."""
-        return [self, *self.listings.filter(community=None)]
+        """What references on this profile can be about: the person, their offers and
+        wishes (things and skills), and their ideas at gift-circles."""
+        from gift_economy.gift_circles.models import Idea
+
+        return [self, *self.listings.filter(community=None), *Idea.objects.filter(from_user=self)]
 
     def has_skill(self, skill):
         from gift_economy.gifts.models import skill_offers

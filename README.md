@@ -142,6 +142,8 @@ skips a job while its previous run is still going.
 | daily, 9:00 | `archive_stale_events` |
 | daily, 9:00 | `send_gift_circle_reminders` |
 | daily, 9:05 | `archive_stale_tours` |
+| daily, 9:10 | `send_gift_circle_results` |
+| daily, 9:20 | `ask_if_wishes_came_true` |
 | daily, 10:00 | `send_reference_requests` |
 | Thursdays, 17:00 | `send_suggestion_emails` |
 

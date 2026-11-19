@@ -401,14 +401,18 @@ def match_detail(request, pk):
                     if error:
                         flash.error(request, error)
                         return redirect(f"{match.get_absolute_url()}?decline=1#compose")
-                if new_status == Match.STATUS_ACCEPTED and match.is_loan:
+                if new_status == Match.STATUS_ACCEPTED and match.takes_loan_days and match.loan_period()[0]:
                     # The agreed time is the loan's from now on; a tool is lent once at a time
                     starts_at, ends_at = match.loan_period()
                     if target.lends_out and not target.is_free(starts_at, ends_at, exclude_match=match):
                         flash.error(request, _("It is already lent on some of these days. Propose other days instead."))
                         return redirect(match.get_absolute_url())
-                    match.loan.starts_at, match.loan.ends_at = starts_at, ends_at
-                    match.loan.save()
+                    if match.is_loan:
+                        match.loan.starts_at, match.loan.ends_at = starts_at, ends_at
+                        match.loan.save()
+                    else:
+                        # Its days were left open: the loan starts with them
+                        Loan.objects.create(match=match, starts_at=starts_at, ends_at=ends_at)
                 body = request.POST.get("body", "").strip()
                 answer = MatchMessage(match=match, sender=request.user, body=body, status_to=new_status)
                 if new_status == Match.STATUS_ACCEPTED and match.is_community_stay:
@@ -459,7 +463,7 @@ def match_detail(request, pk):
                     flash.error(request, _("The stay can't end before it starts."))
                     return redirect(match.get_absolute_url())
             else:
-                if match.is_loan:
+                if match.takes_loan_days:
                     # Other days or hours to borrow it, and maybe another place to pick it up
                     span = _parse_loan(request.POST)
                     if span is None:
@@ -531,7 +535,7 @@ def match_detail(request, pk):
         "can_withdraw":         can_withdraw,
         "proposed_place":       _proposed_place(match, request.user, latest_counter_msg) if can_counter else None,
         # The time proposed last, to start a counter-proposal from
-        "proposed_loan":        Loan(starts_at=match.loan_period()[0], ends_at=match.loan_period()[1]) if match.is_loan else None,
+        "proposed_loan":        Loan(starts_at=match.loan_period()[0], ends_at=match.loan_period()[1]) if match.loan_period()[0] else None,
         # The other side's only roughly until accepted (Match.place_of)
         "my_place":             match.place_of(request.user, viewer=request.user),
         "your_place":           match.place_of(match.recipient if is_requester else match.from_user),

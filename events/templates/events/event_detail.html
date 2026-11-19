@@ -93,6 +93,9 @@
       {% endif %}
 
       {% if event.description %}<p>{{ event.description|linebreaksbr }}</p>{% endif %}
+      {% if event.previous %}
+        <p class="text-sm"><i class="fa-solid fa-clock-rotate-left mr-1"></i>{% trans "Last time:" %} <a href="{{ event.previous.get_absolute_url }}" class="underline">{{ event.previous.title }}{% if event.previous.starts_on %}, {{ event.previous.starts_on|date:"DATE_FORMAT" }}{% endif %}</a></p>
+      {% endif %}
 
       {% with skills=event.skills_to_learn %}
         {% if skills %}
@@ -207,7 +210,9 @@
         {% endif %}
       {% endif %}
 
-      {% if references %}
+      {% if how_it_went and event.has_begun %}
+        {% include how_it_went %}
+      {% elif references %}
         {# What guests and the community wrote after taking part #}
         <h2 id="references">{{ event.texts.references }}</h2>
         <div class="space-y-3">

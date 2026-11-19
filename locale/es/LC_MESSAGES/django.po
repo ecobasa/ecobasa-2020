@@ -10021,3 +10021,186 @@ msgstr "Cambiar"
 #: gift_economy/gift_circles/templates/gift_circles/_giftsheet_entries.html
 msgid "Add an idea"
 msgstr "Añadir una idea"
+
+msgid "Last time:"
+msgstr "La última vez:"
+
+#, python-format
+msgid "%(name)s writes to you from the gift-circle %(title)s"
+msgstr "%(name)s te escribe desde el círculo de regalos %(title)s"
+
+#, python-format
+msgid "What came out of %(title)s"
+msgstr "Lo que salió de %(title)s"
+
+msgid "The gift-circle"
+msgstr "El círculo de regalos"
+
+#, python-format
+msgid "%(name)s, the host"
+msgstr "%(name)s, anfitrión/a"
+
+#, python-format
+msgid "Offer: %(text)s (%(from)s)"
+msgstr "Oferta: %(text)s (%(from)s)"
+
+#, python-format
+msgid "Wish: %(text)s (%(from)s)"
+msgstr "Deseo: %(text)s (%(from)s)"
+
+msgid "Plan the next one"
+msgstr "Planear el próximo"
+
+msgid "Gift-circles grow when they happen again. Anyone who came can plan the next one: choose a date, and everyone who came gets an invitation, and you can invite new people. Whoever plans it hosts it."
+msgstr "Los círculos de regalos crecen cuando se repiten. Cualquiera que vino puede planear el próximo: elige un día, todos los que vinieron reciben una invitación y puedes invitar a gente nueva. Quien lo planea es quien lo acoge."
+
+#, python-format
+msgid "Borrowed from %(start)s until %(end)s"
+msgstr "Prestado del %(start)s al %(end)s"
+
+msgid "How it went"
+msgstr "Así fue"
+
+msgid "Take your story back?"
+msgstr "¿Retirar tu historia?"
+
+msgid "No stories yet."
+msgstr "Todavía no hay historias."
+
+msgid "What is it about?"
+msgstr "¿De qué trata?"
+
+#, python-format
+msgid "%(name)s can help with your wish."
+msgstr "%(name)s puede ayudarte con tu deseo."
+
+#, python-format
+msgid "You said yes to %(name)s. They get in touch with you."
+msgstr "Le dijiste que sí a %(name)s. Se pondrá en contacto contigo."
+
+#, python-format
+msgid "You take it from %(name)s. Get in touch with them."
+msgstr "Lo recibes de %(name)s. Ponte en contacto."
+
+#, python-format
+msgid "An idea from %(name)s: %(text)s. Get in touch and see where it leads."
+msgstr "Una idea de %(name)s: %(text)s. Ponte en contacto y mira adónde lleva."
+
+#, python-format
+msgid "Your idea for %(name)s: %(text)s. They get in touch with you."
+msgstr "Tu idea para %(name)s: %(text)s. Se pondrá en contacto contigo."
+
+#, python-format
+msgid "Write to %(name)s on ecobasa"
+msgstr "Escribir a %(name)s en ecobasa"
+
+msgid "Email:"
+msgstr "Correo:"
+
+#, python-format
+msgid "Write to %(name)s"
+msgstr "Escribir a %(name)s"
+
+#, python-format
+msgid "Write to %(name)s on ecobasa:"
+msgstr "Escribe a %(name)s en ecobasa:"
+
+#, python-format
+msgid "Write to %(name)s:"
+msgstr "Escribe a %(name)s:"
+
+#, python-format
+msgid "Thank you for coming to the gift-circle %(title)s on %(day)s! Here is what happened."
+msgstr "¡Gracias por venir al círculo de regalos %(title)s el %(day)s! Esto es lo que pasó."
+
+msgid "Your part"
+msgstr "Tu parte"
+
+msgid "Remember: the one who wished follows up."
+msgstr "Recuerda: quien deseó, da el siguiente paso."
+
+msgid "Got a yes for your wish? Get in touch in the next few days, while everyone still remembers."
+msgstr "¿Alguien dijo que sí a tu deseo? Ponte en contacto en los próximos días, mientras todos aún se acuerdan."
+
+msgid "Your wishes and offers that found nobody today stay on ecobasa. They keep finding people near you."
+msgstr "Tus deseos y ofertas que hoy no encontraron a nadie se quedan en ecobasa. Siguen encontrando gente cerca de ti."
+
+msgid "The whole Giftsheet"
+msgstr "Toda la hoja de regalos"
+
+msgid "A photo of the Giftsheet is on its page:"
+msgstr "Hay una foto de la hoja de regalos en su página:"
+
+msgid "Something good came out of it? Share the story on the page, it shows others what a gift-circle can do:"
+msgstr "¿Salió algo bueno? Cuenta la historia en la página, muestra a otros lo que puede un círculo de regalos:"
+
+#, python-format
+msgid "Two weeks ago at the gift-circle %(title)s, %(name)s said they could help with your wish:"
+msgstr "Hace dos semanas, en el círculo de regalos %(title)s, %(name)s dijo que podía ayudarte con tu deseo:"
+
+msgid "Did it come true?"
+msgstr "¿Se cumplió?"
+
+msgid "Did they come true?"
+msgstr "¿Se cumplieron?"
+
+msgid "Yes, it did"
+msgstr "Sí, se cumplió"
+
+msgid "Not yet"
+msgstr "Todavía no"
+
+#, python-format
+msgid "%(name)s writes to you about “%(text)s” at the gift-circle %(title)s:"
+msgstr "%(name)s te escribe sobre «%(text)s» en el círculo de regalos %(title)s:"
+
+#, python-format
+msgid "Answer this email to write back to %(name)s."
+msgstr "Responde a este correo para contestar a %(name)s."
+
+msgid "Did your wish come true?"
+msgstr "¿Se cumplió tu deseo?"
+
+msgid "Did your wishes come true?"
+msgstr "¿Se cumplieron tus deseos?"
+
+#, python-format
+msgid "%(name)s said they could help."
+msgstr "%(name)s dijo que podía ayudar."
+
+msgid "Wonderful! How did it go? A few sentences help others see that the gift economy works."
+msgstr "¡Qué bien! ¿Cómo fue? Unas frases ayudan a otros a ver que la economía del regalo funciona."
+
+#, python-format
+msgid "Maybe it just got forgotten. Write to %(name)s, or bring the wish to the next gift-circle."
+msgstr "Quizá solo se olvidó. Escribe a %(name)s, o lleva el deseo al próximo círculo de regalos."
+
+#, python-format
+msgid "About “%(text)s” at the gift-circle %(title)s."
+msgstr "Sobre «%(text)s» en el círculo de regalos %(title)s."
+
+#, python-format
+msgid "We send it to %(name)s by email, without their address. They get yours to answer: %(email)s"
+msgstr "Se lo enviamos a %(name)s por correo, sin su dirección. Recibe la tuya para responder: %(email)s"
+
+msgid "Everyone who came gets the results by email."
+msgstr "Todos los que vinieron reciben los resultados por correo."
+
+#, python-format
+msgid "Your message to %(name)s has been sent."
+msgstr "Tu mensaje a %(name)s se ha enviado."
+
+msgid "This link doesn't work any more."
+msgstr "Este enlace ya no funciona."
+
+msgid "Please choose what it is about."
+msgstr "Elige de qué trata, por favor."
+
+msgid "To lend, the days come later"
+msgstr "Para prestar, los días se acuerdan después"
+
+msgid "Not sure yet? Leave the days empty: they agree on them afterwards on ecobasa."
+msgstr "¿Todavía no lo sabéis? Deja los días vacíos: los acuerdan después en ecobasa."
+
+msgid "The days to borrow it aren't agreed yet. Propose them below."
+msgstr "Los días del préstamo aún no están acordados. Propónlos abajo."

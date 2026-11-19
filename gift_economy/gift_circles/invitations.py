@@ -98,3 +98,20 @@ def answer(invitation, user):
         invitation.user = user
         invitation.name = invitation.email = ""
         invitation.save(update_fields=["user", "name", "email"])
+
+
+def invite_who_came(event, last, planner):
+    """The next gift-circle after `last`: everyone who came to that one (or hosted it) is
+    invited, members and guests, but no more addresses than one gift-circle may invite."""
+    from django.contrib.auth import get_user_model
+
+    from .bringing import coming_ids
+
+    ids = coming_ids(last)
+    if last.manager is not None:
+        ids.add(last.manager.pk)
+    ids.discard(planner.pk)
+    users = list(get_user_model().objects.filter(pk__in=ids, is_active=True))
+    people = [(guest.name, guest.email) for guest in last.guests.coming()][:EMAIL_LIMIT]
+    if users or people:
+        invite(event, planner, users, people, "")

@@ -152,6 +152,8 @@ class Giftsheet(models.Model):
     closed_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="+",
     )
+    # When everyone got the results: once, on the first closing
+    results_sent_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -210,11 +212,22 @@ class Entry(models.Model):
     for_name = models.CharField(max_length=100, blank=True)
     # The offer or wish it is on ecobasa: brought to the circle, or made when it closed
     listing = models.ForeignKey("gifts.Listing", on_delete=models.SET_NULL, null=True, blank=True, related_name="entries")
-    match = models.ForeignKey("matches.Match", on_delete=models.SET_NULL, null=True, blank=True, related_name="+")
+    match = models.OneToOneField(
+        "matches.Match", on_delete=models.SET_NULL, null=True, blank=True, related_name="giftsheet_entry",
+    )
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="+",
     )
     created_at = models.DateTimeField(auto_now_add=True)
+    # A tool to lend, and from which day until which day it is borrowed, if they knew it
+    # already: else they propose the days on the match afterwards
+    lend = models.BooleanField(_("To lend"), default=False)
+    borrow_from = models.DateField(_("Borrow from"), null=True, blank=True)
+    borrow_to = models.DateField(_("Borrow until"), null=True, blank=True)
+    # A fulfilled wish: when the one who wished was asked whether it came true, and what
+    # they said (None: not yet answered)
+    asked_at = models.DateTimeField(null=True, blank=True)
+    came_true = models.BooleanField(null=True, blank=True)
 
     class Meta:
         ordering = ["created_at", "pk"]
@@ -250,6 +263,13 @@ class Entry(models.Model):
     @property
     def for_label(self):
         return _person_name(self.for_user, self.for_guest, self.for_name)
+
+    @property
+    def lends(self):
+        return self.lend
+
+    # ── As what a match made on closing is attached to (gift_economy.matches) ──
+    match_attachment_template = "gift_circles/_match_entry.html"
 
 
 class Idea(models.Model):
@@ -289,6 +309,28 @@ class Idea(models.Model):
     @property
     def from_label(self):
         return _person_name(self.from_user, self.from_guest, self.from_name)
+
+    # ── As what a story from its gift-circle is about (references) ──
+    reference_subject = True
+
+    def can_be_referenced_by(self, user):
+        """Who came to its gift-circle, about someone else's idea."""
+        return user.pk != self.from_user_id and self.entry.event.can_be_referenced_by(user)
+
+    def get_reference_kind(self):
+        return _("Idea"), "fa-lightbulb", "bg-yellow"
+
+    def get_match_owner(self):
+        return self.from_user
+
+    def get_match_display_name(self):
+        return self.text
+
+    def get_match_icon(self):
+        return "fa-lightbulb"
+
+    def get_absolute_url(self):
+        return f"{self.entry.event.get_absolute_url()}#references"
 
 
 def _person_name(user, guest, name):

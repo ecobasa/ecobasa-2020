@@ -123,6 +123,10 @@ class Event(models.Model):
     is_online = models.BooleanField(_("Online, as a video call"), default=False)
     video_url = models.URLField(_("Video link"), blank=True)
     timezone = models.CharField(_("Timezone"), max_length=64, blank=True)
+    # The one it follows on, planned by someone who came to that one
+    previous = models.ForeignKey(
+        "self", on_delete=models.SET_NULL, null=True, blank=True, related_name="next_ones",
+    )
     matches = GenericRelation("matches.Match")
 
     objects = EventQuerySet.as_manager()
@@ -390,6 +394,25 @@ class Event(models.Model):
     @property
     def provides_something(self):
         return bool(self.food_provided or self.bed_provided or self.provided_note or self.volunteers_wanted)
+
+    # ── How it went: references about it (kinds.HOW_IT_WENT) ───────
+    # Only where its kind tells how it went, as `can_be_referenced_by` says
+    reference_subject = True
+
+    @property
+    def has_begun(self):
+        return self.starts_on is not None and self.starts_on <= timezone.localdate()
+
+    def can_be_referenced_by(self, user):
+        """Who came or hosted it tells how it went, once it has begun."""
+        if self.kind not in kinds.HOW_IT_WENT or not self.has_begun or not user.is_authenticated:
+            return False
+        return self.can_edit(user) or self.matches.filter(
+            from_user=user, status=self.matches.model.STATUS_ACCEPTED,
+        ).exists()
+
+    def get_reference_kind(self):
+        return self.kind_label, self.kind_icon, self.kind_colour
 
     # ── matches.Match target protocol ───────────────────────────────
     def get_match_owner(self):

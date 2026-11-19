@@ -297,7 +297,8 @@ def test_closing_makes_offers_wishes_and_matches(host, person, other):
     # Fulfilled between two account holders: accepted at once, on the listing
     assert sofa.match.status == Match.STATUS_ACCEPTED
     assert (sofa.match.from_user, sofa.match.recipient, sofa.match.target) == (other, person, sofa.listing)
-    assert sofa.listing.status == Listing.STATUS_PROMISED
+    # A fulfilled wish is met: no longer current
+    assert sofa.listing.status == Listing.STATUS_COVERED
     assert cuttings.listing == brought and (cuttings.match.from_user, cuttings.match.recipient) == (person, other)
     # An idea, or no listing: no match
     assert ride.match is None and bike.match is None

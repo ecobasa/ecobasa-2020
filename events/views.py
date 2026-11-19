@@ -273,6 +273,7 @@ def detail(request, slug, community_slug=None, kind=None):
         "guest_sign_up": kinds.GUEST_SIGN_UPS.get(event.kind),
         "inviting": kinds.INVITING.get(event.kind),
         "bringing": kinds.BRINGING.get(event.kind),
+        "how_it_went": kinds.HOW_IT_WENT.get(event.kind),
         "references": _references(event),
     })
 

@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import date, timedelta
 
 from django.contrib import messages
 from django.contrib.auth import get_user_model
@@ -17,11 +17,13 @@ from events.models import Event
 from gift_economy.gifts.models import Listing
 from gift_economy.matches.models import Match
 
-from . import bringing, giftsheet as sheets
-from .emails import exact_place, send_guest_confirmation, send_guest_welcome
-from .forms import EntryForm, GuestChangeForm, GuestForm, InviteForm, PhotoForm
+from . import bringing, giftsheet as sheets, results, stories, wishes as wish_answers
+from .emails import exact_place, send_guest_confirmation, send_guest_welcome, send_written
+from .forms import EntryForm, GuestChangeForm, GuestForm, InviteForm, PhotoForm, WriteForm
 from .guests import GUEST_SESSION_KEY, link_to_account
-from .invitations import EMAIL_LIMIT, answer, emails_left, invite as send_invitations, may_invite, taken_users
+from .invitations import (
+    EMAIL_LIMIT, answer, emails_left, invite as send_invitations, invite_who_came, may_invite, taken_users,
+)
 from .models import Attendee, Entry, Guest, Idea, Invitation, Scribe
 from .timings import timings
 
@@ -457,11 +459,13 @@ def giftsheet_entry(request, slug, pk, token=None):
         elif action == "open" and writes:
             entry.state = Entry.STATE_OPEN
             entry.for_user, entry.for_guest, entry.for_name = None, None, ""
+            entry.lend, entry.borrow_from, entry.borrow_to = False, None, None
             entry.save()
         elif action == Entry.STATE_FULFILLED and writes:
             who = _picked(request, event)
             if sheets.same_person(entry, *who):
                 raise sheets.PickError(_("That is who it is from. Please choose someone else."))
+            entry.lend, entry.borrow_from, entry.borrow_to = _borrowing(request)
             entry.state = Entry.STATE_FULFILLED
             entry.for_user, entry.for_guest, entry.for_name = who
             entry.save()
@@ -479,6 +483,24 @@ def giftsheet_entry(request, slug, pk, token=None):
     except sheets.PickError as error:
         messages.error(request, str(error))
     return back
+
+
+def _borrowing(request):
+    """(lends, from, until) of a tool to lend. The days may be left open, to propose them
+    on the match afterwards; one day without an end."""
+    if not request.POST.get("lends"):
+        return False, None, None
+    try:
+        start = date.fromisoformat(request.POST.get("borrow_from", ""))
+    except ValueError:
+        return True, None, None
+    try:
+        end = date.fromisoformat(request.POST.get("borrow_to", "")) if request.POST.get("borrow_to") else start
+    except ValueError:
+        end = start
+    if end < start:
+        raise sheets.PickError(_("It can't come back before it is borrowed."))
+    return True, start, end
 
 
 def _picked(request, event):
@@ -521,8 +543,11 @@ def giftsheet_close(request, slug):
     if request.POST.get("action") == "reopen" and sheet.is_closed:
         sheets.reopen(sheet)
     elif not sheet.is_closed:
+        first = sheet.results_sent_at is None
         sheets.close(event, sheet, request.user)
-        messages.success(request, _("The Giftsheet is closed."))
+        messages.success(request, _("The Giftsheet is closed.") + (
+            " " + _("Everyone who came gets the results by email.") if first else ""
+        ))
     return redirect(here)
 
 
@@ -563,3 +588,160 @@ def scribe(request, slug):
             else:
                 Scribe.objects.get_or_create(event=event, user_id=user_id)
     return redirect(f"{event.get_absolute_url()}#coming")
+
+
+# ── After the circle ────────────────────────────────────────────────
+
+def _person_key(user_id, guest_id):
+    if user_id:
+        return f"user:{user_id}"
+    return f"guest:{guest_id}" if guest_id else None
+
+
+def _pairs(entry):
+    """Who may write to whom about a line: its two sides, and its side and whoever had
+    an idea for it."""
+    origin = _person_key(entry.from_user_id, entry.from_guest_id)
+    others = [_person_key(entry.for_user_id, entry.for_guest_id)] if entry.state == Entry.STATE_FULFILLED else []
+    others += [_person_key(idea.from_user_id, idea.from_guest_id) for idea in entry.ideas.all()]
+    return {frozenset((origin, other)) for other in others if origin and other and other != origin}
+
+
+@login_required
+def write(request, slug, pk):
+    return _write(request, _gift_circle(slug), pk)
+
+
+def guest_write(request, slug, token, pk):
+    guest = _guest(slug, token)
+    if not guest.confirmed_at:
+        return redirect(_guest_url(guest, "guest_confirm"))
+    return _write(request, guest.event, pk, guest)
+
+
+def _write(request, event, pk, guest=None):
+    """"Write to them": a few words by email to the other side of a line of a closed
+    Giftsheet, without showing their address; answering goes to the sender."""
+    if guest is None:
+        me, sender_name, sender_email = f"user:{request.user.pk}", request.user.name or request.user.email, request.user.email
+        giftsheet_url = reverse("gift_circles:giftsheet", args=[event.slug])
+    else:
+        me, sender_name, sender_email = f"guest:{guest.pk}", guest.name, guest.email
+        giftsheet_url = _guest_url(guest, "guest_giftsheet")
+    entry = get_object_or_404(Entry.objects.select_related("event"), event=event, pk=pk)
+    sheet = sheets.sheet_of(event)
+    to = request.GET.get("to", "")
+    recipient = _addressee(event, to)
+    if not sheet.is_closed or recipient is None or not recipient.email or frozenset((me, to)) not in _pairs(entry):
+        return redirect(giftsheet_url)
+    other_name = recipient.name or recipient.email
+    form = WriteForm(request.POST or None)
+    if request.method == "POST" and form.is_valid():
+        send_written(entry, sender_name, sender_email, recipient, form.cleaned_data["message"])
+        messages.success(request, _("Your message to %(name)s has been sent.") % {"name": other_name})
+        return redirect(giftsheet_url)
+    return render(request, "gift_circles/write.html", {
+        "event": event, "entry": entry, "form": form, "other_name": other_name, "sender_email": sender_email,
+        "giftsheet_url": giftsheet_url,
+    })
+
+
+def _addressee(event, to):
+    kind, _sep, pk = to.partition(":")
+    if not pk.isdigit():
+        return None
+    if kind == "user":
+        return get_user_model().objects.filter(pk=pk, is_active=True).first()
+    if kind == "guest":
+        return event.guests.filter(pk=pk).first()
+    return None
+
+
+def wishes(request, slug, key):
+    """"Did your wish come true?", behind the link in its email: one answer per wish.
+    "Yes" marks it covered on ecobasa and asks for the story."""
+    found = wish_answers.read_key(key)
+    event = _gift_circle(slug)
+    if found is None or found[0] != event.pk:
+        messages.error(request, _("This link doesn't work any more."))
+        return redirect(event.get_absolute_url())
+    _event_pk, side, person_pk = found
+    lines = list(wish_answers.wishes_of(event, side, person_pk))
+    if not lines:
+        return redirect(event.get_absolute_url())
+    if request.method == "POST":
+        entry = next((line for line in lines if str(line.pk) == request.POST.get("entry")), None)
+        if entry is not None and request.POST.get("answer") in ("yes", "no"):
+            wish_answers.answer(entry, request.POST["answer"] == "yes")
+        return redirect(f"{request.path}#entry-{entry.pk if entry else ''}")
+    guest = event.guests.filter(pk=person_pk).first() if side == "guest" else None
+    user = get_user_model().objects.filter(pk=person_pk).first() if side == "user" else None
+    stories_url = f"{event.get_absolute_url()}#references"
+    for entry in lines:
+        entry.contact = results.contact(event, entry, entry.for_user, entry.for_guest, user, guest)
+        entry.story_url = reverse("matches:detail", args=[entry.match_id]) if entry.match_id else stories_url
+    return render(request, "gift_circles/wishes.html", {"event": event, "entries": lines})
+
+
+# Taken over from the last one by "Plan the next one": all but its day, host and video room
+NEXT_FIELDS = (
+    "title", "description", "starts_at", "ends_at", "is_open", "max_people", "potluck_note",
+    "location_name", "location", "country", "is_online", "timezone",
+)
+
+
+@login_required
+def plan_next(request, slug):
+    """"Plan the next one": whoever came (or hosted) invites to the next gift-circle,
+    with the form filled in from this one, and hosts it. Everyone who came is invited
+    once it is saved."""
+    from events.views import save_event
+
+    event = _gift_circle(slug)
+    if not (sheets.started(event) and bringing.is_in(event, request.user)):
+        return redirect(event.get_absolute_url())
+    following = Event(
+        kind=event.kind, host_user=request.user, previous=event,
+        **{field: getattr(event, field) for field in NEXT_FIELDS},
+    )
+    return save_event(
+        request, following, event.get_absolute_url(),
+        on_saved=lambda saved: invite_who_came(saved, event, request.user),
+    )
+
+
+@login_required
+@require_POST
+def story(request, slug):
+    """Who came or hosted tells how it went, about something of it (stories.destinies);
+    or takes their story back."""
+    from gift_economy.references.forms import ReferenceForm
+    from gift_economy.references.models import Reference
+    from gift_economy.references.notifications import notify_reference_created
+
+    event = _gift_circle(slug)
+    back = redirect(f"{event.get_absolute_url()}#references")
+    if not event.can_be_referenced_by(request.user):
+        return back
+    if request.POST.get("action") == "delete":
+        reference = Reference.objects.filter(author=request.user, pk=request.POST.get("reference") or 0).first()
+        if reference is not None and stories.is_story_of(reference, event):
+            reference.delete()
+        return back
+    subject = stories.subject_for(event, request.user, request.POST.get("about", ""))
+    if subject is None:
+        messages.error(request, _("Please choose what it is about."))
+        return back
+    existing = stories.own_story(event, request.user, subject)
+    form = ReferenceForm(request.POST, request.FILES, instance=existing, subject=subject, author=request.user)
+    if not form.is_valid():
+        messages.error(request, (form.errors.get("photo") or [_("Please choose an impression and describe your experience.")])[0])
+        return back
+    reference = form.save_reference(request.user, subject)
+    if subject != event:
+        reference.place = event
+        reference.save(update_fields=["place_type", "place_id"])
+    if existing is None:
+        notify_reference_created(reference, http_request=request)
+    messages.success(request, _("Thank you for sharing your experience."))
+    return back

@@ -85,6 +85,10 @@ INVITING = {GIFT_CIRCLE: "gift_circles/_invite.html"}
 # On its page: the offers and wishes people bring, and how who comes or hosts brings theirs
 BRINGING = {GIFT_CIRCLE: "gift_circles/_bring.html"}
 
+# On its page once it has begun: how it went (stories by who came, as references about
+# it), and for who came how to go on (an add-on's template)
+HOW_IT_WENT = {GIFT_CIRCLE: "gift_circles/_after.html"}
+
 # How long one usually takes, in minutes: the form fills in "Until" from "From"
 DURATIONS = {GIFT_CIRCLE: 90}
 

@@ -1,0 +1,12 @@
+{% load i18n %}{% autoescape off %}{% blocktrans with name=recipient.name|default:recipient.email %}Hello {{ name }},{% endblocktrans %}
+{% for entry in entries %}
+{% blocktrans with title=event.title name=entry.for_label %}Two weeks ago at the gift-circle {{ title }}, {{ name }} said they could help with your wish:{% endblocktrans %}
+
+  {{ entry.text }}
+{% endfor %}
+{% if entries|length == 1 %}{% trans "Did it come true?" %}{% else %}{% trans "Did they come true?" %}{% endif %}
+
+{% trans "Yes, it did" %} / {% trans "Not yet" %}: {{ answer_url }}
+
+--
+ecobasa.org{% endautoescape %}

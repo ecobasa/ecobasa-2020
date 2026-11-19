@@ -141,3 +141,11 @@ class PhotoForm(forms.ModelForm):
         from gift_economy.gifts.forms import shrunk
 
         return shrunk(self.cleaned_data.get("image"))
+
+
+class WriteForm(forms.Form):
+    """A few words to the other side of a line of the Giftsheet."""
+
+    message = forms.CharField(
+        label=_("Your message"), max_length=2000, widget=forms.Textarea(attrs={"rows": 6, "class": "form-input"}),
+    )

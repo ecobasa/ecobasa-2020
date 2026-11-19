@@ -28,7 +28,7 @@ def exact_place(event):
     return event.get_match_location()[1]
 
 
-def _send(event, recipient, template, subject, place_name=None, calendar=True, subject_args=None, **extra):
+def _send(event, recipient, template, subject, place_name=None, calendar=True, subject_args=None, reply_to=None, **extra):
     """`recipient`: a user, a guest or an invitation by email. Without `place_name` its
     place as a user may see it."""
     with translation.override(recipient.language or settings.LANGUAGE_CODE):
@@ -52,6 +52,7 @@ def _send(event, recipient, template, subject, place_name=None, calendar=True, s
         calendar = ics(event, place_name) if calendar and event.starts_on else None
     message = EmailMultiAlternatives(
         subject=context["headline"], body=text_body, from_email=settings.DEFAULT_FROM_EMAIL, to=[recipient.email],
+        reply_to=reply_to,
     )
     message.attach_alternative(html_body, "text/html")
     if calendar:
@@ -123,4 +124,15 @@ def send_guest_welcome(guest):
     _send(
         guest.event, guest, "guest_coming", gettext_noop("You're coming to %(title)s"),
         place_name=exact_place(guest.event), **_guest_urls(guest),
+    )
+
+
+def send_written(entry, sender_name, sender_email, recipient, message):
+    """"Write to them": a few words to the other side of a line, without their address;
+    answering goes to the sender."""
+    event = entry.event
+    _send(
+        event, recipient, "write", gettext_noop("%(name)s writes to you from the gift-circle %(title)s"),
+        place_name="", calendar=False, subject_args={"name": sender_name}, reply_to=[sender_email],
+        entry=entry, sender_name=sender_name, message=message,
     )

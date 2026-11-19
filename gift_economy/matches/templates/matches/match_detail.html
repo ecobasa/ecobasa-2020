@@ -90,6 +90,11 @@
             <i class="fa-regular fa-calendar text-primary"></i>
             <span>{% trans "Lent" %}: {{ match.loan.period }}</span>
           </div>
+        {% elif match.lends_later %}
+          <div class="flex items-center gap-2 text-sm">
+            <i class="fa-regular fa-calendar text-primary"></i>
+            <span>{% trans "The days to borrow it aren't agreed yet. Propose them below." %}</span>
+          </div>
         {% elif latest_counter_msg and latest_counter_msg.counter_date %}
           <div class="flex items-center gap-2 text-sm">
             <i class="fa fa-calendar text-primary"></i>
@@ -126,8 +131,8 @@
         {% endif %}
         {% if latest_status_msg.counter_stay_from or latest_status_msg.counter_stay_to %}
           <div class="flex items-center gap-2 text-sm">
-            <i class="{% if match.is_loan %}fa-regular fa-calendar{% else %}fa fa-campground{% endif %} text-primary"></i>
-            <span>{% if match.is_loan %}{{ latest_status_msg.counter_loan_period }}{% else %}{% include "matches/_stay_period.html" with stay_from=latest_status_msg.counter_stay_from stay_to=latest_status_msg.counter_stay_to %}{% endif %}</span>
+            <i class="{% if match.takes_loan_days %}fa-regular fa-calendar{% else %}fa fa-campground{% endif %} text-primary"></i>
+            <span>{% if match.takes_loan_days %}{{ latest_status_msg.counter_loan_period }}{% else %}{% include "matches/_stay_period.html" with stay_from=latest_status_msg.counter_stay_from stay_to=latest_status_msg.counter_stay_to %}{% endif %}</span>
           </div>
         {% endif %}
       {% endif %}
@@ -309,10 +314,10 @@
             {% endif %}
             {% if msg.counter_stay_from or msg.counter_stay_to %}
               <div class="text-sm mb-2">
-                {% if match.is_loan %}<i class="fa-regular fa-calendar mr-1 text-primary"></i>
+                {% if match.takes_loan_days %}<i class="fa-regular fa-calendar mr-1 text-primary"></i>
                 <strong>{% trans "Suggested days" %}:</strong>{% else %}<i class="fa fa-campground mr-1 text-primary"></i>
                 <strong>{% trans "Suggested stay" %}:</strong>{% endif %}
-                {% if match.is_loan %}{{ msg.counter_loan_period }}{% else %}{% include "matches/_stay_period.html" with stay_from=msg.counter_stay_from stay_to=msg.counter_stay_to %}{% endif %}
+                {% if match.takes_loan_days %}{{ msg.counter_loan_period }}{% else %}{% include "matches/_stay_period.html" with stay_from=msg.counter_stay_from stay_to=msg.counter_stay_to %}{% endif %}
               </div>
             {% endif %}
             {% with coords=msg.counter_location_coords %}
@@ -369,7 +374,7 @@
           </div>
         </div>
         {% else %}
-        {% if match.is_loan %}
+        {% if match.takes_loan_days %}
         {# Other days or hours to borrow it; the place to pick it up can change too #}
         {% with loan=proposed_loan %}
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -392,7 +397,7 @@
         {% endwith %}
         {% endif %}
         <div class="form-group">
-          <label class="form-label">{% if match.is_loan %}{% trans "Handover place" %}{% else %}{% trans "Counter location type" %}{% endif %}</label>
+          <label class="form-label">{% if match.takes_loan_days %}{% trans "Handover place" %}{% else %}{% trans "Counter location type" %}{% endif %}</label>
           <div class="space-y-1">
             {% for value, label in loc_choices %}
               <label class="flex items-center gap-2 text-sm cursor-pointer">
@@ -438,7 +443,7 @@
           <div id="counter-pick-map" class="w-full h-full bg-secondary bg-opacity-40"></div>
         </div>
 
-        {% if not match.is_loan %}
+        {% if not match.takes_loan_days %}
         <div class="form-group">
           <label class="form-label">{% trans "Counter date" %}</label>
           <input type="datetime-local" name="counter_date" class="form-input">
@@ -546,7 +551,7 @@
           <button type="button" x-show="!isCounter"
             @click="isCounter = true; $nextTick(() => window.initCounterPicker && window.initCounterPicker())"
             class="btn btn-yellow">
-            {% if match.is_loan %}<i class="fa-solid fa-calendar-days mr-2"></i>{% trans "Propose another time or handover place" %}{% else %}<i class="fa-solid fa-location-dot mr-2"></i>{% trans "Propose different location" %}{% endif %}
+            {% if match.takes_loan_days %}<i class="fa-solid fa-calendar-days mr-2"></i>{% trans "Propose another time or handover place" %}{% else %}<i class="fa-solid fa-location-dot mr-2"></i>{% trans "Propose different location" %}{% endif %}
           </button>
           {% endif %}
 
