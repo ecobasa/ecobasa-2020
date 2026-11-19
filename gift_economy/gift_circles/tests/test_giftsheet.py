@@ -178,6 +178,25 @@ def test_the_scribe_writes_for_anyone_and_answers_lines(host, person, other):
     assert not Scribe.objects.exists()
 
 
+def test_a_scribe_passes_it_on_and_steps_down(host, person, other):
+    event = _circle(host)
+    _come(event, person)
+    _come(event, other)
+    url = reverse("gift_circles:scribe", args=[event.slug])
+    Scribe.objects.create(event=event, user=person)
+    assert "Make scribe" in _client(person).get(event.get_absolute_url()).content.decode()
+    assert "Make scribe" not in _client(other).get(event.get_absolute_url()).content.decode()
+    _client(person).post(url, {"user": other.pk, "action": "make"})
+    # Not someone else's role away, only their own
+    _client(person).post(url, {"user": other.pk, "action": "remove"})
+    assert Scribe.objects.filter(event=event, user=other).exists()
+    _client(person).post(url, {"user": person.pk, "action": "remove"})
+    assert list(Scribe.objects.values_list("user", flat=True)) == [other.pk]
+    # Who isn't scribe hands nothing out
+    _client(person).post(url, {"user": person.pk, "action": "make"})
+    assert not Scribe.objects.filter(event=event, user=person).exists()
+
+
 def test_only_who_comes_becomes_scribe(host, stranger):
     event = _circle(host)
     _client(host).post(reverse("gift_circles:scribe", args=[event.slug]), {"user": stranger.pk})

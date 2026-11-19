@@ -48,3 +48,11 @@ def test_the_travelling_tips_are_linked_from_the_tours_help(client):
     assert 'href="/help/community-tours/travelling-tips/"' in page
     tips = client.get("/help/community-tours/travelling-tips/", HTTP_ACCEPT_LANGUAGE="en")
     assert tips.status_code == 200 and 'id="sailing"' in tips.content.decode()
+
+
+@pytest.mark.django_db
+def test_the_gift_circles_help_is_linked_from_the_index(client):
+    index = client.get("/help/", HTTP_ACCEPT_LANGUAGE="en").content.decode()
+    assert 'href="/help/gift-circles/"' in index
+    page = client.get("/help/gift-circles/", HTTP_ACCEPT_LANGUAGE="en").content.decode()
+    assert 'id="karma"' in page and 'href="/gift-circles/new/"' in page

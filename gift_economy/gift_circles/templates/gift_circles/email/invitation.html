@@ -4,6 +4,7 @@
 {% if message %}<p style="margin:0 0 16px;padding:12px 16px;border-left:3px solid #d4b896;background-color:#f5ede0;font-size:15px;line-height:1.6;">{{ message|linebreaksbr }}</p>{% endif %}
 {% include "gift_circles/_when_where.html" with with_title=True %}
 <p style="margin:0 0 24px;"><a href="{% if answer_url %}{{ answer_url }}{% else %}{{ event_url }}{% endif %}" style="display:inline-block;background-color:#da6137;color:#fcf3e5;text-decoration:none;padding:10px 20px;border-radius:6px;font-size:15px;font-weight:bold;">{% if answer_url %}{% trans "Coming as a guest" %}{% else %}{% trans "I'm coming" %}{% endif %}</a></p>
+<p style="margin:0 0 16px;font-size:15px;line-height:1.6;">{% trans "Say you're coming, and add your wishes and offers on the page. ecobasa shows you who could help whom before the day, so people know what things they could already bring along, so it can change hands there." %}</p>
 
 <h3 style="margin:24px 0 8px;font-size:17px;font-family:'Bree Serif',Georgia,serif;font-weight:normal;">{% trans "What is a gift-circle?" %}</h3>
 <p style="margin:0 0 16px;font-size:15px;line-height:1.6;">{% trans "People sit in a circle and share what they wish for and what they can give. Things, time, skills, knowledge, contacts. Nothing is bought or sold." %} {% trans "Strangers often leave as neighbours who help each other." %}</p>

@@ -1,0 +1,184 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block head_title %}{% trans "Help" %}: {% trans "Hosting a gift-circle" %} — ecobasa{% endblock %}
+
+{% block content %}
+{% url 'events:gift_circle_create' as create_url %}
+<div class="container-page">
+  <a href="{% url 'help:index' %}" class="text-sm"><i class="fa fa-arrow-left mr-1"></i>{% trans "Help" %}</a>
+  <h1 class="mt-2 text-4xl sm:text-5xl hyphens-auto"><i class="fa-solid fa-hands-holding-circle mr-2"></i>{% trans "Hosting a gift-circle" %}</h1>
+
+  <div class="lg:grid lg:grid-cols-4 lg:gap-10">
+    {# Contents, beside the text on wide screens #}
+    <nav class="mb-8 lg:mb-0" aria-label="{% trans 'Contents' %}">
+      <div class="lg:sticky lg:top-6 p-4 rounded-lg bg-secondary bg-opacity-75 text-sm">
+        <span class="block font-bold mb-2">{% trans "Contents" %}</span>
+        <ol class="m-0 space-y-1">
+          <li class="mb-0"><a class="text-yellow hover:text-purple" href="#what">{% trans "What is a gift-circle?" %}</a></li>
+          <li class="mb-0"><a class="text-yellow hover:text-purple" href="#invite">{% trans "Invite to a gift-circle" %}</a></li>
+          <li class="mb-0"><a class="text-yellow hover:text-purple" href="#before">{% trans "Before the circle" %}</a></li>
+          <li class="mb-0"><a class="text-yellow hover:text-purple" href="#rounds">{% trans "The rounds" %}</a></li>
+          <li class="mb-0"><a class="text-yellow hover:text-purple" href="#karma">{% trans "The karma rules" %}</a></li>
+          <li class="mb-0"><a class="text-yellow hover:text-purple" href="#roles">{% trans "Roles" %}</a></li>
+          <li class="mb-0"><a class="text-yellow hover:text-purple" href="#bring">{% trans "What to bring" %}</a></li>
+          <li class="mb-0"><a class="text-yellow hover:text-purple" href="#giftsheet">{% trans "Giftsheet" %}</a></li>
+          <li class="mb-0"><a class="text-yellow hover:text-purple" href="#online">{% trans "Online gift-circles" %}</a></li>
+          <li class="mb-0"><a class="text-yellow hover:text-purple" href="#guests">{% trans "Guests" %}</a></li>
+          <li class="mb-0"><a class="text-yellow hover:text-purple" href="#after">{% trans "After the circle" %}</a></li>
+          <li class="mb-0"><a class="text-yellow hover:text-purple" href="#next">{% trans "Plan the next one" %}</a></li>
+          <li class="mb-0"><a class="text-yellow hover:text-purple" href="#questions">{% trans "Questions from circles" %}</a></li>
+          <li class="mb-0"><a class="text-yellow hover:text-purple" href="#privacy">{% trans "Privacy" %}</a></li>
+          <li class="mb-0"><a class="text-yellow hover:text-purple" href="#origins">{% trans "Where gift-circles come from" %}</a></li>
+        </ol>
+      </div>
+    </nav>
+
+    <div class="lg:col-span-3 max-w-3xl min-w-0">
+      <section id="what" class="scroll-mt-6">
+        <h2 class="text-3xl sm:text-4xl hyphens-auto">{% trans "What is a gift-circle?" %}</h2>
+        <p class="text-lg">{% trans "People sit in a circle and share what they wish for and what they can give. Things, time, skills, knowledge, contacts. Nothing is bought or sold." %}</p>
+        <p>{% trans "A gift-circle typically takes about an hour and a half but can be shorter with a smaller group and some groups don't want to stop, because exciting ideas keep coming up. Strangers often leave as neighbours who help each other. It kick-starts a local support network where friendships and a community can grow out of. It fits well with a potluck, a film night or a party, and it's a good way to find out who in a community can help with what." %}</p>
+        <p>{% trans "Anyone can host one: in a living room, a park, a café, at a community, on a tour, or online as a video call." %}</p>
+      </section>
+
+      <section id="invite" class="mt-12 scroll-mt-6">
+        <h2 class="text-3xl sm:text-4xl hyphens-auto">{% trans "Invite to a gift-circle" %}</h2>
+        <p>{% blocktrans %}Press “<a href="{{ create_url }}">Invite to a gift-circle</a>”: on the events list, on your dashboard or on your profile. Ambassadors find it on their community's page, tour organisers at each stop of their tour.{% endblocktrans %}</p>
+        <p>{% trans "Choose a date and a place, or “Online, as a video call”. Say how many people can come, if there is a limit. For a video call, about 12 is a good size." %}</p>
+        <p>{% trans "If the gift-circle is at your home, only the people who come see the exact address. Everyone else sees the area." %}</p>
+        <p>{% trans "Right after, you get an email with everything for the day: the rounds, the karma rules, a facilitation card to print and the printable Giftsheet." %}</p>
+      </section>
+
+      <section id="before" class="mt-12 scroll-mt-6">
+        <h2 class="text-3xl sm:text-4xl hyphens-auto">{% trans "Before the circle" %}</h2>
+        <p>{% trans "People who come can add their wishes and offers on the event page, or bring ones they already have on ecobasa. Everyone sees what the others bring and wish for, and ecobasa suggests who could help whom beforehand if it knows what they have to offer and what they are wishing for. That way people already know what to bring along to the event so things can change hands there." %}</p>
+        <p>{% trans "Find a scribe. It can be anyone who comes: on the page you can let them write the Giftsheet." %}</p>
+      </section>
+
+      <section id="rounds" class="mt-12 scroll-mt-6">
+        <h2 class="text-3xl sm:text-4xl hyphens-auto">{% trans "The rounds" %} {% trans "– a facilitation guide" %}</h2>
+        <ol>
+          <li><strong>{% trans "Welcome." %}</strong> {% trans "Everyone says their name. Explain the rounds and the karma rules. Say that offers and wishes go on ecobasa only for those who said yes, and emails go only between the two sides of a match." %}</li>
+          <li><strong>{% trans "Wishes." %}</strong> {% trans "Go round the circle. Each person says one wish, or passes. After each wish, ask: Who can help? Nobody? Who knows someone who can? Still nobody? Who has an idea how we could do it together? Stay with one wish until it is solved or you let it go. If there is time, go round again." %}</li>
+          <li><strong>{% trans "Offers." %}</strong> {% trans "Round again. Each person says what they can give. Who would like it? Who knows someone that would like it?" %}</li>
+          <li><strong>{% trans "Thanks." %}</strong> {% trans "A last round. Each person thanks someone: for a gift from last time, for something today, or just for being here." %}</li>
+          <li><strong>{% trans "Close." %}</strong> {% trans "The scribe reads out the matches. Remind everyone: the one who wished follows up." %}</li>
+        </ol>
+        <p class="p-4 rounded-lg bg-secondary bg-opacity-75 text-sm"><i class="fa-regular fa-lightbulb text-primary mr-1"></i>{% trans "Tips: help the shy ones. If nobody starts, suggest an easy wish, like a hug, a book tip or help carrying something. Keep wishes to one sentence. Offers can come up in the wish round, and that's fine. A big wish that needs many hands can become a plan of its own: a work day, a workshop, a next meeting." %}</p>
+      </section>
+
+      <section id="karma" class="mt-12 scroll-mt-6">
+        <h2 class="text-3xl sm:text-4xl hyphens-auto">{% trans "The karma rules" %}</h2>
+        <ul>
+          <li><strong>{% trans "No guarantee." %}</strong> {% trans "Not every wish comes true, and that's okay." %}</li>
+          <li><strong>{% trans "Wish big." %}</strong> {% trans "Big wishes are welcome. Sometimes the circle can do more than you think." %}</li>
+          <li><strong>{% trans "Only good intentions." %}</strong> {% trans "Nothing that harms anyone." %}</li>
+          <li><strong>{% trans "The one who wished follows up." %}</strong> {% trans "If someone offers to help with your wish, you get in touch with them, not the other way round." %}</li>
+          <li><strong>{% trans "No money." %}</strong> {% trans "Nothing is bought or sold. Things, time, skills, ideas and contacts are all welcome." %}</li>
+          <li><strong>{% trans "Give freely." %}</strong> {% trans "Nobody owes anything back." %}</li>
+          <li><strong>{% trans "Give only what you can." %}</strong> {% trans "Say no when it doesn't feel right. Give what you can keep giving." %}</li>
+        </ul>
+        <p class="text-sm">{% blocktrans %}The karma rules are inspired by Pierre Lischke's <a href="https://karmakreis.mystrikingly.com/" target="_blank" rel="noopener">KarmaKreis</a>.{% endblocktrans %}</p>
+      </section>
+
+      <section id="roles" class="mt-12 scroll-mt-6">
+        <h2 class="text-3xl sm:text-4xl hyphens-auto">{% trans "Roles" %}</h2>
+        <ul class="list-none p-0 mt-6 grid sm:grid-cols-3 gap-4">
+          <li class="p-4 rounded-lg bg-secondary bg-opacity-75">
+            <span class="block text-center mb-3"><i class="fa-solid fa-people-group text-primary text-6xl" aria-hidden="true"></i></span><strong class="block text-center text-primary text-2xl font-serif font-normal mb-2">{% trans "Facilitator" %}</strong>
+            {% trans "Usually you, the host. Keeps the circle going and helps the shy ones." %}
+          </li>
+          <li class="p-4 rounded-lg bg-secondary bg-opacity-75">
+            <span class="block text-center mb-3"><i class="fa-solid fa-pen text-primary text-6xl" aria-hidden="true"></i></span><strong class="block text-center text-primary text-2xl font-serif font-normal mb-2">{% trans "Scribe" %}</strong>
+            {% trans "Writes the Giftsheet: who wished or offered what, and who said yes. Shortens a wish to one line, and asks again for a name when needed." %}
+          </li>
+          <li class="p-4 rounded-lg bg-secondary bg-opacity-75">
+            <span class="block text-center mb-3"><i class="fa-regular fa-clock text-primary text-6xl" aria-hidden="true"></i></span><strong class="block text-center text-primary text-2xl font-serif font-normal mb-2">{% trans "Timekeeper" %}</strong>
+            {% trans "Optional. Says when a round should end." %}
+          </li>
+        </ul>
+      </section>
+
+      <section id="bring" class="mt-12 scroll-mt-6">
+        <h2 class="text-3xl sm:text-4xl hyphens-auto">{% trans "What to bring" %}</h2>
+        <p>{% trans "The printed Giftsheet or big paper, markers in two colours (one for wishes, one for offers), pens and small paper for everyone. A phone or laptop for the scribe, if you type the Giftsheet straight into ecobasa. Something for a potluck, if you like." %}</p>
+      </section>
+
+      <section id="giftsheet" class="mt-12 scroll-mt-6">
+        <h2 class="text-3xl sm:text-4xl hyphens-auto">{% trans "Giftsheet" %}</h2>
+        <p>{% trans "The scribe opens the Giftsheet on the gift-circle's page, on a phone or laptop. Add a wish or an offer in one line and pick who said it. Then mark who fulfils a wish or takes an offer, or add an idea. Everyone who has the page open sees it change." %}</p>
+        <p>{% trans "Something to lend, like a tool? Mark it “To lend”. The days can be agreed on right away or come later." %}</p>
+        <p>{% trans "No signal? Print the Giftsheet, fill it in on paper and type it in afterwards. Or take a photo and add it to the page." %}</p>
+        <p>{% trans "Someone came without signing up? The scribe adds them by name. With an email, they get the results too." %}</p>
+      </section>
+
+      <section id="online" class="mt-12 scroll-mt-6">
+        <h2 class="text-3xl sm:text-4xl hyphens-auto">{% trans "Online gift-circles" %}</h2>
+        <p>{% trans "An online gift-circle is a video call. ecobasa opens a room for it on a Jitsi server run by volunteers: no account, no app, nobody tracking you. The room is on the gift-circle's page, from an hour before the start." %}</p>
+        <p>{% trans "Everyone who comes gets an email with the link an hour before, so the room stays among you. Be there a few minutes early and set up your camera and microphone." %}</p>
+        <p>{% trans "Go round in the order people appear on the screen, and say who is next. The scribe shares the Giftsheet link in the chat." %}</p>
+        <p>{% trans "Times show in the circle's timezone, so people from elsewhere know when to come." %}</p>
+      </section>
+
+      <section id="guests" class="mt-12 scroll-mt-6">
+        <h2 class="text-3xl sm:text-4xl hyphens-auto">{% trans "Guests" %}</h2>
+        <p>{% trans "People can come without an ecobasa account, as guests: with a name and an email. They confirm with a link in an email, and can change or cancel through a link too. They only get an ecobasa account if they ask for it." %}</p>
+        <p>{% trans "Guests get the same emails as everyone, and a button to create an account. With one, their offers and wishes keep finding people after the circle, and they can be invited to the next gift-circle." %}</p>
+      </section>
+
+      <section id="after" class="mt-12 scroll-mt-6">
+        <h2 class="text-3xl sm:text-4xl hyphens-auto">{% trans "After the circle" %}</h2>
+        <p>{% trans "When you close the Giftsheet, everyone who came gets the results: the whole Giftsheet, and their own part: what they said yes to, what others said yes to for them, and how to reach each other." %}</p>
+        <p>{% trans "The one who wished follows up. Two weeks later, ecobasa asks them if their wish came true." %}</p>
+        <p>{% trans "Wishes and offers that found nobody stay on ecobasa, for those who said yes, and keep finding people nearby." %}</p>
+        <p>{% trans "Write a few lines under “How it went”: about the gift-circle, about someone who came, or about a wish, an offer or an idea. Stories show others what a gift-circle can do and motivate new people to host one." %}</p>
+        <p>{% trans "The gift-circle stays on ecobasa as a record, but can be deleted manually by the organiser." %}</p>
+      </section>
+
+      <section id="next" class="mt-12 scroll-mt-6">
+        <h2 class="text-3xl sm:text-4xl hyphens-auto">{% trans "Plan the next one" %}</h2>
+        <p>{% trans "Gift-circles get better when they happen again: people know the format, and heartwarming stories can be shared from the last circle's matches. Anyone who came can press “Plan the next one”. Choose a date, and everyone who came gets an invitation. Whoever plans it hosts it." %}</p>
+      </section>
+
+      {# Paraphrased from Alpha Lo's gift-circle principles and FAQ, credited under "origins" #}
+      <section id="questions" class="mt-12 scroll-mt-6">
+        <h2 class="text-3xl sm:text-4xl hyphens-auto">{% trans "Questions from circles" %}</h2>
+        <h3>{% trans "Nobody dares to wish. What now?" %}</h3>
+        <p>{% trans "Many of us learned not to ask. Saying what you need is a gift to the circle: it gives the others a chance to give. Start with a small wish yourself, and encourage the others gently." %}</p>
+        <h3>{% trans "People don't follow up on what was offered to them." %}</h3>
+        <p>{% trans "Remind them in the closing round that the one who wished gets in touch. Offers are meant to be taken: taking one is a gift to the one who gives." %}</p>
+        <h3>{% trans "The circle has grown big." %}</h3>
+        <p>{% trans "Gift-circles work with a hundred people and more. At some point you may just need a microphone or a megaphone. If there isn't time for everyone, split into smaller circles for the wishes and offers, each with its own scribe on the same Giftsheet, and come together again for the thanks." %}</p>
+        <h3>{% trans "Can people trade on the side?" %}</h3>
+        <p>{% trans "The circle itself is for gifts. What two people agree on afterwards is up to them. If two matches complement each other and a barter comes out of it, that is totally fine, but not a requirement." %}</p>
+        <h3>{% trans "Should it always be the same facilitator?" %}</h3>
+        <p>{% trans "Better not. When someone else facilitates next time, more people learn it, and the circle doesn't depend on one person. Later they can start gift-circles of their own." %}</p>
+        <h3>{% trans "Should it always go the same way?" %}</h3>
+        <p>{% trans "Try things, and ask the circle afterwards what worked. A circle that meets regularly learns: the regulars carry its culture, and newcomers bring new wishes, gifts and ideas." %}</p>
+        <h3>{% trans "Why the thanks round?" %}</h3>
+        <p>{% trans "Gratitude is the soil a gift economy grows in. It changes the mood of the whole circle, and it shows that gifts from last time arrived. Try it, you don't want to miss it." %}</p>
+      </section>
+
+      <section id="privacy" class="mt-12 scroll-mt-6">
+        <h2 class="text-3xl sm:text-4xl hyphens-auto">{% trans "Privacy" %}</h2>
+        <ul>
+          <li>{% trans "Offers and wishes from a gift-circle go on ecobasa only for people who said yes. Everyone can change that later." %}</li>
+          <li>{% trans "The Giftsheet is seen only by who came, the host and the scribes. Wishes are said in a trusting circle." %}</li>
+          <li>{% trans "Emails are shared only between the two sides of a match, and only for guests who said yes. People with an account write to each other through ecobasa." %}</li>
+          <li>{% trans "The exact place of a gift-circle at someone's home is shown only to the people who come." %}</li>
+        </ul>
+      </section>
+
+      <section id="origins" class="mt-12 scroll-mt-6">
+        <h2 class="text-3xl sm:text-4xl hyphens-auto">{% trans "Where gift-circles come from" %}</h2>
+        <p>{% blocktrans %}Gift-circles were started by Alpha Lo, and spread by many others since. Read his <a href="https://opencollaboration.wordpress.com/2010/04/15/gift-circle-principles/" target="_blank" rel="noopener">gift-circle principles</a> and the <a href="https://opencollaboration.wordpress.com/2009/11/28/gift-circle-faq/" target="_blank" rel="noopener">gift-circle FAQ</a>.{% endblocktrans %}</p>
+        <p>{% blocktrans %}The karma rules are inspired by Pierre Lischke's <a href="https://karmakreis.mystrikingly.com/" target="_blank" rel="noopener">KarmaKreis</a>.{% endblocktrans %}</p>
+        <p>{% blocktrans %}The gift-circle concept on ecobasa designed by Arne Bollinger is licensed under a <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="license noopener">Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)</a> license.{% endblocktrans %}</p>
+      </section>
+
+      <p class="mt-12">{% blocktrans %}Something missing or unclear? <a href="/contact">Write to us</a>, we are glad to hear it.{% endblocktrans %}</p>
+    </div>
+  </div>
+</div>
+{% endblock content %}

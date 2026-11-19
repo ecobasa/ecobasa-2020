@@ -52,3 +52,14 @@ def test_demo_data_names_things_as_the_form_would_and_spreads_them_over_the_map(
     featured = Reference.objects.filter(featured_at__isnull=False)
     assert featured.count() == 4
     assert all(r.share_publicly and r.impression == Reference.IMPRESSION_POSITIVE for r in featured)
+    # Gift-circles: last week's Giftsheet closed into a wish, a ladder to lend and their matches
+    from events.models import Event
+    from gift_economy.gift_circles.models import Entry
+    last = Event.objects.get(title="Gift-circle by the river")
+    assert last.giftsheet.is_closed and last.next_ones.get().max_people == 12
+    sofa = Entry.objects.get(event=last, text__startswith="Help carrying a sofa")
+    assert sofa.match.from_user.email == "sam@ecobasa.demo" and sofa.listing.covered_at is not None
+    ladder = Entry.objects.get(event=last, text="A long ladder")
+    assert ladder.listing.lend and ladder.match.from_user.email == "bjorn@ecobasa.demo"
+    assert Entry.objects.get(event=last, text__startswith="A bike trailer").listing is None  # Sam said no
+    assert Event.objects.get(title__startswith="Gift-circle online").timezone == "Europe/Paris"

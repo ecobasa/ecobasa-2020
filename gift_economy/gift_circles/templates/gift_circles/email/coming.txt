@@ -11,6 +11,8 @@
 
 {% trans "Already have offers or wishes on ecobasa? Press “Bring it to the gift-circle” on them." %}
 
+{% trans "Someone who comes can help with your wish already? Agree with them on the page, and bring the things along, so you can give them on the day." %}
+
 {% include "gift_circles/_rounds.txt" %}
 
 {% include "gift_circles/_karma_rules.txt" %}

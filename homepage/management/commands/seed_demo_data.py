@@ -109,6 +109,7 @@ class Command(BaseCommand):
         self._seed_references(users, communities)
         self._seed_projects(users, communities)
         self._seed_community_events(users, communities)
+        self._seed_gift_circles(users, communities)
         self._seed_goods_around(users, communities)
         self._seed_tours(users, communities)
 
@@ -1424,6 +1425,110 @@ class Command(BaseCommand):
         )
         coming(ana, festival, 2)
         coming(mireille, festival, 1, days=(festival.starts_on + timedelta(days=1), festival.ends_on))
+
+    # ── Gift-circles ─────────────────────────────────────────────────────
+
+    def _seed_gift_circles(self, users, communities):
+        """Gift-circles: one last week by the river in Görlitz, its Giftsheet closed (a wish
+        fulfilled, a ladder to lend, an open wish with an idea, a guest and a walk-in known
+        only by name); the next one at Luna's home with what people bring and a scribe; and
+        one online, in Mireille's timezone."""
+        from events import kinds
+        from events.models import Event
+        from gift_economy.gift_circles.giftsheet import entries, settle
+        from gift_economy.gift_circles.models import Attendee, Brought, Entry, Giftsheet, Guest, Idea, Scribe
+
+        self.stdout.write("Seeding gift-circles…")
+        luna, bjorn, mireille = users["luna@ecobasa.demo"], users["bjorn@ecobasa.demo"], users["mireille@ecobasa.demo"]
+        sam, jules, freja = users["sam@ecobasa.demo"], users["jules@ecobasa.demo"], users["freja@ecobasa.demo"]
+        today = timezone.localdate()
+
+        def circle(title, host, **fields):
+            obj, _created = Event.objects.get_or_create(
+                kind=kinds.GIFT_CIRCLE, title=title,
+                defaults={"created_by": host, "host_user": host, "is_open": True, **fields},
+            )
+            return obj
+
+        def coming(who, event, keep=True):
+            """Said "I'm coming", and whether their lines stay on ecobasa."""
+            match, created = self._get_or_create_match(
+                who, event.manager, event, message="", status=Match.STATUS_ACCEPTED, responded_at=timezone.now(),
+            )
+            if created:
+                StayDetails.objects.create(
+                    match=match, volunteer_mode=StayDetails.MODE_COME, people=1,
+                    stay_from=_day_start(event.starts_on), stay_to=_day_start(event.starts_on),
+                )
+            Attendee.objects.get_or_create(event=event, user=who, defaults={"keep_on_ecobasa": keep})
+
+        goerlitz = Point(14.9905, 51.1555, srid=4326)
+        last_on = today - timedelta(days=6)
+        last = circle(
+            "Gift-circle by the river", luna,
+            description="Bring a blanket, a wish and something you could give. We sit under the "
+                        "big lime tree; if it rains, in the boathouse next to it.",
+            starts_on=last_on, ends_on=last_on, starts_at=datetime_time(17, 0), ends_at=datetime_time(18, 30),
+            location_name="Riverside meadow, Görlitz", location=goerlitz, country="DE",
+            potluck_note="Something to share for the picnic afterwards",
+        )
+        Attendee.objects.get_or_create(event=last, user=luna, defaults={"keep_on_ecobasa": True})
+        coming(bjorn, last)
+        coming(sam, last, keep=False)
+        tilda, _created = Guest.objects.get_or_create(
+            event=last, email="tilda@guest.demo",
+            defaults=dict(name="Tilda", confirmed_at=timezone.now() - timedelta(days=9), share_email=True),
+        )
+        Scribe.objects.get_or_create(event=last, user=sam)
+        sheet, created = Giftsheet.objects.get_or_create(event=last)
+        if created:
+            def line(type, text, state=Entry.STATE_OPEN, **fields):
+                return Entry.objects.create(event=last, type=type, text=text, state=state, created_by=sam, **fields)
+
+            line(Entry.TYPE_WISH, "Help carrying a sofa up to the third floor", Entry.STATE_FULFILLED,
+                 from_user=bjorn, for_user=sam)
+            line(Entry.TYPE_OFFER, "A long ladder", Entry.STATE_FULFILLED, from_user=luna, for_user=bjorn, lend=True)
+            spanish = line(Entry.TYPE_WISH, "Someone to practise Spanish with", from_guest=tilda)
+            Idea.objects.create(entry=spanish, text="The language café in the library, Thursdays",
+                                from_user=luna, created_by=sam)
+            line(Entry.TYPE_OFFER, "Sourdough starter, as much as you like", Entry.STATE_FULFILLED,
+                 from_name="Konrad", for_guest=tilda)
+            trailer = line(Entry.TYPE_WISH, "A bike trailer for a weekend", from_user=sam)
+            Idea.objects.create(entry=trailer, text="Ask the bike workshop at the station",
+                                from_name="Konrad", created_by=sam)
+            sheet.closed_at = sheet.results_sent_at = timezone.now() - timedelta(days=6)
+            sheet.closed_by = luna
+            sheet.save()
+            settle(last, entries(last).filter(match=None))
+
+        next_on = today + timedelta(days=22)
+        upcoming = circle(
+            "Gift-circle in Luna's living room", luna,
+            description="The second one: thanks for last time's gifts, and new wishes. Room for "
+                        "twelve on the sofas and the floor.",
+            starts_on=next_on, ends_on=next_on, starts_at=datetime_time(19, 0), ends_at=datetime_time(20, 30),
+            location_name="Görlitz", location=Point(14.9857, 51.1642, srid=4326), country="DE",
+            max_people=12, potluck_note="Soup is on us, bring bread or something sweet",
+            previous=last,
+        )
+        coming(bjorn, upcoming)
+        coming(sam, upcoming)
+        Scribe.objects.get_or_create(event=upcoming, user=bjorn)
+        for person in (luna, bjorn):
+            listing = Listing.objects.current().filter(owner=person, community=None, tour=None).first()
+            if listing is not None:
+                Brought.objects.get_or_create(event=upcoming, listing=listing)
+
+        online_on = today + timedelta(days=9)
+        online = circle(
+            "Gift-circle online: skills to share", mireille,
+            description="A video call for everyone who'd like to try a gift-circle from home. "
+                        "Wishes for help that works at a distance are especially welcome.",
+            starts_on=online_on, ends_on=online_on, starts_at=datetime_time(18, 0), ends_at=datetime_time(19, 30),
+            is_online=True, timezone="Europe/Paris", max_people=12,
+        )
+        coming(jules, online)
+        coming(freja, online)
 
     # ── Community-Tours ──────────────────────────────────────────────────
 

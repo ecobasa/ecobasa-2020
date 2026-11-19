@@ -6,7 +6,7 @@
         <li id="entry-{{ entry.pk }}" class="py-3 flex items-start gap-3">
           <i class="fa-solid {% if entry.is_offer %}fa-gift text-primary{% else %}fa-heart text-yellow{% endif %} mt-1 w-4 text-center" title="{{ entry.get_type_display }}"></i>
           <div class="flex-1 min-w-0">
-            <p class="m-0"><span class="font-semibold">{{ entry.text }}</span> <span class="opacity-80">({{ entry.from_label }})</span></p>
+            <p class="m-0 break-words"><span class="font-semibold">{{ entry.text }}</span> <span class="opacity-80">({{ entry.from_label }})</span></p>
             <p class="m-0 text-sm">
               {% if entry.state == "fulfilled" %}
                 <i class="fa fa-check text-green mr-1"></i>{% if entry.is_offer %}{% blocktrans with name=entry.for_label %}Taken by {{ name }}{% endblocktrans %}{% else %}{% blocktrans with name=entry.for_label %}Fulfilled by {{ name }}{% endblocktrans %}{% endif %}
@@ -21,7 +21,7 @@
                 {% for idea in entry.ideas.all %}
                   <li class="flex items-start gap-2">
                     <i class="fa-regular fa-lightbulb mt-1"></i>
-                    <span class="flex-1">{% blocktrans with name=idea.from_label text=idea.text %}An idea from {{ name }}: {{ text }}{% endblocktrans %}</span>
+                    <span class="flex-1 min-w-0 break-words">{% blocktrans with name=idea.from_label text=idea.text %}An idea from {{ name }}: {{ text }}{% endblocktrans %}</span>
                     {% if writes and not sheet.is_closed %}
                       <form method="post" action="{{ entry_url }}" onsubmit="return confirm('{{ _("Remove this idea?")|escapejs }}')">{% csrf_token %}
                         <input type="hidden" name="idea" value="{{ idea.pk }}">
@@ -53,7 +53,7 @@
                       {# A tool to lend: from when until when it is borrowed #}
                       <div x-data="{ lends: {% if entry.lends or entry.listing.lend %}true{% else %}false{% endif %} }" class="space-y-2">
                         <label class="flex items-center gap-2"><input type="checkbox" name="lends" x-model="lends"> {% trans "To lend" %}</label>
-                        <div x-show="lends" x-cloak class="grid grid-cols-2 gap-2">
+                        <div x-show="lends" x-cloak class="grid sm:grid-cols-2 gap-2">
                           <label class="text-sm">{% trans "Borrow from" %}<input type="date" name="borrow_from" class="form-input w-full" value="{{ entry.borrow_from|date:'Y-m-d' }}"></label>
                           <label class="text-sm">{% trans "Borrow until" %}<input type="date" name="borrow_to" class="form-input w-full" value="{{ entry.borrow_to|date:'Y-m-d' }}"></label>
                         </div>

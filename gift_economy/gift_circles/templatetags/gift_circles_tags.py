@@ -26,6 +26,12 @@ def is_scribe(event, user):
 
 
 @register.simple_tag
+def hands_out_scribe(event, user):
+    """Whether `user` makes others scribe: its host, and a scribe passing it on."""
+    return giftsheet.may_hand_out_scribe(event, user)
+
+
+@register.simple_tag
 def brought_to(event, user):
     """What its page shows of what people bring: the offers and wishes, whether `user`
     sees who brings them (logged in) and what was promised among who comes (who comes

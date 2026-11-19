@@ -578,12 +578,16 @@ def giftsheet_photo(request, slug, pk=None):
 @login_required
 @require_POST
 def scribe(request, slug):
-    """The host makes someone who comes a scribe, or no longer one."""
+    """The host makes someone who comes a scribe, or no longer one. A scribe passes it on:
+    makes someone else scribe, and steps down."""
     event = _gift_circle(slug)
-    if event.can_edit(request.user):
+    if sheets.may_hand_out_scribe(event, request.user):
         user_id = request.POST.get("user", "")
+        hosts = event.can_edit(request.user)
         if user_id.isdigit() and int(user_id) in bringing.coming_ids(event):
             if request.POST.get("action") == "remove":
+                if not hosts and int(user_id) != request.user.pk:
+                    return redirect(f"{event.get_absolute_url()}#coming")
                 Scribe.objects.filter(event=event, user_id=user_id).delete()
             else:
                 Scribe.objects.get_or_create(event=event, user_id=user_id)

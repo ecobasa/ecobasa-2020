@@ -19,6 +19,7 @@
 
 {% trans "Printable Giftsheet and this card:" %} {{ print_url }}
 {% trans "Your gift-circle's page:" %} {{ event_url }}
+{% trans "Hosting a gift-circle:" %} {{ help_url }}
 
 {% trans "The calendar file is attached." %}
 

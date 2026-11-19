@@ -32,6 +32,11 @@ def is_scribe(event, user):
     return user.is_authenticated and Scribe.objects.filter(event=event, user=user).exists()
 
 
+def may_hand_out_scribe(event, user):
+    """The host, and a scribe, who can pass it on to someone else who comes."""
+    return user.is_authenticated and (event.can_edit(user) or is_scribe(event, user))
+
+
 def may_write(event, user):
     """Its host and its scribes write every line."""
     return user.is_authenticated and (event.can_edit(user) or is_scribe(event, user))

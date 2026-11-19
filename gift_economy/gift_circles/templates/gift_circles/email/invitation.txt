@@ -10,6 +10,8 @@
 
 {% if answer_url %}{% trans "Coming as a guest" %}: {{ answer_url }}{% else %}{% trans "I'm coming" %}: {{ event_url }}{% endif %}
 
+{% trans "Say you're coming, and add your wishes and offers on the page. ecobasa shows you who could help whom before the day, so people know what things they could already bring along, so it can change hands there." %}
+
 {% trans "What is a gift-circle?" %}
 
 {% trans "People sit in a circle and share what they wish for and what they can give. Things, time, skills, knowledge, contacts. Nothing is bought or sold." %} {% trans "Strangers often leave as neighbours who help each other." %}

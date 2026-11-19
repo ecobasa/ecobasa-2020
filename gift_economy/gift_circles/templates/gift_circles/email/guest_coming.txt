@@ -21,7 +21,7 @@
 
 {% trans "The calendar file is attached." %}
 
-{% include "gift_circles/_account.txt" %}
+{% include "gift_circles/_account.txt" with before=True %}
 
 {% trans "See you there!" %}
 

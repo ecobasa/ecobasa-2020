@@ -36,6 +36,15 @@
         </span>
       </a>
     </li>
+    <li>
+      <a href="{% url 'help:gift_circles' %}" class="flex items-start gap-4 p-6 rounded-2xl bg-secondary bg-opacity-75 shadow hover:shadow-lg transition">
+        <span class="flex-none w-14 h-14 rounded-lg bg-primary flex items-center justify-center"><i class="fa-solid fa-hands-holding-circle text-2xl text-secondary"></i></span>
+        <span class="flex-1 min-w-0">
+          <span class="block font-serif text-2xl text-primary">{% trans "Hosting a gift-circle" %}</span>
+          <span class="block text-brown">{% trans "Invite people to share what they wish for and what they can give: the rounds, the karma rules, the Giftsheet and what comes after." %}</span>
+        </span>
+      </a>
+    </li>
   </ul>
 
   <p class="mt-8">{% blocktrans %}Something missing or unclear? <a href="/contact">Write to us</a>, we are glad to hear it.{% endblocktrans %}</p>

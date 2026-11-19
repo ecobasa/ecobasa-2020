@@ -14,6 +14,6 @@
 {% if event.potluck_note %}<p style="margin:0 0 16px;font-size:15px;line-height:1.6;">{% blocktrans with note=event.potluck_note %}Bring something for the potluck: {{ note }}{% endblocktrans %}</p>{% endif %}
 <p style="margin:0 0 16px;font-size:15px;line-height:1.6;">{% trans "Change or cancel your sign-up:" %} <a href="{{ manage_url }}" style="color:#da6137;">{{ manage_url }}</a></p>
 <p style="margin:0 0 16px;font-size:15px;line-height:1.6;">{% trans "The calendar file is attached." %}</p>
-{% include "gift_circles/_account.html" %}
+{% include "gift_circles/_account.html" with before=True %}
 <p style="margin:0;font-size:15px;line-height:1.6;">{% trans "See you there!" %}</p>
 {% endblock %}

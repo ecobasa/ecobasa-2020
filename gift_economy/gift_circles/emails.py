@@ -53,6 +53,7 @@ def _send(event, recipient, template, subject, place_name=None, calendar=True, s
             "place_name": place_name,
             "event_url": _absolute(event.get_absolute_url()),
             "print_url": _absolute(reverse("gift_circles:print", args=[event.slug])),
+            "help_url": _absolute(reverse("help:gift_circles")),
             "headline": _(subject) % {"title": event.title, **(subject_args or {})},
             "timings": timings(event),
             "video_call_url": video_call_url(event, recipient),

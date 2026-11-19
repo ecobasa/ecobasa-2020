@@ -8,6 +8,8 @@
 
 {% trans "I'm coming" %}: {{ event_url }}
 
+{% trans "Say you're coming, and add your wishes and offers on the page. ecobasa shows you who could help whom before the day, so people know what things they could already bring along, so it can change hands there." %}
+
 {% trans "Think of a wish and an offer" %}
 
 {% trans "Before you come, think of one thing you wish for and one thing you can give. Small or big, a thing, some time, a skill." %}

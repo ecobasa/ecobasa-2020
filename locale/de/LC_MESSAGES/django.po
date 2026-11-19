@@ -8933,8 +8933,8 @@ msgstr "Bleibt bei einem Wunsch, bis er gelöst ist oder ihr ihn loslasst, dann 
 
 #: gift_economy/gift_circles/templates/gift_circles/_facilitator_card.html:19
 #: gift_economy/gift_circles/templates/gift_circles/_facilitator_card.txt:15
-msgid "Round again. Each person says what they can give. Who would like it?"
-msgstr "Noch eine Runde. Jede Person sagt, was sie geben kann. Wer möchte es?"
+msgid "Round again. Each person says what they can give. Who would like it? Who knows someone that would like it?"
+msgstr "Noch eine Runde. Jede Person sagt, was sie geben kann. Wer möchte es? Wer kennt jemanden, der es möchte?"
 
 #: gift_economy/gift_circles/templates/gift_circles/_facilitator_card.html:20
 #: gift_economy/gift_circles/templates/gift_circles/_facilitator_card.txt:16
@@ -9152,8 +9152,8 @@ msgstr "Wir gehen im Kreis herum. Jede Person sagt einen Wunsch oder setzt aus. 
 
 #: gift_economy/gift_circles/templates/gift_circles/_rounds.html:6
 #: gift_economy/gift_circles/templates/gift_circles/_rounds.txt:5
-msgid "Round again. Each person says something they can give: a thing, some time, a skill. Who would like it?"
-msgstr "Noch eine Runde. Jede Person sagt etwas, das sie geben kann: eine Sache, etwas Zeit, eine Fähigkeit. Wer möchte es?"
+msgid "Round again. Each person says something they can give: a thing, some time, a skill. Who would like it? Who knows someone that would like it?"
+msgstr "Noch eine Runde. Jede Person sagt etwas, das sie geben kann: eine Sache, etwas Zeit, eine Fähigkeit. Wer möchte es? Wer kennt jemanden, der es möchte?"
 
 #: gift_economy/gift_circles/templates/gift_circles/_rounds.html:7
 #: gift_economy/gift_circles/templates/gift_circles/_rounds.txt:6
@@ -9327,8 +9327,8 @@ msgstr "Morgen ist der Schenkkreis %(title)s von %(host)s."
 
 #: gift_economy/gift_circles/templates/gift_circles/email/reminder.html:7
 #: gift_economy/gift_circles/templates/gift_circles/email/reminder.txt:8
-msgid "Others who come have what you wish for, or wish for what you have. Bring it up in the circle:"
-msgstr "Andere, die kommen, haben, was du dir wünschst, oder wünschen sich, was du hast. Sprich es im Kreis an:"
+msgid "Others who come have what you wish for, or wish for what you have. Bring it along, so it can change hands there:"
+msgstr "Andere, die kommen, haben, was du dir wünschst, oder wünschen sich, was du hast. Bring es mit, dann kann es dort den Besitzer wechseln:"
 
 #: gift_economy/gift_circles/templates/gift_circles/email/reminder.html:12
 #: gift_economy/gift_circles/templates/gift_circles/email/reminder.txt:12
@@ -10230,3 +10230,223 @@ msgstr "Noch nicht sicher? Lass die Tage leer: Sie vereinbaren sie danach auf ec
 
 msgid "The days to borrow it aren't agreed yet. Propose them below."
 msgstr "Die Tage zum Ausleihen sind noch nicht vereinbart. Schlag sie unten vor."
+
+msgid "Hosting a gift-circle"
+msgstr "Einen Schenkkreis veranstalten"
+
+msgid "Hosting a gift-circle:"
+msgstr "Einen Schenkkreis veranstalten:"
+
+msgid "Invite people to share what they wish for and what they can give: the rounds, the karma rules, the Giftsheet and what comes after."
+msgstr "Lade Menschen ein, zu teilen, was sie sich wünschen und was sie geben können: die Runden, die Karma-Regeln, die Schenkliste und was danach kommt."
+
+msgid "Before the circle"
+msgstr "Vor dem Kreis"
+
+msgid "Roles"
+msgstr "Rollen"
+
+msgid "Online gift-circles"
+msgstr "Schenkkreise online"
+
+msgid "After the circle"
+msgstr "Nach dem Kreis"
+
+msgid "Questions from circles"
+msgstr "Fragen aus den Kreisen"
+
+msgid "Where gift-circles come from"
+msgstr "Woher Schenkkreise kommen"
+
+msgid "A gift-circle takes about an hour and a half. Strangers often leave as neighbours who help each other. It kick-starts a local support network where friendships and a community can grow out of. It fits well with a potluck, a film night or a party, and it's a good way to find out who in a community can help with what."
+msgstr "Ein Schenkkreis dauert etwa anderthalb Stunden. Fremde gehen oft als Nachbar*innen, die einander helfen. Er bringt ein Netz der Unterstützung vor Ort in Gang, aus dem Freundschaften und eine Gemeinschaft wachsen können. Er passt gut zu einem Mitbring-Buffet, einem Filmabend oder einem Fest, und er ist ein guter Weg herauszufinden, wer in einer Gemeinschaft bei was helfen kann."
+
+msgid "Anyone can host one: in a living room, a park, a café, at a community, on a tour, or online as a video call."
+msgstr "Alle können einen veranstalten: im Wohnzimmer, in einem Park, einem Café, in einer Gemeinschaft, auf einer Tour oder online als Videokonferenz."
+
+#, python-format
+msgid "Press “<a href=\"%(create_url)s\">Invite to a gift-circle</a>”: on the events list, on your dashboard or on your profile. Ambassadors find it on their community's page, tour organisers at each stop of their tour."
+msgstr "Drück auf „<a href=\"%(create_url)s\">Zu einem Schenkkreis einladen</a>“: in der Liste der Events, auf deiner Übersicht oder auf deinem Profil. Botschafter*innen finden es auf der Seite ihrer Gemeinschaft, Organisator*innen einer Tour an jeder Station."
+
+msgid "Choose a date and a place, or “Online, as a video call”. Say how many people can come, if there is a limit. For a video call, about 12 is a good size."
+msgstr "Wähl einen Tag und einen Ort, oder „Online, als Videokonferenz“. Gib an, wie viele kommen können, wenn es eine Grenze gibt. Für eine Videokonferenz sind etwa 12 eine gute Größe."
+
+msgid "If the gift-circle is at your home, only the people who come see the exact address. Everyone else sees the area."
+msgstr "Ist der Schenkkreis bei dir zu Hause, sehen nur die, die kommen, die genaue Adresse. Alle anderen sehen die Gegend."
+
+msgid "Right after, you get an email with everything for the day: the rounds, the karma rules, a card to print and the printable Giftsheet."
+msgstr "Gleich danach bekommst du eine E-Mail mit allem für den Tag: die Runden, die Karma-Regeln, eine Karte zum Ausdrucken und die Schenkliste zum Ausdrucken."
+
+msgid "People who come can add their wishes and offers on the page, or bring ones they already have on ecobasa. Everyone sees what the others bring and wish for, and ecobasa suggests who could help whom."
+msgstr "Wer kommt, kann auf der Seite Wünsche und Angebote hinzufügen oder welche mitbringen, die schon auf ecobasa sind. Alle sehen, was die anderen mitbringen und sich wünschen, und ecobasa schlägt vor, wer wem helfen könnte."
+
+msgid "Find a scribe. It can be anyone who comes: on the page you can let them write the Giftsheet."
+msgstr "Such dir jemanden, der protokolliert. Das kann jede*r sein, die*der kommt: auf der Seite kannst du sie*ihn die Schenkliste schreiben lassen."
+
+msgid "Everyone says their name. Explain the rounds and the karma rules. Say that offers and wishes go on ecobasa only for those who said yes, and emails go only between the two sides of a match."
+msgstr "Alle sagen ihren Namen. Erklär die Runden und die Karma-Regeln. Sag, dass Angebote und Wünsche nur von denen auf ecobasa kommen, die ja gesagt haben, und E-Mails nur zwischen den beiden Seiten eines Matches gehen."
+
+msgid "Go round the circle. Each person says one wish, or passes. After each wish, ask: Who can help? Nobody? Who knows someone who can? Still nobody? Who has an idea how we could do it together? Stay with one wish until it is solved or you let it go. If there is time, go round again."
+msgstr "Geht reihum. Jede*r sagt einen Wunsch oder setzt aus. Frag nach jedem Wunsch: Wer kann helfen? Niemand? Wer kennt jemanden, der es kann? Immer noch niemand? Wer hat eine Idee, wie wir es zusammen schaffen? Bleibt bei einem Wunsch, bis er gelöst ist oder ihr ihn ziehen lasst. Wenn Zeit ist, geht noch eine Runde."
+
+msgid "A last round. Each person thanks someone: for a gift from last time, for something today, or just for being here."
+msgstr "Eine letzte Runde. Jede*r dankt jemandem: für ein Geschenk vom letzten Mal, für etwas von heute oder einfach dafür, da zu sein."
+
+msgid "Close."
+msgstr "Abschluss."
+
+msgid "Tips: help the shy ones. If nobody starts, suggest an easy wish, like a hug, a book tip or help carrying something. Keep wishes to one sentence. Offers can come up in the wish round, and that's fine. A big wish that needs many hands can become a plan of its own: a work day, a workshop, a next meeting."
+msgstr "Tipps: Hilf den Schüchternen. Wenn niemand anfängt, schlag einen leichten Wunsch vor, etwa eine Umarmung, einen Buchtipp oder Hilfe beim Tragen. Ein Wunsch, ein Satz. Angebote dürfen schon in der Wunschrunde kommen, das ist in Ordnung. Ein großer Wunsch, der viele Hände braucht, kann ein eigener Plan werden: ein Arbeitstag, ein Workshop, ein nächstes Treffen."
+
+msgid "Facilitator"
+msgstr "Moderation"
+
+msgid "Usually you, the host. Keeps the circle going and helps the shy ones."
+msgstr "Meist du als Gastgeber*in. Hält den Kreis in Gang und hilft den Schüchternen."
+
+msgid "Writes the Giftsheet: who wished or offered what, and who said yes. Shortens a wish to one line, and asks again for a name when needed."
+msgstr "Schreibt die Schenkliste: wer was gewünscht oder angeboten hat und wer ja gesagt hat. Kürzt einen Wunsch auf eine Zeile und fragt nach einem Namen, wenn nötig."
+
+msgid "Timekeeper"
+msgstr "Zeitwächter*in"
+
+msgid "Optional. Says when a round should end."
+msgstr "Wenn ihr wollt. Sagt, wann eine Runde enden sollte."
+
+msgid "The printed Giftsheet or big paper, markers in two colours (one for wishes, one for offers), pens and small paper for everyone. A phone or laptop for the scribe, if you type the Giftsheet straight into ecobasa. Something for a potluck, if you like."
+msgstr "Die ausgedruckte Schenkliste oder großes Papier, Stifte in zwei Farben (eine für Wünsche, eine für Angebote), Stifte und kleine Zettel für alle. Ein Handy oder Laptop für die Person, die protokolliert, wenn ihr die Schenkliste direkt in ecobasa schreibt. Etwas fürs Mitbring-Buffet, wenn ihr mögt."
+
+msgid "The scribe opens the Giftsheet on the gift-circle's page, on a phone or laptop. Add a wish or an offer in one line and pick who said it. Then mark who fulfils a wish or takes an offer, or add an idea. Everyone who has the page open sees it change."
+msgstr "Wer protokolliert, öffnet die Schenkliste auf der Seite des Schenkkreises, am Handy oder Laptop. Einen Wunsch oder ein Angebot in einer Zeile eintragen und wählen, wer es gesagt hat. Dann vermerken, wer einen Wunsch erfüllt oder ein Angebot nimmt, oder eine Idee hinzufügen. Alle, die die Seite offen haben, sehen es sich ändern."
+
+msgid "Something to lend, like a tool? Mark it “To lend”. The days can be agreed on right away or come later."
+msgstr "Etwas zum Verleihen, etwa ein Werkzeug? Markier es „Zum Verleihen“. Die Tage können gleich vereinbart werden oder später kommen."
+
+msgid "No signal? Print the Giftsheet, fill it in on paper and type it in afterwards. Or take a photo and add it to the page."
+msgstr "Kein Netz? Druck die Schenkliste aus, füll sie auf Papier aus und tipp sie danach ein. Oder mach ein Foto und füg es der Seite hinzu."
+
+msgid "Someone came without signing up? The scribe adds them by name. With an email, they get the results too."
+msgstr "Jemand ist ohne Anmeldung gekommen? Wer protokolliert, trägt sie*ihn mit Namen ein. Mit einer E-Mail-Adresse bekommt sie*er auch die Ergebnisse."
+
+msgid "An online gift-circle is a video call. ecobasa opens a room for it on a Jitsi server run by volunteers: no account, no app, nobody tracking you. The room is on the gift-circle's page, from an hour before the start."
+msgstr "Ein Online-Schenkkreis ist eine Videokonferenz. ecobasa öffnet dafür einen Raum auf einem Jitsi-Server, den Freiwillige betreiben: kein Konto, keine App, niemand, der dich verfolgt. Der Raum ist ab einer Stunde vor Beginn auf der Seite des Schenkkreises."
+
+msgid "Everyone who comes gets an email with the link an hour before, so the room stays among you. Be there a few minutes early and set up your camera and microphone."
+msgstr "Alle, die kommen, bekommen eine Stunde vorher eine E-Mail mit dem Link, so bleibt der Raum unter euch. Sei ein paar Minuten früher da und richte Kamera und Mikrofon ein."
+
+msgid "Go round in the order people appear on the screen, and say who is next. The scribe shares the Giftsheet link in the chat."
+msgstr "Geht reihum in der Reihenfolge, in der die Leute auf dem Bildschirm erscheinen, und sagt, wer als Nächstes dran ist. Wer protokolliert, teilt den Link zur Schenkliste im Chat."
+
+msgid "Times show in the circle's timezone, so people from elsewhere know when to come."
+msgstr "Die Uhrzeiten stehen in der Zeitzone des Kreises, so wissen auch Leute von woanders, wann sie kommen sollen."
+
+msgid "People can come without an ecobasa account, as guests: with a name and an email. They confirm with a link in an email, and can change or cancel through a link too. They only get an ecobasa account if they ask for it."
+msgstr "Man kann auch ohne ecobasa-Konto kommen, als Gast: mit Namen und E-Mail. Gäste bestätigen mit einem Link in einer E-Mail und können über einen Link auch ändern oder absagen. Ein ecobasa-Konto bekommen sie nur, wenn sie darum bitten."
+
+msgid "Guests get the same emails as everyone, and a button to create an account. With one, their offers and wishes keep finding people after the circle, and they can be invited to the next gift-circle."
+msgstr "Gäste bekommen dieselben E-Mails wie alle und einen Knopf, um ein Konto anzulegen. Mit einem Konto finden ihre Angebote und Wünsche auch nach dem Kreis Menschen, und sie können zum nächsten Schenkkreis eingeladen werden."
+
+msgid "When you close the Giftsheet, everyone who came gets the results: the whole Giftsheet, and their own part: what they said yes to, what others said yes to for them, and how to reach each other."
+msgstr "Wenn du die Schenkliste schließt, bekommen alle, die da waren, die Ergebnisse: die ganze Schenkliste und ihren eigenen Teil: wozu sie ja gesagt haben, wozu andere für sie ja gesagt haben und wie sie einander erreichen."
+
+msgid "The one who wished follows up. Two weeks later, ecobasa asks them if their wish came true."
+msgstr "Wer sich etwas gewünscht hat, meldet sich. Zwei Wochen später fragt ecobasa nach, ob der Wunsch in Erfüllung gegangen ist."
+
+msgid "Wishes and offers that found nobody stay on ecobasa, for those who said yes, and keep finding people nearby."
+msgstr "Wünsche und Angebote, die niemanden gefunden haben, bleiben auf ecobasa, bei denen, die ja gesagt haben, und finden weiter Menschen in der Nähe."
+
+msgid "Write a few lines under “How it went”: about the gift-circle, about someone who came, or about a wish, an offer or an idea. Stories show others what a gift-circle can do and motivate new people to host one."
+msgstr "Schreib ein paar Zeilen unter „So war es“: über den Schenkkreis, über jemanden, der da war, oder über einen Wunsch, ein Angebot oder eine Idee. Geschichten zeigen anderen, was ein Schenkkreis bewirken kann, und machen neuen Menschen Mut, selbst einen zu veranstalten."
+
+msgid "The gift-circle stays on ecobasa as a record, but can be deleted manually by the organiser."
+msgstr "Der Schenkkreis bleibt als Erinnerung auf ecobasa, kann aber von der Person, die ihn veranstaltet hat, gelöscht werden."
+
+msgid "Gift-circles get better when they happen again: people know the format, and heartwarming stories can be shared from the last circle's matches. Anyone who came can press “Plan the next one”. Choose a date, and everyone who came gets an invitation. Whoever plans it hosts it."
+msgstr "Schenkkreise werden besser, wenn sie wieder stattfinden: alle kennen den Ablauf, und es gibt herzerwärmende Geschichten von den Matches des letzten Kreises zu erzählen. Alle, die da waren, können auf „Den nächsten planen“ drücken. Wähl einen Tag, und alle, die da waren, bekommen eine Einladung. Wer ihn plant, veranstaltet ihn."
+
+msgid "Nobody dares to wish. What now?"
+msgstr "Niemand traut sich, etwas zu wünschen. Was nun?"
+
+msgid "Many of us learned not to ask. Saying what you need is a gift to the circle: it gives the others a chance to give. Start with a small wish yourself, and encourage the others gently."
+msgstr "Viele von uns haben gelernt, nicht zu fragen. Zu sagen, was man braucht, ist ein Geschenk an den Kreis: es gibt den anderen die Chance zu geben. Fang selbst mit einem kleinen Wunsch an und ermutige die anderen sanft."
+
+msgid "People don't follow up on what was offered to them."
+msgstr "Die Leute melden sich nicht auf das, was ihnen angeboten wurde."
+
+msgid "Remind them in the closing round that the one who wished gets in touch. Offers are meant to be taken: taking one is a gift to the one who gives."
+msgstr "Erinnere in der Abschlussrunde daran, dass sich meldet, wer sich etwas gewünscht hat. Angebote wollen genommen werden: eines anzunehmen ist ein Geschenk an die Person, die gibt."
+
+msgid "The circle has grown big."
+msgstr "Der Kreis ist groß geworden."
+
+msgid "Gift-circles work with a hundred people and more. At some point you may just need a microphone or a megaphone. If there isn't time for everyone, split into smaller circles for the wishes and offers, each with its own scribe on the same Giftsheet, and come together again for the thanks."
+msgstr "Schenkkreise funktionieren auch mit hundert Menschen und mehr. Irgendwann braucht ihr vielleicht einfach ein Mikrofon oder ein Megafon. Wenn die Zeit nicht für alle reicht, teilt euch für Wünsche und Angebote in kleinere Kreise, jeder mit eigener Person, die auf derselben Schenkliste protokolliert, und kommt für den Dank wieder zusammen."
+
+msgid "Can people trade on the side?"
+msgstr "Dürfen Leute nebenbei tauschen?"
+
+msgid "The circle itself is for gifts. What two people agree on afterwards is up to them. If two matches complement each other and a barter comes out of it, that is totally fine, but not a requirement."
+msgstr "Der Kreis selbst ist für Geschenke da. Was zwei Menschen danach miteinander ausmachen, ist ihre Sache. Wenn zwei Matches sich gegenseitig ergänzen und so ein Tausch entsteht, ist das völlig in Ordnung, aber keine Voraussetzung."
+
+msgid "Should it always be the same facilitator?"
+msgstr "Sollte immer dieselbe Person moderieren?"
+
+msgid "Better not. When someone else facilitates next time, more people learn it, and the circle doesn't depend on one person. Later they can start gift-circles of their own."
+msgstr "Besser nicht. Moderiert beim nächsten Mal jemand anderes, lernen es mehr Leute, und der Kreis hängt nicht an einer Person. Später können sie eigene Schenkkreise starten."
+
+msgid "Should it always go the same way?"
+msgstr "Sollte es immer gleich ablaufen?"
+
+msgid "Try things, and ask the circle afterwards what worked. A circle that meets regularly learns: the regulars carry its culture, and newcomers bring new wishes, gifts and ideas."
+msgstr "Probiert Dinge aus und fragt den Kreis danach, was funktioniert hat. Ein Kreis, der sich regelmäßig trifft, lernt: die, die immer kommen, tragen seine Kultur, und Neue bringen neue Wünsche, Gaben und Ideen."
+
+msgid "Why the thanks round?"
+msgstr "Warum die Dankesrunde?"
+
+msgid "Gratitude is the soil a gift economy grows in. It changes the mood of the whole circle, and it shows that gifts from last time arrived. Try it, you don't want to miss it."
+msgstr "Dankbarkeit ist der Boden, auf dem eine Schenkökonomie wächst. Sie verändert die Stimmung im ganzen Kreis und zeigt, dass die Geschenke vom letzten Mal angekommen sind. Probiert es aus, ihr werdet sie nicht mehr missen wollen."
+
+msgid "Offers and wishes from a gift-circle go on ecobasa only for people who said yes. Everyone can change that later."
+msgstr "Angebote und Wünsche aus einem Schenkkreis kommen nur von denen auf ecobasa, die ja gesagt haben. Alle können das später ändern."
+
+msgid "The Giftsheet is seen only by who came, the host and the scribes. Wishes are said in a trusting circle."
+msgstr "Die Schenkliste sehen nur die, die da waren, die Gastgeber*in und wer protokolliert. Wünsche werden in einem vertrauten Kreis ausgesprochen."
+
+msgid "Emails are shared only between the two sides of a match, and only for guests who said yes. People with an account write to each other through ecobasa."
+msgstr "E-Mail-Adressen gehen nur zwischen den beiden Seiten eines Matches, und nur von Gästen, die ja gesagt haben. Wer ein Konto hat, schreibt sich über ecobasa."
+
+msgid "The exact place of a gift-circle at someone's home is shown only to the people who come."
+msgstr "Den genauen Ort eines Schenkkreises bei jemandem zu Hause sehen nur die, die kommen."
+
+msgid "Gift-circles were started by Alpha Lo, and spread by many others since. Read his <a href=\"https://opencollaboration.wordpress.com/2010/04/15/gift-circle-principles/\" target=\"_blank\" rel=\"noopener\">gift-circle principles</a> and the <a href=\"https://opencollaboration.wordpress.com/2009/11/28/gift-circle-faq/\" target=\"_blank\" rel=\"noopener\">gift-circle FAQ</a>."
+msgstr "Schenkkreise hat Alpha Lo begonnen, und viele andere haben sie seitdem verbreitet. Lies seine <a href=\"https://opencollaboration.wordpress.com/2010/04/15/gift-circle-principles/\" target=\"_blank\" rel=\"noopener\">Gift-Circle-Prinzipien</a> und die <a href=\"https://opencollaboration.wordpress.com/2009/11/28/gift-circle-faq/\" target=\"_blank\" rel=\"noopener\">Gift-Circle-FAQ</a> (auf Englisch)."
+
+msgid "The gift-circle concept on ecobasa designed by Arne Bollinger is licensed under a <a href=\"https://creativecommons.org/licenses/by-nc-sa/4.0/\" target=\"_blank\" rel=\"license noopener\">Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)</a> license."
+msgstr "Das Schenkkreis-Konzept auf ecobasa, entworfen von Arne Bollinger, steht unter der Lizenz <a href=\"https://creativecommons.org/licenses/by-nc-sa/4.0/deed.de\" target=\"_blank\" rel=\"license noopener\">Namensnennung – Nicht kommerziell – Weitergabe unter gleichen Bedingungen 4.0 International (CC BY-NC-SA 4.0)</a>."
+
+msgid "Say you're coming, and add your wishes and offers on the page. ecobasa shows you who could help whom before the day, so people know what things they could already bring along, so it can change hands there."
+msgstr "Sag zu, dass du kommst, und trag deine Wünsche und Angebote auf der Seite ein. ecobasa zeigt dir schon vor dem Tag, wer wem helfen könnte. So wissen alle, welche Dinge sie schon mitbringen können, und sie können dort den Besitzer wechseln."
+
+msgid "Someone who comes can help with your wish already? Agree with them on the page, and bring the things along, so you can give them on the day."
+msgstr "Jemand, der kommt, kann dir schon bei deinem Wunsch helfen? Verabredet euch auf der Seite und bringt die Dinge mit, dann könnt ihr sie euch am Tag schenken."
+
+msgid "A gift-circle typically takes about an hour and a half but can be shorter with a smaller group and some groups don't want to stop, because exciting ideas keep coming up. Strangers often leave as neighbours who help each other. It kick-starts a local support network where friendships and a community can grow out of. It fits well with a potluck, a film night or a party, and it's a good way to find out who in a community can help with what."
+msgstr "Ein Schenkkreis dauert meist etwa anderthalb Stunden, mit einer kleineren Gruppe kann er kürzer sein, und manche Gruppen wollen gar nicht aufhören, weil immer neue spannende Ideen kommen. Fremde gehen oft als Nachbar*innen, die einander helfen. Er bringt ein Netz der Unterstützung vor Ort in Gang, aus dem Freundschaften und eine Gemeinschaft wachsen können. Er passt gut zu einem Mitbring-Buffet, einem Filmabend oder einem Fest, und er ist ein guter Weg herauszufinden, wer in einer Gemeinschaft bei was helfen kann."
+
+msgid "Right after, you get an email with everything for the day: the rounds, the karma rules, a facilitation card to print and the printable Giftsheet."
+msgstr "Gleich danach bekommst du eine E-Mail mit allem für den Tag: die Runden, die Karma-Regeln, eine Moderationskarte zum Ausdrucken und die Schenkliste zum Ausdrucken."
+
+msgid "People who come can add their wishes and offers on the event page, or bring ones they already have on ecobasa. Everyone sees what the others bring and wish for, and ecobasa suggests who could help whom beforehand if it knows what they have to offer and what they are wishing for. That way people already know what to bring along to the event so things can change hands there."
+msgstr "Wer kommt, kann auf der Seite des Events Wünsche und Angebote hinzufügen oder welche mitbringen, die schon auf ecobasa sind. Alle sehen, was die anderen mitbringen und sich wünschen, und ecobasa schlägt schon vorher vor, wer wem helfen könnte, wenn es weiß, was sie anbieten und was sie sich wünschen. So wissen alle schon, was sie zum Event mitbringen können, und die Dinge können dort den Besitzer wechseln."
+
+msgid "With an account you can add your wishes and offers on the page before the circle and see who could help whom, so you know what to bring along, and things can change hands there."
+msgstr "Mit einem Konto kannst du schon vor dem Kreis deine Wünsche und Angebote auf der Seite eintragen und sehen, wer wem helfen könnte. So weißt du, was du mitbringen kannst, und die Dinge können dort den Besitzer wechseln."
+
+msgid "– a facilitation guide"
+msgstr "– ein Leitfaden zur Moderation"
+
+msgid "The scribe reads out the matches and asks those who came without signing up for their email address, so their matches can reach them. Remind everyone: the one who wished follows up."
+msgstr "Wer protokolliert, liest die Matches vor und fragt alle, die ohne Anmeldung gekommen sind, nach ihrer E-Mail-Adresse, damit ihre Matches sie erreichen können. Erinnere alle: Wer sich etwas gewünscht hat, meldet sich."
+
+msgid "The karma rules are inspired by Pierre Lischke's <a href=\"https://karmakreis.mystrikingly.com/\" target=\"_blank\" rel=\"noopener\">KarmaKreis</a>."
+msgstr "Die Karma-Regeln sind inspiriert vom <a href=\"https://karmakreis.mystrikingly.com/\" target=\"_blank\" rel=\"noopener\">KarmaKreis</a> von Pierre Lischke."

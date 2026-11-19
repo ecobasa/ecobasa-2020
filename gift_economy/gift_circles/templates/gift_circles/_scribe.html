@@ -1,11 +1,14 @@
-{% load i18n gift_circles_tags %}{# Beside someone who comes, for the host: let them write the Giftsheet, or no longer #}
+{% load i18n gift_circles_tags %}{# Beside someone who comes: the host lets them write the Giftsheet, or no longer; a scribe passes it on and steps down #}
+{% hands_out_scribe event user as hands_out %}
+{% if hands_out %}
 {% is_scribe event person as scribe %}
 <form method="post" action="{% url 'gift_circles:scribe' event.slug %}" class="inline">{% csrf_token %}
   <input type="hidden" name="user" value="{{ person.pk }}">
   {% if scribe %}
     <span class="text-xs opacity-70"><i class="fa-solid fa-pen mr-1"></i>{% trans "Scribe" %}</span>
-    <button type="submit" name="action" value="remove" class="underline text-xs">{% trans "No longer scribe" %}</button>
+    {% if can_edit or person == user %}<button type="submit" name="action" value="remove" class="underline text-xs">{% trans "No longer scribe" %}</button>{% endif %}
   {% else %}
     <button type="submit" name="action" value="make" class="underline text-xs">{% trans "Make scribe" %}</button>
   {% endif %}
 </form>
+{% endif %}

@@ -269,7 +269,7 @@ def detail(request, slug, community_slug=None, kind=None):
         "may_just_come": event.may_just_come(request.user),
         "coming_form": ComingForm(event),
         "coming_fields": kinds.COMING_FIELDS.get(event.kind),
-        "coming_tools": kinds.COMING_TOOLS.get(event.kind) if can_edit else None,
+        "coming_tools": kinds.COMING_TOOLS.get(event.kind) if request.user.is_authenticated else None,
         "guest_sign_up": kinds.GUEST_SIGN_UPS.get(event.kind),
         "inviting": kinds.INVITING.get(event.kind),
         "bringing": kinds.BRINGING.get(event.kind),

@@ -5,7 +5,7 @@
 {% include "gift_circles/_video_call.html" %}
 
 {% if suggestions %}
-  <p style="margin:0 0 8px;font-size:15px;line-height:1.6;">{% trans "Others who come have what you wish for, or wish for what you have. Bring it up in the circle:" %}</p>
+  <p style="margin:0 0 8px;font-size:15px;line-height:1.6;">{% trans "Others who come have what you wish for, or wish for what you have. Bring it along, so it can change hands there:" %}</p>
   <ul style="margin:0 0 16px;padding-left:20px;font-size:15px;line-height:1.6;">
     {% for s in suggestions %}<li><a href="{{ event_url }}#bring" style="color:#da6137;">{{ s.text }}</a><br><span style="font-size:13px;opacity:0.75;">{% blocktrans with own=s.own_text %}fits {{ own }}{% endblocktrans %}</span></li>{% endfor %}
   </ul>

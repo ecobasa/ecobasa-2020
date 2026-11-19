@@ -12,9 +12,9 @@
    - {% trans "Nobody? Who knows someone who can?" %}
    - {% trans "Still nobody? Who has an idea how we could do it together?" %}
    {% trans "Stay with one wish until it is solved or you let it go, then the next person. If there is time, go round again." %}
-3. {% trans "Offers" context "gift-circle round" %} {% blocktrans with minutes=timings.offers %}({{ minutes }} minutes){% endblocktrans %}. {% trans "Round again. Each person says what they can give. Who would like it?" %}
+3. {% trans "Offers" context "gift-circle round" %} {% blocktrans with minutes=timings.offers %}({{ minutes }} minutes){% endblocktrans %}. {% trans "Round again. Each person says what they can give. Who would like it? Who knows someone that would like it?" %}
 4. {% trans "Thanks" context "gift-circle round" %} {% blocktrans with minutes=timings.thanks %}({{ minutes }} minutes){% endblocktrans %}. {% trans "Each person thanks someone: for a gift from last time, for something today, or just for being here." %}
-5. {% trans "Close" context "gift-circle round" %} {% blocktrans with minutes=timings.close %}({{ minutes }} minutes){% endblocktrans %}. {% trans "The scribe reads out the matches. Remind everyone: the one who wished follows up." %}
+5. {% trans "Close" context "gift-circle round" %} {% blocktrans with minutes=timings.close %}({{ minutes }} minutes){% endblocktrans %}. {% trans "The scribe reads out the matches and asks those who came without signing up for their email address, so their matches can reach them. Remind everyone: the one who wished follows up." %}
 
 {% trans "Tips" %}
 
