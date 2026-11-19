@@ -10424,3 +10424,12 @@ msgstr "El/la escriba lee los matches en voz alta y pide su correo a quienes vin
 
 msgid "The karma rules are inspired by Pierre Lischke's <a href=\"https://karmakreis.mystrikingly.com/\" target=\"_blank\" rel=\"noopener\">KarmaKreis</a>."
 msgstr "Las reglas del karma se inspiran en el <a href=\"https://karmakreis.mystrikingly.com/\" target=\"_blank\" rel=\"noopener\">KarmaKreis</a> de Pierre Lischke."
+
+msgid "What you will speak in the call."
+msgstr "Qué idiomas habláis en la videollamada."
+
+msgid "Gift-circles you can join from anywhere"
+msgstr "Círculos de regalos a los que puedes unirte desde cualquier lugar"
+
+msgid "None planned at the moment. Would you like to <a href=\"%(create_url)s\">invite to one</a>?"
+msgstr "Ahora mismo no hay ninguno previsto. ¿Quieres <a href=\"%(create_url)s\">invitar a uno</a>?"

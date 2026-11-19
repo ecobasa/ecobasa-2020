@@ -1,3 +1,4 @@
+import json
 from functools import cache
 from zoneinfo import available_timezones
 
@@ -5,6 +6,8 @@ from django import forms
 from django.conf import settings
 from django.utils.translation import gettext_lazy as _
 
+from communities.forms import LanguagesField
+from communities.models import language_choices
 from gift_economy.gifts import units
 from gift_economy.gifts.models import Listing, ListingCategory, themed_choices
 from gift_economy.gifts.things import WHITELISTED_KINDS, thing_named
@@ -29,9 +32,12 @@ class EventForm(forms.ModelForm):
         widget=forms.TextInput(attrs={"data-skill-tags": _("Popular skills to explore")}),
         help_text=_("Comma-separated. People looking for these skills find your community through it."),
     )
+    languages = LanguagesField(
+        required=False, label=_("Languages"), help_text=_("What you will speak in the call."),
+    )
     field_order = [
         "kind", "title", "image", "description", "skills_to_learn", "starts_on", "ends_on", "starts_at", "ends_at",
-        "is_online", "timezone", "location_name", "location", "country", "max_people", "is_open", "potluck_note",
+        "is_online", "timezone", "languages", "location_name", "location", "country", "max_people", "is_open", "potluck_note",
     ]
     # What only a community's events ask: they take volunteers and provide for them
     COMMUNITY_FIELDS = ("skills_to_learn", "volunteers_wanted", "food_provided", "bed_provided", "provided_note")
@@ -40,8 +46,8 @@ class EventForm(forms.ModelForm):
         model = Event
         fields = [
             "kind", "title", "image", "description", "starts_on", "ends_on", "starts_at", "ends_at",
-            "is_online", "timezone", "location_name", "location", "country", "max_people", "is_open", "potluck_note",
-            "volunteers_wanted", "food_provided", "bed_provided", "provided_note",
+            "is_online", "timezone", "languages", "location_name", "location", "country", "max_people", "is_open",
+            "potluck_note", "volunteers_wanted", "food_provided", "bed_provided", "provided_note",
         ]
         widgets = {
             "kind": forms.RadioSelect,
@@ -64,6 +70,9 @@ class EventForm(forms.ModelForm):
         self.fields["skills_to_learn"].widget.attrs["placeholder"] = _("e.g. Clay building, Welding")
         self.fields["timezone"].widget.choices = zone_choices()
         self.fields["timezone"].help_text = _("The times are in this timezone; everyone sees which it is.")
+        self.fields["languages"].widget.attrs["data-languages"] = json.dumps(
+            [{"value": name, "code": code} for code, name in language_choices()]
+        )
         # Its own, else the one at its host's place, else (on the page) the browser's: any,
         # or in a country with several clocks one of the country's
         self.browser_zones = None
@@ -148,7 +157,7 @@ class EventForm(forms.ModelForm):
             cleaned["timezone"] = cleaned.get("timezone") or settings.TIME_ZONE
         else:
             # At a place its hours are local
-            cleaned["timezone"] = ""
+            cleaned["timezone"], cleaned["languages"] = "", []
             if cleaned.get("location") is None:
                 cleaned["location_name"], cleaned["country"] = "", None
                 # Without a place of its own it is at its community's

@@ -724,7 +724,7 @@ def wishes(request, slug, key):
 # Taken over from the last one by "Plan the next one": all but its day, host and video room
 NEXT_FIELDS = (
     "title", "description", "starts_at", "ends_at", "is_open", "max_people", "potluck_note",
-    "location_name", "location", "country", "is_online", "timezone",
+    "location_name", "location", "country", "is_online", "timezone", "languages",
 )
 
 

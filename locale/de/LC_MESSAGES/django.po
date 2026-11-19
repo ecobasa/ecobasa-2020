@@ -10450,3 +10450,12 @@ msgstr "Wer protokolliert, liest die Matches vor und fragt alle, die ohne Anmeld
 
 msgid "The karma rules are inspired by Pierre Lischke's <a href=\"https://karmakreis.mystrikingly.com/\" target=\"_blank\" rel=\"noopener\">KarmaKreis</a>."
 msgstr "Die Karma-Regeln sind inspiriert vom <a href=\"https://karmakreis.mystrikingly.com/\" target=\"_blank\" rel=\"noopener\">KarmaKreis</a> von Pierre Lischke."
+
+msgid "What you will speak in the call."
+msgstr "Welche Sprachen ihr in der Videokonferenz sprecht."
+
+msgid "Gift-circles you can join from anywhere"
+msgstr "Schenkkreise, bei denen du von überall dabei sein kannst"
+
+msgid "None planned at the moment. Would you like to <a href=\"%(create_url)s\">invite to one</a>?"
+msgstr "Gerade ist keiner geplant. Möchtest du <a href=\"%(create_url)s\">zu einem einladen</a>?"

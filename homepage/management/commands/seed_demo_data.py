@@ -1525,7 +1525,7 @@ class Command(BaseCommand):
             description="A video call for everyone who'd like to try a gift-circle from home. "
                         "Wishes for help that works at a distance are especially welcome.",
             starts_on=online_on, ends_on=online_on, starts_at=datetime_time(18, 0), ends_at=datetime_time(19, 30),
-            is_online=True, timezone="Europe/Paris", max_people=12,
+            is_online=True, timezone="Europe/Paris", languages=["en", "fr"], max_people=12,
         )
         coming(jules, online)
         coming(freja, online)

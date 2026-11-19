@@ -113,6 +113,23 @@ def test_an_online_event_has_a_timezone_one_at_a_place_none(host):
     assert event.timezone == "" and event.zone is None
 
 
+def test_an_online_event_says_its_languages_one_at_a_place_none(host):
+    day = timezone.localdate() + timedelta(days=3)
+    data = {"kind": kinds.GIFT_CIRCLE, "title": "Circle", "starts_on": day, "ends_on": day, "is_online": "on"}
+    response = _client(host).post(reverse("events:gift_circle_create"), {**data, "languages": "de,xx"})
+    assert response.context["form"].errors["languages"]
+    _client(host).post(reverse("events:gift_circle_create"), {**data, "languages": "de,it"})
+    event = Event.objects.get()
+    assert event.languages == ["de", "it"] and event.language_names == "German, Italian"
+    assert "German, Italian" in _client(host).get(event.get_absolute_url(), HTTP_ACCEPT_LANGUAGE="en").content.decode()
+    data.pop("is_online")
+    _client(host).post(reverse("events:gift_circle_edit", args=[event.slug]), {
+        **data, "languages": "de", "location_name": PARK_ADDRESS, "location": "SRID=4326;POINT (9.18 48.78)",
+    })
+    event.refresh_from_db()
+    assert event.languages == []
+
+
 def test_the_timezone_nearest_a_place():
     # Near a border its country decides
     assert zone_at(PARK) == "Europe/Zurich" and zone_at(PARK, "DE") == "Europe/Berlin"

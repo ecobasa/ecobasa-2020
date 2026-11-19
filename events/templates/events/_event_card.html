@@ -8,6 +8,7 @@
     {% if event.archived_at %}<span class="pill bg-primary bg-opacity-20 text-xs">{% trans "Archived" %}</span>{% endif %}
     {% if event.food_provided %}<span class="text-xs text-brown" title="{% trans 'Food provided' %}"><i class="fa-solid fa-utensils"></i></span>{% endif %}
     {% if event.bed_provided %}<span class="text-xs text-brown" title="{% trans 'Bed provided' %}"><i class="fa-solid fa-bed"></i></span>{% endif %}
+    {% if event.language_names %}<span class="text-xs text-brown" title="{% trans 'Languages' %}"><i class="fa-solid fa-language mr-1"></i>{{ event.language_names }}</span>{% endif %}
     <span class="text-xs text-brown opacity-70 whitespace-nowrap sm:ml-auto"><i class="fa-regular fa-calendar mr-1"></i>{% include "events/_event_dates.html" %}</span>
   </div>
   <div class="min-w-0">

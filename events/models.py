@@ -4,6 +4,7 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 from django.conf import settings
 from django.contrib.contenttypes.fields import GenericRelation
 from django.contrib.gis.db import models
+from django.contrib.postgres.fields import ArrayField
 from django.db.models import Q
 from django.urls import reverse
 from django.utils import timezone
@@ -11,7 +12,7 @@ from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _, ngettext
 from django_countries.fields import CountryField
 
-from communities.models import Community
+from communities.models import Community, language_name
 from users.places import approximate, town
 
 from . import kinds
@@ -125,6 +126,9 @@ class Event(models.Model):
     video_url = models.URLField(_("Video link"), blank=True)
     # When the video call went to who comes, an hour before
     video_call_mailed_at = models.DateTimeField(null=True, blank=True)
+    # What is spoken in the call (anyone anywhere may come, so it matters which); codes
+    # from Django's LANG_INFO, as a community's
+    languages = ArrayField(models.CharField(max_length=12), verbose_name=_("Languages"), default=list, blank=True)
     timezone = models.CharField(_("Timezone"), max_length=64, blank=True)
     # The one it follows on, planned by someone who came to that one
     previous = models.ForeignKey(
@@ -248,6 +252,11 @@ class Event(models.Model):
         """"Berlin" of Europe/Berlin, to say "19:00 Berlin time"; empty at a place."""
         zone = self.zone
         return zone.key.rsplit("/", 1)[-1].replace("_", " ") if zone else ""
+
+    @property
+    def language_names(self):
+        """"German, English": what is spoken in it, in the current language."""
+        return ", ".join(filter(None, (language_name(code) for code in self.languages)))
 
     @property
     def is_current(self):

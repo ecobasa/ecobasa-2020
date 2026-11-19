@@ -47,7 +47,7 @@
     </fieldset>
 
     {% for field in form %}
-      {% if field.name == "kind" or field.name == "timezone" or field.name == "location_name" or field.name == "location" or field.name == "country" %}
+      {% if field.name == "kind" or field.name == "timezone" or field.name == "languages" or field.name == "location_name" or field.name == "location" or field.name == "country" %}
       {% elif field.name == "is_online" %}
         {# Where: online, at a place of its own, or (left empty) at its community's #}
         <fieldset class="form-group space-y-3" x-data="{ online: {{ form.is_online.value|yesno:'true,false' }} }">
@@ -63,6 +63,10 @@
             </select>
             <p class="text-xs mt-1">{{ form.timezone.help_text }}</p>
             {% for error in form.timezone.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+            <label for="{{ form.languages.id_for_label }}" class="form-label mt-3">{{ form.languages.label }}</label>
+            {{ form.languages }}
+            <p class="text-xs mt-1">{{ form.languages.help_text }}</p>
+            {% for error in form.languages.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
           </div>
           <div x-show="!online" {% if form.is_online.value %}style="display:none"{% endif %}>
             {% if event.community_id %}<p class="text-xs">{% trans "Leave it empty if it takes place at the community." %}</p>{% endif %}
@@ -171,6 +175,22 @@ document.addEventListener('DOMContentLoaded', () => {
     const end = (h * 60 + m + durations[kind]) % (24 * 60);
     endsAt.value = String(Math.floor(end / 60)).padStart(2, '0') + ':' + String(end % 60).padStart(2, '0');
   });
+
+  // Languages by name, only ones Django knows; the input holds their codes
+  const languagesInput = document.getElementById('{{ form.languages.id_for_label }}');
+  if (languagesInput && window.Tagify) {
+    const known = JSON.parse(languagesInput.dataset.languages || '[]');
+    const chosen = (languagesInput.value || '').split(',').map(s => s.trim()).filter(Boolean);
+    languagesInput.value = '';
+    const tagify = new Tagify(languagesInput, {
+      enforceWhitelist: true,
+      editTags: false,
+      whitelist: known,
+      dropdown: { enabled: 1, maxItems: 15, closeOnSelect: true, searchKeys: ['value'], highlightFirst: true },
+      originalInputValueFormat: vals => vals.map(v => v.code).join(','),
+    });
+    tagify.addTags(known.filter(language => chosen.includes(language.code)));
+  }
 
   const locationInput = document.getElementById('{{ form.location.id_for_label }}');
   window.eventPicker = EcoMap.initLocationPicker({

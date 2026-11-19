@@ -69,6 +69,7 @@
         <span><i class="fa-regular fa-calendar mr-1"></i>{% include "events/_event_dates.html" %}</span>
         {% if event.is_open %}<span><i class="fa-solid fa-door-open mr-1"></i>{% trans "Open event: just come" %}</span>{% endif %}
         {% if event.is_online %}<span><i class="fa-solid fa-video mr-1"></i>{% trans "Online" %}</span>{% endif %}
+        {% if event.language_names %}<span title="{% trans 'Languages' %}"><i class="fa-solid fa-language mr-1"></i>{{ event.language_names }}</span>{% endif %}
         {% if event.max_people %}<span><i class="fa-solid fa-users mr-1"></i>{% blocktrans count count=event.max_people %}Room for {{ count }} person{% plural %}Room for {{ count }} people{% endblocktrans %}</span>{% endif %}
         {% include "events/_freshness.html" with when=event.updated_at label_updated=True %}
       </div>

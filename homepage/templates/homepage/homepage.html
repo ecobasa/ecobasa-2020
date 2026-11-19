@@ -59,7 +59,7 @@
         </div>
         <ul class="feature-list">
           <li><a href="{% url 'events:list' %}">{% trans "Events: projects and open days to visit and help out at" %}</a></li>
-          <li>{% trans "Gift circles, in person and online" %} <span class="soon">{% trans "soon" %}</span></li>
+          <li><a href="{% url 'events:list' %}?kind=gift_circle">{% trans "Gift circles, in person and online" %}</a></li>
           <li>{% trans "Communities-Convergences" %} <span class="soon">{% trans "soon" %}</span></li>
           <li>{% if featured_references %}<a href="#success-stories">{% trans "Build trust through references" %}</a>{% else %}{% trans "Build trust through references" %}{% endif %}</li>
           <li>{% trans "Find like-minded people in your area" %}</li>
@@ -68,6 +68,19 @@
       </div>
     </div>
     <img src="{% static 'img/village.webp' %}" alt="" class="block w-full max-w-5xl mx-auto mt-8" loading="lazy">
+  </section>
+
+  {# Online gift-circles are not on the map: anyone anywhere can come #}
+  <section id="online-gift-circles" class="mt-12">
+    <h2>{% trans "Gift-circles you can join from anywhere" %}</h2>
+    {% if online_circles %}
+      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 mt-6">
+        {% for event in online_circles %}{% include "events/_event_card.html" with show_community=True show_coming=True %}{% endfor %}
+      </div>
+    {% else %}
+      {% url 'events:gift_circle_create' as create_url %}
+      <p>{% blocktrans %}None planned at the moment. Would you like to <a href="{{ create_url }}">invite to one</a>?{% endblocktrans %}</p>
+    {% endif %}
   </section>
 
   {% if featured_references %}
