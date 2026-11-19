@@ -1,4 +1,8 @@
+from functools import cache
+from zoneinfo import available_timezones
+
 from django import forms
+from django.conf import settings
 from django.utils.translation import gettext_lazy as _
 
 from gift_economy.gifts import units
@@ -8,6 +12,15 @@ from gift_economy.gifts.skills.models import _taxonomy, get_or_create_skill
 
 from . import kinds
 from .models import Event
+from .zones import zone_at, zones_apart
+
+
+@cache
+def zone_choices():
+    """The timezones of places (Europe/Berlin, America/Mexico_City), not the old aliases."""
+    regions = ("Africa", "America", "Antarctica", "Asia", "Atlantic", "Australia", "Europe", "Indian", "Pacific")
+    zones = sorted(zone for zone in available_timezones() if zone.split("/")[0] in regions)
+    return [(zone, zone.replace("_", " ")) for zone in zones] + [("UTC", "UTC")]
 
 
 class EventForm(forms.ModelForm):
@@ -18,7 +31,7 @@ class EventForm(forms.ModelForm):
     )
     field_order = [
         "kind", "title", "image", "description", "skills_to_learn", "starts_on", "ends_on", "starts_at", "ends_at",
-        "is_online", "location_name", "location", "country", "max_people", "is_open", "potluck_note",
+        "is_online", "timezone", "location_name", "location", "country", "max_people", "is_open", "potluck_note",
     ]
     # What only a community's events ask: they take volunteers and provide for them
     COMMUNITY_FIELDS = ("skills_to_learn", "volunteers_wanted", "food_provided", "bed_provided", "provided_note")
@@ -27,7 +40,7 @@ class EventForm(forms.ModelForm):
         model = Event
         fields = [
             "kind", "title", "image", "description", "starts_on", "ends_on", "starts_at", "ends_at",
-            "is_online", "location_name", "location", "country", "max_people", "is_open", "potluck_note",
+            "is_online", "timezone", "location_name", "location", "country", "max_people", "is_open", "potluck_note",
             "volunteers_wanted", "food_provided", "bed_provided", "provided_note",
         ]
         widgets = {
@@ -39,6 +52,7 @@ class EventForm(forms.ModelForm):
             "starts_at": forms.TimeInput(attrs={"type": "time", "step": 900}, format="%H:%M"),
             "ends_at": forms.TimeInput(attrs={"type": "time", "step": 900}, format="%H:%M"),
             "description": forms.Textarea(attrs={"rows": 5}),
+            "timezone": forms.Select,
         }
 
     def __init__(self, *args, **kwargs):
@@ -48,6 +62,17 @@ class EventForm(forms.ModelForm):
         self.fields["title"].widget.attrs["placeholder"] = texts["title_placeholder"]
         self.fields["description"].widget.attrs["placeholder"] = texts["description_placeholder"]
         self.fields["skills_to_learn"].widget.attrs["placeholder"] = _("e.g. Clay building, Welding")
+        self.fields["timezone"].widget.choices = zone_choices()
+        self.fields["timezone"].help_text = _("The times are in this timezone; everyone sees which it is.")
+        # Its own, else the one at its host's place, else (on the page) the browser's: any,
+        # or in a country with several clocks one of the country's
+        self.browser_zones = None
+        zone = self.instance.timezone
+        if not zone:
+            place = self._host_place()
+            zone = zone_at(*place)
+            self.browser_zones = (zones_apart(*place) or None) if zone else []
+        self.initial["timezone"] = zone or settings.TIME_ZONE
         if self.instance.pk:
             self.initial["skills_to_learn"] = ", ".join(l.display_title for l in self.instance.skills_to_learn())
         else:
@@ -65,6 +90,16 @@ class EventForm(forms.ModelForm):
         if not self.instance.takes_needs:
             for name in self.COMMUNITY_FIELDS:
                 del self.fields[name]
+
+    def _host_place(self):
+        """(point, country code) of its host; a tour's is where it starts."""
+        event = self.instance
+        if event.host_tour_id:
+            return event.host_tour.get_match_location()[2], None
+        host = event.community if event.community_id else event.host_user
+        if host is None:
+            return None, None
+        return host.location, getattr(host.country, "code", None) or None
 
     def _offered(self, kind_list):
         return [kind for kind in kind_list if kind in dict(self.fields["kind"].choices)]
@@ -110,11 +145,15 @@ class EventForm(forms.ModelForm):
         if cleaned.get("is_online"):
             # Online it has no place
             cleaned["location_name"], cleaned["location"], cleaned["country"] = "", None, None
-        elif cleaned.get("location") is None:
-            cleaned["location_name"], cleaned["country"] = "", None
-            # Without a place of its own it is at its community's
-            if not self.instance.community_id:
-                self.add_error("location_name", _("Choose the place on the map, or make it online."))
+            cleaned["timezone"] = cleaned.get("timezone") or settings.TIME_ZONE
+        else:
+            # At a place its hours are local
+            cleaned["timezone"] = ""
+            if cleaned.get("location") is None:
+                cleaned["location_name"], cleaned["country"] = "", None
+                # Without a place of its own it is at its community's
+                if not self.instance.community_id:
+                    self.add_error("location_name", _("Choose the place on the map, or make it online."))
         return cleaned
 
     def _quarter_hour(self, name):
@@ -122,6 +161,12 @@ class EventForm(forms.ModelForm):
         if hour and (hour.minute % 15 or hour.second):
             raise forms.ValidationError(_("Please choose a time in steps of 15 minutes."))
         return hour
+
+    def clean_timezone(self):
+        zone = self.cleaned_data.get("timezone")
+        if zone and zone not in dict(zone_choices()):
+            raise forms.ValidationError(_("Please choose a timezone from the list."))
+        return zone
 
     def clean_starts_at(self):
         return self._quarter_hour("starts_at")

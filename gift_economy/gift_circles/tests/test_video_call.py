@@ -143,3 +143,19 @@ def test_the_confirmation_links_to_the_video_call_and_the_calendar_file_has_it(
     assert page in mail.body
     calendar = mail.attachments[0][1]
     assert "LOCATION:http" in calendar and page in calendar.replace("\r\n ", "")
+
+
+def test_its_times_are_in_its_timezone_and_say_so(host, person, mailoutbox, django_capture_on_commit_callbacks):
+    # 19:00 in Mexico City is 01:00 UTC the next day: it opens at 18:00 there, still closed in Berlin's evening
+    mexico = ZoneInfo("America/Mexico_City")
+    day = timezone.localdate() + timedelta(days=5)
+    event = _circle(host, starts=datetime.combine(day, time(19, 0), tzinfo=BERLIN), timezone="America/Mexico_City")
+    assert not video.is_open(event, datetime.combine(day, time(18, 30), tzinfo=BERLIN))
+    assert video.is_open(event, datetime.combine(day, time(18, 30), tzinfo=mexico))
+    assert "Mexico City time" in _client(person).get(event.get_absolute_url()).content.decode()
+    with django_capture_on_commit_callbacks(execute=True):
+        _client(person).post(reverse("events:gift_circle_come", args=[event.slug]), {"people": 1})
+    [mail] = [mail for mail in mailoutbox if mail.to == [person.email]]
+    assert "(Mexico City time)" in mail.body
+    utc = (day + timedelta(days=1)).strftime("%Y%m%d")
+    assert f"DTSTART:{utc}T010000Z" in mail.attachments[0][1]

@@ -1,4 +1,5 @@
 from datetime import timedelta
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from django.conf import settings
 from django.contrib.contenttypes.fields import GenericRelation
@@ -230,6 +231,23 @@ class Event(models.Model):
     @property
     def is_over(self):
         return self.ends_on is not None and self.ends_on < timezone.localdate()
+
+    @property
+    def zone(self):
+        """The timezone of an online event's hours (the server's while none is set); None
+        at a place, where they are local."""
+        if not self.is_online:
+            return None
+        try:
+            return ZoneInfo(self.timezone or settings.TIME_ZONE)
+        except (ZoneInfoNotFoundError, ValueError):
+            return ZoneInfo(settings.TIME_ZONE)
+
+    @property
+    def zone_city(self):
+        """"Berlin" of Europe/Berlin, to say "19:00 Berlin time"; empty at a place."""
+        zone = self.zone
+        return zone.key.rsplit("/", 1)[-1].replace("_", " ") if zone else ""
 
     @property
     def is_current(self):

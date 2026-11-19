@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% load i18n %}
+{% load i18n tz %}
 
 {% block head_title %}{% trans "The video call" %}: {{ event.title }} — ecobasa{% endblock %}
 
@@ -13,7 +13,7 @@
     <p class="p-4 rounded-lg bg-secondary">{% trans "This gift-circle is over." %}</p>
   {% elif not is_open %}
     <p class="p-4 rounded-lg bg-secondary">
-      <i class="fa-regular fa-clock mr-1"></i>{% blocktrans with day=opens|date:"DATE_FORMAT" time=opens|time:"TIME_FORMAT" %}The video call opens on {{ day }} at {{ time }}, an hour before the gift-circle. You get an email then.{% endblocktrans %}
+      <i class="fa-regular fa-clock mr-1"></i>{% localtime off %}{% blocktrans with day=opens|date:"DATE_FORMAT" time=opens|time:"TIME_FORMAT" city=event.zone_city %}The video call opens on {{ day }} at {{ time }} {{ city }} time, an hour before the gift-circle. You get an email then.{% endblocktrans %}{% endlocaltime %}
     </p>
   {% elif embed_url %}
     {# The room inside the page; full screen through the browser, or across the window where it can't (iPhone) #}

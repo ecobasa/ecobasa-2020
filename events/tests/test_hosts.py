@@ -16,6 +16,7 @@ from users.models import User
 
 from .. import kinds
 from ..models import Event
+from ..zones import zone_at
 
 pytestmark = pytest.mark.django_db
 
@@ -94,6 +95,53 @@ def test_a_person_s_event_needs_a_place_or_to_be_online(host):
     _client(host).post(reverse("events:gift_circle_create"), {**data, "is_online": "on"})
     event = Event.objects.get()
     assert event.is_online and event.place is None and event.rough_place() == ("", None)
+
+
+def test_an_online_event_has_a_timezone_one_at_a_place_none(host):
+    day = timezone.localdate() + timedelta(days=3)
+    data = {"kind": kinds.GIFT_CIRCLE, "title": "Circle", "starts_on": day, "ends_on": day, "is_online": "on"}
+    response = _client(host).post(reverse("events:gift_circle_create"), {**data, "timezone": "Mars/Olympus_Mons"})
+    assert response.context["form"].errors["timezone"]
+    _client(host).post(reverse("events:gift_circle_create"), {**data, "timezone": "America/Mexico_City"})
+    event = Event.objects.get()
+    assert event.timezone == "America/Mexico_City" and event.zone_city == "Mexico City"
+    data.pop("is_online")
+    _client(host).post(reverse("events:gift_circle_edit", args=[event.slug]), {
+        **data, "timezone": "America/Mexico_City", "location_name": PARK_ADDRESS, "location": "SRID=4326;POINT (9.18 48.78)",
+    })
+    event.refresh_from_db()
+    assert event.timezone == "" and event.zone is None
+
+
+def test_the_timezone_nearest_a_place():
+    # Near a border its country decides
+    assert zone_at(PARK) == "Europe/Zurich" and zone_at(PARK, "DE") == "Europe/Berlin"
+    assert zone_at(Point(-99.13, 19.43, srid=4326)) == "America/Mexico_City"
+    assert zone_at(Point(-58.38, -34.6, srid=4326)) == "America/Argentina/Buenos_Aires"
+    assert zone_at(Point(151.2, -33.87, srid=4326)) == "Australia/Sydney"
+    # Cancun's clock isn't Mexico City's
+    assert zone_at(Point(-86.85, 21.16, srid=4326)) == "America/Cancun"
+    assert zone_at(None) is None
+
+
+def test_the_timezone_starts_as_the_event_s_else_its_host_s_else_the_browser_s(host):
+    url = reverse("events:gift_circle_create")
+    form = _client(host).get(url).context["form"]
+    # Any of the browser's
+    assert form.browser_zones == [] and form.initial["timezone"] == "Europe/Berlin"
+    host.location, host.country = PARK, "DE"
+    host.save()
+    form = _client(host).get(url).context["form"]
+    assert form.browser_zones is None and form.initial["timezone"] == "Europe/Berlin"
+    # Where the country has several clocks, the browser's if it is one of them
+    host.location, host.country = Point(-96.8, 32.8, srid=4326), "US"
+    host.save()
+    form = _client(host).get(url).context["form"]
+    assert "America/Chicago" in form.browser_zones and "Europe/Berlin" not in form.browser_zones
+    assert b'id="browser-zones"' in _client(host).get(url).content
+    event = _circle(host_user=host, is_online=True, timezone="Asia/Tokyo")
+    form = _client(host).get(reverse("events:gift_circle_edit", args=[event.slug])).context["form"]
+    assert form.initial["timezone"] == "Asia/Tokyo" and form.browser_zones is None
 
 
 def test_a_person_s_event_asks_nothing_only_a_community_s_does(host):

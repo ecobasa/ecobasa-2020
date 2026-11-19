@@ -9,7 +9,7 @@ import hmac
 import json
 from datetime import datetime, time, timedelta
 from urllib.parse import quote
-from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
+from zoneinfo import ZoneInfo
 
 from django.conf import settings
 from django.utils import timezone
@@ -50,10 +50,7 @@ def embed_url(event, name=""):
 
 
 def _zone(event):
-    try:
-        return ZoneInfo(event.timezone or settings.TIME_ZONE)
-    except (ZoneInfoNotFoundError, ValueError):
-        return ZoneInfo(settings.TIME_ZONE)
+    return event.zone or ZoneInfo(settings.TIME_ZONE)
 
 
 def starts(event):

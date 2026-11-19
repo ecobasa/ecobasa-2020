@@ -1,8 +1,9 @@
 """An event as a calendar file (.ics, RFC 5545), written by hand: a few lines of text
 need no library. Dates and hours are local at the place, so the times are "floating"
-(without a timezone): a calendar shows them as they are."""
+(without a timezone): a calendar shows them as they are. An online event's are in its
+timezone, so they go as UTC: a calendar shows them in the time of whoever reads it."""
 
-from datetime import timedelta, timezone as tz
+from datetime import datetime, timedelta, timezone as tz
 
 from django.conf import settings
 from django.utils import timezone
@@ -30,9 +31,11 @@ def _fold(line):
     return "\r\n ".join(parts)
 
 
-def _when(day, hour):
+def _when(day, hour, zone=None):
     if hour is None:
         return ";VALUE=DATE:" + day.strftime("%Y%m%d")
+    if zone:
+        return ":" + datetime.combine(day, hour, tzinfo=zone).astimezone(tz.utc).strftime("%Y%m%dT%H%M%SZ")
     return ":" + day.strftime("%Y%m%d") + hour.strftime("T%H%M%S")
 
 
@@ -53,9 +56,9 @@ def ics(event, place_name="", description=""):
         "DTSTAMP:" + timezone.now().astimezone(tz.utc).strftime("%Y%m%dT%H%M%SZ"),
     ]
     if event.starts_at:
-        lines.append("DTSTART" + _when(starts_on, event.starts_at))
+        lines.append("DTSTART" + _when(starts_on, event.starts_at, event.zone))
         if event.ends_at:
-            lines.append("DTEND" + _when(ends_on, event.ends_at))
+            lines.append("DTEND" + _when(ends_on, event.ends_at, event.zone))
     else:
         # A whole day ends at the start of the next
         lines.append("DTSTART" + _when(starts_on, None))
