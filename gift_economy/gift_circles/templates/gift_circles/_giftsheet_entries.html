@@ -58,6 +58,7 @@
                           <label class="text-sm">{% trans "Borrow until" %}<input type="date" name="borrow_to" class="form-input w-full" value="{{ entry.borrow_to|date:'Y-m-d' }}"></label>
                         </div>
                         <p x-show="lends" x-cloak class="text-xs m-0">{% trans "Not sure yet? Leave the days empty: they agree on them afterwards on ecobasa." %}</p>
+                        {% if event.is_online and not event.area %}<p x-show="lends" x-cloak class="text-xs m-0">{% trans "Lending needs people who live near each other: do they?" %}</p>{% endif %}
                       </div>
                       <div class="flex flex-wrap justify-between gap-2">
                         {% if entry.state != "open" %}

@@ -10459,3 +10459,24 @@ msgstr "Schenkkreise, bei denen du von überall dabei sein kannst"
 
 msgid "None planned at the moment. Would you like to <a href=\"%(create_url)s\">invite to one</a>?"
 msgstr "Gerade ist keiner geplant. Möchtest du <a href=\"%(create_url)s\">zu einem einladen</a>?"
+
+msgid "For people around"
+msgstr "Für Leute rund um"
+
+msgid "Optional: a town, if it is for people who live near each other. Everyone sees only the town."
+msgstr "Optional: ein Ort, wenn es für Leute ist, die nah beieinander wohnen. Alle sehen nur den Ort."
+
+msgid "From far away, people can give each other skills, knowledge, ideas, shared projects and things that can be posted. Things to pick up and tools to lend need people who live nearby."
+msgstr "Aus der Ferne könnt ihr euch Fähigkeiten, Wissen, Ideen, gemeinsame Projekte und Dinge schenken, die sich verschicken lassen. Dinge zum Abholen und Werkzeug zum Verleihen brauchen Leute, die in der Nähe wohnen."
+
+msgid "for people around %(area)s"
+msgstr "für Leute rund um %(area)s"
+
+msgid "Lending needs people who live near each other: do they?"
+msgstr "Verleihen braucht Leute, die nah beieinander wohnen: Ist das so?"
+
+msgid "Who comes from far away can give each other skills, knowledge, ideas, shared projects and things that can be posted. Things to pick up and tools to lend need people who live nearby: if your circle is for them, say the town under “For people around”. Everyone sees only the town, and people around it find the circle on the map."
+msgstr "Wer von weit her kommt, kann sich Fähigkeiten, Wissen, Ideen, gemeinsame Projekte und Dinge schenken, die sich verschicken lassen. Dinge zum Abholen und Werkzeug zum Verleihen brauchen Leute, die in der Nähe wohnen: Ist dein Schenkkreis für sie, gib den Ort unter „Für Leute rund um“ an. Alle sehen nur den Ort, und wer dort wohnt, findet den Schenkkreis auf der Karte."
+
+msgid "The times are in the timezone of the town below."
+msgstr "Die Uhrzeiten gelten in der Zeitzone des Orts unten."

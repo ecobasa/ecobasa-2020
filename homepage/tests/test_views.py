@@ -21,6 +21,7 @@ def test_the_homepage_names_tool_libraries_and_car_sharing(client):
 def test_the_homepage_shows_the_next_online_gift_circles_those_in_one_s_language_first(client):
     from datetime import time, timedelta
 
+    from django.contrib.gis.geos import Point
     from django.utils import timezone
 
     from events import kinds
@@ -42,7 +43,8 @@ def test_the_homepage_shows_the_next_online_gift_circles_those_in_one_s_language
     circle("Seeds and seedlings", 5, ["en", "fr"])
     circle("Over already", 0, ["en"], starts_at=time(0, 0), ends_at=time(0, 15))
     circle("In the park", 1, ["en"], is_online=False)
+    circle("Around Lyon", 3, ["en"], location_name="Lyon, France", location=Point(4.83, 45.76, srid=4326))
     page = client.get("/", HTTP_ACCEPT_LANGUAGE="en").content.decode()
     assert "Gift-circles you can join from anywhere" in page and "English, French" in page
     assert page.index("Seeds and seedlings") < page.index("Rund um Saatgut")
-    assert "Over already" not in page and "In the park" not in page
+    assert "Over already" not in page and "In the park" not in page and "Around Lyon" not in page

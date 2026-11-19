@@ -1,11 +1,11 @@
-{% load i18n %}{# Who hosts an event: the community's, person's or tour's avatar and name, linked to its page; where it is roughly (not `without_place`), or online, and how far #}
+{% load i18n %}{# Who hosts an event: the community's, person's or tour's avatar and name, linked to its page; where it is roughly (not `without_place`), or online and for people around where, and how far #}
 <div class="text-sm flex items-center gap-2 min-w-0">
   {% with host=event.host %}
   <a href="{{ host.get_absolute_url }}" class="inline-flex items-center gap-2 min-w-0 hover:text-primary">
     {% include "_avatar.html" with who=host %}<span class="truncate">{{ event.host_name }}</span>
   </a>
   {% endwith %}
-  {% if event.is_online %}<span class="opacity-70 whitespace-nowrap">· <i class="fa-solid fa-video mr-1"></i>{% trans "Online" %}</span>
+  {% if event.is_online %}<span class="opacity-70 whitespace-nowrap">· <i class="fa-solid fa-video mr-1"></i>{% trans "Online" %}</span>{% if event.area %}<span class="opacity-70 truncate">· {% blocktrans with area=event.area %}for people around {{ area }}{% endblocktrans %}</span>{% endif %}
   {% elif not without_place %}{% with place=event.rough_place %}{% if place.0 %}<span class="opacity-70 truncate">· {{ place.0 }}</span>{% endif %}{% endwith %}{% endif %}
   {% if event.km is not None %}<span class="opacity-70 whitespace-nowrap">· {% blocktrans with km=event.km %}about {{ km }} km{% endblocktrans %}</span>{% endif %}
 </div>

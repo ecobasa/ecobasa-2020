@@ -12,10 +12,11 @@ from gift_economy.gifts import units
 from gift_economy.gifts.models import Listing, ListingCategory, themed_choices
 from gift_economy.gifts.things import WHITELISTED_KINDS, thing_named
 from gift_economy.gifts.skills.models import _taxonomy, get_or_create_skill
+from users.places import town
 
 from . import kinds
 from .models import Event
-from .zones import zone_at, zones_apart
+from .zones import countries_apart, zone_at, zones_apart
 
 
 @cache
@@ -119,6 +120,23 @@ class EventForm(forms.ModelForm):
     def potluck_kinds(self):
         return self._offered(kinds.POTLUCK)
 
+    def countries_apart(self):
+        """The countries where a town doesn't tell its timezone (they keep several clocks), as
+        "US,RU,…" for the page."""
+        return ",".join(countries_apart())
+
+    def times_from_town(self):
+        """Whether it is online for people around a town that tells its timezone."""
+        if not self["is_online"].value() or not self["location"].value():
+            return False
+        country = str(self["country"].value() or "")
+        return bool(country) and country not in countries_apart()
+
+    def giftsheet_kinds(self):
+        """The kinds offered where people give each other things (and online, from far away
+        only some)."""
+        return self._offered([kinds.GIFT_CIRCLE])
+
     def durations(self):
         """{kind: minutes} of the kinds offered that usually take that long."""
         return {kind: kinds.DURATIONS[kind] for kind in self._offered(kinds.DURATIONS)}
@@ -152,8 +170,15 @@ class EventForm(forms.ModelForm):
         if starts_at and ends_at and one_day and ends_at <= starts_at:
             self.add_error("ends_at", _("It can't end before it starts."))
         if cleaned.get("is_online"):
-            # Online it has no place
-            cleaned["location_name"], cleaned["location"], cleaned["country"] = "", None, None
+            # Online it has no place, at most a town it is for people around
+            if cleaned.get("location") is None:
+                cleaned["location_name"], cleaned["country"] = "", None
+            else:
+                cleaned["location_name"] = town(cleaned.get("location_name"))
+                # Its hours are its town's, where the country keeps one clock
+                point, code = cleaned["location"], getattr(cleaned.get("country"), "code", cleaned.get("country")) or None
+                if not zones_apart(point, code):
+                    cleaned["timezone"] = zone_at(point, code) or cleaned.get("timezone")
             cleaned["timezone"] = cleaned.get("timezone") or settings.TIME_ZONE
         else:
             # At a place its hours are local

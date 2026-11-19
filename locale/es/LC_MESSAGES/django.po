@@ -10433,3 +10433,24 @@ msgstr "Círculos de regalos a los que puedes unirte desde cualquier lugar"
 
 msgid "None planned at the moment. Would you like to <a href=\"%(create_url)s\">invite to one</a>?"
 msgstr "Ahora mismo no hay ninguno previsto. ¿Quieres <a href=\"%(create_url)s\">invitar a uno</a>?"
+
+msgid "For people around"
+msgstr "Para gente de los alrededores de"
+
+msgid "Optional: a town, if it is for people who live near each other. Everyone sees only the town."
+msgstr "Opcional: una localidad, si es para gente que vive cerca. Todo el mundo ve solo la localidad."
+
+msgid "From far away, people can give each other skills, knowledge, ideas, shared projects and things that can be posted. Things to pick up and tools to lend need people who live nearby."
+msgstr "A distancia, podéis regalaros habilidades, conocimientos, ideas, proyectos comunes y cosas que se pueden enviar por correo. Las cosas para recoger y las herramientas para prestar necesitan gente que viva cerca."
+
+msgid "for people around %(area)s"
+msgstr "para gente de los alrededores de %(area)s"
+
+msgid "Lending needs people who live near each other: do they?"
+msgstr "Para prestar hace falta vivir cerca: ¿es el caso?"
+
+msgid "Who comes from far away can give each other skills, knowledge, ideas, shared projects and things that can be posted. Things to pick up and tools to lend need people who live nearby: if your circle is for them, say the town under “For people around”. Everyone sees only the town, and people around it find the circle on the map."
+msgstr "Quien viene de lejos puede regalarse habilidades, conocimientos, ideas, proyectos comunes y cosas que se pueden enviar por correo. Las cosas para recoger y las herramientas para prestar necesitan gente que viva cerca: si tu círculo de regalos es para ella, indica la localidad en «Para gente de los alrededores de». Todo el mundo ve solo la localidad, y quien vive allí encuentra el círculo en el mapa."
+
+msgid "The times are in the timezone of the town below."
+msgstr "Las horas son las de la zona horaria de la localidad de abajo."

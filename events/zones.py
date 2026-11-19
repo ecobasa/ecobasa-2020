@@ -83,3 +83,12 @@ def zones_apart(point, country=None):
         return []
     zones = [other[2] for other in _cities() if other[3] == city[3]]
     return zones if len({_clock(zone) for zone in zones}) > 1 else []
+
+
+@cache
+def countries_apart():
+    """The codes of the countries whose zones keep more than one clock."""
+    zones = {}
+    for _lat, _lon, zone, country in _cities():
+        zones.setdefault(country, []).append(zone)
+    return sorted(country for country, names in zones.items() if len({_clock(zone) for zone in names}) > 1)

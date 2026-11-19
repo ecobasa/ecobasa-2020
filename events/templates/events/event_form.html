@@ -49,28 +49,41 @@
     {% for field in form %}
       {% if field.name == "kind" or field.name == "timezone" or field.name == "languages" or field.name == "location_name" or field.name == "location" or field.name == "country" %}
       {% elif field.name == "is_online" %}
-        {# Where: online, at a place of its own, or (left empty) at its community's #}
-        <fieldset class="form-group space-y-3" x-data="{ online: {{ form.is_online.value|yesno:'true,false' }} }">
+        {# Where: online (for people around a town, if it says one), at a place of its own, or (left empty) at its community's #}
+        <fieldset class="form-group space-y-3" x-data="{ online: {{ form.is_online.value|yesno:'true,false' }}, kind: '{{ form.kind.value }}', apart: '{{ form.countries_apart }}'.split(','), byTown: {{ form.times_from_town|yesno:'true,false' }}, town() { const country = document.getElementById('{{ form.country.id_for_label }}').value; this.byTown = !!document.getElementById('{{ form.location.id_for_label }}').value && !!country && !this.apart.includes(country) } }"
+                  @kind-chosen.window="kind = $event.detail" @location-set.window="town()" @location-country.window="town()" @location-cleared.window="byTown = false">
           <legend class="form-label">{% trans "Where" %}</legend>
-          <label class="inline-flex items-center gap-2"><input type="checkbox" name="{{ form.is_online.html_name }}" id="{{ form.is_online.id_for_label }}" class="form-checkbox" x-model="online" @change="!online && $nextTick(() => window.eventPicker && window.eventPicker.map.updateSize())"> {{ form.is_online.label }}</label>
+          <label class="inline-flex items-center gap-2"><input type="checkbox" name="{{ form.is_online.html_name }}" id="{{ form.is_online.id_for_label }}" class="form-checkbox" x-model="online"> {{ form.is_online.label }}</label>
           {# Its times are in a timezone: its own, else its host's place's, else the browser's (browser_zones: [] any, else only one of these) #}
           {% if form.browser_zones is not None and not form.is_bound %}{{ form.browser_zones|json_script:"browser-zones" }}{% endif %}
           <div x-show="online" {% if not form.is_online.value %}style="display:none"{% endif %}
                x-init="const allowed = JSON.parse(document.getElementById('browser-zones')?.textContent || 'null'); const here = Intl.DateTimeFormat().resolvedOptions().timeZone; if (allowed && (allowed.length ? allowed.includes(here) : true) && [...$refs.zone.options].some(o => o.value === here)) $refs.zone.value = here">
-            <label for="{{ form.timezone.id_for_label }}" class="form-label">{{ form.timezone.label }}</label>
-            <select name="{{ form.timezone.html_name }}" id="{{ form.timezone.id_for_label }}" x-ref="zone" class="form-select w-full">
-              {% for value, label in form.timezone.field.widget.choices %}<option value="{{ value }}"{% if value == form.timezone.value %} selected{% endif %}>{{ label }}</option>{% endfor %}
-            </select>
-            <p class="text-xs mt-1">{{ form.timezone.help_text }}</p>
-            {% for error in form.timezone.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+            {# A town where the country keeps one clock tells its timezone (forms.EventForm.clean) #}
+            <div x-show="!byTown" {% if form.times_from_town %}style="display:none"{% endif %}>
+              <label for="{{ form.timezone.id_for_label }}" class="form-label">{{ form.timezone.label }}</label>
+              <select name="{{ form.timezone.html_name }}" id="{{ form.timezone.id_for_label }}" x-ref="zone" class="form-select w-full">
+                {% for value, label in form.timezone.field.widget.choices %}<option value="{{ value }}"{% if value == form.timezone.value %} selected{% endif %}>{{ label }}</option>{% endfor %}
+              </select>
+              <p class="text-xs mt-1">{{ form.timezone.help_text }}</p>
+              {% for error in form.timezone.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+            </div>
+            <p x-show="byTown" {% if not form.times_from_town %}style="display:none"{% endif %} class="text-xs m-0">{% trans "The times are in the timezone of the town below." %}</p>
             <label for="{{ form.languages.id_for_label }}" class="form-label mt-3">{{ form.languages.label }}</label>
             {{ form.languages }}
             <p class="text-xs mt-1">{{ form.languages.help_text }}</p>
             {% for error in form.languages.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
           </div>
-          <div x-show="!online" {% if form.is_online.value %}style="display:none"{% endif %}>
-            {% if event.community_id %}<p class="text-xs">{% trans "Leave it empty if it takes place at the community." %}</p>{% endif %}
-            {% include "maps/_location_picker.html" with map_id="event-location-map" set_point_fn="setEventPoint" map_height="h-64" %}
+          <div>
+            <label class="form-label" for="{{ form.location_name.id_for_label }}">
+              <span x-show="!online" {% if form.is_online.value %}style="display:none"{% endif %}>{{ form.location_name.label }}</span>
+              <span x-show="online" {% if not form.is_online.value %}style="display:none"{% endif %}>{% trans "For people around" %}</span>
+            </label>
+            {% if event.community_id %}<p class="text-xs" x-show="!online" {% if form.is_online.value %}style="display:none"{% endif %}>{% trans "Leave it empty if it takes place at the community." %}</p>{% endif %}
+            <div x-show="online" {% if not form.is_online.value %}style="display:none"{% endif %} class="text-xs space-y-1 mb-2">
+              <p class="m-0">{% trans "Optional: a town, if it is for people who live near each other. Everyone sees only the town." %}</p>
+              {% with giftsheet=form.giftsheet_kinds %}<p class="m-0" x-show="[{% for kind in giftsheet %}'{{ kind }}'{% if not forloop.last %}, {% endif %}{% endfor %}].includes(kind)" {% if form.kind.value not in giftsheet %}style="display:none"{% endif %}>{% trans "From far away, people can give each other skills, knowledge, ideas, shared projects and things that can be posted. Things to pick up and tools to lend need people who live nearby." %}</p>{% endwith %}
+            </div>
+            {% include "maps/_location_picker.html" with map_id="event-location-map" set_point_fn="setEventPoint" map_height="h-64" no_label=True %}
           </div>
         </fieldset>
       {% elif field.name == "is_open" %}

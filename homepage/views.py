@@ -25,10 +25,10 @@ def _ended(event, now):
 
 
 def online_gift_circles(language):
-    """The next online gift-circles: anyone anywhere can come, so they are not only on the
-    map. Those spoken in `language` first, then the soonest."""
+    """The next online gift-circles for anyone anywhere (those for people around a town are
+    on the map). Those spoken in `language` first, then the soonest."""
     circles = list(
-        Event.objects.current().filter(kind=kinds.GIFT_CIRCLE, is_online=True)
+        Event.objects.current().filter(kind=kinds.GIFT_CIRCLE, is_online=True, location=None)
         .select_related("community", "host_user", "host_tour__organiser")
     )
     now = timezone.now()

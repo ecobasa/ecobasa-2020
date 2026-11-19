@@ -380,8 +380,10 @@
     applyGeoToForm(geo, inputs) {
       inputs = inputs || {};
       if (!geo || !geo.address) return;
-      if (geo.address.country_code && inputs.countryInput)
+      if (geo.address.country_code && inputs.countryInput) {
         inputs.countryInput.value = geo.address.country_code.toUpperCase();
+        window.dispatchEvent(new CustomEvent('location-country'));
+      }
       const label = this.formatAddress(geo);
       if (label && inputs.nameInput) inputs.nameInput.value = label;
     },
@@ -436,6 +438,7 @@
         window[cfg.setPointFn + '_clear'] = function () {
           feature.setGeometry(null);
           if (cfg.locationInput) cfg.locationInput.value = '';
+          window.dispatchEvent(new CustomEvent('location-cleared'));
         };
       }
 

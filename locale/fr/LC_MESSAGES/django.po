@@ -10468,3 +10468,24 @@ msgstr "Cercles de dons que tu peux rejoindre de partout"
 
 msgid "None planned at the moment. Would you like to <a href=\"%(create_url)s\">invite to one</a>?"
 msgstr "Aucun n'est prévu pour le moment. Tu veux <a href=\"%(create_url)s\">inviter à un cercle</a> ?"
+
+msgid "For people around"
+msgstr "Pour les gens autour de"
+
+msgid "Optional: a town, if it is for people who live near each other. Everyone sees only the town."
+msgstr "Facultatif : une ville, si c'est pour des gens qui habitent près les uns des autres. Tout le monde ne voit que la ville."
+
+msgid "From far away, people can give each other skills, knowledge, ideas, shared projects and things that can be posted. Things to pick up and tools to lend need people who live nearby."
+msgstr "À distance, vous pouvez vous offrir des compétences, des savoirs, des idées, des projets communs et des choses qui s'envoient par la poste. Les choses à récupérer et les outils à prêter demandent des gens qui habitent à proximité."
+
+msgid "for people around %(area)s"
+msgstr "pour les gens autour de %(area)s"
+
+msgid "Lending needs people who live near each other: do they?"
+msgstr "Prêter demande d'habiter près l'un de l'autre : est-ce le cas ?"
+
+msgid "Who comes from far away can give each other skills, knowledge, ideas, shared projects and things that can be posted. Things to pick up and tools to lend need people who live nearby: if your circle is for them, say the town under “For people around”. Everyone sees only the town, and people around it find the circle on the map."
+msgstr "Qui vient de loin peut offrir des compétences, des savoirs, des idées, des projets communs et des choses qui s'envoient par la poste. Les choses à récupérer et les outils à prêter demandent des gens qui habitent à proximité : si ton cercle de dons est pour eux, indique la ville sous « Pour les gens autour de ». Tout le monde ne voit que la ville, et les gens du coin trouvent le cercle sur la carte."
+
+msgid "The times are in the timezone of the town below."
+msgstr "Les heures sont celles du fuseau horaire de la ville ci-dessous."

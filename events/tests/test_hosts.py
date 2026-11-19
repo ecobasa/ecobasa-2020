@@ -256,6 +256,49 @@ def test_online_events_are_listed_but_not_on_the_map(host):
     assert "Online" in Client().get(event.get_absolute_url()).content.decode()
 
 
+def test_an_online_event_can_be_for_people_around_a_town(host, guest):
+    day = timezone.localdate() + timedelta(days=3)
+    _client(host).post(reverse("events:gift_circle_create"), {
+        "kind": kinds.GIFT_CIRCLE, "title": "Circle", "starts_on": day, "ends_on": day, "is_online": "on",
+        "location_name": PARK_ADDRESS, "location": "SRID=4326;POINT (9.18 48.78)",
+    })
+    event = Event.objects.get()
+    # Only the town is kept, and nobody sees more: there is no place to come to
+    assert event.location_name == "Stuttgart, Deutschland" and event.area == "Stuttgart, Deutschland"
+    assert event.place is None
+    _come(event, guest)
+    name, point = event.place_for(guest)
+    assert name == "Stuttgart, Deutschland" and point != PARK and point.distance(PARK) < 0.1
+    page = Client().get(event.get_absolute_url(), HTTP_ACCEPT_LANGUAGE="en").content.decode()
+    assert "for people around Stuttgart, Deutschland" in page
+    # People around it find it on the map
+    markers = Client().get(reverse("events:api-markers")).json()["features"]
+    assert [marker["properties"]["title"] for marker in markers] == ["Circle"]
+
+
+def test_an_online_event_s_town_tells_its_timezone_where_the_country_keeps_one_clock(host):
+    day = timezone.localdate() + timedelta(days=3)
+    data = {"kind": kinds.GIFT_CIRCLE, "title": "Circle", "starts_on": day, "ends_on": day, "is_online": "on"}
+    response = _client(host).get(reverse("events:gift_circle_create"))
+    assert "DE" not in response.context["form"].countries_apart().split(",")
+    _client(host).post(reverse("events:gift_circle_create"), {
+        **data, "timezone": "America/Mexico_City", "country": "DE",
+        "location_name": PARK_ADDRESS, "location": "SRID=4326;POINT (9.18 48.78)",
+    })
+    assert Event.objects.get().timezone == "Europe/Berlin"
+    # Around Chicago, the zone chosen stays: the US keeps several clocks
+    _client(host).post(reverse("events:gift_circle_create"), {
+        **data, "title": "Circle around Chicago", "timezone": "America/Denver", "country": "US",
+        "location_name": "Chicago, Illinois, United States", "location": "SRID=4326;POINT (-87.63 41.88)",
+    })
+    assert Event.objects.get(title="Circle around Chicago").timezone == "America/Denver"
+
+
+def test_an_online_event_for_anyone_anywhere_has_no_area(host):
+    event = _circle(host_user=host, is_online=True)
+    assert event.area == "" and event.place_for(host) == ("", None)
+
+
 def test_a_place_of_its_own_shows_roughly_on_the_map(host):
     _circle(host_user=host)
     [marker] = Client().get(reverse("events:api-markers")).json()["features"]

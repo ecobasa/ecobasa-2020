@@ -107,7 +107,8 @@ class Event(models.Model):
         help_text=_("What people could bring to share. Leave it empty if there is no potluck."),
     )
     # A place of its own, e.g. a park or a café; otherwise its community's. Everyone but
-    # who comes sees it roughly (rough_place)
+    # who comes sees it roughly (rough_place). Online: the town it is for people around, if
+    # any (area)
     location_name = models.CharField(_("Place"), max_length=255, blank=True)
     location = models.PointField(_("Geo Location"), null=True, blank=True, geography=True)
     country = CountryField(_("Country"), null=True, blank=True)
@@ -342,8 +343,15 @@ class Event(models.Model):
         """Its name as a place."""
         return self.title
 
+    @property
+    def area(self):
+        """Online: the town it is for people around; "" for anyone anywhere."""
+        return town(self.location_name) if self.is_online and self.location is not None else ""
+
     def rough_place(self):
-        """(name, point) as everyone sees it; ("", None) without a place."""
+        """(name, point) as everyone sees it; ("", None) without a place. Online: its area."""
+        if self.area:
+            return self.area, approximate(self.location, self.place_seed)
         place = self.place
         if place is None:
             return "", None
@@ -353,6 +361,8 @@ class Event(models.Model):
 
     def place_for(self, user):
         """(name, point) as `user` sees it."""
+        if self.is_online:
+            return self.rough_place()
         place = self.place
         if place is not None and place is not self:
             return place.place_for(user)

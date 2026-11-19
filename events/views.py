@@ -246,7 +246,8 @@ def detail(request, slug, community_slug=None, kind=None):
     return render(request, "events/event_detail.html", {
         "event": event,
         "community": event.community,
-        "place": event.place_for(request.user)[0],
+        # Online, its area is beside "Online"
+        "place": "" if event.is_online else event.place_for(request.user)[0],
         "needs": event.needs(),
         "can_edit": can_edit,
         # Its community's calendar is the ambassador's
