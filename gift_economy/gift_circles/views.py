@@ -17,7 +17,7 @@ from events.models import Event
 from gift_economy.gifts.models import Listing
 from gift_economy.matches.models import Match
 
-from . import bringing, giftsheet as sheets, results, stories, wishes as wish_answers
+from . import bringing, giftsheet as sheets, results, stories, video, wishes as wish_answers
 from .emails import exact_place, send_guest_confirmation, send_guest_welcome, send_written
 from .forms import EntryForm, GuestChangeForm, GuestForm, InviteForm, PhotoForm, WriteForm
 from .guests import GUEST_SESSION_KEY, link_to_account
@@ -588,6 +588,40 @@ def scribe(request, slug):
             else:
                 Scribe.objects.get_or_create(event=event, user_id=user_id)
     return redirect(f"{event.get_absolute_url()}#coming")
+
+
+# ── The video call ──────────────────────────────────────────────────
+
+def video_call(request, slug):
+    """An online gift-circle's video call, for who comes and its host: the room inside
+    the page from an hour before, where the server allows it, else a link to it."""
+    event = _gift_circle(slug)
+    if not request.user.is_authenticated:
+        return redirect(f"{reverse('users:login')}?{urlencode({'next': request.path})}")
+    if not (event.is_online and video.may_join(event, request.user)):
+        return redirect(event.get_absolute_url())
+    return _video_call(request, event, request.user.name, reverse("gift_circles:giftsheet", args=[slug]))
+
+
+def guest_video_call(request, slug, token):
+    guest = _guest(slug, token)
+    if not guest.confirmed_at:
+        return redirect(_guest_url(guest, "guest_confirm"))
+    if not guest.event.is_online:
+        return redirect(_guest_url(guest))
+    return _video_call(request, guest.event, guest.name, _guest_url(guest, "guest_giftsheet"), guest=guest)
+
+
+def _video_call(request, event, name, giftsheet_url, guest=None):
+    is_open = video.is_open(event)
+    return render(request, "gift_circles/video_call.html", {
+        "event": event, "guest": guest, "is_open": is_open, "opens": video.opens(event),
+        "is_over": event.is_over or event.archived_at is not None,
+        "room_url": video.room_url(event) if is_open else "",
+        "embed_url": video.embed_url(event, name) if is_open and video.embeds(event) else "",
+        "giftsheet_url": giftsheet_url,
+        "back_url": _guest_url(guest) if guest else event.get_absolute_url(),
+    })
 
 
 # ── After the circle ────────────────────────────────────────────────

@@ -1,5 +1,8 @@
-{% load i18n %}{# On a gift-circle's page while it is ahead: its host and who comes invite people, anyone shares its link #}
+{% load i18n %}{# On a gift-circle's page while it is ahead: its host and who comes join its video call (online) and invite people, anyone shares its link #}
 <div class="mt-8 text-center" x-data="shareLink('{{ event.get_absolute_url|escapejs }}')">
+  {% if event.is_online and can_edit or event.is_online and own_coming %}
+    <a href="{% url 'gift_circles:video_call' event.slug %}" class="btn block w-full text-center mb-2"><i class="fa-solid fa-video mr-1"></i>{% trans "Join the video call" %}</a>
+  {% endif %}
   {% if can_edit or own_coming %}
     <a href="{% url 'gift_circles:invite' event.slug %}" class="btn btn-purple block w-full text-center"><i class="fa-solid fa-user-plus mr-1"></i>{% trans "Invite people" %}</a>
   {% endif %}

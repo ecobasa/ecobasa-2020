@@ -1,0 +1,16 @@
+{% load i18n %}{% autoescape off %}{% blocktrans with name=recipient.name|default:recipient.email %}Hello {{ name }},{% endblocktrans %}
+
+{% blocktrans with title=event.title host=event.host_name %}In an hour the gift-circle {{ title }} begins, hosted by {{ host }}.{% endblocktrans %}
+
+{% include "gift_circles/_when.txt" %}
+
+{% trans "Join the video call:" %} {{ video_call_url }}
+{% if is_host %}
+{% trans "Come a few minutes early, so the room is open when the others come. Your card and the Giftsheet:" %} {{ print_url }}
+{% endif %}{% if is_guest %}
+{% trans "Change or cancel your sign-up:" %} {{ manage_url }}
+{% endif %}
+{% trans "See you there!" %}
+
+--
+ecobasa.org{% endautoescape %}

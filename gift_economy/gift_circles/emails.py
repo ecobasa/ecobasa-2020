@@ -13,6 +13,7 @@ from django.utils.translation import gettext as _, gettext_lazy, gettext_noop
 
 from events.ics import ics
 
+from .models import Guest
 from .timings import timings
 
 
@@ -28,9 +29,18 @@ def exact_place(event):
     return event.get_match_location()[1]
 
 
+def video_call_url(event, recipient):
+    """Online, the page of its video call on ecobasa: a guest's through their link."""
+    if not event.is_online:
+        return ""
+    if isinstance(recipient, Guest):
+        return _absolute(reverse("gift_circles:guest_video_call", args=[event.slug, recipient.token]))
+    return _absolute(reverse("gift_circles:video_call", args=[event.slug]))
+
+
 def _send(event, recipient, template, subject, place_name=None, calendar=True, subject_args=None, reply_to=None, **extra):
     """`recipient`: a user, a guest or an invitation by email. Without `place_name` its
-    place as a user may see it."""
+    place as a user may see it. Online, the calendar file's place is its video call."""
     with translation.override(recipient.language or settings.LANGUAGE_CODE):
         if place_name is None:
             # Its exact place: the host and who comes may know it
@@ -45,11 +55,12 @@ def _send(event, recipient, template, subject, place_name=None, calendar=True, s
             "print_url": _absolute(reverse("gift_circles:print", args=[event.slug])),
             "headline": _(subject) % {"title": event.title, **(subject_args or {})},
             "timings": timings(event),
+            "video_call_url": video_call_url(event, recipient),
             **extra,
         }
         text_body = render_to_string(f"gift_circles/email/{template}.txt", context)
         html_body = render_to_string(f"gift_circles/email/{template}.html", context)
-        calendar = ics(event, place_name) if calendar and event.starts_on else None
+        calendar = ics(event, context["video_call_url"] or place_name) if calendar and event.starts_on else None
     message = EmailMultiAlternatives(
         subject=context["headline"], body=text_body, from_email=settings.DEFAULT_FROM_EMAIL, to=[recipient.email],
         reply_to=reply_to,

@@ -2,6 +2,7 @@
 {% block body %}
 <p style="margin:0 0 16px;font-size:15px;line-height:1.6;">{% blocktrans with title=event.title host=event.host_name %}Great that you're coming to the gift-circle {{ title }}, hosted by {{ host }}.{% endblocktrans %}</p>
 {% include "gift_circles/_when_where.html" %}
+{% include "gift_circles/_video_call.html" %}
 
 <h3 style="margin:24px 0 8px;font-size:17px;">{% trans "Think of a wish and an offer" %}</h3>
 <p style="margin:0 0 16px;font-size:15px;line-height:1.6;">{% trans "Before you come, think of one thing you wish for and one thing you can give. Small or big, a thing, some time, a skill." %} {% trans "Advice: be careful what you wish for, it might come true ;)" %}</p>

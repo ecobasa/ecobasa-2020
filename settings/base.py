@@ -269,6 +269,14 @@ STADIA_MAPS_KEY = env('STADIA_MAPS_KEY', default='cb8069a3-9585-4989-a6a8-572b5c
 # Absolute links in emails sent outside a request (management commands)
 SITE_URL = env("DJANGO_SITE_URL", default="https://ecobasa.org")
 
+# VIDEO CALLS
+# ------------------------------------------------------------------------------
+# The Jitsi server for online gift-circles: a room on it per circle, with a name nobody
+# guesses. JITSI_EMBED: the server lets ecobasa show the room in its own page (its
+# Content-Security-Policy allows ecobasa as frame-ancestor); otherwise the page links to it
+JITSI_BASE_URL = env("JITSI_BASE_URL", default="https://meet.systemli.org")
+JITSI_EMBED = env.bool("JITSI_EMBED", default=True)
+
 # REFERENCE REQUESTS
 # ------------------------------------------------------------------------------
 # After a match, both sides are asked for their story (send_reference_requests, daily, see crontab).

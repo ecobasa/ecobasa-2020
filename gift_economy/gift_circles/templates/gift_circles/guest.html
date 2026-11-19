@@ -13,6 +13,9 @@
     {% if place_name %}<p class="mb-0"><i class="fa fa-map-marker mr-1"></i>{{ place_name }}</p>{% endif %}
   </div>
 
+  {% if event.is_online and event.is_current %}
+    <a href="{% url 'gift_circles:guest_video_call' event.slug guest.token %}" class="btn mb-6"><i class="fa-solid fa-video mr-1"></i>{% trans "Join the video call" %}</a>
+  {% endif %}
   <a href="{% url 'gift_circles:guest_giftsheet' event.slug guest.token %}" class="btn btn-purple mb-6"><i class="fa-solid fa-table-list mr-1"></i>{% trans "Open the Giftsheet" %}</a>
 
   {% if event.is_current %}

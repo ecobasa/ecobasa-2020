@@ -13,6 +13,7 @@ urlpatterns = [
     path("gift-circles/<slug:slug>/giftsheet/photos/<int:pk>/delete/", views.giftsheet_photo, name="giftsheet_photo_delete"),
     path("gift-circles/<slug:slug>/giftsheet/print/", views.print_giftsheet, name="print"),
     path("gift-circles/<slug:slug>/next/", views.plan_next, name="next"),
+    path("gift-circles/<slug:slug>/video-call/", views.video_call, name="video_call"),
     path("gift-circles/<slug:slug>/stories/", views.story, name="story"),
     path("gift-circles/<slug:slug>/wishes/<str:key>/", views.wishes, name="wishes"),
     path("gift-circles/<slug:slug>/scribes/", views.scribe, name="scribe"),
@@ -27,6 +28,7 @@ urlpatterns = [
     path("gift-circles/<slug:slug>/guests/<str:token>/confirm/", views.guest_confirm, name="guest_confirm"),
     path("gift-circles/<slug:slug>/guests/<str:token>/account/", views.guest_account, name="guest_account"),
     path("gift-circles/<slug:slug>/guests/<str:token>/giftsheet/", views.guest_giftsheet, name="guest_giftsheet"),
+    path("gift-circles/<slug:slug>/guests/<str:token>/video-call/", views.guest_video_call, name="guest_video_call"),
     path("gift-circles/<slug:slug>/guests/<str:token>/giftsheet/print/", views.print_giftsheet, name="guest_print"),
     path(
         "gift-circles/<slug:slug>/guests/<str:token>/giftsheet/entries/<int:pk>/", views.giftsheet_entry,

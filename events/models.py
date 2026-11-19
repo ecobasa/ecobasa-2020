@@ -122,6 +122,8 @@ class Event(models.Model):
     # (last: the field hides the timezone module in this class body)
     is_online = models.BooleanField(_("Online, as a video call"), default=False)
     video_url = models.URLField(_("Video link"), blank=True)
+    # When the video call went to who comes, an hour before
+    video_call_mailed_at = models.DateTimeField(null=True, blank=True)
     timezone = models.CharField(_("Timezone"), max_length=64, blank=True)
     # The one it follows on, planned by someone who came to that one
     previous = models.ForeignKey(

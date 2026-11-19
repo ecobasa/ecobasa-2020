@@ -2,6 +2,7 @@
 {% block body %}
 <p style="margin:0 0 16px;font-size:15px;line-height:1.6;">{% trans "Thank you for inviting to a gift-circle! Here is everything you need on the day." %}</p>
 {% include "gift_circles/_when_where.html" with with_title=True %}
+{% include "gift_circles/_video_call.html" %}
 <p style="margin:0 0 16px;font-size:15px;line-height:1.6;">{% trans "Share this page so people can come:" %} <a href="{{ event_url }}" style="color:#da6137;">{{ event_url }}</a></p>
 
 <h2 style="margin:32px 0 4px;font-size:20px;font-family:'Bree Serif',Georgia,serif;color:#da6137;">{% trans "Your facilitator card" %}</h2>

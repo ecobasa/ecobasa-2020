@@ -2,6 +2,7 @@
 {% block body %}
 <p style="margin:0 0 16px;font-size:15px;line-height:1.6;">{% blocktrans with title=event.title host=event.host_name %}Tomorrow is the gift-circle {{ title }}, hosted by {{ host }}.{% endblocktrans %}</p>
 {% include "gift_circles/_when_where.html" %}
+{% include "gift_circles/_video_call.html" %}
 
 {% if suggestions %}
   <p style="margin:0 0 8px;font-size:15px;line-height:1.6;">{% trans "Others who come have what you wish for, or wish for what you have. Bring it up in the circle:" %}</p>

@@ -5,7 +5,7 @@
 {{ event.title }}
 {% include "gift_circles/_when.txt" %}{% if place_name %}
 {{ place_name }}{% endif %}
-
+{% include "gift_circles/_video_call.txt" %}
 {% trans "Share this page so people can come:" %} {{ event_url }}
 
 

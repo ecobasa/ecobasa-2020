@@ -4,7 +4,7 @@
 
 {% include "gift_circles/_when.txt" %}{% if place_name %}
 {{ place_name }}{% endif %}
-{% if suggestions %}
+{% include "gift_circles/_video_call.txt" %}{% if suggestions %}
 {% trans "Others who come have what you wish for, or wish for what you have. Bring it up in the circle:" %}
 {% for s in suggestions %}
 - {{ s.text }} ({% blocktrans with own=s.own_text %}fits {{ own }}{% endblocktrans %})
