@@ -1,14 +1,15 @@
 """Children: what they grow out of or need for a while, outdoors first (rain trousers,
-rubber boots, snowsuits, woollen underwear), and toys, sports gear, cloth nappies, lunch
-boxes, water bottles, backpacks, school and drawing things, carving and exploring gear,
-games consoles. Childcare is a skill ("Childcare"), not a thing.
+rubber boots, snowsuits, woollen underwear), baby things (cloth nappies, bottles, a
+nursing pillow, a cot, a high chair, a changing table), maternity clothes, toys, costumes,
+sports gear, lunch boxes, water bottles, backpacks, school and drawing things, carving and
+exploring gear, games consoles. Childcare is a skill ("Childcare"), not a thing.
 
 Each entry: (slug, broader thing's slug, gift category slug, en, de, es, fr, other
 names in any language separated by "|"). A broader thing goes before the narrower ones.
 Clothes and shoes have a size (Listing.size, by SIZED_THINGS): everything under
-"childrens-clothes" a clothing size, under "childrens-shoes", socks and ice skates a shoe
-size; hats, scarves and gloves don't. A slug follows the English name, so things also made
-for grown-ups start with "childrens-" ("childrens-snowboard", "childrens-carving-set"); toys,
+"childrens-clothes" a clothing size, under "childrens-shoes", socks, ice skates and ski
+boots a shoe size; maternity clothes, hats, scarves and gloves none. A slug follows the
+English name, so things also made for grown-ups start with "childrens-" ("childrens-snowboard", "childrens-carving-set"); toys,
 pram and child seat came from the other things, the children's bike from the vehicles
 (car seats and bike trailers for children stay vehicles). Things also named for grown-ups
 (snowboard, skis, scooter, carving tools, phone, paper) are named as the children's ones
@@ -41,7 +42,8 @@ CHILDREN = [
     ("trousers", "childrens-clothes", C, "Trousers", "Hose", "Pantalón", "Pantalon", "Hosen|Jeans|Leggings|Jogginghose|Latzhose|pants|dungarees|shorts|kurze Hose|pantalones"),
     ("tops", "childrens-clothes", C, "Tops", "Oberteile", "Camisetas y jerséis", "Hauts", "Oberteil|T-Shirt|Shirt|Pullover|Pulli|Sweatshirt|Hoodie|Langarmshirt|Strickjacke|cardigan|jumper|sweater|camiseta|jersey|pull|tee-shirt"),
     ("dress", "childrens-clothes", C, "Dress", "Kleid", "Vestido", "Robe", "Kleider|Rock|skirt|falda|jupe"),
-    ("sleepwear", "childrens-clothes", C, "Pyjamas", "Schlafanzug", "Pijama", "Pyjama", "Schlafanzüge|pajamas|Nachthemd|nightie|Babyschlafsack|Kinderschlafsack|baby sleeping bag|gigoteuse|saco de dormir de bebé"),
+    ("sleepwear", "childrens-clothes", C, "Pyjamas", "Schlafanzug", "Pijama", "Pyjama", "Schlafanzüge|pajamas|Nachthemd|nightie"),
+    ("baby-sleeping-bag", "childrens-clothes", C, "Baby sleeping bag", "Babyschlafsack", "Saco de dormir de bebé", "Gigoteuse", "Schlafsack für Babys|Winterschlafsack|Sommerschlafsack|Pucksack|Strampelsack|sleep sack|swaddle|turbulette"),
     ("underwear", "childrens-clothes", C, "Underwear", "Unterwäsche", "Ropa interior", "Sous-vêtements", "Unterhosen|Unterhemd|Unterhemden|Strumpfhose|Strumpfhosen|tights|collants|braguitas|culottes"),
     # Socks go by shoe size (Listing.SIZED_THINGS)
     ("socks", "childrens-clothes", C, "Socks", "Socken", "Calcetines", "Chaussettes", "Socke|Strümpfe|Kniestrümpfe|Wollsocken|Stoppersocken|Rutschsocken|ABS-Socken|Skisocken|Wandersocken|wool socks|calcetines antideslizantes|chaussettes antidérapantes"),
@@ -66,6 +68,25 @@ CHILDREN = [
     ("pram", "childrens-things", T, "Pram", "Kinderwagen", "Cochecito", "Poussette", "Buggy|stroller|pushchair|Sportwagen|Fahrradanhänger für Kinder|carrito"),
     ("baby-carrier", "childrens-things", T, "Baby carrier", "Babytrage", "Portabebés", "Porte-bébé", "Tragetuch|Tragehilfe|sling|baby sling|Kraxe|Rückentrage|Kindertrage|hiking child carrier|fular"),
     ("child-seat", "childrens-things", T, "Child seat", "Kindersitz", "Asiento infantil", "Siège enfant", "Fahrradsitz|Fahrradkindersitz|bike seat|Kinderfahrradsitz"),
+    ("nursing-pillow", "childrens-things", T, "Nursing pillow", "Stillkissen", "Cojín de lactancia", "Coussin d'allaitement", "Schwangerschaftskissen|pregnancy pillow|Seitenschläferkissen|Lagerungskissen|breastfeeding pillow|nursing cushion|almohada de lactancia"),
+    ("baby-bottles", "childrens-things", "kitchen-household", "Baby bottles", "Babyfläschchen", "Biberones", "Biberons", "Fläschchen|Babyflasche|Babyflaschen|Glasfläschchen|feeding bottle|Sterilisator|Vaporisator|bottle steriliser|Flaschenwärmer|bottle warmer|biberón|biberon"),
+    ("breast-pump", "childrens-things", "health-body", "Breast pump", "Milchpumpe", "Sacaleches", "Tire-lait", "Brustpumpe|Handmilchpumpe|elektrische Milchpumpe|extractor de leche"),
+    ("potty", "childrens-things", "health-body", "Potty", "Töpfchen", "Orinal infantil", "Pot pour bébé", "Kindertöpfchen|Toilettensitz für Kinder|Toilettenaufsatz|Kindertoilettensitz|toilet trainer|Tritthocker|step stool|réducteur de toilettes|reductor de WC"),
+    ("baby-monitor", "childrens-things", "electronics-computers", "Baby monitor", "Babyphone", "Vigilabebés", "Babyphone", "Babyfon|Babyphon|Video-Babyphone|baby phone|écoute-bébé|monitor de bebé"),
+    ("maternity-clothes", "childrens-things", C, "Maternity clothes", "Umstandsmode", "Ropa premamá", "Vêtements de grossesse", "Umstandskleidung|Umstandshose|Umstandskleid|Schwangerschaftskleidung|Bauchband|Stillkleidung|Still-BH|Stilltop|nursing bra|nursing top|pregnancy clothes|ropa de lactancia|vêtements d'allaitement"),
+
+    # ── Baby and children's furniture ───────────────────────────────────────,
+    ("childrens-furniture", "childrens-things", "furniture", "Baby & children's furniture", "Baby- & Kindermöbel", "Muebles infantiles", "Meubles d'enfant", "Kindermöbel|Babymöbel|children's furniture|nursery furniture|Kinderzimmermöbel|muebles de bebé|mobilier enfant"),
+    ("high-chair", "childrens-furniture", "furniture", "High chair", "Hochstuhl", "Trona", "Chaise haute", "Kinderhochstuhl|Treppenhochstuhl|Babystuhl|Sitzerhöhung|booster seat|chaise bébé"),
+    ("cot", "childrens-furniture", "furniture", "Cot", "Kinderbett", "Cuna", "Lit bébé", "Babybett|Gitterbett|Kinderbettchen|Juniorbett|crib|Wiege|cradle|Stubenwagen|Moses basket|lit à barreaux|berceau"),
+    ("travel-cot", "cot", "furniture", "Travel cot", "Reisebett", "Cuna de viaje", "Lit parapluie", "Reisebettchen|Kinderreisebett|travel crib|lit de voyage"),
+    ("bedside-cot", "cot", "furniture", "Bedside cot", "Beistellbett", "Cuna de colecho", "Lit cododo", "Babybalkon|Anstellbett|co-sleeper|bedside crib|cododo|colecho"),
+    ("changing-table", "childrens-furniture", "furniture", "Changing table", "Wickeltisch", "Cambiador", "Table à langer", "Wickelkommode|Wickelaufsatz|Wickelauflage|Wickelunterlage|changing mat|changing unit|matelas à langer|cambiador portátil"),
+    ("baby-bath", "childrens-furniture", "health-body", "Baby bath", "Babybadewanne", "Bañera para bebé", "Baignoire bébé", "Babywanne|Badeeimer|Badewanneneinsatz|Badesitz|bath seat|baignoire pour bébé"),
+    ("bouncer", "childrens-furniture", "furniture", "Baby bouncer", "Babywippe", "Hamaca para bebé", "Transat", "Wippe|Babyschaukel|baby swing|Federwiege|Hängewiege|baby rocker|bouncy chair|transat bébé|balancelle"),
+    ("playpen", "childrens-furniture", "furniture", "Playpen", "Laufstall", "Parque infantil", "Parc bébé", "Laufgitter|Krabbelgitter|play yard|parque de bebé|parc à bébé"),
+    ("baby-gate", "childrens-furniture", "furniture", "Baby gate", "Treppenschutzgitter", "Barrera de seguridad", "Barrière de sécurité", "Treppengitter|Türschutzgitter|Schutzgitter|stair gate|safety gate|barrera de escalera|barrière d'escalier"),
+    ("childrens-desk-chair", "childrens-furniture", "furniture", "Children's desk & chair", "Kinderschreibtisch & -stuhl", "Escritorio y silla infantil", "Bureau et chaise enfant", "Kinderschreibtisch|Kinderstuhl|Kindertisch|Kindersitzgruppe|mitwachsender Schreibtisch|mitwachsender Stuhl|Schülerschreibtisch|children's desk|children's chair|children's table|pupitre"),
 
     # ── Lunch, drinks, backpacks ─────────────────────────────────────────
     ("lunchbox", "childrens-things", "kitchen-household", "Lunch box", "Brotdose", "Fiambrera", "Boîte à goûter", "Vesperdose|Vesperbox|Brotbox|Brotzeitdose|Brotzeitbox|Jausenbox|Jausendose|Znünibox|Lunchbox|Bento|Edelstahldose|Kindergartendose|lonchera|boîte à tartines"),
@@ -83,7 +104,9 @@ CHILDREN = [
     ("toy-vehicles", "toys", T, "Toy vehicles", "Spielfahrzeuge", "Vehículos de juguete", "Véhicules jouets", "Spielfahrzeug|Spielzeugauto|Spielzeugautos|toy car|toy cars|Matchbox|Siku|Spielzeugbagger|Spielzeugtraktor|Holzeisenbahn|Spielzeugeisenbahn|Brio|toy train|Carrerabahn|Autorennbahn|coches de juguete|petites voitures"),
     ("rc-vehicles", "toy-vehicles", T, "Remote-controlled vehicle", "Ferngesteuertes Fahrzeug", "Vehículo teledirigido", "Véhicule télécommandé", "ferngesteuerte Fahrzeuge|ferngesteuertes Auto|ferngesteuerte Autos|Fernsteuerauto|ferngesteuerter Bagger|ferngesteuertes Boot|remote control car|coche teledirigido|voiture télécommandée"),
     ("dolls", "toys", T, "Dolls & soft toys", "Puppen & Kuscheltiere", "Muñecas y peluches", "Poupées & peluches", "Puppe|doll|Kuscheltier|Stofftier|Teddy|Teddybär|soft toy|Puppenwagen|Puppenhaus|Kaufladen|Spielküche|play kitchen|muñeca|peluche"),
+    ("costumes", "toys", T, "Costumes & dress-up", "Verkleidung & Kostüme", "Disfraces", "Déguisements", "Kostüm|Verkleidung|Faschingskostüm|Karnevalskostüm|Halloweenkostüm|Verkleidungskiste|dress-up|fancy dress|costume|disfraz|déguisement"),
     ("baby-toys", "toys", T, "Baby toys", "Babyspielzeug", "Juguetes para bebés", "Jouets d'éveil", "Rassel|rattle|Greifling|Beißring|teether|Motorikschleife|Spielbogen|Krabbeldecke|play mat|sonajero|hochet"),
+    ("childrens-instruments", "toys", "music-instruments", "Children's instruments", "Kinderinstrumente", "Instrumentos infantiles", "Instruments pour enfant", "Blockflöte|recorder|Glockenspiel|Xylophon|xylophone|Kinderukulele|Kindergitarre|Kinderkeyboard|Orff-Instrumente|Rhythmusinstrumente|flauta dulce|flûte à bec|metalófono"),
 
     # ── Sports gear ──────────────────────────────────────────────────────
     ("childrens-sports-gear", "childrens-things", "camping-travel", "Children's sports gear", "Kindersportgeräte", "Material deportivo infantil", "Matériel de sport pour enfants", "Kindersportsachen|Sportsachen für Kinder"),
@@ -95,13 +118,16 @@ CHILDREN = [
     ("skateboard", "childrens-sports-gear", "camping-travel", "Skateboard", "Skateboard", "Skateboard", "Skateboard", "Longboard|Pennyboard|Penny board|patineta"),
     ("childrens-inline-skates", "childrens-sports-gear", "camping-travel", "Children's inline skates", "Kinderinliner", "Patines infantiles", "Rollers enfant", "Rollschuhe|roller skates|Kinderrollschuhe|patines|patins à roulettes"),
     ("childrens-snowboard", "childrens-sports-gear", "camping-travel", "Children's snowboard", "Kindersnowboard", "Snowboard infantil", "Snowboard enfant", "Kinder-Snowboard|Kindersnowboardboots|Kindersnowboardschuhe"),
-    ("childrens-skis", "childrens-sports-gear", "camping-travel", "Children's skis", "Kinderski", "Esquís infantiles", "Skis enfant", "Kinderskier|Kinder-Ski|Kinderskischuhe|Kinderlanglaufski|Kinderskistöcke"),
+    ("childrens-skis", "childrens-sports-gear", "camping-travel", "Children's skis", "Kinderski", "Esquís infantiles", "Skis enfant", "Kinderskier|Kinder-Ski|Kinderlanglaufski|Kinderskistöcke"),
+    ("childrens-ski-boots", "childrens-sports-gear", "camping-travel", "Children's ski boots", "Kinderskischuhe", "Botas de esquí infantiles", "Chaussures de ski enfant", "Skischuhe|Skistiefel|Kinderskistiefel|Langlaufschuhe|Snowboardboots|Snowboardschuhe|ski boots|botas de esquí|chaussures de ski"),
     ("ice-skates", "childrens-sports-gear", "camping-travel", "Ice skates", "Schlittschuhe", "Patines de hielo", "Patins à glace", "Schlittschuh|Kinderschlittschuhe|Kufen|Doppelkufen|Gleitschuhe|Hockeyschlittschuhe|Eiskunstlaufschuhe|ice skate|patins"),
+    ("trampoline", "childrens-sports-gear", T, "Trampoline", "Trampolin", "Cama elástica", "Trampoline", "Gartentrampolin|Minitrampolin|Indoortrampolin|trampolín"),
     ("sledge", "childrens-sports-gear", "camping-travel", "Sledge", "Schlitten", "Trineo", "Luge", "sled|Rodel|Rodelschlitten|Davoser|Poporutscher|Rutschteller|snow tube"),
     ("childrens-helmet", "childrens-sports-gear", T, "Children's helmet", "Kinderhelm", "Casco infantil", "Casque enfant", "Fahrradhelm|Skihelm|Kletterhelm|bike helmet|ski helmet|casco|casque"),
 
     # ── School, drawing, crafting ────────────────────────────────────────
-    ("school-supplies", "childrens-things", "books-learning", "School supplies", "Schulsachen", "Material escolar", "Fournitures scolaires", "Schulbedarf|Schreibwaren|stationery|Federmäppchen|Mäppchen|Federtasche|pencil case|estuche|trousse"),
+    ("school-supplies", "childrens-things", "books-learning", "School supplies", "Schulsachen", "Material escolar", "Fournitures scolaires", "Schulbedarf|Schreibwaren|stationery"),
+    ("pencil-case", "school-supplies", "books-learning", "Pencil case", "Federmappe", "Estuche", "Trousse", "Mäppchen|Federmäppchen|Schlampermäppchen|Federtasche|pencil pouch|estuche escolar|trousse scolaire"),
     ("pens", "school-supplies", "arts-crafts", "Pens & crayons", "Stifte", "Lápices y rotuladores", "Crayons & feutres", "Stift|Buntstifte|Wachsmalstifte|Wachsmalblöcke|Filzstifte|Fasermaler|Bleistifte|Füller|Füllfederhalter|Kreide|Ölkreiden|Wasserfarben|Wasserfarbkasten|Malkasten|Fingerfarben|coloured pencils|felt-tip pens|markers|paint box|lápices de colores|rotuladores|ceras|crayons de couleur|feutres"),
     ("paper-pads", "school-supplies", "arts-crafts", "Paper & pads", "Papier & Blöcke", "Papel y blocs", "Papier & blocs", "Papierstapel"),
     ("drawing-paper", "paper-pads", "arts-crafts", "Drawing paper", "Zeichenpapier", "Papel de dibujo", "Papier à dessin", "Malpapier|Zeichenblock|Malblock|Skizzenbuch|Skizzenblock|Aquarellpapier|Malrolle|sketchbook|drawing pad|watercolour paper|bloc de dibujo|bloc à dessin"),

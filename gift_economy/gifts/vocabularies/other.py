@@ -10,7 +10,7 @@ OTHER = [
     ("furniture", "", "furniture", "Furniture", "Möbel", "Muebles", "Meubles", ""),
     ("table", "furniture", "furniture", "Table", "Tisch", "Mesa", "Table", "Esstisch|Schreibtisch|desk"),
     ("chair", "furniture", "furniture", "Chair", "Stuhl", "Silla", "Chaise", "Stühle|Hocker|stool|Bank|bench"),
-    ("bed", "furniture", "furniture", "Bed", "Bett", "Cama", "Lit", "Betten|Hochbett|Etagenbett|bunk bed|Bettgestell|bed frame|Kinderbett"),
+    ("bed", "furniture", "furniture", "Bed", "Bett", "Cama", "Lit", "Betten|Hochbett|Etagenbett|bunk bed|Bettgestell|bed frame"),
     ("sofa", "furniture", "furniture", "Sofa", "Sofa", "Sofá", "Canapé", "Couch|Sessel|armchair"),
     ("shelf", "furniture", "furniture", "Shelf", "Regal", "Estantería", "Étagère", "Bücherregal|shelves|Schrank|cupboard|wardrobe|Kleiderschrank"),
     # ── On the move, camping ─────────────────────────────────────────────

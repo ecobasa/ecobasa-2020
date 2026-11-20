@@ -462,8 +462,8 @@ class Listing(RandomIdMixin, models.Model):
     # size or one size smaller: children grow into it.
     CLOTHING_SIZES = tuple(range(50, 177, 6))
     SHOE_SIZES = tuple(range(16, 43))
-    # Socks and ice skates by shoe size, though socks are clothes
-    SIZED_THINGS = {"socks": SHOE_SIZES, "ice-skates": SHOE_SIZES, "childrens-clothes": CLOTHING_SIZES, "childrens-shoes": SHOE_SIZES}
+    # Socks, ice skates and ski boots by shoe size, though socks are clothes
+    SIZED_THINGS = {"socks": SHOE_SIZES, "ice-skates": SHOE_SIZES, "childrens-ski-boots": SHOE_SIZES, "childrens-clothes": CLOTHING_SIZES, "childrens-shoes": SHOE_SIZES}
     size = models.PositiveSmallIntegerField(
         _("Size"), null=True, blank=True,
         choices=[
