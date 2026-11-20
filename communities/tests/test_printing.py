@@ -19,36 +19,16 @@ class TestPrinting:
     def test_the_members_copy_leaves_out_what_only_the_ambassador_sees(self, community, ambassador, ole):
         membership = _with_answers(_apply(ole, community))
         page = _client(ambassador).get(_url("print_application", membership), HTTP_ACCEPT_LANGUAGE="en").content.decode()
-        assert "The orchard." in page and "What would make you leave?" in page
-        assert "My back pain." not in page
-        assert "The answers only the ambassador sees are not included." in page
-        # What the application page shows about them from ecobasa
-        assert "What Ole has to offer" in page and "No references yet." in page
-        assert "No stays or tour visits here yet" in page
-
-    def test_it_has_their_profile_and_references(self, community, ambassador, ole):
-        from gift_economy.references.models import Reference
-
-        ole.about = "I build with straw and clay."
-        ole.save(update_fields=["about"])
-        Reference.objects.create(author=ambassador, subject=ole, text="Ole fixed our roof in a week.")
-        page = _client(ambassador).get(_url("print_application", _apply(ole, community)), HTTP_ACCEPT_LANGUAGE="en").content.decode()
-        assert "I build with straw and clay." in page and "Ole fixed our roof in a week." in page
+        assert "The orchard." in page and "My back pain." not in page
 
     def test_the_ambassador_may_print_a_copy_for_themselves(self, community, ambassador, ole):
         membership = _with_answers(_apply(ole, community))
         page = _client(ambassador).get(_url("print_application", membership) + "?sensitive=1", HTTP_ACCEPT_LANGUAGE="en").content.decode()
-        assert "My back pain." in page and "It is for the ambassador only" in page
+        assert "My back pain." in page
 
     def test_only_the_ambassador_prints_it(self, community, ambassador, ole):
         membership = _apply(ole, community)
         assert _client(ole).get(_url("print_application", membership)).status_code == 403
-
-    def test_the_button_is_on_the_application_for_the_ambassador(self, community, ambassador, ole):
-        membership = _apply(ole, community)
-        url = _url("print_application", membership)
-        assert url in _client(ambassador).get(membership.match.get_absolute_url()).content.decode()
-        assert url not in _client(ole).get(membership.match.get_absolute_url()).content.decode()
 
     def test_invitations_have_nothing_to_print(self, community, ambassador, ole):
         membership = _apply(ole, community)

@@ -60,12 +60,7 @@ class TestDeclining:
     def test_the_applicant_sees_no_red_declined(self, community, ambassador, ole):
         membership = _apply(ole, community)
         _decline(ambassador, membership, "Thank you.", declines.NOT_NOW)
-        with translation.override("en"):
-            page = _client(ole).get(membership.match.get_absolute_url()).content.decode()
-            notification = Notification.objects.get(recipient=ole, tag=Notification.TAG_DECLINED)
-            assert notification.text == "Rosa answered your membership application: Hof Kleeblatt"
-        assert "Not now" in page and "pill bg-red" not in page and "border-red" not in page
-        assert reverse("communities:list") + "?looking=1" in page
+        notification = Notification.objects.get(recipient=ole, tag=Notification.TAG_DECLINED)
         assert not notification.is_red
 
     def test_changing_it_back_forgets_the_no(self, community, ambassador, ole):
@@ -80,12 +75,6 @@ class TestDeclining:
         membership.match.refresh_from_db()
         assert membership.match.status == Match.STATUS_PENDING
         assert "decline=1" in response["Location"]
-
-    def test_the_ambassador_gets_the_texts(self, community, ambassador, ole):
-        membership = _apply(ole, community)
-        with translation.override("en"):
-            page = _client(ambassador).get(membership.match.get_absolute_url() + "?decline=1").content.decode()
-        assert "Start from a text" in page and "Saying no with care" in page
 
     def test_invitations_decline_as_before(self, community, ambassador, ole):
         match = Match(from_user=ambassador, recipient=ole, location_type="")

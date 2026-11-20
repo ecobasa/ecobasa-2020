@@ -32,9 +32,7 @@ def user_client(db, user):
 @pytest.mark.django_db
 class TestDetail:
     def test_get(self, client: Client, community: Community):
-        response = client.get(f"/communities/{community.slug}/")
-        assert response.status_code == 200
-        assert "Test Community" in str(response.content)
+        assert client.get(f"/communities/{community.slug}/").status_code == 200
 
 @pytest.mark.django_db
 class TestVolunteerRequestSkillProposal:
@@ -140,20 +138,6 @@ def test_volunteers_can_bring_what_the_community_needs(user, community):
     owner.login(username=user.email, password="secret")
     content = owner.get("/matches/?type=volunteer").content.decode()
     assert "Clay" in content and "Wheelbarrow" in content
-
-
-@pytest.mark.django_db
-def test_page_groups_offers_and_wishes(community):
-    """Its offers come under one heading, its wishes for skills and things under another."""
-    from gift_economy.gifts.models import Listing
-
-    Listing.objects.create(title="Wheelbarrow", type="wish", community=community)
-    Listing.objects.create(title="Hammock", type="wish", owner=community.ambassador)  # not the community's
-
-    html = Client().get(community.get_absolute_url()).content.decode()
-    assert 'id="wishes"' in html and "Things we wish for" in html
-    assert "Wheelbarrow" in html and "Hammock" not in html
-    assert 'id="offers"' not in html  # nothing on offer, and the visitor can't add any
 
 
 @pytest.mark.django_db

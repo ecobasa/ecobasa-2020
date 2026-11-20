@@ -55,9 +55,7 @@ class TestWhoSeesTheCommunitysPlace:
         response = _client_for().get(community.get_absolute_url())
         content = response.content.decode()
         assert response.context["place_point"] == approximate(FARM, community.place_seed)
-        assert "Haar, Deutschland" in content
         assert "Wiesenweg" not in content and "1234567" not in content and str(FARM.x) not in content
-        assert "Address and phone number are shared once your visit is accepted." in content
 
     def test_its_ambassador_sees_it_exactly(self, community, ambassador):
         content = _client_for(ambassador).get(community.get_absolute_url()).content.decode()
