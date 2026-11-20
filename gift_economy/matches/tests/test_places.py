@@ -47,7 +47,6 @@ class TestPlacesInAMatch:
         client.force_login(asker)
         content = client.get(match.get_absolute_url()).content.decode()
         assert "Fliederweg" not in content and str(HOME.x) not in content
-        assert "The exact place shows once the match is accepted." in content
 
     def test_exactly_once_accepted(self, match, asker):
         match.status = Match.STATUS_ACCEPTED

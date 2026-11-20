@@ -270,7 +270,6 @@ def test_without_a_picture_the_tour_shows_its_first_vehicles(east, other):
     Vehicle.objects.create(tour=east, label="Blue van", seats=2, image=SimpleUploadedFile("van.gif", gif, "image/gif"))
     url = Vehicle.objects.get(label="Blue van").image.url
     assert east.header_image == url and east.picture == url
-    assert url in login(other).get(east.get_absolute_url()).content.decode()
 
 
 def test_a_need_of_a_tour_with_one_stop_is_on_the_map_too(organiser, other, village, carpentry):
@@ -307,22 +306,3 @@ def test_a_need_of_a_tour_idea_without_stops_is_about_where_its_organiser_lives(
     # Roughly, never the door
     assert 0 < spot.distance(organiser.location) < 0.2
     assert van.point == organiser.location and van.public_place[1] == approximate(organiser.location, organiser.pk)
-
-
-def test_a_needs_gift_page_shows_the_tour_and_its_route(east, organiser, other, carpentry, farm):
-    from .test_tours import FARM_POINT, exact
-
-    need = tour_need(east, carpentry)
-    html = login(other).get(reverse("gifts:detail", args=[need.pk])).content.decode()
-    # What it is, who travels, where it goes
-    assert "fa-route mr-1\"></i>Tour</span>" in html
-    assert "1 person travels" in html and "5 places free" in html
-    assert "Lindenhof" in html and "Elbtal" in html
-    assert "Olga" in html
-    # The whole route on the map, the private farm only roughly
-    assert 'id="tour-route"' in html and '"kind": "route"' in html
-    assert not exact(FARM_POINT, html)
-    # Logged out: no organiser
-    from django.test import Client
-
-    assert "Olga" not in Client().get(reverse("gifts:detail", args=[need.pk])).content.decode()

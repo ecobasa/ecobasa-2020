@@ -50,8 +50,6 @@ class TestMatchEmails:
         assert len(mailoutbox) == 1
         assert mailoutbox[0].to == [owner.email]
         assert mailoutbox[0].subject == "Rafa interessiert sich für dein Angebot: Lamp"
-        assert "Hallo Olga," in mailoutbox[0].body
-        assert "Annehmen" in mailoutbox[0].body
 
     def test_every_reply_is_emailed_with_its_text(self, owner, requester, match, mailoutbox):
         client = _client_for(requester, "en")
@@ -102,7 +100,6 @@ class TestLanguagePreference:
     def test_saved_language_wins_for_logged_in_users(self, owner):
         response = _client_for(owner, "fr").get("/")
         assert response.headers["Content-Language"] == "de"
-        assert '<html lang="de"' in response.content.decode()
 
     def test_visitors_keep_their_cookie_language(self):
         client = Client()

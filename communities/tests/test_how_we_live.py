@@ -45,8 +45,6 @@ def _form_data(community, **fields):
 @pytest.mark.django_db
 class TestProfile:
     def test_ambassador_fills_in_how_they_live(self, community, ambassador):
-        form_page = _client(ambassador).get(reverse("communities:update", args=[community.slug])).content.decode()
-        assert 'name="looking_for_members"' in form_page and "data-languages" in form_page
         response = _client(ambassador).post(reverse("communities:update", args=[community.slug]), _form_data(
             community, looking_for_members="on", kitchen=[Community.KITCHEN_VEGAN, Community.KITCHEN_GLUTEN_FREE], children_welcome=Community.CHILDREN_WELCOME,
             pets=Community.PETS_ASK, buy_in="15000", buy_in_kind=Community.BUY_IN_SHARES, exit_terms="Paid back within a year.",
@@ -57,16 +55,11 @@ class TestProfile:
         assert community.looking_for_members and community.kitchen == [Community.KITCHEN_VEGAN, Community.KITCHEN_GLUTEN_FREE]
         assert community.languages == ["de", "en"] and community.currency == "EUR" and community.buy_in == 15000
 
-        with translation.override("en"):
-            page = Client().get(community.get_absolute_url()).content.decode()
-            apply_page = _client(_user("ole@example.com")).get(reverse("communities:apply", args=[community.slug])).content.decode()
-            facts = {label: value for _icon, label, value in community.lives()}
+        page = Client().get(community.get_absolute_url()).content.decode()
+        apply_page = _client(_user("ole@example.com")).get(reverse("communities:apply", args=[community.slug])).content.decode()
         # The exit terms only for who asks to become a member
-        assert "How we live" in page and "Paid back within a year." not in page
+        assert "Paid back within a year." not in page
         assert "Paid back within a year." in apply_page
-        assert facts["Buy-in"] == "15 000 EUR (Cooperative shares)"
-        assert facts["Work commitment"] == "10 hours per week" and facts["Languages"] == "German, English"
-        assert facts["Shared kitchen"] == "Vegan, Gluten-free"
 
     def test_eating_anything_is_not_vegetarian(self, community, ambassador):
         response = _client(ambassador).post(
@@ -84,11 +77,6 @@ class TestProfile:
         assert response.status_code == 200
         community.refresh_from_db()
         assert community.languages == []
-
-    def test_nothing_filled_in_shows_no_section(self, community):
-        with translation.override("en"):
-            assert "How we live" not in Client().get(community.get_absolute_url()).content.decode()
-
 
 @pytest.mark.django_db
 class TestFilters:

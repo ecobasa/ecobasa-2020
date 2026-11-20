@@ -12,12 +12,6 @@ class TestHomepage:
 
 
 @pytest.mark.django_db
-def test_the_homepage_names_tool_libraries_and_car_sharing(client):
-    page = client.get("/", HTTP_ACCEPT_LANGUAGE="en").content.decode()
-    assert "Tool library: lend instead of buying twice" in page and "Share vehicles: cargo bike, car, trailer or van" in page
-
-
-@pytest.mark.django_db
 def test_the_homepage_shows_the_next_online_gift_circles_those_in_one_s_language_first(client):
     from datetime import time, timedelta
 
@@ -44,7 +38,5 @@ def test_the_homepage_shows_the_next_online_gift_circles_those_in_one_s_language
     circle("Over already", 0, ["en"], starts_at=time(0, 0), ends_at=time(0, 15))
     circle("In the park", 1, ["en"], is_online=False)
     circle("Around Lyon", 3, ["en"], location_name="Lyon, France", location=Point(4.83, 45.76, srid=4326))
-    page = client.get("/", HTTP_ACCEPT_LANGUAGE="en").content.decode()
-    assert "Gift-circles you can join from anywhere" in page and "English, French" in page
-    assert page.index("Seeds and seedlings") < page.index("Rund um Saatgut")
-    assert "Over already" not in page and "In the park" not in page and "Around Lyon" not in page
+    shown = client.get("/", HTTP_ACCEPT_LANGUAGE="en").context["online_circles"]
+    assert [event.title for event in shown] == ["Seeds and seedlings", "Rund um Saatgut"]

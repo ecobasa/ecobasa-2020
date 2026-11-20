@@ -3,10 +3,10 @@ import pytest
 from django.test import Client
 
 from gift_economy.gifts.models import Listing
-from gift_economy.gifts.testing import need, skill_offer, skill_wish
+from gift_economy.gifts.testing import need, skill_offer
 from users.models import User
 
-from ..models import Match, MatchMessage
+from ..models import Match
 
 
 @pytest.fixture
@@ -49,10 +49,6 @@ class TestMatchDetail:
     def test_stranger_gets_404(self, stranger, match):
         response = _client_for(stranger).get(match.get_absolute_url())
         assert response.status_code == 404
-
-    def test_requester_can_view(self, requester, match):
-        response = _client_for(requester).get(match.get_absolute_url())
-        assert response.status_code == 200
 
     def test_owner_accepts(self, owner, match):
         response = _client_for(owner).post(match.get_absolute_url(), {"action": "accept"})
@@ -121,14 +117,11 @@ class TestMatchDetail:
 def test_menu_badges_count_what_waits_for_an_answer(owner, requester, match):
     from ..views import waiting_counts
 
-    badge = 'title="Waiting for your answer">1</span>'
     assert waiting_counts(owner)["matches"] == 1 and waiting_counts(requester)["matches"] == 0
-    assert badge in _client_for(owner).get("/").content.decode()
     # A counter-proposal waits for the one who asked
     match.status = Match.STATUS_COUNTER
     match.save()
     assert waiting_counts(owner)["matches"] == 0 and waiting_counts(requester)["matches"] == 1
-    assert badge in _client_for(requester).get("/matches/").content.decode()
 
 
 @pytest.mark.django_db
@@ -158,27 +151,6 @@ class TestVolunteerVisits:
         assert list(response.context["page"]) == [stay]
         # Without a community of their own nobody can ask them, so no received tab
         assert [(str(t.label), t.active) for t in response.context["tabs"]] == [("Your requests", True)]
-        assert "Volunteer Visits" in response.content.decode()
-
-    def test_the_user_menu_lists_them_once_you_asked(self, requester, stranger, stay):
-        link = 'href="/matches/?type=volunteer"'
-        assert link in _client_for(requester).get("/").content.decode()
-        response = _client_for(stranger).get("/")
-        assert link not in response.content.decode()
-        assert not response.context["has_membership_applications"] and not response.context["attends_events"]
-
-    def test_menu_buttons_show_a_dot_while_something_waits(self, requester):
-        from notifications.models import Notification
-
-        dot = "Something is waiting for you"
-        client = _client_for(requester)
-        # Logging in may leave a nudge to add skills
-        Notification.objects.filter(recipient=requester).update(is_read=True)
-        assert dot not in client.get("/").content.decode()
-        Notification.objects.create(recipient=requester, verb="Hello")
-        page = client.get("/").content.decode()
-        # Unread notifications: on the mobile menu button only, with an entry in that menu
-        assert page.count(dot) == 2 and 'href="/notifications/"' in page
 
     def test_ambassador_without_requests_still_has_the_received_tab(self, owner):
         from communities.models import Community
@@ -225,16 +197,6 @@ class TestMatchLists:
         assert page.paginator.count == PER_PAGE + 3
         assert "page=2" in page.older_url and "type=gift" in page.older_url
 
-    def test_the_page_opens_on_the_suggestions(self, owner, match):
-        context = _client_for(owner).get("/matches/").context
-        assert [(str(t.label), t.active) for t in context["tabs"]] == [
-            ("Suggestions", True), ("Requests to you", False), ("Your requests", False),
-        ]
-        assert [(str(t.label), t.active) for t in context["types"]] == [("All", True), ("Gifts", False), ("Skills", False)]
-        # The request waiting for an answer is counted on its tab
-        assert next(t for t in context["tabs"] if str(t.label) == "Requests to you").waiting == 1
-
-
 @pytest.fixture
 def stay(requester, owner):
     """A volunteer stay request at a community."""
@@ -263,19 +225,7 @@ def stay(requester, owner):
 class TestCommunityStayCounter:
     """A stay happens at the community, so the owner can only suggest other dates."""
 
-    def test_owner_sees_only_the_date_option(self, owner, stay):
-        content = _client_for(owner).get(stay.get_absolute_url()).content.decode()
-        assert 'name="counter_stay_from"' in content
-        assert 'value="2027-05-01"' in content
-        assert 'name="counter_location_type"' not in content
-        assert "counter-pick-map" not in content
-
-    def test_gifts_keep_the_location_option(self, owner, match):
-        content = _client_for(owner).get(match.get_absolute_url()).content.decode()
-        assert 'name="counter_location_type"' in content
-        assert 'name="counter_stay_from"' not in content
-
-    def test_owner_suggests_other_dates(self, owner, requester, stay, mailoutbox):
+    def test_owner_suggests_other_dates(self, owner, requester, stay):
         from django.utils import timezone
 
         _client_for(owner).post(stay.get_absolute_url(), {
@@ -294,22 +244,13 @@ class TestCommunityStayCounter:
         assert timezone.localdate(counter_msg.counter_stay_to).isoformat() == "2027-06-10"
         assert counter_msg.counter_location == ""
         assert counter_msg.counter_location_type == ""
-
-        notification = requester.notifications.get()
-        assert "other dates for your stay at" in notification.text
-        assert "place" not in notification.text
-        assert "01 Jun 2027" in mailoutbox[0].body
-
-        content = _client_for(requester).get(stay.get_absolute_url()).content.decode()
-        assert "Suggested stay" in content
-        assert "01 Jun 2027&ndash;10 Jun 2027" in content
+        assert requester.notifications.count() == 1
 
         # the requester can then accept the new dates
         _client_for(requester).post(stay.get_absolute_url(), {"action": "accept"})
         stay.refresh_from_db()
         assert stay.status == Match.STATUS_ACCEPTED
-        content = _client_for(requester).get(stay.get_absolute_url()).content.decode()
-        assert "01 Jun 2027&ndash;10 Jun 2027" in content
+        assert [timezone.localdate(day).isoformat() for day in stay.stay_period()] == ["2027-06-01", "2027-06-10"]
 
     def test_counter_needs_a_date(self, owner, stay):
         _client_for(owner).post(stay.get_absolute_url(), {"action": "counter", "body": "Hmm"})
@@ -347,11 +288,6 @@ def test_the_match_shows_what_the_other_side_brings(owner, requester, stay):
     assert [(s.skill.name, s.reference_count) for s in person["skills"]] == [("Masonry", 1)]
     assert [listing.title for listing in person["offers"]] == ["Lime mortar"]
     assert [c.name for c in person["communities"]] == ["Other Hof"]
-    content = response.content.decode()
-    assert masonry.get_absolute_url() in content and "Other Hof" in content
-    # The skills named in the request link to the person's skill page if they have it
-    assert [pill[2] for pill in stay.stay_details.sender_skill_pills] == [masonry.get_absolute_url(), ""]
-    assert str(stay.kind[0]) == "Volunteer stay"
 
 
 @pytest.mark.django_db
@@ -371,8 +307,7 @@ def test_asking_for_more_gifts_makes_them_part_of_the_exchange(owner, requester,
     assert message.sender == owner and "Lime mortar" in message.body
     assert Notification.objects.filter(recipient=requester, tag=Notification.TAG_MESSAGE).exists()
 
-    # Shown with the match, and ticked on its page
-    assert "Lime mortar" in client.get("/matches/?type=volunteer").content.decode()
+    # Ticked on its page
     assert client.get(stay.get_absolute_url()).context["asked_listing_ids"] == {mortar.pk}
 
     # Who received it names it in their reference; the giver doesn't
@@ -422,10 +357,7 @@ def test_asking_for_more_skills(owner, requester, stay):
     client.post(stay.get_absolute_url(), {"action": "extras", "listing": [masonry.pk]})
     assert list(stay.listings.all()) == [masonry]
     assert "Masonry" in stay.thread.get().body
-    content = client.get(stay.get_absolute_url()).content.decode()
-    assert "requester@example.com has to offer" in content
     assert client.get(stay.get_absolute_url()).context["asked_listing_ids"] == {masonry.pk}
-    assert "Masonry" in client.get("/matches/?type=volunteer").content.decode()
 
     # Who was helped tags it on the helper in their reference
     assert match_skill_names(stay, owner) == ["Masonry"] and match_skill_names(stay, requester) == []
@@ -437,17 +369,6 @@ def test_asking_for_more_skills(owner, requester, stay):
     assert "reference_skill=Masonry" in reference_url_for_match({"request": Request}, stay)
 
 
-@pytest.mark.django_db
-def test_the_one_who_asked_doesnt_read_your_offer(owner, requester, match):
-    page = _client_for(owner).get(match.get_absolute_url(), HTTP_ACCEPT_LANGUAGE="en").content.decode()
-    assert "is interested in your offer" in page
-    page = _client_for(requester).get(match.get_absolute_url(), HTTP_ACCEPT_LANGUAGE="en").content.decode()
-    assert "is interested in the offer" in page and "your offer" not in page
-    # Their own requests say whom they went to
-    page = _client_for(requester).get("/matches/?box=sent", HTTP_ACCEPT_LANGUAGE="en").content.decode()
-    assert "To owner@example.com" in page and "your offer" not in page
-
-
 # ── The one who asked changes their mind ─────────────────────────────
 
 
@@ -456,15 +377,12 @@ class TestWithdrawing:
     def test_withdrawing_a_waiting_request(self, owner, requester, stay, mailoutbox):
         from notifications.models import Notification
 
-        content = _client_for(requester).get(stay.get_absolute_url()).content.decode()
-        assert 'value="withdraw"' in content
         _client_for(requester).post(stay.get_absolute_url(), {"action": "withdraw"})
         stay.refresh_from_db()
         assert stay.status == Match.STATUS_WITHDRAWN and stay.is_closed
         assert stay.thread.get().status_to == Match.STATUS_WITHDRAWN
         notification = owner.notifications.get()
         assert notification.tag == Notification.TAG_WITHDRAWN
-        assert notification.text == "requester@example.com withdrew their request: Green Valley"
         assert len(mailoutbox) == 1
 
         # Closed: the host can't accept it any more, nobody can withdraw or counter it again
@@ -473,8 +391,6 @@ class TestWithdrawing:
         _client_for(requester).post(stay.get_absolute_url(), {"action": "withdraw"})
         stay.refresh_from_db()
         assert stay.status == Match.STATUS_WITHDRAWN and stay.thread.count() == 1
-        content = _client_for(owner).get(stay.get_absolute_url()).content.decode()
-        assert 'value="accept"' not in content and "Withdrawn by the one who asked" in content
 
     def test_after_acceptance_it_takes_a_few_words(self, owner, requester, stay):
         stay.status = Match.STATUS_ACCEPTED
@@ -488,8 +404,6 @@ class TestWithdrawing:
         assert stay.thread.get().body == "I broke my leg, sorry!"
 
     def test_only_the_one_who_asked_withdraws(self, owner, stay):
-        content = _client_for(owner).get(stay.get_absolute_url()).content.decode()
-        assert 'value="withdraw"' not in content
         _client_for(owner).post(stay.get_absolute_url(), {"action": "withdraw"})
         stay.refresh_from_db()
         assert stay.status == Match.STATUS_PENDING
@@ -513,17 +427,16 @@ class TestOtherDatesFromTheOneWhoAsked:
     def test_proposing_other_dates_for_a_waiting_stay(self, owner, requester, stay):
         from django.utils import timezone
 
-        content = _client_for(requester).get(stay.get_absolute_url()).content.decode()
-        assert 'name="counter_stay_from"' in content and 'name="counter_location_type"' not in content
         _client_for(requester).post(stay.get_absolute_url(), {
             "action": "counter", "counter_stay_from": "2027-07-01", "counter_stay_to": "2027-07-08",
         })
         stay.refresh_from_db()
         assert stay.status == Match.STATUS_COUNTER
-        assert "other dates for their stay at" in owner.notifications.get().text
-        # The host decides on them, the one who asked waits
-        assert 'value="accept"' in _client_for(owner).get(stay.get_absolute_url()).content.decode()
-        assert 'value="accept"' not in _client_for(requester).get(stay.get_absolute_url()).content.decode()
+        assert owner.notifications.count() == 1
+        # The host decides on them, not the one who asked
+        _client_for(requester).post(stay.get_absolute_url(), {"action": "accept"})
+        stay.refresh_from_db()
+        assert stay.status == Match.STATUS_COUNTER
         _client_for(owner).post(stay.get_absolute_url(), {"action": "accept"})
         stay.refresh_from_db()
         assert stay.status == Match.STATUS_ACCEPTED

@@ -10542,3 +10542,29 @@ msgstr "En ligne – par appel vidéo ou téléphone"
 
 msgid "Online, by video call or phone"
 msgstr "En ligne, par appel vidéo ou téléphone"
+
+#: homepage/templates/homepage/homepage.html:22
+msgid ""
+"Communities, permaculture projects and farms – and everyone who wants to "
+"visit them, support them or start something of their own."
+msgstr ""
+"Les communautés, les projets en permaculture et les fermes – et toutes "
+"celles et ceux qui veulent les visiter, les soutenir ou lancer leur propre "
+"projet."
+
+#: templates/_footer.html:13
+#, python-format
+msgid ""
+"The texts, guides and graphics of ecobasa.org are licensed under <a "
+"class=\"text-yellow\" rel=\"license\" href=\"%(cc_url)s\">CC BY-NC-SA 4.0</"
+"a>: you may share and adapt them with credit, noncommercially and under the "
+"same license."
+msgstr "Les textes, guides et graphiques d'ecobasa.org sont sous licence <a class=\"text-yellow\" rel=\"license\" href=\"%(cc_url)s\">CC BY-NC-SA 4.0</a> : tu peux les partager et les adapter en citant la source, sans usage commercial et sous la même licence."
+
+#: templates/_footer.html:14
+#, python-format
+msgid ""
+"Content written by members belongs to them. The name, the logo and the code "
+"are not covered, <a class=\"text-yellow\" href=\"%(license_url)s\">see "
+"details</a>."
+msgstr "Ce que les membres écrivent leur appartient. Le nom, le logo et le code ne sont pas inclus, <a class=\"text-yellow\" href=\"%(license_url)s\">plus de détails</a>."
