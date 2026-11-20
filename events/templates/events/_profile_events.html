@@ -1,0 +1,21 @@
+{% load i18n %}
+{# In a profile's sidebar, under the tours: the gift-circles they host or come to (events.templatetags.events_tags.events_of). Where it is shows on its page #}
+{% if events %}
+<div class="mt-8">
+  <h2>{% trans "Gift-circles" %}</h2>
+  <div class="space-y-4">
+    {% for event in events %}
+      <a href="{{ event.get_absolute_url }}" class="block overflow-hidden {% if not event.is_current %}opacity-60{% endif %}">
+        {% if event.image %}<img src="{{ event.image.url }}" alt="" class="w-full h-32 object-cover" loading="lazy">{% endif %}
+        <div class="flex items-center gap-3 p-3">
+          <i class="fa-solid {{ event.kind_icon }} text-xl text-primary flex-shrink-0"></i>
+          <div class="min-w-0">
+            <div class="font-serif text-primary truncate">{{ event.title }}</div>
+            <div class="text-xs text-brown">{% include "events/_event_dates.html" %}{% if event.hosted %} · <span class="font-semibold">{% trans "Host" %}</span>{% endif %}</div>
+          </div>
+        </div>
+      </a>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}

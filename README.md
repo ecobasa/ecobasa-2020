@@ -116,6 +116,10 @@ add `docker compose exec django` before the following commands for a docker setu
 
 - `STADIA_MAPS_KEY`: for the map tiles
 - `DJANGO_SITE_URL`: base for links in emails, e.g. `https://ecobasa.org`
+- `JITSI_BASE_URL` (`https://meet.systemli.org`): the Jitsi server for online gift-circles.
+  `JITSI_EMBED` (true): show the room inside ecobasa's page; only for servers that allow
+  ecobasa to embed them (their `Content-Security-Policy: frame-ancestors`), otherwise the
+  page links to the room
 - `REFERENCE_REPLY_ADDRESS`: e.g. `references@ecobasa.org`. Replies go to
   `references+<key>@ecobasa.org`; the key is also in the subject, in case the mail server
   doesn't deliver plus addresses. Leave empty to only offer the link.
@@ -142,8 +146,12 @@ skips a job while its previous run is still going.
 | When | Command |
 | --- | --- |
 | every 5 minutes | `fetch_reference_replies` |
+| every 5 minutes | `send_video_call_links` |
 | daily, 9:00 | `archive_stale_events` |
+| daily, 9:00 | `send_gift_circle_reminders` |
 | daily, 9:05 | `archive_stale_tours` |
+| daily, 9:10 | `send_gift_circle_results` |
+| daily, 9:20 | `ask_if_wishes_came_true` |
 | daily, 10:00 | `send_reference_requests` |
 | Thursdays, 17:00 | `send_suggestion_emails` |
 

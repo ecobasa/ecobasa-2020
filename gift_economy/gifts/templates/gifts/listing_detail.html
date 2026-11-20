@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% load static i18n l10n references_tags tours_tags %}
+{% load static i18n l10n references_tags tours_tags gift_circles_tags %}
 
 {% block extrahead %}
   {{ block.super }}
@@ -92,6 +92,7 @@
         <span class="text-xs">{% include "events/_freshness.html" with when=listing.updated_at label_updated=True %}</span>
       </div>
       {% if listing.level %}<p class="mb-2"><strong>{% trans "Level" %}:</strong> {{ listing.get_level_display }}</p>{% endif %}
+      {% if listing.from_afar and listing.kind in listing.FROM_AFAR_KINDS %}<p class="mb-2"><i class="fa-solid fa-globe mr-1"></i>{% trans "Also from afar" %} · {% trans "By video call or phone" %}</p>{% endif %}
       {% if listing.best_before %}
         <p class="mb-2 flex flex-wrap gap-2 text-sm">
           <span class="pill bg-green"><i class="fa-regular fa-calendar mr-1"></i>{% trans "Best before" %} {{ listing.best_before|date:"SHORT_DATE_FORMAT" }}</span>
@@ -125,6 +126,7 @@
       </div>
     {% endif %}
   </div>
+  {% if is_owner %}{% bring_to_gift_circles listing %}{% endif %}
 
   {# ── Description; for a skill, how good they are at it and how to learn it ── #}
   <div class="mt-5">
@@ -228,7 +230,8 @@
           {% for error in form.quantity.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
         </div>
         {% endif %}
-        <div class="form-group mb-4">
+        {# Online (a skill or knowledge) is no place: nothing to type in #}
+        <div class="form-group mb-4" x-data="{ where: '{{ form.location_type.value|default:''|escapejs }}' }" @change="if ($event.target.name === '{{ form.location_type.html_name }}') where = $event.target.value">
           <label class="form-label">{% trans "Proposed meeting location" %}</label>
           <div class="space-y-1">
             {% for radio in form.location_type %}
@@ -237,7 +240,7 @@
               </label>
             {% endfor %}
           </div>
-          {{ form.proposed_location }}
+          <div x-show="where !== 'online'" {% if form.location_type.value == 'online' %}style="display:none"{% endif %}>{{ form.proposed_location }}</div>
           {{ form.proposed_lat }}
           {{ form.proposed_lon }}
         </div>

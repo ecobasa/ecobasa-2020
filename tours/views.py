@@ -20,7 +20,9 @@ from django_countries import countries as all_countries
 
 from communities.models import Community, Membership, with_member_communities
 from dashboard_lists import paginate
+from events import kinds as event_kinds
 from events.models import Event
+from events.views import save_event
 from gift_economy.gifts.models import Listing
 from gift_economy.gifts.skills.models import Skill, skill_name_q
 
@@ -505,6 +507,27 @@ def plan(request, slug):
         messages.success(request, _("The stop has been added."))
         return redirect(tour.url("plan"))
     return _render_plan(request, tour, form, show_order=bool(request.GET.get("order")))
+
+
+@login_required
+def stop_gift_circle(request, slug, pk):
+    """The organisers invite to a gift-circle at a stop at another place: the tour hosts
+    it there, on the day it arrives, and the stop is at it from then on."""
+    tour = _editable(slug, request.user)
+    stop = get_object_or_404(tour.stops.all(), pk=pk)
+    if not stop.can_host_gift_circle:
+        raise Http404
+    day = stop.arrive_on or stop.leave_on
+    event = Event(
+        kind=event_kinds.GIFT_CIRCLE, host_tour=tour, starts_on=day, ends_on=day,
+        location=stop.location, location_name=stop.name, country=stop.country,
+    )
+
+    def at_stop(event):
+        stop.event = event
+        stop.save(update_fields=["event"])
+
+    return save_event(request, event, tour.get_absolute_url(), on_saved=at_stop)
 
 
 @login_required

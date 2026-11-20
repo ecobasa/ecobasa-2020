@@ -1,13 +1,30 @@
+import json
+from functools import cache
+from zoneinfo import available_timezones
+
 from django import forms
+from django.conf import settings
 from django.utils.translation import gettext_lazy as _
 
+from communities.forms import LanguagesField
+from communities.models import language_choices
 from gift_economy.gifts import units
 from gift_economy.gifts.models import Listing, ListingCategory, themed_choices
 from gift_economy.gifts.things import WHITELISTED_KINDS, thing_named
 from gift_economy.gifts.skills.models import _taxonomy, get_or_create_skill
+from users.places import town
 
 from . import kinds
 from .models import Event
+from .zones import countries_apart, zone_at, zones_apart
+
+
+@cache
+def zone_choices():
+    """The timezones of places (Europe/Berlin, America/Mexico_City), not the old aliases."""
+    regions = ("Africa", "America", "Antarctica", "Asia", "Atlantic", "Australia", "Europe", "Indian", "Pacific")
+    zones = sorted(zone for zone in available_timezones() if zone.split("/")[0] in regions)
+    return [(zone, zone.replace("_", " ")) for zone in zones] + [("UTC", "UTC")]
 
 
 class EventForm(forms.ModelForm):
@@ -16,37 +33,63 @@ class EventForm(forms.ModelForm):
         widget=forms.TextInput(attrs={"data-skill-tags": _("Popular skills to explore")}),
         help_text=_("Comma-separated. People looking for these skills find your community through it."),
     )
-    field_order = ["kind", "title", "image", "description", "skills_to_learn", "starts_on", "ends_on", "starts_at", "ends_at", "is_open"]
+    languages = LanguagesField(
+        required=False, label=_("Languages"), help_text=_("What you will speak in the call."),
+    )
+    field_order = [
+        "kind", "title", "image", "description", "skills_to_learn", "starts_on", "ends_on", "starts_at", "ends_at",
+        "is_online", "timezone", "languages", "location_name", "location", "country", "max_people", "is_open", "potluck_note",
+    ]
+    # What only a community's events ask: they take volunteers and provide for them
+    COMMUNITY_FIELDS = ("skills_to_learn", "volunteers_wanted", "food_provided", "bed_provided", "provided_note")
 
     class Meta:
         model = Event
         fields = [
-            "kind", "title", "image", "description", "starts_on", "ends_on", "starts_at", "ends_at", "is_open",
-            "volunteers_wanted", "food_provided", "bed_provided", "provided_note",
+            "kind", "title", "image", "description", "starts_on", "ends_on", "starts_at", "ends_at",
+            "is_online", "timezone", "languages", "location_name", "location", "country", "max_people", "is_open",
+            "potluck_note", "volunteers_wanted", "food_provided", "bed_provided", "provided_note",
         ]
         widgets = {
             "kind": forms.RadioSelect,
+            "location": forms.HiddenInput(),
             "starts_on": forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
             "ends_on": forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
-            "starts_at": forms.TimeInput(attrs={"type": "time"}, format="%H:%M"),
-            "ends_at": forms.TimeInput(attrs={"type": "time"}, format="%H:%M"),
+            # In steps of a quarter of an hour
+            "starts_at": forms.TimeInput(attrs={"type": "time", "step": 900}, format="%H:%M"),
+            "ends_at": forms.TimeInput(attrs={"type": "time", "step": 900}, format="%H:%M"),
             "description": forms.Textarea(attrs={"rows": 5}),
+            "timezone": forms.Select,
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         texts = self.instance.texts
-        self.fields["kind"].choices = kinds.CHOICES
+        self.fields["kind"].choices = kinds.choices_for(self.instance.host_type)
         self.fields["title"].widget.attrs["placeholder"] = texts["title_placeholder"]
         self.fields["description"].widget.attrs["placeholder"] = texts["description_placeholder"]
         self.fields["skills_to_learn"].widget.attrs["placeholder"] = _("e.g. Clay building, Welding")
+        self.fields["timezone"].widget.choices = zone_choices()
+        self.fields["timezone"].help_text = _("The times are in this timezone; everyone sees which it is.")
+        self.fields["languages"].widget.attrs["data-languages"] = json.dumps(
+            [{"value": name, "code": code} for code, name in language_choices()]
+        )
+        # Its own, else the one at its host's place, else (on the page) the browser's: any,
+        # or in a country with several clocks one of the country's
+        self.browser_zones = None
+        zone = self.instance.timezone
+        if not zone:
+            place = self._host_place()
+            zone = zone_at(*place)
+            self.browser_zones = (zones_apart(*place) or None) if zone else []
+        self.initial["timezone"] = zone or settings.TIME_ZONE
         if self.instance.pk:
             self.initial["skills_to_learn"] = ", ".join(l.display_title for l in self.instance.skills_to_learn())
         else:
             # A new event starts with its kind's settings
             self.initial.update(kinds.DEFAULTS[self.instance.kind])
         for name, field in self.fields.items():
-            if isinstance(field.widget, (forms.RadioSelect, forms.ClearableFileInput)):
+            if isinstance(field.widget, (forms.RadioSelect, forms.ClearableFileInput, forms.HiddenInput)):
                 continue
             if isinstance(field.widget, forms.CheckboxInput):
                 field.widget.attrs["class"] = "form-checkbox"
@@ -54,16 +97,71 @@ class EventForm(forms.ModelForm):
                 field.widget.attrs["class"] = "form-textarea w-full"
             else:
                 field.widget.attrs["class"] = "form-input w-full"
+        if not self.instance.takes_needs:
+            for name in self.COMMUNITY_FIELDS:
+                del self.fields[name]
+
+    def _host_place(self):
+        """(point, country code) of its host; a tour's is where it starts."""
+        event = self.instance
+        if event.host_tour_id:
+            return event.host_tour.get_match_location()[2], None
+        host = event.community if event.community_id else event.host_user
+        if host is None:
+            return None, None
+        return host.location, getattr(host.country, "code", None) or None
+
+    def _offered(self, kind_list):
+        return [kind for kind in kind_list if kind in dict(self.fields["kind"].choices)]
+
+    def one_day_kinds(self):
+        return self._offered(kinds.ONE_DAY)
+
+    def potluck_kinds(self):
+        return self._offered(kinds.POTLUCK)
+
+    def countries_apart(self):
+        """The countries where a town doesn't tell its timezone (they keep several clocks), as
+        "US,RU,…" for the page."""
+        return ",".join(countries_apart())
+
+    def times_from_town(self):
+        """Whether it is online for people around a town that tells its timezone."""
+        if not self["is_online"].value() or not self["location"].value():
+            return False
+        country = str(self["country"].value() or "")
+        return bool(country) and country not in countries_apart()
+
+    def giftsheet_kinds(self):
+        """The kinds offered where people give each other things (and online, from far away
+        only some)."""
+        return self._offered([kinds.GIFT_CIRCLE])
+
+    def durations(self):
+        """{kind: minutes} of the kinds offered that usually take that long."""
+        return {kind: kinds.DURATIONS[kind] for kind in self._offered(kinds.DURATIONS)}
+
+    def guides(self):
+        """(kind, template) of the kinds offered that have a guide for whoever invites."""
+        return [(kind, kinds.GUIDES[kind]) for kind in self._offered(kinds.GUIDES)]
 
     def kind_choices(self):
-        """(value, label, icon, hint, the settings a new one starts with) per kind."""
+        """(value, label, icon, hint, the settings a new one starts with) per kind its host
+        may host."""
         return [
             (value, label, kinds.ICONS[value], kinds.HINTS[value], kinds.DEFAULTS[value])
-            for value, label in kinds.CHOICES
+            for value, label in kinds.choices_for(self.instance.host_type)
         ]
 
     def clean(self):
         cleaned = super().clean()
+        if cleaned.get("kind") in kinds.ONE_DAY:
+            # It ends the day it starts
+            if not cleaned.get("starts_on"):
+                self.add_error("starts_on", _("Which day?"))
+            cleaned["ends_on"] = cleaned.get("starts_on")
+        if cleaned.get("kind") not in kinds.POTLUCK or cleaned.get("is_online"):
+            cleaned["potluck_note"] = ""
         starts_on, ends_on = cleaned.get("starts_on"), cleaned.get("ends_on")
         if starts_on and ends_on and ends_on < starts_on:
             self.add_error("ends_on", _("It can't end before it starts."))
@@ -71,7 +169,55 @@ class EventForm(forms.ModelForm):
         one_day = ends_on and (starts_on or ends_on) == ends_on
         if starts_at and ends_at and one_day and ends_at <= starts_at:
             self.add_error("ends_at", _("It can't end before it starts."))
+        if cleaned.get("is_online"):
+            # Online it has no place, at most a town it is for people around
+            if cleaned.get("location") is None:
+                cleaned["location_name"], cleaned["country"] = "", None
+            else:
+                cleaned["location_name"] = town(cleaned.get("location_name"))
+                # Its hours are its town's, where the country keeps one clock
+                point, code = cleaned["location"], getattr(cleaned.get("country"), "code", cleaned.get("country")) or None
+                if not zones_apart(point, code):
+                    cleaned["timezone"] = zone_at(point, code) or cleaned.get("timezone")
+            cleaned["timezone"] = cleaned.get("timezone") or settings.TIME_ZONE
+        else:
+            # At a place its hours are local
+            cleaned["timezone"], cleaned["languages"] = "", []
+            if cleaned.get("location") is None:
+                cleaned["location_name"], cleaned["country"] = "", None
+                # Without a place of its own it is at its community's
+                if not self.instance.community_id:
+                    self.add_error("location_name", _("Choose the place on the map, or make it online."))
         return cleaned
+
+    def _quarter_hour(self, name):
+        hour = self.cleaned_data.get(name)
+        if hour and (hour.minute % 15 or hour.second):
+            raise forms.ValidationError(_("Please choose a time in steps of 15 minutes."))
+        return hour
+
+    def clean_timezone(self):
+        zone = self.cleaned_data.get("timezone")
+        if zone and zone not in dict(zone_choices()):
+            raise forms.ValidationError(_("Please choose a timezone from the list."))
+        return zone
+
+    def clean_starts_at(self):
+        return self._quarter_hour("starts_at")
+
+    def clean_ends_at(self):
+        return self._quarter_hour("ends_at")
+
+    def clean_image(self):
+        """A new picture as a JPEG of a size a page needs, not a camera's."""
+        image = self.cleaned_data.get("image")
+        if image and hasattr(image, "content_type"):
+            from gift_economy.references.reference_requests import shrink_photo
+            try:
+                image = shrink_photo(image)
+            except ValueError:
+                raise forms.ValidationError(_("Please choose a picture."))
+        return image
 
     def save_skills_to_learn(self, event):
         """Make the community's skill offers in the event the skills named (in any
@@ -240,6 +386,20 @@ class HelpOfferForm(forms.Form):
         if stay_from and stay_to and stay_to < stay_from:
             self.add_error("stay_to", _("The stay can't end before it starts."))
         return cleaned
+
+
+class AskToJoinForm(forms.Form):
+    """Someone asks to join an event that needs nothing but people: how many they are and
+    a few words. The host answers in the match's conversation."""
+
+    people = forms.IntegerField(
+        label=_("How many are you?"), min_value=1, max_value=50, initial=1,
+        widget=forms.NumberInput(attrs={"class": "form-input w-20", "min": "1", "max": "50"}),
+    )
+    message = forms.CharField(
+        label=_("Message"), help_text=_("Who you are, and why you'd like to come."),
+        widget=forms.Textarea(attrs={"rows": 4, "class": "form-textarea w-full"}),
+    )
 
 
 class ComingForm(forms.Form):

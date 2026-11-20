@@ -27,16 +27,24 @@ class MatchForm(forms.ModelForm):
     borrow_to_time = forms.TimeField(label=_("at"), required=False,
                                      widget=forms.TimeInput(attrs={"type": "time", "class": "form-input"}))
 
-    def __init__(self, *args, loan_of=None, **kwargs):
-        """loan_of: the thing to lend or to borrow the request is for; then it asks when."""
+    def __init__(self, *args, loan_of=None, online=False, **kwargs):
+        """loan_of: the thing to lend or to borrow the request is for; then it asks when.
+        online: it can also happen by video call or phone (a skill or knowledge)."""
         super().__init__(*args, **kwargs)
         self.loan_of = loan_of
+        if not online:
+            self.fields["location_type"].choices = [
+                choice for choice in self.fields["location_type"].choices if choice[0] != Match.LOC_ONLINE
+            ]
         if loan_of is not None:
             self.fields["borrow_from"].required = True
 
     def clean(self):
         """With loan_of, cleaned_data["loan"] is the (start, end) asked for."""
         cleaned = super().clean()
+        if cleaned.get("location_type") == Match.LOC_ONLINE:
+            # Online is no place
+            cleaned["proposed_location"], cleaned["proposed_lat"], cleaned["proposed_lon"] = "", None, None
         if self.loan_of is None or not cleaned.get("borrow_from"):
             return cleaned
         from_time, until_time = cleaned.get("borrow_from_time"), cleaned.get("borrow_to_time")

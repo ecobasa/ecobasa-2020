@@ -1,0 +1,19 @@
+{% extends "gift_circles/email/_layout.html" %}{% load i18n %}
+{% block body %}
+<p style="margin:0 0 16px;font-size:15px;line-height:1.6;">{% blocktrans with title=event.title host=event.host_name %}Great that you're coming to the gift-circle {{ title }}, hosted by {{ host }}.{% endblocktrans %}</p>
+{% include "gift_circles/_when_where.html" %}
+{% include "gift_circles/_video_call.html" %}
+
+<h3 style="margin:24px 0 8px;font-size:17px;">{% trans "Think of a wish and an offer" %}</h3>
+<p style="margin:0 0 16px;font-size:15px;line-height:1.6;">{% trans "Before you come, think of one thing you wish for and one thing you can give. Small or big, a thing, some time, a skill." %} {% trans "Advice: be careful what you wish for, it might come true ;)" %}</p>
+
+{% include "gift_circles/_rounds.html" %}
+{% include "gift_circles/_karma_rules.html" %}
+{% include "gift_circles/_privacy.html" with guest=True %}
+
+{% if event.potluck_note %}<p style="margin:0 0 16px;font-size:15px;line-height:1.6;">{% blocktrans with note=event.potluck_note %}Bring something for the potluck: {{ note }}{% endblocktrans %}</p>{% endif %}
+<p style="margin:0 0 16px;font-size:15px;line-height:1.6;">{% trans "Change or cancel your sign-up:" %} <a href="{{ manage_url }}" style="color:#da6137;">{{ manage_url }}</a></p>
+<p style="margin:0 0 16px;font-size:15px;line-height:1.6;">{% trans "The calendar file is attached." %}</p>
+{% include "gift_circles/_account.html" with before=True %}
+<p style="margin:0;font-size:15px;line-height:1.6;">{% trans "See you there!" %}</p>
+{% endblock %}

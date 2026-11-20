@@ -1,0 +1,4 @@
+{% load i18n %}{# Its day, hours and place (`place_name`, as the recipient may see it); its title first `with_title` #}
+<p style="margin:0 0 16px;font-size:15px;line-height:1.6;">{% if with_title %}<strong>{{ event.title }}</strong><br>
+{% endif %}{% include "gift_circles/_when.txt" %}{% if place_name %}<br>
+{{ place_name }}{% endif %}</p>

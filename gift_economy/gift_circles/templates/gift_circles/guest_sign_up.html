@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block head_title %}{% trans "Coming as a guest" %} — {{ event.title }} — ecobasa{% endblock %}
+
+{% block content %}
+<div class="container-form">
+  {% include "gift_circles/_guest_header.html" %}
+  <h1>{% trans "Coming as a guest" %}</h1>
+  <p class="text-sm"><i class="fa-regular fa-calendar mr-1"></i>{% include "events/_event_dates.html" %}</p>
+  <p class="text-sm">{% trans "We send you an email to confirm. Nobody gets an account without asking for one." %}
+    {% trans "Have an account?" %} <a href="{% url 'users:login' %}?next={{ event.get_absolute_url|urlencode }}" class="underline">{% trans "Log in" %}</a></p>
+
+  <form method="post" class="border rounded-xl bg-secondary p-6 space-y-4">
+    {% csrf_token %}
+    {% for field in form %}{% if field.name == "name" or field.name == "email" %}
+      <div class="form-group">
+        <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {{ field }}
+        {% for error in field.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+      </div>
+    {% endif %}{% endfor %}
+    {% include "gift_circles/_guest_fields.html" %}
+    <div class="flex justify-between gap-3">
+      <a href="{{ event.get_absolute_url }}" class="btn btn-lg btn-purple"><i class="fa-solid fa-ban mr-2"></i>{% trans "Cancel" %}</a>
+      <button type="submit" class="btn btn-lg"><i class="fa-solid fa-paper-plane mr-2"></i>{% trans "Coming as a guest" %}</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

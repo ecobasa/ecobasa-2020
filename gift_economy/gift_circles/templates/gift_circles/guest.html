@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block head_title %}{{ event.title }} — ecobasa{% endblock %}
+
+{% block content %}
+<div class="container-form">
+  {% include "gift_circles/_guest_header.html" %}
+  <h1>{{ event.title }}</h1>
+  <div class="p-4 mb-6 rounded-xl border border-green text-sm">
+    <p class="font-semibold mb-2"><i class="fa fa-check mr-1 text-green"></i>{% blocktrans count count=guest.people %}You are coming.{% plural %}You are coming, {{ count }} people.{% endblocktrans %}</p>
+    <p class="mb-1"><i class="fa-regular fa-calendar mr-1"></i>{% include "events/_event_dates.html" %}</p>
+    {% if place_name %}<p class="mb-0"><i class="fa fa-map-marker mr-1"></i>{{ place_name }}</p>{% endif %}
+  </div>
+
+  {% if event.is_online and event.is_current %}
+    <a href="{% url 'gift_circles:guest_video_call' event.slug guest.token %}" class="btn mb-6"><i class="fa-solid fa-video mr-1"></i>{% trans "Join the video call" %}</a>
+  {% endif %}
+  <a href="{% url 'gift_circles:guest_giftsheet' event.slug guest.token %}" class="btn btn-purple mb-6"><i class="fa-solid fa-table-list mr-1"></i>{% trans "Open the Giftsheet" %}</a>
+
+  {% if event.is_current %}
+    <h2 class="mt-0">{% trans "Think of a wish and an offer" %}</h2>
+    <p>{% trans "Before you come, think of one thing you wish for and one thing you can give. Small or big, a thing, some time, a skill." %}</p>
+    <form method="post" class="border rounded-xl bg-secondary p-6 space-y-4">
+      {% csrf_token %}
+      {% include "gift_circles/_guest_fields.html" %}
+      <div class="flex justify-end">
+        <button type="submit" class="btn btn-lg"><i class="fa fa-check mr-2"></i>{% trans "Save" %}</button>
+      </div>
+    </form>
+    <form method="post" class="text-center mt-4" onsubmit="return confirm('{{ _("Take your sign-up back?")|escapejs }}')">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="leave">
+      <button type="submit" class="underline text-sm">{% trans "I can't come after all" %}</button>
+    </form>
+  {% endif %}
+
+  {% if not guest.user_id %}
+    <div class="border rounded-xl p-6 mt-8">
+      <h2 class="mt-0">{% trans "Create an account" %}</h2>
+      <p>{% trans "With an account, your offers and wishes keep finding people near you after the circle. And you hear about the next gift-circle: most of them happen again." %}</p>
+      <a href="{{ account_url }}" class="btn btn-lg"><i class="fa-solid fa-user-plus mr-2"></i>{% trans "Create an account" %}</a>
+      <p class="text-xs mt-2 mb-0">{% trans "We fill in your name and email. Anything you add at this gift-circle moves to your account." %}</p>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

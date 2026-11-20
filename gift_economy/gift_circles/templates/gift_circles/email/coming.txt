@@ -1,0 +1,31 @@
+{% load i18n %}{% autoescape off %}{% blocktrans with name=recipient.name|default:recipient.email %}Hello {{ name }},{% endblocktrans %}
+
+{% blocktrans with title=event.title host=event.host_name %}Great that you're coming to the gift-circle {{ title }}, hosted by {{ host }}.{% endblocktrans %}
+
+{% include "gift_circles/_when.txt" %}{% if place_name %}
+{{ place_name }}{% endif %}
+{% include "gift_circles/_video_call.txt" %}
+{% trans "Think of a wish and an offer" %}
+
+{% trans "Before you come, think of one thing you wish for and one thing you can give. Small or big, a thing, some time, a skill." %} {% trans "You can add them on the page now, so others see them before:" %} {{ event_url }}#bring
+
+{% trans "Already have offers or wishes on ecobasa? Press “Bring it to the gift-circle” on them." %}
+
+{% trans "Someone who comes can help with your wish already? Agree with them on the page, and bring the things along, so you can give them on the day." %}
+
+{% include "gift_circles/_rounds.txt" %}
+
+{% include "gift_circles/_karma_rules.txt" %}
+
+{% include "gift_circles/_privacy.txt" %}
+{% if event.potluck_note %}
+{% blocktrans with note=event.potluck_note %}Bring something for the potluck: {{ note }}{% endblocktrans %}
+{% endif %}
+{% trans "Can't come after all? Please say so on the page, so someone else can have your place:" %} {{ event_url }}
+
+{% trans "The calendar file is attached." %}
+
+{% trans "See you there!" %}
+
+--
+ecobasa.org{% endautoescape %}

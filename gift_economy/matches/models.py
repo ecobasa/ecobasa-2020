@@ -25,6 +25,20 @@ def stay_q():
     return q
 
 
+def joining_q():
+    """Asking to join (or coming to) an event that needs nothing but people, a gift-circle:
+    not volunteer visits, they are listed with the events one attends."""
+    from django.apps import apps
+    from django.db.models import CharField
+    from django.db.models.functions import Cast
+
+    events = apps.get_model("events", "Event").objects.asking_to_join()
+    return Q(
+        content_type__app_label="events", content_type__model="event",
+        object_id__in=events.annotate(key=Cast("pk", CharField())).values("key"),
+    )
+
+
 def talked_over_elsewhere_q():
     """Stays whose days are talked over in another conversation, so the lists leave them
     out: the visit for a membership application while its applicant is invited to visit
@@ -43,10 +57,14 @@ class Match(models.Model):
     LOC_MY_PLACE = "my_place"
     LOC_YOUR_PLACE = "your_place"
     LOC_CUSTOM = "custom"
+    # A skill or knowledge shared by video call or phone: no place (MatchForm offers it
+    # for those only)
+    LOC_ONLINE = "online"
     LOC_CHOICES = [
         (LOC_MY_PLACE, _("My place — come visit me")),
         (LOC_YOUR_PLACE, _("Your place — I will visit you")),
         (LOC_CUSTOM, _("Somewhere else")),
+        (LOC_ONLINE, _("Online — by video call or phone")),
     ]
 
     STATUS_PENDING = "pending"
@@ -154,10 +172,22 @@ class Match(models.Model):
         return _("Match"), "fa-handshake", "bg-primary"
 
     @property
+    def can_be_online(self):
+        """Whether its place can be online: about a skill or knowledge, or proposed so."""
+        target = self.target
+        return self.location_type == self.LOC_ONLINE or getattr(target, "kind", None) in getattr(target, "FROM_AFAR_KINDS", ())
+
+    @property
     def is_coming(self):
         """Someone said they come to an open event: accepted at once, nobody answers."""
         details = getattr(self, "stay_details", None)
         return details is not None and details.is_coming
+
+    @property
+    def stay_label(self):
+        """What the days it asks for are called: a stay, unless its target says otherwise
+        (a gift-circle: its kind)."""
+        return getattr(self.target, "get_match_stay_label", lambda: _("Proposed stay"))()
 
     @property
     def people(self):
@@ -272,31 +302,47 @@ class Match(models.Model):
         return hasattr(self, "loan")
 
     @property
+    def lends_later(self):
+        """About a tool to lend whose days aren't agreed yet (promised at a gift-circle):
+        either side proposes them in a counter-proposal, and accepting it makes the Loan."""
+        target = self.target
+        return not self.is_loan and bool(getattr(target, "lend", False))
+
+    @property
+    def takes_loan_days(self):
+        return self.is_loan or self.lends_later
+
+    @property
     def lender(self):
         """Who lends the tool: the owner of a tool to lend, the one who answers a wish to borrow."""
-        if not self.is_loan:
+        if not self.takes_loan_days:
             return None
         target = self.target
         return self.recipient if target is not None and target.is_offer else self.from_user
 
     @property
     def borrower(self):
-        if not self.is_loan:
+        if not self.takes_loan_days:
             return None
         return self.from_user if self.lender == self.recipient else self.recipient
 
     def loan_period(self):
         """(start, end) of a loan as currently proposed: the latest counter-proposed one,
-        else the agreed or asked for one. (None, None) if it isn't a loan."""
-        if not self.is_loan:
+        else the agreed or asked for one. (None, None) if it isn't a loan, or its days are
+        still to be proposed."""
+        if not self.takes_loan_days:
             return None, None
         counter = self._counter_period()
         if counter and counter.counter_stay_from and counter.counter_stay_to:
             return counter.counter_stay_from, counter.counter_stay_to
+        if not self.is_loan:
+            return None, None
         return self.loan.starts_at, self.loan.ends_at
 
     def resolved_location(self):
         """Human-readable meeting location, resolving my/your place from profiles."""
+        if self.location_type == self.LOC_ONLINE:
+            return str(_("Online, by video call or phone"))
         if self.location_type == self.LOC_MY_PLACE:
             loc = self.person_place(self.from_user)[0] or self.proposed_location or ""
             name = self.from_user.name or self.from_user.email
@@ -382,6 +428,8 @@ class MatchMessage(models.Model):
 
     def resolved_counter_location(self):
         """Human-readable counter-proposed meeting location, resolving my/your place."""
+        if self.counter_location_type == Match.LOC_ONLINE:
+            return str(_("Online, by video call or phone"))
         if self.counter_location:
             return self.counter_location
         match = self.match
@@ -679,6 +727,12 @@ class Suggestion(models.Model):
     # community in the same days (the other side is their stay, not a tour)
     REASON_HOME = "home"
     REASON_TOGETHER = "together"
+    # Both come to the same gift-circle, and one of them brings it there: they meet in
+    # person, however far apart they live (the gift-circle is the detail)
+    REASON_GIFT_CIRCLE = "gift_circle"
+    # One of them shares it at an online gift-circle the other can join from afar (the
+    # gift-circle is the detail)
+    REASON_SHARED_ONLINE = "shared_online"
     # Those that are about travelling along: silenced while someone pauses tour suggestions
     TRAVEL_REASONS = (REASON_ROUTE, REASON_LEARN, REASON_HAS)
     REASON_CHOICES = [
@@ -692,6 +746,8 @@ class Suggestion(models.Model):
         (REASON_WANTS, _("A stop wishes for what you have")),
         (REASON_HOME, _("A ride towards your home")),
         (REASON_TOGETHER, _("Someone from near you comes too")),
+        (REASON_GIFT_CIRCLE, _("Comes to the same gift-circle")),
+        (REASON_SHARED_ONLINE, _("Shared at an online gift-circle")),
     ]
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="suggestions")
@@ -703,7 +759,9 @@ class Suggestion(models.Model):
     other_type = models.ForeignKey(ContentType, on_delete=models.CASCADE, related_name="+")
     other_id = models.CharField(max_length=255)
     other = GenericForeignKey("other_type", "other_id")
-    # For a tour: the offer or wish at one of its stops it is about (REASON_HAS, REASON_WANTS)
+    # For a tour: the offer or wish at one of its stops it is about (REASON_HAS,
+    # REASON_WANTS); the gift-circle both come to (REASON_GIFT_CIRCLE) or one shares it at
+    # (REASON_SHARED_ONLINE)
     detail_type = models.ForeignKey(ContentType, on_delete=models.CASCADE, null=True, blank=True, related_name="+")
     detail_id = models.CharField(max_length=255, blank=True)
     detail = GenericForeignKey("detail_type", "detail_id")
@@ -804,6 +862,30 @@ class Suggestion(models.Model):
                 return _("The tour %(tour)s goes to %(place)s, which offers: %(title)s"), values
             return _("The tour %(tour)s goes to %(place)s, which is looking for: %(title)s"), values
         return _("The tour %(tour)s passes near you"), {}
+
+    @property
+    def gift_circle(self):
+        """The gift-circle both come to, or one shares it at, where it is the reason."""
+        return self.detail if self.reason in (self.REASON_GIFT_CIRCLE, self.REASON_SHARED_ONLINE) else None
+
+    @property
+    def from_afar(self):
+        """Both can share it from afar (Listing.from_afar): it was found however far apart."""
+        own, other = self.own, self.other
+        if self.other_model != "listing" or self.own_type.model != "listing" or None in (own, other):
+            return False
+        return all(listing.from_afar and listing.kind in listing.FROM_AFAR_KINDS for listing in (own, other))
+
+    @property
+    def starts_skill_sharing(self):
+        """Whether its reader can start an online skill-sharing from it: both share it from
+        afar, both are a person's own (not a community's, a tour's or an event's), and no
+        gift-circle brought them together yet."""
+        if self.gift_circle is not None or self.other_user_id is None or not self.from_afar:
+            return False
+        return all(
+            not (listing.community_id or listing.tour_id or listing.event_id) for listing in (self.own, self.other)
+        ) and self.own.owner_id == self.user_id
 
     @property
     def gives_along(self):
@@ -981,10 +1063,13 @@ class Suggestion(models.Model):
 
     @property
     def action_url(self):
-        """Where to act on it: the offer form for an event need, the join page for a
-        tour's need, the volunteer form for a community's wish for a skill, else the thing's page (where it can be asked for or
+        """Where to act on it: the online gift-circle where it is shared, the offer form for
+        an event need, the join page for a tour's need, the volunteer form for a community's wish for a skill, else the thing's page (where it can be asked for or
         offered)."""
         other = self.other
+        if self.reason == self.REASON_SHARED_ONLINE and self.detail is not None:
+            # The online gift-circle, to join it
+            return self.detail.get_absolute_url()
         if self.is_together:
             # Start a tour or ride there, prefilled from their own stay
             return f"{reverse('tours:create')}?stay={self.own.pk}"

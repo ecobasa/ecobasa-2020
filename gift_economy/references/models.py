@@ -173,7 +173,11 @@ class Reference(models.Model):
     @property
     def visited(self):
         """Where a reference about a group (a tour) happened: the host of the stay it was
-        written after, an event or a community. None otherwise."""
+        written after, an event or a community; the event a story was told from. None
+        otherwise."""
+        # A story from a gift-circle: where it was told about
+        if self.place_type_id and self.place_type.model == "event":
+            return self.place
         subject = self.subject
         if self.match is None or subject is None or not hasattr(subject, "get_reference_people"):
             return None

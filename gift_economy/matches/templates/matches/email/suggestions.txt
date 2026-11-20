@@ -2,13 +2,13 @@
 
 {{ headline }}{% if suggestions %}:{% endif %}
 {% for s in suggestions %}
-- {{ s.text }}{% if s.distance_km is not None %} ({% blocktrans with km=s.distance_km %}{{ km }} km away{% endblocktrans %}){% endif %}
+- {{ s.text }}{% if s.distance_km is not None %} ({% blocktrans with km=s.distance_km %}{{ km }} km away{% endblocktrans %}){% endif %}{% if s.gift_circle %} ({{ s.get_reason_display }}: {{ s.gift_circle.title }}){% endif %}
   {% blocktrans with own=s.own_text %}fits {{ own }}{% endblocktrans %}
   {{ site_url }}{{ s.url }}
 {% endfor %}{% if tours %}
 {% if with_rides %}{% trans "Tours and rides for you" %}{% else %}{% trans "Tours for you" %}{% endif %}:
 {% for s in tours %}
-- {{ s.text }}{% if s.distance_km is not None %} ({% blocktrans with km=s.distance_km %}{{ km }} km away{% endblocktrans %}){% endif %}
+- {{ s.text }}{% if s.distance_km is not None %} ({% blocktrans with km=s.distance_km %}{{ km }} km away{% endblocktrans %}){% endif %}{% if s.gift_circle %} ({{ s.get_reason_display }}: {{ s.gift_circle.title }}){% endif %}
   {% blocktrans with own=s.own_text %}fits {{ own }}{% endblocktrans %}
   {{ site_url }}{{ s.action_url }}
 {% endfor %}

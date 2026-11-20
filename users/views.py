@@ -134,7 +134,8 @@ def register(request):
             messages.success(request, _("Account created and logged in."))
             return redirect(_next_url(request))
     else:
-        form = RegisterForm()
+        # Filled in from a link that knows them (a gift-circle guest's "Create an account")
+        form = RegisterForm(initial={field: request.GET[field] for field in ("name", "email") if request.GET.get(field)})
     return render(request, "users/register.html", {"form": form})
 
 

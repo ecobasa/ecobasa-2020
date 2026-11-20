@@ -32,6 +32,7 @@ urlpatterns = [
     path("<slug:slug>/deliveries/<int:pk>/handed-over/", views.delivery_handed_over, name="delivery_handed_over"),
     path("<slug:slug>/deliveries/<int:pk>/withdraw/", views.delivery_withdraw, name="delivery_withdraw"),
     path("<slug:slug>/stops/<int:pk>/host/", views.ask_host, name="ask_host"),
+    path("<slug:slug>/stops/<int:pk>/gift-circle/", views.stop_gift_circle, name="stop_gift_circle"),
     path("<slug:slug>/publish/", views.publish, name="publish"),
     path("<slug:slug>/archive/", views.archive, name="archive"),
     path("<slug:slug>/confirm/", views.confirm, name="confirm"),

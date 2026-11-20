@@ -1,0 +1,12 @@
+{% extends "gift_circles/email/_layout.html" %}{% load i18n %}
+{% block body %}
+{% for entry in entries %}
+  <p style="margin:0 0 8px;font-size:15px;line-height:1.6;">{% blocktrans with title=event.title name=entry.for_label %}Two weeks ago at the gift-circle {{ title }}, {{ name }} said they could help with your wish:{% endblocktrans %}</p>
+  <p style="margin:0 0 16px;padding:10px 14px;border-left:3px solid #da6137;background-color:#f5ede0;font-size:15px;line-height:1.6;"><strong>{{ entry.text }}</strong></p>
+{% endfor %}
+<p style="margin:0 0 16px;font-size:15px;line-height:1.6;">{% if entries|length == 1 %}{% trans "Did it come true?" %}{% else %}{% trans "Did they come true?" %}{% endif %}</p>
+<p style="margin:0 0 16px;">
+  <a href="{{ answer_url }}" style="display:inline-block;background-color:#da6137;color:#fcf3e5;text-decoration:none;padding:10px 20px;border-radius:6px;font-size:15px;font-weight:bold;margin:0 8px 8px 0;">{% trans "Yes, it did" %}</a>
+  <a href="{{ answer_url }}" style="display:inline-block;background-color:#6a5441;color:#fcf3e5;text-decoration:none;padding:10px 20px;border-radius:6px;font-size:15px;font-weight:bold;margin:0 0 8px;">{% trans "Not yet" %}</a>
+</p>
+{% endblock %}

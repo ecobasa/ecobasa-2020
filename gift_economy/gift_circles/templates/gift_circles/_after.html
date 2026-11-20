@@ -1,0 +1,9 @@
+{% load i18n gift_circles_tags %}{# Once a gift-circle has begun: for who came or hosts, planning the next one; for everyone, how it went #}
+{% if own_coming or can_edit %}
+  <section id="next" class="mt-10 border rounded-xl bg-secondary p-6">
+    <h2 class="mt-0">{% trans "Plan the next one" %}</h2>
+    <p>{% trans "Gift-circles grow when they happen again. Anyone who came can plan the next one: choose a date, and everyone who came gets an invitation, and you can invite new people. Whoever plans it hosts it." %}</p>
+    <a href="{% url 'gift_circles:next' event.slug %}" class="btn"><i class="fa-regular fa-calendar-plus mr-2"></i>{% trans "Plan the next one" %}</a>
+  </section>
+{% endif %}
+{% stories_of event %}

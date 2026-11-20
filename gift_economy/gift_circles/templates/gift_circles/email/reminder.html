@@ -1,0 +1,26 @@
+{% extends "gift_circles/email/_layout.html" %}{% load i18n %}
+{% block body %}
+<p style="margin:0 0 16px;font-size:15px;line-height:1.6;">{% blocktrans with title=event.title host=event.host_name %}Tomorrow is the gift-circle {{ title }}, hosted by {{ host }}.{% endblocktrans %}</p>
+{% include "gift_circles/_when_where.html" %}
+{% include "gift_circles/_video_call.html" %}
+
+{% if suggestions %}
+  <p style="margin:0 0 8px;font-size:15px;line-height:1.6;">{% trans "Others who come have what you wish for, or wish for what you have. Bring it along, so it can change hands there:" %}</p>
+  <ul style="margin:0 0 16px;padding-left:20px;font-size:15px;line-height:1.6;">
+    {% for s in suggestions %}<li><a href="{{ event_url }}#bring" style="color:#da6137;">{{ s.text }}</a><br><span style="font-size:13px;opacity:0.75;">{% blocktrans with own=s.own_text %}fits {{ own }}{% endblocktrans %}</span></li>{% endfor %}
+  </ul>
+{% endif %}
+{% if brought %}<p style="margin:0 0 16px;font-size:15px;line-height:1.6;">{% trans "See what the others bring:" %} <a href="{{ event_url }}#bring" style="color:#da6137;">{{ event_url }}</a></p>{% endif %}
+{% if not brings %}
+  <h3 style="margin:24px 0 8px;font-size:17px;">{% trans "Think of a wish and an offer" %}</h3>
+  <p style="margin:0 0 16px;font-size:15px;line-height:1.6;">{% trans "Before you come, think of one thing you wish for and one thing you can give. Small or big, a thing, some time, a skill." %}{% if not is_guest %} {% trans "You can add them on the page now, so others see them before:" %} <a href="{{ event_url }}#bring" style="color:#da6137;">{{ event_url }}</a>{% endif %}</p>
+{% endif %}
+{% if is_host %}<p style="margin:0 0 16px;font-size:15px;line-height:1.6;">{% trans "Found a scribe yet? Your card and the Giftsheet to print:" %} <a href="{{ print_url }}" style="color:#da6137;">{{ print_url }}</a></p>{% endif %}
+{% if event.potluck_note %}<p style="margin:0 0 16px;font-size:15px;line-height:1.6;">{% blocktrans with note=event.potluck_note %}Bring something for the potluck: {{ note }}{% endblocktrans %}</p>{% endif %}
+{% if is_guest %}
+  <p style="margin:0 0 16px;font-size:15px;line-height:1.6;">{% trans "Change or cancel your sign-up:" %} <a href="{{ manage_url }}" style="color:#da6137;">{{ manage_url }}</a></p>
+{% elif not is_host %}
+  <p style="margin:0 0 16px;font-size:15px;line-height:1.6;">{% trans "Can't come after all? Please say so on the page, so someone else can have your place:" %} <a href="{{ event_url }}" style="color:#da6137;">{{ event_url }}</a></p>
+{% endif %}
+<p style="margin:0;font-size:15px;line-height:1.6;">{% trans "See you there!" %}</p>
+{% endblock %}

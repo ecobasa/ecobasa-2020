@@ -1,0 +1,3 @@
+{% load i18n %}{# On a gift-circle's page, for visitors without an account #}
+<a href="{% url 'gift_circles:guest_sign_up' event.slug %}" class="btn btn-purple block w-full mt-2 text-center"><i class="fa-solid fa-user-plus mr-1"></i>{% trans "Coming as a guest" %}</a>
+<p class="text-xs text-center mt-1">{% trans "Without an account, with your name and email." %}</p>

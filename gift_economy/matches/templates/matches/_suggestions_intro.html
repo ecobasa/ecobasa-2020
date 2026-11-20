@@ -14,6 +14,7 @@
     Suggestions: what people, communities and projects anywhere offer or need that fits your
     wishes, offers and skills. It becomes a match once one of you asks.
   {% endblocktrans %}{% endif %}
+  {% if not user.match_global and user.location or not user.match_global and user.country %}{% trans "Skills and knowledge marked “Also from afar” are matched however far away, when the other side marked it too." %}{% endif %}
   <a href="{% url 'users:update' %}#matches" class="underline">{% trans "Change matching distance" %}</a>
 </p>
 {% if not user.match_global and not user.location and not user.country %}

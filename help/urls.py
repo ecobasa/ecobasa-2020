@@ -9,4 +9,5 @@ urlpatterns = [
     path("community-tours/", views.tours, name="tours"),
     path("community-tours/travelling-tips/", views.travelling_tips, name="travelling_tips"),
     path("members/", views.members, name="members"),
+    path("gift-circles/", views.gift_circles, name="gift_circles"),
 ]

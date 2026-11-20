@@ -232,7 +232,7 @@ def send_suggestion_email(user, now=None):
         return False
     with translation.override(user.language or settings.LANGUAGE_CODE):
         subject = ngettext(
-            "%(count)s new suggestion near you", "%(count)s new suggestions near you", len(found),
+            "%(count)s new suggestion", "%(count)s new suggestions", len(found),
         ) % {"count": len(found)}
         context = {
             "recipient": user,

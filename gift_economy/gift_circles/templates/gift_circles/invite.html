@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block head_title %}{% trans "Invite people" %} — {{ event.title }} — ecobasa{% endblock %}
+
+{% block content %}
+<div class="container-form">
+  {% include "gift_circles/_guest_header.html" with here=_("Invite people") %}
+  <h1>{% trans "Invite people" %}</h1>
+  <p class="text-sm"><i class="fa-regular fa-calendar mr-1"></i>{% include "events/_event_dates.html" %}</p>
+  <p class="text-sm">{% trans "They get your invitation with what a gift-circle is, and come without asking." %}</p>
+
+  <form method="post" class="border rounded-xl bg-secondary p-6 space-y-6" x-data="invitePeople">
+    {% csrf_token %}
+    {% for error in form.non_field_errors %}<p class="field-error"><i class="fa-solid fa-circle-exclamation mr-1"></i>{{ error }}</p>{% endfor %}
+
+    {# Found by name; a hidden field per person keeps who was chosen #}
+    <div class="form-group relative">
+      <label class="form-label" for="invite-people-search">{% trans "Members of ecobasa" %}</label>
+      <template x-for="person in chosen" :key="person.id"><input type="hidden" name="users" :value="person.id"></template>
+      <div class="flex flex-wrap gap-2 mb-2" x-show="chosen.length" x-cloak>
+        <template x-for="person in chosen" :key="person.id">
+          <span class="inline-flex items-center gap-1 rounded-full border bg-white px-3 py-1 text-sm">
+            <span x-text="person.name"></span>
+            <button type="button" @click="drop(person)" class="opacity-70 hover:opacity-100" aria-label="{% trans 'Remove' %}"><i class="fa-solid fa-xmark"></i></button>
+          </span>
+        </template>
+      </div>
+      <input type="text" id="invite-people-search" class="form-input w-full" autocomplete="off" x-model="query"
+             @input.debounce.300ms="search()" @keydown.enter.prevent placeholder="{% trans 'Their name…' %}">
+      <div x-show="results.length" @click.outside="results = []" x-cloak
+           class="absolute z-20 inset-x-0 bg-secondary shadow-lg text-sm py-2 rounded-b border">
+        <template x-for="res in results" :key="res.id">
+          <a href="#" @click.prevent="choose(res)" class="flex items-center gap-2 px-3 py-2 hover:bg-primary hover:text-secondary">
+            <template x-if="res.image"><img :src="res.image" alt="" class="w-6 h-6 rounded-full object-cover"></template>
+            <template x-if="!res.image"><i class="fa fa-user w-6 text-center"></i></template>
+            <span x-text="res.name"></span>
+            <span class="opacity-70" x-show="res.place" x-text="'· ' + res.place"></span>
+          </a>
+        </template>
+      </div>
+      {% for error in form.users.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="{{ form.people.id_for_label }}">{{ form.people.label }}</label>
+      {% if emails_left %}
+        <p class="text-xs mb-1">{{ form.people.help_text }}</p>
+        {{ form.people }}
+        {% if emails_left < email_limit %}
+          <p class="text-xs mt-1">{% blocktrans count count=emails_left %}This gift-circle can invite {{ count }} more person by email.{% plural %}This gift-circle can invite {{ count }} more people by email.{% endblocktrans %}</p>
+        {% endif %}
+      {% else %}
+        <p class="text-sm">{% blocktrans count count=email_limit %}This gift-circle has invited {{ count }} person by email, as many as one can.{% plural %}This gift-circle has invited {{ count }} people by email, as many as one can.{% endblocktrans %}</p>
+      {% endif %}
+      {% for error in form.people.errors %}<p class="field-error"><i class="fa-solid fa-circle-exclamation mr-1"></i>{{ error }}</p>{% endfor %}
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="{{ form.message.id_for_label }}">{{ form.message.label }}</label>
+      {{ form.message }}
+      <p class="text-xs mt-1">{{ form.message.help_text }}</p>
+    </div>
+
+    <div class="flex flex-wrap gap-2 justify-between">
+      <a href="{{ event.get_absolute_url }}" class="btn btn-lg btn-purple"><i class="fa fa-ban mr-1"></i>{% trans "Cancel" %}</a>
+      <button type="submit" class="btn btn-lg"><i class="fa-solid fa-user-plus mr-1"></i>{% trans "Invite people" %}</button>
+    </div>
+  </form>
+
+  {% if invited %}
+    <h2>{% trans "Invited so far" %}</h2>
+    <ul class="text-sm">
+      {% for invitation in invited %}
+        <li>{% if invitation.user %}{{ invitation.user.name|default:invitation.user.email }}{% else %}{% if invitation.name %}{{ invitation.name }}, {% endif %}{{ invitation.email }}{% endif %}</li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+</div>
+{{ chosen_people|json_script:"invite-chosen" }}
+{% endblock %}
+
+{% block javascript %}
+{{ block.super }}
+<script>
+document.addEventListener('alpine:init', () => {
+  Alpine.data('invitePeople', () => ({
+    query: '', results: [],
+    chosen: JSON.parse(document.getElementById('invite-chosen').textContent),
+    async search() {
+      const q = this.query.trim();
+      if (q.length < 2) { this.results = []; return; }
+      const response = await fetch('{% url "gift_circles:invite_people" event.slug %}?q=' + encodeURIComponent(q));
+      const taken = this.chosen.map((person) => person.id);
+      this.results = (await response.json()).results.filter((res) => !taken.includes(res.id));
+    },
+    choose(res) {
+      this.chosen.push({id: res.id, name: res.name});
+      this.query = '';
+      this.results = [];
+    },
+    drop(person) {
+      this.chosen = this.chosen.filter((other) => other.id !== person.id);
+    },
+  }));
+});
+</script>
+{% endblock %}

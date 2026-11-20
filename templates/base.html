@@ -36,6 +36,33 @@
 
     {% include "_footer.html" %}
 
+    <script>
+      // An online event's hours also in the reader's own time, where it differs (events/_event_dates.html)
+      (function () {
+        function ownTimes(root) {
+          const here = Intl.DateTimeFormat().resolvedOptions().timeZone;
+          const lang = document.documentElement.lang || undefined;
+          root.querySelectorAll('[data-own-time][hidden]').forEach(function (span) {
+            const zone = span.dataset.zone, start = new Date(span.dataset.start);
+            const end = span.dataset.end ? new Date(span.dataset.end) : null;
+            const hour = function (date, timeZone) {
+              return new Intl.DateTimeFormat(lang, { hour: '2-digit', minute: '2-digit', hourCycle: 'h23', timeZone: timeZone }).format(date);
+            };
+            const day = function (date, timeZone) {
+              return new Intl.DateTimeFormat(lang, { weekday: 'short', day: 'numeric', month: 'short', timeZone: timeZone }).format(date);
+            };
+            if (!here || here === zone || hour(start, here) === hour(start, zone)) return;
+            let time = hour(start, here) + (end ? '–' + hour(end, here) : '');
+            if (day(start, here) !== day(start, zone)) time = day(start, here) + ', ' + time;
+            span.textContent = ' · ' + span.dataset.text.replace('TIME', time);
+            span.hidden = false;
+          });
+        }
+        ownTimes(document);
+        document.addEventListener('htmx:afterSettle', function (event) { ownTimes(event.target); });
+      })();
+    </script>
+
     {% block javascript %}
       <script src="{% static 'js/ecobasa-map.js' %}" data-stadia-key="{% stadia_key %}"></script>
       <script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.4/dist/htmx.min.js" defer></script>

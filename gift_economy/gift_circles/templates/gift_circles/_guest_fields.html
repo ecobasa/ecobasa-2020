@@ -1,0 +1,12 @@
+{% load i18n %}{# What a guest says when signing up and changes after: how many, and what they say yes to #}
+<div class="form-group">
+  <label class="form-label" for="{{ form.people.id_for_label }}">{{ form.people.label }}</label>
+  <p class="text-xs mb-1">{{ form.people.help_text }}</p>
+  {{ form.people }}
+  {% for error in form.people.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+</div>
+<div class="space-y-2 text-sm">
+  <label class="flex items-start gap-2 cursor-pointer">{{ form.keep_on_ecobasa }}<span>{{ form.keep_on_ecobasa.label }}</span></label>
+  <label class="flex items-start gap-2 cursor-pointer">{{ form.share_email }}<span>{{ form.share_email.label }}</span></label>
+  <p class="text-xs">{% trans "Your offers and wishes go on ecobasa only if you said yes to that. You can change it at any time." %} {% trans "Your email goes only to the people you make a match with, and only if you said yes to that. Nobody else gets it." %}</p>
+</div>

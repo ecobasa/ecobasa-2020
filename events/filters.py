@@ -1,4 +1,4 @@
-from collections import defaultdict
+from collections import Counter, defaultdict
 from datetime import date, timedelta
 
 from django.contrib.contenttypes.models import ContentType
@@ -86,7 +86,7 @@ class EventFilters:
                 | skill_name_q(self.q, "listings__skill__")
             )
         if self.country:
-            events = events.filter(community__country=self.country)
+            events = events.filter(Q(community__country=self.country) | Q(country=self.country))
         if self.kinds:
             events = events.filter(kind__in=self.kinds)
         if self.since:
@@ -121,7 +121,7 @@ class EventFilters:
         sees it."""
         found = []
         for event in events:
-            event.point = event.place.rough_place()[1]
+            event.point = event.rough_place()[1]
             if event.point is not None and (self.bbox is None or self.bbox.contains(event.point)):
                 found.append(event)
         return found
@@ -131,7 +131,7 @@ class EventFilters:
         Among equals: the soonest upcoming, the latest past, otherwise the freshest."""
         origin = self.near or home
         for event in events:
-            point = event.place.rough_place()[1]
+            point = event.rough_place()[1]
             event.km = round(distance_km(origin, point)) if origin is not None and point is not None else None
         if self.when == "upcoming":
             tie = lambda event: event.starts_on.toordinal()
@@ -165,6 +165,23 @@ def _accepted(user=None, events=None):
         # A match's object_id is text: the ids, not a join
         matches = matches.filter(object_id__in=[str(pk) for pk in events.values_list("pk", flat=True)])
     return matches
+
+
+def count_coming(events):
+    """Sets `coming_people` on each of `events` (a page of them), as their page counts it:
+    everyone accepted with whoever they bring, and the guests without an account."""
+    from django.apps import apps
+
+    pks = [event.pk for event in events]
+    counts = Counter()
+    for match in _accepted().filter(object_id__in=[str(pk) for pk in pks]).select_related("stay_details"):
+        counts[int(match.object_id)] += match.people
+    # The gift-circles add-on's guests, as Event.people_coming counts them
+    guests = apps.get_model("gift_circles", "Guest").objects.coming().filter(event_id__in=pks)
+    for event_id, people in guests.values_list("event_id", "people"):
+        counts[event_id] += people
+    for event in events:
+        event.coming_people = counts[event.pk]
 
 
 def going_to(user):

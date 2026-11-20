@@ -1,0 +1,30 @@
+{% load i18n %}{% autoescape off %}{% blocktrans with name=recipient.name|default:recipient.email %}Hello {{ name }},{% endblocktrans %}
+
+{% blocktrans with title=event.title day=event.starts_on|date:"DATE_FORMAT" %}Thank you for coming to the gift-circle {{ title }} on {{ day }}! Here is what happened.{% endblocktrans %}
+{% if parts %}
+{% trans "Your part" %}
+{% for part in parts %}
+* {{ part.entry.text }}
+  {% include "gift_circles/email/_part.txt" %}
+{% endfor %}
+{% trans "Remember: the one who wished follows up." %} {% trans "Got a yes for your wish? Get in touch in the next few days, while everyone still remembers." %}
+{% endif %}{% if staying %}
+{% trans "Your wishes and offers that found nobody today stay on ecobasa. They keep finding people near you." %}
+{% endif %}
+{% trans "The whole Giftsheet" %}
+{% for entry in entries %}
+- {% include "gift_circles/email/_line.txt" %}{% empty %}
+{% trans "Nothing on the Giftsheet yet." %}{% endfor %}
+{% if has_photos %}
+{% trans "A photo of the Giftsheet is on its page:" %} {{ giftsheet_url }}
+{% endif %}
+{% if is_guest %}{% include "gift_circles/_account.txt" %}{% else %}{% trans "Plan the next one" %}
+
+{% trans "Gift-circles grow when they happen again. Anyone who came can plan the next one: choose a date, and everyone who came gets an invitation, and you can invite new people. Whoever plans it hosts it." %}
+
+{% trans "Plan the next one" %}: {{ next_url }}{% endif %}
+
+{% trans "Something good came out of it? Share the story on the page, it shows others what a gift-circle can do:" %} {{ stories_url }}
+
+--
+ecobasa.org{% endautoescape %}

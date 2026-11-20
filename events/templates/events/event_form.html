@@ -1,11 +1,11 @@
 {% extends 'base.html' %}
-{% load i18n %}
+{% load i18n events_tags %}
 
-{% block head_title %}{% if event %}{{ texts.edit }}{% else %}{{ texts.new }}{% endif %} — {{ community.name }} — ecobasa{% endblock %}
+{% block head_title %}{% if editing %}{{ texts.edit }}{% else %}{{ texts.new }}{% endif %} — {{ event.host_name }} — ecobasa{% endblock %}
 
 {% block content %}
 <div class="container-form">
-  <div class="mb-2 text-sm"><a href="{{ community.get_absolute_url }}" class="hover:underline">{{ community.name }}</a></div>
+  <div class="mb-2 text-sm"><a href="{{ event.host.get_absolute_url }}" class="hover:underline">{{ event.host_name }}</a></div>
   {# Heading and intro follow the kind chosen below #}
   <div x-data="{ kind: '{{ form.kind.value }}' }" @kind-chosen.window="kind = $event.detail">
     {% for value, label, icon, hint, defaults in form.kind_choices %}
@@ -14,10 +14,20 @@
         <p class="text-sm">{{ hint }}</p>
       </div>
     {% endfor %}
-    <p class="text-sm">{% trans "Keep it short and current: what nobody updates is archived after a while." %}</p>
+    {# What whoever invites to it does, for kinds that have a guide #}
+    {% for value, guide in form.guides %}
+      <div x-show="kind === '{{ value }}'" {% if value != form.kind.value %}style="display:none"{% endif %}>{% include guide %}</div>
+    {% endfor %}
+    {# Kinds on one day end with it; ongoing ones are archived when nobody keeps them current #}
+    {% with one_day=form.one_day_kinds %}
+      <p class="text-sm" x-data="{ oneDay: [{% for kind in one_day %}'{{ kind }}'{% if not forloop.last %}, {% endif %}{% endfor %}] }">
+        <span x-show="!oneDay.includes(kind)" {% if form.kind.value in one_day %}style="display:none"{% endif %}>{% trans "Keep it short and current: what nobody updates is archived after a while." %}</span>
+        <span x-show="oneDay.includes(kind)" {% if form.kind.value not in one_day %}style="display:none"{% endif %}>{% trans "It is archived once it is over, and stays on ecobasa as a record." %}</span>
+      </p>
+    {% endwith %}
   </div>
 
-  <form method="post" enctype="multipart/form-data" class="border rounded-xl bg-secondary p-6 space-y-4" x-data="needRows()">
+  <form method="post" enctype="multipart/form-data" class="border rounded-xl bg-secondary p-6 space-y-4" {% if formset %}x-data="needRows()"{% endif %}>
     {% csrf_token %}
     {{ form.non_field_errors }}
 
@@ -28,7 +38,7 @@
         {% for value, label, icon, hint, defaults in form.kind_choices %}
           <label class="flex items-start gap-3 p-3 rounded border cursor-pointer bg-secondary" :class="kind === '{{ value }}' ? 'border-primary border-2' : 'bg-opacity-50'">
             <input type="radio" name="{{ form.kind.html_name }}" value="{{ value }}" class="mt-1" x-model="kind"
-                   @change="$dispatch('kind-chosen', '{{ value }}'){% if not event %}; document.getElementById('{{ form.is_open.id_for_label }}').checked = {{ defaults.is_open|yesno:'true,false' }}{% endif %}">
+                   @change="$dispatch('kind-chosen', '{{ value }}'){% if not editing %}; document.getElementById('{{ form.is_open.id_for_label }}').checked = {{ defaults.is_open|yesno:'true,false' }}{% endif %}">
             <span><span class="font-semibold"><i class="fa-solid {{ icon }} mr-1 text-primary"></i>{{ label }}</span><span class="block text-xs">{{ hint }}</span></span>
           </label>
         {% endfor %}
@@ -37,12 +47,52 @@
     </fieldset>
 
     {% for field in form %}
-      {% if field.name == "kind" %}
+      {% if field.name == "kind" or field.name == "timezone" or field.name == "languages" or field.name == "location_name" or field.name == "location" or field.name == "country" %}
+      {% elif field.name == "is_online" %}
+        {# Where: online (for people around a town, if it says one), at a place of its own, or (left empty) at its community's #}
+        <fieldset class="form-group space-y-3" x-data="{ online: {{ form.is_online.value|yesno:'true,false' }}, kind: '{{ form.kind.value }}', apart: '{{ form.countries_apart }}'.split(','), byTown: {{ form.times_from_town|yesno:'true,false' }}, town() { const country = document.getElementById('{{ form.country.id_for_label }}').value; this.byTown = !!document.getElementById('{{ form.location.id_for_label }}').value && !!country && !this.apart.includes(country) } }"
+                  @kind-chosen.window="kind = $event.detail" @location-set.window="town()" @location-country.window="town()" @location-cleared.window="byTown = false">
+          <legend class="form-label">{% trans "Where" %}</legend>
+          <label class="inline-flex items-center gap-2"><input type="checkbox" name="{{ form.is_online.html_name }}" id="{{ form.is_online.id_for_label }}" class="form-checkbox" x-model="online" @change="$dispatch('online-chosen', online)"> {{ form.is_online.label }}</label>
+          {# Its times are in a timezone: its own, else its host's place's, else the browser's (browser_zones: [] any, else only one of these) #}
+          {% if form.browser_zones is not None and not form.is_bound %}{{ form.browser_zones|json_script:"browser-zones" }}{% endif %}
+          <div x-show="online" {% if not form.is_online.value %}style="display:none"{% endif %}
+               x-init="const allowed = JSON.parse(document.getElementById('browser-zones')?.textContent || 'null'); const here = Intl.DateTimeFormat().resolvedOptions().timeZone; if (allowed && (allowed.length ? allowed.includes(here) : true) && [...$refs.zone.options].some(o => o.value === here)) $refs.zone.value = here">
+            {# A town where the country keeps one clock tells its timezone (forms.EventForm.clean) #}
+            <div x-show="!byTown" {% if form.times_from_town %}style="display:none"{% endif %}>
+              <label for="{{ form.timezone.id_for_label }}" class="form-label">{{ form.timezone.label }}</label>
+              <select name="{{ form.timezone.html_name }}" id="{{ form.timezone.id_for_label }}" x-ref="zone" class="form-select w-full">
+                {% for value, label in form.timezone.field.widget.choices %}<option value="{{ value }}"{% if value == form.timezone.value %} selected{% endif %}>{{ label }}</option>{% endfor %}
+              </select>
+              <p class="text-xs mt-1">{{ form.timezone.help_text }}</p>
+              {% for error in form.timezone.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+            </div>
+            <p x-show="byTown" {% if not form.times_from_town %}style="display:none"{% endif %} class="text-xs m-0">{% trans "The times are in the timezone of the town below." %}</p>
+            <label for="{{ form.languages.id_for_label }}" class="form-label mt-3">{{ form.languages.label }}</label>
+            {{ form.languages }}
+            <p class="text-xs mt-1">{{ form.languages.help_text }}</p>
+            {% for error in form.languages.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+          </div>
+          {# An online skill-sharing (event.skill_sharing, from a suggestion) is from afar: no town #}
+          <div {% if event.skill_sharing %}x-show="!online" {% if form.is_online.value %}style="display:none"{% endif %}{% endif %}>
+            <label class="form-label" for="{{ form.location_name.id_for_label }}">
+              <span x-show="!online" {% if form.is_online.value %}style="display:none"{% endif %}>{{ form.location_name.label }}</span>
+              <span x-show="online" {% if not form.is_online.value %}style="display:none"{% endif %}>{% trans "For people around" %}</span>
+            </label>
+            {% if event.community_id %}<p class="text-xs" x-show="!online" {% if form.is_online.value %}style="display:none"{% endif %}>{% trans "Leave it empty if it takes place at the community." %}</p>{% endif %}
+            <div x-show="online" {% if not form.is_online.value %}style="display:none"{% endif %} class="text-xs space-y-1 mb-2">
+              <p class="m-0">{% trans "Optional: a town, if it is for people who live near each other. Everyone sees only the town." %}</p>
+              {% with giftsheet=form.giftsheet_kinds %}<p class="m-0" x-show="[{% for kind in giftsheet %}'{{ kind }}'{% if not forloop.last %}, {% endif %}{% endfor %}].includes(kind)" {% if form.kind.value not in giftsheet %}style="display:none"{% endif %}>{% trans "From far away, people can give each other skills, knowledge, ideas, shared projects and things that can be posted. Things to pick up and tools to lend need people who live nearby." %}</p>{% endwith %}
+            </div>
+            {% include "maps/_location_picker.html" with map_id="event-location-map" set_point_fn="setEventPoint" map_height="h-64" no_label=True %}
+          </div>
+        </fieldset>
       {% elif field.name == "is_open" %}
         <fieldset class="form-group">
           <legend class="form-label">{% trans "How people come" %}</legend>
           <label class="inline-flex items-center gap-2">{{ form.is_open }} {{ form.is_open.label }}</label>
-          <p class="text-xs mt-1">{{ form.is_open.help_text }}</p>
+          {# Asking first is how volunteer stays work: only a community knows that #}
+          {% if event.takes_needs %}<p class="text-xs mt-1">{{ form.is_open.help_text }}</p>{% endif %}
         </fieldset>
       {% elif field.name == "food_provided" %}
         <fieldset class="form-group">
@@ -50,8 +100,31 @@
           <label class="inline-flex items-center gap-2 mr-6">{{ form.food_provided }} <i class="fa-solid fa-utensils"></i> {{ form.food_provided.label }}</label>
           <label class="inline-flex items-center gap-2">{{ form.bed_provided }} <i class="fa-solid fa-bed"></i> {{ form.bed_provided.label }}</label>
         </fieldset>
+      {% elif field.name == "starts_on" or field.name == "ends_on" %}
+        {# A kind that happens on one day has a day, no "Until" #}
+        {% with one_day=form.one_day_kinds %}
+        <div class="form-group inline-block w-full sm:w-[48%] sm:mr-[2%] align-top"
+             x-data="{ kind: '{{ form.kind.value }}', oneDay: [{% for kind in one_day %}'{{ kind }}'{% if not forloop.last %}, {% endif %}{% endfor %}] }" @kind-chosen.window="kind = $event.detail"
+             {% if field.name == "ends_on" %}x-show="!oneDay.includes(kind)" {% if form.kind.value in one_day %}style="display:none"{% endif %}{% endif %}>
+          <label class="form-label" for="{{ field.id_for_label }}">{% if field.name == "starts_on" %}<span x-show="!oneDay.includes(kind)" {% if form.kind.value in one_day %}style="display:none"{% endif %}>{{ field.label }}</span><span x-show="oneDay.includes(kind)" {% if form.kind.value not in one_day %}style="display:none"{% endif %}>{% trans "Day" %}</span>{% else %}{{ field.label }}{% endif %}</label>
+          {{ field }}
+          {% if field.help_text %}<p class="text-xs mt-1" x-show="!oneDay.includes(kind)">{{ field.help_text }}</p>{% endif %}
+          {% for error in field.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+        </div>
+        {% endwith %}
+      {% elif field.name == "potluck_note" %}
+        {% with potluck=form.potluck_kinds %}
+        {# Not online: nobody shares a table #}
+        <div class="form-group" x-data="{ kind: '{{ form.kind.value }}', online: {{ form.is_online.value|yesno:'true,false' }}, potluck: [{% for kind in potluck %}'{{ kind }}'{% if not forloop.last %}, {% endif %}{% endfor %}] }" @kind-chosen.window="kind = $event.detail" @online-chosen.window="online = $event.detail"
+             x-show="potluck.includes(kind) && !online" {% if form.kind.value not in potluck or form.is_online.value %}style="display:none"{% endif %}>
+          <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+          {{ field }}
+          <p class="text-xs mt-1">{{ field.help_text }}</p>
+          {% for error in field.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+        </div>
+        {% endwith %}
       {% elif field.name != "bed_provided" %}
-        <div class="form-group {% if field.name == 'starts_on' or field.name == 'ends_on' or field.name == 'starts_at' or field.name == 'ends_at' %}inline-block w-full sm:w-[48%] sm:mr-[2%] align-top{% endif %}">
+        <div class="form-group {% if field.name == 'starts_at' or field.name == 'ends_at' %}inline-block w-full sm:w-[48%] sm:mr-[2%] align-top{% endif %}">
           <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
           {{ field }}
           {% if field.help_text %}<p class="text-xs mt-1">{{ field.help_text }}</p>{% endif %}
@@ -60,6 +133,7 @@
       {% endif %}
     {% endfor %}
 
+    {% if formset %}
     <h2>{% trans "What do you need?" %}</h2>
     <p class="text-xs">{% trans "One line per thing: people with a skill, a material, a tool or knowledge. Skills from the list let us find people who have them." %}</p>
     {{ formset.management_form }}
@@ -71,10 +145,20 @@
     </div>
     <template id="need-row-template">{% include "events/_need_row.html" with need_form=formset.empty_form %}</template>
     <button type="button" class="btn btn-purple" @click="add()"><i class="fa fa-plus mr-1"></i>{% trans "Add a need" %}</button>
+    {% endif %}
 
-    <div class="flex justify-between gap-3 pt-4">
-      <a href="{% if event %}{{ event.get_absolute_url }}{% else %}{{ community.get_absolute_url }}{% endif %}" class="btn btn-lg btn-purple"><i class="fa fa-ban mr-2"></i>{% trans "Cancel" %}</a>
-      <button type="submit" class="btn btn-lg"><i class="fa fa-save mr-2"></i>{% trans "Save" %}</button>
+    <div class="flex flex-wrap justify-between gap-3 pt-4">
+      <a href="{{ cancel_url }}" class="btn btn-lg btn-purple"><i class="fa fa-ban mr-2"></i>{% trans "Cancel" %}</a>
+      <div class="flex flex-wrap gap-3">
+        {% if editing %}
+          {# Asks once more before it deletes #}
+          <button type="submit" formaction="{% event_url event "delete" %}" formnovalidate class="btn btn-lg btn-red"
+                  x-data="{ sure: false }" @click="if (!sure) { $event.preventDefault(); sure = true }" @click.outside="sure = false">
+            <i class="fa fa-recycle mr-2"></i><span x-text="sure ? '{% trans "Sure?" %}' : '{% trans "Delete" %}'">{% trans "Delete" %}</span>
+          </button>
+        {% endif %}
+        <button type="submit" class="btn btn-lg"><i class="fa fa-save mr-2"></i>{% trans "Save" %}</button>
+      </div>
     </div>
   </form>
 </div>
@@ -83,6 +167,7 @@
 {% block css %}
 {{ block.super }}
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v7.2.2/ol.css">
 {% endblock %}
 
 {% block javascript %}
@@ -91,4 +176,48 @@
 {% include "users/_skill_tagify_js.html" %}
 {% include "_vocabulary_select_js.html" %}
 {% include "events/_need_rows_js.html" %}
+<script src="https://cdn.jsdelivr.net/npm/ol@v7.2.2/dist/ol.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  // "Until" from "From", for kinds that usually take a set time
+  const durations = { {% for kind, minutes in form.durations.items %}'{{ kind }}': {{ minutes }}{% if not forloop.last %}, {% endif %}{% endfor %} };
+  const startsAt = document.getElementById('{{ form.starts_at.id_for_label }}');
+  const endsAt = document.getElementById('{{ form.ends_at.id_for_label }}');
+  startsAt.addEventListener('change', () => {
+    const kind = (document.querySelector('input[name="{{ form.kind.html_name }}"]:checked') || {}).value;
+    if (!durations[kind] || endsAt.value || !startsAt.value) return;
+    const [h, m] = startsAt.value.split(':').map(Number);
+    const end = (h * 60 + m + durations[kind]) % (24 * 60);
+    endsAt.value = String(Math.floor(end / 60)).padStart(2, '0') + ':' + String(end % 60).padStart(2, '0');
+  });
+
+  // Languages by name, only ones Django knows; the input holds their codes
+  const languagesInput = document.getElementById('{{ form.languages.id_for_label }}');
+  if (languagesInput && window.Tagify) {
+    const known = JSON.parse(languagesInput.dataset.languages || '[]');
+    const chosen = (languagesInput.value || '').split(',').map(s => s.trim()).filter(Boolean);
+    languagesInput.value = '';
+    const tagify = new Tagify(languagesInput, {
+      enforceWhitelist: true,
+      editTags: false,
+      whitelist: known,
+      dropdown: { enabled: 1, maxItems: 15, closeOnSelect: true, searchKeys: ['value'], highlightFirst: true },
+      originalInputValueFormat: vals => vals.map(v => v.code).join(','),
+    });
+    tagify.addTags(known.filter(language => chosen.includes(language.code)));
+  }
+
+  const locationInput = document.getElementById('{{ form.location.id_for_label }}');
+  window.eventPicker = EcoMap.initLocationPicker({
+    mapTarget: 'event-location-map',
+    locationInput: locationInput,
+    countryInput: document.getElementById('{{ form.country.id_for_label }}'),
+    nameInput: document.getElementById('{{ form.location_name.id_for_label }}'),
+    groupName: 'event-layer',
+    setPointFn: 'setEventPoint',
+    badge: {{ event.kind_pin.0 }},  // its kind's icon
+    existingWkt: locationInput ? locationInput.value : '',
+  });
+});
+</script>
 {% endblock %}

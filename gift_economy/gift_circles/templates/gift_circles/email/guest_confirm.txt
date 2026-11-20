@@ -1,0 +1,14 @@
+{% load i18n %}{% autoescape off %}{% blocktrans with name=recipient.name|default:recipient.email %}Hello {{ name }},{% endblocktrans %}
+
+{% blocktrans with title=event.title %}You signed up for the gift-circle {{ title }} on ecobasa. Please confirm it's you:{% endblocktrans %}
+
+{% trans "Yes, I'm coming" %}: {{ confirm_url }}
+
+{% trans "Only after that do you count as coming, and only then do we write to you again. If it wasn't you, ignore this email and we won't write again." %}
+
+{{ event.title }}
+{% include "gift_circles/_when.txt" %}{% if place_name %}
+{{ place_name }}{% endif %}
+
+--
+ecobasa.org{% endautoescape %}

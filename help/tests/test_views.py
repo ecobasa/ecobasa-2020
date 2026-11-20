@@ -5,7 +5,8 @@ from django.utils import translation
 
 @pytest.mark.django_db
 def test_the_help_pages_open(client):
-    for url in ("/help/", "/help/community-tours/", "/help/community-tours/travelling-tips/", "/help/members/"):
+    for url in ("/help/", "/help/community-tours/", "/help/community-tours/travelling-tips/", "/help/members/",
+                "/help/gift-circles/"):
         assert client.get(url, HTTP_ACCEPT_LANGUAGE="en").status_code == 200, url
 
 

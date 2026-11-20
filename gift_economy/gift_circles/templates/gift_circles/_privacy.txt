@@ -1,0 +1,3 @@
+{% load i18n %}{% autoescape off %}{% trans "Your offers and wishes go on ecobasa only if you said yes to that. You can change it at any time." %}
+
+{% if guest %}{% trans "Your email goes only to the people you make a match with, and only if you said yes to that. Nobody else gets it." %}{% else %}{% trans "The people you make a match with can write to you through ecobasa. Nobody gets your email." %}{% endif %}{% endautoescape %}

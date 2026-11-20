@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block head_title %}{% trans "Yes, I'm coming" %} — {{ event.title }} — ecobasa{% endblock %}
+
+{% block content %}
+<div class="container-form">
+  {% include "gift_circles/_guest_header.html" %}
+  <h1>{{ event.title }}</h1>
+  <p class="text-sm"><i class="fa-regular fa-calendar mr-1"></i>{% include "events/_event_dates.html" %}</p>
+  <form method="post" class="border rounded-xl bg-secondary p-6">
+    {% csrf_token %}
+    <p class="mb-6">{% blocktrans with name=guest.name title=event.title %}You signed up for the gift-circle {{ title }} on ecobasa. Please confirm it's you:{% endblocktrans %} <strong>{{ guest.name }}</strong>, {{ guest.email }}</p>
+    <div class="flex justify-between gap-3">
+      <a href="{{ event.get_absolute_url }}" class="btn btn-lg btn-purple"><i class="fa-solid fa-ban mr-2"></i>{% trans "Cancel" %}</a>
+      <button type="submit" class="btn btn-lg"><i class="fa fa-check mr-2"></i>{% trans "Yes, I'm coming" %}</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

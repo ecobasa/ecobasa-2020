@@ -11,18 +11,20 @@
 {% block giving_content %}
 <div>
 
-  <div class="mb-2 text-sm">
+  <div class="mb-2 text-sm flex flex-wrap items-center gap-x-2 gap-y-1">
     {% if request_type == "volunteer" %}
       <a href="{% url 'matches:list' %}?type=volunteer" class="hover:underline">{% trans "Volunteer Visits" %}</a>
     {% elif request_type == "tours" %}
       <a href="{% url 'matches:list' %}?type=tours" class="hover:underline">{% trans "Join requests" %}</a>
+    {% elif request_type == "events" %}
+      <a href="{% url 'events:going' %}" class="hover:underline">{% trans "Events you are attending" %}</a>
     {% else %}
       <a href="{% url 'matches:list' %}" class="hover:underline">{% trans "Matches" %}</a>
     {% endif %}
-    <span class="mx-1">/</span>
+    <i class="fa-solid fa-chevron-right text-xs opacity-50" aria-hidden="true"></i>
     <a href="{{ target.get_absolute_url }}" class="hover:underline">{{ target.get_match_display_name }}</a>
-    <span class="mx-1">/</span>
-    <span>{% trans "Match" %} #{{ match.pk }}</span>
+    <i class="fa-solid fa-chevron-right text-xs opacity-50" aria-hidden="true"></i>
+    <span class="opacity-70">{% trans "Match" %} #{{ match.pk }}</span>
   </div>
 
   {# ── Status summary banner ────────────────────────────────────────── #}
@@ -88,6 +90,11 @@
             <i class="fa-regular fa-calendar text-primary"></i>
             <span>{% trans "Lent" %}: {{ match.loan.period }}</span>
           </div>
+        {% elif match.lends_later %}
+          <div class="flex items-center gap-2 text-sm">
+            <i class="fa-regular fa-calendar text-primary"></i>
+            <span>{% trans "The days to borrow it aren't agreed yet. Propose them below." %}</span>
+          </div>
         {% elif latest_counter_msg and latest_counter_msg.counter_date %}
           <div class="flex items-center gap-2 text-sm">
             <i class="fa fa-calendar text-primary"></i>
@@ -124,8 +131,8 @@
         {% endif %}
         {% if latest_status_msg.counter_stay_from or latest_status_msg.counter_stay_to %}
           <div class="flex items-center gap-2 text-sm">
-            <i class="{% if match.is_loan %}fa-regular fa-calendar{% else %}fa fa-campground{% endif %} text-primary"></i>
-            <span>{% if match.is_loan %}{{ latest_status_msg.counter_loan_period }}{% else %}{% include "matches/_stay_period.html" with stay_from=latest_status_msg.counter_stay_from stay_to=latest_status_msg.counter_stay_to %}{% endif %}</span>
+            <i class="{% if match.takes_loan_days %}fa-regular fa-calendar{% else %}fa fa-campground{% endif %} text-primary"></i>
+            <span>{% if match.takes_loan_days %}{{ latest_status_msg.counter_loan_period }}{% else %}{% include "matches/_stay_period.html" with stay_from=latest_status_msg.counter_stay_from stay_to=latest_status_msg.counter_stay_to %}{% endif %}</span>
           </div>
         {% endif %}
       {% endif %}
@@ -163,6 +170,10 @@
 
     <div class="prose text-sm mb-4">{{ match.message|linebreaksbr }}</div>
 
+    {% if skill_sharing %}
+      <p class="text-sm mb-4"><a href="{% url 'events:gift_circle_create' %}?suggestion={{ skill_sharing.pk }}" class="btn text-sm py-1 px-3"><i class="fa-solid fa-video mr-1"></i>{% trans "Start an online skill-sharing" %}</a>
+        <span class="block text-xs mt-1">{% trans "Agree on a day and time here first. Everyone sees the times in their own timezone." %}</span></p>
+    {% endif %}
     {% if summary_template %}{% include summary_template %}{% endif %}
     {% for attachment in match.attachments %}{% include attachment.match_attachment_template %}{% endfor %}
 
@@ -179,7 +190,7 @@
       {% if vd.stay_from or vd.stay_to %}
         <div class="text-sm mb-2">
           <i class="fa fa-campground mr-1 text-primary"></i>
-          <strong>{% trans "Proposed stay" %}:</strong>
+          <strong>{{ match.stay_label }}:</strong>
           {% include "matches/_stay_period.html" with stay_from=vd.stay_from stay_to=vd.stay_to %}
         </div>
       {% endif %}
@@ -223,7 +234,7 @@
 
     {% if match.location_type %}
       <div class="text-sm mb-2">
-        <i class="fa fa-map-marker mr-1 text-primary"></i>
+        <i class="fa {% if match.location_type == 'online' %}fa-video{% else %}fa-map-marker{% endif %} mr-1 text-primary"></i>
         <strong>{% trans "Location" %}:</strong>
         {% with community=match.community %}{% if community %}<a href="{{ community.get_absolute_url }}" class="underline hover:text-primary">{{ match.resolved_location }}</a>{% else %}{{ match.resolved_location }}{% endif %}{% endwith %}
       </div>
@@ -307,10 +318,10 @@
             {% endif %}
             {% if msg.counter_stay_from or msg.counter_stay_to %}
               <div class="text-sm mb-2">
-                {% if match.is_loan %}<i class="fa-regular fa-calendar mr-1 text-primary"></i>
+                {% if match.takes_loan_days %}<i class="fa-regular fa-calendar mr-1 text-primary"></i>
                 <strong>{% trans "Suggested days" %}:</strong>{% else %}<i class="fa fa-campground mr-1 text-primary"></i>
                 <strong>{% trans "Suggested stay" %}:</strong>{% endif %}
-                {% if match.is_loan %}{{ msg.counter_loan_period }}{% else %}{% include "matches/_stay_period.html" with stay_from=msg.counter_stay_from stay_to=msg.counter_stay_to %}{% endif %}
+                {% if match.takes_loan_days %}{{ msg.counter_loan_period }}{% else %}{% include "matches/_stay_period.html" with stay_from=msg.counter_stay_from stay_to=msg.counter_stay_to %}{% endif %}
               </div>
             {% endif %}
             {% with coords=msg.counter_location_coords %}
@@ -367,7 +378,7 @@
           </div>
         </div>
         {% else %}
-        {% if match.is_loan %}
+        {% if match.takes_loan_days %}
         {# Other days or hours to borrow it; the place to pick it up can change too #}
         {% with loan=proposed_loan %}
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -390,7 +401,7 @@
         {% endwith %}
         {% endif %}
         <div class="form-group">
-          <label class="form-label">{% if match.is_loan %}{% trans "Handover place" %}{% else %}{% trans "Counter location type" %}{% endif %}</label>
+          <label class="form-label">{% if match.takes_loan_days %}{% trans "Handover place" %}{% else %}{% trans "Counter location type" %}{% endif %}</label>
           <div class="space-y-1">
             {% for value, label in loc_choices %}
               <label class="flex items-center gap-2 text-sm cursor-pointer">
@@ -432,11 +443,12 @@
         <input type="hidden" name="counter_lat" id="counter-lat">
         <input type="hidden" name="counter_lon" id="counter-lon">
 
-        <div class="rounded shadow overflow-hidden h-[220px]">
+        {# Online is no place: no map #}
+        <div class="rounded shadow overflow-hidden h-[220px]" x-show="counterLocType !== 'online'" {% if proposed_place.type == 'online' %}style="display:none"{% endif %}>
           <div id="counter-pick-map" class="w-full h-full bg-secondary bg-opacity-40"></div>
         </div>
 
-        {% if not match.is_loan %}
+        {% if not match.takes_loan_days %}
         <div class="form-group">
           <label class="form-label">{% trans "Counter date" %}</label>
           <input type="datetime-local" name="counter_date" class="form-input">
@@ -544,7 +556,7 @@
           <button type="button" x-show="!isCounter"
             @click="isCounter = true; $nextTick(() => window.initCounterPicker && window.initCounterPicker())"
             class="btn btn-yellow">
-            {% if match.is_loan %}<i class="fa-solid fa-calendar-days mr-2"></i>{% trans "Propose another time or handover place" %}{% else %}<i class="fa-solid fa-location-dot mr-2"></i>{% trans "Propose different location" %}{% endif %}
+            {% if match.takes_loan_days %}<i class="fa-solid fa-calendar-days mr-2"></i>{% trans "Propose another time or handover place" %}{% else %}<i class="fa-solid fa-location-dot mr-2"></i>{% trans "Propose different location" %}{% endif %}
           </button>
           {% endif %}
 
@@ -684,7 +696,12 @@ document.fonts.ready.then(function () {
 
     window.updateCounterMode = function (locType) {
       counterMapInst.removeInteraction(modify);
-      if (locType === 'custom') {
+      // Shown again after online: the map has to measure itself
+      setTimeout(function () { counterMapInst.updateSize(); });
+      if (locType === 'online') {
+        counterFeature.setGeometry(null);
+        setHidden('', '', '');
+      } else if (locType === 'custom') {
         counterFeature.setGeometry(null);
         counterVectorLayer.setStyle(EcoMap.makeIconStyle(0xF111, '#da6137'));
         counterMapInst.addInteraction(modify);

@@ -18,7 +18,8 @@ Where each side looks, by their owner's settings (reaches()):
   as its place, so it is measured from the route's nearest point, and the organiser's
   distance is how wide the tour looks around it;
 - with only a country: in that country;
-- with neither: anywhere, as with "search worldwide" (User.match_global).
+- with neither: anywhere, as with "search worldwide" (User.match_global);
+- a skill or knowledge both sides can also share from afar (Listing.from_afar): anywhere.
 Nothing is suggested between things of the same person (or community), for skills that
 aren't available, or for what is covered, given away or part of a event that is over."""
 
@@ -61,6 +62,7 @@ class Side:
     kind: str = ""
     thing_id: int | None = None
     climate: str = ""
+    from_afar: bool = False
 
     @property
     def is_thing(self):
@@ -83,15 +85,17 @@ def side_of(listing):
     return Side(listing, owner, listing.point, listing.country, want=listing.is_wish,
                 route=route, countries=tuple(listing.countries) if listing.tour_id else (),
                 skill_id=listing.skill_id, title=listing.display_title if not listing.skill_id else "", kind=listing.kind,
-                thing_id=listing.thing_id, climate=listing.climate)
+                thing_id=listing.thing_id, climate=listing.climate,
+                from_afar=listing.from_afar and listing.kind in Listing.FROM_AFAR_KINDS)
 
 
 def reaches(recipient, other, km):
     """Whether `recipient` side's owner hears about `other`: anywhere if they search
-    worldwide or have neither place nor country, in their country if they have only that,
-    else within their distance (unknown if `other` has no place)."""
+    worldwide, both can share it from afar or they have neither place nor country, in their
+    country if they have only that, else within their distance (unknown if `other` has no
+    place)."""
     owner = recipient.owner
-    if owner.match_global:
+    if owner.match_global or recipient.from_afar and other.from_afar:
         return True
     if recipient.point is not None:
         return km is not None and km <= (owner.match_radius or 0)
@@ -103,7 +107,8 @@ def reaches(recipient, other, km):
 def candidates(side):
     """The listings on the other side that could fit `side`: nearby (roughly), without a
     place (they may look anywhere or in a country), or anywhere if one of the owners
-    searches worldwide. reaches() then decides for each side."""
+    searches worldwide or both can share it from afar. reaches() then decides for each
+    side."""
     others = Listing.objects.current().filter(type=Listing.TYPE_OFFER if side.want else Listing.TYPE_WISH)
     if side.skill_id:
         others = others.filter(skill_id=side.skill_id)
@@ -118,6 +123,8 @@ def candidates(side):
             near |= Q(**{f"{name}__dwithin": (where, D(km=MAX_RADIUS_KM))})
         for path in WORLDWIDE:
             near |= Q(**{path: True})
+        if side.from_afar:
+            near |= Q(from_afar=True, kind__in=Listing.FROM_AFAR_KINDS)
         others = others.filter(near)
     return others.select_related("owner", "community__ambassador", "event__community", "tour__organiser", "skill").prefetch_related(
         "contributions__match",
