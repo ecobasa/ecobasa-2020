@@ -14,7 +14,7 @@ def load_and_recognize(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("gifts", "0015_children"),
+        ("gifts", "0016_children"),
     ]
 
     operations = [

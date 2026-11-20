@@ -24,10 +24,10 @@ def _kids(owner, title, type="offer", **fields):
 
 @pytest.mark.django_db
 def test_the_children_vocabulary_holds_toys_and_the_pram_now():
-    rain_trousers = ChildrenThing.objects.get(slug="kids-rain-trousers")
-    assert rain_trousers.parent.slug == "kids-outdoor-clothing" and rain_trousers.parent.parent.slug == "kids-clothing"
+    rain_trousers = ChildrenThing.objects.get(slug="rain-trousers")
+    assert rain_trousers.parent.slug == "outdoor-clothing" and rain_trousers.parent.parent.slug == "childrens-clothes"
     assert rain_trousers.get_name("de") == "Regenhose" and "Matschhose" in rain_trousers.other_names
-    assert ChildrenThing.objects.get(slug="pram").parent.slug == "kids"
+    assert ChildrenThing.objects.get(slug="pram").parent.slug == "childrens-things"
     assert not OtherThing.objects.filter(slug__in=("toys", "pram", "child-seat")).exists()
 
 
@@ -39,7 +39,7 @@ def test_offering_rain_trousers_with_a_size():
     })
     assert response.status_code == 302
     trousers = Listing.objects.get()
-    assert (trousers.thing.slug, trousers.size, trousers.unit, trousers.size_label) == ("kids-rain-trousers", 104, "", "Size 104")
+    assert (trousers.thing.slug, trousers.size, trousers.unit, trousers.size_label) == ("rain-trousers", 104, "", "Size 104")
     assert {c.slug for c in trousers.categories.all()} == {"clothing-textiles", "children-toys"}
     assert "Size 104" in Client().get(trousers.get_absolute_url(), HTTP_ACCEPT_LANGUAGE="en").content.decode()
 
@@ -134,8 +134,8 @@ def test_childrens_things_can_be_lent():
     ("Schnitzwerkzeug", "carving-tools"),
     ("Papier", "paper"),
     # Only children have these
-    ("Lego Duplo", "kids-duplo"),
-    ("Schere", "kids-scissors"),
+    ("Lego Duplo", "duplo"),
+    ("Schere", "childrens-scissors"),
 ])
 def test_other_things_and_childrens_things_named_alike(title, slug):
     assert Listing.objects.create(owner=_user("anna"), title=title, type="offer", kind=Listing.KIND_OTHER).thing.slug == slug

@@ -200,16 +200,19 @@ def test_suggestions_while_typing_come_from_the_vocabulary():
         return Client().get(url, {"kind": kind, "q": q}, HTTP_ACCEPT_LANGUAGE=lang).json()["results"]
     assert "Tomate" in suggest("seeds_plants", "Tom", "de")
     assert "Tomato" in suggest("seeds_plants", "Tom", "en")
-    assert "Paradeiser" in suggest("seeds_plants", "Paradei", "de")  # the Austrian word as typed
-    assert suggest("seeds_plants", "Paradei", "de")[0] == "Paradeiser"
+    # Another name finds the thing in the reader's language, and is shown once typed in full
+    assert suggest("seeds_plants", "Paradei", "de")[0] == "Tomate"
+    assert suggest("seeds_plants", "Paradeiser", "de")[0] == "Paradeiser"
+    assert "Regenhose" in suggest("children", "rain", "de") and "rain pants" not in suggest("children", "rain", "de")
     assert "Lastenrad" in suggest("vehicle", "Lasten", "de")
     assert "Tomate" not in suggest("vehicle", "Tom", "de")  # each kind its own vocabulary
     assert suggest("seeds_plants", "T", "de") == []
     # The reader's language first, names starting with it first; no other languages if it fits
     results = suggest("vehicle", "Trans", "de")
     starting = [name for name in results if name.startswith("Trans")]
-    assert results[0] == "Transporter" and "Transportrad" in starting
+    assert results[0] == "Transporter" and "Lastenrad" not in starting  # found as "Transportrad"
     assert results[:len(starting)] == starting and "Autotransporter" in results[len(starting):]
+    assert results.index("Autotransporter") < results.index("Lastenrad")
     assert suggest("seeds_plants", "Tom", "de")[0] == "Tomate"
 
 

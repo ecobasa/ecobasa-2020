@@ -83,11 +83,12 @@ def thing_named(name, kind):
 
 
 def suggest(q, kind, lang="en", limit=15):
-    """Names from the kind's vocabulary for what is being typed: in the reader's language
-    or by one of a thing's other names (a regional word like "Paradeiser", a botanical
-    name); only if none fits, in another language ("Tomato" typed in German). Each thing
-    once, names starting with what was typed first, then those with a word starting with
-    it ("Prunus tomentosa" after "Tomate")."""
+    """Names from the kind's vocabulary for what is being typed, in the reader's language;
+    a thing's other name (a regional word like "Paradeiser", a word in another language)
+    shown only when typed in full, else it finds the thing by the reader's name. Only if
+    none fits, in another language ("Tomato" typed in German). Each thing once, names
+    starting with what was typed first, then those with a word starting with it, then
+    those found by another name."""
     from .models import Thing
     q = " ".join(q.casefold().split())
     if len(q) < 2:
@@ -103,10 +104,16 @@ def suggest(q, kind, lang="en", limit=15):
     own, foreign = [], []
     for thing in Thing.objects.filter(kind=kind).only("names", "other_names"):
         reader = thing.get_name(lang)
-        for name in [reader, *thing.other_names]:
-            if (fit := rank(name)) is not None:
-                own.append((fit, name.casefold(), name))
-                break
+        if (fit := rank(reader)) is not None:
+            own.append((fit, reader.casefold(), reader))
+            continue
+        # Other names are in any language: one typed in full is shown as typed, one
+        # only begun finds the thing by the reader's name, after the names that fit
+        fits = [(rank(name), name) for name in thing.other_names if rank(name) is not None]
+        if typed := [name for _, name in fits if " ".join(name.casefold().split()) == q]:
+            own.append((0, typed[0].casefold(), typed[0]))
+        elif fits:
+            own.append((3 + min(fit for fit, _ in fits), reader.casefold(), reader))
         else:
             for name in thing.names.values():
                 if (fit := rank(name)) is not None:
