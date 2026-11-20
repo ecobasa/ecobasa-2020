@@ -67,7 +67,7 @@ jobs:
       # *.mo files are gitignored and `run` overrides the compose command that
       # normally compiles them, so the translation tests would see only English.
       - name: Run test suite
-        run: docker compose run --rm django bash -c "python manage.py compilemessages --ignore=node_modules --ignore=.venv && python -m pytest -q --create-db"
+        run: docker compose run --rm django bash -c "python manage.py compilemessages --ignore=node_modules --ignore=.venv && python -m pytest -q --create-db -m \"\""
 
       - name: Tear down
         if: always()
