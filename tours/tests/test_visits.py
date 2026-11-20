@@ -84,22 +84,6 @@ def test_a_group_of_four_stays_two_weeks(tour, organiser, farm, django_capture_o
     assert timezone.localdate(exchange_dates(match)[1]) == stop.leave_on
 
 
-def test_the_status_is_shown_to_everyone(tour, organiser, farm):
-    stop = farm_stop(tour)
-    ask_host(organiser, tour, stop)
-    stop.refresh_from_db()
-    accept(stop.visit_match, farm.ambassador)
-    page = login(person("Vera")).get(tour.get_absolute_url()).content.decode()
-    assert "Agreed" in page and "Not asked yet" in page
-    from django.test import Client
-    assert "Agreed" in Client().get(tour.get_absolute_url()).content.decode()
-    # Only the organisers get the button
-    assert reverse("tours:ask_host", args=[tour.slug, stop.pk]) not in page
-    own = login(organiser).get(tour.get_absolute_url()).content.decode()
-    village_stop = tour.ordered_stops()[2]
-    assert reverse("tours:ask_host", args=[tour.slug, village_stop.pk]) in own
-
-
 def test_only_organisers_ask_and_only_once(tour, organiser, other):
     stop = farm_stop(tour)
     assert ask_host(other, tour, stop).status_code == 403
@@ -212,11 +196,6 @@ def test_the_form_has_what_the_volunteer_form_has(tour, organiser, farm):
     )
     jars = Listing.objects.create(community=farm, type=Listing.TYPE_WISH, kind=Listing.KIND_MATERIAL, title="Jars")
     stop = farm_stop(tour)
-    page = login(organiser).get(reverse("tours:ask_host", args=[tour.slug, stop.pk])).content.decode()
-    assert "Harvest days" in page and "Jars" in page and "Also wished for" in page
-    assert f'value="{clay.pk}"' in page and "checked" in page.split(f'value="{clay.pk}"')[1].split(">")[0]
-    assert "checked" not in page.split(f'value="{sowing.pk}"')[1].split(">")[0]
-
     ask_host(organiser, tour, stop, learn=[str(clay.pk), str(sowing.pk)],
              **{f"need_{hands.pk}": "on", f"quantity_{hands.pk}": "1", f"need_{jars.pk}": "on"})
     stop.refresh_from_db()

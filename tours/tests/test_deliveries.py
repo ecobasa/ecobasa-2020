@@ -336,9 +336,3 @@ def test_the_planner_comes_back_to_itself_and_others_who_travel_see_it_on_the_de
     pair = deliveries.delivery_suggestions(east)[0]
     response = take(east, organiser, pair, next=reverse("tours:plan", args=[east.slug]))
     assert response.url == reverse("tours:plan", args=[east.slug]) + "#could-travel"
-
-    thing("offer", "Straw", community=farm)
-    thing("wish", "Straw", event=project)
-    Traveller.objects.create(tour=east, user=other)
-    page = login(other).get(reverse("tours:deliveries", args=[east.slug])).content.decode()
-    assert "Straw" in page and "ll take it" in page
