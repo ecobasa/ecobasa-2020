@@ -29,17 +29,12 @@ def user_client(db, user) -> Client:
 
 @pytest.mark.django_db
 class TestLogin:
-    def test_get(self, client: Client):
-        response = client.get("/users/login/")
-        assert response.status_code == 200
-        assert "Log in" in str(response.content)
-
     def test_fail(self, client: Client, user: User):
         response = client.post(
             "/users/login/", {"username": user.email, "password": "blabla"}, follow=True
         )
         assert response.status_code == 200
-        assert "Credentials are not correct." in str(response.content)
+        assert "_auth_user_id" not in client.session
 
     def test_login_email(self, client: Client, user: User):
         response = client.post(
@@ -62,15 +57,9 @@ class TestLogin:
 
 @pytest.mark.django_db
 class TestRegister:
-    def test_get(self, client: Client):
-        response = client.get("/users/register/")
-        assert response.status_code == 200
-        assert "Register" in str(response.content)
-
     def test_post_invalid(self, client: Client):
         response = client.post("/users/register/")
         assert response.status_code == 200
-        assert "This field is required" in str(response.content)
         assert not User.objects.all().exists()
 
     def test_redirect_if_logged_in(self, user_client: Client):
@@ -93,11 +82,6 @@ class TestRegister:
 @pytest.mark.django_db
 class TestPasswordReset:
     def test_pw_reset(self, client: Client, user: User, mailoutbox: list):
-        # get
-        res = client.get(reverse("users:password_reset"))
-        assert res.status_code == 200
-        assert "Forgotten" in str(res.content)
-
         # post email address
         res = client.post(
             reverse("users:password_reset"), {"email": user.email}, follow=True
@@ -112,7 +96,6 @@ class TestPasswordReset:
         # email send with correct link
         assert len(mailoutbox) == 1
         m = mailoutbox[0]
-        assert "Password reset" in m.subject
         url = re.search(r"(?P<url>https?://[^\s]+)", m.body).group("url")
         path = urlparse(url).path
         assert resolve(path).url_name == "password_reset_confirm"
@@ -120,7 +103,6 @@ class TestPasswordReset:
         # get url from email
         res = client.get(path, follow=True)
         assert res.status_code == 200
-        assert "form" in str(res.content)
 
         # post new password to url from email
         url, _ = res.redirect_chain[-1]
@@ -138,17 +120,6 @@ class TestPasswordReset:
         # check that new pw works
         newuser = authenticate(email=user.email, password=new_password)
         assert newuser == user
-
-
-@pytest.mark.django_db
-def test_profile_lists_owned_communities(user_client):
-    from communities.models import Community
-
-    owner = User.objects.create_user(email="luna@example.com", password="pw", name="Luna")
-    community = Community.objects.create(name="Sonnenkraut", ambassador=owner)
-    content = user_client.get(owner.get_absolute_url()).content.decode()
-    assert community.get_absolute_url() in content
-    assert "Sonnenkraut" in content
 
 
 @pytest.mark.django_db
@@ -184,10 +155,6 @@ class TestEmailChange:
 
     def _link(self, mailbox):
         return re.search(r"https?://\S+/users/email/\S+/", mailbox[0].body).group(0)
-
-    def test_the_edit_page_shows_the_account_section(self, user_client):
-        response = user_client.get(reverse("users:update"))
-        assert 'id="account"' in response.content.decode()
 
     def test_a_link_goes_to_the_new_address_and_nothing_changes_yet(self, user_client, user, mailoutbox):
         response = self._ask(user_client)

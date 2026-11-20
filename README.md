@@ -92,6 +92,9 @@ ALTER_ROLE ecobasa SUPERUSER;
 pytest
 ```
 
+The check of every vocabulary name is slow and left out; CI runs it. To run it too:
+`pytest -m ""`.
+
 ## Continous Deployment
 https://ecobasa.herokuapp.com/
 
