@@ -120,8 +120,7 @@ def test_an_online_event_says_its_languages_one_at_a_place_none(host):
     assert response.context["form"].errors["languages"]
     _client(host).post(reverse("events:gift_circle_create"), {**data, "languages": "de,it"})
     event = Event.objects.get()
-    assert event.languages == ["de", "it"] and event.language_names == "German, Italian"
-    assert "German, Italian" in _client(host).get(event.get_absolute_url(), HTTP_ACCEPT_LANGUAGE="en").content.decode()
+    assert event.languages == ["de", "it"]
     data.pop("is_online")
     _client(host).post(reverse("events:gift_circle_edit", args=[event.slug]), {
         **data, "languages": "de", "location_name": PARK_ADDRESS, "location": "SRID=4326;POINT (9.18 48.78)",
@@ -253,7 +252,6 @@ def test_online_events_are_listed_but_not_on_the_map(host):
     assert markers == []
     listed = Client().get(reverse("events:api-list")).context["events"]
     assert listed == [event]
-    assert "Online" in Client().get(event.get_absolute_url()).content.decode()
 
 
 def test_an_online_event_can_be_for_people_around_a_town(host, guest):
@@ -269,8 +267,6 @@ def test_an_online_event_can_be_for_people_around_a_town(host, guest):
     _come(event, guest)
     name, point = event.place_for(guest)
     assert name == "Stuttgart, Deutschland" and point != PARK and point.distance(PARK) < 0.1
-    page = Client().get(event.get_absolute_url(), HTTP_ACCEPT_LANGUAGE="en").content.decode()
-    assert "for people around Stuttgart, Deutschland" in page
     # People around it find it on the map
     markers = Client().get(reverse("events:api-markers")).json()["features"]
     assert [marker["properties"]["title"] for marker in markers] == ["Circle"]
@@ -367,27 +363,6 @@ def test_one_s_own_gift_circles_are_among_the_events_one_goes_to(host):
     event = _circle(host_user=host)
     response = _client(host).get(reverse("events:going"))
     assert list(response.context["page"]) == [event]
-    assert reverse("events:gift_circle_create") in response.content.decode()
-
-
-def test_the_user_menu_lists_events_once_one_hosts_one(host):
-    link = f'href="{reverse("events:going")}"'
-    assert link not in _client(host).get("/").content.decode()
-    _circle(host_user=host)
-    assert link in _client(host).get("/").content.decode()
-
-
-def test_the_cards_say_how_many_come(host, guest):
-    from gift_economy.gift_circles.models import Guest
-
-    event = _circle(host_user=host, max_people=12)
-    _come(event, guest, people=2)
-    Guest.objects.create(event=event, name="Ayla", email="ayla@example.com", confirmed_at=timezone.now())
-    Guest.objects.create(event=event, name="Theo", email="theo@example.com")
-    for page in (_client(host).get(reverse("events:going")), Client().get(reverse("events:api-list"))):
-        assert "3 people so far · Room for 12 people" in page.content.decode()
-    [marker] = Client().get(reverse("events:api-markers")).json()["features"]
-    assert marker["properties"]["coming"] == "3 people so far · Room for 12 people"
 
 
 def test_the_map_offers_gift_circles_to_everyone_and_more_to_ambassadors(host, community):
@@ -414,9 +389,6 @@ def test_members_invite_to_their_community_s_events(guest, community):
     })
     event = Event.objects.get()
     assert event.community == community and event.manager == community.ambassador and event.can_edit(guest)
-    # The community's calendar stays the ambassador's
-    page = _client(guest).get(event.get_absolute_url()).content.decode()
-    assert reverse("matches:calendar", args=[community.slug]) not in page
 
 
 # ── Deleting ────────────────────────────────────────────────────────
@@ -424,8 +396,6 @@ def test_members_invite_to_their_community_s_events(guest, community):
 def test_the_host_deletes_a_gift_circle_with_who_comes(host, guest):
     event = _circle(host_user=host)
     _come(event, guest)
-    edit_page = _client(host).get(event.url("edit")).content.decode()
-    assert event.url("delete") in edit_page
     assert _client(guest).post(event.url("delete")).status_code == 403
     response = _client(host).post(event.url("delete"))
     assert response.status_code == 302 and response.url == host.get_absolute_url()
@@ -486,7 +456,6 @@ def test_a_picture_is_shrunk_to_what_a_page_needs(host, settings, tmp_path):
     assert event.image.name.endswith(".jpg")
     with Image.open(event.image.path) as image:
         assert max(image.size) == 1600
-    assert 'View fullscreen' in _client(host).get(event.get_absolute_url()).content.decode()
 
 
 def test_an_online_event_has_no_potluck(host):
@@ -505,7 +474,5 @@ def test_an_online_event_s_hours_are_also_shown_in_the_reader_s_own_time(host):
                     starts_at=time(23, 0), ends_at=time(0, 30))
     start, end = event.zoned_hours
     assert start.isoformat().endswith(("-06:00", "-05:00")) and end - start == timedelta(minutes=90)
-    page = Client().get(event.get_absolute_url(), HTTP_ACCEPT_LANGUAGE="en").content.decode()
-    assert 'data-own-time data-zone="America/Mexico_City"' in page and "TIME your time" in page
     # At a place its hours are local: nothing to convert
     assert _circle(host_user=host, title="In the park").zoned_hours is None

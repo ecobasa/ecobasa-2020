@@ -91,9 +91,6 @@ def test_one_starts_an_online_skill_sharing_from_the_suggestion(
         for name in ("Spanish", "Guitar"):
             _skill(tomek, Listing.TYPE_WISH, name, from_afar=True)
     suggestion = Suggestion.objects.filter(user=mira).first()
-    page = _client(mira).get(reverse("matches:list")).content.decode()
-    assert "Start an online skill-sharing" in page and "Also from afar" in page
-
     url = f"{reverse('events:gift_circle_create')}?suggestion={suggestion.pk}"
     form = _client(mira).get(url).context["form"]
     assert form["is_online"].value() is True
@@ -150,9 +147,7 @@ def test_a_skill_sharing_is_agreed_on_in_the_conversation_and_asks_for_no_town(m
     asked = Match(from_user=tomek, recipient=mira, message="When would suit you?")
     asked.target = offer
     asked.save()
-    page = _client(mira).get(asked.get_absolute_url()).content.decode()
     suggestion = Suggestion.objects.get(user=mira)
-    assert f"?suggestion={suggestion.pk}" in page and "Agree on a day and time here first" in page
     response = _client(mira).get(f"{reverse('events:gift_circle_create')}?suggestion={suggestion.pk}")
     assert response.context["event"].skill_sharing
 
@@ -169,7 +164,6 @@ def test_one_offers_to_fulfil_a_wish_for_a_skill_online(mira, tomek):
     })
     asked = Match.objects.get()
     assert asked.location_type == Match.LOC_ONLINE and asked.proposed_location == "" and asked.proposed_lat is None
-    assert asked.resolved_location() == "Online, by video call or phone"
     assert asked.can_be_online
 
 

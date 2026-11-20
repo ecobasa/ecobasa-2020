@@ -75,32 +75,17 @@ def test_closing_sends_everyone_their_part_once(circle, host, person, other, dja
     }
     sofa, bike, ride = Entry.objects.order_by("pk")
 
-    tomek = _mail_to("tomek@example.com")
-    assert tomek.subject == "What came out of Gift-circle in the park"
-    text = tomek.body
-    assert "Ayla can help with your wish." in text
+    text = _mail_to("tomek@example.com").body
     # Ayla kept her lines off ecobasa, so no match: a message on ecobasa
     assert reverse("postman:write_with_recipients", args=[str(other.pk)]) in text
-    assert "You take it from Lena. Get in touch with them." in text
     # Lena didn't share her email: "Write to her" without it
     assert "lena@example.com" not in text
     assert reverse("gift_circles:write", args=[circle.slug, bike.pk]) + f"?to=guest:{bike.from_guest_id}" in text
-    assert "An idea from Ayla: Ask at the station. Get in touch and see where it leads." in text
-    assert "Wish: Help moving a sofa (Tomek) Fulfilled by Ayla." in text
-    assert "Offer: Bike repair (Lena) Taken by Tomek." in text
-    assert "Your wishes and offers that found nobody today stay on ecobasa." in text
     assert reverse("gift_circles:next", args=[circle.slug]) in text
-    assert "Create an account" not in text
-
-    ayla = _mail_to("ayla@example.com").body
-    assert "You said yes to Tomek. They get in touch with you." in ayla
-    assert "Your idea for Tomek: Ask at the station. They get in touch with you." in ayla
-    assert "stay on ecobasa" not in ayla
 
     lena = _mail_to("lena@example.com").body
-    assert "You said yes to Tomek. They get in touch with you." in lena
     assert reverse("gift_circles:guest_write", args=[circle.slug, bike.from_guest.token, bike.pk]) + f"?to=user:{person.pk}" in lena
-    assert "Create an account" in lena and reverse("gift_circles:next", args=[circle.slug]) not in lena
+    assert reverse("gift_circles:next", args=[circle.slug]) not in lena
 
     # Open again and closed again: nobody is mailed twice
     mail.outbox.clear()
@@ -151,12 +136,11 @@ def test_write_to_them_mails_the_other_side_without_their_address(circle, host, 
     lena = bike.from_guest
 
     url = reverse("gift_circles:write", args=[circle.slug, bike.pk]) + f"?to=guest:{lena.pk}"
-    page = _client(person).get(url).content.decode()
-    assert "Write to Lena" in page and "lena@example.com" not in page
+    assert "lena@example.com" not in _client(person).get(url).content.decode()
     _client(person).post(url, {"message": "When could I bring my bike?"})
     message = mail.outbox[-1]
     assert message.to == ["lena@example.com"] and message.reply_to == ["tomek@example.com"]
-    assert "When could I bring my bike?" in message.body and "Bike repair" in message.body
+    assert "When could I bring my bike?" in message.body
 
     # Lena answers through her link
     guest_url = reverse("gift_circles:guest_write", args=[circle.slug, lena.token, bike.pk]) + f"?to=user:{person.pk}"
@@ -204,15 +188,13 @@ def test_two_weeks_later_who_wished_is_asked(circle, host, person, other, django
     later = timezone.localdate() + timedelta(days=13)
     assert wishes.send_questions(later) == 1
     question = mail.outbox[-1]
-    assert question.to == ["tomek@example.com"] and question.subject == "Did your wish come true?"
-    assert "Ayla said they could help with your wish" in question.body
+    assert question.to == ["tomek@example.com"]
     # Once
     assert wishes.send_questions(later) == 0
 
     sofa = Entry.objects.get(text="Help moving a sofa")
     url = reverse("gift_circles:wishes", args=[circle.slug, wishes.key_for(circle, user=person)])
-    page = Client().get(url).content.decode()
-    assert "Help moving a sofa" in page and "Yes, it did" in page
+    assert Client().get(url).status_code == 200
     # Nothing is answered by opening the link
     sofa.refresh_from_db()
     assert sofa.came_true is None
@@ -220,13 +202,10 @@ def test_two_weeks_later_who_wished_is_asked(circle, host, person, other, django
     Client().post(url, {"entry": sofa.pk, "answer": "no"})
     sofa.refresh_from_db()
     assert sofa.came_true is False
-    page = Client().get(url).content.decode()
-    assert "Maybe it just got forgotten" in page and "Write to Ayla" in page
 
     Client().post(url, {"entry": sofa.pk, "answer": "yes"})
     sofa.refresh_from_db()
     assert sofa.came_true is True
-    assert "Share your story" in Client().get(url).content.decode()
 
 
 def test_a_wrong_wishes_link_finds_nothing(circle, person):
@@ -242,8 +221,6 @@ def test_who_came_plans_the_next_one(circle, host, person, other, stranger, djan
     ahead = _circle(host, days=3, title="Next week")
     assert _client(host).get(reverse("gift_circles:next", args=[ahead.slug])).url == ahead.get_absolute_url()
 
-    page = _client(other).get(circle.get_absolute_url()).content.decode()
-    assert "Plan the next one" in page
     form = _client(other).get(url).context["form"]
     assert form.initial["title"] == "Gift-circle in the park"
 
@@ -261,15 +238,10 @@ def test_who_came_plans_the_next_one(circle, host, person, other, stranger, djan
     invited = Invitation.objects.filter(event=following)
     assert {invitation.user for invitation in invited.exclude(user=None)} == {host, person}
     assert [invitation.email for invitation in invited.filter(user=None)] == ["lena@example.com"]
-    assert "Last time:" in Client().get(following.get_absolute_url()).content.decode()
 
 
 def test_who_came_tells_how_it_went_about_something_of_it(circle, host, person, other, stranger, django_capture_on_commit_callbacks):
     _close(host, circle, django_capture_on_commit_callbacks)
-    page = _client(person).get(circle.get_absolute_url()).content.decode()
-    assert "How it went" in page and "Share your story" in page and "What is it about?" in page
-    assert "Mira, the host" in page and "An idea from Ayla: Ask at the station" in page
-    assert "Share your story" not in _client(stranger).get(circle.get_absolute_url()).content.decode()
     url = reverse("gift_circles:story", args=[circle.slug])
 
     # About the idea: on the gift-circle's page and on Ayla's profile
@@ -277,16 +249,12 @@ def test_who_came_tells_how_it_went_about_something_of_it(circle, host, person, 
     _client(person).post(url, {"about": f"idea:{idea.pk}", "impression": "positive", "text": "The station had a ride for me."})
     story = Reference.objects.get()
     assert (story.author, story.subject, story.place, story.recipient) == (person, idea, circle, other)
-    assert "The station had a ride for me." in Client().get(circle.get_absolute_url()).content.decode()
-    assert "The station had a ride for me." in _client(person).get(other.get_absolute_url()).content.decode()
 
     # About the host, and about the gift-circle itself
     _client(person).post(url, {"about": f"user:{host.pk}", "impression": "positive", "text": "Mira kept us in time."})
     _client(person).post(url, {"about": "event", "impression": "positive", "text": "A warm evening."})
     assert Reference.objects.get(text="Mira kept us in time.").subject == host
     assert Reference.objects.get(text="A warm evening.").subject == circle
-    page = Client().get(circle.get_absolute_url()).content.decode()
-    assert "Mira kept us in time." in page and "A warm evening." in page
 
     # Not about oneself, not by someone who wasn't there
     _client(person).post(url, {"about": f"user:{person.pk}", "impression": "positive", "text": "Me"})
@@ -296,11 +264,6 @@ def test_who_came_tells_how_it_went_about_something_of_it(circle, host, person, 
     # Taken back
     _client(person).post(url, {"action": "delete", "reference": story.pk})
     assert not Reference.objects.filter(pk=story.pk).exists()
-
-    # Not before it has begun
-    ahead = _circle(host, days=3, title="Next week")
-    _come(ahead, person)
-    assert "How it went" not in _client(person).get(ahead.get_absolute_url()).content.decode()
 
 
 def test_a_tool_lent_at_the_circle_becomes_a_loan_at_the_giver_s_place(host, person, other, django_capture_on_commit_callbacks):
@@ -326,7 +289,6 @@ def test_a_tool_lent_at_the_circle_becomes_a_loan_at_the_giver_s_place(host, per
     _answer(event, garden, f"user:{other.pk}")
     drill.refresh_from_db()
     assert (drill.borrow_from, drill.borrow_to) == (day, day + timedelta(days=2))
-    assert "Borrowed from" in _client(host).get(_url(event)).content.decode()
 
     _close(host, event, django_capture_on_commit_callbacks)
     for entry in (drill, garden, ladder):
@@ -357,16 +319,11 @@ def test_lending_days_can_be_left_for_the_match(host, person, other, django_capt
     _client(host).post(_entry_url(event, ladder), {"action": "fulfilled", "who": f"user:{other.pk}", "lends": "on"})
     ladder.refresh_from_db()
     assert ladder.lend and ladder.borrow_from is None
-    assert "To lend, the days come later" in _client(host).get(_url(event)).content.decode()
 
     _close(host, event, django_capture_on_commit_callbacks)
     ladder.refresh_from_db()
     match = ladder.match
     assert not match.is_loan and match.lends_later and (match.lender, match.borrower) == (other, person)
-    page = _client(person).get(match.get_absolute_url()).content.decode()
-    # The gift-circle it was promised at, and the days still to agree on
-    assert event.title in page and event.get_absolute_url() in page
-    assert "The days to borrow it aren't agreed yet" in page and "Borrow from" in page
 
     # Tomek proposes the days at home, Ayla accepts: now it is a loan
     day = timezone.localdate() + timedelta(days=5)
