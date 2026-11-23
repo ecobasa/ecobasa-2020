@@ -10592,3 +10592,46 @@ msgid ""
 "are not covered, <a class=\"text-yellow\" href=\"%(license_url)s\">see "
 "details</a>."
 msgstr "Was Mitglieder schreiben, gehört ihnen. Name, Logo und Code sind nicht eingeschlossen, <a class=\"text-yellow\" href=\"%(license_url)s\">mehr dazu</a>."
+
+msgid "Your email"
+msgstr "Deine E-Mail"
+
+msgid "Please leave links out of your name."
+msgstr "Bitte lass Links aus deinem Namen weg."
+
+msgid "Please leave links out of the subject."
+msgstr "Bitte lass Links aus dem Betreff weg."
+
+msgid "Please send at most two links."
+msgstr "Bitte schick höchstens zwei Links."
+
+msgid "That didn't work. Please send your message again."
+msgstr "Das hat nicht geklappt. Bitte schick deine Nachricht noch einmal."
+
+msgid "You have sent us several messages already. Please try again tomorrow."
+msgstr "Du hast uns schon mehrere Nachrichten geschickt. Bitte versuch es morgen wieder."
+
+msgid "We have received this message already."
+msgstr "Diese Nachricht haben wir schon bekommen."
+
+msgid "Thank you! Your message is on its way to us."
+msgstr "Danke! Deine Nachricht ist auf dem Weg zu uns."
+
+msgid "Your message could not be sent right now. Please try again later."
+msgstr "Deine Nachricht konnte gerade nicht gesendet werden. Bitte versuch es später noch einmal."
+
+msgid "Questions, ideas, or you want to help? We read every message and answer by email."
+msgstr "Fragen, Ideen, oder du möchtest mithelfen? Wir lesen jede Nachricht und antworten per E-Mail."
+
+#, python-format
+msgid "We'll answer to %(email)s."
+msgstr "Wir antworten an %(email)s."
+
+msgid "To keep spam out, this form needs JavaScript. Please turn it on to send your message."
+msgstr "Gegen Spam braucht dieses Formular JavaScript. Bitte schalte es ein, um deine Nachricht zu senden."
+
+msgid "Checking…"
+msgstr "Wird geprüft…"
+
+msgid "Send message"
+msgstr "Nachricht senden"

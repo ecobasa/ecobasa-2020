@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags i18n static %}
+
+{% block head_title %}{% trans "Contact ecobasa" %} — ecobasa{% endblock %}
+
+{% block content %}
+<div class="container-form">
+  <h1 class="text-2xl text-primary mb-2"><i class="fa fa-at mr-2"></i>{% trans "Contact ecobasa" %}</h1>
+  <p class="text-brown mb-6">{% trans "Questions, ideas, or you want to help? We read every message and answer by email." %}</p>
+
+  <div class="border rounded-xl bg-secondary p-4 sm:p-6">
+    <form method="post" id="contact-form"{% if not request.user.is_authenticated %} data-challenge="{{ challenge }}" data-difficulty="{{ difficulty }}"{% endif %}>
+      {% csrf_token %}
+      {% for error in form.non_field_errors %}
+        <p class="text-red-600 mb-4"><i class="fa-solid fa-circle-exclamation mr-1"></i>{{ error }}</p>
+      {% endfor %}
+      {% if request.user.is_authenticated %}
+        <p class="text-sm text-brown mb-4">{% blocktrans with email=request.user.email %}We'll answer to {{ email }}.{% endblocktrans %}</p>
+      {% else %}
+        {{ form.name|as_crispy_field }}
+        {{ form.email|as_crispy_field }}
+      {% endif %}
+      {{ form.subject|as_crispy_field }}
+      {{ form.message|as_crispy_field }}
+      {% if not request.user.is_authenticated %}
+        {# For bots only: people don't see it, and screen readers skip it #}
+        <div aria-hidden="true" style="position:absolute;left:-10000px;width:1px;height:1px;overflow:hidden;">
+          <label for="id_website">Website</label>
+          <input type="text" name="website" id="id_website" tabindex="-1" autocomplete="off">
+        </div>
+        <input type="hidden" name="challenge" value="{{ challenge }}">
+        <input type="hidden" name="nonce" value="">
+        <noscript><p class="text-red-600 mt-4"><i class="fa-solid fa-circle-exclamation mr-1"></i>{% trans "To keep spam out, this form needs JavaScript. Please turn it on to send your message." %}</p></noscript>
+      {% endif %}
+      <div class="flex justify-end mt-5">
+        <button type="submit" class="btn" data-checking="{% trans "Checking…" %}"{% if not request.user.is_authenticated %} disabled{% endif %}><i class="fa fa-paper-plane mr-2"></i><span>{% trans "Send message" %}</span></button>
+      </div>
+    </form>
+  </div>
+</div>
+{% if not request.user.is_authenticated %}<script src="{% static 'js/contact.js' %}" defer></script>{% endif %}
+{% endblock %}
