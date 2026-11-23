@@ -1,6 +1,6 @@
 {% load i18n site_tags %}
-<article class="border rounded-xl bg-secondary bg-opacity-60 p-4 flex flex-col gap-2 {% if not event.is_current %}opacity-60{% endif %}">
-  {% if event.image %}<a href="{{ event.get_absolute_url }}"><img src="{{ event.image.url }}" alt="" class="w-full h-36 object-cover rounded-lg"></a>{% endif %}
+<article class="card p-4 flex flex-col gap-2 {% if not event.is_current %}opacity-60{% endif %}">
+  {% if event.image %}<a href="{{ event.get_absolute_url }}"><img src="{{ event.image.url }}" alt="" class="w-full h-36 object-cover rounded-lg" loading="lazy"></a>{% endif %}
   {# Its kind and what it offers, the dates on the right, as on a tour's card #}
   <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
     <span class="pill {{ event.kind_colour }} text-secondary text-xs"><i class="fa-solid {{ event.kind_icon }} mr-1"></i>{{ event.kind_label }}</span>

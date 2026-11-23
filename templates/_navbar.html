@@ -37,12 +37,6 @@
             <i class="fa fa-home mr-2"></i>
             {% trans "Communities" %}
           </a>
-          {% if user.is_authenticated %}
-          <a href="{% url "pioneers:list" %}" class="{% if namespace == "pioneers" %}text-brown{% endif %} ml-8 inline-flex items-center px-1 pt-1 border-b-2 border-transparent leading-5 focus:outline-none focus:text-brown transition duration-150 ease-in-out">
-            <i class="fa-solid fa-people-group mr-2"></i>
-            {% trans "Pioneers" %}
-          </a>
-          {% endif %}
           <a href="{% url "gifts:search" %}" class="{% if namespace == "gifts" %}text-brown{% endif %} ml-8 inline-flex items-center px-1 pt-1 border-b-2 border-transparent leading-5 focus:outline-none focus:text-brown transition duration-150 ease-in-out">
             <i class="fa fa-recycle mr-2"></i>
             {% trans "Gifts" %}
@@ -55,6 +49,12 @@
             <i class="fa-solid fa-calendar-day mr-2"></i>
             {% trans "Events" %}
           </a>
+          {% if user.is_authenticated %}
+          <a href="{% url "pioneers:list" %}" class="{% if namespace == "pioneers" %}text-brown{% endif %} ml-8 inline-flex items-center px-1 pt-1 border-b-2 border-transparent leading-5 focus:outline-none focus:text-brown transition duration-150 ease-in-out">
+            <i class="fa-solid fa-people-group mr-2"></i>
+            {% trans "Pioneers" %}
+          </a>
+          {% endif %}
           <a href="{% url "homepage:support" %}" class="{% if request.path == "/support/" %}text-brown{% endif %} ml-8 inline-flex items-center px-1 pt-1 border-b-2 border-transparent leading-5 focus:outline-none focus:text-brown transition duration-150 ease-in-out">
             <i class="fa fa-heart mr-2"></i>
             {% trans "Support" %}

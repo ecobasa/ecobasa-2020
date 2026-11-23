@@ -1,0 +1,8 @@
+{% load i18n static %}
+{# The arrows of a .card-slider, hidden until cardSlider() knows there is more to see #}
+<button type="button" class="card-slider-prev" x-show="!start" style="display: none;" @click="go(-1)">
+  <img src="{% static 'img/arrow-left.png' %}" alt="{% trans 'Previous' %}" class="w-full h-full object-contain">
+</button>
+<button type="button" class="card-slider-next" x-show="!end" style="display: none;" @click="go(1)">
+  <img src="{% static 'img/arrow-right.png' %}" alt="{% trans 'Next' %}" class="w-full h-full object-contain">
+</button>

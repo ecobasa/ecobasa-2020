@@ -1,6 +1,7 @@
 from datetime import date, datetime, time, timedelta
 
 from django.contrib import messages
+from django.db.models import F
 from django.shortcuts import redirect, render
 from django.utils import timezone
 from django.utils.translation import get_language, gettext as _
@@ -9,11 +10,14 @@ from events import kinds
 from events.filters import count_coming
 from events.models import Event
 from gift_economy.references.models import Reference, with_card_data
+from tours.models import Tour
 
 from . import contact as contact_form
 
-HOMEPAGE_REFERENCES = 3
-HOMEPAGE_ONLINE_CIRCLES = 6
+# Each a slider showing three at a time
+HOMEPAGE_REFERENCES = 9
+HOMEPAGE_ONLINE_CIRCLES = 9
+HOMEPAGE_TOURS = 9
 
 
 def _ended(event, now):
@@ -42,6 +46,17 @@ def online_gift_circles(language):
     return circles
 
 
+def next_tours():
+    """The tours in the list that are not over: the soonest first, then tour ideas, the
+    freshest first."""
+    return (
+        Tour.objects.listed().current()
+        .select_related("organiser")
+        .prefetch_related("stops__event__community", "stops__community__photos", "learn_skills")
+        .order_by(F("starts_on").asc(nulls_last=True), "-updated_at")[:HOMEPAGE_TOURS]
+    )
+
+
 def homepage(request):
     # A different few each visit of the references staff featured (from those their
     # authors agreed to share)
@@ -51,6 +66,7 @@ def homepage(request):
     return render(request, "homepage/homepage.html", {
         "featured_references": featured,
         "online_circles": online_gift_circles(get_language()),
+        "tours": next_tours(),
     })
 
 def support(request):

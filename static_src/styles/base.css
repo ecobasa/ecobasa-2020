@@ -91,6 +91,17 @@ nav {
  	}
 }
 
+/* Bands on the orange paper of the old ecobasa.org: light links for contrast */
+.paper-orange {
+	background-image: url('../img/paper-orange.webp');
+	a {
+		@apply text-secondary underline;
+		&:hover, &:focus, &:active {
+			@apply text-brown;
+		}
+	}
+}
+
 /* ── Page layout containers ───────────────────────────────────────── */
 .container-page    { @apply mx-auto max-w-7xl px-6 mt-10 pb-10; }   /* wide pages: profile, community, homepage, dashboard */
 .container-content { @apply mx-auto max-w-4xl px-6 mt-10 mb-12; }  /* offer details (gifts, skills, wishes), multi-field forms & content pages */
@@ -98,9 +109,37 @@ nav {
 .container-form    { @apply mx-auto max-w-lg px-6 py-8; }           /* small focused forms */
 .container-auth    { @apply flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8; } /* centered auth pages */
 
-/* ── Homepage: "ecobasa is made for" boxes ────────────────────────── */
+/* ── Cards: events, tours, stories and the homepage boxes look alike ── */
+.card { @apply rounded-2xl shadow-lg bg-secondary bg-opacity-75 backdrop-blur-sm; }
+
+/* A row of cards to scroll sideways: one, two or three at a time, with round arrows
+   (cardSlider() shows them while there is more). The padding leaves room for the shadows. */
+/* The space beside the cards: the page's side padding, and the margin once the screen is wider than the page */
+.card-slider {
+	@apply relative;
+	--gutter: calc(theme('spacing.6') + max(0px, (100vw - theme('maxWidth.7xl')) / 2));
+}
+.card-slider-track {
+	@apply flex gap-6 overflow-x-auto snap-x snap-mandatory -mx-3 px-3 py-4 scroll-px-3;
+	scrollbar-width: none;
+	&::-webkit-scrollbar { display: none; }
+	> * {
+		@apply flex snap-start shrink-0 w-full;
+		> * { @apply flex-1; }
+	}
+	@media (min-width: theme('screens.sm')) { > * { width: calc((100% - 1.5rem) / 2); } }
+	@media (min-width: theme('screens.lg')) { > * { width: calc((100% - 3rem) / 3); } }
+}
+.card-slider-prev, .card-slider-next {
+	@apply absolute top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-black bg-opacity-20 hover:bg-opacity-90 shadow;
+}
+/* Each in the middle of that space */
+.card-slider-prev { @apply -translate-x-1/2; left: calc(var(--gutter) / -2); }
+.card-slider-next { @apply translate-x-1/2; right: calc(var(--gutter) / -2); }
+
+/* ── Homepage: "ecobasa is made for" boxes (with .card) ───────────── */
 .feature-box {
-	@apply px-8 py-12 rounded-2xl shadow-lg border bg-secondary bg-opacity-75 backdrop-blur-sm;
+	@apply px-8 py-12 border;
 	border-color: color-mix(in srgb, var(--accent) 50%, transparent);
 	h2, a, li::marker { color: var(--accent); }
 	a:hover { @apply text-brown; }

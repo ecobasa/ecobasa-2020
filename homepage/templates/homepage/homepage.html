@@ -2,20 +2,91 @@
 {% load i18n static %}
 
 {% block content %}
-<div class="container-page md:mt-20">
-  <h1>ecobasa.org – The sustainable gift-economy community</h1>
-  <h2>Subline in Purple</h2>
-  <p>Some Lato Text <b>also in Bold</b><a href="#">with a link</a></p>
-  <button class="btn btn-primary">Primary Button</button>
-  <a class="btn btn-purple inline-block">Purple Button</a>
-  <button class="btn btn-green">Green Button</button>
-  <a class="btn btn-green inline-block">Green Link Button</a>
-  <h2>Sub Title</h3>
-  <p>Some Text</p>
-  <h5>Unimportant Info</h5>
-  <p>More Text</p>
+<script>
+  // A .card-slider: whether there is more to either side, and a page of cards per arrow
+  function cardSlider() {
+    return {
+      start: true,
+      end: true,
+      init() {
+        this.update();
+        new ResizeObserver(() => this.update()).observe(this.$refs.track);
+      },
+      update() {
+        const track = this.$refs.track;
+        this.start = track.scrollLeft <= 1;
+        this.end = track.scrollLeft + track.clientWidth >= track.scrollWidth - 1;
+      },
+      go(direction) {
+        const track = this.$refs.track;
+        track.scrollBy({ left: direction * track.clientWidth, behavior: 'smooth' });
+      },
+    };
+  }
+</script>
+{# Like a community's photos: three photos fading into each other, each with its headline and text; the buttons stay #}
+<section id="welcome" class="relative w-full grid items-end" style="min-height: 480px;"
+    x-data="{ cur: 0, len: 3, _timer: null, go(i) { clearInterval(this._timer); this.cur = (i + this.len) % this.len } }"
+    x-init="_timer = setInterval(() => cur = (cur + 1) % len, 8000)">
+  <div class="absolute inset-0 bg-center bg-cover transition-opacity duration-700" :style="{ opacity: cur === 0 ? 1 : 0 }" style="background-image: url('{% static 'img/home-planting.webp' %}'); will-change: opacity;"></div>
+  <div class="absolute inset-0 bg-center bg-cover transition-opacity duration-700" :style="{ opacity: cur === 1 ? 1 : 0 }" style="background-image: url('{% static 'img/home-gift-economy.webp' %}'); opacity: 0; will-change: opacity;"></div>
+  <div class="absolute inset-0 bg-center bg-cover transition-opacity duration-700" :style="{ opacity: cur === 2 ? 1 : 0 }" style="background-image: url('{% static 'img/home-trust.webp' %}'); opacity: 0; will-change: opacity;"></div>
+  <div class="relative z-10 mb-12 py-8 bg-black bg-opacity-40 text-center text-secondary drop-shadow-md">
+    {# The texts in one grid cell: the band is as tall as the longest #}
+    <div class="grid max-w-4xl mx-auto px-16">
+      <div class="[grid-area:1/1] transition-opacity duration-700" :class="cur === 0 ? 'opacity-100' : 'opacity-0'">
+        <h1 class="text-3xl md:text-5xl text-secondary m-0">{% trans "Connecting people and communities" %}</h1>
+        <p class="mt-4 mb-0">{% trans "ecobasa is a directory of sustainable communities, eco-villages and individuals looking for alternative ways of living. In this network you can communicate with existing communities or find the right people and resources to form a new community. You can organise a stay in a community – for your help you get food, accommodation and amazing learning opportunities." %}</p>
+      </div>
+      <div class="[grid-area:1/1] transition-opacity duration-700 opacity-0" :class="cur === 1 ? 'opacity-100' : 'opacity-0'" :aria-hidden="cur !== 1">
+        <h2 class="text-3xl md:text-5xl text-secondary m-0">{% trans "Creating a global gift-economy" %}</h2>
+        <p class="mt-4 mb-0">{% trans "ecobasa offers the needed communication and collaboration technology for the free exchange of experiences, knowledge, skills, services and resources." %}</p>
+      </div>
+      <div class="[grid-area:1/1] transition-opacity duration-700 opacity-0" :class="cur === 2 ? 'opacity-100' : 'opacity-0'" :aria-hidden="cur !== 2">
+        <h2 class="text-3xl md:text-5xl text-secondary m-0">{% trans "A culture of trust and support" %}</h2>
+        <p class="mt-4 mb-0">{% trans "All members offer their gifts without expectation of a direct return. Their wishes may be fulfilled by another member. Positive references build trust between the users of the network. Responsible relationships emerge where people begin to understand each other's needs and qualities." %}</p>
+      </div>
+    </div>
+    <div class="flex flex-wrap justify-center gap-4 mt-6 px-4">
+      {% if user.is_authenticated %}
+        <a href="{% url 'gifts:create' %}" class="btn btn-lg"><i class="fa-solid fa-hand-holding-heart mr-2"></i>{% trans "Share a gift" %}</a>
+      {% else %}
+        <a href="{% url 'users:register' %}" class="btn btn-lg"><i class="fa-solid fa-seedling mr-2"></i>{% trans "Join ecobasa" %}</a>
+      {% endif %}
+      <a href="#explore" class="btn btn-green btn-lg"><i class="fa fa-search mr-2"></i>{% trans "Explore the network" %}</a>
+    </div>
+  </div>
+  <button type="button" @click="go(cur - 1)"
+          class="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-20 hover:bg-opacity-90 text-primary rounded-full w-10 h-10 flex items-center justify-center shadow z-10">
+    <img src="{% static 'img/arrow-left.png' %}" alt="{% trans 'Previous' %}" class="w-full h-full object-contain">
+  </button>
+  <button type="button" @click="go(cur + 1)"
+          class="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-20 hover:bg-opacity-90 text-primary rounded-full w-10 h-10 flex items-center justify-center shadow z-10">
+    <img src="{% static 'img/arrow-right.png' %}" alt="{% trans 'Next' %}" class="w-full h-full object-contain">
+  </button>
+  <div class="absolute left-0 right-0 bottom-4 z-10 text-center space-x-2">
+    {% for i in "012" %}
+      <button type="button" @click="go({{ i }})" :class="cur === {{ i }} ? 'bg-primary' : 'bg-secondary bg-opacity-60'"
+              class="inline-block w-3 h-3 rounded-full" aria-label="{% blocktrans with number=forloop.counter %}Slide {{ number }}{% endblocktrans %}"></button>
+    {% endfor %}
+  </div>
+</section>
 
-  {# What ecobasa is for: who it serves in the intro, what is shared in three boxes, the village drawing from the old ecobasa.org below #}
+{# The search hands over to the gift map, which reads it from the query string. On the orange paper of the old ecobasa.org #}
+<section id="explore" class="paper-orange py-10 px-6 text-center text-secondary font-bold scroll-mt-16">
+  <h2 class="text-secondary mt-0">{% trans "Explore our global gift-economy network" %}</h2>
+  <form action="{% url 'gifts:search' %}" method="get" class="flex max-w-2xl mx-auto mt-6 border border-brown-80 rounded-lg overflow-hidden">
+    <div class="flex-1">
+      <input class="form-input w-full h-full bg-secondary border-0 rounded-none shadow-[inset_0_2px_4px_rgb(0_0_0_/_0.15)]" type="search" name="search" placeholder="{% trans 'What are you looking for?' %}" aria-label="{% trans 'Search' %}">
+    </div>
+    <button type="submit" class="btn border-0 rounded-none"><i class="fa fa-search mr-2"></i>{% trans "Search" %}</button>
+  </form>
+  <p class="mt-4 mb-0">{% url 'gifts:search' as gifts_url %}{% url 'communities:list' as communities_url %}{% url 'events:list' as events_url %}{% url 'tours:list' as tours_url %}{% blocktrans %}Find <a href="{{ gifts_url }}?type=offer">offers</a>, <a href="{{ gifts_url }}?type=wish">wishes</a> and <a href="{{ gifts_url }}?type=skill">skills</a> on the map, or browse <a href="{{ communities_url }}">communities</a>, <a href="{{ events_url }}">events</a> and <a href="{{ tours_url }}">Community-Tours</a>.{% endblocktrans %}{% if user.is_authenticated %} {% url 'pioneers:list' as pioneers_url %}{% blocktrans %}Or meet <a href="{{ pioneers_url }}">pioneers</a> to invite or travel with.{% endblocktrans %}{% endif %}</p>
+</section>
+
+<div class="container-page !pb-0">
+
+    {# What ecobasa is for: who it serves in the intro, what is shared in three boxes #}
   <section id="features" class="mt-12">
     <h1 class="text-center">{% trans "ecobasa is made for" %}</h1>
     <div class="max-w-3xl mx-auto text-center mb-8">
@@ -24,7 +95,7 @@
       <p><a href="{% url 'help:index' %}"><i class="fa-regular fa-circle-question mr-1"></i>{% trans "How does ecobasa work?" %}</a></p>
     </div>
     <div class="grid gap-6 md:grid-cols-3">
-      <div class="feature-box feature-box-primary">
+      <div class="card feature-box feature-box-primary">
         <div class="text-center">
           <i class="fa-solid fa-hand-holding-heart text-6xl text-primary"></i>
           <h2 class="mt-4">{% trans "Sharing things" %}</h2>
@@ -39,7 +110,7 @@
           <li><a href="https://ecobasa.org/media/filer_public/82/c3/82c335b9-da85-4194-8fe2-3818cdb1ecfd/gift-ambassadors_community_manual_23_compressed.pdf" >{% trans "Make your life more moneyless" %}</a></li>
         </ul>
       </div>
-      <div class="feature-box feature-box-purple">
+      <div class="card feature-box feature-box-purple">
         <div class="text-center">
           <i class="fa-solid fa-people-carry-box text-6xl text-purple"></i>
           <h2 class="mt-4">{% trans "Communities & Volunteering" %}</h2>
@@ -52,7 +123,7 @@
           <li><a href="{% url 'communities:create' %}">{% trans "Start a new community with the people and resources you need" %}</a></li>
         </ul>
       </div>
-      <div class="feature-box feature-box-green">
+      <div class="card feature-box feature-box-green">
         <div class="text-center">
           <i class="fa-solid fa-people-group text-6xl text-green"></i>
           <h2 class="mt-4">{% trans "Coming together" %}</h2>
@@ -68,15 +139,22 @@
         </ul>
       </div>
     </div>
-    <img src="{% static 'img/village.webp' %}" alt="" class="block w-full max-w-5xl mx-auto mt-8" loading="lazy">
   </section>
 
+
   {# Online gift-circles are not on the map: anyone anywhere can come #}
-  <section id="online-gift-circles" class="mt-12">
+  <section id="online-gift-circles" class="text-center mt-12">
     <h2>{% trans "Gift-circles you can join from anywhere" %}</h2>
+    <div class="max-w-3xl mx-auto">
+      <p>{% trans "People sit in a circle and share what they wish for and what they can give. Things, time, skills, knowledge, contacts. Nothing is bought or sold." %} {% trans "Anyone can host one: in a living room, a park, a café, at a community, on a tour, or online as a video call." %}</p>
+      <p><a href="{% url 'help:gift_circles' %}"><i class="fa-regular fa-circle-question mr-1"></i>{% trans "How do gift-circles work?" %}</a></p>
+    </div>
     {% if online_circles %}
-      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 mt-6">
-        {% for event in online_circles %}{% include "events/_event_card.html" with show_community=True show_coming=True %}{% endfor %}
+      <div class="card-slider mt-2" x-data="cardSlider()">
+        <div x-ref="track" class="card-slider-track" @scroll.debounce.50ms="update()">
+          {% for event in online_circles %}<div>{% include "events/_event_card.html" with show_community=True show_coming=True %}</div>{% endfor %}
+        </div>
+        {% include "homepage/_slider_arrows.html" %}
       </div>
     {% else %}
       {% url 'events:gift_circle_create' as create_url %}
@@ -85,16 +163,41 @@
   </section>
 
   {% if featured_references %}
-    <section id="success-stories" class="mt-12">
+    <section id="success-stories" class="text-center mt-12">
       <h2>{% trans "Success stories from the gift network" %}</h2>
       <p class="text-brown mb-6">{% trans "What people gave and received on ecobasa, in their own words." %}</p>
-      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {% for ref in featured_references %}{% include "references/_featured_card.html" %}{% endfor %}
+      <div class="card-slider mt-2" x-data="cardSlider()">
+        <div x-ref="track" class="card-slider-track" @scroll.debounce.50ms="update()">
+          {% for ref in featured_references %}<div>{% include "references/_featured_card.html" %}</div>{% endfor %}
+        </div>
+        {% include "homepage/_slider_arrows.html" %}
       </div>
     </section>
   {% endif %}
   {% if user.is_staff %}
     <p class="mt-4 text-sm"><a href="{% url 'references:featured' %}" class="text-primary"><i class="fa fa-star mr-1"></i>{% trans "Choose stories for the homepage" %}</a></p>
   {% endif %}
+
+  {# Last, after the gifting: the next tours in the list, dated ones first, then tour ideas, and the drawing from the old ecobasa.org to close the page #}
+  <section id="community-tours" class="mt-12">
+    <div class="max-w-3xl mx-auto text-center">
+      <h2>{% trans "The Community-Tours: a gift-economy experience" %}</h2>
+      <p>{% trans "The Community-Tours empower an alternative economy based on trust and sharing. Start travelling between ecovillages and other sustainable communities across the planet and experience sustainable ways of living through volunteering. By bringing spare resources and experts from one community to the next place where they are needed, we grow the gift-economy network together!" %}</p>
+      <p>{% url 'tours:list' as tours_url %}{% url 'tours:create' as create_url %}{% url 'tours:ride' as ride_url %}{% blocktrans %}<a href="{{ tours_url }}">All tours on the map</a> · <a href="{{ create_url }}">Organise a tour</a> · <a href="{{ ride_url }}">Offer a ride</a>{% endblocktrans %}</p>
+      <p><a href="{% url 'help:tours' %}"><i class="fa-regular fa-circle-question mr-1"></i>{% trans "How do Community-Tours work?" %}</a></p>
+    </div>
+    {% if tours %}
+      <div class="card-slider mt-2" x-data="cardSlider()">
+        <div x-ref="track" class="card-slider-track" @scroll.debounce.50ms="update()">
+          {% for tour in tours %}<div>{% include "tours/_tour_card.html" with stacked=True %}</div>{% endfor %}
+        </div>
+        {% include "homepage/_slider_arrows.html" %}
+      </div>
+    {% else %}
+      {% url 'tours:create' as create_url %}
+      <p class="text-center mt-6">{% blocktrans %}No tours planned at the moment. Would you like to <a href="{{ create_url }}">organise one</a>?{% endblocktrans %}</p>
+    {% endif %}
+    <img src="{% static 'img/community-tours.webp' %}" alt="" class="block w-full max-w-5xl mx-auto mt-8" loading="lazy">
+  </section>
 </div>
 {% endblock content %}
