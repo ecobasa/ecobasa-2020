@@ -1,0 +1,25 @@
+{% load i18n %}{# The offers or the wishes people bring to a gift-circle: `listings`, `empty` when there are none; `bring` from brought_to #}
+{% if listings %}
+  <ul class="list-none p-0 space-y-2">
+    {% for listing in listings %}{% with person=listing.owner %}
+      <li class="flex items-center gap-2 p-2 rounded border bg-secondary bg-opacity-50 {% if listing.is_done %}opacity-70{% endif %}">
+        {% if bring.names %}<a href="{{ person.get_absolute_url }}" title="{{ person.name|default:person.email }}">{% include "_avatar.html" with who=person %}</a>{% endif %}
+        <div class="flex-1 min-w-0 text-sm">
+          <a href="{{ listing.get_absolute_url }}" class="font-semibold hover:underline {% if listing.is_done %}line-through{% endif %}">{% include "gifts/_listing_icon.html" %}{{ listing.display_title }}</a>
+          {% if listing.amount %}<span class="opacity-70"> · {{ listing.amount }}</span>{% endif %}
+          {% if bring.names %}<span class="text-xs opacity-70 block">{{ person.name|default:person.email }}</span>{% endif %}
+          {% if bring.promises and listing.circle_promises %}
+            <span class="text-xs block"><i class="fa-solid fa-handshake mr-1 text-green"></i>{% for promise in listing.circle_promises %}{% with other=promise.match.from_user %}<a href="{{ other.get_absolute_url }}" class="underline hover:text-primary">{{ other.name|default:other.email }}</a>{% endwith %}{% if not forloop.last %}, {% endif %}{% endfor %}</span>
+          {% endif %}
+        </div>
+        {% if bring.may_bring and person == request.user %}
+          <form method="post" action="{% url 'gift_circles:take_back' event.slug listing.pk %}">{% csrf_token %}
+            <button type="submit" class="px-2 py-1 rounded text-sm text-red hover:opacity-80" title="{% trans 'Take it back' %}" aria-label="{% trans 'Take it back' %}"><i class="fa-solid fa-trash-can"></i></button>
+          </form>
+        {% endif %}
+      </li>
+    {% endwith %}{% endfor %}
+  </ul>
+{% else %}
+  <p class="italic text-sm">{{ empty }}</p>
+{% endif %}

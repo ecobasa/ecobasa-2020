@@ -14,7 +14,7 @@
         <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background-color:#fcf3e5;border-radius:8px;overflow:hidden;border:1px solid #d4b896;">
           <tr>
             <td bgcolor="#e08361" style="background-color:#e08361;padding:24px 32px;">
-              <img class="wordmark" src="{% email_static "images/email-wordmark.png" %}" width="185" height="39" alt="ecobasa.org" style="display:block;border:0;font-size:26px;color:#fcf3e5;font-family:Georgia,serif;">
+              <img class="wordmark" src="{% email_static "images/email-wordmark.png" %}" width="185" height="39" alt="ecobasa.org" style="display:block;border:0;font-size:26px;color:#fcf3e5;font-family:'Bree Serif',Georgia,serif;">
               <p style="margin:8px 0 0;font-size:14px;color:#fcf3e5;opacity:0.85;">{% trans "Suggestions for you" %}</p>
             </td>
           </tr>
@@ -27,7 +27,7 @@
                 <tr>
                   <td style="padding:14px 18px;">
                     <p style="margin:0;font-size:15px;font-weight:bold;"><a href="{{ site_url }}{{ s.url }}" style="color:#da6137;text-decoration:none;">{{ s.text }}</a></p>
-                    <p style="margin:4px 0 0;font-size:13px;opacity:0.75;">{% blocktrans with own=s.own_text %}fits {{ own }}{% endblocktrans %}{% if s.distance_km is not None %} · {% blocktrans with km=s.distance_km %}{{ km }} km away{% endblocktrans %}{% endif %}</p>
+                    <p style="margin:4px 0 0;font-size:13px;opacity:0.75;">{% blocktrans with own=s.own_text %}fits {{ own }}{% endblocktrans %}{% if s.distance_km is not None %} · {% blocktrans with km=s.distance_km %}{{ km }} km away{% endblocktrans %}{% endif %}{% if s.gift_circle %} · {{ s.get_reason_display }}: {{ s.gift_circle.title }}{% endif %}</p>
                   </td>
                 </tr>
               </table>
@@ -39,7 +39,7 @@
                 <tr>
                   <td style="padding:14px 18px;">
                     <p style="margin:0;font-size:15px;font-weight:bold;"><a href="{{ site_url }}{{ s.action_url }}" style="color:#da6137;text-decoration:none;">{{ s.text }}</a></p>
-                    <p style="margin:4px 0 0;font-size:13px;opacity:0.75;">{% blocktrans with own=s.own_text %}fits {{ own }}{% endblocktrans %}{% if s.distance_km is not None %} · {% blocktrans with km=s.distance_km %}{{ km }} km away{% endblocktrans %}{% endif %}</p>
+                    <p style="margin:4px 0 0;font-size:13px;opacity:0.75;">{% blocktrans with own=s.own_text %}fits {{ own }}{% endblocktrans %}{% if s.distance_km is not None %} · {% blocktrans with km=s.distance_km %}{{ km }} km away{% endblocktrans %}{% endif %}{% if s.gift_circle %} · {{ s.get_reason_display }}: {{ s.gift_circle.title }}{% endif %}</p>
                   </td>
                 </tr>
               </table>

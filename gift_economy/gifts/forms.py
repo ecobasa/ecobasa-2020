@@ -47,7 +47,7 @@ class ListingForm(forms.ModelForm):
         model = Listing
         fields = (
             "type", "kind", "skill_name", "title", "plant_form", "variety", "harvest_year", "open_pollinated",
-            "hardiness_zone", "best_before", "size", "lend",
+            "hardiness_zone", "best_before", "size", "lend", "from_afar",
             "quantity", "unit", "level", "available",
             "description", "image", "categories", "public_good", "location_name", "location", "location_public",
         )
@@ -93,6 +93,9 @@ class ListingForm(forms.ModelForm):
         self.fields["size"].help_text = _("Clothes by height in cm, shoes in EU sizes. A wish also finds one size bigger.")
         if self.instance.pk and self.instance.skill_id:
             self.initial["skill_name"] = self.instance.skill.get_name()
+        if not self.instance.pk and self.initial.get("kind", self.instance.kind) == Listing.KIND_KNOWLEDGE:
+            # Advice usually works by call
+            self.initial["from_afar"] = True
 
     def _radios(self, name, icons, colours):
         """(radio, icon, pill colour, text colour) for each choice of a radio field."""
@@ -133,6 +136,8 @@ class ListingForm(forms.ModelForm):
             self.add_error("title", _("Please choose one from the suggestions, so others with the same can find it."))
         if kind not in Listing.LEND_KINDS:
             cleaned["lend"] = False
+        if kind not in Listing.FROM_AFAR_KINDS:
+            cleaned["from_afar"] = False
         if kind in Listing.PIECE_KINDS:
             cleaned["unit"] = ""
         if kind in Listing.CATEGORY_KINDS and title and not self.has_error("title"):

@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+
+{% block content %}
+<div class="container-auth">
+  <div class="max-w-md w-full">
+
+    <h1 class="mt-6 text-center text-3xl leading-9">
+      {% trans "Change your email address" %}
+    </h1>
+
+    <form method="post" class="panel-card">
+      {% csrf_token %}
+      <p class="mb-6">{% blocktrans %}From now on, you log in with <strong>{{ new_email }}</strong> instead of {{ old_email }}.{% endblocktrans %}</p>
+      <div class="flex items-center justify-between gap-4">
+        <a class="btn btn-purple" href="{% url 'homepage:homepage' %}"><i class="fa fa-ban mr-2"></i>{% trans "Cancel" %}</a>
+        <button class="btn" type="submit"><i class="fa fa-check mr-2"></i>{% trans "Change email address" %}</button>
+      </div>
+    </form>
+
+  </div>
+</div>
+{% endblock %}

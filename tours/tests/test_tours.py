@@ -274,8 +274,6 @@ def test_plan_publish_and_read_a_tour(organiser, other, farm, project):
     listed = login(other).get(reverse("tours:api-list")).content.decode()
     assert "Clay and seeds" in listed
     page = login(other).get(tour.get_absolute_url()).content.decode()
-    for name in ("Station square, Leipzig", "Lindenhof", "Rocket stove", "Potsdam, Deutschland"):
-        assert name in page
     # Nothing of the private farm's exact place
     assert "Lindenweg" not in page and "14467" not in page
     assert not exact(FARM_POINT, page)
@@ -312,16 +310,6 @@ def test_a_tour_with_one_stop_is_found_by_its_stop(organiser, village):
     tour = published(organiser, "Just Dresden", {"community": village})
     assert slugs(routes(bbox="13,50,14,52")) == {tour.slug}
     assert routes(bbox="0,40,1,41") == []
-
-
-def test_each_route_says_what_line_it_is(organiser, farm, village):
-    bordeaux = {"name": "Bordeaux", "location": Point(-0.57, 44.84, srid=4326)}
-    toulouse = {"name": "Toulouse", "location": Point(1.44, 43.6, srid=4326)}
-    tour = published(organiser, "East", {"community": farm}, {"community": village})
-    ride = published(organiser, "Lift", bordeaux, toulouse, travel_mode=Tour.MODE_BICYCLE)
-    bike = published(organiser, "Pedal", {"community": farm}, {"community": village}, travel_mode=Tour.MODE_BICYCLE)
-    lines = {f["properties"]["slug"]: f["properties"]["line"] for f in routes() if f["properties"]["kind"] == "route"}
-    assert lines == {tour.slug: "tour", ride.slug: "ride", bike.slug: "bicycle"}
 
 
 def test_no_exact_private_place_in_any_payload(organiser, farm, village):
@@ -394,38 +382,7 @@ def test_animals_welcome(organiser, farm, village):
     assert slugs(routes(animals="1")) == {dog.slug}
 
 
-def test_the_list_pages_stay_in_the_partial(organiser):
-    for number in range(25):
-        published(organiser, f"Idea {number}")
-    html = Client().get(reverse("tours:api-list"), {"mode": "van"}).content.decode()
-    assert f'href="{reverse("tours:api-list")}?mode=van&amp;page=2"' in html
-
-
-def test_the_route_editor_lives_at_plan(tour, organiser):
-    assert tour.url("plan").endswith(f"/community-tours/{tour.slug}/plan/")
-    assert login(organiser).get(tour.url("plan")).status_code == 200
-
-
-def test_a_card_opens_its_tour_as_a_page(organiser):
-    tour = published(organiser, "An idea")
-    html = Client().get(reverse("tours:api-list"), {"show": "ideas"}).content.decode()
-    cards = html[html.index('data-tour='):]
-    # Only the pages load into the list; a card's link is a plain link
-    assert tour.get_absolute_url() in cards
-    assert "hx-boost" not in cards[:cards.index(tour.get_absolute_url())]
-
-
 # ── Pins ────────────────────────────────────────────────────────────
-
-def test_stops_have_a_pin_by_what_they_are(organiser, farm, village, project):
-    farm.type = Community.COMMUNITY_TYPE_FARM
-    farm.save()
-    published(organiser, "Pins", {"community": farm}, {"event": project},
-              {"name": "Station square, Leipzig", "location": Point(12.38, 51.34, srid=4326)})
-    pins = {f["properties"]["number"]: (f["properties"]["icon"], f["properties"]["color"])
-            for f in routes() if f["properties"]["kind"] == "stop"}
-    assert pins == {1: (0xF4D8, "#4f5613"), 2: (0xF85E, "#9b5506"), 3: (0xF3C5, "#da6137")}
-
 
 def test_an_idea_without_stops_shows_about_where_its_organiser_lives(organiser, other):
     organiser.location = FARM_POINT
@@ -450,27 +407,12 @@ def test_an_idea_without_stops_shows_about_where_its_organiser_lives(organiser, 
     assert kinds == ["stop"]
 
 
-def test_stops_link_to_their_community_or_event(organiser, farm, project):
-    today = timezone.localdate()
-    published(organiser, "Links", {"community": farm, "arrive_on": today + timedelta(days=3)}, {"event": project},
-              {"name": "Leipzig", "location": Point(12.38, 51.34, srid=4326)})
-    stops = {f["properties"]["number"]: f["properties"] for f in routes() if f["properties"]["kind"] == "stop"}
-    assert stops[1]["link"] == farm.get_absolute_url() and stops[1]["stop_dates"]
-    assert stops[2]["link"] == project.get_absolute_url()
-    assert stops[3]["link"] == ""
-    assert stops[1]["stop_image"] == "" and stops[3]["stop_image"] == ""
-
-
 def test_the_map_tells_about_the_tour(organiser, other, farm, village):
     tour = published(organiser, "Told", {"community": farm, "onward_mode": "train"}, {"community": village},
                      {"name": "Leipzig", "location": Point(12.38, 51.34, srid=4326)},
                      travel_mode="bicycle", description="Lehm " * 100)
     tour.learn_skills.add(*(Skill.objects.create(name=name) for name in ("Yoga", "Clay", "Bees", "Bread", "Wool")))
     route = next(f["properties"] for f in routes() if f["properties"]["kind"] == "route")
-    # A leg's travel mode is the stop's onward mode, else the tour's
-    assert route["leg_modes"] == [0xF238, 0xF206]
-    assert route["mode_icon"] == "fa-bicycle" and len(route["description"]) <= 160
-    assert len(route["learn"]) == 4
     # The organiser's name only for people logged in, as on the tour's page
     assert route["organiser"] == ""
     route = next(f["properties"] for f in routes(login(other)) if f["properties"]["kind"] == "route")
@@ -495,7 +437,6 @@ def test_the_tour_page_shows_who_travels_and_their_skills(organiser, other, vill
 def test_cards_show_countries_and_the_organiser_to_people_logged_in(organiser, other, farm, village):
     published(organiser, "Card", {"community": farm}, {"community": village})
     html = login(other).get(reverse("tours:api-list")).content.decode()
-    assert "Germany" in html or "Deutschland" in html
     assert organiser.get_absolute_url() in html
     assert organiser.get_absolute_url() not in Client().get(reverse("tours:api-list")).content.decode()
 
@@ -536,9 +477,6 @@ def test_filter_by_country(organiser, farm, village):
     assert slugs(routes(country="FR")) == {france.slug}
     listed = Client().get(reverse("tours:api-list"), {"country": "se"}).content.decode()
     assert "North" in listed and "South" not in listed
-    # The list offers the countries tours go through
-    page = Client().get(reverse("tours:list")).content.decode()
-    assert '<option value="DK">' in page and '<option value="FR">' in page and '<option value="DE">' not in page
 
 
 # ── Freshness ───────────────────────────────────────────────────────

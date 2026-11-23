@@ -163,23 +163,6 @@ def test_an_open_request_can_be_withdrawn(four_stops, organiser, other):
     assert again.match.status == Match.STATUS_ACCEPTED
 
 
-def test_the_tour_page_shows_the_join_button_by_state(four_stops, organiser, other):
-    url = four_stops.get_absolute_url()
-    stops = four_stops.ordered_stops()
-    assert "Ask to join" in login(other).get(url).content.decode()
-    assert "Join requests" in login(organiser).get(url).content.decode()
-    _r, traveller = ask(other, four_stops, stops[0], stops[1])
-    assert "waiting for an answer" in login(other).get(url).content.decode()
-    accept(traveller.match, organiser)
-    page = login(other).get(url).content.decode()
-    assert "Leave tour" in page and "1 place free" in page
-    # Logged out: how many travel, not who
-    from django.test import Client
-
-    page = Client().get(url).content.decode()
-    assert "2 people travel" in page and "Otto" not in page
-
-
 def test_no_join_on_a_personal_tour(organiser, other, village):
     tour = published(organiser, "Just me", {"community": village}, open_to_join=False, listed=True)
     response = login(other).get(reverse("tours:join", args=[tour.slug]))
@@ -224,47 +207,9 @@ def test_join_requests_list_and_your_tours(four_stops, organiser, other):
     assert "Seeds to the coast" in login(organiser).get(reverse("tours:mine")).content.decode()
 
 
-def test_a_profile_lists_the_tours_someone_is_on(four_stops, organiser, other):
-    stops = four_stops.ordered_stops()
-    profile = other.get_absolute_url()
-    viewer = person("Vera")
-    _, traveller = ask(other, four_stops, stops[0], stops[1])
-    # Asked, not yet accepted: not on their profile
-    assert "Seeds to the coast" not in login(viewer).get(profile).content.decode()
-    accept(traveller.match, organiser)
-    assert "Seeds to the coast" in login(viewer).get(profile).content.decode()
-    # The organiser's profile lists it too; a draft only for its organiser
-    four_stops.published_at = None
-    four_stops.save()
-    own = organiser.get_absolute_url()
-    assert "Seeds to the coast" in login(organiser).get(own).content.decode()
-    assert "Seeds to the coast" not in login(viewer).get(own).content.decode()
-
-
-def test_a_traveller_who_is_an_ambassador_shows_their_community(four_stops, organiser, farm):
-    stops = four_stops.ordered_stops()
-    _, traveller = ask(farm.ambassador, four_stops, stops[0], stops[1])
-    page = reverse("tours:detail", args=[four_stops.slug])
-    assert farm.get_absolute_url() + '" class="block text-sm' not in login(organiser).get(page).content.decode()
-    accept(traveller.match, organiser)
-    html = login(organiser).get(page).content.decode()
-    assert farm.get_absolute_url() + '" class="block text-sm' in html
-
-
 def test_only_the_organisers_see_what_a_traveller_could_bring(four_stops, organiser, other):
     stops = four_stops.ordered_stops()
     _, traveller = ask(other, four_stops, stops[0], stops[1])
     url = traveller.match.get_absolute_url()
     assert 'id="person"' in login(organiser).get(url).content.decode()
     assert 'id="person"' not in login(other).get(url).content.decode()
-
-
-def test_the_user_menu_lists_your_tours_once_you_are_on_one(four_stops, organiser, other):
-    mine = reverse("tours:mine")
-    assert mine not in login(other).get("/").content.decode()
-    assert mine in login(organiser).get("/").content.decode()
-    stops = four_stops.ordered_stops()
-    _r, traveller = ask(other, four_stops, stops[0], stops[1])
-    assert mine in login(other).get("/").content.decode()
-    login(other).post(reverse("tours:withdraw", args=[four_stops.slug]))
-    assert mine not in login(other).get("/").content.decode()

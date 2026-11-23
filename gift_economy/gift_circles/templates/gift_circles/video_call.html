@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+{% load i18n tz %}
+
+{% block head_title %}{% trans "The video call" %}: {{ event.title }} — ecobasa{% endblock %}
+
+{% block content %}
+<div class="container-page">
+  {% include "gift_circles/_guest_header.html" with here=_("The video call") %}
+  <h1 class="mb-1">{% trans "The video call" %}</h1>
+  <p class="text-sm"><i class="fa-regular fa-calendar mr-1"></i>{% include "events/_event_dates.html" %}</p>
+
+  {% if is_over %}
+    <p class="p-4 rounded-lg bg-secondary">{% trans "This gift-circle is over." %}</p>
+  {% elif not is_open %}
+    <p class="p-4 rounded-lg bg-secondary">
+      <i class="fa-regular fa-clock mr-1"></i>{% localtime off %}{% blocktrans with day=opens|date:"DATE_FORMAT" time=opens|time:"TIME_FORMAT" city=event.zone_city %}The video call opens on {{ day }} at {{ time }} {{ city }} time, an hour before the gift-circle. You get an email then.{% endblocktrans %}{% endlocaltime %}
+    </p>
+  {% elif embed_url %}
+    {# The room inside the page; full screen through the browser, or across the window where it can't (iPhone) #}
+    {# Only on a secure page (https, localhost): embedded in an insecure one it gets no camera or microphone, so there it is a link #}
+    <div x-data="videoCall()" @fullscreenchange.document="native = !!document.fullscreenElement"
+         x-effect="document.body.classList.toggle('overflow-hidden', covers)">
+      <a x-show="!secure" x-cloak href="{{ room_url }}" target="_blank" rel="noopener" class="btn btn-lg"><i class="fa-solid fa-video mr-2"></i>{% trans "Join the video call" %}</a>
+      <template x-if="secure"><div>
+      <div x-ref="room" class="bg-black overflow-hidden flex flex-col"
+           :class="covers ? 'fixed inset-0 z-50' : 'relative rounded-xl'">
+        <iframe src="{{ embed_url }}" title="{% trans 'The video call' %}"
+                allow="camera; microphone; display-capture; fullscreen; autoplay; clipboard-write"
+                class="w-full border-0" :class="covers ? 'flex-1' : 'h-[75vh]'"></iframe>
+        <button type="button" x-show="covers" x-cloak @click="toggle()"
+                class="absolute top-2 left-2 btn btn-sm" aria-label="{% trans 'Leave full screen' %}">
+          <i class="fa-solid fa-compress mr-1"></i>{% trans "Leave full screen" %}
+        </button>
+      </div>
+      <div class="flex flex-wrap justify-between gap-x-4 gap-y-2 mt-3 text-sm">
+        <a href="{{ room_url }}" target="_blank" rel="noopener" class="underline"><i class="fa-solid fa-arrow-up-right-from-square mr-1"></i>{% trans "Open it in its own tab" %}</a>
+        <button type="button" @click="toggle()" class="btn"><i class="fa-solid fa-expand mr-1"></i>{% trans "Full screen" %}</button>
+      </div>
+      </div></template>
+    </div>
+    <script>
+    document.addEventListener('alpine:init', () => {
+      Alpine.data('videoCall', () => ({
+        secure: window.isSecureContext,
+        native: false,
+        // Across the window, where the browser has no full screen for the room
+        window: false,
+        get covers() { return this.native || this.window },
+        toggle() {
+          if (document.fullscreenElement) return document.exitFullscreen()
+          if (this.window) return this.window = false
+          const room = this.$refs.room
+          if (room.requestFullscreen) {
+            room.requestFullscreen().catch(() => { this.window = true })
+          } else {
+            this.window = true
+          }
+        },
+      }))
+    })
+    </script>
+  {% else %}
+    <a href="{{ room_url }}" target="_blank" rel="noopener" class="btn btn-lg"><i class="fa-solid fa-video mr-2"></i>{% trans "Join the video call" %}</a>
+  {% endif %}
+
+  <div class="flex flex-wrap justify-between gap-3 mt-8">
+    <a href="{{ back_url }}" class="btn btn-purple"><i class="fa-solid fa-chevron-left mr-2"></i>{% trans "Back to the gift-circle's page" %}</a>
+    <a href="{{ giftsheet_url }}" class="btn"><i class="fa-solid fa-table-list mr-2"></i>{% trans "Open the Giftsheet" %}</a>
+  </div>
+</div>
+{% endblock %}

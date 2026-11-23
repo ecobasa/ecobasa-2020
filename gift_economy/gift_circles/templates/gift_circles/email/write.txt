@@ -1,0 +1,10 @@
+{% load i18n %}{% autoescape off %}{% blocktrans with name=recipient.name|default:recipient.email %}Hello {{ name }},{% endblocktrans %}
+
+{% blocktrans with name=sender_name text=entry.text title=event.title %}{{ name }} writes to you about “{{ text }}” at the gift-circle {{ title }}:{% endblocktrans %}
+
+{{ message }}
+
+{% blocktrans with name=sender_name %}Answer this email to write back to {{ name }}.{% endblocktrans %}
+
+--
+ecobasa.org{% endautoescape %}

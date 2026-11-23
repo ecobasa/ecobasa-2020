@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("gifts", "0015_listing_tour"),
+        ("gifts", "0016_listing_from_afar"),
     ]
 
     operations = [

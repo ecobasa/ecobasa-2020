@@ -5,9 +5,9 @@
 {% endif %}{% if match.is_loan %}
 {% trans "Asked to borrow" %}:
 {{ match.loan.period }}
-{% endif %}{% with vd=match.volunteer_details %}{% if vd %}
-{% if vd.stay_from or vd.stay_to %}{% trans "Proposed stay" %}:
-{% if vd.stay_from %}{{ vd.stay_from|date:"DATE_FORMAT" }}{% endif %}{% if vd.stay_from and vd.stay_to %} – {% endif %}{% if vd.stay_to %}{{ vd.stay_to|date:"DATE_FORMAT" }}{% endif %}
+{% endif %}{% with vd=match.stay_details %}{% if vd %}
+{% if vd.stay_from or vd.stay_to %}{{ match.stay_label }}:
+{% if vd.stay_from %}{{ vd.stay_from|date:"DATE_FORMAT" }}{% endif %}{% if vd.stay_to and vd.stay_to|date:"Ymd" != vd.stay_from|date:"Ymd" %}{% if vd.stay_from %} – {% endif %}{{ vd.stay_to|date:"DATE_FORMAT" }}{% endif %}
 
 {% endif %}{% if vd.practice_skills %}{% if vd.volunteer_mode == "wish" %}{% trans "Skills to offer" %}{% else %}{% trans "Skills to learn and practice" %}{% endif %}:
 {{ vd.practice_skills }}{% if vd.practice_skill_level %} ({% trans "level" %}: {{ vd.practice_skill_level }}){% endif %}

@@ -1,0 +1,44 @@
+{% load i18n gift_circles_tags %}{# On a gift-circle's page: the offers and wishes people bring, for everyone; who brings them for logged-in people, what was promised among who comes for them and the host. Who comes or hosts adds theirs while it is ahead #}
+{% brought_to event request.user as bring %}
+{% sees_giftsheet event request.user as sees %}
+{% if sees %}
+  <a href="{% url 'gift_circles:giftsheet' event.slug %}" class="btn btn-purple mt-6"><i class="fa-solid fa-table-list mr-1"></i>{% trans "Open the Giftsheet" %}</a>
+{% endif %}
+{% if bring.offers or bring.wishes or bring.may_bring %}
+  <h2 id="bring">{% trans "What people bring" %}</h2>
+  {% if bring.offers or bring.wishes %}
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div>
+        <h3 class="mt-0"><i class="fa-solid fa-gift mr-1 text-primary"></i>{% trans "Offers" %}</h3>
+        {% include "gift_circles/_brought.html" with listings=bring.offers empty=_("No offers yet.") %}
+      </div>
+      <div>
+        <h3 class="mt-0"><i class="fa-solid fa-heart mr-1 text-primary"></i>{% trans "Wishes" %}</h3>
+        {% include "gift_circles/_brought.html" with listings=bring.wishes empty=_("No wishes yet.") %}
+      </div>
+    </div>
+  {% endif %}
+  {% if bring.may_bring %}
+    <div x-data="{ open: false }" class="mt-4">
+      <div class="flex flex-wrap gap-2">
+        <a href="{% url 'gifts:create' %}?type=offer&amp;gift_circle={{ event.slug }}" class="btn"><i class="fa-solid fa-gift mr-1"></i>{% trans "Add an offer" %}</a>
+        <a href="{% url 'gifts:create' %}?type=wish&amp;gift_circle={{ event.slug }}" class="btn"><i class="fa-solid fa-heart mr-1"></i>{% trans "Add a wish" %}</a>
+        {% if bring.own %}
+          <button type="button" class="btn btn-purple" @click="open = !open" :aria-expanded="open"><i class="fa-solid fa-hand-holding-heart mr-1"></i>{% trans "Bring one of yours" %}</button>
+        {% endif %}
+      </div>
+      {% if bring.own %}
+        <div x-show="open" x-cloak class="flex flex-wrap gap-2 mt-3">
+          {% for listing in bring.own %}
+            <form method="post" action="{% url 'gift_circles:bring' event.slug %}">{% csrf_token %}
+              <input type="hidden" name="listing" value="{{ listing.pk }}">
+              <button type="submit" class="pill {{ listing.colour }} text-xs hover:opacity-80" title="{% trans 'Bring it to the gift-circle' %}">
+                <i class="fa-solid fa-plus mr-1"></i>{% include "gifts/_listing_icon.html" %}{{ listing.display_title|truncatechars:40 }}
+              </button>
+            </form>
+          {% endfor %}
+        </div>
+      {% endif %}
+    </div>
+  {% endif %}
+{% endif %}

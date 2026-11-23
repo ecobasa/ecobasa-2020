@@ -1,0 +1,14 @@
+{% extends "gift_circles/email/_layout.html" %}{% load i18n %}
+{% block body %}
+<p style="margin:0 0 16px;font-size:15px;line-height:1.6;">{% blocktrans with tour=tour.title %}Your tour {{ tour }} invites to a gift-circle where it stops. You're on the tour there, so you're very welcome.{% endblocktrans %}</p>
+{% include "gift_circles/_when_where.html" with with_title=True %}
+<p style="margin:0 0 24px;"><a href="{{ event_url }}" style="display:inline-block;background-color:#da6137;color:#fcf3e5;text-decoration:none;padding:10px 20px;border-radius:6px;font-size:15px;font-weight:bold;">{% trans "I'm coming" %}</a></p>
+<p style="margin:0 0 16px;font-size:15px;line-height:1.6;">{% trans "Say you're coming, and add your wishes and offers on the page. ecobasa shows you who could help whom before the day, so people know what things they could already bring along, so it can change hands there." %}</p>
+
+<h3 style="margin:24px 0 8px;font-size:17px;">{% trans "Think of a wish and an offer" %}</h3>
+<p style="margin:0 0 16px;font-size:15px;line-height:1.6;">{% trans "Before you come, think of one thing you wish for and one thing you can give. Small or big, a thing, some time, a skill." %}</p>
+
+{% include "gift_circles/_rounds.html" %}
+{% include "gift_circles/_karma_rules.html" %}
+<p style="margin:0;font-size:15px;line-height:1.6;">{% trans "Happy giving!" %}</p>
+{% endblock %}

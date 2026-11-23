@@ -13,7 +13,8 @@ from gift_economy.gifts.models import Listing
 from .models import User
 from .places import approximate, town
 
-from .forms import RegisterForm, LoginForm, ProfileUpdateForm
+from .emails import read_email_change_token, send_email_change_link, send_email_changed_notice
+from .forms import RegisterForm, LoginForm, ProfileUpdateForm, EmailChangeForm
 from django.http import JsonResponse
 from django.views.decorators.http import require_GET
 from django.db.models import Q
@@ -133,7 +134,8 @@ def register(request):
             messages.success(request, _("Account created and logged in."))
             return redirect(_next_url(request))
     else:
-        form = RegisterForm()
+        # Filled in from a link that knows them (a gift-circle guest's "Create an account")
+        form = RegisterForm(initial={field: request.GET[field] for field in ("name", "email") if request.GET.get(field)})
     return render(request, "users/register.html", {"form": form})
 
 
@@ -165,6 +167,20 @@ class UpdateView(LoginRequiredMixin, django_views.FormView):
         kwargs["instance"] = self.request.user
         return kwargs
 
+    def post(self, request, *args, **kwargs):
+        # The account section is a form of its own, below the profile form
+        if "new_email" not in request.POST:
+            return super().post(request, *args, **kwargs)
+        email_form = EmailChangeForm(request.POST, user=request.user)
+        if not email_form.is_valid():
+            return self.render_to_response(self.get_context_data(
+                form=self.form_class(instance=request.user), email_form=email_form,
+            ))
+        new_email = email_form.cleaned_data["new_email"]
+        send_email_change_link(request.user, new_email, request)
+        messages.success(request, _("We sent a link to %(email)s. Your email address changes once you open it.") % {"email": new_email})
+        return redirect(reverse("users:update") + "#account")
+
     def form_valid(self, form):
         self.object = form.save()
         # Whether their offers and skills show on each of their communities' pages, and
@@ -186,11 +202,30 @@ class UpdateView(LoginRequiredMixin, django_views.FormView):
         ctx = super().get_context_data(**kwargs)
         ctx["user_obj"] = self.request.user
         ctx["memberships"] = self._memberships()
+        ctx.setdefault("email_form", EmailChangeForm(user=self.request.user))
         return ctx
 
     def get_success_url(self):
         return self.object.get_absolute_url() if hasattr(self, "object") else self.request.user.get_absolute_url()
 
+
+def confirm_email(request, token):
+    """The link sent to a new email address: changing it takes a click on the page, so
+    mail programs that open links to check them don't change it."""
+    data = read_email_change_token(token)
+    user = User.objects.filter(pk=data[0]).first() if data else None
+    old_email, new_email = data[1:] if data else ("", "")
+    taken = User.objects.filter(email__iexact=new_email).exclude(pk=user.pk).exists() if user else False
+    if user is None or user.email != old_email or taken:
+        messages.error(request, _("This link doesn't work any more. You can ask for a new one on your profile page."))
+        return redirect(reverse("users:update") if request.user.is_authenticated else reverse("users:login"))
+    if request.method == "POST":
+        user.email = new_email
+        user.save(update_fields=["email"])
+        send_email_changed_notice(user, old_email)
+        messages.success(request, _("Your email address is now %(email)s. Use it to log in.") % {"email": new_email})
+        return redirect(user.get_absolute_url() if request.user == user else reverse("users:login"))
+    return render(request, "users/confirm_email.html", {"old_email": old_email, "new_email": new_email})
 
 
 def set_language(request):

@@ -1,0 +1,8 @@
+{% load i18n %}{% autoescape off %}{% blocktrans with name=user.name|default:user.email %}Hello {{ name }},{% endblocktrans %}
+{% for paragraph in paragraphs %}
+{{ paragraph }}
+{% endfor %}{% if button_url %}
+{{ button_label }}: {{ button_url }}
+{% endif %}
+--
+ecobasa.org{% endautoescape %}

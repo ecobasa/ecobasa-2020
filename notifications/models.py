@@ -36,6 +36,8 @@ class Notification(models.Model):
     TAG_REFERENCE   = "reference"
     TAG_SUGGESTION  = "suggestion"
     TAG_MATCH_AREA  = "match_area"
+    # An invitation without a match (a tour's travellers to its gift-circle): its text is the verb
+    TAG_INVITATION  = "invitation"
 
     recipient   = models.ForeignKey(User, on_delete=models.CASCADE, related_name="notifications")
     actor       = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name="notifications_sent")
@@ -131,10 +133,10 @@ class Notification(models.Model):
 
         new = Suggestion.objects.shown_to(self.recipient).filter(seen_at=None).count()
         if not new:
-            return str(_("Suggestions near you: what fits your wishes, offers and skills."))
+            return str(_("Suggestions: what fits your wishes, offers and skills."))
         return ngettext(
-            "%(count)s new suggestion near you: something fits your wishes, offers or skills.",
-            "%(count)s new suggestions near you: things fit your wishes, offers or skills.",
+            "%(count)s new suggestion: something fits your wishes, offers or skills.",
+            "%(count)s new suggestions: things fit your wishes, offers or skills.",
             new,
         ) % {"count": new}
 
@@ -183,4 +185,5 @@ class Notification(models.Model):
             self.TAG_REFERENCE:   "fa-comments",
             self.TAG_SUGGESTION:  "fa-handshake-angle",
             self.TAG_MATCH_AREA:  "fa-location-dot",
+            self.TAG_INVITATION:  "fa-envelope-open-text",
         }.get(self.tag, "fa-bell")

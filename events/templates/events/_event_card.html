@@ -8,6 +8,7 @@
     {% if event.archived_at %}<span class="pill bg-primary bg-opacity-20 text-xs">{% trans "Archived" %}</span>{% endif %}
     {% if event.food_provided %}<span class="text-xs text-brown" title="{% trans 'Food provided' %}"><i class="fa-solid fa-utensils"></i></span>{% endif %}
     {% if event.bed_provided %}<span class="text-xs text-brown" title="{% trans 'Bed provided' %}"><i class="fa-solid fa-bed"></i></span>{% endif %}
+    {% if event.language_names %}<span class="text-xs text-brown" title="{% trans 'Languages' %}"><i class="fa-solid fa-language mr-1"></i>{{ event.language_names }}</span>{% endif %}
     <span class="text-xs text-brown opacity-70 whitespace-nowrap sm:ml-auto"><i class="fa-regular fa-calendar mr-1"></i>{% include "events/_event_dates.html" %}</span>
   </div>
   <div class="min-w-0">
@@ -29,7 +30,19 @@
       </div>
     {% endif %}
   {% endwith %}
+  {# On the events one attends: one's own request not answered yet, or requests waiting for one's answer #}
+  {% if event.own_request %}
+    <p class="text-sm m-0"><span class="pill bg-yellow text-xs mr-1"><i class="fa-solid fa-hourglass-half mr-1"></i>{% trans "Not approved yet" %}</span>
+      <a href="{{ event.own_request.get_absolute_url }}" class="underline">{% trans "See your request" %}</a></p>
+  {% endif %}
+  {% if event.waiting_answers %}
+    <p class="text-sm m-0"><a href="{{ event.get_absolute_url }}#offers" class="underline"><i class="fa-solid fa-hand mr-1"></i>{% blocktrans count count=event.waiting_answers %}{{ count }} request waits for your answer{% plural %}{{ count }} requests wait for your answer{% endblocktrans %}</a></p>
+  {% endif %}
   <div class="text-xs mt-auto flex flex-wrap items-center gap-2">
+    {# How many come, where the list counted them (`show_coming`) #}
+    {% if show_coming and event.is_current %}{% if event.coming_people or event.max_people %}
+      <span class="text-brown"><i class="fa-solid fa-users mr-1"></i>{% include "events/_coming.html" %}</span>
+    {% endif %}{% endif %}
     {% include "events/_freshness.html" with when=event.updated_at label_updated=True %}
   </div>
 </article>

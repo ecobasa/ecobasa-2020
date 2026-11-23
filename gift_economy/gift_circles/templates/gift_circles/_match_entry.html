@@ -1,0 +1,10 @@
+{% load i18n %}
+{# On the page of a match made when a Giftsheet was closed (gift_economy.matches includes the templates of what is attached to a match): the gift-circle and its line #}
+{% with entry=attachment event=attachment.event %}
+  <div class="border rounded-xl bg-secondary bg-opacity-60 p-4 text-sm mb-4 space-y-2">
+    <div><i class="fa-solid {{ event.kind_icon }} text-primary mr-1"></i><strong>{% trans "Gift-circle" %}:</strong>
+      <a href="{{ event.get_absolute_url }}" class="underline">{{ event.title }}</a>{% if event.starts_on %}, {{ event.starts_on|date:"DATE_FORMAT" }}{% endif %}
+    </div>
+    <div><i class="fa-solid {% if entry.is_offer %}fa-gift{% else %}fa-heart{% endif %} text-primary mr-1"></i>{% if entry.is_offer %}{% blocktrans with text=entry.text from=entry.from_label %}Offer: {{ text }} ({{ from }}){% endblocktrans %} {% blocktrans with name=entry.for_label %}Taken by {{ name }}{% endblocktrans %}{% else %}{% blocktrans with text=entry.text from=entry.from_label %}Wish: {{ text }} ({{ from }}){% endblocktrans %} {% blocktrans with name=entry.for_label %}Fulfilled by {{ name }}{% endblocktrans %}{% endif %}</div>
+  </div>
+{% endwith %}

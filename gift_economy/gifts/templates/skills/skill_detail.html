@@ -6,10 +6,10 @@
 {% block content %}
 <div class="container-content">
 
-  <div class="mb-2 text-sm text-brown">
+  <div class="mb-2 text-sm text-brown flex flex-wrap items-center gap-x-2 gap-y-1">
     <a href="{% url 'skills:skill_list' %}" class="hover:underline">{% trans "Skills" %}</a>
-    <span class="mx-1">/</span>
-    <span>{{ skill }}</span>
+    <i class="fa-solid fa-chevron-right text-xs opacity-50" aria-hidden="true"></i>
+    <span class="opacity-70">{{ skill }}</span>
   </div>
 
   <div class="flex items-start justify-between mb-6 gap-4">

@@ -1,0 +1,13 @@
+{% load i18n gift_circles_tags %}{# In "I'm coming" and "Ask to join"; `changing`: its own form, for who comes #}
+{% if changing %}
+  {% keeps_on_ecobasa event request.user as keeps %}
+  <form method="post" action="{% url 'gift_circles:attendee' event.slug %}" class="mt-3 pt-3 border-t text-left space-y-2">{% csrf_token %}
+    <label class="flex items-start gap-2 cursor-pointer"><input type="checkbox" name="keep_on_ecobasa" class="form-checkbox mt-1" {% if keeps %}checked{% endif %}><span>{% trans "Keep my offers and wishes from this gift-circle on ecobasa" %}</span></label>
+    <button type="submit" class="btn">{% trans "Save" %}</button>
+  </form>
+{% else %}
+  <div class="text-sm text-left">
+    <label class="flex items-start gap-2 cursor-pointer"><input type="checkbox" name="keep_on_ecobasa" class="form-checkbox mt-1"><span>{% trans "Keep my offers and wishes from this gift-circle on ecobasa" %}</span></label>
+    <p class="text-xs mt-1">{% trans "Then they keep finding people near you after the circle. You can change it at any time." %}</p>
+  </div>
+{% endif %}

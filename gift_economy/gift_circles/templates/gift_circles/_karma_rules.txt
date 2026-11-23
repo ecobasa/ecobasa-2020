@@ -1,0 +1,11 @@
+{% load i18n %}{% autoescape off %}{% trans "The karma rules" %}
+
+- {% trans "No guarantee." %} {% trans "Not every wish comes true, and that's okay." %}
+- {% trans "Wish big." %} {% trans "Big wishes are welcome. Sometimes the circle can do more than you think." %}
+- {% trans "Only good intentions." %} {% trans "Nothing that harms anyone." %}
+- {% trans "The one who wished follows up." %} {% trans "If someone offers to help with your wish, you get in touch with them, not the other way round." %}
+- {% trans "No money." %} {% trans "Nothing is bought or sold. Things, time, skills, ideas and contacts are all welcome." %}
+- {% trans "Give freely." %} {% trans "Nobody owes anything back." %}
+- {% trans "Give only what you can." %} {% trans "Say no when it doesn't feel right. Give what you can keep giving." %}{% if credit %}
+
+{% trans "The karma rules are inspired by Pierre Lischke's KarmaKreis." %}{% endif %}{% endautoescape %}

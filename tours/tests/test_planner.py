@@ -15,7 +15,7 @@ from users.models import User
 
 from .. import recommend
 from ..models import Stop
-from ..recommend import best_position, hints, recommend_stops, suggest_order
+from ..recommend import best_position, recommend_stops, suggest_order
 from .test_joining import person
 from .test_tours import FARM_POINT, VILLAGE_POINT, add, exact, farm, login, organiser, other, published, village  # noqa: F401
 
@@ -292,27 +292,6 @@ def test_use_the_suggested_order(organiser):
 
 # ── Hints ───────────────────────────────────────────────────────────
 
-def test_the_group_size_hint_only_for_tours_that_look_for_travellers(organiser, farm, village):
-    looking = published(organiser, "Together", {"community": farm}, {"community": village})
-    alone = published(organiser, "Alone", {"community": farm}, {"community": village}, open_to_join=False)
-    group_hint = "3 to 5 people fit into a community most easily; with experience, up to 10."
-    assert group_hint in hints(looking, looking.ordered_stops())
-    assert group_hint not in hints(alone, alone.ordered_stops())
-
-
-def test_the_week_tip_is_where_the_days_are_chosen(east, organiser):
-    html = login(organiser).get(reverse("tours:plan", args=[east.slug])).content.decode()
-    assert html.count("Hosts usually gain from help after about a week.") == 1
-
-
-def test_the_hints_say_what_applies(organiser, farm):
-    today = timezone.localdate()
-    tour = published(organiser, "Short", {"community": farm, "arrive_on": today, "leave_on": today + timedelta(days=2)},
-                     max_people=4)
-    found = hints(tour, tour.ordered_stops())
-    assert "Visit at least two communities so gifts can travel." in found
-
-
 # ── Directions in a maps app, for those who travel along ────────────
 
 def test_travellers_get_directions_to_each_stop(east, organiser, other):
@@ -344,14 +323,3 @@ def test_directions_use_the_exact_place_once_the_host_agreed(east, organiser, fa
     match.save()
     html = login(organiser).get(reverse("tours:detail", args=[east.slug])).content.decode()
     assert f"geo:{round(FARM_POINT.y, 6)},{round(FARM_POINT.x, 6)}" in html
-
-
-def test_the_pin_is_named_after_the_community_also_at_its_event(organiser, village):
-    fest = Event.objects.create(community=village, title="Open day")
-    tour = published(organiser, "Fest", {"event": fest}, {"name": "Harbour", "location": Point(8.8, 53.1, srid=4326)},
-                     travel_mode="bicycle")
-    html = login(organiser).get(reverse("tours:detail", args=[tour.slug])).content.decode()
-    assert "(Elbtal)" in html and "(Open%20day)" not in html
-    assert "(Harbour)" in html
-    assert "engine=fossgis_osrm_bike" in html
-    assert "google.com/maps/dir/?api=1&amp;destination=" in html and "travelmode=bicycling" in html

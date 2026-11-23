@@ -1,0 +1,34 @@
+{% load i18n %}{% autoescape off %}{% trans "Before you start" %}
+
+- {% trans "Find a scribe. They write the Giftsheet: on paper, or straight into ecobasa on a phone or laptop so open wishes can still be matched after the circle by other people." %}
+- {% trans "Optional: a timekeeper, who says when a round should end." %}
+- {% trans "Sit or stand in a circle, so everyone sees everyone." %}
+
+{% trans "The rounds" %} {% if timings.duration %}({{ timings.duration }}){% else %}{% trans "(maximum 1.5 hours)" %}{% endif %}
+
+1. {% trans "Welcome" context "gift-circle round" %} {% blocktrans with minutes=timings.welcome %}({{ minutes }} minutes){% endblocktrans %}. {% trans "Names. Explain the rounds and the karma rules. Say that offers and wishes go on ecobasa only for those who said yes, and emails go only between the two sides of a match." %}
+2. {% trans "Wishes" context "gift-circle round" %} {% blocktrans with minutes=timings.wishes %}({{ minutes }} minutes){% endblocktrans %}. {% trans "Go round the circle. Each person says one wish, or passes. After each wish, ask:" %}
+   - {% trans "Who can help?" %}
+   - {% trans "Nobody? Who knows someone who can?" %}
+   - {% trans "Still nobody? Who has an idea how we could do it together?" %}
+   {% trans "Stay with one wish until it is solved or you let it go, then the next person. If there is time, go round again." %}
+3. {% trans "Offers" context "gift-circle round" %} {% blocktrans with minutes=timings.offers %}({{ minutes }} minutes){% endblocktrans %}. {% trans "Round again. Each person says what they can give. Who would like it? Who knows someone that would like it?" %}
+4. {% trans "Thanks" context "gift-circle round" %} {% blocktrans with minutes=timings.thanks %}({{ minutes }} minutes){% endblocktrans %}. {% trans "Each person thanks someone: for a gift from last time, for something today, or just for being here." %}
+5. {% trans "Close" context "gift-circle round" %} {% blocktrans with minutes=timings.close %}({{ minutes }} minutes){% endblocktrans %}. {% trans "The scribe reads out the matches and asks those who came without signing up for their email address, so their matches can reach them. Remind everyone: the one who wished follows up." %}
+
+{% trans "Tips" %}
+
+- {% trans "Help the shy ones. If nobody starts, suggest an easy wish: a hug, a book tip, help carrying something." %}
+- {% trans "Keep wishes short. One sentence is enough for the Giftsheet." %}
+- {% trans "Offers can come up in the wish round. That's fine: the scribe writes them down too." %}
+- {% trans "If a wish finds nobody, let it go kindly. It stays on the Giftsheet and on ecobasa if they want and may still find a match." %}
+
+{% include "gift_circles/_karma_rules.txt" with credit=True %}
+
+{% trans "What to bring" %}
+
+- {% trans "The printed Giftsheet, or big paper" %}
+- {% trans "Markers in two colours: one for wishes, one for offers" %}
+- {% trans "Pens and small paper, so people can note contacts" %}
+- {% trans "A phone or laptop for the scribe, if you type the Giftsheet into ecobasa" %}{% if event.potluck_note %}
+- {% blocktrans with note=event.potluck_note %}Something for the potluck: {{ note }}{% endblocktrans %}{% endif %}{% endautoescape %}

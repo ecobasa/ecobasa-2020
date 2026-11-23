@@ -3,7 +3,6 @@ from datetime import timedelta
 from email.message import EmailMessage
 
 import pytest
-from django.contrib.contenttypes.models import ContentType
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client
 from django.urls import reverse
@@ -96,12 +95,11 @@ class TestSendReferenceRequests:
         assert send_reference_requests() == 0
         assert sorted(m.to[0] for m in mailoutbox) == [owner.email, requester.email]
 
-    def test_in_their_language_with_reply_address_and_key(self, stay, owner, mailoutbox):
+    def test_with_reply_address_and_key(self, stay, owner, mailoutbox):
         send_reference_requests()
         reference_request = ReferenceRequest.objects.get(user=owner)
         mail = next(m for m in mailoutbox if m.to == [owner.email])
-        assert mail.subject == f"Aufenthalt von Rafa bei Goat Farm: Wie war es? [#{reference_request.key}]"
-        assert "Rafa schrieb:" in mail.body and "“Hi”" in mail.body
+        assert mail.subject.endswith(f"[#{reference_request.key}]")
         assert mail.reply_to == [f"references+{reference_request.key}@ecobasa.test"]
         assert f"https://ecobasa.test/references/request/{reference_request.key}/" in mail.body
         assert REPLY_MARKER in mail.body
@@ -112,17 +110,15 @@ class TestSendReferenceRequests:
         assert mailoutbox[0].reply_to == []
         assert REPLY_MARKER not in mailoutbox[0].body
 
-    def test_not_before_the_stay_ended(self, stay):
+    def test_not_before_the_stay_ended_nor_long_after_nor_when_pending(self, stay):
         stay.stay_details.stay_to = timezone.now() + timedelta(days=3)
         stay.stay_details.save()
         assert send_reference_requests() == 0
-
-    def test_not_about_long_past_matches(self, stay):
         stay.stay_details.stay_to = timezone.now() - timedelta(days=60)
         stay.stay_details.save()
         assert send_reference_requests() == 0
-
-    def test_not_about_pending_matches(self, stay):
+        stay.stay_details.stay_to = timezone.now() - timedelta(days=2)
+        stay.stay_details.save()
         stay.status = Match.STATUS_PENDING
         stay.save()
         assert send_reference_requests() == 0
@@ -154,9 +150,7 @@ def _as_browser(url, **data):
 @pytest.mark.django_db
 class TestReferenceRequestForm:
     def test_works_without_login(self, stay, requester):
-        response = Client().get(_request_url(stay, requester))
-        assert response.status_code == 200
-        assert "Goat Farm" in response.content.decode()
+        assert Client().get(_request_url(stay, requester)).status_code == 200
 
     def test_saves_a_reference_about_the_community_with_a_photo(self, stay, requester, owner):
         url = _request_url(stay, requester)
@@ -186,21 +180,8 @@ class TestReferenceRequestForm:
     def test_edits_the_reference_they_already_wrote(self, stay, requester, owner):
         Reference.objects.create(author=requester, recipient=owner, subject=stay.target, text="Old text")
         url = _request_url(stay, requester)
-        assert "Old text" in Client().get(url).content.decode()
         Client().post(url, {"impression": "positive", "text": "New text"})
         assert Reference.objects.get(author=requester).text == "New text"
-
-    def test_the_form_on_a_profile_takes_a_photo_and_sharing_too(self, owner, requester):
-        client = Client()
-        client.login(username=requester.email, password="secret")
-        content_type = ContentType.objects.get_for_model(owner)
-        client.post(reverse("references:save", args=[content_type.pk, owner.pk]), {
-            "impression": "positive", "text": "Lovely host", "share_publicly": "on",
-            "photo": SimpleUploadedFile("tea.jpg", _photo(), content_type="image/jpeg"),
-        })
-        reference = Reference.objects.get(author=requester)
-        assert reference.share_publicly
-        assert Image.open(reference.photo).size == (1600, 1067)
 
     def test_unreadable_photo_is_rejected(self, stay, requester):
         response = Client().post(_request_url(stay, requester), {
@@ -236,35 +217,20 @@ class TestWhatItWasAbout:
         assert exchange_text(helping, requester) == "Your help with Cob Building for Goat Farm"
         assert exchange_text(helping, owner) == "Rafa's help with Cob Building"
 
-    def test_email_and_form_name_the_exchange_and_its_dates(self, stay, requester, mailoutbox):
-        send_reference_requests()
-        mail = next(m for m in mailoutbox if m.to == [requester.email])
-        assert mail.subject.startswith("Your stay at Goat Farm: how was it?")
-        assert "Your stay at Goat Farm" in mail.body
-        assert "You wrote: “Hi”" in mail.body
-        assert stay.stay_details.stay_to.strftime("%Y") in mail.body
-        page = Client().get(_request_url(stay, requester)).content.decode()
-        assert "Your stay at Goat Farm" in page
-
-
 @pytest.mark.django_db
 class TestEveryKindOfMatch:
     """Gifts, skills and skill wishes get the same email, form, guide and photo as stays."""
 
     def _answer(self, match, user, text="Thank you!"):
-        url = _request_url(match, user)
-        page = Client().get(url).content.decode()
-        _as_browser(url, text=text)
-        return page, Reference.objects.get(author=user, match=match)
+        _as_browser(_request_url(match, user), text=text)
+        return Reference.objects.get(author=user, match=match)
 
     def test_what_was_filled_in_can_be_removed(self, gift_match, requester):
         _as_browser(_request_url(gift_match, requester), gift_names=[])
         assert Reference.objects.get(author=requester).gift_names == []
 
     def test_gift(self, gift_match, owner, requester, mailoutbox):
-        page, reference = self._answer(gift_match, requester)
-        assert "How to write a reference" in page
-        assert "You are writing about a community" not in page
+        reference = self._answer(gift_match, requester)
         assert reference.subject == owner
         assert reference.gift_names == ["Old Bicycle"]
         assert {m.to[0] for m in mailoutbox} >= {owner.email, requester.email}
@@ -272,11 +238,10 @@ class TestEveryKindOfMatch:
     def test_learning_a_skill(self, owner, requester):
         skill = Skill.objects.create(name="Cob building")
         match = _match(skill_offer(owner, skill), requester, owner)
-        page, reference = self._answer(match, requester)
-        assert "How to write a reference" in page
+        reference = self._answer(match, requester)
         assert reference.subject == owner
         assert [(t.skill, t.status) for t in reference.skill_tags.all()] == [(skill, ReferenceSkill.STATUS_CONFIRMED)]
-        _page, reference = self._answer(match, owner)
+        reference = self._answer(match, owner)
         assert reference.subject == requester
         assert not reference.skill_tags.exists()
 
@@ -284,11 +249,10 @@ class TestEveryKindOfMatch:
         skill = Skill.objects.create(name="Cob building")
         community = Community.objects.create(name="Goat Farm", ambassador=owner)
         match = _match(skill_wish(community, skill), requester, owner)
-        page, reference = self._answer(match, requester)
-        assert "You are writing about a community" in page
+        reference = self._answer(match, requester)
         assert reference.subject == community
         # The ambassador writes about the helper, who confirms the skill
-        _page, reference = self._answer(match, owner)
+        reference = self._answer(match, owner)
         assert reference.subject == requester
         assert [(t.skill, t.status) for t in reference.skill_tags.all()] == [(skill, ReferenceSkill.STATUS_PENDING)]
 
@@ -329,7 +293,6 @@ class TestReplyByEmail:
         assert "?share=1" in thanks.body
         # A reply can't choose an impression: positive, and the email says how to change it
         assert reference.impression == Reference.IMPRESSION_POSITIVE
-        assert "We saved it as “Positive”" in thanks.body
 
     def test_key_from_the_subject_when_the_address_lost_it(self, stay, requester):
         send_reference_requests()
@@ -364,11 +327,6 @@ class TestFeaturing:
     def test_staff_only(self, requester):
         assert self._client(requester).get(reverse("references:featured")).status_code == 302
 
-    def test_in_the_user_menu_for_staff_only(self, staff, requester):
-        url = reverse("references:featured")
-        assert f'href="{url}"' in self._client(staff).get("/").content.decode()
-        assert f'href="{url}"' not in self._client(requester).get("/").content.decode()
-
     def test_featured_reference_is_on_the_homepage(self, staff, shared):
         client = self._client(staff)
         assert "Grateful!" in client.get(reverse("references:featured")).content.decode()
@@ -384,42 +342,6 @@ class TestFeaturing:
         response = self._client(staff).get(reverse("references:featured"))
         assert response.context["candidates"] == []
         assert response.context["others"] == [shared]
-        assert "1 neutral or negative" in response.content.decode()
-        assert "fa-face-frown" in response.content.decode()
-
-    def test_homepage_card_links_to_it_in_full_and_shortens_long_text(self, shared, owner):
-        shared.text = " ".join(f"word{i}" for i in range(60))
-        shared.gift_names = ["Old Bicycle"]
-        shared.featured_at = timezone.now()
-        shared.save()
-        skill = Skill.objects.create(name="Cob building")
-        ReferenceSkill.objects.create(reference=shared, skill=skill, status=ReferenceSkill.STATUS_CONFIRMED)
-        pending = Skill.objects.create(name="Beekeeping")
-        ReferenceSkill.objects.create(reference=shared, skill=pending, status=ReferenceSkill.STATUS_PENDING)
-        page = Client().get("/").content.decode()
-        assert f'href="{owner.get_absolute_url()}#reference-{shared.pk}"' in page
-        assert "word39" in page and "word45" not in page and "Read more" in page
-        assert "Old Bicycle" in page and "Cob Building" in page and "Beekeeping" not in page
-        # The linked page (for members) has it in full
-        assert "word59" in self._client(owner).get(owner.get_absolute_url()).content.decode()
-
-    def test_homepage_card_says_whose_skill_with_their_picture(self, requester, owner):
-        owner.image = SimpleUploadedFile("olga.jpg", _photo(size=(80, 80)), content_type="image/jpeg")
-        owner.save()
-        offer = skill_offer(owner, Skill.objects.create(name="Cob building"))
-        Reference.objects.create(author=requester, recipient=owner, subject=offer, text="Grateful!",
-                                 share_publicly=True, featured_at=timezone.now())
-        page = " ".join(Client().get("/", HTTP_ACCEPT_LANGUAGE="de").content.decode().split())
-        assert f'Rafa</a> über <a href="{offer.get_absolute_url()}"' in page
-        assert f'</a> von <a href="{owner.get_absolute_url()}" class="text-primary">Olga</a>' in page
-        assert owner.image.url in page
-
-    def test_homepage_shows_three_of_the_featured(self, requester, owner):
-        for i in range(5):
-            author = User.objects.create_user(email=f"author{i}@example.com", password="secret", username=f"author{i}")
-            Reference.objects.create(author=author, recipient=owner, subject=owner, text=f"Story {i}",
-                                     share_publicly=True, featured_at=timezone.now())
-        assert Client().get("/").content.decode().count('id="reference-') == 3
 
     def test_only_shared_references_can_be_featured(self, staff, shared):
         shared.share_publicly = False

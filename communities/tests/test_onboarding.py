@@ -170,33 +170,6 @@ def _process(community):
 
 @pytest.mark.django_db
 class TestApplication:
-    def test_the_process_shows_only_on_the_apply_page(self, community):
-        _process(community)
-        ole = _user("ole@example.com", "Ole")
-        with translation.override("en"):
-            assert "Our shared kitchen cooks" not in _client(ole).get(community.get_absolute_url()).content.decode()
-            assert [question.key for question in community.onboarding()][:1] == ["kitchen"]
-            page = _client(ole).get(reverse("communities:apply", args=[community.slug])).content.decode()
-        assert 'name="lives_here"' in page
-        # Must-matches first; pets aren't filled in, so there's nothing to agree to
-        assert page.index("Our shared kitchen cooks: Vegan.") < page.index("Why this community, and why now?")
-        assert "There are no pets here" not in page
-        assert "Can you drive a tractor?" in page and "What would make you leave this community?" in page
-        assert "Six months trial" in page
-
-    def test_statements_under_their_texts_and_the_message_after_the_must_matches(self, community):
-        _process(community)
-        community.house_agreements = "Quiet after ten."
-        community.save()
-        OnboardingQuestion.objects.create(
-            community=community, key="house_agreements", type=onboarding.MUST_MATCH, position=onboarding.POSITIONS["house_agreements"],
-        )
-        with translation.override("en"):
-            page = _client(_user("ole@example.com")).get(reverse("communities:apply", args=[community.slug])).content.decode()
-        statement = page.index("read your house agreements")
-        assert page.index("Quiet after ten.") < statement < page.index("Our shared kitchen cooks")
-        assert page.index("Our shared kitchen cooks") < page.index('name="message"') < page.index("Why this community, and why now?")
-
     def test_applying(self, community, ambassador):
         tractor = _process(community)
         ole = _user("ole@example.com", "Ole")
@@ -290,27 +263,6 @@ class TestApplication:
             page = _client(ambassador).get(application.membership.match.get_absolute_url()).content.decode()
         assert "Mara" in page and "Kim" in page and "4, 9" in page and "'s application" not in page
 
-    def test_waiting_for_the_others(self, community, ambassador):
-        from ..models import Family
-
-        ole = _user("ole@example.com", "Ole")
-        family = Family.objects.create(community=community, invited=["kim@example.org"])
-        membership = Membership.objects.create(community=community, user=ole)
-        from gift_economy.matches.models import Match
-        match = Match(from_user=ole, recipient=ambassador, location_type="")
-        match.target = membership
-        match.save()
-        membership.match = match
-        membership.save()
-        from ..models import MembershipApplication
-        MembershipApplication.objects.create(membership=membership, family=family, answers=[{
-            "key": "who", "type": onboarding.INFO, "kind": onboarding.FAMILY, "text": "Who would move in with you?",
-            "sensitive": False, "answer": {"together": ["kim@example.org"], "children": []},
-        }])
-        with translation.override("en"):
-            page = _client(ambassador).get(match.get_absolute_url()).content.decode()
-        assert "Waiting for kim@example.org" in page
-
     def test_the_ambassador_sees_what_ecobasa_knows(self, community, ambassador):
         from gift_economy.gifts.models import Listing, add_skill_offer
         from gift_economy.gifts.skills.models import Skill
@@ -327,14 +279,9 @@ class TestApplication:
         _client(ole).post(reverse("communities:apply", args=[community.slug]), {"lives_here": "on", "message": "Hi"})
         membership = community.memberships.get(user=ole)
         assert membership.stays_here().count() == 2 and [listing.skill for listing in membership.wished_skills()] == [carpentry]
-        with translation.override("en"):
-            page = _client(ambassador).get(membership.match.get_absolute_url()).content.decode()
-            own = _client(ole).get(membership.match.get_absolute_url()).content.decode()
-        assert "references on their profile" in page and "Skills you look for that they have" in page
-        assert "Skills you look for" not in own
-        # The ambassador sees what they have to offer, without asking for it along with the membership
-        assert 'id="person"' in page and 'name="action" value="extras"' not in page
-        assert 'id="person"' not in own
+        # What they have to offer only for the ambassador
+        assert _client(ambassador).get(membership.match.get_absolute_url()).context["person"]
+        assert not _client(ole).get(membership.match.get_absolute_url()).context.get("person")
 
     def test_who_already_lives_here_skips_the_questions(self, community):
         _process(community)

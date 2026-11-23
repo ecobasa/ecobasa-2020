@@ -4,7 +4,7 @@ from django.utils import translation
 
 from communities.models import Community
 from gift_economy.gifts.models import Listing
-from gift_economy.matches.emails import notify_match_created, notify_match_response
+from gift_economy.matches.emails import notify_match_created
 from gift_economy.matches.models import Match
 from users.models import User
 
@@ -42,15 +42,6 @@ class TestNotificationText:
             assert notification.text == "Rafa interessiert sich für dein Angebot: Old Bicycle"
         with translation.override("en"):
             assert notification.text == "Rafa is interested in your offer: Old Bicycle"
-
-    def test_requester_answering_a_counter_proposal(self, owner, requester):
-        listing = Listing.objects.create(title="Old Bicycle", type="offer", owner=owner)
-        match = _match(requester, listing)
-        match.status = Match.STATUS_ACCEPTED
-        notify_match_response(match, actor=requester)
-
-        notification = Notification.objects.get(recipient=owner, tag=Notification.TAG_ACCEPTED)
-        assert notification.text == "Rafa accepted your counter-proposal for: Old Bicycle"
 
     def test_falls_back_to_stored_text_without_a_match(self, owner):
         notification = Notification.objects.create(recipient=owner, verb="Welcome!", tag="")

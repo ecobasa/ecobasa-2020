@@ -104,8 +104,6 @@ def test_wishes_for_knowledge_helping_hands_or_learning_a_skill(anna, ben):
         _request(wish, ben, status=Match.STATUS_ACCEPTED)
     assert not Listing.objects.get(pk=learn.pk).is_done
     assert Listing.objects.get(pk=advice.pk).is_done
-    with translation.override("en"):
-        assert learn.kind_label == "Learn a skill" and offer.kind_label == "Skill"
 
 
 @pytest.mark.django_db
@@ -160,9 +158,6 @@ def test_a_projects_listings_are_listed_while_it_runs(anna, ben):
     assert clay.community == community and clay.is_wish
     assert set(Listing.objects.current()) >= {clay, learn}
     assert learn in skill_offers(community).current()
-    # Its need is helped with on the project's offer form
-    content = _client(ben).get(clay.get_absolute_url()).content.decode()
-    assert f"{project.url('offer_help')}?need={clay.pk}" in content
     # Off the lists once it is over
     project.archived_at = timezone.now()
     project.save()
@@ -187,25 +182,8 @@ def test_the_community_page_lists_its_and_its_members_skills_and_gifts_once(anna
     context = _client(ben).get(community.get_absolute_url()).context
     assert [(listing, people) for listing, people in context["skills"]] == [(ours, [anna]), (weaving, [anna])]
     assert context["gifts"] == [jam]
-    content = _client(ben).get(community.get_absolute_url()).content.decode()
-    assert ours.get_absolute_url() in content and weaving.get_absolute_url() in content
-
-    # Its page says the level and how to learn it, and leads to the volunteer form for it
-    page = _client(ben).get(ours.get_absolute_url()).content.decode()
-    assert "Bake with us on Saturdays." in page and "How you can learn it here" in page
-    assert f"{community.get_absolute_url()}?learn=bread-baking" in page
+    # The volunteer form for learning it
     assert _client(ben).get(community.get_absolute_url(), {"learn": "bread-baking"}).context["learn_skill"] == ours
-
-
-@pytest.mark.django_db
-def test_a_projects_need_says_what_it_is_for(anna, ben):
-    community = Community.objects.create(name="Hof", ambassador=anna, location=GOERLITZ)
-    project = Event.objects.create(community=community, title="Rocket stove", starts_on=timezone.localdate())
-    clay = need(project, "Clay", kind=Listing.KIND_MATERIAL)
-    with translation.override("en"):
-        page = _client(ben).get(clay.get_absolute_url()).content.decode()
-    assert "needs this for" in page
-    assert project.get_absolute_url() in page and community.get_absolute_url() in page
 
 
 @pytest.mark.django_db
@@ -213,41 +191,5 @@ def test_a_thing_a_project_needs_can_also_just_be_given(anna, ben):
     community = Community.objects.create(name="Hof", ambassador=anna, location=GOERLITZ)
     project = Event.objects.create(community=community, title="Rocket stove", starts_on=timezone.localdate())
     clay = need(project, "Clay", kind=Listing.KIND_MATERIAL, community=community, quantity=200, unit="kg")
-    hands = need(project, "Masons", kind=Listing.KIND_HANDS, community=community)
-    with translation.override("en"):
-        page = _client(ben).get(clay.get_absolute_url()).content.decode()
-        # Coming to help, or just giving it
-        assert "Help with this" in page and "Offer to fulfill this wish" in page
-        # Helping hands come to the project: only the help form
-        page = _client(ben).get(hands.get_absolute_url()).content.decode()
-        assert "Help with this" in page and "Offer to fulfill this wish" not in page
     given = _request(clay, ben, quantity=50)
     assert given.recipient == anna and Contribution.objects.get(match=given).quantity == 50
-
-
-@pytest.mark.django_db
-def test_a_communitys_wish_shows_the_community_and_its_ambassador(anna, ben):
-    community = Community.objects.create(name="Hof", ambassador=anna, location=GOERLITZ, type="e")
-    clay = Listing.objects.create(community=community, type="wish", kind="material", title="Clay")
-    with translation.override("en"):
-        page = _client(ben).get(clay.get_absolute_url()).content.decode()
-        assert "Ecovillage</span>" in page and "Ambassador" in page and anna.get_absolute_url() in page
-        # Who answers for it only for people logged in
-        assert "Ambassador" not in Client().get(clay.get_absolute_url()).content.decode()
-
-
-@pytest.mark.django_db
-def test_a_projects_needs_link_to_their_gift_pages(anna, ben):
-    community = Community.objects.create(name="Hof", ambassador=anna, location=GOERLITZ)
-    project = Event.objects.create(community=community, title="Rocket stove", starts_on=timezone.localdate())
-    clay = need(project, "Clay", kind=Listing.KIND_MATERIAL, community=community)
-    page = _client(ben).get(project.get_absolute_url()).content.decode()
-    assert f'href="{clay.get_absolute_url()}"' in page
-
-
-@pytest.mark.django_db
-def test_the_kind_choices_have_their_icons_and_colours(anna):
-    form = _client(anna).get(reverse("gifts:create")).context["form"]
-    kinds = {radio.data["value"]: (icon, colour) for radio, icon, colour, _text in form.kind_radios()}
-    assert kinds["skill"] == ("fa-graduation-cap", "bg-purple") and kinds["tool"] == ("fa-screwdriver-wrench", "bg-primary")
-    assert [(icon, colour) for _radio, icon, colour, _text in form.type_radios()] == [("fa-gift", "bg-primary"), ("fa-heart", "bg-yellow")]

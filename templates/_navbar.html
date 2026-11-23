@@ -180,9 +180,10 @@
                     {% include "_badge.html" with count=waiting.tours title=answer_title %}</span>
                   </a>
                 {% endif %}
-                {% if attends_events %}
-                  <a href="{% url 'events:going' %}" class="dropdown-link">
-                    <i class="fa-solid fa-calendar-check mr-2"></i>{% trans "Events you are attending" %}
+                {% if attends_events or waiting.events %}
+                  <a href="{% url 'events:going' %}" class="group dropdown-link">
+                    <span class="flex items-center"><i class="fa-solid fa-calendar-check mr-2"></i>{% trans "Events you are attending" %}
+                    {% include "_badge.html" with count=waiting.events title=answer_title %}</span>
                   </a>
                 {% endif %}
                 <a href="{% url 'gifts:mine' %}" class="dropdown-link">
@@ -346,8 +347,8 @@
           {% if on_tours %}
             <a href="{% url 'tours:mine' %}" class="group mt-1 flex items-center px-4 py-2 text-base text-secondary hover:text-primary hover:bg-secondary focus:text-primary focus:bg-secondary" role="menuitem"><i class="fa-solid fa-route mr-2"></i>{% trans "Your tours" %}{% include "_badge.html" with count=waiting.tours title=answer_title %}</a>
           {% endif %}
-          {% if attends_events %}
-            <a href="{% url 'events:going' %}" class="mt-1 block px-4 py-2 text-base text-secondary hover:text-primary hover:bg-secondary focus:text-primary focus:bg-secondary" role="menuitem"><i class="fa-solid fa-calendar-check mr-2"></i>{% trans "Events you are attending" %}</a>
+          {% if attends_events or waiting.events %}
+            <a href="{% url 'events:going' %}" class="group mt-1 flex items-center px-4 py-2 text-base text-secondary hover:text-primary hover:bg-secondary focus:text-primary focus:bg-secondary" role="menuitem"><i class="fa-solid fa-calendar-check mr-2"></i>{% trans "Events you are attending" %}{% include "_badge.html" with count=waiting.events title=answer_title %}</a>
           {% endif %}
           <a href="{% url 'references:list' %}" class="group mt-1 flex items-center px-4 py-2 text-base text-secondary hover:text-primary hover:bg-secondary focus:text-primary focus:bg-secondary" role="menuitem"><i class="fa fa-comments mr-2"></i>{% trans "References" %}{% include "_badge.html" with count=pending_reference_skills title=confirm_title %}</a>
           {% if owned_communities %}

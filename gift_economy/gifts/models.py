@@ -349,6 +349,8 @@ class Listing(RandomIdMixin, models.Model):
     # Wishes for knowledge or helping hands are met once someone comes; wanting to learn
     # a skill stays until its owner says otherwise
     NEED_KINDS = (KIND_KNOWLEDGE, KIND_HANDS)
+    # What can also be shared from afar (from_afar): hands have to be there
+    FROM_AFAR_KINDS = (KIND_SKILL, KIND_KNOWLEDGE)
     KIND_ICONS = {
         KIND_MATERIAL: "fa-cubes", KIND_TOOL: "fa-screwdriver-wrench", KIND_VEHICLE: "fa-van-shuttle", KIND_SEEDS_PLANTS: "fa-seedling", KIND_FOOD: "fa-apple-whole", KIND_CHILDREN: "fa-child", KIND_OTHER: "fa-gift",
         KIND_SKILL: "fa-graduation-cap", KIND_KNOWLEDGE: "fa-lightbulb", KIND_HANDS: "fa-handshake-angle",
@@ -419,6 +421,9 @@ class Listing(RandomIdMixin, models.Model):
     # A tool or vehicle lent for some days that comes back (offer), or to borrow (wish);
     # requests for it say from when until when (matches.Loan)
     lend = models.BooleanField(_("To lend"), default=False)
+    # A skill or knowledge that can also be shared by video call or phone: matched however
+    # far apart, when the other side says so too
+    from_afar = models.BooleanField(_("Also from afar"), default=False)
     # Seeds: the variety ("Ochsenherz"), the year they were harvested (how well they still
     # germinate), and whether they are open-pollinated, so their seeds can be saved again
     variety = models.CharField(_("Variety"), max_length=100, blank=True)

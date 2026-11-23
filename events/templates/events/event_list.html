@@ -168,6 +168,12 @@
           <button type="button" x-cloak x-show="$store.eventMap.anything" class="underline opacity-70 hover:opacity-100" @click="$store.eventMap.clear(true)">{% trans "Clear all filters" %}</button>
         </div>
       </div>
+
+      {% if create_buttons %}
+        <div class="flex flex-wrap gap-2">
+          {% for url, label, icon in create_buttons %}<a href="{{ url }}" class="btn shadow self-start text-sm"><i class="fa-solid {{ icon }} mr-1"></i>{{ label }}</a>{% endfor %}
+        </div>
+      {% endif %}
     </div>
 
     <div x-show="$store.eventMap.loading" x-cloak class="absolute bottom-16 left-1/2 -translate-x-1/2 z-10 bg-primary text-secondary px-3 py-1 rounded-full shadow text-xs">
@@ -295,6 +301,11 @@ function eventPopup(props) {
   const dates = add(el, 'div', 'mt-1');
   add(dates, 'i', 'fa-regular fa-calendar mr-1');
   dates.append(props.dates);
+  if (props.coming) {
+    const coming = add(el, 'div', 'text-sm text-brown mt-1');
+    add(coming, 'i', 'fa-solid fa-users mr-1');
+    coming.append(props.coming);
+  }
   if (props.description) add(el, 'p', 'text-sm text-brown mt-2 mb-0', props.description);
   // Rendered by the server from the avatar snippet, everything in it escaped there
   add(el, 'div', 'mt-2').innerHTML = props.host;
@@ -361,7 +372,8 @@ document.addEventListener('DOMContentLoaded', function () {
   menu.querySelectorAll('input').forEach(r => r.addEventListener('change', e => { if (e.target.checked) base.setBaseLayer(e.target.value); }));
 
   const popupEl = document.createElement('div');
-  popupEl.className = 'map-popup';
+  // One width for all, with or without a picture
+  popupEl.className = 'map-popup w-[300px]';
   const popup = new ol.Overlay({ element: popupEl, positioning: 'bottom-center', offset: [0, -12], stopEvent: true, autoPan: { animation: { duration: 250 }, margin: 90 } });
   eventMap.addOverlay(popup);
   popupEl.addEventListener('click', e => { if (e.target.closest('.map-popup-close')) popup.setPosition(undefined); });

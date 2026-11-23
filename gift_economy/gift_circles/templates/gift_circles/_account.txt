@@ -1,0 +1,7 @@
+{% load i18n %}{% autoescape off %}{% trans "Create an account" %}
+
+{% trans "With an account, your offers and wishes keep finding people near you after the circle. And you hear about the next gift-circle: most of them happen again." %}{% if before %} {% trans "With an account you can add your wishes and offers on the page before the circle and see who could help whom, so you know what to bring along, and things can change hands there." %}{% endif %}
+
+{% trans "Create an account" %}: {{ account_url }}
+
+{% trans "We fill in your name and email. Anything you add at this gift-circle moves to your account." %}{% endautoescape %}

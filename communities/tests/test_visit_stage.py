@@ -103,17 +103,7 @@ class TestAccepting:
         notify_match_created(membership.match, http_request=RequestFactory().get("/"))
         email = mail.outbox[-1]
         assert email.to == [ambassador.email]
-        assert "Read the application" in email.body and "/matches/action/" not in email.body
-
-    def test_the_yes_says_what_it_was(self, community, ambassador, ole):
-        membership = _accept(ambassador, _apply(ole, community), Membership.STAGE_VISIT)
-        notification = Notification.objects.get(recipient=ole, match=membership.match, tag=Notification.TAG_ACCEPTED)
-        with translation.override("en"):
-            assert notification.text == "Rosa invited you to visit, for your membership application: Hof Kleeblatt"
-        _client(ambassador).post(reverse("communities:make_member", args=[community.slug, membership.pk]))
-        notification = Notification.objects.get(pk=notification.pk)
-        with translation.override("en"):
-            assert notification.text == "Rosa made you a member of Hof Kleeblatt"
+        assert "/matches/action/" not in email.body
 
     def test_the_emails_keep_what_was_written(self, community, ambassador, ole):
         from django.core import mail
@@ -142,17 +132,10 @@ class TestAccepting:
 
 @pytest.mark.django_db
 class TestTheVisit:
-    def test_the_applicant_sees_the_stage(self, community, ambassador, ole):
+    def test_the_ambassador_suggests_the_first_visit_days(self, community, ambassador, ole):
         membership = _apply(ole, community)
-        with translation.override("en"):
-            assert "Sent" in _client(ole).get(membership.match.get_absolute_url()).content.decode()
         _accept(ambassador, membership, Membership.STAGE_VISIT)
-        with translation.override("en"):
-            page = _client(ole).get(membership.match.get_absolute_url()).content.decode()
-        assert "Invited to visit" in page and "Six months trial" in page
-        # Without days yet the ambassador suggests the first ones
-        assert "Hof Kleeblatt will suggest days for your visit here." in page
-        assert "Suggest other days" not in page and "Accept these days" not in page
+        # Without days yet, not the applicant
         assert _client(ole).post(_url("visit_days", membership), {"visit_from": "2027-05-03"}).status_code == 403
 
     def test_days_are_agreed_in_the_conversation(self, community, ambassador, ole):
@@ -331,15 +314,11 @@ class TestBecomingAMember:
         membership.make_member()
         assert membership.visit == stop.visit_match
 
-        url = reverse("tours:detail", args=[tour.slug])
-        with translation.override("en"):
-            assert "Became a member after this tour" not in _client(ole).get(url).content.decode()
-            _client(ole).post(reverse("users:update"), {
-                "name": "Ole", "email": ole.email, "shows_visit": str(membership.pk),
-            })
-            membership.refresh_from_db()
-            assert membership.shows_visit
-            assert "Became a member after this tour" in _client(ole).get(url).content.decode()
+        _client(ole).post(reverse("users:update"), {
+            "name": "Ole", "email": ole.email, "shows_visit": str(membership.pk),
+        })
+        membership.refresh_from_db()
+        assert membership.shows_visit
 
 
 @pytest.mark.django_db

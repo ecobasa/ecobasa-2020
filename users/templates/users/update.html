@@ -88,6 +88,26 @@
       <button class="btn btn-lg" type="submit"><i class="fa fa-check mr-2"></i>{% trans "Save changes" %}</button>
     </div>
   </form>
+
+  <!-- Account: its own form, the email only changes once the link sent to the new address is opened -->
+  <form id="account" method="post" action="{% url 'users:update' %}#account" class="mt-12 p-4 bg-secondary bg-opacity-75 rounded-md shadow space-y-3 scroll-mt-24">
+    {% csrf_token %}
+    <h2 class="mt-0">{% trans "Account" %}</h2>
+    <p class="text-sm">{% blocktrans with email=user_obj.email %}You log in with <strong>{{ email }}</strong>. To change it, we send a link to the new address; it changes once you open it.{% endblocktrans %}</p>
+    {% for field in email_form %}
+      <label class="block text-sm">
+        <span class="block font-semibold mb-1">{{ field.label }}</span>
+        <input type="{{ field.field.widget.input_type }}" name="{{ field.html_name }}" id="{{ field.id_for_label }}"
+               {% if field.html_name == "new_email" %}value="{{ field.value|default_if_none:'' }}"{% endif %}
+               autocomplete="{{ field.field.widget.attrs.autocomplete }}" required
+               class="block w-full max-w-md rounded-md border border-gray-300 px-3 py-2 text-sm">
+      </label>
+      {% for error in field.errors %}<p class="field-error"><i class="fa-solid fa-circle-exclamation mr-1"></i>{{ error }}</p>{% endfor %}
+    {% endfor %}
+    <div class="flex justify-end">
+      <button class="btn" type="submit"><i class="fa fa-envelope mr-2"></i>{% trans "Send confirmation link" %}</button>
+    </div>
+  </form>
 </div>
 {% endblock content %}
 

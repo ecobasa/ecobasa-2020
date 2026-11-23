@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block head_title %}{% if entries|length == 1 %}{% trans "Did your wish come true?" %}{% else %}{% trans "Did your wishes come true?" %}{% endif %} — {{ event.title }} — ecobasa{% endblock %}
+
+{% block content %}
+<div class="container-form">
+  {% include "gift_circles/_guest_header.html" %}
+  <h1>{% if entries|length == 1 %}{% trans "Did your wish come true?" %}{% else %}{% trans "Did your wishes come true?" %}{% endif %}</h1>
+  <div class="space-y-4">
+    {% for entry in entries %}
+      <div id="entry-{{ entry.pk }}" class="border rounded-xl bg-secondary p-6">
+        <p class="font-semibold mb-1">{{ entry.text }}</p>
+        <p class="text-sm mb-4">{% blocktrans with name=entry.for_label %}{{ name }} said they could help.{% endblocktrans %}</p>
+        {% if entry.came_true %}
+          <p class="mb-2"><i class="fa fa-check text-green mr-1"></i>{% trans "Wonderful! How did it go? A few sentences help others see that the gift economy works." %}</p>
+          <a href="{{ entry.story_url }}" class="btn"><i class="fa fa-pencil mr-2"></i>{% trans "Share your story" %}</a>
+        {% elif entry.came_true is False %}
+          <p class="mb-2">{% blocktrans with name=entry.for_label %}Maybe it just got forgotten. Write to {{ name }}, or bring the wish to the next gift-circle.{% endblocktrans %}</p>
+          {% with how=entry.contact.0 where=entry.contact.1 %}{% if how == "email" %}
+            <p class="mb-0">{% trans "Email:" %} <a href="mailto:{{ where }}" class="underline">{{ where }}</a></p>
+          {% elif how %}
+            <a href="{{ where }}" class="btn btn-purple"><i class="fa fa-envelope mr-2"></i>{% blocktrans with name=entry.for_label %}Write to {{ name }}{% endblocktrans %}</a>
+          {% endif %}{% endwith %}
+        {% endif %}
+        {% if entry.came_true is not True %}
+          <form method="post" class="flex flex-wrap justify-between gap-2{% if entry.came_true is False %} mt-4{% endif %}">
+            {% csrf_token %}
+            <input type="hidden" name="entry" value="{{ entry.pk }}">
+            {% if entry.came_true is None %}<button type="submit" name="answer" value="no" class="btn btn-purple">{% trans "Not yet" %}</button>{% else %}<span></span>{% endif %}
+            <button type="submit" name="answer" value="yes" class="btn"><i class="fa fa-check mr-2"></i>{% trans "Yes, it did" %}</button>
+          </form>
+        {% endif %}
+      </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

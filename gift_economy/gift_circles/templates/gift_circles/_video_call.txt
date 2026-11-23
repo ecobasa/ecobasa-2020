@@ -1,0 +1,3 @@
+{% load i18n %}{% if video_call_url %}
+{% trans "Join the video call (it opens on ecobasa an hour before the gift-circle):" %} {{ video_call_url }}
+{% endif %}

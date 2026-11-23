@@ -1,0 +1,9 @@
+{% extends "gift_circles/email/_layout.html" %}{% load i18n %}
+{% block body %}
+<p style="margin:0 0 16px;font-size:15px;line-height:1.6;">{% blocktrans with title=event.title host=event.host_name %}In an hour the gift-circle {{ title }} begins, hosted by {{ host }}.{% endblocktrans %}</p>
+<p style="margin:0 0 16px;font-size:15px;line-height:1.6;">{% include "gift_circles/_when.txt" %}</p>
+<p style="margin:0 0 24px;"><a href="{{ video_call_url }}" style="display:inline-block;background-color:#da6137;color:#fcf3e5;text-decoration:none;font-weight:bold;padding:12px 22px;border-radius:6px;">{% trans "Join the video call" %}</a></p>
+{% if is_host %}<p style="margin:0 0 16px;font-size:15px;line-height:1.6;">{% trans "Come a few minutes early, so the room is open when the others come. Your card and the Giftsheet:" %} <a href="{{ print_url }}" style="color:#da6137;">{{ print_url }}</a></p>{% endif %}
+{% if is_guest %}<p style="margin:0 0 16px;font-size:15px;line-height:1.6;">{% trans "Change or cancel your sign-up:" %} <a href="{{ manage_url }}" style="color:#da6137;">{{ manage_url }}</a></p>{% endif %}
+<p style="margin:0;font-size:15px;line-height:1.6;">{% trans "See you there!" %}</p>
+{% endblock %}

@@ -17,6 +17,8 @@ urlpatterns = [
     path("gifts/", include("gift_economy.gifts.urls")),
     # Events live under their host: /communities/<community>/events/<event>/
     path("", include("events.urls", namespace="events")),
+    # What only gift-circles have: /gift-circles/<event>/giftsheet/…
+    path("", include("gift_economy.gift_circles.urls", namespace="gift_circles")),
     path("communities/", include("communities.urls")),
     path("community-tours/", include("tours.urls", namespace="tours")),
     path("skills/", include("gift_economy.gifts.skills.urls")),

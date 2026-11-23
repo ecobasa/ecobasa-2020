@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block head_title %}{{ event.title }} — ecobasa{% endblock %}
+
+{% block content %}
+<div class="container-form">
+  {% include "gift_circles/_guest_header.html" %}
+  <h1>{{ event.title }}</h1>
+  <p class="text-sm"><i class="fa-regular fa-calendar mr-1"></i>{% include "events/_event_dates.html" %}</p>
+  <p>{% blocktrans with name=invitation.inviter_name title=event.title %}{{ name }} invites you to the gift-circle {{ title }}.{% endblocktrans %}
+    <a href="{{ event.get_absolute_url }}" class="underline">{% trans "Back to the gift-circle" %}</a></p>
+
+  {% if not takes_people %}
+    <p class="field-error"><i class="fa-solid fa-circle-exclamation mr-1"></i>{{ event.texts.no_offers }}</p>
+  {% elif request.user.is_authenticated %}
+    <form method="post" class="border rounded-xl bg-secondary p-6">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="account">
+      <button type="submit" class="btn btn-lg block w-full text-center"><i class="fa fa-check mr-1"></i>{% trans "I'm coming" %}</button>
+    </form>
+  {% else %}
+    <p class="text-sm">{% trans "Without an account, with your name and email." %}
+      {% trans "Have an account?" %} <a href="{% url 'users:login' %}?next={{ request.path|urlencode }}" class="underline">{% trans "Log in" %}</a></p>
+    <form method="post" class="border rounded-xl bg-secondary p-6 space-y-4">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="guest">
+      {% for field in form %}{% if field.name == "name" or field.name == "email" %}
+        <div class="form-group">
+          <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+          {{ field }}
+          {% for error in field.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+        </div>
+      {% endif %}{% endfor %}
+      {% include "gift_circles/_guest_fields.html" %}
+      <button type="submit" class="btn btn-lg block w-full text-center"><i class="fa-solid fa-user-plus mr-2"></i>{% trans "Coming as a guest" %}</button>
+    </form>
+  {% endif %}
+
+  {# Not coming: their address goes #}
+  <form method="post" class="mt-6 text-sm text-center">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="decline">
+    <p>{% blocktrans with name=invitation.inviter_name %}{{ name }} gave us your address for this gift-circle only.{% endblocktrans %}
+      <button type="submit" class="underline">{% trans "I'm not coming, delete my address" %}</button></p>
+  </form>
+</div>
+{% endblock %}

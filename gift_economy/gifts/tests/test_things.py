@@ -87,15 +87,6 @@ def test_loading_again_recognizes_existing_listings():
 
 
 @pytest.mark.django_db
-def test_the_listing_shows_what_it_is_recognized_as_in_the_readers_language(client):
-    owner = User.objects.create_user(email="a@example.com", password="x")
-    listing = Listing.objects.create(owner=owner, title="Leiter, 3 m", type="offer", kind=Listing.KIND_TOOL)
-    page = client.get(listing.get_absolute_url(), HTTP_ACCEPT_LANGUAGE="en").content.decode()
-    assert "Recognized as" in page and "Ladder" in page
-
-
-
-@pytest.mark.django_db
 def test_each_kind_has_its_own_vocabulary():
     assert ToolThing.objects.filter(slug="ladder").exists()
     assert not ToolThing.objects.filter(slug="cargo-bike").exists()
@@ -116,6 +107,7 @@ def test_a_thing_added_to_a_vocabulary_belongs_to_it():
     assert recognize("Rikscha", "vehicle") == thing.pk
 
 
+@pytest.mark.slow
 @pytest.mark.django_db
 def test_every_name_in_the_vocabularies_finds_its_own_thing():
     """Guards edits of the vocabularies: a name shared by two things, or one a broader

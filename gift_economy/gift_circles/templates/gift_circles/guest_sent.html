@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block head_title %}{% trans "Please confirm your email" %} — {{ event.title }} — ecobasa{% endblock %}
+
+{% block content %}
+<div class="container-form">
+  {% include "gift_circles/_guest_header.html" %}
+  <h1>{% trans "Please confirm your email" %}</h1>
+  <div class="border rounded-xl bg-secondary p-6">
+    <p>{% blocktrans %}We sent an email to <strong>{{ email }}</strong>. Open the link in it: only then do you count as coming.{% endblocktrans %}</p>
+    <p class="mb-0"><a href="{{ event.get_absolute_url }}" class="underline">{% trans "Back to the gift-circle" %}</a></p>
+  </div>
+</div>
+{% endblock %}

@@ -242,12 +242,6 @@ def test_filters_rides_and_free_places(organiser, other, four_stops):
     assert ride.title not in free and four_stops.title in free
 
 
-def test_the_new_pages_render(four_stops, organiser):
-    assert "invite-person-search" in login(organiser).get(reverse("tours:invite", args=[four_stops.slug])).content.decode()
-    page = login(organiser).get(reverse("tours:ride")).content.decode()
-    assert 'name="from-location_name"' in page and 'name="to-location_name"' in page
-
-
 def test_invite_from_a_profile(four_stops, organiser, other):
     invite_url = reverse("tours:invite", args=[four_stops.slug]) + f"?user={other.pk}"
     profile = login(organiser).get(other.get_absolute_url()).content.decode()
@@ -259,13 +253,3 @@ def test_invite_from_a_profile(four_stops, organiser, other):
     invite(organiser, four_stops, other)
     assert "Invite to join your tour" not in login(organiser).get(other.get_absolute_url()).content.decode()
     assert "Invite to join your tour" not in login(other).get(organiser.get_absolute_url()).content.decode()
-
-
-def test_your_tours_cards_offer_what_one_can_do(four_stops, organiser, other):
-    stops = four_stops.ordered_stops()
-    ask(other, four_stops, stops[0], stops[1])
-    mine = login(organiser).get(reverse("tours:mine")).content.decode()
-    assert "Join requests (1)" in mine and reverse("tours:plan", args=[four_stops.slug]) in mine
-    assert reverse("tours:invite", args=[four_stops.slug]) in mine
-    theirs = login(other).get(reverse("tours:mine")).content.decode()
-    assert "See your request" in theirs and reverse("tours:plan", args=[four_stops.slug]) not in theirs

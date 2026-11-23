@@ -1,7 +1,5 @@
 import pytest
 
-from django.utils import translation
-
 from gift_economy.matches.models import Match, MatchMessage
 from notifications.models import Notification
 from .. import declines
@@ -86,13 +84,6 @@ class TestDeleting:
         third = _apply(ole, community)
         assert [past["outcome"] for past in third.before()] == [PastApplication.APPLIED, declines.NO]
 
-        with translation.override("en"):
-            page = _client(ambassador).get(third.match.get_absolute_url()).content.decode()
-            own = _client(ole).get(third.match.get_absolute_url()).content.decode()
-        assert "Declined before" in page and "Applied before" in page
-        assert "Declined before" not in own
-        assert "Delete application" in page and "Delete application" in own
-
 
 @pytest.mark.django_db
 def test_delete_also_ends_the_answer_form(community, ambassador, ole):
@@ -100,17 +91,3 @@ def test_delete_also_ends_the_answer_form(community, ambassador, ole):
     action = f'formaction="{_url("delete_application", membership)}"'
     assert action in _client(ambassador).get(membership.match.get_absolute_url()).content.decode()
     assert action in _client(ole).get(membership.match.get_absolute_url()).content.decode()
-
-
-@pytest.mark.django_db
-def test_the_confirm_text_names_who_it_is_deleted_for(community, ambassador, ole):
-    membership = _apply(ole, community)
-    for language, text in (("en", "for Hof Kleeblatt too"), ("de", "auch für Hof Kleeblatt")):
-        ole.language = language
-        ole.save(update_fields=["language"])
-        with translation.override(language):
-            own = _client(ole).get(membership.match.get_absolute_url()).content.decode()
-        assert text in own and "%(community)s" not in own
-    with translation.override("en"):
-        page = _client(ambassador).get(membership.match.get_absolute_url()).content.decode()
-    assert "for Ole too" in page

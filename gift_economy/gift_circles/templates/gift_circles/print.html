@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block head_title %}{% trans "Giftsheet" %}: {{ event.title }} — ecobasa{% endblock %}
+
+{% block extrahead %}
+<style>
+  @page { size: A4; margin: 12mm; }
+  .giftsheet td { height: 9mm; }
+  /* Printed, the page is only the sheets: the card, and the Giftsheet on the front and
+     back of one sheet of paper. Each button prints one of them (data-print) */
+  @media print {
+    body > *:not(.flex-auto), .no-print { display: none !important; }
+    #sheets { max-width: none; margin: 0; padding: 0; }
+    .sheet { border: 0 !important; padding: 0 !important; margin: 0 !important; }
+    .page-break { break-before: page; }
+    body:not([data-print]) .giftsheet-start { break-before: page; }
+    /* No paper texture, no ink for nothing; the card on one page */
+    body, #sheets, .sheet { background: none !important; }
+    .card-page h1 { font-size: 26px; }
+    .card-page h3 { margin: 10px 0 4px !important; font-size: 15px !important; }
+    .card-page p, .card-page ol, .card-page ul { font-size: 12px !important; line-height: 1.4 !important; margin-bottom: 4px !important; }
+    .card-page li { margin-bottom: 2px !important; }
+    body[data-print="card"] .giftsheet-page, body[data-print="giftsheet"] .card-page { display: none; }
+  }
+</style>
+{% endblock %}
+
+{% block navbar %}<div class="no-print">{{ block.super }}</div>{% endblock %}
+
+{% block content %}
+<div class="container-content">
+  <div class="no-print mb-6 space-y-3">
+    {% include "gift_circles/_guest_header.html" with here=_("Print") parent_url=giftsheet_url parent=_("Giftsheet") %}
+    {% if filled %}
+      <p class="p-4 rounded-lg bg-secondary bg-opacity-75 text-sm m-0">{% trans "The Giftsheet as filled in so far, with names only: print it for those who want it on paper to take home. To save it as a PDF, choose “Save as PDF” in the print dialog." %}</p>
+    {% else %}
+      <p class="p-4 rounded-lg bg-secondary bg-opacity-75 text-sm m-0">{% trans "The Giftsheet takes two pages: print it on both sides of one sheet. To save it as a PDF, choose “Save as PDF” in the print dialog." %}</p>
+    {% endif %}
+    <div class="flex flex-wrap justify-end gap-3">
+      <button type="button" onclick="printSheets('card')" class="btn btn-purple"><i class="fa-solid fa-print mr-1"></i>{% trans "Print the card" %}</button>
+      <button type="button" onclick="printSheets('giftsheet')" class="btn"><i class="fa-solid fa-print mr-1"></i>{% trans "Print the Giftsheet" %}</button>
+    </div>
+  </div>
+
+  <div id="sheets" class="space-y-6">
+    <article class="sheet card-page p-6 rounded-xl border bg-white text-brown">
+      <p class="flex items-center justify-end text-primary mt-0 mb-3">{% include "_logo_mark.html" with class="h-5 w-5 mr-1" %}<span class="font-serif text-lg">ecobasa.org</span></p>
+      <h1 class="mb-1">{% trans "Your facilitator card" %}</h1>
+      <p class="mt-0">{{ event.title }} · {% include "gift_circles/_when.txt" %}</p>
+      {% include "gift_circles/_facilitator_card.html" %}
+    </article>
+
+    {# The Giftsheet: its front, then its back with the columns again #}
+    {% for page in pages %}
+      <article class="sheet giftsheet-page {% if forloop.first %}giftsheet-start{% else %}page-break{% endif %} p-6 rounded-xl border bg-white text-brown">
+        {% if forloop.first %}
+          <p class="flex items-center justify-end text-primary mt-0 mb-3">{% include "_logo_mark.html" with class="h-5 w-5 mr-1" %}<span class="font-serif text-lg">ecobasa.org</span></p>
+          <h1 class="mb-1">{% trans "Giftsheet" %}</h1>
+          <p class="mt-0">{{ event.title }} · {% include "gift_circles/_when.txt" %}</p>
+        {% else %}
+          <p class="mt-0 text-sm">{% trans "Giftsheet" %} · {{ event.title }}</p>
+        {% endif %}
+        <table class="giftsheet w-full border-collapse text-sm">
+          <thead>
+            <tr>
+              <th class="border border-brown p-2 text-left w-2/5">{% trans "Wish or offer" %}</th>
+              <th class="border border-brown p-2 text-left">{% trans "From (name, contact)" %}</th>
+              <th class="border border-brown p-2 text-left">{% trans "Who said yes (name, contact)" %}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for entry in page %}
+              {% if entry %}
+                <tr class="align-top">
+                  <td class="border border-brown p-1"><i class="fa-solid {% if entry.is_offer %}fa-gift{% else %}fa-heart{% endif %} mr-1" title="{{ entry.get_type_display }}"></i>{{ entry.text }}</td>
+                  <td class="border border-brown p-1">{{ entry.from_label }}</td>
+                  <td class="border border-brown p-1">
+                    {% if entry.state == "fulfilled" %}{{ entry.for_label }}{% endif %}
+                    {% for idea in entry.ideas.all %}<div class="text-xs"><i class="fa-regular fa-lightbulb mr-1"></i>{% blocktrans with name=idea.from_label text=idea.text %}An idea from {{ name }}: {{ text }}{% endblocktrans %}</div>{% endfor %}
+                  </td>
+                </tr>
+              {% else %}
+                <tr><td class="border border-brown"></td><td class="border border-brown"></td><td class="border border-brown"></td></tr>
+              {% endif %}
+            {% endfor %}
+          </tbody>
+        </table>
+      </article>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}
+
+{% block javascript %}
+{{ block.super }}
+<script>
+  // Print only the card or only the Giftsheet; Ctrl+P prints both
+  function printSheets(which) {
+    document.body.dataset.print = which;
+    window.print();
+  }
+  window.addEventListener('afterprint', () => { delete document.body.dataset.print; });
+</script>
+{% endblock %}

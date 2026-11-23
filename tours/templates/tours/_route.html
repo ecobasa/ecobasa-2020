@@ -55,7 +55,7 @@
             {% else %}{{ stop.name }}{% endif %}
           </div>
           <div class="text-sm opacity-80 mt-0.5">
-            {% if stop.event %}{{ stop.event.kind_label }} · <a href="{{ stop.community.get_absolute_url }}" class="hover:underline">{{ stop.community.name }}</a>{% if item.place %} · {% endif %}{% endif %}{% if stop.community and item.place %}{{ item.place }}{% endif %}
+            {% if stop.event %}{{ stop.event.kind_label }}{% if stop.community %} · <a href="{{ stop.community.get_absolute_url }}" class="hover:underline">{{ stop.community.name }}</a>{% endif %}{% if item.place %} · {% endif %}{% endif %}{% if item.place and stop.community or item.place and stop.event %}{{ item.place }}{% endif %}
           </div>
         </div>
 
@@ -79,6 +79,10 @@
               {% endif %}
             {% endif %}
           {% endwith %}{% endif %}{% endwith %}
+          {# At another place the tour can invite people there itself #}
+          {% if can_edit or editing %}{% if stop.can_host_gift_circle %}
+            <a href="{% url 'tours:stop_gift_circle' tour.slug stop.pk %}" class="btn btn-purple text-xs inline-block mt-1"><i class="fa-solid fa-hands-holding-circle mr-1"></i>{% trans "Invite to a gift-circle here" %}</a>
+          {% endif %}{% endif %}
         </div>
 
         {# What the group plans here, and a clash with the stop before #}

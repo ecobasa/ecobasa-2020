@@ -53,8 +53,10 @@ def host_pin(community, event=None):
 
 
 def stop_pin(stop):
+    if stop.event_id:
+        return stop.event.kind_pin
     if stop.community_id:
-        return host_pin(stop.community, stop.event if stop.event_id else None)
+        return host_pin(stop.community)
     return PLACE_PIN
 
 
@@ -339,7 +341,7 @@ def tour_features(tour, user=None):
             continue
         label = stop.label
         if stop.event_id:
-            label = f"{stop.event.title} · {stop.community.name}"
+            label = f"{stop.event.title} · {stop.community.name if stop.community_id else name}"
         icon, color = RIDE_PIN if props["line"] == "ride" else stop_pin(stop)
         if stop.event_id:
             link = stop.event.get_absolute_url()

@@ -2128,10 +2128,10 @@ msgstr "Matchs"
 
 #: gift_economy/matches/emails.py:218
 #, python-format
-msgid "%(count)s new suggestion near you"
-msgid_plural "%(count)s new suggestions near you"
-msgstr[0] "%(count)s nouvelle suggestion près de chez toi"
-msgstr[1] "%(count)s nouvelles suggestions près de chez toi"
+msgid "%(count)s new suggestion"
+msgid_plural "%(count)s new suggestions"
+msgstr[0] "%(count)s nouvelle suggestion"
+msgstr[1] "%(count)s nouvelles suggestions"
 
 #: gift_economy/matches/forms.py:16
 msgid "How much?"
@@ -3685,12 +3685,9 @@ msgid "ecobasa is made for"
 msgstr "ecobasa est fait pour"
 
 #: homepage/templates/homepage/homepage.html:22
-msgid ""
-"Communities, permaculture projects and farms – and everyone who wants to "
-"visit them, support them or start something of their own."
-msgstr ""
-"Les communautés, les projets en permaculture et les fermes – et toutes celles"
-" et ceux qui veulent les visiter, les soutenir ou lancer leur propre projet."
+#, python-format
+msgid "Communities, permaculture projects and farms – and everyone who wants to <a href=\"%(communities_url)s\">visit them</a>, <a href=\"%(communities_url)s?looking=1\">join them</a>, <a href=\"%(events_url)s\">support them</a> or <a href=\"%(create_url)s\">start something of their own</a>."
+msgstr "Les communautés, les projets en permaculture et les fermes – et toutes celles et ceux qui veulent <a href=\"%(communities_url)s\">les visiter</a>, <a href=\"%(communities_url)s?looking=1\">les rejoindre</a>, <a href=\"%(events_url)s\">les soutenir</a> ou <a href=\"%(create_url)s\">lancer leur propre projet</a>."
 
 #: homepage/templates/homepage/homepage.html:23
 msgid ""
@@ -3747,8 +3744,8 @@ msgid "Make your life more moneyless"
 msgstr "Rends ta vie moins dépendante de l'argent"
 
 #: homepage/templates/homepage/homepage.html:44
-msgid "Knowledge & helping out"
-msgstr "Savoir & coup de main"
+msgid "Communities & Volunteering"
+msgstr "Communautés & bénévolat"
 
 #: homepage/templates/homepage/homepage.html:47
 msgid "Share skills: teach and learn by doing"
@@ -3769,8 +3766,8 @@ msgid "soon"
 msgstr "bientôt"
 
 #: homepage/templates/homepage/homepage.html:50
-msgid "Find inspiring places to visit and live in"
-msgstr "Trouver des lieux inspirants à visiter et où vivre"
+msgid "Find a community to live in: apply with the member form, visit first and grow into it"
+msgstr "Trouver une communauté où vivre : postuler avec le formulaire de membre, venir d'abord en visite et s'y intégrer peu à peu"
 
 #: homepage/templates/homepage/homepage.html:51
 msgid "Start a new community with the people and resources you need"
@@ -3783,8 +3780,9 @@ msgid "Coming together"
 msgstr "Se rassembler"
 
 #: homepage/templates/homepage/homepage.html:60
-msgid "Gift circles, in person and online"
-msgstr "Cercles de dons, en personne et en ligne"
+#, python-format
+msgid "<a href=\"%(host_url)s\">Host gift circles</a>: strengthen your community and become more independent from money. <a href=\"%(circles_url)s?kind=gift_circle\">Next gift circles</a>, in person and online"
+msgstr "<a href=\"%(host_url)s\">Organiser des cercles de dons</a> : ils renforcent votre communauté et vous rendent plus indépendants de l'argent. <a href=\"%(circles_url)s?kind=gift_circle\">Les prochains cercles de dons</a>, en personne et en ligne"
 
 #: homepage/templates/homepage/homepage.html:61
 msgid "Communities-Convergences"
@@ -3920,24 +3918,15 @@ msgid "Someone"
 msgstr "Quelqu’un"
 
 #: notifications/models.py:116
-msgid "Suggestions near you: what fits your wishes, offers and skills."
-msgstr ""
-"Suggestions près de chez toi : ce qui va avec tes souhaits, tes dons et tes "
-"compétences."
+msgid "Suggestions: what fits your wishes, offers and skills."
+msgstr "Suggestions : ce qui va avec tes souhaits, tes dons et tes compétences."
 
 #: notifications/models.py:118
 #, python-format
-msgid ""
-"%(count)s new suggestion near you: something fits your wishes, offers or "
-"skills."
-msgid_plural ""
-"%(count)s new suggestions near you: things fit your wishes, offers or skills."
-msgstr[0] ""
-"%(count)s nouvelle suggestion près de chez toi : quelque chose va avec tes "
-"souhaits, dons ou compétences."
-msgstr[1] ""
-"%(count)s nouvelles suggestions près de chez toi : plusieurs choses vont avec"
-" tes souhaits, dons ou compétences."
+msgid "%(count)s new suggestion: something fits your wishes, offers or skills."
+msgid_plural "%(count)s new suggestions: things fit your wishes, offers or skills."
+msgstr[0] "%(count)s nouvelle suggestion : quelque chose va avec tes souhaits, dons ou compétences."
+msgstr[1] "%(count)s nouvelles suggestions : plusieurs choses vont avec tes souhaits, dons ou compétences."
 
 #: notifications/models.py:129
 #, python-format
@@ -7693,9 +7682,6 @@ msgstr "Pas de place pour d'autres en ce moment"
 msgid "Adults-only"
 msgstr "Adultes uniquement"
 
-msgid "Children"
-msgstr "Enfants"
-
 msgid "Ask us first"
 msgstr "Demande-nous d'abord"
 
@@ -8673,3 +8659,1948 @@ msgstr "Les réponses que seul·e l'ambassadeur·rice voit ne sont pas incluses.
 #, python-format
 msgid "Printed from ecobasa.org on %(date)s"
 msgstr "Imprimé depuis ecobasa.org le %(date)s"
+
+msgid "Confirm your new email address for ecobasa"
+msgstr "Confirme ta nouvelle adresse e-mail pour ecobasa"
+
+#, python-format
+msgid "You'd like to use this address for ecobasa from now on. Until you confirm it, you keep logging in with %(email)s."
+msgstr "Tu veux utiliser cette adresse pour ecobasa à partir de maintenant. Tant que tu ne l'as pas confirmée, tu continues à te connecter avec %(email)s."
+
+msgid "The link works for 3 days. If you didn't ask for this, you can ignore this email."
+msgstr "Le lien fonctionne pendant 3 jours. Si tu ne l'as pas demandé, tu peux ignorer cet e-mail."
+
+msgid "Confirm email address"
+msgstr "Confirmer l'adresse e-mail"
+
+msgid "Your ecobasa email address was changed"
+msgstr "Ton adresse e-mail sur ecobasa a été modifiée"
+
+#, python-format
+msgid "Your ecobasa email address is now %(email)s. Use it to log in from now on."
+msgstr "Ton adresse e-mail sur ecobasa est maintenant %(email)s. Utilise-la désormais pour te connecter."
+
+msgid "If you didn't change it, please answer this email right away."
+msgstr "Si ce n'est pas toi qui l'as modifiée, réponds tout de suite à cet e-mail, s'il te plaît."
+
+msgid "New email address"
+msgstr "Nouvelle adresse e-mail"
+
+msgid "Your password"
+msgstr "Ton mot de passe"
+
+msgid "That's already your email address."
+msgstr "C'est déjà ton adresse e-mail."
+
+msgid "Someone on ecobasa already uses this email address."
+msgstr "Quelqu'un sur ecobasa utilise déjà cette adresse e-mail."
+
+msgid "That's not your password."
+msgstr "Ce n'est pas ton mot de passe."
+
+#, python-format
+msgid "We sent a link to %(email)s. Your email address changes once you open it."
+msgstr "Nous avons envoyé un lien à %(email)s. Ton adresse e-mail change dès que tu l'ouvres."
+
+msgid "This link doesn't work any more. You can ask for a new one on your profile page."
+msgstr "Ce lien ne fonctionne plus. Tu peux en demander un nouveau sur ta page de profil."
+
+#, python-format
+msgid "Your email address is now %(email)s. Use it to log in."
+msgstr "Ton adresse e-mail est maintenant %(email)s. Utilise-la pour te connecter."
+
+msgid "Change your email address"
+msgstr "Changer ton adresse e-mail"
+
+#, python-format
+msgid "From now on, you log in with <strong>%(new_email)s</strong> instead of %(old_email)s."
+msgstr "Désormais, tu te connectes avec <strong>%(new_email)s</strong> au lieu de %(old_email)s."
+
+msgid "Change email address"
+msgstr "Changer l'adresse e-mail"
+
+#, python-format
+msgid "You log in with <strong>%(email)s</strong>. To change it, we send a link to the new address; it changes once you open it."
+msgstr "Tu te connectes avec <strong>%(email)s</strong>. Pour la changer, nous envoyons un lien à la nouvelle adresse ; elle change dès que tu l'ouvres."
+
+msgid "Send confirmation link"
+msgstr "Envoyer le lien de confirmation"
+
+#: events/kinds.py:15
+msgid "Gift-circle"
+msgstr "Cercle de dons"
+
+#: events/kinds.py:96
+#: gift_economy/gift_circles/templates/gift_circles/giftsheet.html:94
+msgid "Print the Giftsheet and card"
+msgstr "Imprimer la feuille des dons et la fiche"
+
+#: events/kinds.py:109
+msgid "People meet in a circle and say what they wish for and what they can give."
+msgstr "Des personnes se retrouvent en cercle et disent ce qu'elles souhaitent et ce qu'elles peuvent donner."
+
+#: events/kinds.py:173 events/templates/events/_profile_events.html:5
+#: gift_economy/gift_circles/apps.py:12
+msgid "Gift-circles"
+msgstr "Cercles de dons"
+
+#: events/kinds.py:174
+msgid "New gift-circle"
+msgstr "Nouveau cercle de dons"
+
+#: events/kinds.py:177
+msgid "e.g. Gift-circle in the park"
+msgstr "p. ex. Cercle de dons au parc"
+
+#: events/kinds.py:178
+msgid "Where exactly do you meet, and is there a potluck?"
+msgstr "Où vous retrouvez-vous exactement, et y a-t-il un repas partagé ?"
+
+#: events/kinds.py:192
+msgid "Gift-circle need"
+msgstr "Besoin du cercle de dons"
+
+#: events/models.py:67 events/templates/events/_profile_events.html:14
+#: events/templates/events/event_detail.html:243
+msgid "Host"
+msgstr "Hôte"
+
+#: events/models.py:104
+msgid "Potluck"
+msgstr "Repas partagé"
+
+#: events/models.py:105
+msgid "What people could bring to share. Leave it empty if there is no potluck."
+msgstr "Ce que chacun·e pourrait apporter à partager. Laisse vide s'il n'y a pas de repas partagé."
+
+#: events/models.py:123
+msgid "Online, as a video call"
+msgstr "En ligne, en visio"
+
+#: events/models.py:125
+msgid "Timezone"
+msgstr "Fuseau horaire"
+
+#: events/templates/events/event_form.html:25
+msgid "It is archived once it is over, and stays on ecobasa as a record."
+msgstr "Une fois terminé, il est archivé et reste sur ecobasa comme trace."
+
+#: events/templates/events/event_form.html:57
+msgid "Leave it empty if it takes place at the community."
+msgstr "Laisse vide si ça a lieu dans la communauté."
+
+#: gift_economy/gift_circles/emails.py:27
+#: gift_economy/gift_circles/emails.py:37
+msgid "Online, as a video call."
+msgstr "En ligne, en visio."
+
+#: gift_economy/gift_circles/emails.py:64
+#, python-format
+msgid "Your gift-circle is on ecobasa: %(title)s"
+msgstr "Ton cercle de dons est sur ecobasa : %(title)s"
+
+#: gift_economy/gift_circles/emails.py:114
+#, python-format
+msgid "Please confirm: you're coming to %(title)s"
+msgstr "Merci de confirmer : tu viens à %(title)s"
+
+#: gift_economy/gift_circles/forms.py:60
+msgid "By email"
+msgstr "Par e-mail"
+
+#: gift_economy/gift_circles/forms.py:62
+msgid "One person per line: their name, a comma and their email. The name may be left out."
+msgstr "Une personne par ligne : son nom, une virgule et son e-mail. Le nom peut être omis."
+
+#: gift_economy/gift_circles/forms.py:91
+#, python-format
+msgid "A gift-circle can invite %(count)s more person by email."
+msgid_plural "A gift-circle can invite %(count)s more people by email."
+msgstr[0] "Un cercle de dons peut encore inviter %(count)s personne par e-mail."
+msgstr[1] "Un cercle de dons peut encore inviter %(count)s personnes par e-mail."
+
+#: gift_economy/gift_circles/giftsheet.py:164
+msgid "Please write their name."
+msgstr "Merci d'écrire son nom."
+
+#: gift_economy/gift_circles/giftsheet.py:184
+msgid "This gift-circle can't add more email addresses. Add them by name only."
+msgstr "Ce cercle de dons ne peut plus ajouter d'adresses e-mail. Ajoute-les seulement avec leur nom."
+
+#: gift_economy/gift_circles/giftsheet.py:255
+#, python-format
+msgid "At the gift-circle %(title)s."
+msgstr "Au cercle de dons %(title)s."
+
+#: gift_economy/gift_circles/models.py:27
+#: gift_economy/gift_circles/models.py:95
+msgid "Email"
+msgstr "E-mail"
+
+#: gift_economy/gift_circles/models.py:35
+#: gift_economy/gift_circles/models.py:69
+#: gift_economy/gift_circles/templates/gift_circles/_attendee_fields.html:5
+#: gift_economy/gift_circles/templates/gift_circles/_attendee_fields.html:10
+#: gift_economy/gift_circles/templates/gift_circles/giftsheet.html:60
+msgid "Keep my offers and wishes from this gift-circle on ecobasa"
+msgstr "Garder sur ecobasa mes offres et souhaits de ce cercle de dons"
+
+#: gift_economy/gift_circles/models.py:37
+msgid "The people I make a match with at this gift-circle may get my email"
+msgstr "Les personnes avec qui je fais un match dans ce cercle de dons peuvent recevoir mon e-mail"
+
+#: gift_economy/gift_circles/models.py:55
+msgid "Guests"
+msgstr "Invité·es"
+
+#: gift_economy/gift_circles/models.py:72
+msgid "Attendee"
+msgstr "Participant·e"
+
+#: gift_economy/gift_circles/models.py:73
+msgid "Attendees"
+msgstr "Participant·es"
+
+#: gift_economy/gift_circles/models.py:176
+#: gift_economy/gift_circles/templates/gift_circles/_scribe.html:6
+msgid "Scribe"
+msgstr "Scribe"
+
+#: gift_economy/gift_circles/models.py:177
+msgid "Scribes"
+msgstr "Scribes"
+
+#: gift_economy/gift_circles/models.py:195
+msgid "Fulfilled"
+msgstr "Exaucé"
+
+#: gift_economy/gift_circles/models.py:319
+#: gift_economy/gift_circles/templates/gift_circles/giftsheet.html:71
+msgid "Photo of the Giftsheet"
+msgstr "Photo de la feuille des dons"
+
+#: gift_economy/gift_circles/models.py:320
+#: gift_economy/gift_circles/templates/gift_circles/giftsheet.html:66
+msgid "Photos of the Giftsheet"
+msgstr "Photos de la feuille des dons"
+
+#: gift_economy/gift_circles/templates/gift_circles/_account.html:3
+#: gift_economy/gift_circles/templates/gift_circles/_account.txt:3
+#: gift_economy/gift_circles/templates/gift_circles/guest.html:38
+msgid "With an account, your offers and wishes keep finding people near you after the circle. And you hear about the next gift-circle: most of them happen again."
+msgstr "Avec un compte, tes offres et souhaits continuent de trouver des gens près de chez toi après le cercle. Et tu entends parler du prochain cercle de dons : la plupart ont lieu de nouveau."
+
+#: gift_economy/gift_circles/templates/gift_circles/_account.html:5
+#: gift_economy/gift_circles/templates/gift_circles/_account.txt:7
+#: gift_economy/gift_circles/templates/gift_circles/guest.html:40
+msgid "We fill in your name and email. Anything you add at this gift-circle moves to your account."
+msgstr "Nous remplissons ton nom et ton e-mail. Tout ce que tu ajoutes à ce cercle de dons passe sur ton compte."
+
+#: gift_economy/gift_circles/templates/gift_circles/_bring.html:27
+msgid "Bring one of yours"
+msgstr "Apporter un des tiens"
+
+#: gift_economy/gift_circles/templates/gift_circles/_bring.html:35
+#: gift_economy/gift_circles/templates/gift_circles/_bring_to.html:21
+msgid "Bring it to the gift-circle"
+msgstr "L'apporter au cercle de dons"
+
+#: gift_economy/gift_circles/templates/gift_circles/_facilitator_card.html:4
+#: gift_economy/gift_circles/templates/gift_circles/_facilitator_card.txt:3
+msgid "Find a scribe. They write the Giftsheet: on paper, or straight into ecobasa on a phone or laptop so open wishes can still be matched after the circle by other people."
+msgstr "Trouve un·e scribe. Il ou elle tient la feuille des dons : sur papier, ou directement dans ecobasa sur un téléphone ou un ordinateur, pour que d'autres puissent encore répondre aux souhaits ouverts après le cercle."
+
+#: gift_economy/gift_circles/templates/gift_circles/_facilitator_card.html:5
+#: gift_economy/gift_circles/templates/gift_circles/_facilitator_card.txt:4
+msgid "Optional: a timekeeper, who says when a round should end."
+msgstr "Facultatif : un·e gardien·ne du temps, qui dit quand un tour doit se terminer."
+
+#: gift_economy/gift_circles/templates/gift_circles/_facilitator_card.html:6
+#: gift_economy/gift_circles/templates/gift_circles/_facilitator_card.txt:5
+msgid "Sit or stand in a circle, so everyone sees everyone."
+msgstr "Asseyez-vous ou tenez-vous en cercle, pour que tout le monde se voie."
+
+#: gift_economy/gift_circles/templates/gift_circles/_facilitator_card.html:9
+#: gift_economy/gift_circles/templates/gift_circles/_facilitator_card.txt:7
+msgid "(maximum 1.5 hours)"
+msgstr "(1 h 30 maximum)"
+
+#: gift_economy/gift_circles/templates/gift_circles/_facilitator_card.html:11
+#: gift_economy/gift_circles/templates/gift_circles/_facilitator_card.html:12
+#: gift_economy/gift_circles/templates/gift_circles/_facilitator_card.html:19
+#: gift_economy/gift_circles/templates/gift_circles/_facilitator_card.html:20
+#: gift_economy/gift_circles/templates/gift_circles/_facilitator_card.html:21
+#: gift_economy/gift_circles/templates/gift_circles/_facilitator_card.txt:9
+#: gift_economy/gift_circles/templates/gift_circles/_facilitator_card.txt:10
+#: gift_economy/gift_circles/templates/gift_circles/_facilitator_card.txt:15
+#: gift_economy/gift_circles/templates/gift_circles/_facilitator_card.txt:16
+#: gift_economy/gift_circles/templates/gift_circles/_facilitator_card.txt:17
+#, python-format
+msgid "(%(minutes)s minutes)"
+msgstr "(%(minutes)s minutes)"
+
+#: gift_economy/gift_circles/templates/gift_circles/_facilitator_card.html:11
+#: gift_economy/gift_circles/templates/gift_circles/_facilitator_card.txt:9
+msgid "Names. Explain the rounds and the karma rules. Say that offers and wishes go on ecobasa only for those who said yes, and emails go only between the two sides of a match."
+msgstr "Prénoms. Explique les tours et les règles du karma. Dis que les offres et souhaits ne vont sur ecobasa que pour celles et ceux qui ont dit oui, et que les e-mails ne passent qu'entre les deux côtés d'un match."
+
+#: gift_economy/gift_circles/templates/gift_circles/_facilitator_card.html:12
+#: gift_economy/gift_circles/templates/gift_circles/_facilitator_card.txt:10
+msgid "Go round the circle. Each person says one wish, or passes. After each wish, ask:"
+msgstr "Faites le tour du cercle. Chaque personne dit un souhait, ou passe. Après chaque souhait, demande :"
+
+#: gift_economy/gift_circles/templates/gift_circles/_facilitator_card.html:15
+#: gift_economy/gift_circles/templates/gift_circles/_facilitator_card.txt:12
+msgid "Nobody? Who knows someone who can?"
+msgstr "Personne ? Qui connaît quelqu'un qui peut ?"
+
+#: gift_economy/gift_circles/templates/gift_circles/_facilitator_card.html:16
+#: gift_economy/gift_circles/templates/gift_circles/_facilitator_card.txt:13
+msgid "Still nobody? Who has an idea how we could do it together?"
+msgstr "Toujours personne ? Qui a une idée pour qu'on y arrive ensemble ?"
+
+#: gift_economy/gift_circles/templates/gift_circles/_facilitator_card.html:18
+#: gift_economy/gift_circles/templates/gift_circles/_facilitator_card.txt:14
+msgid "Stay with one wish until it is solved or you let it go, then the next person. If there is time, go round again."
+msgstr "Restez sur un souhait jusqu'à ce qu'il soit résolu ou que vous le laissiez partir, puis la personne suivante. S'il reste du temps, refaites un tour."
+
+#: gift_economy/gift_circles/templates/gift_circles/_facilitator_card.html:19
+#: gift_economy/gift_circles/templates/gift_circles/_facilitator_card.txt:15
+msgid "Round again. Each person says what they can give. Who would like it? Who knows someone that would like it?"
+msgstr "Nouveau tour. Chaque personne dit ce qu'elle peut donner. Qui le voudrait ? Qui connaît quelqu'un qui le voudrait ?"
+
+#: gift_economy/gift_circles/templates/gift_circles/_facilitator_card.html:20
+#: gift_economy/gift_circles/templates/gift_circles/_facilitator_card.txt:16
+msgid "Each person thanks someone: for a gift from last time, for something today, or just for being here."
+msgstr "Chaque personne remercie quelqu'un : pour un don de la dernière fois, pour quelque chose aujourd'hui, ou simplement pour sa présence."
+
+#: gift_economy/gift_circles/templates/gift_circles/_facilitator_card.html:21
+#: gift_economy/gift_circles/templates/gift_circles/_facilitator_card.txt:17
+msgid "The scribe reads out the matches. Remind everyone: the one who wished follows up."
+msgstr "Le ou la scribe lit les matchs à voix haute. Rappelle à tout le monde : c'est la personne qui a souhaité qui reprend contact."
+
+#: gift_economy/gift_circles/templates/gift_circles/_facilitator_card.html:24
+#: gift_economy/gift_circles/templates/gift_circles/_facilitator_card.txt:19
+msgid "Tips"
+msgstr "Conseils"
+
+#: gift_economy/gift_circles/templates/gift_circles/_facilitator_card.html:26
+#: gift_economy/gift_circles/templates/gift_circles/_facilitator_card.txt:21
+msgid "Help the shy ones. If nobody starts, suggest an easy wish: a hug, a book tip, help carrying something."
+msgstr "Aide les plus timides. Si personne ne commence, propose un souhait facile : un câlin, un conseil de livre, de l'aide pour porter quelque chose."
+
+#: gift_economy/gift_circles/templates/gift_circles/_facilitator_card.html:27
+#: gift_economy/gift_circles/templates/gift_circles/_facilitator_card.txt:22
+msgid "Keep wishes short. One sentence is enough for the Giftsheet."
+msgstr "Des souhaits courts. Une phrase suffit pour la feuille des dons."
+
+#: gift_economy/gift_circles/templates/gift_circles/_facilitator_card.html:28
+#: gift_economy/gift_circles/templates/gift_circles/_facilitator_card.txt:23
+msgid "Offers can come up in the wish round. That's fine: the scribe writes them down too."
+msgstr "Des offres peuvent venir pendant le tour des souhaits. Pas de souci : le ou la scribe les note aussi."
+
+#: gift_economy/gift_circles/templates/gift_circles/_facilitator_card.html:29
+#: gift_economy/gift_circles/templates/gift_circles/_facilitator_card.txt:24
+msgid "If a wish finds nobody, let it go kindly. It stays on the Giftsheet and on ecobasa if they want and may still find a match."
+msgstr "Si un souhait ne trouve personne, laissez-le partir avec bienveillance. Il reste sur la feuille des dons et sur ecobasa si la personne le veut, et peut encore trouver un match."
+
+#: gift_economy/gift_circles/templates/gift_circles/_facilitator_card.html:36
+#: gift_economy/gift_circles/templates/gift_circles/_facilitator_card.txt:30
+msgid "The printed Giftsheet, or big paper"
+msgstr "La feuille des dons imprimée, ou une grande feuille de papier"
+
+#: gift_economy/gift_circles/templates/gift_circles/_facilitator_card.html:37
+#: gift_economy/gift_circles/templates/gift_circles/_facilitator_card.txt:31
+msgid "Markers in two colours: one for wishes, one for offers"
+msgstr "Des feutres de deux couleurs : une pour les souhaits, une pour les offres"
+
+#: gift_economy/gift_circles/templates/gift_circles/_facilitator_card.html:38
+#: gift_economy/gift_circles/templates/gift_circles/_facilitator_card.txt:32
+msgid "Pens and small paper, so people can note contacts"
+msgstr "Des stylos et des petits papiers pour noter les contacts"
+
+#: gift_economy/gift_circles/templates/gift_circles/_facilitator_card.html:39
+#: gift_economy/gift_circles/templates/gift_circles/_facilitator_card.txt:33
+msgid "A phone or laptop for the scribe, if you type the Giftsheet into ecobasa"
+msgstr "Un téléphone ou un ordinateur pour le ou la scribe, si vous tapez la feuille des dons dans ecobasa"
+
+#: gift_economy/gift_circles/templates/gift_circles/_facilitator_card.html:40
+#: gift_economy/gift_circles/templates/gift_circles/_facilitator_card.txt:34
+#, python-format
+msgid "Something for the potluck: %(note)s"
+msgstr "Quelque chose pour le repas partagé : %(note)s"
+
+#: gift_economy/gift_circles/templates/gift_circles/_giftsheet_entries.html:23
+#: gift_economy/gift_circles/templates/gift_circles/print.html:80
+#, python-format
+msgid "An idea from %(name)s: %(text)s"
+msgstr "Une idée de %(name)s : %(text)s"
+
+#: gift_economy/gift_circles/templates/gift_circles/_giftsheet_entries.html:60
+msgid "Who said yes?"
+msgstr "Qui a dit oui ?"
+
+#: gift_economy/gift_circles/templates/gift_circles/_giftsheet_entries.html:65
+msgid "Taken by …"
+msgstr "Pour …"
+
+#: gift_economy/gift_circles/templates/gift_circles/_giftsheet_entries.html:65
+msgid "Fulfilled by …"
+msgstr "Exaucé par …"
+
+#: gift_economy/gift_circles/templates/gift_circles/_giftsheet_entries.html:73
+msgid "An idea from …"
+msgstr "Une idée de …"
+
+#: gift_economy/gift_circles/templates/gift_circles/_giftsheet_entries.html:78
+msgid "Take this line off the Giftsheet?"
+msgstr "Retirer cette ligne de la feuille des dons ?"
+
+#: gift_economy/gift_circles/templates/gift_circles/_guest_fields.html:11
+#: gift_economy/gift_circles/templates/gift_circles/_privacy.html:2
+#: gift_economy/gift_circles/templates/gift_circles/_privacy.txt:1
+msgid "Your offers and wishes go on ecobasa only if you said yes to that. You can change it at any time."
+msgstr "Tes offres et souhaits ne vont sur ecobasa que si tu as dit oui. Tu peux changer ça à tout moment."
+
+#: gift_economy/gift_circles/templates/gift_circles/_guest_fields.html:11
+#: gift_economy/gift_circles/templates/gift_circles/_privacy.html:3
+#: gift_economy/gift_circles/templates/gift_circles/_privacy.txt:3
+msgid "Your email goes only to the people you make a match with, and only if you said yes to that. Nobody else gets it."
+msgstr "Ton e-mail ne va qu'aux personnes avec qui tu fais un match, et seulement si tu as dit oui. Personne d'autre ne le reçoit."
+
+#: gift_economy/gift_circles/templates/gift_circles/_guest_sign_up.html:3
+#: gift_economy/gift_circles/templates/gift_circles/invitation.html:23
+msgid "Without an account, with your name and email."
+msgstr "Sans compte, avec ton nom et ton e-mail."
+
+#: gift_economy/gift_circles/templates/gift_circles/_host_guide.html:4
+msgid "You invite, you welcome everyone, and you keep the circle going: three rounds, wishes, offers, thanks. You don't need to know the format: the email after this form has everything, and a card to print."
+msgstr "Tu invites, tu accueilles tout le monde et tu fais vivre le cercle : trois tours, souhaits, offres, remerciements. Pas besoin de connaître le format : l'e-mail après ce formulaire contient tout, et une fiche à imprimer."
+
+#: gift_economy/gift_circles/templates/gift_circles/_host_guide.html:5
+msgid "Find a scribe before you start. They write down who wished or offered what."
+msgstr "Trouve un·e scribe avant de commencer. Il ou elle note qui a souhaité ou offert quoi."
+
+#: gift_economy/gift_circles/templates/gift_circles/_host_guide.html:6
+msgid "About 1.5 hours is enough. A potluck before or after fits well."
+msgstr "Environ 1 h 30 suffit. Un repas partagé avant ou après s'y prête bien."
+
+#: gift_economy/gift_circles/templates/gift_circles/_invite.html:8
+msgid "Copied"
+msgstr "Copié"
+
+#: gift_economy/gift_circles/templates/gift_circles/_invite.html:11
+msgid "Share"
+msgstr "Partager"
+
+#: gift_economy/gift_circles/templates/gift_circles/_karma_rules.html:2
+#: gift_economy/gift_circles/templates/gift_circles/_karma_rules.txt:1
+msgid "The karma rules"
+msgstr "Les règles du karma"
+
+#: gift_economy/gift_circles/templates/gift_circles/_karma_rules.html:4
+#: gift_economy/gift_circles/templates/gift_circles/_karma_rules.txt:3
+msgid "No guarantee."
+msgstr "Aucune garantie."
+
+#: gift_economy/gift_circles/templates/gift_circles/_karma_rules.html:4
+#: gift_economy/gift_circles/templates/gift_circles/_karma_rules.txt:3
+msgid "Not every wish comes true, and that's okay."
+msgstr "Tous les souhaits ne se réalisent pas, et c'est très bien comme ça."
+
+#: gift_economy/gift_circles/templates/gift_circles/_karma_rules.html:5
+#: gift_economy/gift_circles/templates/gift_circles/_karma_rules.txt:4
+msgid "Big wishes are welcome. Sometimes the circle can do more than you think."
+msgstr "Les grands souhaits sont les bienvenus. Parfois le cercle peut plus que tu ne le penses."
+
+#: gift_economy/gift_circles/templates/gift_circles/_karma_rules.html:6
+#: gift_economy/gift_circles/templates/gift_circles/_karma_rules.txt:5
+msgid "Only good intentions."
+msgstr "Seulement de bonnes intentions."
+
+#: gift_economy/gift_circles/templates/gift_circles/_karma_rules.html:6
+#: gift_economy/gift_circles/templates/gift_circles/_karma_rules.txt:5
+msgid "Nothing that harms anyone."
+msgstr "Rien qui fasse du tort à quiconque."
+
+#: gift_economy/gift_circles/templates/gift_circles/_karma_rules.html:7
+#: gift_economy/gift_circles/templates/gift_circles/_karma_rules.txt:6
+msgid "If someone offers to help with your wish, you get in touch with them, not the other way round."
+msgstr "Si quelqu'un propose de t'aider pour ton souhait, c'est toi qui le contactes, pas l'inverse."
+
+#: gift_economy/gift_circles/templates/gift_circles/_karma_rules.html:8
+#: gift_economy/gift_circles/templates/gift_circles/_karma_rules.txt:7
+msgid "No money."
+msgstr "Pas d'argent."
+
+#: gift_economy/gift_circles/templates/gift_circles/_karma_rules.html:8
+#: gift_economy/gift_circles/templates/gift_circles/_karma_rules.txt:7
+msgid "Nothing is bought or sold. Things, time, skills, ideas and contacts are all welcome."
+msgstr "Rien ne s'achète ni ne se vend. Objets, temps, compétences, idées et contacts sont tous les bienvenus."
+
+#: gift_economy/gift_circles/templates/gift_circles/_karma_rules.html:9
+#: gift_economy/gift_circles/templates/gift_circles/_karma_rules.txt:8
+msgid "Give freely."
+msgstr "Donne librement."
+
+#: gift_economy/gift_circles/templates/gift_circles/_karma_rules.html:9
+#: gift_economy/gift_circles/templates/gift_circles/_karma_rules.txt:8
+msgid "Nobody owes anything back."
+msgstr "Personne ne doit rien en retour."
+
+#: gift_economy/gift_circles/templates/gift_circles/_karma_rules.html:10
+#: gift_economy/gift_circles/templates/gift_circles/_karma_rules.txt:9
+msgid "Give only what you can."
+msgstr "Ne donne que ce que tu peux."
+
+#: gift_economy/gift_circles/templates/gift_circles/_karma_rules.html:10
+#: gift_economy/gift_circles/templates/gift_circles/_karma_rules.txt:9
+msgid "Say no when it doesn't feel right. Give what you can keep giving."
+msgstr "Dis non quand ça ne te semble pas juste. Donne ce que tu peux continuer à donner."
+
+#: gift_economy/gift_circles/templates/gift_circles/_karma_rules.html:12
+#: gift_economy/gift_circles/templates/gift_circles/_karma_rules.txt:11
+msgid "The karma rules are inspired by Pierre Lischke's KarmaKreis."
+msgstr "Les règles du karma s'inspirent du KarmaKreis de Pierre Lischke."
+
+#: gift_economy/gift_circles/templates/gift_circles/_privacy.html:3
+#: gift_economy/gift_circles/templates/gift_circles/_privacy.txt:3
+msgid "The people you make a match with can write to you through ecobasa. Nobody gets your email."
+msgstr "Les personnes avec qui tu fais un match peuvent t'écrire via ecobasa. Personne ne reçoit ton e-mail."
+
+#: gift_economy/gift_circles/templates/gift_circles/_rounds.html:2
+#: gift_economy/gift_circles/templates/gift_circles/_rounds.txt:1
+msgid "How a gift-circle goes"
+msgstr "Comment se passe un cercle de dons"
+
+#: gift_economy/gift_circles/templates/gift_circles/_rounds.html:4
+#: gift_economy/gift_circles/templates/gift_circles/_rounds.txt:3
+msgid "Everyone says their name. The facilitator explains the rounds and the karma rules."
+msgstr "Chacun·e dit son prénom. La personne qui anime explique les tours et les règles du karma."
+
+#: gift_economy/gift_circles/templates/gift_circles/_rounds.html:5
+#: gift_economy/gift_circles/templates/gift_circles/_rounds.txt:4
+msgid "We go round the circle. Each person says one wish, or passes. Who can help? Who knows someone who can? Who has an idea how we could do it together?"
+msgstr "On fait le tour du cercle. Chaque personne dit un souhait, ou passe. Qui peut aider ? Qui connaît quelqu'un qui peut ? Qui a une idée pour qu'on y arrive ensemble ?"
+
+#: gift_economy/gift_circles/templates/gift_circles/_rounds.html:6
+#: gift_economy/gift_circles/templates/gift_circles/_rounds.txt:5
+msgid "Round again. Each person says something they can give: a thing, some time, a skill. Who would like it? Who knows someone that would like it?"
+msgstr "Nouveau tour. Chaque personne dit quelque chose qu'elle peut donner : un objet, du temps, une compétence. Qui le voudrait ? Qui connaît quelqu'un qui le voudrait ?"
+
+#: gift_economy/gift_circles/templates/gift_circles/_rounds.html:7
+#: gift_economy/gift_circles/templates/gift_circles/_rounds.txt:6
+msgid "A last round. Thank someone: for a gift from last time, for something today, or just for being here."
+msgstr "Un dernier tour. Remercie quelqu'un : pour un don de la dernière fois, pour quelque chose aujourd'hui, ou simplement pour sa présence."
+
+#: gift_economy/gift_circles/templates/gift_circles/_rounds.html:9
+#: gift_economy/gift_circles/templates/gift_circles/_rounds.txt:8
+msgid "The scribe writes it all down on the Giftsheet: who wished or offered what, and who said yes."
+msgstr "Le ou la scribe note tout sur la feuille des dons : qui a souhaité ou offert quoi, et qui a dit oui."
+
+#: gift_economy/gift_circles/templates/gift_circles/_scribe.html:7
+msgid "No longer scribe"
+msgstr "Plus scribe"
+
+#: gift_economy/gift_circles/templates/gift_circles/email/coming.html:3
+#: gift_economy/gift_circles/templates/gift_circles/email/coming.txt:3
+#: gift_economy/gift_circles/templates/gift_circles/email/guest_coming.html:3
+#: gift_economy/gift_circles/templates/gift_circles/email/guest_coming.txt:3
+#, python-format
+msgid "Great that you're coming to the gift-circle %(title)s, hosted by %(host)s."
+msgstr "Super que tu viennes au cercle de dons %(title)s, organisé par %(host)s."
+
+#: gift_economy/gift_circles/templates/gift_circles/email/coming.html:6
+#: gift_economy/gift_circles/templates/gift_circles/email/coming.txt:8
+#: gift_economy/gift_circles/templates/gift_circles/email/guest_coming.html:6
+#: gift_economy/gift_circles/templates/gift_circles/email/guest_coming.txt:8
+#: gift_economy/gift_circles/templates/gift_circles/email/reminder.html:14
+#: gift_economy/gift_circles/templates/gift_circles/email/reminder.txt:14
+#: gift_economy/gift_circles/templates/gift_circles/email/tour_invitation.html:7
+#: gift_economy/gift_circles/templates/gift_circles/email/tour_invitation.txt:11
+#: gift_economy/gift_circles/templates/gift_circles/guest.html:19
+msgid "Think of a wish and an offer"
+msgstr "Pense à un souhait et à une offre"
+
+#: gift_economy/gift_circles/templates/gift_circles/email/coming.html:7
+#: gift_economy/gift_circles/templates/gift_circles/email/coming.txt:10
+#: gift_economy/gift_circles/templates/gift_circles/email/guest_coming.html:7
+#: gift_economy/gift_circles/templates/gift_circles/email/guest_coming.txt:10
+#: gift_economy/gift_circles/templates/gift_circles/email/reminder.html:15
+#: gift_economy/gift_circles/templates/gift_circles/email/reminder.txt:16
+#: gift_economy/gift_circles/templates/gift_circles/email/tour_invitation.html:8
+#: gift_economy/gift_circles/templates/gift_circles/email/tour_invitation.txt:13
+#: gift_economy/gift_circles/templates/gift_circles/guest.html:20
+msgid "Before you come, think of one thing you wish for and one thing you can give. Small or big, a thing, some time, a skill."
+msgstr "Avant de venir, pense à une chose que tu souhaites et à une chose que tu peux donner. Petite ou grande, un objet, du temps, une compétence."
+
+#: gift_economy/gift_circles/templates/gift_circles/email/coming.html:7
+#: gift_economy/gift_circles/templates/gift_circles/email/coming.txt:10
+#: gift_economy/gift_circles/templates/gift_circles/email/reminder.html:15
+#: gift_economy/gift_circles/templates/gift_circles/email/reminder.txt:16
+msgid "You can add them on the page now, so others see them before:"
+msgstr "Tu peux déjà les ajouter sur la page, pour que les autres les voient avant :"
+
+#: gift_economy/gift_circles/templates/gift_circles/email/coming.html:8
+#: gift_economy/gift_circles/templates/gift_circles/email/coming.txt:12
+msgid "Already have offers or wishes on ecobasa? Press “Bring it to the gift-circle” on them."
+msgstr "Tu as déjà des offres ou des souhaits sur ecobasa ? Appuie sur « L'apporter au cercle de dons » sur eux."
+
+#: gift_economy/gift_circles/templates/gift_circles/email/coming.html:14
+#: gift_economy/gift_circles/templates/gift_circles/email/coming.txt:20
+#: gift_economy/gift_circles/templates/gift_circles/email/guest_coming.html:13
+#: gift_economy/gift_circles/templates/gift_circles/email/guest_coming.txt:18
+#: gift_economy/gift_circles/templates/gift_circles/email/reminder.html:18
+#: gift_economy/gift_circles/templates/gift_circles/email/reminder.txt:20
+#, python-format
+msgid "Bring something for the potluck: %(note)s"
+msgstr "Apporte quelque chose pour le repas partagé : %(note)s"
+
+#: gift_economy/gift_circles/templates/gift_circles/email/coming.html:15
+#: gift_economy/gift_circles/templates/gift_circles/email/coming.txt:22
+#: gift_economy/gift_circles/templates/gift_circles/email/reminder.html:22
+#: gift_economy/gift_circles/templates/gift_circles/email/reminder.txt:24
+msgid "Can't come after all? Please say so on the page, so someone else can have your place:"
+msgstr "Finalement tu ne peux pas venir ? Dis-le sur la page, pour que quelqu'un d'autre puisse prendre ta place :"
+
+#: gift_economy/gift_circles/templates/gift_circles/email/coming.html:16
+#: gift_economy/gift_circles/templates/gift_circles/email/coming.txt:24
+#: gift_economy/gift_circles/templates/gift_circles/email/guest_coming.html:15
+#: gift_economy/gift_circles/templates/gift_circles/email/guest_coming.txt:22
+#: gift_economy/gift_circles/templates/gift_circles/email/host.html:15
+#: gift_economy/gift_circles/templates/gift_circles/email/host.txt:23
+msgid "The calendar file is attached."
+msgstr "Le fichier de calendrier est en pièce jointe."
+
+#: gift_economy/gift_circles/templates/gift_circles/email/guest_coming.html:7
+#: gift_economy/gift_circles/templates/gift_circles/email/guest_coming.txt:10
+msgid "Advice: be careful what you wish for, it might come true ;)"
+msgstr "Conseil : fais attention à ce que tu souhaites, ça pourrait se réaliser ;)"
+
+#: gift_economy/gift_circles/templates/gift_circles/email/guest_coming.html:14
+#: gift_economy/gift_circles/templates/gift_circles/email/guest_coming.txt:20
+#: gift_economy/gift_circles/templates/gift_circles/email/reminder.html:20
+#: gift_economy/gift_circles/templates/gift_circles/email/reminder.txt:22
+msgid "Change or cancel your sign-up:"
+msgstr "Modifier ou annuler ton inscription :"
+
+#: gift_economy/gift_circles/templates/gift_circles/email/guest_confirm.html:3
+#: gift_economy/gift_circles/templates/gift_circles/email/guest_confirm.txt:3
+#: gift_economy/gift_circles/templates/gift_circles/guest_confirm.html:13
+#, python-format
+msgid "You signed up for the gift-circle %(title)s on ecobasa. Please confirm it's you:"
+msgstr "Tu t'es inscrit·e au cercle de dons %(title)s sur ecobasa. Merci de confirmer que c'est bien toi :"
+
+#: gift_economy/gift_circles/templates/gift_circles/email/guest_confirm.html:5
+#: gift_economy/gift_circles/templates/gift_circles/email/guest_confirm.txt:7
+msgid "Only after that do you count as coming, and only then do we write to you again. If it wasn't you, ignore this email and we won't write again."
+msgstr "Ce n'est qu'après que tu comptes parmi les participant·es, et seulement alors que nous t'écrivons de nouveau. Si ce n'était pas toi, ignore cet e-mail et nous ne t'écrirons plus."
+
+#: gift_economy/gift_circles/templates/gift_circles/email/host.html:3
+#: gift_economy/gift_circles/templates/gift_circles/email/host.txt:3
+msgid "Thank you for inviting to a gift-circle! Here is everything you need on the day."
+msgstr "Merci d'inviter à un cercle de dons ! Voici tout ce qu'il te faut pour le jour J."
+
+#: gift_economy/gift_circles/templates/gift_circles/email/host.html:5
+#: gift_economy/gift_circles/templates/gift_circles/email/host.txt:9
+msgid "Share this page so people can come:"
+msgstr "Partage cette page pour que les gens puissent venir :"
+
+#: gift_economy/gift_circles/templates/gift_circles/email/host.html:7
+#: gift_economy/gift_circles/templates/gift_circles/email/host.txt:12
+#: gift_economy/gift_circles/templates/gift_circles/print.html:49
+msgid "Your facilitator card"
+msgstr "Ta fiche d'animation"
+
+#: gift_economy/gift_circles/templates/gift_circles/email/host.html:8
+#: gift_economy/gift_circles/templates/gift_circles/email/host.txt:14
+msgid "Print it, or keep this email open on your phone."
+msgstr "Imprime-la, ou garde cet e-mail ouvert sur ton téléphone."
+
+#: gift_economy/gift_circles/templates/gift_circles/email/host.html:12
+#: gift_economy/gift_circles/templates/gift_circles/email/host.txt:20
+msgid "Printable Giftsheet and this card:"
+msgstr "Feuille des dons à imprimer et cette fiche :"
+
+#: gift_economy/gift_circles/templates/gift_circles/email/host.html:13
+#: gift_economy/gift_circles/templates/gift_circles/email/host.txt:21
+msgid "Your gift-circle's page:"
+msgstr "La page de ton cercle de dons :"
+
+#: gift_economy/gift_circles/templates/gift_circles/email/host.html:16
+#: gift_economy/gift_circles/templates/gift_circles/email/host.txt:25
+#: gift_economy/gift_circles/templates/gift_circles/email/invitation.html:15
+#: gift_economy/gift_circles/templates/gift_circles/email/invitation.txt:21
+#: gift_economy/gift_circles/templates/gift_circles/email/tour_invitation.html:12
+#: gift_economy/gift_circles/templates/gift_circles/email/tour_invitation.txt:19
+msgid "Happy giving!"
+msgstr "Bons dons !"
+
+#: gift_economy/gift_circles/templates/gift_circles/email/invitation.html:9
+#: gift_economy/gift_circles/templates/gift_circles/email/invitation.txt:15
+msgid "People sit in a circle and share what they wish for and what they can give. Things, time, skills, knowledge, contacts. Nothing is bought or sold."
+msgstr "Des personnes s'assoient en cercle et partagent ce qu'elles souhaitent et ce qu'elles peuvent donner. Objets, temps, compétences, savoirs, contacts. Rien ne s'achète ni ne se vend."
+
+#: gift_economy/gift_circles/templates/gift_circles/email/invitation.html:9
+#: gift_economy/gift_circles/templates/gift_circles/email/invitation.txt:15
+msgid "Strangers often leave as neighbours who help each other."
+msgstr "Des inconnu·es repartent souvent en voisin·es qui s'entraident."
+
+#: gift_economy/gift_circles/templates/gift_circles/email/invitation.html:13
+#: gift_economy/gift_circles/templates/gift_circles/email/invitation.txt:19
+#, python-format
+msgid "%(name)s gave us your address for this gift-circle only. Not coming? Tell us, and we delete it:"
+msgstr "%(name)s nous a donné ton adresse pour ce cercle de dons uniquement. Tu ne viens pas ? Dis-le-nous et nous la supprimons :"
+
+#: gift_economy/gift_circles/templates/gift_circles/email/reminder.html:3
+#: gift_economy/gift_circles/templates/gift_circles/email/reminder.txt:3
+#, python-format
+msgid "Tomorrow is the gift-circle %(title)s, hosted by %(host)s."
+msgstr "Demain a lieu le cercle de dons %(title)s, organisé par %(host)s."
+
+#: gift_economy/gift_circles/templates/gift_circles/email/reminder.html:7
+#: gift_economy/gift_circles/templates/gift_circles/email/reminder.txt:8
+msgid "Others who come have what you wish for, or wish for what you have. Bring it along, so it can change hands there:"
+msgstr "D'autres qui viennent ont ce que tu souhaites, ou souhaitent ce que tu as. Apporte-le, il pourra changer de mains sur place :"
+
+#: gift_economy/gift_circles/templates/gift_circles/email/reminder.html:12
+#: gift_economy/gift_circles/templates/gift_circles/email/reminder.txt:12
+msgid "See what the others bring:"
+msgstr "Vois ce que les autres apportent :"
+
+#: gift_economy/gift_circles/templates/gift_circles/email/reminder.html:17
+#: gift_economy/gift_circles/templates/gift_circles/email/reminder.txt:18
+msgid "Found a scribe yet? Your card and the Giftsheet to print:"
+msgstr "Tu as trouvé un·e scribe ? Ta fiche et la feuille des dons à imprimer :"
+
+#: gift_economy/gift_circles/templates/gift_circles/email/tour_invitation.html:3
+#: gift_economy/gift_circles/templates/gift_circles/email/tour_invitation.txt:3
+#, python-format
+msgid "Your tour %(tour)s invites to a gift-circle where it stops. You're on the tour there, so you're very welcome."
+msgstr "Ton tour %(tour)s invite à un cercle de dons à l'une de ses étapes. Tu es du voyage à ce moment-là, alors tu es le ou la bienvenu·e."
+
+#: gift_economy/gift_circles/templates/gift_circles/giftsheet.html:13
+#: gift_economy/gift_circles/views.py:522
+msgid "The Giftsheet is closed."
+msgstr "La feuille des dons est close."
+
+#: gift_economy/gift_circles/templates/gift_circles/giftsheet.html:43
+msgid "With an email they get the results too."
+msgstr "Avec un e-mail, la personne reçoit aussi les résultats."
+
+#: gift_economy/gift_circles/templates/gift_circles/giftsheet.html:83
+#: gift_economy/gift_circles/templates/gift_circles/giftsheet.html:87
+msgid "Add a photo of the Giftsheet"
+msgstr "Ajouter une photo de la feuille des dons"
+
+#: gift_economy/gift_circles/templates/gift_circles/giftsheet.html:84
+msgid "Filled in on paper? Take a photo of each side."
+msgstr "Remplie sur papier ? Prends une photo de chaque côté."
+
+#: gift_economy/gift_circles/templates/gift_circles/giftsheet.html:96
+msgid "Close the Giftsheet? The offers and wishes of everyone who said yes go on ecobasa, and what was fulfilled becomes a match."
+msgstr "Clore la feuille des dons ? Les offres et souhaits de celles et ceux qui ont dit oui vont sur ecobasa, et ce qui a été exaucé devient un match."
+
+#: gift_economy/gift_circles/templates/gift_circles/giftsheet.html:100
+msgid "Close the Giftsheet"
+msgstr "Clore la feuille des dons"
+
+#: gift_economy/gift_circles/templates/gift_circles/guest.html:28
+msgid "Take your sign-up back?"
+msgstr "Retirer ton inscription ?"
+
+#: gift_economy/gift_circles/templates/gift_circles/guest_sent.html:11
+#, python-format
+msgid "We sent an email to <strong>%(email)s</strong>. Open the link in it: only then do you count as coming."
+msgstr "Nous avons envoyé un e-mail à <strong>%(email)s</strong>. Ouvre le lien qu'il contient : ce n'est qu'alors que tu comptes parmi les participant·es."
+
+#: gift_economy/gift_circles/templates/gift_circles/guest_sign_up.html:11
+msgid "We send you an email to confirm. Nobody gets an account without asking for one."
+msgstr "Nous t'envoyons un e-mail pour confirmer. Personne n'obtient de compte sans l'avoir demandé."
+
+#: gift_economy/gift_circles/templates/gift_circles/invitation.html:44
+#, python-format
+msgid "%(name)s gave us your address for this gift-circle only."
+msgstr "%(name)s nous a donné ton adresse pour ce cercle de dons uniquement."
+
+#: gift_economy/gift_circles/templates/gift_circles/invitation.html:45
+msgid "I'm not coming, delete my address"
+msgstr "Je ne viens pas, supprimez mon adresse"
+
+#: gift_economy/gift_circles/templates/gift_circles/invite.html:51
+#, python-format
+msgid "This gift-circle can invite %(count)s more person by email."
+msgid_plural "This gift-circle can invite %(count)s more people by email."
+msgstr[0] "Ce cercle de dons peut encore inviter %(count)s personne par e-mail."
+msgstr[1] "Ce cercle de dons peut encore inviter %(count)s personnes par e-mail."
+
+#: gift_economy/gift_circles/templates/gift_circles/invite.html:54
+#, python-format
+msgid "This gift-circle has invited %(count)s person by email, as many as one can."
+msgid_plural "This gift-circle has invited %(count)s people by email, as many as one can."
+msgstr[0] "Ce cercle de dons a invité %(count)s personne par e-mail, le maximum possible."
+msgstr[1] "Ce cercle de dons a invité %(count)s personnes par e-mail, le maximum possible."
+
+#: gift_economy/gift_circles/templates/gift_circles/print.html:36
+msgid "The Giftsheet as filled in so far, with names only: print it for those who want it on paper to take home. To save it as a PDF, choose “Save as PDF” in the print dialog."
+msgstr "La feuille des dons telle qu'elle est remplie jusqu'ici, avec les prénoms seulement : imprime-la pour celles et ceux qui la veulent sur papier à emporter. Pour l'enregistrer en PDF, choisis « Enregistrer au format PDF » dans la fenêtre d'impression."
+
+#: gift_economy/gift_circles/templates/gift_circles/print.html:41
+msgid "Print the card"
+msgstr "Imprimer la fiche"
+
+#: gift_economy/gift_circles/templates/gift_circles/print.html:42
+msgid "Print the Giftsheet"
+msgstr "Imprimer la feuille des dons"
+
+#: gift_economy/gift_circles/templates/gift_circles/print.html:69
+msgid "Who said yes (name, contact)"
+msgstr "Qui a dit oui (nom, contact)"
+
+#: gift_economy/gift_circles/views.py:293
+msgid "They were invited already."
+msgstr "Ces personnes étaient déjà invitées."
+
+#: gift_economy/gift_circles/views.py:338
+msgid "We deleted your address. Thank you for letting us know."
+msgstr "Nous avons supprimé ton adresse. Merci de nous avoir prévenus."
+
+#: gift_economy/matches/models.py:718
+msgid "Comes to the same gift-circle"
+msgstr "Vient au même cercle de dons"
+
+#: events/forms.py:99
+msgid "Which day?"
+msgstr "Quel jour ?"
+
+#: events/forms.py:117
+msgid "Choose the place on the map, or make it online."
+msgstr "Choisis le lieu sur la carte, ou fais-le en ligne."
+
+#: events/forms.py:123
+msgid "Please choose a time in steps of 15 minutes."
+msgstr "Choisis une heure par pas de 15 minutes."
+
+#: events/forms.py:140
+msgid "Please choose a picture."
+msgstr "Choisis une image."
+
+#: events/forms.py:321
+msgid "Who you are, and why you'd like to come."
+msgstr "Qui tu es, et pourquoi tu aimerais venir."
+
+#: events/kinds.py:137
+#, python-format
+msgid "%(actor)s asked to join your project: %(title)s"
+msgstr "%(actor)s veut rejoindre ton projet : %(title)s"
+
+#: events/kinds.py:166
+#, python-format
+msgid "%(actor)s asked to join your community event: %(title)s"
+msgstr "%(actor)s veut rejoindre ton événement communautaire : %(title)s"
+
+#: events/kinds.py:175
+msgid "Edit gift-circle"
+msgstr "Modifier le cercle de dons"
+
+#: events/kinds.py:176
+msgid "Invite to a gift-circle"
+msgstr "Inviter à un cercle de dons"
+
+#: events/kinds.py:179
+msgid "The gift-circle has been saved."
+msgstr "Le cercle de dons a été enregistré."
+
+#: events/kinds.py:180
+msgid "This gift-circle is over."
+msgstr "Ce cercle de dons est terminé."
+
+#: events/kinds.py:181
+msgid "This gift-circle is over. Change its dates to bring it back."
+msgstr "Ce cercle de dons est terminé. Change sa date pour le faire revenir."
+
+#: events/kinds.py:182
+msgid "This gift-circle has been archived."
+msgstr "Ce cercle de dons a été archivé."
+
+#: events/kinds.py:183
+msgid "The gift-circle has been archived. You can bring it back at any time."
+msgstr "Le cercle de dons a été archivé. Tu peux le faire revenir à tout moment."
+
+#: events/kinds.py:184
+msgid "Archive this gift-circle? It will no longer be listed."
+msgstr "Archiver ce cercle de dons ? Il ne sera plus affiché."
+
+#: events/kinds.py:185
+msgid "Thanks! The gift-circle shows as up to date again."
+msgstr "Merci ! Le cercle de dons apparaît de nouveau comme à jour."
+
+#: events/kinds.py:186
+msgid "Shows visitors that this gift-circle is up to date"
+msgstr "Montre aux visiteur·euses que ce cercle de dons est à jour"
+
+#: events/kinds.py:187
+msgid "Nobody has updated this gift-circle for a while. Is it still current? Otherwise it will be archived soon."
+msgstr "Personne n'a mis à jour ce cercle de dons depuis un moment. Est-il toujours d'actualité ? Sinon, il sera bientôt archivé."
+
+#: events/kinds.py:188
+msgid "This gift-circle doesn't take sign-ups at the moment."
+msgstr "Ce cercle de dons n'accepte pas d'inscriptions pour le moment."
+
+#: events/kinds.py:189
+msgid "Support this gift-circle"
+msgstr "Soutenir ce cercle de dons"
+
+#: events/kinds.py:190
+msgid "Join this gift-circle"
+msgstr "Rejoindre ce cercle de dons"
+
+#: events/kinds.py:191
+msgid "References from this gift-circle"
+msgstr "Références de ce cercle de dons"
+
+#: events/kinds.py:193
+#, python-format
+msgid "your gift-circle %(project)s: %(title)s"
+msgstr "ton cercle de dons %(project)s : %(title)s"
+
+#: events/kinds.py:194
+#, python-format
+msgid "%(actor)s offered to help with your gift-circle: %(title)s"
+msgstr "%(actor)s a proposé de l'aide pour votre cercle de dons : %(title)s"
+
+#: events/kinds.py:195
+#, python-format
+msgid "%(actor)s asked to join your gift-circle: %(title)s"
+msgstr "%(actor)s veut rejoindre ton cercle de dons : %(title)s"
+
+#: events/kinds.py:196
+#, python-format
+msgid "Is your gift-circle “%(title)s” still current?"
+msgstr "Ton cercle de dons « %(title)s » est-il toujours d'actualité ?"
+
+#: events/kinds.py:197
+msgid "Is your gift-circle still current?"
+msgstr "Ton cercle de dons est-il toujours d'actualité ?"
+
+#: events/kinds.py:198
+#, python-format
+msgid "nobody has updated the gift-circle “%(title)s” of %(community)s for a while. Is it still current?"
+msgstr "personne n'a mis à jour le cercle de dons « %(title)s » de %(community)s depuis un moment. Est-il toujours d'actualité ?"
+
+#: events/kinds.py:199
+msgid "Update the gift-circle"
+msgstr "Mettre à jour le cercle de dons"
+
+#: events/models.py:102
+msgid "How many people can come?"
+msgstr "Combien de personnes peuvent venir ?"
+
+#: events/models.py:124
+msgid "Video link"
+msgstr "Lien vidéo"
+
+#: events/models.py:466 events/views.py:519
+#: gift_economy/gift_circles/views.py:131
+#, python-format
+msgid "Only %(count)s more person can come."
+msgid_plural "Only %(count)s more people can come."
+msgstr[0] "Seule %(count)s personne de plus peut venir."
+msgstr[1] "Seules %(count)s personnes de plus peuvent venir."
+
+#: events/templates/events/_coming.html:1
+#: events/templates/events/event_detail.html:72
+#, python-format
+msgid "Room for %(count)s person"
+msgid_plural "Room for %(count)s people"
+msgstr[0] "De la place pour %(count)s personne"
+msgstr[1] "De la place pour %(count)s personnes"
+
+#: events/templates/events/_event_card.html:34
+msgid "Not approved yet"
+msgstr "Pas encore accepté"
+
+#: events/templates/events/_event_card.html:38
+#, python-format
+msgid "%(count)s request waits for your answer"
+msgid_plural "%(count)s requests wait for your answer"
+msgstr[0] "%(count)s demande attend ta réponse"
+msgstr[1] "%(count)s demandes attendent ta réponse"
+
+#: events/templates/events/_host.html:8
+#: events/templates/events/event_detail.html:71
+msgid "Online"
+msgstr "En ligne"
+
+#: events/templates/events/event_detail.html:164
+#: gift_economy/gift_circles/models.py:54
+msgid "Guest"
+msgstr "Invité·e"
+
+#: events/templates/events/event_detail.html:268
+msgid "You asked to join."
+msgstr "Tu as demandé à participer."
+
+#: events/views.py:379
+#, python-format
+msgid "“%(title)s” is deleted."
+msgstr "« %(title)s » a été supprimé."
+
+#: events/views.py:494
+#, python-format
+msgid "Your request has been sent to %(host)s!"
+msgstr "Ta demande a été envoyée à %(host)s !"
+
+#: gift_economy/gift_circles/emails.py:69
+#: gift_economy/gift_circles/emails.py:124
+#, python-format
+msgid "You're coming to %(title)s"
+msgstr "Tu viens à %(title)s"
+
+#: gift_economy/gift_circles/emails.py:76
+#, python-format
+msgid "Your tour invites to a gift-circle: %(title)s"
+msgstr "Ton tour invite à un cercle de dons : %(title)s"
+
+#: gift_economy/gift_circles/emails.py:84
+#: gift_economy/gift_circles/emails.py:95
+#: gift_economy/gift_circles/invitations.py:80
+#, python-format
+msgid "%(name)s invites you to a gift-circle: %(title)s"
+msgstr "%(name)s t'invite à un cercle de dons : %(title)s"
+
+#: gift_economy/gift_circles/forms.py:67
+msgid "They get it with the invitation."
+msgstr "Ces personnes le reçoivent avec l'invitation."
+
+#: gift_economy/gift_circles/forms.py:83
+#, python-format
+msgid "This line has no email address: %(line)s"
+msgstr "Cette ligne n'a pas d'adresse e-mail : %(line)s"
+
+#: gift_economy/gift_circles/forms.py:99
+msgid "Please choose someone, or write an email address."
+msgstr "Choisis quelqu'un, ou écris une adresse e-mail."
+
+#: gift_economy/gift_circles/forms.py:112
+#: gift_economy/gift_circles/templates/gift_circles/_giftsheet_entries.html:51
+msgid "Who said it?"
+msgstr "Qui l'a dit ?"
+
+#: gift_economy/gift_circles/forms.py:118
+#: gift_economy/gift_circles/templates/gift_circles/_giftsheet_picker.html:9
+msgid "Email (optional)"
+msgstr "E-mail (facultatif)"
+
+#: gift_economy/gift_circles/forms.py:129
+#: gift_economy/gift_circles/templates/gift_circles/_giftsheet_picker.html:5
+msgid "Someone new"
+msgstr "Quelqu'un de nouveau"
+
+#: gift_economy/gift_circles/giftsheet.py:168
+msgid "Please choose who it is."
+msgstr "Choisis de qui il s'agit."
+
+#: gift_economy/gift_circles/models.py:104
+msgid "Invitations"
+msgstr "Invitations"
+
+#: gift_economy/gift_circles/models.py:137
+msgid "Brought offer or wish"
+msgstr "Offre ou souhait apporté"
+
+#: gift_economy/gift_circles/models.py:138
+msgid "Brought offers and wishes"
+msgstr "Offres et souhaits apportés"
+
+#: gift_economy/gift_circles/models.py:158
+#: gift_economy/gift_circles/templates/gift_circles/giftsheet.html:4
+#: gift_economy/gift_circles/templates/gift_circles/giftsheet.html:8
+#: gift_economy/gift_circles/templates/gift_circles/giftsheet.html:9
+#: gift_economy/gift_circles/templates/gift_circles/print.html:4
+#: gift_economy/gift_circles/templates/gift_circles/print.html:59
+#: gift_economy/gift_circles/templates/gift_circles/print.html:62
+msgid "Giftsheet"
+msgstr "Feuille des dons"
+
+#: gift_economy/gift_circles/models.py:159
+msgid "Giftsheets"
+msgstr "Feuilles des dons"
+
+#: gift_economy/gift_circles/models.py:195
+#: gift_economy/gift_circles/templates/gift_circles/_giftsheet_entries.html:14
+#: gift_economy/gift_circles/templates/gift_circles/_giftsheet_entries.html:63
+msgid "Still open"
+msgstr "Encore ouvert"
+
+#: gift_economy/gift_circles/models.py:221
+msgid "Entry"
+msgstr "Entrée"
+
+#: gift_economy/gift_circles/models.py:222
+msgid "Entries"
+msgstr "Entrées"
+
+#: gift_economy/gift_circles/models.py:274
+msgid "Ideas"
+msgstr "Idées"
+
+#: gift_economy/gift_circles/receivers.py:46
+#, python-format
+msgid "%(tour)s invites to a gift-circle: %(title)s"
+msgstr "%(tour)s invite à un cercle de dons : %(title)s"
+
+#: gift_economy/gift_circles/reminders.py:18
+#, python-format
+msgid "Tomorrow: %(title)s"
+msgstr "Demain : %(title)s"
+
+#: gift_economy/gift_circles/templates/gift_circles/_account.html:2
+#: gift_economy/gift_circles/templates/gift_circles/_account.html:4
+#: gift_economy/gift_circles/templates/gift_circles/_account.txt:1
+#: gift_economy/gift_circles/templates/gift_circles/_account.txt:5
+#: gift_economy/gift_circles/templates/gift_circles/guest.html:37
+#: gift_economy/gift_circles/templates/gift_circles/guest.html:39
+msgid "Create an account"
+msgstr "Créer un compte"
+
+#: gift_economy/gift_circles/templates/gift_circles/_attendee_fields.html:11
+msgid "Then they keep finding people near you after the circle. You can change it at any time."
+msgstr "Ils continuent alors de trouver des gens près de chez toi après le cercle. Tu peux changer ça à tout moment."
+
+#: gift_economy/gift_circles/templates/gift_circles/_bring.html:5
+#: gift_economy/gift_circles/templates/gift_circles/guest.html:16
+msgid "Open the Giftsheet"
+msgstr "Ouvrir la feuille des dons"
+
+#: gift_economy/gift_circles/templates/gift_circles/_bring.html:8
+#: gift_economy/gift_circles/templates/gift_circles/_bring_to.html:12
+msgid "What people bring"
+msgstr "Ce que les gens apportent"
+
+#: gift_economy/gift_circles/templates/gift_circles/_bring.html:17
+msgid "No wishes yet."
+msgstr "Pas encore de souhaits."
+
+#: gift_economy/gift_circles/templates/gift_circles/_bring.html:24
+msgid "Add an offer"
+msgstr "Ajouter une offre"
+
+#: gift_economy/gift_circles/templates/gift_circles/_bring.html:25
+msgid "Add a wish"
+msgstr "Ajouter un souhait"
+
+#: gift_economy/gift_circles/templates/gift_circles/_bring_to.html:15
+#: gift_economy/gift_circles/templates/gift_circles/_brought.html:17
+msgid "Take it back"
+msgstr "Le retirer"
+
+#: gift_economy/gift_circles/templates/gift_circles/_facilitator_card.html:2
+#: gift_economy/gift_circles/templates/gift_circles/_facilitator_card.txt:1
+msgid "Before you start"
+msgstr "Avant de commencer"
+
+#: gift_economy/gift_circles/templates/gift_circles/_facilitator_card.html:9
+#: gift_economy/gift_circles/templates/gift_circles/_facilitator_card.txt:7
+msgid "The rounds"
+msgstr "Les tours"
+
+#: gift_economy/gift_circles/templates/gift_circles/_facilitator_card.html:11
+#: gift_economy/gift_circles/templates/gift_circles/_facilitator_card.txt:9
+msgctxt "gift-circle round"
+msgid "Welcome"
+msgstr "Accueil"
+
+#: gift_economy/gift_circles/templates/gift_circles/_facilitator_card.html:12
+#: gift_economy/gift_circles/templates/gift_circles/_facilitator_card.txt:10
+msgctxt "gift-circle round"
+msgid "Wishes"
+msgstr "Souhaits"
+
+#: gift_economy/gift_circles/templates/gift_circles/_facilitator_card.html:14
+#: gift_economy/gift_circles/templates/gift_circles/_facilitator_card.txt:11
+msgid "Who can help?"
+msgstr "Qui peut aider ?"
+
+#: gift_economy/gift_circles/templates/gift_circles/_facilitator_card.html:19
+#: gift_economy/gift_circles/templates/gift_circles/_facilitator_card.txt:15
+msgctxt "gift-circle round"
+msgid "Offers"
+msgstr "Offres"
+
+#: gift_economy/gift_circles/templates/gift_circles/_facilitator_card.html:20
+#: gift_economy/gift_circles/templates/gift_circles/_facilitator_card.txt:16
+msgctxt "gift-circle round"
+msgid "Thanks"
+msgstr "Remerciements"
+
+#: gift_economy/gift_circles/templates/gift_circles/_facilitator_card.html:21
+#: gift_economy/gift_circles/templates/gift_circles/_facilitator_card.txt:17
+msgctxt "gift-circle round"
+msgid "Close"
+msgstr "Clôture"
+
+#: gift_economy/gift_circles/templates/gift_circles/_facilitator_card.html:34
+#: gift_economy/gift_circles/templates/gift_circles/_facilitator_card.txt:28
+msgid "What to bring"
+msgstr "Quoi apporter"
+
+#: gift_economy/gift_circles/templates/gift_circles/_giftsheet_entries.html:12
+#, python-format
+msgid "Taken by %(name)s"
+msgstr "Pour %(name)s"
+
+#: gift_economy/gift_circles/templates/gift_circles/_giftsheet_entries.html:12
+#, python-format
+msgid "Fulfilled by %(name)s"
+msgstr "Exaucé par %(name)s"
+
+#: gift_economy/gift_circles/templates/gift_circles/_giftsheet_entries.html:25
+msgid "Remove this idea?"
+msgstr "Retirer cette idée ?"
+
+#: gift_economy/gift_circles/templates/gift_circles/_giftsheet_entries.html:49
+#: gift_economy/gift_circles/templates/gift_circles/print.html:67
+msgid "Wish or offer"
+msgstr "Souhait ou offre"
+
+#: gift_economy/gift_circles/templates/gift_circles/_giftsheet_entries.html:70
+msgid "What is the idea?"
+msgstr "Quelle est l'idée ?"
+
+#: gift_economy/gift_circles/templates/gift_circles/_giftsheet_entries.html:71
+msgid "Whose idea is it?"
+msgstr "De qui est l'idée ?"
+
+#: gift_economy/gift_circles/templates/gift_circles/_giftsheet_entries.html:90
+msgid "Nothing on the Giftsheet yet."
+msgstr "Rien encore sur la feuille des dons."
+
+#: gift_economy/gift_circles/templates/gift_circles/_guest_sign_up.html:2
+#: gift_economy/gift_circles/templates/gift_circles/email/invitation.html:6
+#: gift_economy/gift_circles/templates/gift_circles/email/invitation.txt:11
+#: gift_economy/gift_circles/templates/gift_circles/guest_sign_up.html:4
+#: gift_economy/gift_circles/templates/gift_circles/guest_sign_up.html:9
+#: gift_economy/gift_circles/templates/gift_circles/guest_sign_up.html:26
+#: gift_economy/gift_circles/templates/gift_circles/invitation.html:36
+msgid "Coming as a guest"
+msgstr "Venir en tant qu'invité·e"
+
+#: gift_economy/gift_circles/templates/gift_circles/_host_guide.html:3
+msgid "What you do as a host"
+msgstr "Ce que tu fais en tant qu'hôte"
+
+#: gift_economy/gift_circles/templates/gift_circles/_invite.html:4
+#: gift_economy/gift_circles/templates/gift_circles/invite.html:4
+#: gift_economy/gift_circles/templates/gift_circles/invite.html:8
+#: gift_economy/gift_circles/templates/gift_circles/invite.html:9
+#: gift_economy/gift_circles/templates/gift_circles/invite.html:67
+msgid "Invite people"
+msgstr "Inviter des gens"
+
+#: gift_economy/gift_circles/templates/gift_circles/_invite.html:8
+#: gift_economy/gift_circles/templates/gift_circles/_invite.html:16
+msgid "Copy link"
+msgstr "Copier le lien"
+
+#: gift_economy/gift_circles/templates/gift_circles/_karma_rules.html:5
+#: gift_economy/gift_circles/templates/gift_circles/_karma_rules.txt:4
+msgid "Wish big."
+msgstr "Souhaite en grand."
+
+#: gift_economy/gift_circles/templates/gift_circles/_karma_rules.html:7
+#: gift_economy/gift_circles/templates/gift_circles/_karma_rules.txt:6
+msgid "The one who wished follows up."
+msgstr "C'est la personne qui a souhaité qui reprend contact."
+
+#: gift_economy/gift_circles/templates/gift_circles/_rounds.html:4
+#: gift_economy/gift_circles/templates/gift_circles/_rounds.txt:3
+msgid "Welcome."
+msgstr "Accueil."
+
+#: gift_economy/gift_circles/templates/gift_circles/_rounds.html:5
+#: gift_economy/gift_circles/templates/gift_circles/_rounds.txt:4
+msgid "Wishes."
+msgstr "Souhaits."
+
+#: gift_economy/gift_circles/templates/gift_circles/_rounds.html:6
+#: gift_economy/gift_circles/templates/gift_circles/_rounds.txt:5
+msgid "Offers."
+msgstr "Offres."
+
+#: gift_economy/gift_circles/templates/gift_circles/_rounds.html:7
+#: gift_economy/gift_circles/templates/gift_circles/_rounds.txt:6
+msgid "Thanks."
+msgstr "Remerciements."
+
+#: gift_economy/gift_circles/templates/gift_circles/_scribe.html:9
+msgid "Make scribe"
+msgstr "Nommer scribe"
+
+#: gift_economy/gift_circles/templates/gift_circles/_when.txt:1
+#, python-format
+msgid "%(start)s to %(end)s"
+msgstr "de %(start)s à %(end)s"
+
+#: gift_economy/gift_circles/templates/gift_circles/_when.txt:1
+#, python-format
+msgid "from %(start)s"
+msgstr "à partir de %(start)s"
+
+#: gift_economy/gift_circles/templates/gift_circles/email/coming.html:17
+#: gift_economy/gift_circles/templates/gift_circles/email/coming.txt:26
+#: gift_economy/gift_circles/templates/gift_circles/email/guest_coming.html:17
+#: gift_economy/gift_circles/templates/gift_circles/email/guest_coming.txt:26
+#: gift_economy/gift_circles/templates/gift_circles/email/reminder.html:24
+#: gift_economy/gift_circles/templates/gift_circles/email/reminder.txt:26
+msgid "See you there!"
+msgstr "À bientôt sur place !"
+
+#: gift_economy/gift_circles/templates/gift_circles/email/guest_confirm.html:4
+#: gift_economy/gift_circles/templates/gift_circles/email/guest_confirm.txt:5
+#: gift_economy/gift_circles/templates/gift_circles/guest_confirm.html:4
+#: gift_economy/gift_circles/templates/gift_circles/guest_confirm.html:16
+msgid "Yes, I'm coming"
+msgstr "Oui, je viens"
+
+#: gift_economy/gift_circles/templates/gift_circles/email/host.html:11
+#: gift_economy/gift_circles/templates/gift_circles/email/host.txt:18
+msgid "Links"
+msgstr "Liens"
+
+#: gift_economy/gift_circles/templates/gift_circles/email/invitation.html:3
+#: gift_economy/gift_circles/templates/gift_circles/email/invitation.txt:3
+#: gift_economy/gift_circles/templates/gift_circles/invitation.html:11
+#, python-format
+msgid "%(name)s invites you to the gift-circle %(title)s."
+msgstr "%(name)s t'invite au cercle de dons %(title)s."
+
+#: gift_economy/gift_circles/templates/gift_circles/email/invitation.html:8
+#: gift_economy/gift_circles/templates/gift_circles/email/invitation.txt:13
+msgid "What is a gift-circle?"
+msgstr "Qu'est-ce qu'un cercle de dons ?"
+
+#: gift_economy/gift_circles/templates/gift_circles/email/invitation.html:13
+msgid "I'm not coming"
+msgstr "Je ne viens pas"
+
+#: gift_economy/gift_circles/templates/gift_circles/giftsheet.html:73
+msgid "Delete this photo?"
+msgstr "Supprimer cette photo ?"
+
+#: gift_economy/gift_circles/templates/gift_circles/giftsheet.html:98
+msgid "Open it again"
+msgstr "La rouvrir"
+
+#: gift_economy/gift_circles/templates/gift_circles/guest_sent.html:4
+#: gift_economy/gift_circles/templates/gift_circles/guest_sent.html:9
+msgid "Please confirm your email"
+msgstr "Merci de confirmer ton e-mail"
+
+#: gift_economy/gift_circles/templates/gift_circles/guest_sent.html:12
+#: gift_economy/gift_circles/templates/gift_circles/invitation.html:12
+msgid "Back to the gift-circle"
+msgstr "Retour au cercle de dons"
+
+#: gift_economy/gift_circles/templates/gift_circles/guest_sign_up.html:12
+#: gift_economy/gift_circles/templates/gift_circles/invitation.html:24
+msgid "Have an account?"
+msgstr "Tu as un compte ?"
+
+#: gift_economy/gift_circles/templates/gift_circles/invite.html:11
+msgid "They get your invitation with what a gift-circle is, and come without asking."
+msgstr "Ces personnes reçoivent ton invitation avec ce qu'est un cercle de dons, et viennent sans demander."
+
+#: gift_economy/gift_circles/templates/gift_circles/invite.html:19
+msgid "Members of ecobasa"
+msgstr "Membres d'ecobasa"
+
+#: gift_economy/gift_circles/templates/gift_circles/invite.html:72
+msgid "Invited so far"
+msgstr "Invité·es jusqu'ici"
+
+#: gift_economy/gift_circles/templates/gift_circles/print.html:38
+msgid "The Giftsheet takes two pages: print it on both sides of one sheet. To save it as a PDF, choose “Save as PDF” in the print dialog."
+msgstr "La feuille des dons tient sur deux pages : imprime-la en recto verso. Pour l'enregistrer en PDF, choisis « Enregistrer au format PDF » dans la fenêtre d'impression."
+
+#: gift_economy/gift_circles/templates/gift_circles/print.html:68
+msgid "From (name, contact)"
+msgstr "De (nom, contact)"
+
+#: gift_economy/gift_circles/timings.py:26
+#, python-format
+msgid "%(count)s hour"
+msgid_plural "%(count)s hours"
+msgstr[0] "%(count)s heure"
+msgstr[1] "%(count)s heures"
+
+#: gift_economy/gift_circles/timings.py:28
+#, python-format
+msgid "%(count)s minute"
+msgid_plural "%(count)s minutes"
+msgstr[0] "%(count)s minute"
+msgstr[1] "%(count)s minutes"
+
+#: gift_economy/gift_circles/views.py:198
+#, python-format
+msgid "You're in. See you on %(day)s!"
+msgstr "C'est noté. Rendez-vous le %(day)s !"
+
+#: gift_economy/gift_circles/views.py:290
+#, python-format
+msgid "Your invitation has been sent."
+msgid_plural "Your %(count)s invitations have been sent."
+msgstr[0] "Ton invitation a été envoyée."
+msgstr[1] "Tes %(count)s invitations ont été envoyées."
+
+#: gift_economy/gift_circles/views.py:461
+msgid "That is who it is from. Please choose someone else."
+msgstr "C'est de cette personne. Choisis quelqu'un d'autre."
+
+#: gift_economy/gift_circles/views.py:468
+msgid "Please write the idea."
+msgstr "Merci d'écrire l'idée."
+
+#: gift_economy/gift_circles/views.py:492
+msgid "Please write the wish or offer."
+msgstr "Merci d'écrire le souhait ou l'offre."
+
+#: help/templates/help/travelling_tips.html:36
+msgid "Hitchwiki Map"
+msgstr "Carte Hitchwiki"
+
+#: tours/templates/tours/_route.html:84
+msgid "Invite to a gift-circle here"
+msgstr "Inviter à un cercle de dons ici"
+
+#: tours/templates/tours/_route.html:121
+msgid "Change"
+msgstr "Modifier"
+
+#: gift_economy/gift_circles/templates/gift_circles/_giftsheet_entries.html
+msgid "Add an idea"
+msgstr "Ajouter une idée"
+
+msgid "Last time:"
+msgstr "La dernière fois :"
+
+#, python-format
+msgid "%(name)s writes to you from the gift-circle %(title)s"
+msgstr "%(name)s t'écrit depuis le cercle de dons %(title)s"
+
+#, python-format
+msgid "What came out of %(title)s"
+msgstr "Ce qui est sorti de %(title)s"
+
+msgid "The gift-circle"
+msgstr "Le cercle de dons"
+
+#, python-format
+msgid "%(name)s, the host"
+msgstr "%(name)s, l'hôte"
+
+#, python-format
+msgid "Offer: %(text)s (%(from)s)"
+msgstr "Offre : %(text)s (%(from)s)"
+
+#, python-format
+msgid "Wish: %(text)s (%(from)s)"
+msgstr "Souhait : %(text)s (%(from)s)"
+
+msgid "Plan the next one"
+msgstr "Prévoir le prochain"
+
+msgid "Gift-circles grow when they happen again. Anyone who came can plan the next one: choose a date, and everyone who came gets an invitation, and you can invite new people. Whoever plans it hosts it."
+msgstr "Les cercles de dons grandissent quand ils se répètent. Toute personne venue peut prévoir le prochain : choisis une date, toutes les personnes venues reçoivent une invitation, et tu peux inviter de nouvelles personnes. Qui le prévoit l'accueille."
+
+#, python-format
+msgid "Borrowed from %(start)s until %(end)s"
+msgstr "Emprunté du %(start)s au %(end)s"
+
+msgid "How it went"
+msgstr "Comment ça s'est passé"
+
+msgid "Take your story back?"
+msgstr "Retirer ton histoire ?"
+
+msgid "No stories yet."
+msgstr "Pas encore d'histoires."
+
+msgid "What is it about?"
+msgstr "De quoi s'agit-il ?"
+
+#, python-format
+msgid "%(name)s can help with your wish."
+msgstr "%(name)s peut t'aider pour ton souhait."
+
+#, python-format
+msgid "You said yes to %(name)s. They get in touch with you."
+msgstr "Tu as dit oui à %(name)s. Cette personne te contacte."
+
+#, python-format
+msgid "You take it from %(name)s. Get in touch with them."
+msgstr "Tu le reçois de %(name)s. Prends contact."
+
+#, python-format
+msgid "An idea from %(name)s: %(text)s. Get in touch and see where it leads."
+msgstr "Une idée de %(name)s : %(text)s. Prends contact et vois où elle mène."
+
+#, python-format
+msgid "Your idea for %(name)s: %(text)s. They get in touch with you."
+msgstr "Ton idée pour %(name)s : %(text)s. Cette personne te contacte."
+
+#, python-format
+msgid "Write to %(name)s on ecobasa"
+msgstr "Écrire à %(name)s sur ecobasa"
+
+msgid "Email:"
+msgstr "E-mail :"
+
+#, python-format
+msgid "Write to %(name)s"
+msgstr "Écrire à %(name)s"
+
+#, python-format
+msgid "Write to %(name)s on ecobasa:"
+msgstr "Écris à %(name)s sur ecobasa :"
+
+#, python-format
+msgid "Write to %(name)s:"
+msgstr "Écris à %(name)s :"
+
+#, python-format
+msgid "Thank you for coming to the gift-circle %(title)s on %(day)s! Here is what happened."
+msgstr "Merci d'être venu·e au cercle de dons %(title)s le %(day)s ! Voici ce qui s'est passé."
+
+msgid "Your part"
+msgstr "Ta part"
+
+msgid "Remember: the one who wished follows up."
+msgstr "N'oublie pas : qui a souhaité fait le suivi."
+
+msgid "Got a yes for your wish? Get in touch in the next few days, while everyone still remembers."
+msgstr "Quelqu'un a dit oui à ton souhait ? Prends contact dans les prochains jours, tant que tout le monde s'en souvient."
+
+msgid "Your wishes and offers that found nobody today stay on ecobasa. They keep finding people near you."
+msgstr "Tes souhaits et offres qui n'ont trouvé personne aujourd'hui restent sur ecobasa. Ils continuent de trouver des gens près de chez toi."
+
+msgid "The whole Giftsheet"
+msgstr "Toute la feuille des dons"
+
+msgid "A photo of the Giftsheet is on its page:"
+msgstr "Une photo de la feuille des dons est sur sa page :"
+
+msgid "Something good came out of it? Share the story on the page, it shows others what a gift-circle can do:"
+msgstr "Il en est sorti quelque chose de beau ? Raconte l'histoire sur la page, elle montre aux autres ce que peut un cercle de dons :"
+
+#, python-format
+msgid "Two weeks ago at the gift-circle %(title)s, %(name)s said they could help with your wish:"
+msgstr "Il y a deux semaines, au cercle de dons %(title)s, %(name)s a dit pouvoir t'aider pour ton souhait :"
+
+msgid "Did it come true?"
+msgstr "S'est-il réalisé ?"
+
+msgid "Did they come true?"
+msgstr "Se sont-ils réalisés ?"
+
+msgid "Yes, it did"
+msgstr "Oui"
+
+msgid "Not yet"
+msgstr "Pas encore"
+
+#, python-format
+msgid "%(name)s writes to you about “%(text)s” at the gift-circle %(title)s:"
+msgstr "%(name)s t'écrit à propos de « %(text)s » au cercle de dons %(title)s :"
+
+#, python-format
+msgid "Answer this email to write back to %(name)s."
+msgstr "Réponds à cet e-mail pour répondre à %(name)s."
+
+msgid "Did your wish come true?"
+msgstr "Ton souhait s'est-il réalisé ?"
+
+msgid "Did your wishes come true?"
+msgstr "Tes souhaits se sont-ils réalisés ?"
+
+#, python-format
+msgid "%(name)s said they could help."
+msgstr "%(name)s a dit pouvoir aider."
+
+msgid "Wonderful! How did it go? A few sentences help others see that the gift economy works."
+msgstr "Magnifique ! Comment ça s'est passé ? Quelques phrases aident les autres à voir que l'économie du don fonctionne."
+
+#, python-format
+msgid "Maybe it just got forgotten. Write to %(name)s, or bring the wish to the next gift-circle."
+msgstr "Peut-être que ça a juste été oublié. Écris à %(name)s, ou apporte le souhait au prochain cercle de dons."
+
+#, python-format
+msgid "About “%(text)s” at the gift-circle %(title)s."
+msgstr "À propos de « %(text)s » au cercle de dons %(title)s."
+
+#, python-format
+msgid "We send it to %(name)s by email, without their address. They get yours to answer: %(email)s"
+msgstr "Nous l'envoyons à %(name)s par e-mail, sans son adresse. Cette personne reçoit la tienne pour répondre : %(email)s"
+
+msgid "Everyone who came gets the results by email."
+msgstr "Toutes les personnes venues reçoivent les résultats par e-mail."
+
+#, python-format
+msgid "Your message to %(name)s has been sent."
+msgstr "Ton message à %(name)s a été envoyé."
+
+msgid "This link doesn't work any more."
+msgstr "Ce lien ne fonctionne plus."
+
+msgid "Please choose what it is about."
+msgstr "Choisis de quoi il s'agit, s'il te plaît."
+
+msgid "To lend, the days come later"
+msgstr "À prêter, les jours viendront plus tard"
+
+msgid "Not sure yet? Leave the days empty: they agree on them afterwards on ecobasa."
+msgstr "Pas encore sûr·e ? Laisse les jours vides : ils les conviendront ensuite sur ecobasa."
+
+msgid "The days to borrow it aren't agreed yet. Propose them below."
+msgstr "Les jours de l'emprunt ne sont pas encore convenus. Propose-les ci-dessous."
+
+msgid "Hosting a gift-circle"
+msgstr "Organiser un cercle de dons"
+
+msgid "Hosting a gift-circle:"
+msgstr "Organiser un cercle de dons :"
+
+msgid "Invite people to share what they wish for and what they can give: the rounds, the karma rules, the Giftsheet and what comes after."
+msgstr "Invite des gens à partager ce qu'ils souhaitent et ce qu'ils peuvent donner : les tours, les règles du karma, la feuille des dons et la suite."
+
+msgid "Before the circle"
+msgstr "Avant le cercle"
+
+msgid "Roles"
+msgstr "Rôles"
+
+msgid "Online gift-circles"
+msgstr "Cercles de dons en ligne"
+
+msgid "After the circle"
+msgstr "Après le cercle"
+
+msgid "Questions from circles"
+msgstr "Questions des cercles"
+
+msgid "Where gift-circles come from"
+msgstr "D'où viennent les cercles de dons"
+
+msgid "A gift-circle takes about an hour and a half. Strangers often leave as neighbours who help each other. It kick-starts a local support network where friendships and a community can grow out of. It fits well with a potluck, a film night or a party, and it's a good way to find out who in a community can help with what."
+msgstr "Un cercle de dons dure environ une heure et demie. Des inconnu·es repartent souvent en voisin·es qui s'entraident. Il lance un réseau d'entraide local d'où peuvent naître des amitiés et une communauté. Il va bien avec un repas partagé, une soirée cinéma ou une fête, et c'est un bon moyen de découvrir qui, dans une communauté, peut aider pour quoi."
+
+msgid "Anyone can host one: in a living room, a park, a café, at a community, on a tour, or online as a video call."
+msgstr "Tout le monde peut en organiser un : dans un salon, un parc, un café, dans une communauté, sur un tour ou en ligne, en visio."
+
+#, python-format
+msgid "Press “<a href=\"%(create_url)s\">Invite to a gift-circle</a>”: on the events list, on your dashboard or on your profile. Ambassadors find it on their community's page, tour organisers at each stop of their tour."
+msgstr "Clique sur « <a href=\"%(create_url)s\">Inviter à un cercle de dons</a> » : dans la liste des événements, sur ton tableau de bord ou sur ton profil. Les ambassadeur·rices le trouvent sur la page de leur communauté, les organisateur·rices d'un tour à chaque étape."
+
+msgid "Choose a date and a place, or “Online, as a video call”. Say how many people can come, if there is a limit. For a video call, about 12 is a good size."
+msgstr "Choisis une date et un lieu, ou « En ligne, en visio ». Indique combien de personnes peuvent venir, s'il y a une limite. Pour une visio, environ 12, c'est une bonne taille."
+
+msgid "If the gift-circle is at your home, only the people who come see the exact address. Everyone else sees the area."
+msgstr "Si le cercle de dons a lieu chez toi, seules les personnes qui viennent voient l'adresse exacte. Les autres voient le quartier."
+
+msgid "Right after, you get an email with everything for the day: the rounds, the karma rules, a card to print and the printable Giftsheet."
+msgstr "Juste après, tu reçois un e-mail avec tout pour le jour J : les tours, les règles du karma, une carte à imprimer et la feuille des dons à imprimer."
+
+msgid "People who come can add their wishes and offers on the page, or bring ones they already have on ecobasa. Everyone sees what the others bring and wish for, and ecobasa suggests who could help whom."
+msgstr "Les personnes qui viennent peuvent ajouter leurs souhaits et offres sur la page, ou apporter ceux qu'elles ont déjà sur ecobasa. Chacun·e voit ce que les autres apportent et souhaitent, et ecobasa propose qui pourrait aider qui."
+
+msgid "Find a scribe. It can be anyone who comes: on the page you can let them write the Giftsheet."
+msgstr "Trouve un·e scribe. Ce peut être n'importe qui parmi les personnes qui viennent : sur la page, tu peux lui laisser écrire la feuille des dons."
+
+msgid "Everyone says their name. Explain the rounds and the karma rules. Say that offers and wishes go on ecobasa only for those who said yes, and emails go only between the two sides of a match."
+msgstr "Chacun·e dit son prénom. Explique les tours et les règles du karma. Dis que les offres et souhaits ne vont sur ecobasa que pour celles et ceux qui ont dit oui, et que les e-mails ne circulent qu'entre les deux côtés d'un match."
+
+msgid "Go round the circle. Each person says one wish, or passes. After each wish, ask: Who can help? Nobody? Who knows someone who can? Still nobody? Who has an idea how we could do it together? Stay with one wish until it is solved or you let it go. If there is time, go round again."
+msgstr "Faites le tour du cercle. Chacun·e dit un souhait, ou passe. Après chaque souhait, demande : Qui peut aider ? Personne ? Qui connaît quelqu'un qui peut ? Toujours personne ? Qui a une idée pour le faire ensemble ? Restez sur un souhait jusqu'à ce qu'il soit résolu ou que vous le laissiez partir. S'il reste du temps, refaites un tour."
+
+msgid "A last round. Each person thanks someone: for a gift from last time, for something today, or just for being here."
+msgstr "Un dernier tour. Chacun·e remercie quelqu'un : pour un don de la dernière fois, pour quelque chose d'aujourd'hui, ou simplement pour sa présence."
+
+msgid "Close."
+msgstr "Clôture."
+
+msgid "Tips: help the shy ones. If nobody starts, suggest an easy wish, like a hug, a book tip or help carrying something. Keep wishes to one sentence. Offers can come up in the wish round, and that's fine. A big wish that needs many hands can become a plan of its own: a work day, a workshop, a next meeting."
+msgstr "Astuces : aide les plus timides. Si personne ne commence, propose un souhait facile, comme un câlin, un conseil de lecture ou de l'aide pour porter quelque chose. Un souhait, une phrase. Des offres peuvent venir pendant le tour des souhaits, c'est très bien. Un grand souhait qui demande beaucoup de mains peut devenir un projet à part : une journée de travail, un atelier, une prochaine rencontre."
+
+msgid "Facilitator"
+msgstr "La personne qui anime"
+
+msgid "Usually you, the host. Keeps the circle going and helps the shy ones."
+msgstr "D'habitude toi, l'hôte. Fait avancer le cercle et aide les plus timides."
+
+msgid "Writes the Giftsheet: who wished or offered what, and who said yes. Shortens a wish to one line, and asks again for a name when needed."
+msgstr "Écrit la feuille des dons : qui a souhaité ou offert quoi, et qui a dit oui. Résume un souhait en une ligne et redemande un nom si besoin."
+
+msgid "Timekeeper"
+msgstr "Gardien·ne du temps"
+
+msgid "Optional. Says when a round should end."
+msgstr "Facultatif. Dit quand un tour devrait finir."
+
+msgid "The printed Giftsheet or big paper, markers in two colours (one for wishes, one for offers), pens and small paper for everyone. A phone or laptop for the scribe, if you type the Giftsheet straight into ecobasa. Something for a potluck, if you like."
+msgstr "La feuille des dons imprimée ou une grande feuille, des feutres de deux couleurs (une pour les souhaits, une pour les offres), des stylos et des petits papiers pour tout le monde. Un téléphone ou un ordinateur pour le·la scribe, si vous tapez la feuille des dons directement dans ecobasa. De quoi faire un repas partagé, si vous voulez."
+
+msgid "The scribe opens the Giftsheet on the gift-circle's page, on a phone or laptop. Add a wish or an offer in one line and pick who said it. Then mark who fulfils a wish or takes an offer, or add an idea. Everyone who has the page open sees it change."
+msgstr "Le·la scribe ouvre la feuille des dons sur la page du cercle, sur un téléphone ou un ordinateur. Ajoute un souhait ou une offre en une ligne et choisis qui l'a dit. Puis indique qui exauce un souhait ou prend une offre, ou ajoute une idée. Tous ceux qui ont la page ouverte la voient changer."
+
+msgid "Something to lend, like a tool? Mark it “To lend”. The days can be agreed on right away or come later."
+msgstr "Quelque chose à prêter, comme un outil ? Coche « À prêter ». Les jours peuvent être convenus tout de suite ou plus tard."
+
+msgid "No signal? Print the Giftsheet, fill it in on paper and type it in afterwards. Or take a photo and add it to the page."
+msgstr "Pas de réseau ? Imprime la feuille des dons, remplis-la sur papier et tape-la ensuite. Ou prends une photo et ajoute-la à la page."
+
+msgid "Someone came without signing up? The scribe adds them by name. With an email, they get the results too."
+msgstr "Quelqu'un est venu sans s'inscrire ? Le·la scribe l'ajoute par son prénom. Avec un e-mail, la personne reçoit aussi les résultats."
+
+msgid "An online gift-circle is a video call. ecobasa opens a room for it on a Jitsi server run by volunteers: no account, no app, nobody tracking you. The room is on the gift-circle's page, from an hour before the start."
+msgstr "Un cercle de dons en ligne est une visio. ecobasa ouvre une salle sur un serveur Jitsi tenu par des bénévoles : pas de compte, pas d'appli, pas de pistage. La salle est sur la page du cercle, à partir d'une heure avant le début."
+
+msgid "Everyone who comes gets an email with the link an hour before, so the room stays among you. Be there a few minutes early and set up your camera and microphone."
+msgstr "Toutes les personnes qui viennent reçoivent un e-mail avec le lien une heure avant, ainsi la salle reste entre vous. Arrive quelques minutes en avance et règle ta caméra et ton micro."
+
+msgid "Go round in the order people appear on the screen, and say who is next. The scribe shares the Giftsheet link in the chat."
+msgstr "Passez dans l'ordre où les gens apparaissent à l'écran, et dites qui est le suivant. Le·la scribe partage le lien de la feuille des dons dans le chat."
+
+msgid "Times show in the circle's timezone, so people from elsewhere know when to come."
+msgstr "Les heures sont dans le fuseau horaire du cercle, pour que les gens d'ailleurs sachent quand venir."
+
+msgid "People can come without an ecobasa account, as guests: with a name and an email. They confirm with a link in an email, and can change or cancel through a link too. They only get an ecobasa account if they ask for it."
+msgstr "On peut venir sans compte ecobasa, en invité·e : avec un prénom et un e-mail. On confirme par un lien dans un e-mail, et un lien permet aussi de modifier ou d'annuler. On ne reçoit un compte ecobasa que si on le demande."
+
+msgid "Guests get the same emails as everyone, and a button to create an account. With one, their offers and wishes keep finding people after the circle, and they can be invited to the next gift-circle."
+msgstr "Les invité·es reçoivent les mêmes e-mails que tout le monde, et un bouton pour créer un compte. Avec un compte, leurs offres et souhaits continuent de trouver des gens après le cercle, et ils et elles peuvent être invité·es au prochain cercle de dons."
+
+msgid "When you close the Giftsheet, everyone who came gets the results: the whole Giftsheet, and their own part: what they said yes to, what others said yes to for them, and how to reach each other."
+msgstr "Quand tu fermes la feuille des dons, toutes les personnes venues reçoivent les résultats : la feuille entière, et leur propre part : à quoi elles ont dit oui, ce que d'autres leur ont dit oui, et comment se joindre."
+
+msgid "The one who wished follows up. Two weeks later, ecobasa asks them if their wish came true."
+msgstr "C'est la personne qui a souhaité qui reprend contact. Deux semaines plus tard, ecobasa lui demande si son souhait s'est réalisé."
+
+msgid "Wishes and offers that found nobody stay on ecobasa, for those who said yes, and keep finding people nearby."
+msgstr "Les souhaits et offres qui n'ont trouvé personne restent sur ecobasa, pour celles et ceux qui ont dit oui, et continuent de trouver des gens à proximité."
+
+msgid "Write a few lines under “How it went”: about the gift-circle, about someone who came, or about a wish, an offer or an idea. Stories show others what a gift-circle can do and motivate new people to host one."
+msgstr "Écris quelques lignes sous « Comment ça s'est passé » : sur le cercle de dons, sur quelqu'un qui est venu, ou sur un souhait, une offre ou une idée. Les histoires montrent aux autres ce qu'un cercle de dons peut faire, et donnent envie à de nouvelles personnes d'en organiser un."
+
+msgid "The gift-circle stays on ecobasa as a record, but can be deleted manually by the organiser."
+msgstr "Le cercle de dons reste sur ecobasa comme trace, mais la personne qui l'a organisé peut le supprimer."
+
+msgid "Gift-circles get better when they happen again: people know the format, and heartwarming stories can be shared from the last circle's matches. Anyone who came can press “Plan the next one”. Choose a date, and everyone who came gets an invitation. Whoever plans it hosts it."
+msgstr "Les cercles de dons s'améliorent quand ils reviennent : les gens connaissent le déroulé, et on peut partager des histoires touchantes nées des matchs du dernier cercle. Toute personne venue peut cliquer sur « Prévoir le prochain ». Choisis une date, et toutes les personnes venues reçoivent une invitation. Qui le prévoit l'organise."
+
+msgid "Nobody dares to wish. What now?"
+msgstr "Personne n'ose souhaiter. Et maintenant ?"
+
+msgid "Many of us learned not to ask. Saying what you need is a gift to the circle: it gives the others a chance to give. Start with a small wish yourself, and encourage the others gently."
+msgstr "Beaucoup d'entre nous ont appris à ne pas demander. Dire ce dont on a besoin est un cadeau pour le cercle : cela donne aux autres l'occasion de donner. Commence toi-même par un petit souhait, et encourage les autres avec douceur."
+
+msgid "People don't follow up on what was offered to them."
+msgstr "Les gens ne reprennent pas contact pour ce qu'on leur a offert."
+
+msgid "Remind them in the closing round that the one who wished gets in touch. Offers are meant to be taken: taking one is a gift to the one who gives."
+msgstr "Rappelle à la clôture que c'est la personne qui a souhaité qui reprend contact. Les offres sont faites pour être prises : en accepter une est un cadeau pour qui donne."
+
+msgid "The circle has grown big."
+msgstr "Le cercle est devenu grand."
+
+msgid "Gift-circles work with a hundred people and more. At some point you may just need a microphone or a megaphone. If there isn't time for everyone, split into smaller circles for the wishes and offers, each with its own scribe on the same Giftsheet, and come together again for the thanks."
+msgstr "Les cercles de dons fonctionnent avec cent personnes et plus. À un moment, il vous faudra peut-être juste un micro ou un mégaphone. S'il n'y a pas assez de temps pour tout le monde, séparez-vous en cercles plus petits pour les souhaits et les offres, chacun avec son·sa scribe sur la même feuille des dons, et retrouvez-vous pour les remerciements."
+
+msgid "Can people trade on the side?"
+msgstr "Peut-on échanger à côté ?"
+
+msgid "The circle itself is for gifts. What two people agree on afterwards is up to them. If two matches complement each other and a barter comes out of it, that is totally fine, but not a requirement."
+msgstr "Le cercle lui-même est fait pour les dons. Ce que deux personnes conviennent ensuite les regarde. Si deux matchs se complètent et qu'un troc en naît, c'est tout à fait bien, mais ce n'est pas une obligation."
+
+msgid "Should it always be the same facilitator?"
+msgstr "Est-ce toujours la même personne qui doit animer ?"
+
+msgid "Better not. When someone else facilitates next time, more people learn it, and the circle doesn't depend on one person. Later they can start gift-circles of their own."
+msgstr "Plutôt pas. Si quelqu'un d'autre anime la prochaine fois, plus de gens apprennent, et le cercle ne dépend pas d'une seule personne. Plus tard, ils et elles pourront lancer leurs propres cercles de dons."
+
+msgid "Should it always go the same way?"
+msgstr "Est-ce que ça doit toujours se passer pareil ?"
+
+msgid "Try things, and ask the circle afterwards what worked. A circle that meets regularly learns: the regulars carry its culture, and newcomers bring new wishes, gifts and ideas."
+msgstr "Essayez des choses, et demandez ensuite au cercle ce qui a marché. Un cercle qui se réunit régulièrement apprend : les habitué·es portent sa culture, et les nouveaux·elles apportent de nouveaux souhaits, talents et idées."
+
+msgid "Why the thanks round?"
+msgstr "Pourquoi le tour des remerciements ?"
+
+msgid "Gratitude is the soil a gift economy grows in. It changes the mood of the whole circle, and it shows that gifts from last time arrived. Try it, you don't want to miss it."
+msgstr "La gratitude est le terreau où pousse une économie du don. Elle change l'ambiance de tout le cercle, et montre que les dons de la dernière fois sont arrivés. Essayez, vous ne voudrez plus vous en passer."
+
+msgid "Offers and wishes from a gift-circle go on ecobasa only for people who said yes. Everyone can change that later."
+msgstr "Les offres et souhaits d'un cercle de dons ne vont sur ecobasa que pour celles et ceux qui ont dit oui. Chacun·e peut changer cela plus tard."
+
+msgid "The Giftsheet is seen only by who came, the host and the scribes. Wishes are said in a trusting circle."
+msgstr "Seules les personnes venues, l'hôte et les scribes voient la feuille des dons. Les souhaits se disent dans un cercle de confiance."
+
+msgid "Emails are shared only between the two sides of a match, and only for guests who said yes. People with an account write to each other through ecobasa."
+msgstr "Les e-mails ne sont partagés qu'entre les deux côtés d'un match, et seulement pour les invité·es qui ont dit oui. Les personnes avec un compte s'écrivent via ecobasa."
+
+msgid "The exact place of a gift-circle at someone's home is shown only to the people who come."
+msgstr "Le lieu exact d'un cercle de dons chez quelqu'un n'est montré qu'aux personnes qui viennent."
+
+msgid "Gift-circles were started by Alpha Lo, and spread by many others since. Read his <a href=\"https://opencollaboration.wordpress.com/2010/04/15/gift-circle-principles/\" target=\"_blank\" rel=\"noopener\">gift-circle principles</a> and the <a href=\"https://opencollaboration.wordpress.com/2009/11/28/gift-circle-faq/\" target=\"_blank\" rel=\"noopener\">gift-circle FAQ</a>."
+msgstr "Les cercles de dons ont été lancés par Alpha Lo, et beaucoup d'autres les ont répandus depuis. Lis ses <a href=\"https://opencollaboration.wordpress.com/2010/04/15/gift-circle-principles/\" target=\"_blank\" rel=\"noopener\">principes du gift circle</a> et la <a href=\"https://opencollaboration.wordpress.com/2009/11/28/gift-circle-faq/\" target=\"_blank\" rel=\"noopener\">FAQ</a> (en anglais)."
+
+msgid "The gift-circle concept on ecobasa designed by Arne Bollinger is licensed under a <a href=\"https://creativecommons.org/licenses/by-nc-sa/4.0/\" target=\"_blank\" rel=\"license noopener\">Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)</a> license."
+msgstr "Le concept du cercle de dons sur ecobasa, conçu par Arne Bollinger, est mis à disposition selon les termes de la licence <a href=\"https://creativecommons.org/licenses/by-nc-sa/4.0/deed.fr\" target=\"_blank\" rel=\"license noopener\">Attribution - Pas d'Utilisation Commerciale - Partage dans les Mêmes Conditions 4.0 International (CC BY-NC-SA 4.0)</a>."
+
+msgid "Say you're coming, and add your wishes and offers on the page. ecobasa shows you who could help whom before the day, so people know what things they could already bring along, so it can change hands there."
+msgstr "Dis que tu viens, et ajoute tes souhaits et tes offres sur la page. ecobasa te montre avant le jour qui pourrait aider qui, ainsi chacun·e sait quelles choses apporter déjà, et elles peuvent changer de mains sur place."
+
+msgid "Someone who comes can help with your wish already? Agree with them on the page, and bring the things along, so you can give them on the day."
+msgstr "Quelqu'un qui vient peut déjà t'aider pour ton souhait ? Mettez-vous d'accord sur la page et apportez les choses, pour vous les donner le jour même."
+
+msgid "A gift-circle typically takes about an hour and a half but can be shorter with a smaller group and some groups don't want to stop, because exciting ideas keep coming up. Strangers often leave as neighbours who help each other. It kick-starts a local support network where friendships and a community can grow out of. It fits well with a potluck, a film night or a party, and it's a good way to find out who in a community can help with what."
+msgstr "Un cercle de dons dure en général environ une heure et demie, mais peut être plus court avec un petit groupe, et certains groupes ne veulent plus s'arrêter, parce que des idées passionnantes n'arrêtent pas d'arriver. Des inconnu·es repartent souvent en voisin·es qui s'entraident. Il lance un réseau d'entraide local d'où peuvent naître des amitiés et une communauté. Il va bien avec un repas partagé, une soirée cinéma ou une fête, et c'est un bon moyen de découvrir qui, dans une communauté, peut aider pour quoi."
+
+msgid "Right after, you get an email with everything for the day: the rounds, the karma rules, a facilitation card to print and the printable Giftsheet."
+msgstr "Juste après, tu reçois un e-mail avec tout pour le jour J : les tours, les règles du karma, une carte d'animation à imprimer et la feuille des dons à imprimer."
+
+msgid "People who come can add their wishes and offers on the event page, or bring ones they already have on ecobasa. Everyone sees what the others bring and wish for, and ecobasa suggests who could help whom beforehand if it knows what they have to offer and what they are wishing for. That way people already know what to bring along to the event so things can change hands there."
+msgstr "Les personnes qui viennent peuvent ajouter leurs souhaits et offres sur la page de l'événement, ou apporter ceux qu'elles ont déjà sur ecobasa. Chacun·e voit ce que les autres apportent et souhaitent, et ecobasa propose à l'avance qui pourrait aider qui, s'il sait ce qu'elles ont à offrir et ce qu'elles souhaitent. Ainsi, chacun·e sait déjà quoi apporter à l'événement, et les choses peuvent changer de mains sur place."
+
+msgid "With an account you can add your wishes and offers on the page before the circle and see who could help whom, so you know what to bring along, and things can change hands there."
+msgstr "Avec un compte, tu peux ajouter tes souhaits et tes offres sur la page avant le cercle et voir qui pourrait aider qui. Tu sais ainsi quoi apporter, et les choses peuvent changer de mains sur place."
+
+msgid "– a facilitation guide"
+msgstr "– un guide d'animation"
+
+msgid "The scribe reads out the matches and asks those who came without signing up for their email address, so their matches can reach them. Remind everyone: the one who wished follows up."
+msgstr "Le ou la scribe lit les matchs à voix haute et demande leur adresse e-mail aux personnes venues sans s'inscrire, pour que leurs matchs puissent les joindre. Rappelle à tout le monde : c'est la personne qui a souhaité qui reprend contact."
+
+msgid "The karma rules are inspired by Pierre Lischke's <a href=\"https://karmakreis.mystrikingly.com/\" target=\"_blank\" rel=\"noopener\">KarmaKreis</a>."
+msgstr "Les règles du karma s'inspirent du <a href=\"https://karmakreis.mystrikingly.com/\" target=\"_blank\" rel=\"noopener\">KarmaKreis</a> de Pierre Lischke."
+
+msgid "What you will speak in the call."
+msgstr "Les langues que vous parlez pendant la visio."
+
+msgid "Gift-circles you can join from anywhere"
+msgstr "Cercles de dons que tu peux rejoindre de partout"
+
+msgid "None planned at the moment. Would you like to <a href=\"%(create_url)s\">invite to one</a>?"
+msgstr "Aucun n'est prévu pour le moment. Tu veux <a href=\"%(create_url)s\">inviter à un cercle</a> ?"
+
+msgid "For people around"
+msgstr "Pour les gens autour de"
+
+msgid "Optional: a town, if it is for people who live near each other. Everyone sees only the town."
+msgstr "Facultatif : une ville, si c'est pour des gens qui habitent près les uns des autres. Tout le monde ne voit que la ville."
+
+msgid "From far away, people can give each other skills, knowledge, ideas, shared projects and things that can be posted. Things to pick up and tools to lend need people who live nearby."
+msgstr "À distance, vous pouvez vous offrir des compétences, des savoirs, des idées, des projets communs et des choses qui s'envoient par la poste. Les choses à récupérer et les outils à prêter demandent des gens qui habitent à proximité."
+
+msgid "for people around %(area)s"
+msgstr "pour les gens autour de %(area)s"
+
+msgid "Lending needs people who live near each other: do they?"
+msgstr "Prêter demande d'habiter près l'un de l'autre : est-ce le cas ?"
+
+msgid "Who comes from far away can give each other skills, knowledge, ideas, shared projects and things that can be posted. Things to pick up and tools to lend need people who live nearby: if your circle is for them, say the town under “For people around”. Everyone sees only the town, and people around it find the circle on the map."
+msgstr "Qui vient de loin peut offrir des compétences, des savoirs, des idées, des projets communs et des choses qui s'envoient par la poste. Les choses à récupérer et les outils à prêter demandent des gens qui habitent à proximité : si ton cercle de dons est pour eux, indique la ville sous « Pour les gens autour de ». Tout le monde ne voit que la ville, et les gens du coin trouvent le cercle sur la carte."
+
+msgid "The times are in the timezone of the town below."
+msgstr "Les heures sont celles du fuseau horaire de la ville ci-dessous."
+
+#: homepage/templates/homepage/homepage.html
+msgid "Find new members for your community: applications, trial visits and onboarding"
+msgstr "Trouver de nouveaux membres pour ta communauté : candidatures, visites d'essai et intégration"
+
+msgid "Also from afar"
+msgstr "Aussi à distance"
+
+msgid "By video call or phone. You also find people far away who say so too, beyond your distance."
+msgstr "Par appel vidéo ou téléphone. Tu trouves aussi des gens loin qui disent la même chose, au-delà de ta distance."
+
+msgid "By video call or phone"
+msgstr "Par appel vidéo ou téléphone"
+
+msgid "Shared at an online gift-circle"
+msgstr "Partagé dans un cercle de dons en ligne"
+
+msgid "Start an online skill-sharing"
+msgstr "Lancer un skillsharing en ligne"
+
+msgid "Online skill-sharing: %(skills)s"
+msgstr "Skillsharing en ligne : %(skills)s"
+
+
+msgid "Skill-sharing."
+msgstr "Skillsharing."
+
+msgid "If there is time, those who matched over a skill or knowledge share it right away, in small groups."
+msgstr "S'il reste du temps, celles et ceux qui ont fait un match autour d'une compétence ou d'un savoir le partagent tout de suite, en petits groupes."
+
+msgid "More below"
+msgstr "Plus bas"
+
+msgid "Skill-sharing"
+msgstr "Skillsharing"
+
+msgid "Every gift-circle can end with skill-sharing. After the rounds, who matched over a skill or knowledge sits together and starts: show how the sourdough is fed, sketch the food forest, practise the first sentences of Spanish. The rest can listen in or join a group of their own."
+msgstr "Chaque cercle de dons peut se terminer par du skillsharing. Après les tours, celles et ceux qui ont fait un match autour d'une compétence ou d'un savoir se mettent ensemble et commencent : montrer comment on nourrit le levain, esquisser la forêt-jardin, pratiquer les premières phrases d'espagnol. Les autres peuvent écouter ou rejoindre un groupe."
+
+msgid "In a room, each group takes a corner or a table. Online, open a breakout room for each group: whoever is first in the call can, in the participants list. Or go one after another. What doesn't fit into the evening, the two go on with afterwards: the match is on ecobasa."
+msgstr "Dans une salle, chaque groupe prend un coin ou une table. En ligne, ouvrez une salle de sous-groupe pour chaque groupe : la personne arrivée en premier dans l'appel peut le faire, dans la liste des participant·es. Ou passez l'un après l'autre. Ce qui ne tient pas dans la soirée, les deux le poursuivent après : le match est sur ecobasa."
+
+msgid "Offers and wishes of a skill or knowledge can say “Also from afar”: by video call or phone. Two that both say so are suggested to each other however far apart they live, and from the suggestion either of them can start an online skill-sharing: an online gift-circle that invites the other and brings their offers and wishes along. Everyone else who shares the same from afar hears about it and can join."
+msgstr "Les offres et les souhaits d'une compétence ou de savoirs peuvent dire « Aussi à distance » : par appel vidéo ou téléphone. Deux qui le disent sont suggérés l'un à l'autre, quelle que soit la distance qui les sépare, et depuis la suggestion chacun·e des deux peut lancer un skillsharing en ligne : un cercle de dons en ligne qui invite l'autre et apporte leurs offres et souhaits. Toutes les autres personnes qui partagent la même chose à distance l'apprennent et peuvent rejoindre."
+
+msgid "Skills and knowledge marked “Also from afar” are matched however far away, when the other side marked it too."
+msgstr "Les compétences et les savoirs cochés « Aussi à distance » sont suggérés quelle que soit la distance, si l'autre côté l'a coché aussi."
+
+msgid "%(time)s your time"
+msgstr "%(time)s chez toi"
+
+msgid "Agree on a day and time here first. Everyone sees the times in their own timezone."
+msgstr "Mettez-vous d'abord d'accord ici sur un jour et une heure. Chacun·e voit les heures dans son propre fuseau horaire."
+
+msgid "Agree on a day and time in your conversation first: the button is there too. Everyone sees an online gift-circle's times also in their own timezone."
+msgstr "Mettez-vous d'abord d'accord dans votre conversation sur un jour et une heure : le bouton y est aussi. Chacun·e voit les heures d'un cercle de dons en ligne aussi dans son propre fuseau horaire."
+
+msgid "%(city)s time"
+msgstr "heure de %(city)s"
+
+msgid "Online — by video call or phone"
+msgstr "En ligne – par appel vidéo ou téléphone"
+
+msgid "Online, by video call or phone"
+msgstr "En ligne, par appel vidéo ou téléphone"
+
+#: homepage/templates/homepage/homepage.html:22
+msgid ""
+"Communities, permaculture projects and farms – and everyone who wants to "
+"visit them, support them or start something of their own."
+msgstr ""
+"Les communautés, les projets en permaculture et les fermes – et toutes "
+"celles et ceux qui veulent les visiter, les soutenir ou lancer leur propre "
+"projet."
+
+#: templates/_footer.html:13
+#, python-format
+msgid ""
+"The texts, guides and graphics of ecobasa.org are licensed under <a "
+"class=\"text-yellow\" rel=\"license\" href=\"%(cc_url)s\">CC BY-NC-SA 4.0</"
+"a>: you may share and adapt them with credit, noncommercially and under the "
+"same license."
+msgstr "Les textes, guides et graphiques d'ecobasa.org sont sous licence <a class=\"text-yellow\" rel=\"license\" href=\"%(cc_url)s\">CC BY-NC-SA 4.0</a> : tu peux les partager et les adapter en citant la source, sans usage commercial et sous la même licence."
+
+#: templates/_footer.html:14
+#, python-format
+msgid ""
+"Content written by members belongs to them. The name, the logo and the code "
+"are not covered, <a class=\"text-yellow\" href=\"%(license_url)s\">see "
+"details</a>."
+msgstr "Ce que les membres écrivent leur appartient. Le nom, le logo et le code ne sont pas inclus, <a class=\"text-yellow\" href=\"%(license_url)s\">plus de détails</a>."

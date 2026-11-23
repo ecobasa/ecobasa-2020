@@ -16,7 +16,7 @@
           {# Header #}
           <tr>
             <td bgcolor="#e08361" style="background-color:#e08361;padding:24px 32px;">
-              <img class="wordmark" src="{% email_static "images/email-wordmark.png" %}" width="185" height="39" alt="ecobasa.org" style="display:block;border:0;font-size:26px;color:#fcf3e5;font-family:Georgia,serif;">
+              <img class="wordmark" src="{% email_static "images/email-wordmark.png" %}" width="185" height="39" alt="ecobasa.org" style="display:block;border:0;font-size:26px;color:#fcf3e5;font-family:'Bree Serif',Georgia,serif;">
               <p style="margin:8px 0 0;font-size:14px;color:#fcf3e5;opacity:0.85;">{% if kind %}{{ kind }}{% else %}{% trans "New match" %}{% endif %}</p>
             </td>
           </tr>
@@ -40,9 +40,9 @@
                     <p style="margin:0 0 16px;font-size:15px;">{{ match.loan.period }}</p>
                     {% endif %}
                     {% if vd and vd.stay_from or vd and vd.stay_to %}
-                    <p style="margin:0 0 4px;font-size:11px;text-transform:uppercase;letter-spacing:0.06em;opacity:0.6;">{% trans "Proposed stay" %}</p>
+                    <p style="margin:0 0 4px;font-size:11px;text-transform:uppercase;letter-spacing:0.06em;opacity:0.6;">{{ match.stay_label }}</p>
                     <p style="margin:0 0 16px;font-size:15px;">
-                      {% if vd.stay_from %}{{ vd.stay_from|date:"N j, Y" }}{% endif %}{% if vd.stay_from and vd.stay_to %} &ndash; {% endif %}{% if vd.stay_to %}{{ vd.stay_to|date:"N j, Y" }}{% endif %}
+                      {% if vd.stay_from %}{{ vd.stay_from|date:"N j, Y" }}{% endif %}{% if vd.stay_to and vd.stay_to|date:"Ymd" != vd.stay_from|date:"Ymd" %}{% if vd.stay_from %} &ndash; {% endif %}{{ vd.stay_to|date:"N j, Y" }}{% endif %}
                     </p>
                     {% endif %}
                     {% if vd.practice_skills %}

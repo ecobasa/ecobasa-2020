@@ -23,7 +23,7 @@ from gift_economy.gifts.models import Listing
 
 from .emails import notify_match_message, notify_match_response, read_action_token, read_suggestions_unsubscribe_token
 from .forms import MatchMessageForm
-from .models import Loan, Match, MatchMessage, Suggestion, loan_span, stay_q, talked_over_elsewhere_q
+from .models import Loan, Match, MatchMessage, Suggestion, joining_q, loan_span, stay_q, talked_over_elsewhere_q
 
 # What the matches page can show, by its "type" query param: gifts (things) and skills
 # (and knowledge and helping hands) together on one page (with suggestions first),
@@ -68,7 +68,7 @@ def _listing_matches(kinds=None):
 
 
 def _stays():
-    return _with_details(Match.objects.filter(stay_q()).exclude(talked_over_elsewhere_q()))
+    return _with_details(Match.objects.filter(stay_q()).exclude(talked_over_elsewhere_q()).exclude(joining_q()))
 
 
 # ── Matches page ───────────────────────────────────────────────────────────────
@@ -252,7 +252,8 @@ def waiting_counts(user):
 
     counts = {
         "matches": waiting(Match.objects.filter(content_type__app_label="gifts")),
-        "volunteer": waiting(Match.objects.filter(stay_q()).exclude(talked_over_elsewhere_q())),
+        "volunteer": waiting(Match.objects.filter(stay_q()).exclude(talked_over_elsewhere_q()).exclude(joining_q())),
+        "events": waiting(Match.objects.filter(joining_q())),
         "members": waiting(_applications()),
         "tours": waiting(Match.objects.filter(content_type__app_label=TOUR_APP_LABEL), _tours_received(user)),
     }
@@ -400,14 +401,18 @@ def match_detail(request, pk):
                     if error:
                         flash.error(request, error)
                         return redirect(f"{match.get_absolute_url()}?decline=1#compose")
-                if new_status == Match.STATUS_ACCEPTED and match.is_loan:
+                if new_status == Match.STATUS_ACCEPTED and match.takes_loan_days and match.loan_period()[0]:
                     # The agreed time is the loan's from now on; a tool is lent once at a time
                     starts_at, ends_at = match.loan_period()
                     if target.lends_out and not target.is_free(starts_at, ends_at, exclude_match=match):
                         flash.error(request, _("It is already lent on some of these days. Propose other days instead."))
                         return redirect(match.get_absolute_url())
-                    match.loan.starts_at, match.loan.ends_at = starts_at, ends_at
-                    match.loan.save()
+                    if match.is_loan:
+                        match.loan.starts_at, match.loan.ends_at = starts_at, ends_at
+                        match.loan.save()
+                    else:
+                        # Its days were left open: the loan starts with them
+                        Loan.objects.create(match=match, starts_at=starts_at, ends_at=ends_at)
                 body = request.POST.get("body", "").strip()
                 answer = MatchMessage(match=match, sender=request.user, body=body, status_to=new_status)
                 if new_status == Match.STATUS_ACCEPTED and match.is_community_stay:
@@ -458,7 +463,7 @@ def match_detail(request, pk):
                     flash.error(request, _("The stay can't end before it starts."))
                     return redirect(match.get_absolute_url())
             else:
-                if match.is_loan:
+                if match.takes_loan_days:
                     # Other days or hours to borrow it, and maybe another place to pick it up
                     span = _parse_loan(request.POST)
                     if span is None:
@@ -467,6 +472,9 @@ def match_detail(request, pk):
                     msg.counter_stay_from, msg.counter_stay_to = span
                 msg.counter_location_type = request.POST.get("counter_location_type", "")
                 msg.counter_location      = request.POST.get("counter_location", "")
+                if msg.counter_location_type == Match.LOC_ONLINE:
+                    # Online is no place
+                    msg.counter_location = ""
                 try:
                     msg.counter_lat = float(request.POST.get("counter_lat") or "")
                 except (ValueError, TypeError):
@@ -475,6 +483,8 @@ def match_detail(request, pk):
                     msg.counter_lon = float(request.POST.get("counter_lon") or "")
                 except (ValueError, TypeError):
                     msg.counter_lon = None
+                if msg.counter_location_type == Match.LOC_ONLINE:
+                    msg.counter_lat = msg.counter_lon = None
                 raw_dt = request.POST.get("counter_date", "")
                 try:
                     msg.counter_date = _dt.fromisoformat(raw_dt) if raw_dt else None
@@ -489,11 +499,22 @@ def match_detail(request, pk):
             return redirect(match.get_absolute_url())
 
     attached_verb = match.attached_verb
+    # A skill or knowledge both share from afar: they agree on a time here and start an
+    # online skill-sharing from the suggestion between them
+    skill_sharing = None
+    other_party = match.recipient if is_requester else match.from_user
+    if is_party and other_party is not None and isinstance(target, Listing) and target.from_afar:
+        skill_sharing = next((
+            suggestion for suggestion in request.user.suggestions.filter(other_user=other_party, dismissed_at=None)
+            if suggestion.starts_skill_sharing
+        ), None)
     return render(request, "matches/match_detail.html", {
+        "skill_sharing":        skill_sharing,
         "match":                match,
-        # Volunteer visits and join requests have their own place in the sidebar and breadcrumb
+        # Volunteer visits, join requests and asking to join an event have their own place
+        # in the sidebar and breadcrumb (an event says which)
         "request_type":         (
-            "volunteer" if match.is_community_stay
+            (getattr(target, "match_request_type", "") or "volunteer") if match.is_community_stay
             else "tours" if match.content_type.app_label == TOUR_APP_LABEL else ""
         ),
         # What the target shows about the match itself (a tour: the stretch and people)
@@ -529,12 +550,15 @@ def match_detail(request, pk):
         "can_withdraw":         can_withdraw,
         "proposed_place":       _proposed_place(match, request.user, latest_counter_msg) if can_counter else None,
         # The time proposed last, to start a counter-proposal from
-        "proposed_loan":        Loan(starts_at=match.loan_period()[0], ends_at=match.loan_period()[1]) if match.is_loan else None,
+        "proposed_loan":        Loan(starts_at=match.loan_period()[0], ends_at=match.loan_period()[1]) if match.loan_period()[0] else None,
         # The other side's only roughly until accepted (Match.place_of)
         "my_place":             match.place_of(request.user, viewer=request.user),
         "your_place":           match.place_of(match.recipient if is_requester else match.from_user),
         "message_form":         MatchMessageForm(),
-        "loc_choices":          Match.LOC_CHOICES,
+        # Online only for a skill or knowledge, or where it was proposed so
+        "loc_choices":          [
+            choice for choice in Match.LOC_CHOICES if choice[0] != Match.LOC_ONLINE or match.can_be_online
+        ],
         "person":               _person(match.recipient if is_requester else match.from_user) if shows_person else None,
         "can_ask_extras":       can_ask_extras,
         "asked_listing_ids":    {listing.pk for listing in match.listings.all()},

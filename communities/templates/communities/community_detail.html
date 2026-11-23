@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% load i18n embed_video_tags static l10n references_tags tours_tags %}
+{% load i18n embed_video_tags static l10n references_tags tours_tags events_tags %}
 
 {% block extrahead %}
 	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.css">
@@ -272,17 +272,17 @@
 			{% endif %}
 
 			<!-- Its events: projects and community events -->
-			{% if events or is_ambassador %}
+			{% if events or can_edit %}
 				<h2 id="events">{% trans "Projects and events" %}</h2>
 				{% if events %}
 					<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
 						{% for event in events %}{% include "events/_event_card.html" %}{% endfor %}
 					</div>
 				{% endif %}
-				{% if is_ambassador %}
+				{% if can_edit %}
 					<div class="flex flex-wrap gap-2">
 						{% for kind, label, icon in event_kinds %}<a href="{% url 'events:create' community.slug %}?kind={{ kind }}" class="btn"><i class="fa-solid {{ icon }} mr-1"></i>{{ label }}</a>{% endfor %}
-						<a href="{% url 'matches:calendar' community.slug %}" class="btn btn-purple"><i class="fa-regular fa-calendar mr-1"></i>{% trans "Calendar" %}</a>
+						{% if is_ambassador %}<a href="{% url 'matches:calendar' community.slug %}" class="btn btn-purple"><i class="fa-regular fa-calendar mr-1"></i>{% trans "Calendar" %}</a>{% endif %}
 					</div>
 					{% if past_events %}
 						<details class="mt-4">
@@ -440,7 +440,7 @@
 									<div class="flex flex-wrap items-center gap-x-2 text-xs">
 										<a href="{{ event.get_absolute_url }}" class="font-semibold hover:underline" target="_blank"><i class="fa-solid {{ event.kind_icon }} mr-1"></i>{{ event.title }}</a>
 										<span class="opacity-70">{% include "events/_event_dates.html" %}</span>
-										<a href="{% url 'events:offer_help' community.slug event.slug %}" class="underline">{{ event.texts.join }}</a>
+										<a href="{% event_url event "offer_help" %}" class="underline">{{ event.texts.join }}</a>
 									</div>
 									{% for need in needs %}
 										<label class="flex items-center gap-2 cursor-pointer py-0.5">
