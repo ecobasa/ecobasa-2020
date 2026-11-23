@@ -1,13 +1,56 @@
 {% extends 'base.html' %}
-{% load i18n %}
+{% load i18n static %}
 
 {% block head_title %}{% trans "Help" %}: {% trans "Community-Tours" %} — ecobasa{% endblock %}
 
 {% block content %}
+{# As on the homepage: three photos fading into each other, each with its headline and text; the title and buttons stay #}
+<section class="relative w-full grid items-end" style="min-height: 480px;"
+    x-data="{ cur: 0, len: 3, _timer: null, go(i) { clearInterval(this._timer); this.cur = (i + this.len) % this.len } }"
+    x-init="_timer = setInterval(() => cur = (cur + 1) % len, 8000)">
+  <div class="absolute inset-0 bg-center bg-cover transition-opacity duration-700" :style="{ opacity: cur === 0 ? 1 : 0 }" style="background-image: url('{% static 'img/tours-volunteer.webp' %}'); will-change: opacity;"></div>
+  <div class="absolute inset-0 bg-center bg-cover transition-opacity duration-700" :style="{ opacity: cur === 1 ? 1 : 0 }" style="background-image: url('{% static 'img/tours-gifts.webp' %}'); opacity: 0; will-change: opacity;"></div>
+  <div class="absolute inset-0 bg-center bg-cover transition-opacity duration-700" :style="{ opacity: cur === 2 ? 1 : 0 }" style="background-image: url('{% static 'img/tours-rolling.webp' %}'); opacity: 0; will-change: opacity;"></div>
+  <div class="relative z-10 mb-12 py-8 bg-black bg-opacity-40 text-center text-secondary drop-shadow-md">
+    <h1 class="text-xl text-secondary m-0 mb-4 px-16"><i class="fa-solid fa-route mr-2"></i>{% trans "Community-Tours" %}</h1>
+    {# The texts in one grid cell: the band is as tall as the longest #}
+    <div class="grid max-w-4xl mx-auto px-16">
+      <div class="[grid-area:1/1] transition-opacity duration-700" :class="cur === 0 ? 'opacity-100' : 'opacity-0'" :aria-hidden="cur !== 0">
+        <h2 class="text-3xl md:text-5xl text-secondary m-0">{% trans "Volunteer in sustainable communities" %}</h2>
+        <p class="mt-4 mb-0">{% trans "Find a volunteering opportunity that fits your interests and skills. Learn new skills and collect heart-opening experiences. Collect good references as recommendations for your next visit or new home." %}</p>
+      </div>
+      <div class="[grid-area:1/1] transition-opacity duration-700 opacity-0" :class="cur === 1 ? 'opacity-100' : 'opacity-0'" :aria-hidden="cur !== 1">
+        <h2 class="text-3xl md:text-5xl text-secondary m-0">{% trans "Transport gifts" %}</h2>
+        <p class="mt-4 mb-0">{% trans "Communities can exchange gifts with your help: if you visit more than one community in a row, you can take things along and connect them. You can find many ways to support the communities you want to visit on their profiles, surprise them with a nice gift!" %}</p>
+      </div>
+      <div class="[grid-area:1/1] transition-opacity duration-700 opacity-0" :class="cur === 2 ? 'opacity-100' : 'opacity-0'" :aria-hidden="cur !== 2">
+        <h2 class="text-3xl md:text-5xl text-secondary m-0">{% trans "Become a rolling community" %}</h2>
+        <p class="mt-4 mb-0">{% trans "Meet amazing people, share your skills with your tour mates and become an amazing team that can create gift-economy miracles together like building houses, gardens or produce a great documentary!" %}</p>
+      </div>
+    </div>
+    <div class="flex flex-wrap justify-center gap-4 mt-6 px-4">
+      <a href="{% url 'tours:list' %}" class="btn btn-lg"><i class="fa-solid fa-map-location-dot mr-2"></i>{% trans "Find a tour" %}</a>
+      <a href="{% url 'tours:create' %}" class="btn btn-green btn-lg"><i class="fa-solid fa-route mr-2"></i>{% trans "Plan a tour" %}</a>
+    </div>
+  </div>
+  <button type="button" @click="go(cur - 1)"
+          class="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-20 hover:bg-opacity-90 text-primary rounded-full w-10 h-10 flex items-center justify-center shadow z-10">
+    <img src="{% static 'img/arrow-left.png' %}" alt="{% trans 'Previous' %}" class="w-full h-full object-contain">
+  </button>
+  <button type="button" @click="go(cur + 1)"
+          class="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-20 hover:bg-opacity-90 text-primary rounded-full w-10 h-10 flex items-center justify-center shadow z-10">
+    <img src="{% static 'img/arrow-right.png' %}" alt="{% trans 'Next' %}" class="w-full h-full object-contain">
+  </button>
+  <div class="absolute left-0 right-0 bottom-4 z-10 text-center space-x-2">
+    {% for i in "012" %}
+      <button type="button" @click="go({{ i }})" :class="cur === {{ i }} ? 'bg-primary' : 'bg-secondary bg-opacity-60'"
+              class="inline-block w-3 h-3 rounded-full" aria-label="{% blocktrans with number=forloop.counter %}Slide {{ number }}{% endblocktrans %}"></button>
+    {% endfor %}
+  </div>
+</section>
 {% url 'tours:list' as list_url %}{% url 'tours:create' as create_url %}{% url 'tours:ride' as ride_url %}{% url 'tours:mine' as mine_url %}{% url 'matches:list' as matches_url %}{% url 'events:list' as events_url %}{% url 'users:update' as settings_url %}
 <div class="container-page">
-  <a href="{% url 'help:index' %}" class="text-sm"><i class="fa fa-arrow-left mr-1"></i>{% trans "Help" %}</a>
-  <h1 class="mt-2 text-4xl sm:text-5xl hyphens-auto"><i class="fa-solid fa-route mr-2"></i>{% trans "Community-Tours" %}</h1>
+  <a href="{% url 'help:index' %}" class="block mb-6 text-sm"><i class="fa fa-arrow-left mr-1"></i>{% trans "Help" %}</a>
 
   <div class="lg:grid lg:grid-cols-4 lg:gap-10">
     {# Contents, beside the text on wide screens #}
@@ -96,6 +139,7 @@
         <p class="p-4 rounded-lg bg-secondary bg-opacity-75 text-sm"><i class="fa-regular fa-lightbulb text-primary mr-1"></i>{% trans "Pro tip: start with your final destination." %}</p>
         <p>{% trans "“Recommended on the way” shows communities and events along your route, always with the reasons: you can learn there what you want to learn, they need what you can do, food and a bed are provided, there is room for your group, it is only a short detour, gifts could travel. “You can learn this on the way” lists the skills taught at your stops." %}</p>
         <p class="p-4 rounded-lg bg-secondary bg-opacity-75 text-sm"><i class="fa-regular fa-lightbulb text-primary mr-1"></i>{% trans "Hosts usually gain most from help after about a week; shorter stays may require payment. Visit at least two communities, so gifts can travel between them. The more you have to offer, the more they are willing to offer you food and accommodation without charging money for it." %}</p>
+        <p class="p-4 rounded-lg bg-secondary bg-opacity-75 text-sm"><i class="fa-regular fa-lightbulb text-primary mr-1"></i>{% trans "Small groups of three to five people fit in most easily. Experienced groups of up to ten can take on bigger projects together." %}</p>
         <h3>{% trans "3. Vehicles and what you are still looking for" %}</h3>
         <p>{% trans "Add your vehicles with seats, sleeping places and who may drive. The free places on each leg follow from them. Under “We're still looking for” you add what the tour still needs: a van, a driver, a carpenter. “Needed on your route” shows what your hosts need that nobody on the tour can do yet." %}</p>
         <p>{% trans "What a tour looks for also appears among the gifts, so people can offer it, travelling along or not. A vehicle someone gives or lends for the tour becomes one of its vehicles." %}</p>
@@ -151,7 +195,9 @@
         </ul>
       </section>
 
-      <p class="mt-12">{% blocktrans %}Something missing or unclear? <a href="/contact">Write to us</a>, we are glad to hear it.{% endblocktrans %}</p>
+      <p class="mt-12 text-lg">{% trans "Offer your time and creative energy, and trust the way: coincidences tend to happen that make wishes come true." %}</p>
+
+      <p class="mt-6">{% blocktrans %}Something missing or unclear? <a href="/contact">Write to us</a>, we are glad to hear it.{% endblocktrans %}</p>
     </div>
   </div>
 </div>
