@@ -10743,3 +10743,27 @@ msgstr "Cherche une communauté"
 
 msgid "shows on your profile, so communities can invite you to become a member"
 msgstr "s'affiche sur ton profil, pour que les communautés puissent t'inviter à devenir membre"
+
+msgid "Your gifts keep us giving!"
+msgstr "Vos dons nous permettent de continuer à donner !"
+
+msgid "We are a dedicated team of volunteers working for the vision of a gift-economy network that connects people and sustainable communities: a network that brings wishes together with gifts and makes it easy to share knowledge, skills, services and resources."
+msgstr "Nous sommes une équipe engagée de bénévoles qui œuvre pour la vision d'un réseau d'économie du don reliant les personnes et les communautés durables : un réseau qui rapproche les souhaits et les dons et facilite le partage de connaissances, de compétences, de services et de ressources."
+
+msgid "ecobasa started in 2011. In 2014 we relaunched the platform, and since then we have co-organised many Community-Tours and Communities-Convergences, all based on the gift economy. Now in 2026 we have rebuilt ecobasa from the ground up once again: with Matches nearby, sharing of seeds & plants, food, tools and vehicles, gift-circles, and Community-Tours anyone can organise."
+msgstr "ecobasa a commencé en 2011. En 2014, nous avons relancé la plateforme et depuis, nous avons co-organisé de nombreux Community-Tours et Communities-Convergences, tous fondés sur l'économie du don. Aujourd'hui, en 2026, nous avons de nouveau reconstruit ecobasa de fond en comble : avec des Matchs à proximité, des graines et plantes, de la nourriture, des outils et des véhicules à partager, des cercles de dons et des Community-Tours que chacun·e peut organiser."
+
+msgid "ecobasa is free for everyone, without ads and without selling your data. Our business model is the gift economy itself, so to keep the platform running and growing, we need your support."
+msgstr "ecobasa est gratuit pour tout le monde, sans publicité et sans vendre tes données. Notre modèle économique, c'est l'économie du don elle-même : pour que la plateforme continue de fonctionner et de grandir, nous avons besoin de ton soutien."
+
+msgid "Support ecobasa"
+msgstr "Soutenir ecobasa"
+
+msgid "ecobasa: gift-economy network for sustainable ways of living"
+msgstr "ecobasa : réseau d'économie du don pour des modes de vie durables"
+
+msgid "Play the video"
+msgstr "Lire la vidéo"
+
+msgid "The video plays from YouTube."
+msgstr "La vidéo est lue depuis YouTube."

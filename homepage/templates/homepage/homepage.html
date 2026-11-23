@@ -137,6 +137,34 @@
   </section>
 
 
+  {# The video comes from YouTube only after a click: until then a local still, no request to Google #}
+  <section id="donate" class="mt-12 grid gap-8 md:grid-cols-2 items-center">
+    <div>
+      <h2>{% trans "Your gifts keep us giving!" %}</h2>
+      <p>{% trans "We are a dedicated team of volunteers working for the vision of a gift-economy network that connects people and sustainable communities: a network that brings wishes together with gifts and makes it easy to share knowledge, skills, services and resources." %}</p>
+      <p>{% trans "ecobasa started in 2011. In 2014 we relaunched the platform, and since then we have co-organised many Community-Tours and Communities-Convergences, all based on the gift economy. Now in 2026 we have rebuilt ecobasa from the ground up once again: with Matches nearby, sharing of seeds & plants, food, tools and vehicles, gift-circles, and Community-Tours anyone can organise." %}</p>
+      <p>{% trans "ecobasa is free for everyone, without ads and without selling your data. Our business model is the gift economy itself, so to keep the platform running and growing, we need your support." %}</p>
+      <p><i>{% trans "Happy giving!" %}</i></p>
+      <a href="{% url 'homepage:support' %}" class="btn btn-lg inline-block mt-2"><i class="fa-solid fa-heart mr-2"></i>{% trans "Support ecobasa" %}</a>
+    </div>
+    <div x-data="{ play: false }">
+      <div class="relative w-full aspect-video overflow-hidden rounded shadow">
+        <template x-if="play">
+          <iframe src="https://www.youtube-nocookie.com/embed/QBX0HkupHOQ?autoplay=1&rel=0" title="{% trans 'ecobasa: gift-economy network for sustainable ways of living' %}"
+                  class="absolute inset-0 w-full h-full border-0" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>
+        </template>
+        <button type="button" x-show="!play" @click="play = true" class="absolute inset-0 w-full h-full group" aria-label="{% trans 'Play the video' %}">
+          <img src="{% static 'img/home-video.webp' %}" alt="" class="w-full h-full object-cover" loading="lazy">
+          <span class="absolute inset-0 flex items-center justify-center">
+            <i class="fa-solid fa-circle-play text-7xl text-primary drop-shadow-md transition-transform group-hover:scale-110"></i>
+          </span>
+        </button>
+      </div>
+      <p class="text-sm text-brown mt-2" x-show="!play">{% trans "The video plays from YouTube." %}</p>
+    </div>
+  </section>
+
+
   {# Online gift-circles are not on the map: anyone anywhere can come #}
   <section id="online-gift-circles" class="text-center mt-12">
     <h2>{% trans "Gift-circles you can join from anywhere" %}</h2>

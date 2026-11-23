@@ -10709,3 +10709,27 @@ msgstr "Busca una comunidad"
 
 msgid "shows on your profile, so communities can invite you to become a member"
 msgstr "aparece en tu perfil, para que las comunidades puedan invitarte a ser miembro"
+
+msgid "Your gifts keep us giving!"
+msgstr "¡Vuestros regalos nos mantienen regalando!"
+
+msgid "We are a dedicated team of volunteers working for the vision of a gift-economy network that connects people and sustainable communities: a network that brings wishes together with gifts and makes it easy to share knowledge, skills, services and resources."
+msgstr "Somos un equipo comprometido de voluntarios que trabaja por la visión de una red de economía del regalo que conecta a personas y comunidades sostenibles: una red que une deseos con regalos y facilita compartir conocimientos, habilidades, servicios y recursos."
+
+msgid "ecobasa started in 2011. In 2014 we relaunched the platform, and since then we have co-organised many Community-Tours and Communities-Convergences, all based on the gift economy. Now in 2026 we have rebuilt ecobasa from the ground up once again: with Matches nearby, sharing of seeds & plants, food, tools and vehicles, gift-circles, and Community-Tours anyone can organise."
+msgstr "ecobasa empezó en 2011. En 2014 relanzamos la plataforma y desde entonces hemos co-organizado muchos Community-Tours y Communities-Convergences, todos basados en la economía del regalo. Ahora, en 2026, hemos vuelto a reconstruir ecobasa desde cero: con Matches cerca de ti, semillas y plantas, alimentos, herramientas y vehículos para compartir, círculos de regalos y Community-Tours que cualquiera puede organizar."
+
+msgid "ecobasa is free for everyone, without ads and without selling your data. Our business model is the gift economy itself, so to keep the platform running and growing, we need your support."
+msgstr "ecobasa es gratis para todos, sin publicidad y sin vender tus datos. Nuestro modelo de negocio es la propia economía del regalo, así que para que la plataforma siga funcionando y creciendo, necesitamos tu apoyo."
+
+msgid "Support ecobasa"
+msgstr "Apoyar a ecobasa"
+
+msgid "ecobasa: gift-economy network for sustainable ways of living"
+msgstr "ecobasa: red de economía del regalo para formas de vida sostenibles"
+
+msgid "Play the video"
+msgstr "Reproducir el vídeo"
+
+msgid "The video plays from YouTube."
+msgstr "El vídeo se reproduce desde YouTube."
