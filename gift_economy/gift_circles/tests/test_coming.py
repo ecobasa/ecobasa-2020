@@ -188,6 +188,20 @@ def test_bots_can_t_sign_up_as_guests(host, mailoutbox, bot_check_fields, monkey
     assert Guest.objects.exists()
 
 
+def test_one_connection_signs_up_many_guests_but_not_endlessly_for_one_circle(host, bot_check_fields, monkeypatch):
+    import bot_check
+    from gift_economy.gift_circles.views import GUEST_LIMITS_PER_CIRCLE
+
+    monkeypatch.undo()
+    monkeypatch.setattr(bot_check, "MIN_SECONDS", 0)
+    event, other = _circle(host), _circle(host, title="Another one")
+    most = GUEST_LIMITS_PER_CIRCLE[0][0]
+    for n in range(most + 1):
+        _sign_up(event, email=f"guest{n}@example.com", **bot_check_fields())
+    _sign_up(other, **bot_check_fields())
+    assert event.guests.count() == most and other.guests.count() == 1
+
+
 def _sign_up(event, **fields):
     data = {"name": "Ayla", "email": "ayla@example.com", "people": "1"}
     data.update(fields)

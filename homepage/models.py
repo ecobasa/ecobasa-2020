@@ -13,6 +13,8 @@ class BotCheckEntry(models.Model):
     ip_digest = models.CharField(max_length=64, db_index=True)
     email_digest = models.CharField(max_length=64, blank=True, db_index=True)
     text_digest = models.CharField(max_length=64, blank=True, db_index=True)
+    # What it was for, when limits count per thing too (a guest: the gift-circle)
+    scope = models.CharField(max_length=64, blank=True)
     # The form's challenge: each one goes through once
     token_digest = models.CharField(max_length=64, unique=True, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)

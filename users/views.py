@@ -121,7 +121,8 @@ def _next_url(request):
     return reverse("homepage:homepage")
 
 
-SIGNUP_LIMITS = [(3, timedelta(days=1))]
+# Loose, as people at one place often share a connection (a house Wi-Fi, a mobile network)
+SIGNUP_LIMITS = [(10, timedelta(days=1))]
 # The session's last confirmation mail, and how long until another one may go
 CONFIRMATION_SENT = "confirmation_sent_at"
 RESEND_AFTER = timedelta(minutes=10)

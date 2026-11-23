@@ -148,8 +148,10 @@ def _mail_again(guest, send):
     transaction.on_commit(lambda: send(guest))
 
 
-# Sign-ups from one connection, across all gift-circles: (at most, within)
-GUEST_LIMITS = [(5, timedelta(days=1))]
+# Sign-ups from one connection, (at most, within): across all gift-circles, and for one.
+# Loose, as people at one place often share a connection (a house Wi-Fi, a mobile network)
+GUEST_LIMITS = [(40, timedelta(days=1))]
+GUEST_LIMITS_PER_CIRCLE = [(15, timedelta(days=1))]
 
 
 def guest_sign_up(request, slug):
@@ -161,7 +163,7 @@ def guest_sign_up(request, slug):
         return redirect(event.get_absolute_url())
     form = GuestForm(request.POST or None)
     if request.method == "POST" and form.is_valid():
-        check = bot_check.check(request, "guest", GUEST_LIMITS)
+        check = bot_check.check(request, "guest", GUEST_LIMITS, scope=str(event.pk), scope_limits=GUEST_LIMITS_PER_CIRCLE)
         if check.trapped:
             return render(request, "gift_circles/guest_sent.html", {"event": event, "email": form.cleaned_data["email"]})
         if check.error:
@@ -170,7 +172,7 @@ def guest_sign_up(request, slug):
             response = _sign_up(request, event, form)
             if response is not None:
                 try:
-                    bot_check.record(request, "guest")
+                    bot_check.record(request, "guest", scope=str(event.pk))
                 except IntegrityError:
                     pass
                 return response

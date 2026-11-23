@@ -89,9 +89,11 @@ class TestRegister:
         register(0, website="http://spam.example")
         register(1, nonce="1")
         assert not User.objects.exists()
-        for n in range(5):
+        from users.views import SIGNUP_LIMITS
+
+        for n in range(SIGNUP_LIMITS[0][0] + 1):
             register(n)
-        assert User.objects.count() == 3
+        assert User.objects.count() == SIGNUP_LIMITS[0][0]
 
 
 @pytest.mark.django_db

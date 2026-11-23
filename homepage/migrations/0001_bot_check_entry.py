@@ -38,6 +38,7 @@ class Migration(migrations.Migration):
                     "text_digest",
                     models.CharField(blank=True, db_index=True, max_length=64),
                 ),
+                ("scope", models.CharField(blank=True, max_length=64)),
                 (
                     "token_digest",
                     models.CharField(blank=True, max_length=64, null=True, unique=True),

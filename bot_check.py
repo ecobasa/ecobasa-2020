@@ -78,9 +78,10 @@ class Check:
     error: str = ""
 
 
-def check(request, form, limits, challenge_needed=True):
-    """Whether this POST may go through. `limits`: [(at most, within)] per address.
-    A bot in the trap gets `trapped`, so the view can pretend it worked."""
+def check(request, form, limits, challenge_needed=True, scope="", scope_limits=()):
+    """Whether this POST may go through. `limits`: [(at most, within)] per address;
+    `scope_limits` the same for one `scope` only. A bot in the trap gets `trapped`, so
+    the view can pretend it worked."""
     data = request.POST
     if challenge_needed:
         if data.get("website"):
@@ -92,7 +93,8 @@ def check(request, form, limits, challenge_needed=True):
             return Check(error=_("That didn't work. Please send it again."))
     now = timezone.now()
     mine = entries(form).filter(ip_digest=digest(client_address(request)))
-    if any(mine.filter(created_at__gte=now - span).count() >= most for most, span in limits):
+    counted = [(mine, most, span) for most, span in limits] + [(mine.filter(scope=scope), most, span) for most, span in scope_limits]
+    if any(rows.filter(created_at__gte=now - span).count() >= most for rows, most, span in counted):
         return Check(error=_("Too many tries from your connection. Please try again tomorrow."))
     return Check()
 
