@@ -1,0 +1,2 @@
+{% load i18n %}{# Under the name search of an invitation: pick someone on the pioneer map instead, around where one invites to #}
+<a href="{{ pioneer_map_url }}" {% if dynamic_href %}:href="{{ dynamic_href }}"{% endif %} class="inline-flex items-center text-sm underline mt-2"><i class="fa-solid fa-people-group mr-1"></i>{% trans "Find pioneers on the map" %}</a>

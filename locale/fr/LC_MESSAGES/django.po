@@ -10690,3 +10690,56 @@ msgstr "Merci de confirmer ton adresse e-mail : ouvre le lien envoyé à <strong
 
 msgid "Send the link again"
 msgstr "Renvoyer le lien"
+
+msgid "Show me on the pioneer map"
+msgstr "M'afficher sur la carte des pionnier·ères"
+
+msgid "only members see it, so they can invite you to gift-circles, tours and communities"
+msgstr "seuls les membres la voient, pour pouvoir t'inviter à des cercles de dons, des tours et des communautés"
+
+msgid "Open to tour suggestions"
+msgstr "Ouvert aux suggestions de tours"
+
+msgid "Pioneers"
+msgstr "Pionnier·ères"
+
+msgid "Name, skill or place…"
+msgstr "Nom, compétence ou lieu…"
+
+msgid "Skills they share"
+msgstr "Compétences qu'ils partagent"
+
+msgid "Show pioneers near me"
+msgstr "Montrer les pionnier·ères près de moi"
+
+msgid "No pioneers found."
+msgstr "Aucun·e pionnier·ère trouvé·e."
+
+msgid "Choose someone to invite: “Invite” in their card takes them back to your invitation."
+msgstr "Choisis quelqu'un à inviter : « Inviter » sur sa fiche le ramène à ton invitation."
+
+msgid "Back to the invitation"
+msgstr "Retour à l'invitation"
+
+msgid "You aren't on the map: add your place in your profile."
+msgstr "Tu n'es pas sur la carte : ajoute ton lieu dans ton profil."
+
+msgid "You aren't on the map: you chose not to show yourself."
+msgstr "Tu n'es pas sur la carte : tu as choisi de ne pas t'afficher."
+
+msgid "Invite"
+msgstr "Inviter"
+
+msgid "Find pioneers on the map"
+msgstr "Trouver des pionnier·ères sur la carte"
+
+msgid "%(count)s pioneer"
+msgid_plural "%(count)s pioneers"
+msgstr[0] "%(count)s pionnier·ère"
+msgstr[1] "%(count)s pionnier·ères"
+
+msgid "Looking for a community"
+msgstr "Cherche une communauté"
+
+msgid "shows on your profile, so communities can invite you to become a member"
+msgstr "s'affiche sur ton profil, pour que les communautés puissent t'inviter à devenir membre"

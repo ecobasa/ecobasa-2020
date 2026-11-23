@@ -20,6 +20,7 @@ urlpatterns = [
     # What only gift-circles have: /gift-circles/<event>/giftsheet/…
     path("", include("gift_economy.gift_circles.urls", namespace="gift_circles")),
     path("communities/", include("communities.urls")),
+    path("pioneers/", include("users.pioneer_urls", namespace="pioneers")),
     path("community-tours/", include("tours.urls", namespace="tours")),
     path("skills/", include("gift_economy.gifts.skills.urls")),
     path("notifications/", include("notifications.urls")),

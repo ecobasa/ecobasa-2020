@@ -105,6 +105,11 @@ class User(AbstractUser):
     country = CountryField(_("Country"), null=True, blank=True)
     location_name = models.CharField(_("Location"), null=True, blank=True, max_length=255)
     location = models.PointField(_("Geo Location"), null=True, blank=True, geography=True)
+    # On the pioneer map and list, about where they live (users.places), for members
+    # looking for people to invite or to travel with
+    shows_on_map = models.BooleanField(_("Show me on the pioneer map"), default=True)
+    # For ambassadors inviting new members, as communities show they're looking for them
+    looking_for_community = models.BooleanField(_("Looking for a community"), default=False)
     ecobasa_what = models.TextField(_('What would you like to use ecobasa mainly for?'), blank=True, null=True)
     world = models.TextField(_('What do you do to make the world a better place?'), blank=True, null=True)
     # Last language picked in the language switcher; emails to this user are sent in it.

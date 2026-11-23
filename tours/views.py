@@ -28,6 +28,7 @@ from gift_economy.gifts.skills.models import Skill, skill_name_q
 
 from gift_economy.matches.emails import notify_match_created, notify_match_message, notify_match_response
 from gift_economy.matches.models import Contribution, Match, MatchMessage
+from users.pioneers import map_link
 
 from . import deliveries as deliveries_module, matching
 from .freshness import read_confirm_token
@@ -908,6 +909,7 @@ def invite(request, slug):
         return redirect(f"{tour.get_absolute_url()}#travellers")
     return render(request, "tours/invite.html", {
         "tour": tour, "form": form, "chosen": form.chosen_user(), "stops": tour.ordered_stops(),
+        "pioneer_map_url": map_link(request.path, tour.get_match_location()[2]),
     })
 
 

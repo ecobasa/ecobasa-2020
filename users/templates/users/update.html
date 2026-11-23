@@ -37,6 +37,14 @@
     <!-- Location section (manually rendered to wrap in Alpine + OL map) -->
     {% include "maps/_location_picker.html" with map_id="user-location-map" set_point_fn="setUserPoint" locate_fn="locateUserProfile" map_height="h-[280px]" %}
     <p class="text-xs text-brown">{% trans "Others see only roughly where you live (about 1–2 km, without the street). Your exact place shows only once a match between you is accepted, so that you meet through ecobasa." %}</p>
+    <label class="flex items-start gap-2 text-sm cursor-pointer mt-2">
+      {{ form.shows_on_map }}
+      <span>{{ form.shows_on_map.label }} <span class="text-xs text-brown">({% trans "only members see it, so they can invite you to gift-circles, tours and communities" %})</span></span>
+    </label>
+    <label class="flex items-start gap-2 text-sm cursor-pointer mt-2">
+      {{ form.looking_for_community }}
+      <span>{{ form.looking_for_community.label }} <span class="text-xs text-brown">({% trans "shows on your profile, so communities can invite you to become a member" %})</span></span>
+    </label>
 
     <!-- Project suggestions by email -->
     <div id="matches" class="mt-8 p-4 bg-secondary bg-opacity-75 rounded-md shadow space-y-3 scroll-mt-24">

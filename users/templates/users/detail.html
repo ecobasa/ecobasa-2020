@@ -14,6 +14,7 @@
 		<div>
 			<h1 class="text-5xl font-semibold">{{ user.name }}</h1>
 			{% if user.last_active %}<p class="text-sm -mt-2">{% include "events/_freshness.html" with when=user.last_active %}</p>{% endif %}
+			{% if user.looking_for_community %}<span class="pill bg-green"><i class="fa-solid fa-door-open mr-1"></i>{% trans "Looking for a community" %}</span>{% endif %}
 		</div>
 		{% if request.user.is_authenticated and request.user.pk == user.pk %}
 			<a href="{% url 'users:update' %}" class="btn btn-lg">

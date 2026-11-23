@@ -22,6 +22,7 @@ from django.contrib.gis.geos import Polygon, Point
 from django.contrib.gis.db.models import PointField
 from django.contrib.gis.db.models.functions import Distance
 from django.db.models.functions import Cast
+from users.pioneers import map_link
 from users.places import town
 from django.core.paginator import Paginator
 from django.http import Http404, JsonResponse
@@ -1043,6 +1044,7 @@ def invite(request, slug):
         return redirect(community.get_absolute_url() + "#members")
     return render(request, "communities/invite.html", {
         "community": community, "form": form, "chosen": form.chosen_user(),
+        "pioneer_map_url": map_link(request.path, community.rough_place()[1]),
     })
 
 

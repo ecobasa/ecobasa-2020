@@ -1,0 +1,19 @@
+{% load i18n %}
+{# The list in the modal, for htmx: the pioneers of the filters as cards, 20 at a time, the next ones loaded on scrolling, as on the communities and gifts #}
+{% if page.number == 1 %}
+<span id="pioneer-result-count" hx-swap-oob="true" class="text-xs text-brown">
+  {% if page.paginator.count %}{% blocktrans count count=page.paginator.count %}{{ count }} pioneer{% plural %}{{ count }} pioneers{% endblocktrans %}{% if sorted_by_distance %} · {% trans "sorted by distance" %}{% endif %}{% else %}{% trans "No pioneers found." %}{% endif %}
+</span>
+{% endif %}
+
+{% for person in people %}
+  {% include "pioneers/_pioneer_card.html" %}
+{% empty %}
+  <p class="text-primary py-8 text-center">{% trans "No pioneers found." %}</p>
+{% endfor %}
+
+{% if next_url %}
+<div class="py-4 text-center" hx-get="{{ next_url }}" hx-swap="outerHTML" hx-trigger="intersect once">
+  <i class="fa fa-spinner fa-spin text-brown"></i>
+</div>
+{% endif %}

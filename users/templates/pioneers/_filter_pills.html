@@ -1,0 +1,11 @@
+{% load i18n %}
+{# The filters in use as small pills, each with an x to take it off, as on the events. Skills they share in purple, what they want to learn in yellow. Bound to $store.pioneerMap #}
+<div x-show="$store.pioneerMap.pills.length" x-cloak class="flex flex-wrap gap-1">
+  <template x-for="pill in $store.pioneerMap.pills" :key="pill.key">
+    <span class="inline-flex items-center gap-1 text-xs text-secondary rounded-full px-2 py-0.5" :class="pill.skill ? 'bg-purple' : pill.wish ? 'bg-yellow' : 'bg-primary'">
+      <i class="fa-solid" :class="pill.icon"></i>
+      <span x-text="pill.label" class="truncate max-w-[12rem]"></span>
+      <button type="button" @click="$store.pioneerMap.unset(pill.key)" class="opacity-70 hover:opacity-100" aria-label="{% trans 'Remove' %}">&times;</button>
+    </span>
+  </template>
+</div>

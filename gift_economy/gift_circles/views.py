@@ -17,6 +17,7 @@ from events import kinds
 from events.models import Event
 from gift_economy.gifts.models import Listing
 from gift_economy.matches.models import Match
+from users.pioneers import map_link
 
 from . import bringing, giftsheet as sheets, results, stories, video, wishes as wish_answers
 from .emails import exact_place, send_guest_confirmation, send_guest_welcome, send_written
@@ -318,13 +319,18 @@ def invite(request, slug):
     invited = event.invitations.select_related("user").order_by("-created_at")
     if not event.can_edit(request.user):
         invited = invited.filter(invited_by=request.user)
+    if form.is_bound:
+        # Picked before the form came back with an error
+        chosen = form.cleaned_data.get("users", [])
+    else:
+        # Picked on the pioneer map
+        pks = [pk for pk in request.GET.getlist("user") if pk.isdigit()]
+        chosen = get_user_model().objects.filter(pk__in=pks, is_active=True).exclude(pk__in=taken_users(event)).order_by("name")
     return render(request, "gift_circles/invite.html", {
         "event": event, "form": form, "invited": invited, "emails_left": emails_left(event),
         "email_limit": EMAIL_LIMIT,
-        # Picked before the form came back with an error
-        "chosen_people": [
-            {"id": user.pk, "name": user.name or user.email} for user in form.cleaned_data.get("users", [])
-        ] if form.is_bound else [],
+        "chosen_people": [{"id": user.pk, "name": user.name or user.email} for user in chosen],
+        "pioneer_map_url": map_link(request.path, event.rough_place()[1]),
     })
 
 

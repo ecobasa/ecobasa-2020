@@ -40,6 +40,8 @@
         </template>
       </div>
       {% for error in form.users.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+      {# Who is chosen already comes back with the one picked on the map #}
+      {% include "pioneers/_map_link.html" with dynamic_href="mapUrl" %}
     </div>
 
     <div class="form-group">
@@ -87,6 +89,12 @@ document.addEventListener('alpine:init', () => {
   Alpine.data('invitePeople', () => ({
     query: '', results: [],
     chosen: JSON.parse(document.getElementById('invite-chosen').textContent),
+    get mapUrl() {
+      const url = new URL('{{ pioneer_map_url|escapejs }}', window.location.origin);
+      const invite = new URLSearchParams(this.chosen.map((person) => ['user', person.id]));
+      url.searchParams.set('invite', window.location.pathname + (this.chosen.length ? '?' + invite : ''));
+      return url.pathname + url.search;
+    },
     async search() {
       const q = this.query.trim();
       if (q.length < 2) { this.results = []; return; }

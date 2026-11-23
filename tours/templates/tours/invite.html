@@ -37,6 +37,7 @@
         </template>
       </div>
       {% for error in form.user.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+      {% include "pioneers/_map_link.html" %}
     </div>
     {% if not form.from_stop %}
       <p class="text-sm italic">{% trans "The route isn't planned yet: they come along for the whole of it." %}</p>

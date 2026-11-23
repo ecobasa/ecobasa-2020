@@ -1,0 +1,64 @@
+{% load i18n %}
+{# The search row of the pioneers, on the map and in the list: a search with suggestions, the filters, near me. All bound to $store.pioneerMap #}
+<div class="flex {{ row|default:'flex-row' }} gap-2 items-stretch">
+  <div class="relative flex-1 min-w-0" x-data="pioneerSuggestions()">
+    <div class="absolute inset-y-0 left-3 flex items-center text-primary opacity-80 pointer-events-none"><i class="fa fa-search"></i></div>
+    <input class="form-input icon-input w-full" type="text" autocomplete="off"
+           placeholder="{% trans 'Name, skill or place…' %}"
+           :value="$store.pioneerMap.q"
+           @input="$store.pioneerMap.q = $el.value; suggest($el.value); clearTimeout(window._pioneerInputTimer); window._pioneerInputTimer = setTimeout(() => window.pioneerFiltersChanged(true), 600)"
+           @keydown.arrow-down.prevent="moveDown()" @keydown.arrow-up.prevent="moveUp()"
+           @keydown.enter.prevent="choose()" @keydown.escape="close()" @blur="setTimeout(() => close(), 200)">
+    <ul x-show="open" x-cloak class="suggestions-dropdown">
+      <template x-for="(item, i) in items" :key="i">
+        <li :class="i === active ? 'bg-primary text-secondary' : ''" class="px-3 py-1 cursor-pointer flex items-center justify-between gap-2"
+            @mousedown.prevent="selectItem(item)">
+          <span x-text="item.value" class="truncate"></span>
+          <i x-show="item.type === 'name'" class="fa fa-user text-xs opacity-50 flex-shrink-0"></i>
+          <i x-show="item.type === 'skill'" class="fa fa-graduation-cap text-xs opacity-50 flex-shrink-0"></i>
+          <i x-show="item.type === 'place'" class="fa fa-map-marker-alt text-xs opacity-50 flex-shrink-0"></i>
+        </li>
+      </template>
+    </ul>
+  </div>
+
+  <div class="flex gap-2 flex-shrink-0">
+    {# Filter popover: every change shows at once on the map and in the list #}
+    <div class="relative" x-data="{ filterOpen: false }">
+      <button type="button" @click="filterOpen = !filterOpen"
+              :class="$store.pioneerMap.filterCount > 0 ? 'ring-2 ring-offset-1 ring-primary' : ''"
+              class="btn h-full px-3 flex items-center gap-1 text-sm" title="{% trans 'Filters' %}">
+        <i class="fa fa-sliders-h"></i>
+        <span x-show="$store.pioneerMap.filterCount > 0" x-text="$store.pioneerMap.filterCount" class="text-xs font-bold leading-none"></span>
+      </button>
+      <div x-show="filterOpen" x-cloak @click.outside="if (!$event.target.closest('.tagify__dropdown')) filterOpen = false" @keydown.escape.window="filterOpen = false"
+           class="absolute {{ align|default:'left-0' }} top-full mt-2 w-72 bg-primary text-secondary rounded-lg shadow-xl border border-red p-4 z-30 space-y-4 max-h-[80vh] overflow-y-auto">
+        <div>
+          <div class="text-xs font-bold uppercase tracking-wider opacity-70 mb-2">{% trans "Skills they share" %}</div>
+          <input data-pioneer-skills class="form-input w-full text-brown" value="{{ filters.skills|join:', ' }}"
+                 data-skill-tags="{% trans 'Popular skills to explore' %}" placeholder="{% trans 'e.g. Permaculture, Yoga' %}">
+        </div>
+        <div>
+          <div class="text-xs font-bold uppercase tracking-wider opacity-70 mb-2">{% trans "Wants to learn" %}</div>
+          <input data-pioneer-learn class="form-input w-full text-brown" value="{{ filters.learn|join:', ' }}"
+                 data-skill-tags="{% trans 'Popular skills to explore' %}" placeholder="{% trans 'e.g. Permaculture, Yoga' %}">
+        </div>
+        <div class="space-y-1">
+          {% for flag, label, icon in flag_choices %}
+            <label class="flex items-center gap-2 cursor-pointer text-sm hover:bg-secondary hover:bg-opacity-10 rounded px-1 py-0.5">
+              <input type="checkbox" class="form-checkbox light h-4 w-4 flex-shrink-0" x-model="$store.pioneerMap.{{ flag }}" @change="window.pioneerFiltersChanged()">
+              <i class="fa-solid {{ icon }} w-4 text-center"></i><span>{{ label }}</span>
+            </label>
+          {% endfor %}
+        </div>
+        <button type="button" x-show="$store.pioneerMap.filterCount > 0" class="text-xs underline opacity-70 hover:opacity-100" @click="$store.pioneerMap.clear(false)">{% trans "Clear filters" %}</button>
+      </div>
+    </div>
+
+    {# Near me: the map moves there, the list sorts nearest first #}
+    <button type="button" class="btn px-3" :class="$store.pioneerMap.near ? 'ring-2 ring-offset-1 ring-primary' : ''" title="{% trans 'Show pioneers near me' %}"
+            @click="if (!navigator.geolocation) return; navigator.geolocation.getCurrentPosition(pos => { $store.pioneerMap.near = pos.coords.latitude.toFixed(2) + ',' + pos.coords.longitude.toFixed(2); window._pioneerMapPanTo(pos.coords.longitude, pos.coords.latitude, 9); window.pioneerFiltersChanged(); });">
+      <i class="fa fa-crosshairs"></i>
+    </button>
+  </div>
+</div>
