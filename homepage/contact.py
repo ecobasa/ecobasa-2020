@@ -1,82 +1,29 @@
-"""The contact form and its spam protection, all on our own server: a trap field, a
-signed single-use challenge the browser has to work on for about a second, a minimum
-time to fill in, limits per address, sender and text, and few links. No confirmation
-goes to the sender, so the form can't be used to mail strangers."""
+"""The contact form. Besides the bot check (bot_check.py), limits per sender and text,
+and few links. No confirmation goes to the sender, so the form can't be used to mail
+strangers."""
 
-import hashlib
-import ipaddress
 import re
-import secrets
 from datetime import timedelta
 
 from django import forms
 from django.conf import settings
-from django.core import signing
 from django.core.mail import EmailMessage
 from django.db import IntegrityError, transaction
 from django.utils import timezone
-from django.utils.crypto import salted_hmac
 from django.utils.translation import get_language, gettext_lazy as _
 
-from .models import ContactSubmission
+import bot_check
+from bot_check import LINK
 
-SALT = "homepage.contact"
-# Leading zero bits of sha256(challenge:nonce): about 130,000 tries, a second or two in a browser
-DIFFICULTY = 17
-MIN_SECONDS = 4
-MAX_AGE = timedelta(hours=3)
 MAX_LINKS = 2
-# (rows that count, over how long)
+# (at most, within)
 PER_ADDRESS = [(3, timedelta(hours=1)), (8, timedelta(days=1))]
-PER_SENDER = [(3, timedelta(days=1))]
+PER_SENDER = (3, timedelta(days=1))
 SAME_TEXT = timedelta(days=7)
-KEEP = timedelta(days=8)
-
-LINK = re.compile(r"https?://|www\.|\[url|<a\s|\]\(", re.IGNORECASE)
-
-
-def challenge():
-    return signing.TimestampSigner(salt=SALT).sign(secrets.token_hex(16))
-
-
-def challenge_age(value):
-    """Seconds since the challenge was made, or None if it isn't ours or too old."""
-    signer = signing.TimestampSigner(salt=SALT)
-    try:
-        signer.unsign(value, max_age=MAX_AGE)
-    except signing.BadSignature:
-        return None
-    issued = signing.b62_decode(value.split(signer.sep)[-2])
-    return timezone.now().timestamp() - issued
-
-
-def solved(value, nonce):
-    if not nonce.isdigit() or len(nonce) > 12:
-        return False
-    digest = hashlib.sha256(f"{value}:{nonce}".encode()).digest()
-    return int.from_bytes(digest, "big") >> (256 - DIFFICULTY) == 0
-
-
-def client_address(request):
-    """nginx appends the address it saw; earlier entries can be made up by the client.
-    IPv6 by its /64, which one connection usually gets whole."""
-    forwarded = request.META.get("HTTP_X_FORWARDED_FOR", "")
-    address = forwarded.split(",")[-1].strip() if forwarded else request.META.get("REMOTE_ADDR", "")
-    try:
-        ip = ipaddress.ip_address(address)
-    except ValueError:
-        return address
-    if ip.version == 6:
-        return str(ipaddress.ip_network(f"{ip}/64", strict=False))
-    return str(ip)
-
-
-def digest(value):
-    return salted_hmac(SALT, value).hexdigest()
 
 
 def text_digest(text):
-    return digest(re.sub(r"\W+", "", text.lower()))
+    return bot_check.digest(re.sub(r"\W+", "", text.lower()))
 
 
 class ContactForm(forms.Form):
@@ -84,10 +31,6 @@ class ContactForm(forms.Form):
     email = forms.EmailField(label=_("Your email"))
     subject = forms.CharField(label=_("Subject"), max_length=100)
     message = forms.CharField(label=_("Message"), min_length=15, max_length=4000, widget=forms.Textarea(attrs={"rows": 8}))
-    # The trap: hidden from people, filled in by bots
-    website = forms.CharField(required=False)
-    challenge = forms.CharField(required=False, widget=forms.HiddenInput)
-    nonce = forms.CharField(required=False, widget=forms.HiddenInput)
 
     def __init__(self, *args, request, **kwargs):
         super().__init__(*args, **kwargs)
@@ -95,8 +38,7 @@ class ContactForm(forms.Form):
         self.member = request.user if request.user.is_authenticated else None
         self.trapped = False
         if self.member:
-            for name in ("name", "email", "website", "challenge", "nonce"):
-                del self.fields[name]
+            del self.fields["name"], self.fields["email"]
 
     def clean_name(self):
         name = " ".join(self.cleaned_data["name"].split())
@@ -120,23 +62,18 @@ class ContactForm(forms.Form):
         data = super().clean()
         if self.errors:
             return data
-        if not self.member:
-            if data["website"]:
-                self.trapped = True
-                return data
-            age = challenge_age(data["challenge"])
-            if age is None or age < MIN_SECONDS or not solved(data["challenge"], data["nonce"]) or (
-                ContactSubmission.objects.filter(token_digest=digest(data["challenge"])).exists()
-            ):
-                raise forms.ValidationError(_("That didn't work. Please send your message again."))
-        email = self.sender()[1]
-        now = timezone.now()
-        rows = ContactSubmission.objects.all()
-        limits = [(rows.filter(ip_digest=digest(client_address(self.request))), PER_ADDRESS),
-                  (rows.filter(email_digest=digest(email.lower())), PER_SENDER)]
-        if any(found.filter(created_at__gte=now - span).count() >= most for found, spans in limits for most, span in spans):
+        check = bot_check.check(self.request, "contact", PER_ADDRESS, challenge_needed=not self.member)
+        if check.error:
+            raise forms.ValidationError(check.error)
+        self.trapped = check.trapped
+        if self.trapped:
+            return data
+        rows = bot_check.entries("contact")
+        most, within = PER_SENDER
+        sent = rows.filter(email_digest=bot_check.digest(self.sender()[1].lower()), created_at__gte=timezone.now() - within)
+        if sent.count() >= most:
             raise forms.ValidationError(_("You have sent us several messages already. Please try again tomorrow."))
-        if rows.filter(text_digest=text_digest(data["message"]), created_at__gte=now - SAME_TEXT).exists():
+        if rows.filter(text_digest=text_digest(data["message"]), created_at__gte=timezone.now() - SAME_TEXT).exists():
             raise forms.ValidationError(_("We have received this message already."))
         return data
 
@@ -162,14 +99,11 @@ class ContactForm(forms.Form):
             to=[settings.CONTACT_EMAIL],
             reply_to=[email],
         )
-        ContactSubmission.objects.filter(created_at__lt=timezone.now() - KEEP).delete()
         try:
             with transaction.atomic():
-                ContactSubmission.objects.create(
-                    ip_digest=digest(client_address(self.request)),
-                    email_digest=digest(email.lower()),
-                    text_digest=text_digest(message),
-                    token_digest=None if self.member else digest(self.cleaned_data["challenge"]),
+                bot_check.record(
+                    self.request, "contact", challenge_needed=not self.member,
+                    email_digest=bot_check.digest(email.lower()), text_digest=text_digest(message),
                 )
                 mail.send()
         except IntegrityError:

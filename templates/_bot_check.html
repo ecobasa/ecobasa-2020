@@ -1,0 +1,9 @@
+{% load i18n static %}{# Inside a public form: see bot_check.py #}
+<div aria-hidden="true" style="position:absolute;left:-10000px;width:1px;height:1px;overflow:hidden;">
+  <label for="id_website">Website</label>
+  <input type="text" name="website" id="id_website" tabindex="-1" autocomplete="off">
+</div>
+<input type="hidden" name="challenge" value="{{ challenge }}" data-difficulty="{{ difficulty }}" data-checking="{% trans "Checking…" %}">
+<input type="hidden" name="nonce" value="">
+<noscript><p class="text-red-600 mt-4"><i class="fa-solid fa-circle-exclamation mr-1"></i>{% trans "To keep bots out, this form needs JavaScript. Please turn it on." %}</p></noscript>
+<script src="{% static 'js/bot-check.js' %}" defer></script>

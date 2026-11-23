@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from django.contrib.auth import views as django_views
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -17,7 +19,10 @@ from .emails import read_email_change_token, send_email_change_link, send_email_
 from .forms import RegisterForm, LoginForm, ProfileUpdateForm, EmailChangeForm
 from django.http import JsonResponse
 from django.views.decorators.http import require_GET
+from django.db import IntegrityError, transaction
 from django.db.models import Q
+
+import bot_check
 
 
 class LoginView(django_views.LoginView):
@@ -111,6 +116,9 @@ def _next_url(request):
     return reverse("homepage:homepage")
 
 
+SIGNUP_LIMITS = [(3, timedelta(days=1))]
+
+
 def register(request):
     """register a new user"""
     if request.user.is_authenticated:
@@ -125,11 +133,20 @@ def register(request):
             mutable["name"] = full_name
             data = mutable
         form = RegisterForm(data, request.FILES)
-        if form.is_valid():
-            form.save()
-            email = form.cleaned_data.get("email")
-            raw_password = form.cleaned_data.get("password")
-            user = authenticate(username=email, password=raw_password)
+        check = bot_check.check(request, "signup", SIGNUP_LIMITS) if form.is_valid() else None
+        if check and check.trapped:
+            return redirect("homepage:homepage")
+        if check and check.error:
+            form.add_error(None, check.error)
+        elif check:
+            try:
+                with transaction.atomic():
+                    bot_check.record(request, "signup")
+                    form.save()
+            except IntegrityError:
+                # Sent twice at once: the first one made the account
+                return redirect("users:login")
+            user = authenticate(username=form.cleaned_data["email"], password=form.cleaned_data["password"])
             auth_login(request, user)
             messages.success(request, _("Account created and logged in."))
             return redirect(_next_url(request))

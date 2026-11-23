@@ -68,15 +68,30 @@ class TestRegister:
             response, "/", status_code=302, target_status_code=200,
         )
 
-    def test_post(self, client: Client):
+    def test_post(self, client: Client, bot_check_fields):
         response = client.post(
             "/users/register/",
-            {"first_name": "Max", "last_name": "Mustermann", "email": "max@mustermann.com", "password": "asdaogfisgaf"},
+            {"first_name": "Max", "last_name": "Mustermann", "email": "max@mustermann.com", "password": "asdaogfisgaf",
+             **bot_check_fields()},
         )
         assertRedirects(
             response, "/", status_code=302, target_status_code=200,
         )
         assert User.objects.all().exists()
+
+
+    def test_bots_make_no_account_and_one_address_only_a_few(self, client: Client, bot_check_fields):
+        def register(n, **fields):
+            client.logout()
+            client.post("/users/register/", {"name": "Max", "email": f"max{n}@example.com", "password": "asdaogfisgaf",
+                                             **bot_check_fields(), **fields})
+
+        register(0, website="http://spam.example")
+        register(1, nonce="1")
+        assert not User.objects.exists()
+        for n in range(5):
+            register(n)
+        assert User.objects.count() == 3
 
 
 @pytest.mark.django_db

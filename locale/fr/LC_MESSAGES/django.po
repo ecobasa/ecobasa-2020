@@ -10617,8 +10617,8 @@ msgstr "Merci de ne pas mettre de liens dans l'objet."
 msgid "Please send at most two links."
 msgstr "Merci d'envoyer au plus deux liens."
 
-msgid "That didn't work. Please send your message again."
-msgstr "Ça n'a pas marché. Merci de renvoyer ton message."
+msgid "That didn't work. Please send it again."
+msgstr "Ça n'a pas marché. Merci de le renvoyer."
 
 msgid "You have sent us several messages already. Please try again tomorrow."
 msgstr "Tu nous as déjà envoyé plusieurs messages. Merci de réessayer demain."
@@ -10639,11 +10639,14 @@ msgstr "Des questions, des idées, ou tu veux aider ? Nous lisons chaque message
 msgid "We'll answer to %(email)s."
 msgstr "Nous répondrons à %(email)s."
 
-msgid "To keep spam out, this form needs JavaScript. Please turn it on to send your message."
-msgstr "Pour éviter le spam, ce formulaire a besoin de JavaScript. Active-le pour envoyer ton message."
+msgid "To keep bots out, this form needs JavaScript. Please turn it on."
+msgstr "Pour éviter les robots, ce formulaire a besoin de JavaScript. Merci de l'activer."
 
 msgid "Checking…"
 msgstr "Vérification…"
 
 msgid "Send message"
 msgstr "Envoyer le message"
+
+msgid "Too many tries from your connection. Please try again tomorrow."
+msgstr "Trop de tentatives depuis ta connexion. Merci de réessayer demain."

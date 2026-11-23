@@ -10605,8 +10605,8 @@ msgstr "Bitte lass Links aus dem Betreff weg."
 msgid "Please send at most two links."
 msgstr "Bitte schick höchstens zwei Links."
 
-msgid "That didn't work. Please send your message again."
-msgstr "Das hat nicht geklappt. Bitte schick deine Nachricht noch einmal."
+msgid "That didn't work. Please send it again."
+msgstr "Das hat nicht geklappt. Bitte schick es noch einmal."
 
 msgid "You have sent us several messages already. Please try again tomorrow."
 msgstr "Du hast uns schon mehrere Nachrichten geschickt. Bitte versuch es morgen wieder."
@@ -10627,11 +10627,14 @@ msgstr "Fragen, Ideen, oder du möchtest mithelfen? Wir lesen jede Nachricht und
 msgid "We'll answer to %(email)s."
 msgstr "Wir antworten an %(email)s."
 
-msgid "To keep spam out, this form needs JavaScript. Please turn it on to send your message."
-msgstr "Gegen Spam braucht dieses Formular JavaScript. Bitte schalte es ein, um deine Nachricht zu senden."
+msgid "To keep bots out, this form needs JavaScript. Please turn it on."
+msgstr "Gegen Bots braucht dieses Formular JavaScript. Bitte schalte es ein."
 
 msgid "Checking…"
 msgstr "Wird geprüft…"
 
 msgid "Send message"
 msgstr "Nachricht senden"
+
+msgid "Too many tries from your connection. Please try again tomorrow."
+msgstr "Zu viele Versuche von deiner Verbindung. Bitte versuch es morgen wieder."

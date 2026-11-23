@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load crispy_forms_tags i18n static %}
+{% load crispy_forms_tags i18n site_tags static %}
 
 {% block extrahead %}
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.css">
@@ -19,7 +19,11 @@
   <h1 class="text-2xl">{% trans "Register for an account at ecobasa" %}</h1>
 
   <form enctype="multipart/form-data" method="post" class="w-full my-10 form-control-w-full">
+    {% for error in form.non_field_errors %}
+      <p class="text-red-600 mb-4"><i class="fa-solid fa-circle-exclamation mr-1"></i>{{ error }}</p>
+    {% endfor %}
     {% crispy form %}
+    {% bot_check %}
     {% if request.GET.next or request.POST.next %}<input type="hidden" name="next" value="{{ request.POST.next|default:request.GET.next }}">{% endif %}
     <div id="cropper" class="hidden"></div>
 
