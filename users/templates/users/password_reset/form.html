@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load crispy_forms_tags i18n %}
+{% load crispy_forms_tags i18n site_tags %}
 
 {% block content %}
 <div class="container-auth">
@@ -22,6 +22,7 @@
       <form method="post" class="mt-8">
         {% csrf_token %}
         {{ form | crispy }}
+        {% bot_check %}
         <button class="btn w-full my-5">{% trans 'Reset my password' %}</button>
       </form>
     </div>

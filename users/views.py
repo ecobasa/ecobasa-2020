@@ -167,10 +167,28 @@ def register(request):
     return render(request, "users/register.html", {"form": form})
 
 
+# Reset mails asked for from one connection: (at most, within)
+PASSWORD_RESET_LIMITS = [(5, timedelta(hours=1))]
+
+
 class PasswordResetView(django_views.PasswordResetView):
+    """Through the bot check, so nobody floods a member's inbox with reset mails."""
     email_template_name = "users/password_reset/email.html"
     template_name = "users/password_reset/form.html"
     success_url = reverse_lazy("users:password_reset_done")
+
+    def form_valid(self, form):
+        check = bot_check.check(self.request, "password_reset", PASSWORD_RESET_LIMITS)
+        if check.trapped:
+            return redirect(self.success_url)
+        if check.error:
+            form.add_error(None, check.error)
+            return self.form_invalid(form)
+        try:
+            bot_check.record(self.request, "password_reset")
+        except IntegrityError:
+            return redirect(self.success_url)
+        return super().form_valid(form)
 
 
 class PasswordResetDoneView(django_views.PasswordResetDoneView):

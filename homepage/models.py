@@ -6,7 +6,8 @@ class BotCheckEntry(models.Model):
     limits. Keyed hashes, never the address, name or text: the mail or the account itself
     is the record."""
 
-    FORM_CHOICES = [("contact", "Contact"), ("signup", "Signup"), ("guest", "Gift-circle guest")]
+    FORM_CHOICES = [("contact", "Contact"), ("signup", "Signup"), ("guest", "Gift-circle guest"),
+                    ("password_reset", "Password reset")]
 
     form = models.CharField(max_length=20, choices=FORM_CHOICES)
     ip_digest = models.CharField(max_length=64, db_index=True)

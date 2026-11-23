@@ -96,10 +96,10 @@ class TestRegister:
 
 @pytest.mark.django_db
 class TestPasswordReset:
-    def test_pw_reset(self, client: Client, user: User, mailoutbox: list):
+    def test_pw_reset(self, client: Client, user: User, mailoutbox: list, bot_check_fields):
         # post email address
         res = client.post(
-            reverse("users:password_reset"), {"email": user.email}, follow=True
+            reverse("users:password_reset"), {"email": user.email, **bot_check_fields()}, follow=True
         )
         assertRedirects(
             res,
@@ -135,6 +135,11 @@ class TestPasswordReset:
         # check that new pw works
         newuser = authenticate(email=user.email, password=new_password)
         assert newuser == user
+
+    def test_bots_send_no_reset_mails(self, client: Client, user: User, mailoutbox: list, bot_check_fields):
+        client.post(reverse("users:password_reset"), {"email": user.email, **bot_check_fields(), "website": "x"})
+        client.post(reverse("users:password_reset"), {"email": user.email, **bot_check_fields(), "nonce": "1"})
+        assert mailoutbox == []
 
 
 @pytest.mark.django_db
