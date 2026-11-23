@@ -40,3 +40,31 @@ def test_the_homepage_shows_the_next_online_gift_circles_those_in_one_s_language
     circle("Around Lyon", 3, ["en"], location_name="Lyon, France", location=Point(4.83, 45.76, srid=4326))
     shown = client.get("/", HTTP_ACCEPT_LANGUAGE="en").context["online_circles"]
     assert [event.title for event in shown] == ["Seeds and seedlings", "Rund um Saatgut"]
+
+
+@pytest.mark.django_db
+def test_the_search_goes_straight_to_the_one_list_with_hits_and_shows_an_overview_for_several(client):
+    from django.contrib.gis.geos import Point
+    from django.urls import reverse
+
+    from communities.models import Community
+    from users.models import User
+
+    Community.objects.create(name="Lindenhof", description="An orchard of old apple varieties")
+    Community.objects.create(name="Sonnenwiese", description="Apple juice in autumn")
+    pioneer = User.objects.create_user(
+        email="jona@example.com", password="secret", name="Jona", about="Grafting apple trees",
+        email_confirmed=True, shows_on_map=True, location=Point(9.18, 48.78, srid=4326),
+    )
+
+    # The pioneers only for people logged in
+    response = client.get(reverse("homepage:search"), {"q": "apple"})
+    assert response.status_code == 302
+    assert response.url == reverse("communities:list") + "?q=apple"
+    client.force_login(pioneer)
+    response = client.get(reverse("homepage:search"), {"q": "apple"})
+    assert [section["key"] for section in response.context["sections"]] == ["communities", "pioneers"]
+
+    response = client.get(reverse("homepage:search"), {"q": "nothing like it"})
+    assert response.status_code == 200
+    assert response.context["sections"] == []

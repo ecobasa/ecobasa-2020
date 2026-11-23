@@ -1,14 +1,14 @@
 {% load i18n %}{# An offer or wish as a card in the list: a thing, a skill, knowledge, helping hands or a project's need #}
-<a href="{% url "gifts:detail" listing.pk %}" class="relative w-full group flex items-stretch bg-secondary bg-opacity-50 rounded-md hover:text-primary hover:shadow-lg">
+<a href="{% url "gifts:detail" listing.pk %}" class="card relative w-full group flex items-stretch overflow-hidden hover:text-primary hover:shadow-xl">
   <div class="text-xs absolute bottom-0 right-0 rounded-full p-2 text-secondary {{ listing.marker_colour }}">
     {% if listing.event_id and listing.is_wish %}<i class="fa-solid {{ listing.event.kind_icon }} mr-1"></i>{{ listing.event.texts.need }}
     {% else %}<i class="fa-solid {% if listing.kind != 'other' %}{{ listing.kind_icon }}{% elif listing.is_offer %}fa-gift{% else %}fa-heart{% endif %} mr-1"></i>{{ listing.get_type_display }}{% endif %}
   </div>
-  {# Its own photo, filling the left side; the giver has their picture in the line below #}
+  {# Its own photo, filling the left side as on a tour's card; the giver has their picture in the line below #}
   {% if listing.image %}
-    <img class="w-24 sm:w-48 flex-shrink-0 object-cover rounded-l-md" src="{{ listing.image.url }}" alt="" loading="lazy">
+    <img class="w-24 sm:w-48 flex-shrink-0 object-cover" src="{{ listing.image.url }}" alt="" loading="lazy">
   {% endif %}
-  <div class="flex-1 min-w-0 p-5 flex flex-col">
+  <div class="flex-1 min-w-0 p-4 sm:p-5 flex flex-col">
     {# Everything in the flow, so nothing overlaps when it wraps on small screens #}
     <div class="min-w-0">
       <div class="flex flex-wrap items-center gap-x-2 gap-y-1">

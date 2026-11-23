@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block head_title %}{% blocktrans %}Search: {{ q }}{% endblocktrans %} — ecobasa{% endblock %}
+
+{% block content %}
+{# The search again, to change it; then the first few of each list with hits #}
+<section class="paper-orange py-10 px-6 text-center text-secondary font-bold">
+  <h1 class="text-secondary mt-0">{% blocktrans %}Search: {{ q }}{% endblocktrans %}</h1>
+  {% include "homepage/_search_form.html" %}
+</section>
+
+<div class="container-content">
+  {# Where the hits are, each a link to its section #}
+  {% if sections %}
+    <nav class="flex flex-wrap justify-center gap-2 mb-8" aria-label="{% trans 'Results' %}">
+      {% for section in sections %}<a href="#{{ section.key }}" class="pill pill-lg bg-primary">{% include "homepage/_search_section_label.html" %}</a>{% endfor %}
+    </nav>
+  {% endif %}
+  {# The first few of each list, one card a row, so the same detail lines up from card to card #}
+  {% for section in sections %}
+    <section id="{{ section.key }}" class="mb-12 scroll-mt-20">
+      <div class="flex flex-wrap items-baseline justify-between gap-2 mb-4">
+        <h2 class="m-0 [&>i]:text-primary">{% include "homepage/_search_section_label.html" %}</h2>
+        <a href="{{ section.url }}" class="btn"><i class="fa-solid fa-map mr-1"></i>{% trans "Show all on the map" %}</a>
+      </div>
+      <div class="space-y-4">
+        {% for item in section.items %}
+          {% if section.key == "communities" %}{% include "communities/_community_list_card.html" with community=item %}
+          {% elif section.key == "gifts" %}{% include "gifts/_listing_card.html" with listing=item %}
+          {% elif section.key == "tours" %}{% include "tours/_tour_card.html" with tour=item %}
+          {% elif section.key == "events" %}{% include "events/_event_card.html" with event=item show_community=True show_coming=True %}
+          {% else %}{% include "pioneers/_pioneer_card.html" with person=item %}{% endif %}
+        {% endfor %}
+      </div>
+    </section>
+  {% empty %}
+    <p class="text-center italic">{% trans "Nothing found. Try another word, or browse the lists:" %}</p>
+    <p class="text-center">
+      <a href="{% url 'communities:list' %}">{% trans "Communities" %}</a> ·
+      <a href="{% url 'gifts:search' %}">{% trans "Gifts" %}</a> ·
+      <a href="{% url 'tours:list' %}">{% trans "Community-Tours" %}</a> ·
+      <a href="{% url 'events:list' %}">{% trans "Events" %}</a>{% if user.is_authenticated %} ·
+      <a href="{% url 'pioneers:list' %}">{% trans "Pioneers" %}</a>{% endif %}
+    </p>
+  {% endfor %}
+</div>
+{% endblock %}

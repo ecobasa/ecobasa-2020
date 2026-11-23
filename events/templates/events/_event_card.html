@@ -1,6 +1,7 @@
 {% load i18n site_tags %}
-<article class="card p-4 flex flex-col gap-2 {% if not event.is_current %}opacity-60{% endif %}">
-  {% if event.image %}<a href="{{ event.get_absolute_url }}"><img src="{{ event.image.url }}" alt="" class="w-full h-36 object-cover rounded-lg" loading="lazy"></a>{% endif %}
+<article class="card p-4 flex flex-col gap-2 overflow-hidden {% if not event.is_current %}opacity-60{% endif %}">
+  {# Its picture across the top, as on a community's card #}
+  {% if event.image %}<a href="{{ event.get_absolute_url }}" class="-mx-4 -mt-4 mb-1"><img src="{{ event.image.url }}" alt="" class="w-full h-40 object-cover" loading="lazy"></a>{% endif %}
   {# Its kind and what it offers, the dates on the right, as on a tour's card #}
   <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
     <span class="pill {{ event.kind_colour }} text-secondary text-xs"><i class="fa-solid {{ event.kind_icon }} mr-1"></i>{{ event.kind_label }}</span>

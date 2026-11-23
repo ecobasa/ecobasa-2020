@@ -324,16 +324,16 @@ def _apply_bbox(qs, bbox_param):
     return qs.filter(spot__intersects=poly)
 
 
-def _filtered_listings(request, require_location=True):
-    """What the map and list show: current listings, filtered (ListingFilter), each with
-    its place. Offers and wishes of things, skills, knowledge and helping hands of people
+def filtered_listings(params, require_location=True):
+    """What the map and list show: current listings, filtered (ListingFilter, from the
+    query parameters `params`), each with its place. Offers and wishes of things, skills, knowledge and helping hands of people
     and communities, and the needs of current events and tours."""
     base_qs = _with_spot(Listing.objects.open()).select_related(
         "owner", "community", "event", "tour", "skill",
     ).exclude(owner=None, community=None, tour=None).exclude(type=Listing.TYPE_OFFER, skill__isnull=False, available=False)
     if require_location:
         base_qs = base_qs.filter(spot__isnull=False)
-    return ListingFilter(request.GET, queryset=base_qs, request=request).qs
+    return ListingFilter(params, queryset=base_qs).qs
 
 
 # ── Endpoints ────────────────────────────────────────────────────────
@@ -362,7 +362,7 @@ def gifts_markers(request):
     """
     features = []
     signed_in = request.user.is_authenticated
-    listings = _apply_bbox(_filtered_listings(request), request.GET.get("bbox", "")).prefetch_related(with_member_communities("owner__"))
+    listings = _apply_bbox(filtered_listings(request.GET), request.GET.get("bbox", "")).prefetch_related(with_member_communities("owner__"))
     for listing in listings[:700]:
         holder = listing.holder
         photo = listing.image.url if listing.image else None
@@ -407,7 +407,7 @@ def gifts_markers(request):
 
 @require_GET
 def gifts_list_partial(request):
-    listings_queryset = _filtered_listings(request, require_location=False).prefetch_related(
+    listings_queryset = filtered_listings(request.GET, require_location=False).prefetch_related(
         "categories", "community__photos", with_member_communities("owner__"),
     )
     # Your own (and your communities') are nearest, so they would always come first; the

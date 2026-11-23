@@ -1,29 +1,36 @@
 {% load i18n %}
-{# A pioneer in the list: picture, name, about where and how far, when last around, some words about them, the skills they share; invite them when one came to pick someone (messages start on their profile) #}
-<article class="relative w-full bg-secondary bg-opacity-50 rounded-md hover:shadow-lg p-5 flex flex-col gap-2">
-  <div class="flex items-center gap-3 min-w-0">
-    <a href="{{ person.get_absolute_url }}" class="flex-shrink-0">{% include "_avatar.html" with who=person %}</a>
-    <div class="min-w-0">
-      <a href="{{ person.get_absolute_url }}" class="font-serif font-bold text-lg leading-snug hover:underline">{% firstof person.name person.username %}</a>
-      <div class="text-sm text-brown flex flex-wrap gap-x-2">
-        {% if person.place %}<span class="truncate"><i class="fa fa-map-marker-alt mr-1"></i>{{ person.place }}</span>{% endif %}
-        {% if person.km is not None %}<span class="opacity-70 whitespace-nowrap">· {% blocktrans with km=person.km %}about {{ km }} km{% endblocktrans %}</span>{% endif %}
+{# A pioneer in the list, laid out like a tour's card: their picture filling the left side (else as a round icon by the name), name, about where and how far, when last around, some words about them, the skills they share; invite them when one came to pick someone (messages start on their profile) #}
+<article class="card relative w-full flex items-stretch overflow-hidden hover:shadow-xl">
+  {% if person.image %}
+    <a href="{{ person.get_absolute_url }}" class="flex-shrink-0 w-24 sm:w-48" tabindex="-1" aria-hidden="true">
+      <img class="w-full h-full object-cover" src="{{ person.image.url }}" alt="" loading="lazy">
+    </a>
+  {% endif %}
+  <div class="flex-1 min-w-0 p-4 sm:p-5 flex flex-col gap-2">
+    <div class="flex items-center gap-3 min-w-0">
+      {% if not person.image %}<a href="{{ person.get_absolute_url }}" class="flex-shrink-0">{% include "_avatar.html" with who=person %}</a>{% endif %}
+      <div class="min-w-0">
+        <a href="{{ person.get_absolute_url }}" class="font-serif font-bold text-lg leading-snug hover:underline">{% firstof person.name person.username %}</a>
+        <div class="text-sm text-brown flex flex-wrap gap-x-2">
+          {% if person.place %}<span class="truncate"><i class="fa fa-map-marker-alt mr-1"></i>{{ person.place }}</span>{% endif %}
+          {% if person.km is not None %}<span class="opacity-70 whitespace-nowrap">· {% blocktrans with km=person.km %}about {{ km }} km{% endblocktrans %}</span>{% endif %}
+        </div>
       </div>
     </div>
-  </div>
-  {% if person.looking_for_community %}<span class="pill bg-green self-start"><i class="fa-solid fa-door-open mr-1"></i>{% trans "Looking for a community" %}</span>{% endif %}
-  {% if person.about %}<p class="text-sm text-brown m-0 line-clamp-2">{{ person.about }}</p>{% endif %}
-  {% if person.skill_offers %}
-    <div class="flex flex-wrap gap-1">
-      {% for listing in person.skill_offers|slice:":6" %}{% include "gifts/_listing_pill.html" with link=True %}{% endfor %}
-    </div>
-  {% endif %}
-  <div class="text-xs mt-auto flex flex-wrap items-center justify-between gap-2">
-    {% include "events/_freshness.html" with when=person.last_active %}
-    {% if person != user %}
-      <span class="flex flex-wrap gap-2">
-        {% if person.invite_url %}<a href="{{ person.invite_url }}" class="btn text-xs"><i class="fa-solid fa-user-plus mr-1"></i>{% trans "Invite" %}</a>{% endif %}
-      </span>
+    {% if person.looking_for_community %}<span class="pill bg-green self-start"><i class="fa-solid fa-door-open mr-1"></i>{% trans "Looking for a community" %}</span>{% endif %}
+    {% if person.about %}<p class="text-sm text-brown m-0 line-clamp-2">{{ person.about }}</p>{% endif %}
+    {% if person.skill_offers %}
+      <div class="flex flex-wrap gap-1">
+        {% for listing in person.skill_offers|slice:":6" %}{% include "gifts/_listing_pill.html" with link=True %}{% endfor %}
+      </div>
     {% endif %}
+    <div class="text-xs mt-auto flex flex-wrap items-center justify-between gap-2">
+      {% include "events/_freshness.html" with when=person.last_active %}
+      {% if person != user %}
+        <span class="flex flex-wrap gap-2">
+          {% if person.invite_url %}<a href="{{ person.invite_url }}" class="btn text-xs"><i class="fa-solid fa-user-plus mr-1"></i>{% trans "Invite" %}</a>{% endif %}
+        </span>
+      {% endif %}
+    </div>
   </div>
 </article>

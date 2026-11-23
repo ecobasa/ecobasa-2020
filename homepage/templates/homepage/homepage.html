@@ -72,15 +72,10 @@
   </div>
 </section>
 
-{# The search hands over to the gift map, which reads it from the query string. On the orange paper of the old ecobasa.org #}
+{# The search goes through all lists, or straight to the one with hits. On the orange paper of the old ecobasa.org #}
 <section id="explore" class="paper-orange py-10 px-6 text-center text-secondary font-bold scroll-mt-16">
   <h2 class="text-secondary mt-0">{% trans "Explore our global gift-economy network" %}</h2>
-  <form action="{% url 'gifts:search' %}" method="get" class="flex max-w-2xl mx-auto mt-6 border border-brown-80 rounded-lg overflow-hidden">
-    <div class="flex-1">
-      <input class="form-input w-full h-full bg-secondary border-0 rounded-none shadow-[inset_0_2px_4px_rgb(0_0_0_/_0.15)]" type="search" name="search" placeholder="{% trans 'What are you looking for?' %}" aria-label="{% trans 'Search' %}">
-    </div>
-    <button type="submit" class="btn border-0 rounded-none"><i class="fa fa-search mr-2"></i>{% trans "Search" %}</button>
-  </form>
+  {% include "homepage/_search_form.html" %}
   <p class="mt-4 mb-0">{% url 'gifts:search' as gifts_url %}{% url 'communities:list' as communities_url %}{% url 'events:list' as events_url %}{% url 'tours:list' as tours_url %}{% blocktrans %}Find <a href="{{ gifts_url }}?type=offer">offers</a>, <a href="{{ gifts_url }}?type=wish">wishes</a> and <a href="{{ gifts_url }}?type=skill">skills</a> on the map, or browse <a href="{{ communities_url }}">communities</a>, <a href="{{ events_url }}">events</a> and <a href="{{ tours_url }}">Community-Tours</a>.{% endblocktrans %}{% if user.is_authenticated %} {% url 'pioneers:list' as pioneers_url %}{% blocktrans %}Or meet <a href="{{ pioneers_url }}">pioneers</a> to invite or travel with.{% endblocktrans %}{% endif %}</p>
 </section>
 

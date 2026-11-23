@@ -1464,12 +1464,12 @@ msgstr "Sin resultados"
 msgid "No results found."
 msgstr "No se han encontrado resultados."
 
-#: gift_economy/gifts/templates/gifts/_listing.html:4
+#: gift_economy/gifts/templates/gifts/_listing_card.html:4
 #: gift_economy/gifts/templates/gifts/listing_detail.html:62
 msgid "Project need"
 msgstr "Necesidad del proyecto"
 
-#: gift_economy/gifts/templates/gifts/_listing.html:29
+#: gift_economy/gifts/templates/gifts/_listing_card.html:29
 msgid "to"
 msgstr "hasta"
 

@@ -3,6 +3,8 @@ from datetime import date, datetime, time, timedelta
 from django.contrib import messages
 from django.db.models import F
 from django.shortcuts import redirect, render
+from django.urls import reverse
+from django.utils.http import urlencode
 from django.utils import timezone
 from django.utils.translation import get_language, gettext as _
 
@@ -18,6 +20,8 @@ from . import contact as contact_form
 HOMEPAGE_REFERENCES = 9
 HOMEPAGE_ONLINE_CIRCLES = 9
 HOMEPAGE_TOURS = 9
+# What the search overview shows of each list
+SEARCH_PREVIEW = 3
 
 
 def _ended(event, now):
@@ -68,6 +72,54 @@ def homepage(request):
         "online_circles": online_gift_circles(get_language()),
         "tours": next_tours(),
     })
+
+def search(request):
+    """The search of the homepage, in the communities, gifts, tours and events lists (and,
+    logged in, the pioneers) at once: with hits in one of them straight to that list, with
+    hits in several an overview of the first few of each, with a link to its list."""
+    from communities.models import Community
+    from communities.views import _current_events, _search_q, _skill_offers
+    from events.filters import EventFilters
+    from events.views import _events
+    from gift_economy.gifts.views import filtered_listings
+    from tours.geo import TourFilters
+    from tours.views import _tours
+    from users.pioneers import PioneerFilters, _with_skills, pioneers
+    from users.places import town
+
+    q = (request.GET.get("q") or "").strip()
+    if not q:
+        return redirect(reverse("homepage:homepage") + "#explore")
+    events = EventFilters({"q": q}, request.user)
+    tours = TourFilters({"q": q}, request.user)
+    sections = [
+        # (key, its list, the parameter its search reads, what was found)
+        ("communities", "communities:list", "q", Community.objects.filter(_search_q(q)).distinct().prefetch_related("photos", _skill_offers(), _current_events()).order_by("name")),
+        ("gifts", "gifts:search", "search", filtered_listings({"search": q}, require_location=False).order_by("-created_at")),
+        ("tours", "tours:list", "q", tours.apply(tours.base(_tours())).order_by(F("starts_on").asc(nulls_last=True), "-updated_at")),
+        ("events", "events:list", "q", events.apply(events.base(_events())).order_by(F("starts_on").asc(nulls_last=True))),
+    ]
+    if request.user.is_authenticated:
+        people = PioneerFilters(request).apply(pioneers())
+        sections.append(("pioneers", "pioneers:list", "q", _with_skills(people).order_by(F("last_seen").desc(nulls_last=True), "name")))
+    found = []
+    for key, list_name, param, items in sections:
+        count = items.count()
+        if count:
+            found.append({
+                "key": key, "count": count, "items": list(items[:SEARCH_PREVIEW]),
+                "url": reverse(list_name) + "?" + urlencode({param: q}),
+            })
+    if len(found) == 1:
+        return redirect(found[0]["url"])
+    for section in found:
+        if section["key"] == "events":
+            count_coming(section["items"])
+        if section["key"] == "pioneers":
+            for person in section["items"]:
+                person.place, person.km = town(person.location_name), None
+    return render(request, "homepage/search.html", {"q": q, "sections": found})
+
 
 def support(request):
     return render(request, "homepage/support.html")

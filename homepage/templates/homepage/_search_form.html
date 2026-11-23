@@ -1,0 +1,7 @@
+{% load i18n %}{# The search in the gifts, communities, events and tours lists (and, logged in, the pioneers) at once, with what was asked (`q`) #}
+<form action="{% url 'homepage:search' %}" method="get" class="flex max-w-2xl mx-auto mt-6 border border-brown-80 rounded-lg overflow-hidden">
+  <div class="flex-1">
+    <input class="form-input w-full h-full bg-secondary border-0 rounded-none shadow-[inset_0_2px_4px_rgb(0_0_0_/_0.15)]" type="search" name="q" value="{{ q }}" required placeholder="{% trans 'What are you looking for?' %}" aria-label="{% trans 'Search' %}">
+  </div>
+  <button type="submit" class="btn border-0 rounded-none"><i class="fa fa-search mr-2"></i>{% trans "Search" %}</button>
+</form>

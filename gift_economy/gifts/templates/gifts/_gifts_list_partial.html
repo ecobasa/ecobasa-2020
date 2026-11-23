@@ -11,7 +11,7 @@
 
 {# ── Offers and wishes of every kind: things, skills, project needs ─ #}
 {% for listing in listings %}
-  {% include "gifts/_listing.html" %}
+  {% include "gifts/_listing_card.html" %}
 {% empty %}
   <p class="text-primary py-8 text-center">{% trans "No results found." %}</p>
 {% endfor %}
