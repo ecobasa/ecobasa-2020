@@ -10650,3 +10650,43 @@ msgstr "Envoyer le message"
 
 msgid "Too many tries from your connection. Please try again tomorrow."
 msgstr "Trop de tentatives depuis ta connexion. Merci de réessayer demain."
+
+msgid "Email address confirmed"
+msgstr "Adresse e-mail confirmée"
+
+msgid "Confirm your email address for ecobasa"
+msgstr "Confirme ton adresse e-mail pour ecobasa"
+
+msgid "Welcome to ecobasa! Please confirm that this is your address. Then you can share gifts and skills, write to people and visit communities."
+msgstr "Bienvenue sur ecobasa ! Merci de confirmer que c'est bien ton adresse. Ensuite tu pourras partager des dons et des compétences, écrire aux gens et visiter des communautés."
+
+msgid "The link works for 7 days. If you didn't sign up, you can ignore this email."
+msgstr "Le lien fonctionne pendant 7 jours. Si tu ne t'es pas inscrit·e, tu peux ignorer cet e-mail."
+
+#, python-format
+msgid "Welcome! We sent a link to %(email)s. Please open it to confirm your address, then you can start sharing."
+msgstr "Bienvenue ! Nous avons envoyé un lien à %(email)s. Ouvre-le pour confirmer ton adresse, ensuite tu pourras commencer à partager."
+
+msgid "This link doesn't work any more. Log in to ask for a new one."
+msgstr "Ce lien ne fonctionne plus. Connecte-toi pour en demander un nouveau."
+
+msgid "Thank you, your email address is confirmed. Happy sharing!"
+msgstr "Merci, ton adresse e-mail est confirmée. Bon partage !"
+
+msgid "We sent you a link a few minutes ago. Please look in your spam folder too."
+msgstr "Nous t'avons envoyé un lien il y a quelques minutes. Regarde aussi dans tes spams."
+
+#, python-format
+msgid "We sent a new link to %(email)s."
+msgstr "Nous avons envoyé un nouveau lien à %(email)s."
+
+#, python-format
+msgid "Please confirm your email address first: open the link we sent to %(email)s."
+msgstr "Merci de confirmer d'abord ton adresse e-mail : ouvre le lien envoyé à %(email)s."
+
+#, python-format
+msgid "Please confirm your email address: open the link we sent to <strong>%(email)s</strong>. Until then you can look around, but not share or write to people yet."
+msgstr "Merci de confirmer ton adresse e-mail : ouvre le lien envoyé à <strong>%(email)s</strong>. D'ici là tu peux regarder, mais pas encore partager ni écrire aux gens."
+
+msgid "Send the link again"
+msgstr "Renvoyer le lien"

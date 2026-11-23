@@ -91,6 +91,10 @@ class User(AbstractUser):
     username = models.CharField(_("username"), unique=True, default=None, max_length=150, blank=True, null=True)
 
     email = models.EmailField(_("email address"), unique=True)
+    # False from signing up until they open the link in the confirmation mail; until then
+    # they can look around but not post (UnconfirmedEmailMiddleware). Accounts made any
+    # other way count as confirmed.
+    email_confirmed = models.BooleanField(_("Email address confirmed"), default=True)
     first_name = None
     last_name = None
     name = models.CharField(_("name"), blank=True, max_length=255)

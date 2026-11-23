@@ -35,7 +35,8 @@ class ContactForm(forms.Form):
     def __init__(self, *args, request, **kwargs):
         super().__init__(*args, **kwargs)
         self.request = request
-        self.member = request.user if request.user.is_authenticated else None
+        # Who hasn't confirmed their address yet writes like a visitor
+        self.member = request.user if request.user.is_authenticated and request.user.email_confirmed else None
         self.trapped = False
         if self.member:
             del self.fields["name"], self.fields["email"]

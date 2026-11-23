@@ -15,10 +15,15 @@ from gift_economy.gifts.models import Listing
 from .models import User
 from .places import approximate, town
 
-from .emails import read_email_change_token, send_email_change_link, send_email_changed_notice
+from .emails import (
+    read_email_change_token, read_signup_token, send_email_change_link, send_email_changed_notice,
+    send_signup_confirmation,
+)
 from .forms import RegisterForm, LoginForm, ProfileUpdateForm, EmailChangeForm
 from django.http import JsonResponse
-from django.views.decorators.http import require_GET
+from django.utils import timezone
+from django.utils.http import url_has_allowed_host_and_scheme
+from django.views.decorators.http import require_GET, require_POST
 from django.db import IntegrityError, transaction
 from django.db.models import Q
 
@@ -117,6 +122,9 @@ def _next_url(request):
 
 
 SIGNUP_LIMITS = [(3, timedelta(days=1))]
+# The session's last confirmation mail, and how long until another one may go
+CONFIRMATION_SENT = "confirmation_sent_at"
+RESEND_AFTER = timedelta(minutes=10)
 
 
 def register(request):
@@ -139,6 +147,7 @@ def register(request):
         if check and check.error:
             form.add_error(None, check.error)
         elif check:
+            form.instance.email_confirmed = False
             try:
                 with transaction.atomic():
                     bot_check.record(request, "signup")
@@ -148,7 +157,9 @@ def register(request):
                 return redirect("users:login")
             user = authenticate(username=form.cleaned_data["email"], password=form.cleaned_data["password"])
             auth_login(request, user)
-            messages.success(request, _("Account created and logged in."))
+            send_signup_confirmation(user, request)
+            request.session[CONFIRMATION_SENT] = timezone.now().timestamp()
+            messages.success(request, _("Welcome! We sent a link to %(email)s. Please open it to confirm your address, then you can start sharing.") % {"email": user.email})
             return redirect(_next_url(request))
     else:
         # Filled in from a link that knows them (a gift-circle guest's "Create an account")
@@ -238,11 +249,45 @@ def confirm_email(request, token):
         return redirect(reverse("users:update") if request.user.is_authenticated else reverse("users:login"))
     if request.method == "POST":
         user.email = new_email
-        user.save(update_fields=["email"])
+        # They opened a link sent to it
+        user.email_confirmed = True
+        user.save(update_fields=["email", "email_confirmed"])
         send_email_changed_notice(user, old_email)
         messages.success(request, _("Your email address is now %(email)s. Use it to log in.") % {"email": new_email})
         return redirect(user.get_absolute_url() if request.user == user else reverse("users:login"))
     return render(request, "users/confirm_email.html", {"old_email": old_email, "new_email": new_email})
+
+
+def confirm_signup(request, token):
+    """The link in the mail after signing up. Opening it is enough: it only shows the
+    address is theirs, so a mail program that opens it to check it does no harm."""
+    data = read_signup_token(token)
+    user = User.objects.filter(pk=data[0], email=data[1]).first() if data else None
+    if user is None:
+        messages.error(request, _("This link doesn't work any more. Log in to ask for a new one."))
+        return redirect("homepage:homepage")
+    if not user.email_confirmed:
+        user.email_confirmed = True
+        user.save(update_fields=["email_confirmed"])
+    messages.success(request, _("Thank you, your email address is confirmed. Happy sharing!"))
+    return redirect("homepage:homepage")
+
+
+@login_required
+@require_POST
+def resend_confirmation(request):
+    user = request.user
+    sent = request.session.get(CONFIRMATION_SENT)
+    if user.email_confirmed:
+        pass
+    elif sent and timezone.now().timestamp() - sent < RESEND_AFTER.total_seconds():
+        messages.info(request, _("We sent you a link a few minutes ago. Please look in your spam folder too."))
+    else:
+        send_signup_confirmation(user, request)
+        request.session[CONFIRMATION_SENT] = timezone.now().timestamp()
+        messages.success(request, _("We sent a new link to %(email)s.") % {"email": user.email})
+    return redirect(request.POST.get("next") if url_has_allowed_host_and_scheme(
+        request.POST.get("next"), allowed_hosts={request.get_host()}, require_https=request.is_secure()) else "homepage:homepage")
 
 
 def set_language(request):

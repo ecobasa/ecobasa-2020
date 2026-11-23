@@ -14,7 +14,7 @@
       {% for error in form.non_field_errors %}
         <p class="text-red-600 mb-4"><i class="fa-solid fa-circle-exclamation mr-1"></i>{{ error }}</p>
       {% endfor %}
-      {% if request.user.is_authenticated %}
+      {% if form.member %}
         <p class="text-sm text-brown mb-4">{% blocktrans with email=request.user.email %}We'll answer to {{ email }}.{% endblocktrans %}</p>
       {% else %}
         {{ form.name|as_crispy_field }}
@@ -22,7 +22,7 @@
       {% endif %}
       {{ form.subject|as_crispy_field }}
       {{ form.message|as_crispy_field }}
-      {% if not request.user.is_authenticated %}{% bot_check %}{% endif %}
+      {% if not form.member %}{% bot_check %}{% endif %}
       <div class="flex justify-end mt-5">
         <button type="submit" class="btn"><i class="fa fa-paper-plane mr-2"></i>{% trans "Send message" %}</button>
       </div>
