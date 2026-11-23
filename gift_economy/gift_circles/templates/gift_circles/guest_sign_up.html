@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% load i18n %}
+{% load i18n site_tags %}
 
 {% block head_title %}{% trans "Coming as a guest" %} — {{ event.title }} — ecobasa{% endblock %}
 
@@ -13,6 +13,7 @@
 
   <form method="post" class="border rounded-xl bg-secondary p-6 space-y-4">
     {% csrf_token %}
+    {% for error in form.non_field_errors %}<p class="field-error"><i class="fa-solid fa-circle-exclamation mr-1"></i>{{ error }}</p>{% endfor %}
     {% for field in form %}{% if field.name == "name" or field.name == "email" %}
       <div class="form-group">
         <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
@@ -21,6 +22,7 @@
       </div>
     {% endif %}{% endfor %}
     {% include "gift_circles/_guest_fields.html" %}
+    {% bot_check %}
     <div class="flex justify-between gap-3">
       <a href="{{ event.get_absolute_url }}" class="btn btn-lg btn-purple"><i class="fa-solid fa-ban mr-2"></i>{% trans "Cancel" %}</a>
       <button type="submit" class="btn btn-lg"><i class="fa-solid fa-paper-plane mr-2"></i>{% trans "Coming as a guest" %}</button>

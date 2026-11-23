@@ -25,7 +25,7 @@ class Migration(migrations.Migration):
                 (
                     "form",
                     models.CharField(
-                        choices=[("contact", "Contact"), ("signup", "Signup")],
+                        choices=[("contact", "Contact"), ("signup", "Signup"), ("guest", "Gift-circle guest")],
                         max_length=20,
                     ),
                 ),

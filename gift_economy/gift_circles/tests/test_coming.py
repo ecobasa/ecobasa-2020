@@ -168,6 +168,26 @@ def test_only_who_comes_changes_it(host, person):
 
 # ── Guests ──────────────────────────────────────────────────────────
 
+@pytest.fixture(autouse=True)
+def passes_bot_check(monkeypatch):
+    import bot_check
+
+    monkeypatch.setattr(bot_check, "check", lambda *args, **kwargs: bot_check.Check())
+
+
+def test_bots_can_t_sign_up_as_guests(host, mailoutbox, bot_check_fields, monkeypatch):
+    import bot_check
+
+    monkeypatch.undo()
+    monkeypatch.setattr(bot_check, "MIN_SECONDS", 0)
+    event = _circle(host)
+    _sign_up(event, **{**bot_check_fields(), "website": "http://spam.example"})
+    _sign_up(event, **{**bot_check_fields(), "nonce": "1"})
+    assert not Guest.objects.exists() and mailoutbox == []
+    _sign_up(event, **bot_check_fields())
+    assert Guest.objects.exists()
+
+
 def _sign_up(event, **fields):
     data = {"name": "Ayla", "email": "ayla@example.com", "people": "1"}
     data.update(fields)

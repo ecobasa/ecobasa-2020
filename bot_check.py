@@ -106,6 +106,6 @@ def record(request, form, challenge_needed=True, **fields):
     return BotCheckEntry.objects.create(
         form=form,
         ip_digest=digest(client_address(request)),
-        token_digest=digest(request.POST.get("challenge", "")) if challenge_needed else None,
+        token_digest=digest(request.POST["challenge"]) if challenge_needed and request.POST.get("challenge") else None,
         **fields,
     )
