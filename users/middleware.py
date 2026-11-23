@@ -1,8 +1,13 @@
 from datetime import timedelta
 
 from django.conf import settings
+from django.contrib import messages
 from django.contrib.auth import get_user_model
+from django.http import HttpResponse
+from django.shortcuts import redirect
 from django.utils import timezone, translation
+from django.utils.http import url_has_allowed_host_and_scheme
+from django.utils.translation import gettext as _
 
 
 class UserLanguageMiddleware:
@@ -64,3 +69,36 @@ class LastSeenMiddleware:
                 get_user_model().objects.filter(pk=user.pk).update(last_seen=now)
                 user.last_seen = now
         return response
+
+
+class UnconfirmedEmailMiddleware:
+    """Until a new account has confirmed its email address, it can look around but not
+    post: no listings, messages or requests from addresses nobody reads, and from bots.
+    Logging out, the language, the profile (its texts only show once confirmed), the
+    contact page (as for visitors) and the confirmation itself stay open."""
+
+    OPEN = {
+        "users:logout", "set_language", "users:update", "users:confirm_email",
+        "users:confirm_signup", "users:resend_confirmation", "homepage:contact",
+    }
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        return self.get_response(request)
+
+    def process_view(self, request, view_func, view_args, view_kwargs):
+        user = getattr(request, "user", None)
+        if (request.method in ("GET", "HEAD", "OPTIONS") or user is None or not user.is_authenticated
+                or user.email_confirmed or request.resolver_match.view_name in self.OPEN):
+            return None
+        messages.error(request, _("Please confirm your email address first: open the link we sent to %(email)s.") % {"email": user.email})
+        if request.headers.get("HX-Request"):
+            response = HttpResponse(status=403)
+            response["HX-Refresh"] = "true"
+            return response
+        back = request.META.get("HTTP_REFERER")
+        if not url_has_allowed_host_and_scheme(back, allowed_hosts={request.get_host()}, require_https=request.is_secure()):
+            back = "/"
+        return redirect(back)

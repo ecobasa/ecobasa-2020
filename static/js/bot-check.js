@@ -1,13 +1,12 @@
-// The contact form's proof of work: find a number whose sha256 with the challenge starts
-// with enough zero bits. Starts once someone begins to write, so visitors who only look
-// don't spend any power on it. Plain JS sha256: crypto.subtle is missing outside https
+// The proof of work of public forms (bot_check.py): find a number whose sha256 with the
+// challenge starts with enough zero bits. Starts once someone begins to write, so
+// visitors who only look don't spend any power on it. Plain JS sha256: crypto.subtle is missing outside https
 // and very slow for many small hashes in Firefox and Safari.
-(function () {
-  var form = document.getElementById('contact-form');
-  if (!form || !form.dataset.challenge) return;
-  var challenge = form.dataset.challenge + ':';
-  var bits = parseInt(form.dataset.difficulty, 10);  // up to 32, only the first word is checked
-  var button = form.querySelector('button[type=submit]');
+document.querySelectorAll('input[name=challenge][data-difficulty]').forEach(function (input) {
+  var form = input.form;
+  var challenge = input.value + ':';
+  var bits = parseInt(input.dataset.difficulty, 10);  // up to 32, only the first word is checked
+  var button = form.querySelector('[type=submit]');
   var nonce = form.querySelector('input[name=nonce]');
   var work = null;
 
@@ -69,14 +68,15 @@
     return work;
   }
 
-  button.disabled = false;
   form.addEventListener('input', begin, { once: true });
   form.addEventListener('submit', function (event) {
     if (nonce.value) return;
     event.preventDefault();
     if (!form.reportValidity()) return;
-    button.disabled = true;
-    button.querySelector('span').textContent = button.dataset.checking;
+    if (button) {
+      button.disabled = true;
+      button.textContent = input.dataset.checking;
+    }
     begin().then(function () { form.submit(); });
   });
-})();
+});

@@ -104,15 +104,15 @@
 		<!-- About -->
 
 		<div class="md:col-span-8 sm:pl-10">
-			{% if user.about or request.user.is_authenticated and request.user.pk == user.pk %}
+			{% if user.about and user.email_confirmed or request.user.is_authenticated and request.user.pk == user.pk %}
 				<h2>{% trans "About me" %}</h2>
 				<p>{{ user.about }}</p>
 			{% endif %}
-			{% if user.world or request.user.is_authenticated and request.user.pk == user.pk %}
+			{% if user.world and user.email_confirmed or request.user.is_authenticated and request.user.pk == user.pk %}
 				<h2>{% trans "What do you do to make the world a better place?" %}</h2>
 				<p>{{ user.world }}</p>
 			{% endif %}
-			{% if user.ecobasa_what or request.user.is_authenticated and request.user.pk == user.pk %}
+			{% if user.ecobasa_what and user.email_confirmed or request.user.is_authenticated and request.user.pk == user.pk %}
 				<h2>{% trans "What would you like to use ecobasa mainly for?" %}</h2>
 				<p>{{ user.ecobasa_what }}</p>
 			{% endif %}

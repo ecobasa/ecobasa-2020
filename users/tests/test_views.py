@@ -68,10 +68,11 @@ class TestRegister:
             response, "/", status_code=302, target_status_code=200,
         )
 
-    def test_post(self, client: Client):
+    def test_post(self, client: Client, bot_check_fields):
         response = client.post(
             "/users/register/",
-            {"first_name": "Max", "last_name": "Mustermann", "email": "max@mustermann.com", "password": "asdaogfisgaf"},
+            {"first_name": "Max", "last_name": "Mustermann", "email": "max@mustermann.com", "password": "asdaogfisgaf",
+             **bot_check_fields()},
         )
         assertRedirects(
             response, "/", status_code=302, target_status_code=200,
@@ -79,12 +80,28 @@ class TestRegister:
         assert User.objects.all().exists()
 
 
+    def test_bots_make_no_account_and_one_address_only_a_few(self, client: Client, bot_check_fields):
+        def register(n, **fields):
+            client.logout()
+            client.post("/users/register/", {"name": "Max", "email": f"max{n}@example.com", "password": "asdaogfisgaf",
+                                             **bot_check_fields(), **fields})
+
+        register(0, website="http://spam.example")
+        register(1, nonce="1")
+        assert not User.objects.exists()
+        from users.views import SIGNUP_LIMITS
+
+        for n in range(SIGNUP_LIMITS[0][0] + 1):
+            register(n)
+        assert User.objects.count() == SIGNUP_LIMITS[0][0]
+
+
 @pytest.mark.django_db
 class TestPasswordReset:
-    def test_pw_reset(self, client: Client, user: User, mailoutbox: list):
+    def test_pw_reset(self, client: Client, user: User, mailoutbox: list, bot_check_fields):
         # post email address
         res = client.post(
-            reverse("users:password_reset"), {"email": user.email}, follow=True
+            reverse("users:password_reset"), {"email": user.email, **bot_check_fields()}, follow=True
         )
         assertRedirects(
             res,
@@ -120,6 +137,11 @@ class TestPasswordReset:
         # check that new pw works
         newuser = authenticate(email=user.email, password=new_password)
         assert newuser == user
+
+    def test_bots_send_no_reset_mails(self, client: Client, user: User, mailoutbox: list, bot_check_fields):
+        client.post(reverse("users:password_reset"), {"email": user.email, **bot_check_fields(), "website": "x"})
+        client.post(reverse("users:password_reset"), {"email": user.email, **bot_check_fields(), "nonce": "1"})
+        assert mailoutbox == []
 
 
 @pytest.mark.django_db

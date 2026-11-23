@@ -8,6 +8,8 @@ from django.utils.translation import gettext as _
 
 EMAIL_CHANGE_SALT = "users-email-change"
 EMAIL_CHANGE_MAX_AGE = 60 * 60 * 24 * 3  # 3 days
+SIGNUP_SALT = "users-signup-confirm"
+SIGNUP_MAX_AGE = 60 * 60 * 24 * 7  # 7 days
 
 
 def make_email_change_token(user, new_email):
@@ -22,6 +24,19 @@ def read_email_change_token(token):
     except signing.BadSignature:
         return None
     return data.get("user"), data.get("old", ""), data.get("new", "")
+
+
+def make_signup_token(user):
+    return signing.dumps({"user": user.pk, "email": user.email}, salt=SIGNUP_SALT)
+
+
+def read_signup_token(token):
+    """(user pk, email), or None for a broken or old link."""
+    try:
+        data = signing.loads(token, salt=SIGNUP_SALT, max_age=SIGNUP_MAX_AGE)
+    except signing.BadSignature:
+        return None
+    return data.get("user"), data.get("email", "")
 
 
 def _send(user, to, headline, paragraphs, button_url="", button_label=""):
@@ -59,3 +74,16 @@ def send_email_changed_notice(user, old_email):
             _("If you didn't change it, please answer this email right away."),
         ]
     _send(user, old_email, headline, paragraphs)
+
+
+def send_signup_confirmation(user, http_request):
+    """After signing up: the link that confirms their address, so they can start sharing."""
+    path = reverse("users:confirm_signup", args=[make_signup_token(user)])
+    with translation.override(user.language or settings.LANGUAGE_CODE):
+        headline = _("Confirm your email address for ecobasa")
+        paragraphs = [
+            _("Welcome to ecobasa! Please confirm that this is your address. Then you can share gifts and skills, write to people and visit communities."),
+            _("The link works for 7 days. If you didn't sign up, you can ignore this email."),
+        ]
+        label = _("Confirm email address")
+    _send(user, user.email, headline, paragraphs, http_request.build_absolute_uri(path), label)

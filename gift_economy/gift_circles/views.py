@@ -3,7 +3,7 @@ from datetime import date, timedelta
 from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
-from django.db import transaction
+from django.db import IntegrityError, transaction
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -12,6 +12,7 @@ from django.utils.http import url_has_allowed_host_and_scheme, urlencode
 from django.utils.translation import get_language, gettext as _, ngettext
 from django.views.decorators.http import require_POST
 
+import bot_check
 from events import kinds
 from events.models import Event
 from gift_economy.gifts.models import Listing
@@ -147,17 +148,34 @@ def _mail_again(guest, send):
     transaction.on_commit(lambda: send(guest))
 
 
+# Sign-ups from one connection, (at most, within): across all gift-circles, and for one.
+# Loose, as people at one place often share a connection (a house Wi-Fi, a mobile network)
+GUEST_LIMITS = [(40, timedelta(days=1))]
+GUEST_LIMITS_PER_CIRCLE = [(15, timedelta(days=1))]
+
+
 def guest_sign_up(request, slug):
     """Coming without an account: a name and an email, confirmed by a link in an email.
-    Only an open gift-circle; who is logged in says "I'm coming"."""
+    Only an open gift-circle; who is logged in says "I'm coming". Through the bot check,
+    so it can't be used to mail strangers."""
     event = _gift_circle(slug)
     if request.user.is_authenticated or not (event.is_open and event.takes_people()):
         return redirect(event.get_absolute_url())
     form = GuestForm(request.POST or None)
     if request.method == "POST" and form.is_valid():
-        response = _sign_up(request, event, form)
-        if response is not None:
-            return response
+        check = bot_check.check(request, "guest", GUEST_LIMITS, scope=str(event.pk), scope_limits=GUEST_LIMITS_PER_CIRCLE)
+        if check.trapped:
+            return render(request, "gift_circles/guest_sent.html", {"event": event, "email": form.cleaned_data["email"]})
+        if check.error:
+            form.add_error(None, check.error)
+        else:
+            response = _sign_up(request, event, form)
+            if response is not None:
+                try:
+                    bot_check.record(request, "guest", scope=str(event.pk))
+                except IntegrityError:
+                    pass
+                return response
     return render(request, "gift_circles/guest_sign_up.html", {"event": event, "form": form})
 
 

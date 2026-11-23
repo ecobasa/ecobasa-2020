@@ -1,0 +1,11 @@
+{% load i18n %}{# Until a new account has confirmed its address: see UnconfirmedEmailMiddleware #}
+<div class="mx-auto max-w-7xl px-6 mt-4">
+  <div class="rounded-xl p-4 border border-yellow bg-yellow bg-opacity-10 text-sm flex flex-wrap items-center justify-between gap-3">
+    <p class="m-0"><i class="fa fa-envelope mr-2"></i>{% blocktrans with email=request.user.email %}Please confirm your email address: open the link we sent to <strong>{{ email }}</strong>. Until then you can look around, but not share or write to people yet.{% endblocktrans %}</p>
+    <form method="post" action="{% url "users:resend_confirmation" %}">
+      {% csrf_token %}
+      <input type="hidden" name="next" value="{{ request.get_full_path }}">
+      <button type="submit" class="pill bg-yellow hover:bg-purple transition-opacity"><i class="fa fa-paper-plane mr-1"></i>{% trans "Send the link again" %}</button>
+    </form>
+  </div>
+</div>

@@ -55,3 +55,11 @@ def email_static(path):
     from django.templatetags.static import static
 
     return settings.SITE_URL.rstrip("/") + static(path)
+
+
+@register.inclusion_tag("_bot_check.html")
+def bot_check():
+    """The trap and the challenge of a public form (bot_check.py), inside its <form>."""
+    import bot_check as checks
+
+    return {"challenge": checks.challenge(), "difficulty": checks.DIFFICULTY}

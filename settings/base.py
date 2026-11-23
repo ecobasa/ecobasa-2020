@@ -152,6 +152,7 @@ MIDDLEWARE = [
     "users.middleware.UserLanguageMiddleware",
     "users.middleware.LastSeenMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
+    "users.middleware.UnconfirmedEmailMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 

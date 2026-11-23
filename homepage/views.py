@@ -64,8 +64,4 @@ def contact(request):
             messages.success(request, _("Thank you! Your message is on its way to us."))
             return redirect("homepage:contact")
         form.add_error(None, _("Your message could not be sent right now. Please try again later."))
-    return render(request, "homepage/contact.html", {
-        "form": form,
-        "challenge": contact_form.challenge(),
-        "difficulty": contact_form.DIFFICULTY,
-    })
+    return render(request, "homepage/contact.html", {"form": form})

@@ -10605,8 +10605,8 @@ msgstr "Bitte lass Links aus dem Betreff weg."
 msgid "Please send at most two links."
 msgstr "Bitte schick höchstens zwei Links."
 
-msgid "That didn't work. Please send your message again."
-msgstr "Das hat nicht geklappt. Bitte schick deine Nachricht noch einmal."
+msgid "That didn't work. Please send it again."
+msgstr "Das hat nicht geklappt. Bitte schick es noch einmal."
 
 msgid "You have sent us several messages already. Please try again tomorrow."
 msgstr "Du hast uns schon mehrere Nachrichten geschickt. Bitte versuch es morgen wieder."
@@ -10627,11 +10627,54 @@ msgstr "Fragen, Ideen, oder du möchtest mithelfen? Wir lesen jede Nachricht und
 msgid "We'll answer to %(email)s."
 msgstr "Wir antworten an %(email)s."
 
-msgid "To keep spam out, this form needs JavaScript. Please turn it on to send your message."
-msgstr "Gegen Spam braucht dieses Formular JavaScript. Bitte schalte es ein, um deine Nachricht zu senden."
+msgid "To keep bots out, this form needs JavaScript. Please turn it on."
+msgstr "Gegen Bots braucht dieses Formular JavaScript. Bitte schalte es ein."
 
 msgid "Checking…"
 msgstr "Wird geprüft…"
 
 msgid "Send message"
 msgstr "Nachricht senden"
+
+msgid "Too many tries from your connection. Please try again tomorrow."
+msgstr "Zu viele Versuche von deiner Verbindung. Bitte versuch es morgen wieder."
+
+msgid "Email address confirmed"
+msgstr "E-Mail-Adresse bestätigt"
+
+msgid "Confirm your email address for ecobasa"
+msgstr "Bestätige deine E-Mail-Adresse für ecobasa"
+
+msgid "Welcome to ecobasa! Please confirm that this is your address. Then you can share gifts and skills, write to people and visit communities."
+msgstr "Willkommen bei ecobasa! Bitte bestätige, dass das deine Adresse ist. Dann kannst du Geschenke und Fähigkeiten teilen, Leuten schreiben und Gemeinschaften besuchen."
+
+msgid "The link works for 7 days. If you didn't sign up, you can ignore this email."
+msgstr "Der Link funktioniert 7 Tage lang. Wenn du dich nicht angemeldet hast, kannst du diese E-Mail ignorieren."
+
+#, python-format
+msgid "Welcome! We sent a link to %(email)s. Please open it to confirm your address, then you can start sharing."
+msgstr "Willkommen! Wir haben einen Link an %(email)s geschickt. Bitte öffne ihn, um deine Adresse zu bestätigen, dann kannst du loslegen."
+
+msgid "This link doesn't work any more. Log in to ask for a new one."
+msgstr "Dieser Link funktioniert nicht mehr. Melde dich an, um einen neuen anzufordern."
+
+msgid "Thank you, your email address is confirmed. Happy sharing!"
+msgstr "Danke, deine E-Mail-Adresse ist bestätigt. Viel Freude beim Teilen!"
+
+msgid "We sent you a link a few minutes ago. Please look in your spam folder too."
+msgstr "Wir haben dir vor ein paar Minuten einen Link geschickt. Bitte schau auch in deinen Spam-Ordner."
+
+#, python-format
+msgid "We sent a new link to %(email)s."
+msgstr "Wir haben einen neuen Link an %(email)s geschickt."
+
+#, python-format
+msgid "Please confirm your email address first: open the link we sent to %(email)s."
+msgstr "Bitte bestätige zuerst deine E-Mail-Adresse: Öffne den Link, den wir an %(email)s geschickt haben."
+
+#, python-format
+msgid "Please confirm your email address: open the link we sent to <strong>%(email)s</strong>. Until then you can look around, but not share or write to people yet."
+msgstr "Bitte bestätige deine E-Mail-Adresse: Öffne den Link, den wir an <strong>%(email)s</strong> geschickt haben. Bis dahin kannst du dich umsehen, aber noch nichts teilen oder Leuten schreiben."
+
+msgid "Send the link again"
+msgstr "Link noch einmal schicken"
