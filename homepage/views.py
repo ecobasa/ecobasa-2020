@@ -1,13 +1,16 @@
 from datetime import date, datetime, time, timedelta
 
-from django.shortcuts import render
+from django.contrib import messages
+from django.shortcuts import redirect, render
 from django.utils import timezone
-from django.utils.translation import get_language
+from django.utils.translation import get_language, gettext as _
 
 from events import kinds
 from events.filters import count_coming
 from events.models import Event
 from gift_economy.references.models import Reference, with_card_data
+
+from . import contact as contact_form
 
 HOMEPAGE_REFERENCES = 3
 HOMEPAGE_ONLINE_CIRCLES = 6
@@ -52,3 +55,17 @@ def homepage(request):
 
 def support(request):
     return render(request, "homepage/support.html")
+
+
+def contact(request):
+    form = contact_form.ContactForm(request.POST or None, request=request)
+    if request.method == "POST" and form.is_valid():
+        if form.send():
+            messages.success(request, _("Thank you! Your message is on its way to us."))
+            return redirect("homepage:contact")
+        form.add_error(None, _("Your message could not be sent right now. Please try again later."))
+    return render(request, "homepage/contact.html", {
+        "form": form,
+        "challenge": contact_form.challenge(),
+        "difficulty": contact_form.DIFFICULTY,
+    })

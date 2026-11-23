@@ -10604,3 +10604,40 @@ msgid ""
 "are not covered, <a class=\"text-yellow\" href=\"%(license_url)s\">see "
 "details</a>."
 msgstr "Ce que les membres écrivent leur appartient. Le nom, le logo et le code ne sont pas inclus, <a class=\"text-yellow\" href=\"%(license_url)s\">plus de détails</a>."
+
+msgid "Please leave links out of your name."
+msgstr "Merci de ne pas mettre de liens dans ton nom."
+
+msgid "Please send at most two links."
+msgstr "Merci d'envoyer au plus deux liens."
+
+msgid "That didn't work. Please send your message again."
+msgstr "Ça n'a pas marché. Merci de renvoyer ton message."
+
+msgid "You have sent us several messages already. Please try again tomorrow."
+msgstr "Tu nous as déjà envoyé plusieurs messages. Merci de réessayer demain."
+
+msgid "We have received this message already."
+msgstr "Nous avons déjà reçu ce message."
+
+msgid "Thank you! Your message is on its way to us."
+msgstr "Merci ! Ton message est en route vers nous."
+
+msgid "Your message could not be sent right now. Please try again later."
+msgstr "Ton message n'a pas pu être envoyé pour le moment. Merci de réessayer plus tard."
+
+msgid "Questions, ideas, or you want to help? We read every message and answer by email."
+msgstr "Des questions, des idées, ou tu veux aider ? Nous lisons chaque message et répondons par e-mail."
+
+#, python-format
+msgid "We'll answer to %(email)s."
+msgstr "Nous répondrons à %(email)s."
+
+msgid "To keep spam out, this form needs JavaScript. Please turn it on to send your message."
+msgstr "Pour éviter le spam, ce formulaire a besoin de JavaScript. Active-le pour envoyer ton message."
+
+msgid "Checking…"
+msgstr "Vérification…"
+
+msgid "Send message"
+msgstr "Envoyer le message"
