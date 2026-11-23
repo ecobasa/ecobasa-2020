@@ -87,7 +87,7 @@
       <a href="{% if own %}{{ own.match.get_absolute_url }}{% else %}{{ tour.get_absolute_url }}{% endif %}" class="btn btn-purple"><i class="fa-solid fa-ban mr-2"></i>{% trans "Cancel" %}</a>
       {% if own %}
         <button type="submit" form="withdraw" class="btn btn-red ml-auto"
-          onclick="return confirm('{% trans "Withdraw your request?" as question %}{{ question|escapejs }}')">
+          data-confirm="{% trans "Withdraw your request?" as question %}{{ question }}">
           <i class="fa-solid fa-rotate-left mr-2"></i>{% trans "Withdraw" %}
         </button>
       {% endif %}

@@ -303,13 +303,10 @@
 
 
   {# ── List modal ── #}
-  <div x-show="$store.fm.view === 'list'" x-cloak
-    class="modal-overlay flex"
-    @click.self="$store.fm.showMap()"
-    @keydown.escape.window="$store.fm.showMap()">
-
-    <div class="modal-content"
-      role="dialog" aria-modal="true">
+  <dialog class="modal"
+    x-effect="$store.fm.view === 'list' ? $el.open || $el.showModal() : $el.close()"
+    @close="$store.fm.showMap()" @click.self="$el.close()">
+    <div class="modal-content">
       <button type="button" class="modal-close" @click="$store.fm.showMap()">&times;</button>
 
       <div class="space-y-3 mb-4">
@@ -383,7 +380,7 @@
         </div>
       </div>
     </div>
-  </div>
+  </dialog>
 
   {# Hidden filter inputs shared by all HTMX requests — synced from the Alpine store #}
   <div id="gift-filters" style="display:none" aria-hidden="true">

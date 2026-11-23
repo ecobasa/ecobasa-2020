@@ -23,7 +23,7 @@
                     <i class="fa-regular fa-lightbulb mt-1"></i>
                     <span class="flex-1 min-w-0 break-words">{% blocktrans with name=idea.from_label text=idea.text %}An idea from {{ name }}: {{ text }}{% endblocktrans %}</span>
                     {% if writes and not sheet.is_closed %}
-                      <form method="post" action="{{ entry_url }}" onsubmit="return confirm('{{ _("Remove this idea?")|escapejs }}')">{% csrf_token %}
+                      <form method="post" action="{{ entry_url }}" data-confirm="{{ _("Remove this idea?") }}">{% csrf_token %}
                         <input type="hidden" name="idea" value="{{ idea.pk }}">
                         <button type="submit" name="action" value="idea_delete" class="opacity-70 hover:opacity-100" aria-label="{% trans 'Remove' %}"><i class="fa-solid fa-xmark"></i></button>
                       </form>
@@ -80,7 +80,7 @@
                   {% endif %}
 
                   {# Its words; while it isn't on ecobasa yet, also wish or offer, and from whom. Removing it is here too #}
-                  <form method="post" action="{{ entry_url }}" id="remove-{{ entry.pk }}" onsubmit="return confirm('{{ _("Take this line off the Giftsheet?")|escapejs }}')">{% csrf_token %}</form>
+                  <form method="post" action="{{ entry_url }}" id="remove-{{ entry.pk }}" data-confirm="{{ _("Take this line off the Giftsheet?") }}">{% csrf_token %}</form>
                   <form method="post" action="{{ entry_url }}" x-show="open === 'edit'" x-cloak class="mt-2 p-3 rounded-lg bg-secondary space-y-2" x-data="{ who: '{{ entry.from_choice|escapejs }}' }">{% csrf_token %}
                     {% if not entry.listing_id %}
                       <div class="flex gap-4">

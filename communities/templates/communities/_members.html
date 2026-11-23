@@ -26,11 +26,11 @@
 								class="origin-top-right absolute right-0 top-full mt-1 w-56 rounded-md shadow-lg z-40">
 								<div class="py-1 rounded-md bg-primary bg-opacity-75 backdrop-blur shadow-xs">
 									<form method="post" action="{% url 'communities:hand_over' community.slug m.pk %}"
-										onsubmit="return confirm('{% blocktrans with name=person.name|default:person.email asvar question %}Make {{ name }} the ambassador? Requests to the community then go to them; you stay a member.{% endblocktrans %}{{ question|escapejs }}')">{% csrf_token %}
+										data-confirm="{% blocktrans with name=person.name|default:person.email asvar question %}Make {{ name }} the ambassador? Requests to the community then go to them; you stay a member.{% endblocktrans %}{{ question }}">{% csrf_token %}
 										<button type="submit" class="hover:text-brown dropdown-link w-full text-left"><i class="fa-solid fa-handshake mr-2"></i>{% trans "Make ambassador" %}</button>
 									</form>
 									<form method="post" action="{% url 'communities:remove_member' community.slug m.pk %}"
-										onsubmit="return confirm('{% blocktrans with name=person.name|default:person.email asvar question %}Remove {{ name }} from the community?{% endblocktrans %}{{ question|escapejs }}')">{% csrf_token %}
+										data-confirm="{% blocktrans with name=person.name|default:person.email asvar question %}Remove {{ name }} from the community?{% endblocktrans %}{{ question }}">{% csrf_token %}
 										<button type="submit" class="hover:text-brown dropdown-link w-full text-left"><i class="fa-solid fa-user-minus mr-2"></i>{% trans "Remove from community" %}</button>
 									</form>
 								</div>
@@ -75,7 +75,7 @@
 	{% elif membership and membership.is_counted %}
 		{% if request.user.pk != community.ambassador_id %}
 			<form method="post" action="{% url 'communities:leave' community.slug %}"
-				onsubmit="return confirm('{% trans "Leave this community?" as question %}{{ question|escapejs }}')">{% csrf_token %}
+				data-confirm="{% trans "Leave this community?" as question %}{{ question }}">{% csrf_token %}
 				<button type="submit" class="btn text-sm"><i class="fa-solid fa-person-walking-arrow-right mr-1"></i>{% trans "Leave community" %}</button>
 			</form>
 		{% endif %}

@@ -181,8 +181,54 @@ nav {
 	@apply inline-flex items-center w-full px-2 py-1 rounded hover:bg-secondary hover:text-primary cursor-pointer;
 }
 
-.modal-overlay {
-	@apply fixed inset-0 bg-black bg-opacity-70 z-50 items-center justify-center p-4;
+/* A <dialog> opened with showModal(): on top of everything, Escape closes it */
+.modal {
+	@apply w-full max-w-5xl p-0 bg-transparent overflow-visible;
+	color: inherit;
+
+	&::backdrop {
+		background: rgb(0 0 0 / 0.7);
+	}
+
+	&-sm {
+		@apply max-w-md;
+	}
+
+	/* Taller than the screen: it scrolls */
+	&-scroll {
+		@apply overflow-y-auto;
+	}
+
+	/* Images over a darker backdrop, centred on the screen; a click beside them closes it */
+	&-image {
+		@apply w-screen h-screen max-w-none max-h-none;
+
+		&[open] {
+			@apply flex items-center justify-center;
+		}
+
+		&::backdrop {
+			background: rgb(0 0 0 / 0.9);
+		}
+
+		/* As big as the image, so the close button sits on its corner */
+		.modal-frame {
+			@apply relative;
+
+			/* Its centre right on the corner, half over the image */
+			.modal-close {
+				@apply top-0 right-0 translate-x-1/2 -translate-y-1/2;
+			}
+		}
+
+		.modal-frame img {
+			@apply block max-h-[90vh] max-w-[90vw] rounded-lg shadow-2xl object-contain;
+		}
+	}
+}
+
+body:has(dialog.modal[open]) {
+	@apply overflow-hidden;
 }
 
 .modal-content {
@@ -192,10 +238,6 @@ nav {
 
 .modal-close {
 	@apply absolute top-2 right-2 text-secondary text-xl h-8 w-8 rounded-full bg-black bg-opacity-50 hover:bg-opacity-70 flex items-center justify-center;
-}
-
-.lightbox-close {
-	@apply absolute top-4 right-8 text-white text-6xl leading-none hover:opacity-70 focus:outline-none;
 }
 
 .video-container iframe,

@@ -40,18 +40,14 @@
   </div>
 
   {# ── Image lightbox modal ── #}
-  <div x-show="imageOpen" x-cloak
-    class="fixed inset-0 bg-black bg-opacity-80 z-50 flex items-center justify-center p-4"
-    @click.self="imageOpen = false"
-    @keydown.escape.window="imageOpen = false">
-    <div class="relative max-w-5xl w-full flex justify-center">
-      <button type="button" @click="imageOpen = false"
-        class="modal-close absolute top-0 right-0"
-        aria-label="{% trans 'Close' %}">&times;</button>
-      <img src="{{ listing.image.url }}" alt="{{ listing.display_title }}"
-        class="max-h-[80vh] max-w-full rounded-lg shadow-lg">
+  <dialog class="modal modal-image"
+    x-effect="imageOpen ? $el.open || $el.showModal() : $el.close()"
+    @close="imageOpen = false" @click.self="$el.close()">
+    <div class="modal-frame">
+      <button type="button" @click="imageOpen = false" class="modal-close" aria-label="{% trans 'Close' %}">&times;</button>
+      <img src="{{ listing.image.url }}" alt="{{ listing.display_title }}">
     </div>
-  </div>
+  </dialog>
   {% endif %}
 
   {# ── Header ── #}

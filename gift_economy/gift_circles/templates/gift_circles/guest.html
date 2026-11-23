@@ -28,7 +28,7 @@
         <button type="submit" class="btn btn-lg"><i class="fa fa-check mr-2"></i>{% trans "Save" %}</button>
       </div>
     </form>
-    <form method="post" class="text-center mt-4" onsubmit="return confirm('{{ _("Take your sign-up back?")|escapejs }}')">
+    <form method="post" class="text-center mt-4" data-confirm="{{ _("Take your sign-up back?") }}">
       {% csrf_token %}
       <input type="hidden" name="action" value="leave">
       <button type="submit" class="underline text-sm">{% trans "I can't come after all" %}</button>

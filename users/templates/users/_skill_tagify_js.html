@@ -8,8 +8,8 @@
     return (value || '').split(',').map(s => s.trim().replace(/^"(.*)"$/, '$1')).filter(Boolean);
   }
 
-  function makeTagOpts(existingValue) {
-    const existing = namesIn(existingValue);
+  function makeTagOpts(input) {
+    const existing = namesIn(input.value);
     return {
       editTags: false,
       enforceWhitelist: true,
@@ -20,6 +20,8 @@
         closeOnSelect: true,
         searchKeys: ['value'],
         highlightFirst: true,
+        // In a modal <dialog>, inside it: the page under it can't be reached
+        appendTarget: input.closest('dialog') || document.body,
       },
       // A trailing comma, so taggit doesn't split a single "Cob building" at the space
       originalInputValueFormat: vals => vals.length ? vals.map(v => v.value).join(', ') + ',' : '',
@@ -58,7 +60,7 @@
   document.addEventListener('DOMContentLoaded', function () {
     document.querySelectorAll('[data-skill-tags]').forEach(function (input) {
       input.value = namesIn(input.value).join(', ');
-      wireTagify(new Tagify(input, makeTagOpts(input.value)), input.dataset.skillTags);
+      wireTagify(new Tagify(input, makeTagOpts(input)), input.dataset.skillTags);
     });
   });
 })();

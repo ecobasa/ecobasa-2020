@@ -7,7 +7,7 @@
         <div>
           {% include "references/_reference_card.html" %}
           {% if ref.author_id == request.user.pk %}
-            <form method="post" action="{% url 'gift_circles:story' event.slug %}" class="mt-1 text-right" onsubmit="return confirm('{{ _("Take your story back?")|escapejs }}')">{% csrf_token %}
+            <form method="post" action="{% url 'gift_circles:story' event.slug %}" class="mt-1 text-right" data-confirm="{{ _("Take your story back?") }}">{% csrf_token %}
               <input type="hidden" name="reference" value="{{ ref.pk }}">
               <button type="submit" name="action" value="delete" class="text-xs text-brown underline">{% trans "Remove your reference" %}</button>
             </form>

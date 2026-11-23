@@ -12,8 +12,7 @@
 {% with header=tour.header_image %}{% if header %}
   {# The tour's picture (else its first vehicle's) across the page, its title on it; a click shows it whole #}
   <div class="relative w-full" style="height: 340px;"
-       x-data="{ fullscreen: false }"
-       x-effect="document.body.classList.toggle('overflow-hidden', fullscreen)">
+       x-data="{ fullscreen: false }">
     <div class="absolute inset-0 bg-center bg-cover" style="background-image: url('{{ header }}');"></div>
     <button type="button" @click="fullscreen = true"
             class="absolute inset-0 cursor-zoom-in focus:outline-none bg-transparent"
@@ -23,12 +22,14 @@
         <h1 class="text-5xl text-secondary m-0 px-4">{{ tour.title }}</h1>
       </div>
     </div>
-    <div x-show="fullscreen" @click="fullscreen = false" @keydown.escape.window="fullscreen = false"
-         class="fixed inset-0 bg-black bg-opacity-90" style="display:none; z-index: 60;">
-      <button type="button" @click.stop="fullscreen = false" class="modal-close" aria-label="{% trans 'Close' %}">&times;</button>
-      <img src="{{ header }}" alt="{{ tour.title }}" @click.stop
-           class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 max-h-[90vh] max-w-[90vw] rounded-lg shadow-2xl object-contain">
-    </div>
+    <dialog class="modal modal-image"
+            x-effect="fullscreen ? $el.open || $el.showModal() : $el.close()"
+            @close="fullscreen = false" @click.self="$el.close()">
+      <div class="modal-frame">
+        <button type="button" @click="fullscreen = false" class="modal-close" aria-label="{% trans 'Close' %}">&times;</button>
+        <img src="{{ header }}" alt="{{ tour.title }}">
+      </div>
+    </dialog>
   </div>
 {% endif %}{% endwith %}
 <div class="container-page">
@@ -86,7 +87,7 @@
             </form>
           {% endif %}
           {% if not tour.archived_at %}
-            <form method="post" action="{% url 'tours:archive' tour.slug %}" onsubmit="return confirm('{% trans "Archive this tour? It will no longer be listed." as question %}{{ question|escapejs }}')">{% csrf_token %}
+            <form method="post" action="{% url 'tours:archive' tour.slug %}" data-confirm="{% trans "Archive this tour? It will no longer be listed." as question %}{{ question }}">{% csrf_token %}
               <button type="submit" class="btn btn-purple"><i class="fa-solid fa-box-archive mr-1"></i>{% trans "Archive" %}</button>
             </form>
           {% endif %}
@@ -224,7 +225,7 @@
                     </form>
                   {% elif can_hand_over and traveller.is_organiser and traveller.user_id != tour.organiser_id %}
                     <form method="post" action="{% url 'tours:hand_over' tour.slug traveller.pk %}"
-                          onsubmit="return confirm('{% blocktrans with name=person.name|default:person.email asvar question %}Hand the tour over to {{ name }}? Join requests and hosts then go to them; you stay an organiser.{% endblocktrans %}{{ question|escapejs }}')">{% csrf_token %}
+                          data-confirm="{% blocktrans with name=person.name|default:person.email asvar question %}Hand the tour over to {{ name }}? Join requests and hosts then go to them; you stay an organiser.{% endblocktrans %}{{ question }}">{% csrf_token %}
                       <button type="submit" class="btn btn-primary text-xs py-0.5 px-2 w-44 text-center"><i class="fa-solid fa-handshake mr-1"></i>{% trans "Hand over the tour" %}</button>
                     </form>
                   {% endif %}

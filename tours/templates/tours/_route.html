@@ -119,7 +119,7 @@
                 <form method="post" action="{% url 'tours:stop_move' tour.slug stop.pk 'down' %}">{% csrf_token %}<button type="submit" class="btn btn-purple text-xs" title="{% trans 'Move down' %}" aria-label="{% trans 'Move down' %}"><i class="fa fa-arrow-down"></i></button></form>
               {% endif %}
               <a href="{% url 'tours:stop_edit' tour.slug stop.pk %}" class="btn btn-purple text-xs" title="{% trans 'Change' %}" aria-label="{% trans 'Change' %}"><i class="fa fa-edit"></i></a>
-              <form method="post" action="{% url 'tours:stop_delete' tour.slug stop.pk %}" onsubmit="return confirm('{% trans "Remove this stop?" as question %}{{ question|escapejs }}')">{% csrf_token %}<button type="submit" class="btn btn-red text-xs" title="{% trans 'Remove' %}" aria-label="{% trans 'Remove' %}"><i class="fa fa-trash"></i></button></form>
+              <form method="post" action="{% url 'tours:stop_delete' tour.slug stop.pk %}" data-confirm="{% trans "Remove this stop?" as question %}{{ question }}">{% csrf_token %}<button type="submit" class="btn btn-red text-xs" title="{% trans 'Remove' %}" aria-label="{% trans 'Remove' %}"><i class="fa fa-trash"></i></button></form>
             {% endif %}
           </div>
         {% endif %}

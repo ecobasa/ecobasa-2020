@@ -19,8 +19,7 @@
 {% if photos %}
 	<div class="relative w-full" style="height: 340px;"
 			x-data="{ cur: 0, len: {{ photos|length }}, fullscreen: false, _timer: null }"
-			x-init="if (len > 1) { $watch('fullscreen', v => { if (v) { clearInterval(_timer); _timer = null; } else { _timer = setInterval(() => cur = (cur + 1) % len, 5000); } }); _timer = setInterval(() => cur = (cur + 1) % len, 5000); }"
-			x-effect="document.body.classList.toggle('overflow-hidden', fullscreen)">
+			x-init="if (len > 1) { $watch('fullscreen', v => { if (v) { clearInterval(_timer); _timer = null; } else { _timer = setInterval(() => cur = (cur + 1) % len, 5000); } }); _timer = setInterval(() => cur = (cur + 1) % len, 5000); }">
 		{% for photo in photos %}
 			<div class="absolute inset-0 bg-center bg-cover transition-opacity duration-700"
 					:style="{ opacity: cur === {{ forloop.counter0 }} ? 1 : 0 }"
@@ -53,46 +52,45 @@
 				</div>
 			</div>
 		{% endif %}
-		<!-- Fullscreen overlay -->
-		<div x-show="fullscreen" @click="fullscreen = false" @keydown.escape.window="fullscreen = false"
-				class="fixed inset-0 bg-black bg-opacity-90"
-				style="display:none; z-index: 60;">
-			<button type="button" @click.stop="fullscreen = false" class="lightbox-close" aria-label="{% trans 'Close' %}">&times;</button>
-			{% for photo in photos %}
-				<img src="{{ photo.image.url }}" alt="{{ community.name }}"
-						:class="cur === {{ forloop.counter0 }} ? 'opacity-100' : 'opacity-0 pointer-events-none'"
-						@click.stop
-						class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 max-h-[90vh] max-w-[90vw] rounded-lg shadow-2xl transition-opacity duration-300 object-contain">
-			{% endfor %}
+		<!-- Fullscreen -->
+		<dialog class="modal modal-image"
+				x-effect="fullscreen ? $el.open || $el.showModal() : $el.close()"
+				@close="fullscreen = false" @click.self="$el.close()">
+			{# Only the photo shown, so the frame is its size #}
+			<div class="modal-frame">
+				<button type="button" @click="fullscreen = false" class="modal-close z-10" aria-label="{% trans 'Close' %}">&times;</button>
+				{% for photo in photos %}
+					<img src="{{ photo.image.url }}" alt="{{ community.name }}" x-show="cur === {{ forloop.counter0 }}">
+				{% endfor %}
+			</div>
 			{% if photos|length > 1 %}
-				<button type="button" @click.stop="cur = (cur - 1 + len) % len"
+				<button type="button" @click="cur = (cur - 1 + len) % len"
 								class="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-40 hover:bg-opacity-80 text-white rounded-full w-12 h-12 flex items-center justify-center shadow">
 					<img src="{% static 'img/arrow-left.png' %}" alt="{% trans 'Previous' %}" class="w-full h-full object-contain">
 				</button>
-				<button type="button" @click.stop="cur = (cur + 1) % len"
+				<button type="button" @click="cur = (cur + 1) % len"
 								class="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-40 hover:bg-opacity-80 text-white rounded-full w-12 h-12 flex items-center justify-center shadow">
 					<img src="{% static 'img/arrow-right.png' %}" alt="{% trans 'Next' %}" class="w-full h-full object-contain">
 				</button>
 			{% endif %}
-		</div>
+		</dialog>
 	</div>
 {% elif hero_image %}
 	<div class="relative w-full" style="height: 340px;"
-			x-data="{ fullscreen: false }"
-			x-effect="document.body.classList.toggle('overflow-hidden', fullscreen)">
+			x-data="{ fullscreen: false }">
 		<div class="absolute inset-0 bg-center bg-cover" style="background-image: url('{{ hero_image }}');"></div>
 		<button type="button" @click="fullscreen = true"
 						class="absolute inset-0 cursor-zoom-in focus:outline-none bg-transparent"
 						style="z-index: 2;" aria-label="{% trans 'View fullscreen' %}"></button>
-		<!-- Fullscreen overlay -->
-		<div x-show="fullscreen" @click="fullscreen = false" @keydown.escape.window="fullscreen = false"
-				class="fixed inset-0 bg-black bg-opacity-90"
-				style="display:none; z-index: 60;">
-			<button type="button" @click.stop="fullscreen = false" class="modal-close" aria-label="{% trans 'Close' %}">&times;</button>
-			<img src="{{ hero_image }}" alt="{{ community.name }}"
-					@click.stop
-					class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 max-h-[90vh] max-w-[90vw] rounded-lg shadow-2xl object-contain">
-		</div>
+		<!-- Fullscreen -->
+		<dialog class="modal modal-image"
+				x-effect="fullscreen ? $el.open || $el.showModal() : $el.close()"
+				@close="fullscreen = false" @click.self="$el.close()">
+			<div class="modal-frame">
+				<button type="button" @click="fullscreen = false" class="modal-close" aria-label="{% trans 'Close' %}">&times;</button>
+				<img src="{{ hero_image }}" alt="{{ community.name }}">
+			</div>
+		</dialog>
 	</div>
 {% endif %}
 <div class="container-page relative" x-data="communityVolunteer()">
@@ -404,12 +402,11 @@
 		</aside>
 	</div>{# grid #}
 
-	<!-- Volunteer Request Modal — placed outside grid/flex so space-y doesn't apply margin to the fixed overlay -->
-	<div x-show="vOpen" style="display:none"
-			@click.self="vOpen = false"
-			@keydown.escape.window="vOpen = false"
-			class="fixed inset-0 bg-black bg-opacity-70 z-50 flex items-center justify-center p-4 overflow-y-auto">
-		<div id="volunteer-form-wrap" class="modal-content" style="-webkit-overflow-scrolling: touch;">
+	<!-- Volunteer Request Modal -->
+	<dialog id="volunteer-dialog" class="modal modal-scroll"
+			x-effect="vOpen ? $el.open || $el.showModal() : $el.close()"
+			@close="vOpen = false" @click.self="$el.close()">
+		<div id="volunteer-form-wrap" class="modal-content">
 			<button type="button" @click="vOpen = false" class="modal-close">&times;</button>
 			<h1 class="text-xl font-semibold mb-4">{% trans "Offer to volunteer" %}</h1>
 			<form hx-post="{% url 'communities:volunteer_request' community.slug %}"
@@ -480,7 +477,7 @@
 				</div>
 			</form>
 		</div>
-	</div><!-- Modal -->
+	</dialog>
 </div>{# Alpine communityVolunteer #}
 {% endblock content %}
 
@@ -511,7 +508,6 @@ document.addEventListener('alpine:init', () => {
 			this.$nextTick(() => window.seedPracticeTagify && window.seedPracticeTagify(skill ? [skill] : this.wishNames));
 		},
 		init() {
-			this.$watch('vOpen', v => document.body.classList.toggle('overflow-hidden', v));
 			document.addEventListener('volunteer-modal-close', () => { this.vOpen = false; });
 			{% if help_wish %}window.addEventListener('load', () => this.openVolunteer('{{ help_wish.skill|escapejs }}', 'wish', {{ help_wish.skill_id }}));{% endif %}
 			{% if learn_skill %}window.addEventListener('load', () => this.openVolunteer('{{ learn_skill.skill|escapejs }}', 'offer', {{ learn_skill.skill_id }}));{% endif %}
@@ -535,6 +531,8 @@ document.addEventListener('DOMContentLoaded', () => {
 				closeOnSelect: true,
 				searchKeys: ['value'],
 				highlightFirst: true,
+				// Inside the modal <dialog>: the page under it can't be reached
+				appendTarget: document.getElementById('volunteer-dialog'),
 			},
 			originalInputValueFormat: v => v.map(x => x.value).join(', '),
 		};

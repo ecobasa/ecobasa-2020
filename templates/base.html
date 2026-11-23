@@ -37,6 +37,48 @@
 
     {% include "_footer.html" %}
 
+    {# Asks before a form with data-confirm (on the form or its button) is sent; ecobasaConfirm(text) from scripts #}
+    <dialog id="confirm-dialog" class="modal modal-sm">
+      <form method="dialog" class="modal-content">
+        <p id="confirm-dialog-text" class="mb-6 whitespace-pre-line"></p>
+        <div class="flex justify-between gap-3">
+          <button value="cancel" class="btn btn-purple"><i class="fa-solid fa-ban mr-2"></i>{% trans "Cancel" %}</button>
+          <button value="ok" class="btn" autofocus>{% trans "Yes" %}</button>
+        </div>
+      </form>
+    </dialog>
+
+    <script>
+      (function () {
+        const dialog = document.getElementById('confirm-dialog');
+        window.ecobasaConfirm = function (text) {
+          document.getElementById('confirm-dialog-text').textContent = text;
+          dialog.returnValue = '';
+          dialog.showModal();
+          return new Promise(function (resolve) {
+            dialog.addEventListener('close', function () { resolve(dialog.returnValue === 'ok'); }, { once: true });
+          });
+        };
+        dialog.addEventListener('click', function (event) {
+          if (event.target === dialog) dialog.close();
+        });
+        // Before htmx or the browser sends it; once answered yes, sent again with the same button
+        document.addEventListener('submit', function (event) {
+          const form = event.target, submitter = event.submitter;
+          const text = (submitter && submitter.dataset.confirm) || form.dataset.confirm;
+          if (!text || form.dataset.confirmed) return;
+          event.preventDefault();
+          event.stopImmediatePropagation();
+          ecobasaConfirm(text).then(function (ok) {
+            if (!ok) return;
+            form.dataset.confirmed = '1';
+            form.requestSubmit(submitter && submitter.form === form ? submitter : undefined);
+            delete form.dataset.confirmed;
+          });
+        }, true);
+      })();
+    </script>
+
     <script>
       // An online event's hours also in the reader's own time, where it differs (events/_event_dates.html)
       (function () {

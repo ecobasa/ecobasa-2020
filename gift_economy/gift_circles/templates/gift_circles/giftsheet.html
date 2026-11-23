@@ -70,7 +70,7 @@
           <figure class="m-0">
             <a href="{{ photo.image.url }}"><img src="{{ photo.image.url }}" alt="{% trans 'Photo of the Giftsheet' %}" loading="lazy" class="w-full rounded-lg border"></a>
             {% if writes %}
-              <form method="post" action="{% url 'gift_circles:giftsheet_photo_delete' event.slug photo.pk %}" class="text-sm mt-1" onsubmit="return confirm('{{ _("Delete this photo?")|escapejs }}')">{% csrf_token %}
+              <form method="post" action="{% url 'gift_circles:giftsheet_photo_delete' event.slug photo.pk %}" class="text-sm mt-1" data-confirm="{{ _("Delete this photo?") }}">{% csrf_token %}
                 <button type="submit" class="underline"><i class="fa-regular fa-trash-can mr-1"></i>{% trans "Delete" %}</button>
               </form>
             {% endif %}
@@ -93,7 +93,7 @@
   <div class="flex flex-wrap justify-between items-center gap-3 mt-8 pt-4 border-t">
     <a href="{% if guest %}{% url 'gift_circles:guest_print' event.slug guest.token %}{% else %}{% url 'gift_circles:print' event.slug %}{% endif %}" class="text-sm underline"><i class="fa-solid fa-print mr-1"></i>{% trans "Print the Giftsheet and card" %}</a>
     {% if can_edit and not guest %}
-      <form method="post" action="{% url 'gift_circles:giftsheet_close' event.slug %}"{% if not sheet.is_closed %} onsubmit="return confirm('{{ _("Close the Giftsheet? The offers and wishes of everyone who said yes go on ecobasa, and what was fulfilled becomes a match.")|escapejs }}')"{% endif %}>{% csrf_token %}
+      <form method="post" action="{% url 'gift_circles:giftsheet_close' event.slug %}"{% if not sheet.is_closed %} data-confirm="{{ _("Close the Giftsheet? The offers and wishes of everyone who said yes go on ecobasa, and what was fulfilled becomes a match.") }}"{% endif %}>{% csrf_token %}
         {% if sheet.is_closed %}
           <button type="submit" name="action" value="reopen" class="btn btn-purple"><i class="fa fa-lock-open mr-1"></i>{% trans "Open it again" %}</button>
         {% else %}

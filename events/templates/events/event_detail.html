@@ -7,8 +7,7 @@
 {# Its picture across the top with its title on it, as on a community's page #}
 {% if event.image %}
   <div class="relative w-full" style="height: 340px;"
-       x-data="{ fullscreen: false }"
-       x-effect="document.body.classList.toggle('overflow-hidden', fullscreen)">
+       x-data="{ fullscreen: false }">
     <div class="absolute inset-0 bg-center bg-cover" style="background-image: url('{{ event.image.url }}');"></div>
     <button type="button" @click="fullscreen = true"
             class="absolute inset-0 cursor-zoom-in focus:outline-none bg-transparent"
@@ -18,13 +17,14 @@
         <h1 class="text-5xl text-secondary m-0">{{ event.title }}</h1>
       </div>
     </div>
-    <div x-show="fullscreen" @click="fullscreen = false" @keydown.escape.window="fullscreen = false"
-         class="fixed inset-0 bg-black bg-opacity-90"
-         style="display:none; z-index: 60;">
-      <button type="button" @click.stop="fullscreen = false" class="modal-close" aria-label="{% trans 'Close' %}">&times;</button>
-      <img src="{{ event.image.url }}" alt="{{ event.title }}" @click.stop
-           class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 max-h-[90vh] max-w-[90vw] rounded-lg shadow-2xl object-contain">
-    </div>
+    <dialog class="modal modal-image"
+            x-effect="fullscreen ? $el.open || $el.showModal() : $el.close()"
+            @close="fullscreen = false" @click.self="$el.close()">
+      <div class="modal-frame">
+        <button type="button" @click="fullscreen = false" class="modal-close" aria-label="{% trans 'Close' %}">&times;</button>
+        <img src="{{ event.image.url }}" alt="{{ event.title }}">
+      </div>
+    </dialog>
   </div>
 {% endif %}
 <div class="container-page">
@@ -84,7 +84,7 @@
                 <button type="submit" class="btn btn-purple" title="{{ event.texts.confirm_title }}"><i class="fa fa-check mr-1"></i>{% trans "Still current" %}</button>
               </form>
             {% endif %}
-            <form method="post" action="{% event_url event "archive" %}" onsubmit="return confirm('{{ event.texts.archive_question|escapejs }}')">{% csrf_token %}
+            <form method="post" action="{% event_url event "archive" %}" data-confirm="{{ event.texts.archive_question }}">{% csrf_token %}
               <button type="submit" class="btn btn-purple"><i class="fa-solid fa-box-archive mr-1"></i>{% trans "Archive" %}</button>
             </form>
           {% endif %}

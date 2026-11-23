@@ -391,13 +391,10 @@
 
 
   {% comment %}List modal{% endcomment %}
-  <div x-show="$store.communityMap.view === 'list'" x-cloak
-    class="modal-overlay flex"
-    @click.self="$store.communityMap.showMap()"
-    @keydown.escape.window="$store.communityMap.showMap()">
-
-    <div class="modal-content"
-      role="dialog" aria-modal="true">
+  <dialog class="modal"
+    x-effect="$store.communityMap.view === 'list' ? $el.open || $el.showModal() : $el.close()"
+    @close="$store.communityMap.showMap()" @click.self="$el.close()">
+    <div class="modal-content">
       <button type="button" class="modal-close" @click="$store.communityMap.showMap()">&times;</button>
 
       <div class="space-y-3 mb-4">
@@ -619,7 +616,7 @@
         </div>
       </div>
     </div>
-  </div>
+  </dialog>
 
   {% comment %}Hidden filter inputs shared by all HTMX requests{% endcomment %}
   <div id="community-hidden-filters" style="display:none" aria-hidden="true">

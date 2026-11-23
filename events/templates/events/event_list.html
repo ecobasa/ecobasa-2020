@@ -182,9 +182,10 @@
   </div>
 
   {# The list, in a modal over the map #}
-  <div x-show="$store.eventMap.view === 'list'" x-cloak class="modal-overlay flex"
-       @click.self="$store.eventMap.showMap()" @keydown.escape.window="$store.eventMap.showMap()">
-    <div class="modal-content" role="dialog" aria-modal="true">
+  <dialog class="modal"
+    x-effect="$store.eventMap.view === 'list' ? $el.open || $el.showModal() : $el.close()"
+    @close="$store.eventMap.showMap()" @click.self="$el.close()">
+    <div class="modal-content">
       <button type="button" class="modal-close" @click="$store.eventMap.showMap()">&times;</button>
       {# The same search and filters as on the map, the country, the filters in use #}
       <div class="space-y-3 mb-4">
@@ -204,7 +205,7 @@
         <div class="text-center py-8 text-brown"><i class="fa fa-spinner fa-spin text-2xl"></i></div>
       </div>
     </div>
-  </div>
+  </dialog>
 </div>
 {% endblock %}
 

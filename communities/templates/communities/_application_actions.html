@@ -11,7 +11,7 @@
 	{% else %}{% blocktrans with name=target.user.name asvar question %}Their answers and this conversation will be deleted, for {{ name }} too. What stays is that they applied, how it ended and when, so you'll see it if they apply again.{% endblocktrans %}{% endif %}
 	<button type="submit" formaction="{% url 'communities:delete_application' target.community.slug target.pk %}"
 		x-show="!isCounter && !acceptAs && !declining" class="btn btn-red{% if not can_withdraw %} sm:ml-auto{% endif %}"
-		onclick="return confirm('{{ question|escapejs }}{% if target.is_counted %} {% trans "The membership stays." as stays %}{{ stays|escapejs }}{% endif %}')">
+		data-confirm="{{ question }}{% if target.is_counted %} {% trans "The membership stays." as stays %}{{ stays }}{% endif %}">
 		<i class="fa-regular fa-trash-can mr-2"></i>{% trans "Delete application" %}
 	</button>
 {% endif %}

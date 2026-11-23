@@ -347,11 +347,14 @@
                  // A text to start from replaces what is in the box, unless they wrote something of their own
                  startFrom(text) {
                    const box = this.$root.querySelector('[name=body]');
-                   if (box.value.trim() && box.value !== this.startText && !confirm('{{ _("Replace what you wrote with this text?")|escapejs }}')) return;
-                   box.value = this.body = this.startText = text;
-                   // The whole text to read, not just its first lines
-                   box.style.height = 'auto';
-                   box.style.height = box.scrollHeight + 'px';
+                   const replace = () => {
+                     box.value = this.body = this.startText = text;
+                     // The whole text to read, not just its first lines
+                     box.style.height = 'auto';
+                     box.style.height = box.scrollHeight + 'px';
+                   };
+                   if (!box.value.trim() || box.value === this.startText) return replace();
+                   ecobasaConfirm('{{ _("Replace what you wrote with this text?")|escapejs }}').then(ok => ok && replace());
                  },
                  get unfilled() { return /\[[^\]]*\]/.test(this.body); } }">
 
@@ -574,7 +577,7 @@
           {# After it was accepted they were counted on: the message box says why #}
           <button type="submit" name="action" value="withdraw" x-show="!isCounter"
             class="btn btn-purple sm:ml-auto"
-            onclick="return confirm('{% if match.status == 'accepted' %}{% trans "Withdraw your request? Please write a few words why in the message box, they were counting on you." as question %}{% else %}{% trans "Withdraw your request?" as question %}{% endif %}{{ question|escapejs }}')">
+            data-confirm="{% if match.status == 'accepted' %}{% trans "Withdraw your request? Please write a few words why in the message box, they were counting on you." as question %}{% else %}{% trans "Withdraw your request?" as question %}{% endif %}{{ question }}">
             <i class="fa-solid fa-rotate-left mr-2"></i>{% trans "Withdraw request" %}
           </button>
         {% endif %}
