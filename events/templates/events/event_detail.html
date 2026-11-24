@@ -64,6 +64,7 @@
   <div class="grid grid-cols-1 sm:grid-cols-12 gap-6">
     <div class="sm:col-span-8">
       <span class="pill bg-green text-secondary text-xs"><i class="fa-solid {{ event.kind_icon }} mr-1"></i>{{ event.kind_label }}</span>
+      {% if event.help_link %}<span class="ml-2">{% include event.help_link with colour="text-green" %}</span>{% endif %}
       {% if not event.image %}<h1 class="mb-1 mt-2">{{ event.title }}</h1>{% endif %}
       <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm mb-6 {% if event.image %}mt-2{% endif %}">
         <span><i class="fa-regular fa-calendar mr-1"></i>{% include "events/_event_dates.html" %}</span>

@@ -135,6 +135,9 @@ class StopForm(forms.ModelForm):
     )
     # Another place's name, as the location picker writes it
     location_name = forms.CharField(label=_("Place"), max_length=255, required=False)
+    # A new stop: on to the gift-circle form (another place), or to asking its host with
+    # the gift-circle in it (a community or one of its events)
+    gift_circle = forms.BooleanField(label=_("Organise a gift-circle here"), required=False)
 
     class Meta:
         model = Stop
@@ -170,6 +173,8 @@ class StopForm(forms.ModelForm):
             if stop.event_id:
                 events = events | Event.objects.filter(pk=stop.event_id)
         self.fields["event"].queryset = events
+        if stop.pk:
+            del self.fields["gift_circle"]
         _style(self.fields)
 
     def _chosen_community(self):
@@ -439,6 +444,11 @@ class HostForm(forms.Form):
         label=_("Message"), widget=forms.Textarea(attrs={"rows": 5}),
         help_text=_("Who you are as a group, what you would like to do and learn there, what you bring, and what you need: food (diet, allergies), where you would sleep."),
     )
+    # Asked with the visit: once the host agrees, the tour can organise one there
+    gift_circle = forms.BooleanField(
+        label=_("We'd like to organise a gift-circle with you"), required=False,
+        widget=forms.CheckboxInput(attrs={"class": "form-checkbox"}),
+    )
 
     def __init__(self, stop, people, *args, open_event=False, **kwargs):
         super().__init__(*args, **kwargs)
@@ -452,6 +462,7 @@ class HostForm(forms.Form):
             # Just saying the tour comes: no needs to choose, a message is optional
             self.fields["message"].required = False
             self.fields["message"].help_text = ""
+            del self.fields["gift_circle"]
         elif stop.event_id:
             self.groups = [(stop.event, [need for need in stop.event.needs() if not need.is_done])]
         else:

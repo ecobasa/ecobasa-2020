@@ -23,11 +23,12 @@ GAVE = "gave"
 LENT = "lent"
 HELPED = "helped"
 HOST_AGREED = "host_agreed"
+GIFT_CIRCLE = "gift_circle"
 PICKED_UP = "picked_up"
 HANDED_OVER = "handed_over"
 REFERENCE = "reference"
 # What visitors see: nothing that names who travels, as people's profiles are for members
-PUBLIC_KINDS = {HOST_AGREED, PICKED_UP, HANDED_OVER}
+PUBLIC_KINDS = {HOST_AGREED, GIFT_CIRCLE, PICKED_UP, HANDED_OVER}
 
 
 def timeline_by_stop(tour, stops, user):
@@ -80,6 +81,11 @@ def _happenings(tour, stops):
         match = stop.visit_match
         if match is not None and match.status == Match.STATUS_ACCEPTED and match.responded_at and not match.is_coming:
             entries.append(_entry(HOST_AGREED, match.responded_at, stop, host=stop.host))
+    # The gift-circles it organises: at a stop with a host, or as the event of another place
+    for stop in stops:
+        circle = stop.gift_circle or (stop.event if stop.event_id and stop.event.host_tour_id == tour.pk else None)
+        if circle is not None:
+            entries.append(_entry(GIFT_CIRCLE, circle.created_at, stop, event=circle))
     # The gifts that travelled along
     for delivery in tour.deliveries.filter(dismissed_at=None).select_related("offer", "wish", "bringer"):
         if delivery.picked_up_at:

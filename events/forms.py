@@ -36,6 +36,13 @@ class EventForm(forms.ModelForm):
     languages = LanguagesField(
         required=False, label=_("Languages"), help_text=_("What you will speak in the call."),
     )
+    # Who hears of a new gift-circle right away: its host's members (a community's, or the
+    # travellers of a tour), and who lives nearby (a suggestion)
+    invite_members = forms.BooleanField(label=_("Invite our members"), required=False, initial=True)
+    invite_nearby = forms.BooleanField(
+        label=_("Invite people nearby"), required=False, initial=True,
+        help_text=_("Everyone who lives within %(km)s km gets it as a suggestion.") % {"km": kinds.NEARBY_KM},
+    )
     field_order = [
         "kind", "title", "image", "description", "skills_to_learn", "starts_on", "ends_on", "starts_at", "ends_at",
         "is_online", "timezone", "languages", "location_name", "location", "country", "max_people", "is_open", "potluck_note",
@@ -100,6 +107,14 @@ class EventForm(forms.ModelForm):
         if not self.instance.takes_needs:
             for name in self.COMMUNITY_FIELDS:
                 del self.fields[name]
+        # Inviting is for a new one of the kinds that invite; a person has no members
+        if self.instance.pk or not self._offered(kinds.INVITING):
+            del self.fields["invite_members"], self.fields["invite_nearby"]
+        elif self.instance.host_type == kinds.HOST_PERSON:
+            del self.fields["invite_members"]
+
+    def inviting_kinds(self):
+        return self._offered(kinds.INVITING)
 
     def _host_place(self):
         """(point, country code) of its host; a tour's is where it starts."""

@@ -23,7 +23,7 @@
 {% else %}
   <div class="flex items-start gap-2 text-sm min-w-0">
     <span class="w-6 h-6 flex-none rounded-full bg-secondary border border-primary border-opacity-40 text-primary flex items-center justify-center text-xs">
-      <i class="fa-solid {% if entry.kind == 'published' %}fa-flag{% elif entry.kind == 'joined' %}fa-user-plus{% elif entry.kind == 'lent' %}fa-handshake{% elif entry.kind == 'gave' %}fa-gift{% elif entry.kind == 'helped' %}fa-handshake-angle{% elif entry.kind == 'host_agreed' %}fa-circle-check{% elif entry.kind == 'picked_up' %}fa-box{% else %}fa-gift{% endif %}"></i>
+      <i class="fa-solid {% if entry.kind == 'published' %}fa-flag{% elif entry.kind == 'joined' %}fa-user-plus{% elif entry.kind == 'lent' %}fa-handshake{% elif entry.kind == 'gave' %}fa-gift{% elif entry.kind == 'helped' %}fa-handshake-angle{% elif entry.kind == 'host_agreed' %}fa-circle-check{% elif entry.kind == 'gift_circle' %}fa-hands-holding-circle{% elif entry.kind == 'picked_up' %}fa-box{% else %}fa-gift{% endif %}"></i>
     </span>
     <div class="min-w-0">
       <p class="m-0 leading-snug">
@@ -34,6 +34,7 @@
         {% elif entry.kind == "lent" %}{% blocktrans with gift=entry.listing.display_title %}lent {{ gift }} to the tour{% endblocktrans %}
         {% elif entry.kind == "helped" %}{% blocktrans with gift=entry.listing.display_title %}came to help with {{ gift }}{% endblocktrans %}
         {% elif entry.kind == "host_agreed" %}<a href="{{ entry.host.get_absolute_url }}" class="font-semibold text-primary hover:underline">{{ entry.stop.label }}</a> {% trans "agreed to host the group" %}
+        {% elif entry.kind == "gift_circle" %}<a href="{{ entry.stop.tour.get_absolute_url }}" class="font-semibold text-primary hover:underline">{{ entry.stop.tour.title }}</a> {% trans "organises a gift-circle:" %} <a href="{{ entry.event.get_absolute_url }}" class="font-semibold text-primary hover:underline">{{ entry.event.title }}</a>
         {% elif user.is_authenticated %}
           {% if entry.kind == "picked_up" %}{% blocktrans with gift=entry.listing.display_title %}picked up {{ gift }}{% endblocktrans %}
           {% else %}{% blocktrans with gift=entry.listing.display_title to=entry.to %}handed over {{ gift }} to {{ to }}{% endblocktrans %}{% endif %}

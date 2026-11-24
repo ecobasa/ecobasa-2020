@@ -57,6 +57,9 @@
           <div class="text-sm opacity-80 mt-0.5">
             {% if stop.event %}{{ stop.event.kind_label }}{% if stop.community %} · <a href="{{ stop.community.get_absolute_url }}" class="hover:underline">{{ stop.community.name }}</a>{% endif %}{% if item.place %} · {% endif %}{% endif %}{% if item.place and stop.community or item.place and stop.event %}{{ item.place }}{% endif %}
           </div>
+          {% if stop.gift_circle %}
+            <div class="text-sm mt-0.5"><i class="fa-solid fa-hands-holding-circle mr-1 text-primary"></i><a href="{{ stop.gift_circle.get_absolute_url }}" class="hover:underline">{{ stop.gift_circle.title }}</a></div>
+          {% endif %}
         </div>
 
         {# When #}
@@ -69,19 +72,30 @@
         {# Where the host stands, for everyone; the organisers ask from here #}
         <div class="route-host text-sm">
           {% with status=stop.host_status %}{% if status %}{% with label=stop.host_status_label %}
-            <div class="{{ label.2 }} font-semibold"><i class="{{ label.1 }} mr-1"></i>{{ label.0 }}</div>
+            {% if stop.only_gift_circle %}
+              {# No stay, but a yes to the gift-circle: the tour comes for its day #}
+              <div class="text-green font-semibold"><i class="fa-solid fa-hands-holding-circle mr-1"></i>{% trans "Only for the gift-circle" %}</div>
+            {% else %}
+              <div class="{{ label.2 }} font-semibold"><i class="{{ label.1 }} mr-1"></i>{{ label.0 }}</div>
+            {% endif %}
             {% if can_edit or editing %}
               {% if stop.can_ask_host %}
                 <a href="{% url 'tours:ask_host' tour.slug stop.pk %}" class="btn btn-purple text-xs inline-block mt-1"><i class="fa-solid fa-paper-plane mr-1"></i>{% if stop.joins_open_event %}{% trans "We're coming" context "host status" %}{% else %}{% trans "Ask to host us" %}{% endif %}</a>
+              {% endif %}
+              {% if stop.can_propose_gift_circle %}
+                <form method="post" action="{% url 'tours:propose_gift_circle' tour.slug stop.pk %}" class="mt-1">{% csrf_token %}
+                  <button type="submit" class="btn btn-purple text-xs"><i class="fa-solid fa-hands-holding-circle mr-1"></i>{% trans "Propose a gift-circle" %}</button>
+                </form>
               {% endif %}
               {% if stop.visit_match and status != "not_asked" %}
                 <div><a href="{{ stop.visit_match.get_absolute_url }}" class="underline text-xs">{% trans "View conversation" %}</a></div>
               {% endif %}
             {% endif %}
           {% endwith %}{% endif %}{% endwith %}
-          {# At another place the tour can invite people there itself #}
+          {# At another place, or where the host agreed to the visit, the tour can organise a gift-circle #}
           {% if can_edit or editing %}{% if stop.can_host_gift_circle %}
-            <a href="{% url 'tours:stop_gift_circle' tour.slug stop.pk %}" class="btn btn-purple text-xs inline-block mt-1"><i class="fa-solid fa-hands-holding-circle mr-1"></i>{% trans "Invite to a gift-circle here" %}</a>
+            <a href="{% url 'tours:stop_gift_circle' tour.slug stop.pk %}" class="btn btn-purple text-xs inline-block mt-1"><i class="fa-solid fa-hands-holding-circle mr-1"></i>{% trans "Organise a gift-circle here" %}</a>
+            <div class="mt-1">{% include "gift_circles/_what_link.html" with colour="text-purple" %}</div>
           {% endif %}{% endif %}
         </div>
 

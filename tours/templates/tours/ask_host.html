@@ -85,6 +85,12 @@
         {% endfor %}
       </fieldset>
     {% endif %}{% endwith %}
+    {% if form.gift_circle %}
+      <div class="form-group">
+        <label class="inline-flex items-center gap-2 cursor-pointer">{{ form.gift_circle }} <i class="fa-solid fa-hands-holding-circle text-primary"></i> {{ form.gift_circle.label }}</label>
+        <p class="text-xs mt-1">{% trans "Once they agree to your visit, you can organise it on the route." %} {% include "gift_circles/_what_link.html" %}</p>
+      </div>
+    {% endif %}
     {% with field=form.message %}
       <div class="form-group">
         <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>

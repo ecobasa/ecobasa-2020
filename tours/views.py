@@ -506,29 +506,76 @@ def plan(request, slug):
             append_stop(stop)
             tour.touch()
         messages.success(request, _("The stop has been added."))
+        if form.cleaned_data.get("gift_circle"):
+            if stop.can_host_gift_circle:
+                return redirect("tours:stop_gift_circle", tour.slug, stop.pk)
+            if stop.can_ask_host and not stop.joins_open_event and stop.host.get_match_owner() is not None:
+                return redirect(f"{reverse('tours:ask_host', args=[tour.slug, stop.pk])}?gift_circle=1")
         return redirect(tour.url("plan"))
     return _render_plan(request, tour, form, show_order=bool(request.GET.get("order")))
 
 
 @login_required
 def stop_gift_circle(request, slug, pk):
-    """The organisers invite to a gift-circle at a stop at another place: the tour hosts
-    it there, on the day it arrives, and the stop is at it from then on."""
+    """The organisers organise a gift-circle at a stop: the tour hosts it, on the day it
+    arrives. At another place the stop is at it from then on. At a community or one of its
+    events, whose host agreed to the visit, it takes their place and its host is told."""
     tour = _editable(slug, request.user)
-    stop = get_object_or_404(tour.stops.all(), pk=pk)
+    stop = get_object_or_404(tour.stops.select_related("event", "community"), pk=pk)
     if not stop.can_host_gift_circle:
         raise Http404
     day = stop.arrive_on or stop.leave_on
+    place = stop.gift_circle_place()
     event = Event(
-        kind=event_kinds.GIFT_CIRCLE, host_tour=tour, starts_on=day, ends_on=day,
-        location=stop.location, location_name=stop.name, country=stop.country,
+        kind=event_kinds.GIFT_CIRCLE, host_tour=tour, starts_on=day, ends_on=day, location=place.location,
+        location_name=stop.name if place is stop else place.location_name, country=place.country,
     )
 
     def at_stop(event):
-        stop.event = event
-        stop.save(update_fields=["event"])
+        from .visits import tell_host_of_gift_circle
+
+        if stop.community_id:
+            stop.gift_circle = event
+            stop.save(update_fields=["gift_circle"])
+            url = request.build_absolute_uri(event.get_absolute_url())
+            help_url = request.build_absolute_uri(reverse("help:gift_circles")) + "#what"
+            transaction.on_commit(lambda: tell_host_of_gift_circle(stop, request.user, url, help_url))
+        else:
+            stop.event = event
+            stop.save(update_fields=["event"])
 
     return save_event(request, event, tour.get_absolute_url(), on_saved=at_stop)
+
+
+@login_required
+@require_POST
+def propose_gift_circle(request, slug, pk):
+    """The organisers propose a gift-circle to a stop's host they asked to host them."""
+    from .visits import propose_gift_circle as propose
+
+    tour = _editable(slug, request.user)
+    stop = get_object_or_404(tour.stops.select_related("visit_match__recipient"), pk=pk)
+    if not stop.can_propose_gift_circle:
+        raise Http404
+    propose(stop)
+    messages.success(request, _("Your proposal has been sent to %(community)s!") % {"community": stop.label})
+    return redirect(stop.visit_match.get_absolute_url())
+
+
+@login_required
+@require_POST
+def answer_gift_circle(request, slug, pk):
+    """The host says yes or no to the gift-circle a tour proposed, apart from the stay."""
+    from .visits import answer_gift_circle as answer
+
+    stop = get_object_or_404(Stop.objects.select_related("tour", "visit_match"), tour__slug=slug, pk=pk)
+    match = stop.visit_match
+    if match is None or request.user != match.recipient:
+        raise PermissionDenied
+    if stop.gift_circle_answer != stop.GIFT_CIRCLE_PROPOSED:
+        raise Http404
+    answer(stop, agreed=request.POST.get("answer") == "yes")
+    return redirect(match.get_absolute_url())
 
 
 @login_required
@@ -1074,8 +1121,14 @@ def ask_host(request, slug, pk):
         return redirect(tour.get_absolute_url())
     group = stop.group()
     people = max(stop.group_people(group), 1)
-    form = HostForm(stop, people, request.POST or None, open_event=stop.joins_open_event)
+    form = HostForm(
+        stop, people, request.POST or None, open_event=stop.joins_open_event,
+        initial={"gift_circle": True} if request.GET.get("gift_circle") else None,
+    )
     if request.method == "POST" and form.is_valid():
+        # Asked again after a no to the stay, a gift-circle they agreed to stays agreed
+        if form.cleaned_data.get("gift_circle") and stop.gift_circle_answer != stop.GIFT_CIRCLE_AGREED:
+            stop.gift_circle_answer = stop.GIFT_CIRCLE_PROPOSED
         match = send(
             stop, request.user, message=form.cleaned_data["message"],
             stay_from=form.cleaned_data["stay_from"], stay_to=form.cleaned_data["stay_to"],

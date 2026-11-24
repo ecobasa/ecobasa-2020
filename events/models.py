@@ -207,6 +207,11 @@ class Event(models.Model):
         return self.get_kind_display()
 
     @property
+    def help_link(self):
+        """The template of a link to the help page that explains its kind, if it has one."""
+        return kinds.HELP_LINKS.get(self.kind, "")
+
+    @property
     def kind_icon(self):
         return kinds.ICONS[self.kind]
 

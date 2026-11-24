@@ -10070,8 +10070,8 @@ msgid "Hitchwiki Map"
 msgstr "Carte Hitchwiki"
 
 #: tours/templates/tours/_route.html:84
-msgid "Invite to a gift-circle here"
-msgstr "Inviter à un cercle de dons ici"
+msgid "Organise a gift-circle here"
+msgstr "Organiser un cercle de dons ici"
 
 #: tours/templates/tours/_route.html:121
 msgid "Change"
@@ -10767,3 +10767,81 @@ msgstr "Lire la vidéo"
 
 msgid "The video plays from YouTube."
 msgstr "La vidéo est lue depuis YouTube."
+
+msgid "A gift-circle near you"
+msgstr "Un cercle de dons près de chez toi"
+
+#, python-format
+msgid "%(reason)s: %(title)s"
+msgstr "%(reason)s : %(title)s"
+
+msgid "Invite our members"
+msgstr "Inviter nos membres"
+
+msgid "Invite people nearby"
+msgstr "Inviter les gens à proximité"
+
+#, python-format
+msgid "Everyone who lives within %(km)s km gets it as a suggestion."
+msgstr "Toute personne qui habite à moins de %(km)s km le reçoit comme suggestion."
+
+msgid "Who hosts it?"
+msgstr "Qui l'organise ?"
+
+msgid "Me"
+msgstr "Moi"
+
+#, python-format
+msgid "We are organising a gift-circle during our visit: %(title)s %(url)s"
+msgstr "Nous organisons un cercle de dons pendant notre visite : %(title)s %(url)s"
+
+msgid "We'd like to organise a gift-circle with you"
+msgstr "Nous aimerions organiser un cercle de dons avec vous"
+
+msgid "Once they agree to your visit, you can organise it on the route."
+msgstr "Dès qu'ils acceptent votre visite, vous pouvez l'organiser sur l'itinéraire."
+
+msgid "How do gift-circles work?"
+msgstr "Comment fonctionnent les cercles de dons ?"
+
+
+msgid "organises a gift-circle:"
+msgstr "organise un cercle de dons :"
+
+#, python-format
+msgid "We'd like to organise a <a href=\"%(url)s\">gift-circle</a> with you"
+msgstr "Nous aimerions organiser un <a href=\"%(url)s\">cercle de dons</a> avec vous"
+
+#, python-format
+msgid "%(community)s agreed to the gift-circle: now organise it"
+msgstr "%(community)s a accepté le cercle de dons : organisez-le maintenant"
+
+#, python-format
+msgid "%(community)s doesn't want a gift-circle this time"
+msgstr "%(community)s ne veut pas de cercle de dons cette fois"
+
+#, python-format
+msgid "%(tour)s proposes a gift-circle during its visit"
+msgstr "%(tour)s propose un cercle de dons pendant sa visite"
+
+#, python-format
+msgid "Your proposal has been sent to %(community)s!"
+msgstr "Votre proposition a été envoyée à %(community)s !"
+
+msgid "Yes to the gift-circle"
+msgstr "Oui au cercle de dons"
+
+msgid "No gift-circle"
+msgstr "Pas de cercle de dons"
+
+msgid "Propose a gift-circle"
+msgstr "Proposer un cercle de dons"
+
+msgid "Only for the gift-circle"
+msgstr "Seulement pour le cercle de dons"
+
+msgid "You answer this apart from the stay."
+msgstr "Tu réponds à cela indépendamment du séjour."
+
+msgid "Proposed"
+msgstr "Proposé"

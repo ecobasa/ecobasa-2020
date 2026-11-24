@@ -69,7 +69,7 @@ def test_a_tour_s_travellers_at_the_stop_are_invited_to_its_gift_circle(
     with django_capture_on_commit_callbacks(execute=True):
         _client(host).post(reverse("tours:stop_gift_circle", args=[tour.slug, market.pk]), {
             "kind": kinds.GIFT_CIRCLE, "title": "Gift-circle on the market square", "starts_on": market.arrive_on,
-            "location_name": market.name, "location": "SRID=4326;POINT (9.18 48.78)",
+            "location_name": market.name, "location": "SRID=4326;POINT (9.18 48.78)", "invite_members": "on",
         })
     event = Event.objects.get()
     [invitation] = [mail for mail in mailoutbox if mail.to == [person.email]]

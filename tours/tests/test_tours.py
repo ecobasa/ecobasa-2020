@@ -240,6 +240,21 @@ def test_a_stop_needs_an_event_of_its_community(tour, organiser, farm, project):
     assert not tour.stops.exists()
 
 
+def test_a_new_stop_with_a_gift_circle_goes_on_to_it_or_to_asking_its_host(tour, organiser, farm):
+    client = login(organiser)
+    response = client.post(tour.url("plan"), {
+        "where": "place", "location_name": "Station square, Leipzig", "location": "SRID=4326;POINT (12.38 51.34)",
+        "country": "DE", "gift_circle": "on",
+    })
+    place = tour.stops.get(community=None)
+    assert response.url == reverse("tours:stop_gift_circle", args=[tour.slug, place.pk])
+    # At a community its host agrees first
+    response = client.post(tour.url("plan"), {"where": "community", "community": farm.pk, "gift_circle": "on"})
+    stop = tour.stops.get(community=farm)
+    assert response.url == f"{reverse('tours:ask_host', args=[tour.slug, stop.pk])}?gift_circle=1"
+    assert client.get(response.url).context["form"]["gift_circle"].value()
+
+
 # ── The whole flow ────────────────────────────────────────────────
 
 def test_plan_publish_and_read_a_tour(organiser, other, farm, project):

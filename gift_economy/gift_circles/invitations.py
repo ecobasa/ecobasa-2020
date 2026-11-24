@@ -88,6 +88,40 @@ def _send(invitations, message):
             send_member_invitation(invitation, message)
 
 
+def suggest_nearby(event, host, exclude=()):
+    """Who lives within kinds.NEARBY_KM of a new gift-circle gets it as a suggestion ("A
+    gift-circle near you"): not its host, nor whoever was invited or comes already."""
+    from django.contrib.auth import get_user_model
+    from django.contrib.contenttypes.models import ContentType
+    from django.contrib.gis.db.models.functions import Distance
+    from django.contrib.gis.measure import D
+
+    from events import kinds
+    from gift_economy.matches.emails import notify_new_suggestions
+    from gift_economy.matches.models import Suggestion
+
+    point = event.get_match_location()[2]
+    if point is None:
+        return []
+    User = get_user_model()
+    people = list(
+        User.objects.filter(is_active=True, location__distance_lte=(point, D(km=kinds.NEARBY_KM)))
+        .exclude(pk__in=taken_users(event) | {host.pk} | set(exclude))
+        .annotate(distance=Distance("location", point))
+    )
+    user_type, event_type = ContentType.objects.get_for_model(User), ContentType.objects.get_for_model(event)
+    Suggestion.objects.bulk_create([
+        Suggestion(
+            user=person, own_type=user_type, own_id=str(person.pk), other_type=event_type, other_id=str(event.pk),
+            kind=Suggestion.KIND_GIFT, reason=Suggestion.REASON_NEAR_GIFT_CIRCLE, distance_km=round(person.distance.km),
+        )
+        for person in people
+    ], ignore_conflicts=True)
+    if people:
+        notify_new_suggestions(people)
+    return people
+
+
 def answer(invitation, user):
     """Someone invited by email says they come with their account: the invitation is
     theirs from now on, and their address no longer kept with it."""

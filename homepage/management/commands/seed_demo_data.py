@@ -22,6 +22,7 @@ see seed_images/SOURCES.md for attribution), resized for repo size.
 import os
 from datetime import datetime, time as datetime_time, timedelta
 
+from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.gis.geos import Point
 from django.core.files import File
@@ -114,6 +115,7 @@ class Command(BaseCommand):
         self._seed_skill_sharing(users)
         self._seed_goods_around(users, communities)
         self._seed_tours(users, communities)
+        self._seed_gift_circles_on_tours(users, communities)
 
         self.stdout.write(self.style.SUCCESS(
             "\nDone. Log in as any of these (password: %s):" % DEMO_PASSWORD
@@ -139,6 +141,13 @@ class Command(BaseCommand):
                 world="Redistributes firewood with more enthusiasm than technique.",
                 ecobasa_what="Trading spreadsheets for compost heaps, one day at a time.",
                 location_name="Bautzen, Germany", point=(14.4290, 51.1810),
+            ),
+            dict(
+                email="ida@ecobasa.demo", name="Ida Wróbel",
+                about="Mends bikes and jackets on the Polish side of the river. Not a member anywhere yet.",
+                world="Carries spare inner tubes for strangers.",
+                ecobasa_what="Meeting the people across the bridge.",
+                location_name="Zgorzelec, Poland", point=(15.0083, 51.1496),
             ),
             dict(
                 email="mireille@ecobasa.demo", name="Mireille Dubois",
@@ -1514,6 +1523,25 @@ class Command(BaseCommand):
             sheet.save()
             settle(last, entries(last).filter(match=None))
 
+        # How it went: stories by who came, about the gift-circle, its host, a lent offer
+        # from its Giftsheet and an idea; all but the one about the circle placed at it
+        def story(author, subject, text, age_days, place=last, **fields):
+            if subject is not None:
+                self._seed_reference(
+                    author, subject, text, timezone.now() - timedelta(days=age_days), place=place, **fields,
+                )
+
+        story(bjorn, last, "Twelve of us under the lime tree, and by the end everyone had said a wish out loud. "
+                           "Sam and I carried a sofa up three floors the next day; it still feels like a party.",
+              5, place=None, share=True)
+        story(sam, luna, "Luna kept the rounds going so calmly that even the shy ones spoke. And she remembered "
+                         "everyone's name for the Giftsheet without asking twice.", 5)
+        ladder = Entry.objects.filter(event=last, text="A long ladder").exclude(listing=None).first()
+        story(bjorn, ladder.listing if ladder else None,
+              "Borrowed the ladder the day after and finally cleaned the gutters. Back on Sunday, with a jar of honey.", 4)
+        idea = Idea.objects.filter(entry__event=last, text__startswith="The language café").first()
+        story(sam, idea, "Tilda went on Thursday and now practises Spanish there every week. Small idea, big difference.", 3)
+
         next_on = today + timedelta(days=22)
         upcoming = circle(
             "Gift-circle in Luna's living room", luna,
@@ -1542,6 +1570,27 @@ class Command(BaseCommand):
         )
         coming(jules, online)
         coming(freja, online)
+
+        # Hosted by a community, at its place: its members invited, who lives nearby
+        # suggested (as the form's "Invite our members" and "Invite people nearby")
+        from gift_economy.gift_circles.invitations import invite, suggest_nearby
+        from gift_economy.matches.models import Suggestion
+
+        sonnenkraut = communities["Sonnenkraut Ecovillage"]
+        at_home_on = today + timedelta(days=12)
+        at_home, created = Event.objects.get_or_create(
+            kind=kinds.GIFT_CIRCLE, title="Gift-circle in the Sonnenkraut barn", community=sonnenkraut,
+            defaults={
+                "created_by": luna, "is_open": True, "starts_on": at_home_on, "ends_on": at_home_on,
+                "starts_at": datetime_time(16, 0), "ends_at": datetime_time(17, 30),
+                "description": "For the village and the neighbours: what we wish for this winter, and "
+                               "what we can give. Tea from the herb garden.",
+            },
+        )
+        if created:
+            invite(at_home, luna, [person for person in sonnenkraut.members() if person != luna], [], "")
+        if not Suggestion.objects.filter(reason=Suggestion.REASON_NEAR_GIFT_CIRCLE, other_id=str(at_home.pk)).exists():
+            suggest_nearby(at_home, luna)
 
     # ── Skill-sharing from afar ──────────────────────────────────────────
 
@@ -1754,6 +1803,86 @@ class Command(BaseCommand):
         )
         self._seed_boat_tour(users, communities, tour, place, day)
         self._seed_gifts_along_tours(users, communities)
+
+    def _seed_gift_circles_on_tours(self, users, communities):
+        """Gift-circles the tours organise, each answered apart from the stay:
+        - Jars tour at the house project: proposed with the visit, both agreed, organised
+          (the host was told in the conversation)
+        - Jars tour at the fermentation weekend: proposed with the visit, both unanswered
+        - Bike tour at the rocket stove: the stay declined, the gift-circle agreed (the
+          tour comes only for it), not organised yet
+        - Bike tour at the old mill hostel: another place, the gift-circle is its event
+        - The boat tour at the cacao farm: proposed later, declined, the stay agreed"""
+        from django.urls import reverse
+        from events import kinds
+        from events.models import Event
+        from tours.models import Stop, Tour
+        from tours.visits import answer_gift_circle, propose_gift_circle, tell_host_of_gift_circle
+
+        self.stdout.write("Seeding gift-circles on tours…")
+        site = settings.SITE_URL.rstrip("/")
+
+        def organise(stop, title, **fields):
+            """What "Organise a gift-circle here" does, once the host agreed."""
+            if stop.gift_circle_id or (stop.event_id and stop.event.host_tour_id):
+                return
+            day = stop.arrive_on or stop.leave_on
+            place = stop.gift_circle_place()
+            event = Event.objects.create(
+                kind=kinds.GIFT_CIRCLE, host_tour=stop.tour, title=title, created_by=stop.tour.organiser,
+                starts_on=day, ends_on=day, is_open=True, location=place.location, country=place.country,
+                location_name=stop.name if place is stop else place.location_name, **fields,
+            )
+            if stop.community_id:
+                stop.gift_circle = event
+                stop.save(update_fields=["gift_circle"])
+                tell_host_of_gift_circle(
+                    stop, stop.tour.organiser, site + event.get_absolute_url(), site + reverse("help:gift_circles") + "#what",
+                )
+            else:
+                stop.event = event
+                stop.save(update_fields=["event"])
+
+        def proposed(stop):
+            if not stop.gift_circle_answer:
+                stop.gift_circle_answer = Stop.GIFT_CIRCLE_PROPOSED
+                stop.save(update_fields=["gift_circle_answer"])
+
+        def answered(stop, agreed):
+            if stop.gift_circle_answer == Stop.GIFT_CIRCLE_PROPOSED:
+                answer_gift_circle(stop, agreed)
+
+        jars = Tour.objects.get(title="Jars, olives and a long way south")
+        barefoot = jars.stops.get(community__name="Barefoot Bureaucracy House Project", event=None)
+        seminar = jars.stops.get(event__title="Fermentation weekend")
+        proposed(barefoot)
+        answered(barefoot, agreed=True)
+        organise(
+            barefoot, "Gift-circle at the house project", starts_at=datetime_time(18, 0), ends_at=datetime_time(19, 30),
+            description="The van crew and the house project in one circle on the courtyard: what we "
+                        "wish for, what we can give. Jars of kimchi for everyone.",
+        )
+        proposed(seminar)
+
+        bikes = Tour.objects.get(title="By bike to the rocket stove")
+        mill = bikes.stops.get(name__startswith="Old mill hostel")
+        stove = bikes.stops.get(event__title="Rocket stove for the community kitchen")
+        self._seed_visit(bikes, list(bikes.ordered_stops()).index(stove), Match.STATUS_DECLINED,
+                         "Two of us on bikes, happy to help with the stove and the bench.")
+        stove.refresh_from_db()
+        proposed(stove)
+        answered(stove, agreed=True)
+        organise(
+            mill, "Gift-circle at the old mill", starts_at=datetime_time(19, 0), ends_at=datetime_time(20, 30),
+            description="On our way through Leipzig: a circle in the hostel's garden, for the guests and the neighbours.",
+        )
+
+        atlantic = Tour.objects.filter(title="Across the Atlantic by sail").first()
+        if atlantic is not None:
+            farm = atlantic.stops.get(community__name="Cacao Tierra Viva")
+            if farm.can_propose_gift_circle:
+                propose_gift_circle(farm)
+            answered(farm, agreed=False)
 
     def _seed_gifts_along_tours(self, users, communities):
         """Something for each tour with stops to take along: offered at or near one place on
@@ -2117,7 +2246,7 @@ class Command(BaseCommand):
             return
         stop = stops[index]
         match = ask_host(stop, tour.organiser, message=message, stay_from=stop.arrive_on, stay_to=stop.leave_on)
-        if status == Match.STATUS_ACCEPTED and match.status != status:
+        if status in (Match.STATUS_ACCEPTED, Match.STATUS_DECLINED) and match.status != status:
             match.status = status
             match.responded_at = timezone.now()
             match.save()

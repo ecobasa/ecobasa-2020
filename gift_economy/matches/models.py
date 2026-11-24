@@ -733,6 +733,8 @@ class Suggestion(models.Model):
     # One of them shares it at an online gift-circle the other can join from afar (the
     # gift-circle is the detail)
     REASON_SHARED_ONLINE = "shared_online"
+    # A gift-circle invites near where they live (the own side is the person themselves)
+    REASON_NEAR_GIFT_CIRCLE = "near_gift_circle"
     # Those that are about travelling along: silenced while someone pauses tour suggestions
     TRAVEL_REASONS = (REASON_ROUTE, REASON_LEARN, REASON_HAS)
     REASON_CHOICES = [
@@ -748,6 +750,7 @@ class Suggestion(models.Model):
         (REASON_TOGETHER, _("Someone from near you comes too")),
         (REASON_GIFT_CIRCLE, _("Comes to the same gift-circle")),
         (REASON_SHARED_ONLINE, _("Shared at an online gift-circle")),
+        (REASON_NEAR_GIFT_CIRCLE, _("A gift-circle near you")),
     ]
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="suggestions")
@@ -910,6 +913,8 @@ class Suggestion(models.Model):
             return "fa-people-arrows"
         if self.is_tour:
             return "fa-route"
+        if self.reason == self.REASON_NEAR_GIFT_CIRCLE:
+            return "fa-hands-holding-circle"
         if other is None or self.other_model != "listing":
             return "fa-handshake-angle"
         if other.event_id and other.is_wish:
@@ -929,6 +934,8 @@ class Suggestion(models.Model):
         if self.is_tour:
             text, values = self._tour_text()
             return text % {**({} if self.is_together else {"tour": other.title}), **values}
+        if self.reason == self.REASON_NEAR_GIFT_CIRCLE:
+            return _("%(reason)s: %(title)s") % {"reason": self.get_reason_display(), "title": other.title}
         if self.other_model != "listing":
             return str(other)
         title = f"{other.display_title} ({other.amount})" if other.amount else other.display_title
@@ -1031,6 +1038,8 @@ class Suggestion(models.Model):
                 return _("your wish: %(title)s") % {"title": own.display_title}
             if self.reason == self.REASON_WANTS:
                 return _("your offer: %(title)s") % {"title": own.display_title}
+            return _("where you live")
+        if self.reason == self.REASON_NEAR_GIFT_CIRCLE:
             return _("where you live")
         if self.own_type.model != "listing":
             return str(own)

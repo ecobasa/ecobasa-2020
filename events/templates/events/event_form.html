@@ -31,6 +31,17 @@
     {% csrf_token %}
     {{ form.non_field_errors }}
 
+    {# Who hosts a new one of a kind with several hosts: choosing opens the form for that host #}
+    {% if host_choices %}
+      <div class="form-group" x-data="{ kind: '{{ form.kind.value }}' }" @kind-chosen.window="kind = $event.detail"
+           x-show="kind === '{{ event.kind }}'" {% if form.kind.value != event.kind %}style="display:none"{% endif %}>
+        <label class="form-label" for="event-host">{% trans "Who hosts it?" %}</label>
+        <select id="event-host" class="form-select w-full" @change="window.location = $event.target.value">
+          {% for url, label, chosen in host_choices %}<option value="{{ url }}"{% if chosen %} selected{% endif %}>{{ label }}</option>{% endfor %}
+        </select>
+      </div>
+    {% endif %}
+
     {# What it is: the kind sets what a new one starts with, everything can be changed #}
     <fieldset class="form-group" x-data="{ kind: '{{ form.kind.value }}' }">
       <legend class="form-label">{% trans "What is it?" %}</legend>
@@ -47,7 +58,7 @@
     </fieldset>
 
     {% for field in form %}
-      {% if field.name == "kind" or field.name == "timezone" or field.name == "languages" or field.name == "location_name" or field.name == "location" or field.name == "country" %}
+      {% if field.name == "kind" or field.name == "timezone" or field.name == "languages" or field.name == "location_name" or field.name == "location" or field.name == "country" or field.name == "invite_members" or field.name == "invite_nearby" %}
       {% elif field.name == "is_online" %}
         {# Where: online (for people around a town, if it says one), at a place of its own, or (left empty) at its community's #}
         <fieldset class="form-group space-y-3" x-data="{ online: {{ form.is_online.value|yesno:'true,false' }}, kind: '{{ form.kind.value }}', apart: '{{ form.countries_apart }}'.split(','), byTown: {{ form.times_from_town|yesno:'true,false' }}, town() { const country = document.getElementById('{{ form.country.id_for_label }}').value; this.byTown = !!document.getElementById('{{ form.location.id_for_label }}').value && !!country && !this.apart.includes(country) } }"
@@ -133,6 +144,17 @@
       {% endif %}
     {% endfor %}
 
+    {# A new one of the kinds that invite: its host's members and who lives nearby hear of it #}
+    {% if form.invite_nearby %}{% with inviting=form.inviting_kinds %}
+      <fieldset class="form-group space-y-1" x-data="{ kind: '{{ form.kind.value }}' }" @kind-chosen.window="kind = $event.detail"
+                x-show="[{% for kind in inviting %}'{{ kind }}'{% if not forloop.last %}, {% endif %}{% endfor %}].includes(kind)" {% if form.kind.value not in inviting %}style="display:none"{% endif %}>
+        <legend class="form-label">{% trans "Invite" %}</legend>
+        {% if form.invite_members %}<label class="flex items-center gap-2">{{ form.invite_members }} {{ form.invite_members.label }}</label>{% endif %}
+        <label class="flex items-center gap-2">{{ form.invite_nearby }} {{ form.invite_nearby.label }}</label>
+        <p class="text-xs m-0">{{ form.invite_nearby.help_text }}</p>
+      </fieldset>
+    {% endwith %}{% endif %}
+
     {% if formset %}
     <h2>{% trans "What do you need?" %}</h2>
     <p class="text-xs">{% trans "One line per thing: people with a skill, a material, a tool or knowledge. Skills from the list let us find people who have them." %}</p>
@@ -179,6 +201,9 @@
 <script src="https://cdn.jsdelivr.net/npm/ol@v7.2.2/dist/ol.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
+  // Back with an error: show the first one, it may be far down (under the map)
+  {% if form.errors %}document.querySelector('form .field-error')?.scrollIntoView({ block: 'center' });{% endif %}
+
   // "Until" from "From", for kinds that usually take a set time
   const durations = { {% for kind, minutes in form.durations.items %}'{{ kind }}': {{ minutes }}{% if not forloop.last %}, {% endif %}{% endfor %} };
   const startsAt = document.getElementById('{{ form.starts_at.id_for_label }}');

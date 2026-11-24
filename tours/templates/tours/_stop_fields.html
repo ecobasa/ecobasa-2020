@@ -43,6 +43,13 @@
     {% include "maps/_location_picker.html" with map_id="stop-location-map" set_point_fn="setStopPoint" map_height="h-64" %}
   </div>
 
+  {% if form.gift_circle %}
+    <div class="form-group">
+      <label class="inline-flex items-center gap-2">{{ form.gift_circle }} <i class="fa-solid fa-hands-holding-circle text-primary"></i> {{ form.gift_circle.label }}</label>
+      {% include "gift_circles/_what_link.html" %}
+      <p class="text-xs mt-1" x-show="where === 'community'">{% trans "Once they agree to your visit, you can organise it on the route." %}</p>
+    </div>
+  {% endif %}
   <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
     {% for field in form %}{% if field.name == "arrive_on" or field.name == "leave_on" or field.name == "leave_at" %}
       <div class="form-group">

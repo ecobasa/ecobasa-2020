@@ -5,9 +5,11 @@ calendar, and its group sees the place once it is accepted (`StayDetails.compani
 
 from datetime import datetime, time
 
+from django.conf import settings
 from django.db import transaction
-from django.utils import timezone
-from django.utils.translation import ngettext
+from django.urls import reverse
+from django.utils import timezone, translation
+from django.utils.translation import gettext as _, ngettext
 
 from gift_economy.matches.emails import notify_match_created, notify_match_message
 from gift_economy.matches.models import Match, MatchMessage, StayDetails, create_stay
@@ -39,7 +41,7 @@ def ask_host(stop, user, *, message="", stay_from=None, stay_to=None, contributi
             status=Match.STATUS_ACCEPTED if coming else None,
         )
         stop.visit_match = match
-        stop.save(update_fields=["visit_match"])
+        stop.save(update_fields=["visit_match", "gift_circle_answer"])
     if not coming:
         notify_match_created(match, http_request=http_request)
     return match
@@ -68,6 +70,55 @@ def sync_visits(tour):
             ) % {"n": people}
             MatchMessage.objects.create(match=match, sender=match.from_user, body=body)
             notify_match_message(match, sender=match.from_user, message=body)
+
+
+def tell_host_of_gift_circle(stop, sender, url, help_url):
+    """The tour organises a gift-circle at the stop whose host agreed to the visit: they
+    read it in the visit's conversation, with what a gift-circle is."""
+    match = stop.visit_match
+    body = _("We are organising a gift-circle during our visit: %(title)s %(url)s") % {
+        "title": stop.gift_circle.title, "url": url,
+    }
+    body = f"{body}\n{_('What is a gift-circle?')} {help_url}"
+    MatchMessage.objects.create(match=match, sender=sender, body=body)
+    notify_match_message(match, sender=sender, message=body)
+
+
+def propose_gift_circle(stop):
+    """The organisers propose a gift-circle to a stop's host after asking to host them:
+    its host answers it in the visit's conversation, and is told."""
+    from notifications.models import Notification
+
+    stop.gift_circle_answer = stop.GIFT_CIRCLE_PROPOSED
+    stop.save(update_fields=["gift_circle_answer"])
+    match = stop.visit_match
+    host = match.recipient
+    with translation.override(host.language or settings.LANGUAGE_CODE):
+        verb = _("%(tour)s proposes a gift-circle during its visit") % {"tour": stop.tour.title}
+    Notification.objects.create(
+        recipient=host, actor=match.from_user, verb=verb[:255], link=match.get_absolute_url(),
+        tag=Notification.TAG_INVITATION,
+    )
+
+
+def answer_gift_circle(stop, agreed):
+    """The host answers the gift-circle the tour proposed, apart from the stay: each
+    organiser is told, and where it was a yes, the form to organise it is a click away."""
+    from notifications.models import Notification
+
+    stop.gift_circle_answer = stop.GIFT_CIRCLE_AGREED if agreed else stop.GIFT_CIRCLE_DECLINED
+    stop.save(update_fields=["gift_circle_answer"])
+    match = stop.visit_match
+    link = reverse("tours:stop_gift_circle", args=[stop.tour.slug, stop.pk]) if agreed else match.get_absolute_url()
+    for organiser in stop.tour.organisers():
+        with translation.override(organiser.language or settings.LANGUAGE_CODE):
+            if agreed:
+                verb = _("%(community)s agreed to the gift-circle: now organise it") % {"community": stop.label}
+            else:
+                verb = _("%(community)s doesn't want a gift-circle this time") % {"community": stop.label}
+        Notification.objects.create(
+            recipient=organiser, actor=match.recipient, verb=verb[:255], link=link, tag=Notification.TAG_INVITATION,
+        )
 
 
 def follow_agreed_days(match):

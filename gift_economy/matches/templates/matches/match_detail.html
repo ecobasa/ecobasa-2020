@@ -168,7 +168,10 @@
       </div>
     </div>
 
-    <div class="prose text-sm mb-4">{{ match.message|linebreaksbr }}</div>
+    <div class="prose text-sm mb-4">{{ match.message|urlize|linebreaksbr }}</div>
+
+    {# A tour visit: the gift-circle proposed with it, answered apart from the stay #}
+    {% if match.tour_stop %}{% visit_gift_circle match %}{% endif %}
 
     {% if skill_sharing %}
       <p class="text-sm mb-4"><a href="{% url 'events:gift_circle_create' %}?suggestion={{ skill_sharing.pk }}" class="btn text-sm py-1 px-3"><i class="fa-solid fa-video mr-1"></i>{% trans "Start an online skill-sharing" %}</a>
@@ -293,7 +296,7 @@
           </div>
 
           {% if msg.body %}
-            <div class="prose text-sm mb-3">{{ msg.body|linebreaksbr }}</div>
+            <div class="prose text-sm mb-3">{{ msg.body|urlize|linebreaksbr }}</div>
           {% endif %}
           {% if msg.status_to == 'accepted' and match.is_community_stay and msg.counter_stay_from %}
             <div class="text-sm mb-2">

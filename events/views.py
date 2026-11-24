@@ -316,13 +316,44 @@ def save_event(request, event, cancel_url, on_saved=None):
             if on_saved is not None:
                 on_saved(event)
             if not editing:
-                event_created.send(sender=Event, event=event, user=request.user)
+                event_created.send(sender=Event, event=event, user=request.user, data=form.cleaned_data)
         messages.success(request, event.texts["saved"])
         return redirect(event.get_absolute_url())
     return render(request, "events/event_form.html", {
         "event": event, "editing": editing, "form": form, "formset": formset, "texts": event.texts,
         "cancel_url": event.get_absolute_url() if editing else cancel_url,
+        "host_choices": [] if editing else _host_choices(request.user, event),
     })
+
+
+def _tours():
+    """Tours, without importing the tours app: the model events.host_tour points to."""
+    return Event._meta.get_field("host_tour").related_model.objects.all()
+
+
+def _host_choices(user, event):
+    """(url, label, chosen) per host a new event of a kind with several hosts can have:
+    oneself, the communities one is a member of, the current tours one organises. Choosing
+    one opens the form for it. Nothing if there is only one to choose."""
+    hosts = kinds.HOSTS[event.kind]
+    if len(hosts) < 2:
+        return []
+    kind = event.kind
+    choices = []
+    if kinds.HOST_PERSON in hosts:
+        choices.append((reverse(f"events:{kind}_create"), _("Me"), event.host_user_id == user.pk))
+    if kinds.HOST_COMMUNITY in hosts:
+        for community in user.member_communities_qs().order_by("name"):
+            url = f"{reverse('events:create', args=[community.slug])}?kind={kind}"
+            choices.append((url, community.name, event.community_id == community.pk))
+    if kinds.HOST_TOUR in hosts:
+        tours = _tours().current().filter(
+            Q(organiser=user) | Q(travellers__user=user, travellers__is_organiser=True)
+        ).distinct().order_by("title")
+        for tour in tours:
+            url = f"{reverse(f'events:{kind}_create')}?tour={tour.slug}"
+            choices.append((url, tour.title, event.host_tour_id == tour.pk))
+    return choices if len(choices) > 1 else []
 
 
 def _save_needs(event, formset):
@@ -350,6 +381,13 @@ def create(request, community_slug=None, kind=None):
         if request.GET.get("kind") in dict(kinds.choices_for(kinds.HOST_COMMUNITY)):
             event.kind = request.GET["kind"]
         cancel_url = community.get_absolute_url()
+    elif request.GET.get("tour"):
+        # One of their tours hosts it (?tour=<slug>)
+        if kinds.HOST_TOUR not in kinds.HOSTS[kind]:
+            raise PermissionDenied
+        tour = get_object_or_404(_tours(), slug=request.GET["tour"])
+        event = Event(kind=kind, host_tour=tour)
+        cancel_url = tour.get_absolute_url()
     else:
         if kinds.HOST_PERSON not in kinds.HOSTS[kind]:
             raise PermissionDenied

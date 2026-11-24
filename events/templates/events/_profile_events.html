@@ -3,6 +3,7 @@
 {% if events %}
 <div class="mt-8">
   <h2>{% trans "Gift-circles" %}</h2>
+  <p class="text-sm">{% include "gift_circles/_what_link.html" %}</p>
   <div class="space-y-4">
     {% for event in events %}
       <a href="{{ event.get_absolute_url }}" class="block overflow-hidden {% if not event.is_current %}opacity-60{% endif %}">

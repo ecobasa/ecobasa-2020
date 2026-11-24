@@ -282,6 +282,7 @@
 						{% for kind, label, icon in event_kinds %}<a href="{% url 'events:create' community.slug %}?kind={{ kind }}" class="btn"><i class="fa-solid {{ icon }} mr-1"></i>{{ label }}</a>{% endfor %}
 						{% if is_ambassador %}<a href="{% url 'matches:calendar' community.slug %}" class="btn btn-purple"><i class="fa-regular fa-calendar mr-1"></i>{% trans "Calendar" %}</a>{% endif %}
 					</div>
+					<p class="text-sm mt-2">{% include "gift_circles/_what_link.html" %}</p>
 					{% if past_events %}
 						<details class="mt-4">
 							<summary class="cursor-pointer text-sm">{% trans "Ended and archived" %}</summary>

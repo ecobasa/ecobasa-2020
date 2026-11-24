@@ -8,11 +8,12 @@ from django.test import Client
 from django.urls import reverse
 from django.utils import timezone
 
+from communities.models import Community, Membership
 from events import kinds
 from events.models import Event
 from gift_economy.gift_circles.invitations import EMAIL_LIMIT
 from gift_economy.gift_circles.models import Guest, Invitation
-from gift_economy.matches.models import Match
+from gift_economy.matches.models import Match, Suggestion
 from notifications.models import Notification
 from users.models import User
 
@@ -187,3 +188,25 @@ def test_the_host_sees_everyone_invited_others_their_own(host, person, friend):
     Invitation.objects.create(event=event, invited_by=person, user=friend)
     assert "jonas@example.org" not in _client(person).get(reverse("gift_circles:invite", args=[event.slug])).content.decode()
     assert "jonas@example.org" in _client(host).get(reverse("gift_circles:invite", args=[event.slug])).content.decode()
+
+
+def test_a_community_s_new_gift_circle_invites_its_members_and_people_nearby(
+    host, person, friend, django_capture_on_commit_callbacks,
+):
+    community = Community.objects.create(name="Wiesengrund", ambassador=host, location=PARK, country="DE")
+    Membership.objects.create(community=community, user=host)
+    Membership.objects.create(community=community, user=person)
+    friend.location = Point(9.30, 48.78, srid=4326)  # about 9 km away
+    friend.save()
+    far = User.objects.create_user(email="ruth@example.com", password="secret", location=Point(9.70, 48.78, srid=4326))
+    with django_capture_on_commit_callbacks(execute=True):
+        _client(host).post(f"{reverse('events:create', args=[community.slug])}?kind={kinds.GIFT_CIRCLE}", {
+            "kind": kinds.GIFT_CIRCLE, "title": "Gift-circle at Wiesengrund",
+            "starts_on": timezone.localdate() + timedelta(days=7), "invite_members": "on", "invite_nearby": "on",
+            "needs-TOTAL_FORMS": "0", "needs-INITIAL_FORMS": "0",
+        })
+    event = Event.objects.get()
+    assert [invitation.user for invitation in event.invitations.all()] == [person]
+    [suggestion] = Suggestion.objects.filter(reason=Suggestion.REASON_NEAR_GIFT_CIRCLE)
+    assert (suggestion.user, suggestion.other, suggestion.distance_km) == (friend, event, 9)
+    assert not far.suggestions.exists()

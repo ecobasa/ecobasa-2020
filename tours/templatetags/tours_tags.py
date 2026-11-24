@@ -173,3 +173,18 @@ def go_together(context, event):
             if home is not None and distance_km(viewer.location, home) <= (viewer.match_radius or 0) and around_days(stay_days(stay), *days):
                 near.add(stay.from_user_id)
     return {"event": event, "others": len(near)}
+
+
+@register.inclusion_tag("tours/_visit_gift_circle.html", takes_context=True)
+def visit_gift_circle(context, match):
+    """In a tour visit's conversation: the gift-circle the tour proposed, its answer
+    (the host says yes or no apart from the stay), or proposing one."""
+    viewer = context["request"].user
+    stop = match.tour_stop
+    return {
+        "stop": stop, "tour": stop.tour,
+        "can_answer": viewer == match.recipient and stop.gift_circle_answer == stop.GIFT_CIRCLE_PROPOSED,
+        "can_propose": stop.can_propose_gift_circle and stop.tour.can_edit(viewer),
+        "can_organise": stop.can_host_gift_circle and stop.tour.can_edit(viewer),
+        "csrf_token": context.get("csrf_token"),
+    }

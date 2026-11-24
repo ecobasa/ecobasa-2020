@@ -1,0 +1,25 @@
+{% load i18n %}{# In a tour visit's conversation (tours_tags.visit_gift_circle): the gift-circle proposed with it, linked to what one is, then to the circle; the host's yes or no; proposing one #}
+{% if stop.gift_circle_answer %}
+  <div class="text-sm mb-4 space-y-2">
+    <p class="m-0 [&_a]:font-semibold [&_a]:text-primary [&_a]:underline"><i class="fa-solid fa-hands-holding-circle mr-1 text-primary"></i>
+      {% if stop.gift_circle %}{% with url=stop.gift_circle.get_absolute_url %}{% blocktrans %}We'd like to organise a <a href="{{ url }}">gift-circle</a> with you{% endblocktrans %}{% endwith %}
+      {% else %}{% url 'help:gift_circles' as help_url %}{% with url=help_url|add:"#what" %}{% blocktrans %}We'd like to organise a <a href="{{ url }}">gift-circle</a> with you{% endblocktrans %}{% endwith %}{% endif %}
+      {% if stop.gift_circle_answer == "agreed" %}<span class="pill bg-green text-secondary text-xs ml-1"><i class="fa-solid fa-circle-check mr-1"></i>{% trans "Yes to the gift-circle" %}</span>
+      {% elif stop.gift_circle_answer == "declined" %}<span class="pill bg-red text-secondary text-xs ml-1"><i class="fa-solid fa-circle-xmark mr-1"></i>{% trans "No gift-circle" %}</span>{% endif %}
+    </p>
+    {% if can_answer %}
+      <form method="post" action="{% url 'tours:answer_gift_circle' tour.slug stop.pk %}" class="flex flex-wrap justify-between gap-3">{% csrf_token %}
+        <button type="submit" name="answer" value="no" class="btn btn-purple text-sm"><i class="fa fa-ban mr-1"></i>{% trans "No gift-circle" %}</button>
+        <button type="submit" name="answer" value="yes" class="btn text-sm"><i class="fa-solid fa-check mr-1"></i>{% trans "Yes to the gift-circle" %}</button>
+      </form>
+      <p class="text-xs m-0">{% trans "You answer this apart from the stay." %}</p>
+    {% elif can_organise %}
+      <a href="{% url 'tours:stop_gift_circle' tour.slug stop.pk %}" class="btn btn-purple text-sm"><i class="fa-solid fa-hands-holding-circle mr-1"></i>{% trans "Organise a gift-circle here" %}</a>
+    {% endif %}
+  </div>
+{% elif can_propose %}
+  <form method="post" action="{% url 'tours:propose_gift_circle' tour.slug stop.pk %}" class="mb-4 flex flex-wrap items-center gap-3">{% csrf_token %}
+    <button type="submit" class="btn btn-purple text-sm"><i class="fa-solid fa-hands-holding-circle mr-1"></i>{% trans "Propose a gift-circle" %}</button>
+    {% include "gift_circles/_what_link.html" with colour="text-purple" %}
+  </form>
+{% endif %}

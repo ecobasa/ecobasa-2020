@@ -635,6 +635,20 @@ class Stop(models.Model):
         Community, on_delete=models.SET_NULL, null=True, blank=True, related_name="tour_stops",
         verbose_name=_("Community"),
     )
+    # The gift-circle the tour organises at a stop with a host, once the host agreed to the
+    # visit (at another place the gift-circle is the stop's event)
+    gift_circle = models.ForeignKey(
+        Event, on_delete=models.SET_NULL, null=True, blank=True, related_name="gift_circle_stops",
+    )
+    # A gift-circle the organisers proposed to the host, answered apart from the stay: only
+    # once the host agreed to it can the tour organise it (also without staying)
+    GIFT_CIRCLE_PROPOSED = "proposed"
+    GIFT_CIRCLE_AGREED = "agreed"
+    GIFT_CIRCLE_DECLINED = "declined"
+    GIFT_CIRCLE_ANSWERS = [
+        (GIFT_CIRCLE_PROPOSED, _("Proposed")), (GIFT_CIRCLE_AGREED, _("Agreed")), (GIFT_CIRCLE_DECLINED, _("Declined")),
+    ]
+    gift_circle_answer = models.CharField(max_length=10, choices=GIFT_CIRCLE_ANSWERS, blank=True)
     # Only for another place: public as entered
     name = models.CharField(_("Place"), max_length=255, blank=True)
     location = models.PointField(_("Geo Location"), null=True, blank=True, geography=True)
@@ -733,8 +747,36 @@ class Stop(models.Model):
 
     @property
     def can_host_gift_circle(self):
-        """At another place, with no event yet, the tour can invite to a gift-circle there."""
-        return not self.event_id and not self.community_id and self.location is not None
+        """The tour can organise a gift-circle here: at another place with no event yet, or
+        at a community or one of its events once the host agreed to the gift-circle,
+        whatever they said to the stay (at their place: an online event has none)."""
+        if self.community_id:
+            return (
+                not self.gift_circle_id and self.gift_circle_answer == self.GIFT_CIRCLE_AGREED
+                and self.gift_circle_place() is not None
+            )
+        return not self.event_id and self.location is not None
+
+    @property
+    def can_propose_gift_circle(self):
+        """The organisers can still propose a gift-circle to the host, in the visit's
+        conversation: asked to host, nothing proposed yet. Not where people just come."""
+        return (
+            self.community_id is not None and self.visit_match_id is not None and not self.gift_circle_answer
+            and not self.gift_circle_id and not self.joins_open_event
+        )
+
+    @property
+    def only_gift_circle(self):
+        """The host declined the stay but agreed to the gift-circle: the tour comes for it."""
+        return self.host_status == self.HOST_DECLINED and self.gift_circle_answer == self.GIFT_CIRCLE_AGREED
+
+    def gift_circle_place(self):
+        """What a gift-circle the tour organises here takes its place from: the event's
+        place, else the community, else the stop itself."""
+        if self.event_id:
+            return self.event.place
+        return self.community if self.community_id else self
 
     @property
     def joins_open_event(self):

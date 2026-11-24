@@ -13,7 +13,10 @@ from gift_economy.matches.calendar import stays_of
 from gift_economy.matches.models import Match
 from gift_economy.references.reference_requests import exchange_dates
 
+from notifications.models import Notification
+
 from ..models import Stop
+from ..timeline import timeline_by_stop
 from .test_joining import accept, ask, person
 from .test_tours import farm, login, organiser, other, published, village  # noqa: F401
 
@@ -202,3 +205,52 @@ def test_the_form_has_what_the_volunteer_form_has(tour, organiser, farm):
     match = stop.visit_match
     assert match.stay_details.practice_skills_list == [clay.get_name(), sowing.get_name()]
     assert {c.listing_id for c in match.contributions.all()} == {hands.pk, jars.pk}
+
+
+def test_the_host_answers_the_gift_circle_apart_from_the_stay(
+    tour, organiser, farm, django_capture_on_commit_callbacks,
+):
+    stop = farm_stop(tour)
+    ask_host(organiser, tour, stop, gift_circle="on")
+    stop.refresh_from_db()
+    assert stop.gift_circle_answer == Stop.GIFT_CIRCLE_PROPOSED
+    # A yes to the stay is no yes to the gift-circle
+    accept(stop.visit_match, farm.ambassador)
+    stop.refresh_from_db()
+    assert not stop.can_host_gift_circle
+    answer_url = reverse("tours:answer_gift_circle", args=[tour.slug, stop.pk])
+    assert login(organiser).post(answer_url, {"answer": "yes"}).status_code == 403
+    login(farm.ambassador).post(answer_url, {"answer": "yes"})
+    stop.refresh_from_db()
+    assert stop.can_host_gift_circle and not stop.only_gift_circle
+    # The organiser is told to organise it now
+    link = reverse("tours:stop_gift_circle", args=[tour.slug, stop.pk])
+    assert Notification.objects.filter(recipient=organiser, link=link).count() == 1
+    with django_capture_on_commit_callbacks(execute=True):
+        login(organiser).post(link, {
+            "kind": "gift_circle", "title": "Gift-circle at the farm", "starts_on": stop.arrive_on,
+            "location_name": farm.location_name, "location": farm.location.ewkt,
+        })
+    event = Event.objects.get(kind="gift_circle")
+    stop.refresh_from_db()
+    # The tour hosts it at the farm's place; the stop stays at the farm, its host is told
+    assert (event.host_tour, event.community, event.location) == (tour, None, farm.location)
+    assert (stop.community, stop.event, stop.gift_circle) == (farm, None, event)
+    assert event.get_absolute_url() in stop.visit_match.thread.last().body
+    assert not stop.can_host_gift_circle
+    # On the tour's timeline at its stop
+    assert any(e["kind"] == "gift_circle" and e["event"] == event for e in timeline_by_stop(tour, [stop], organiser)[0])
+
+
+def test_a_gift_circle_proposed_later_and_agreed_without_the_stay(tour, organiser, farm):
+    stop = farm_stop(tour)
+    ask_host(organiser, tour, stop)
+    stop.refresh_from_db()
+    assert stop.can_propose_gift_circle
+    login(organiser).post(reverse("tours:propose_gift_circle", args=[tour.slug, stop.pk]))
+    stop.refresh_from_db()
+    assert stop.gift_circle_answer == Stop.GIFT_CIRCLE_PROPOSED and not stop.can_propose_gift_circle
+    login(farm.ambassador).post(stop.visit_match.get_absolute_url(), {"action": "decline"})
+    login(farm.ambassador).post(reverse("tours:answer_gift_circle", args=[tour.slug, stop.pk]), {"answer": "yes"})
+    stop.refresh_from_db()
+    assert stop.host_status == Stop.HOST_DECLINED and stop.only_gift_circle and stop.can_host_gift_circle

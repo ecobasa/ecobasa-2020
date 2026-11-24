@@ -81,6 +81,8 @@ GUEST_SIGN_UPS = {GIFT_CIRCLE: "gift_circles/_guest_sign_up.html"}
 
 # On its page: how the host and who comes invite others, and anyone shares it
 INVITING = {GIFT_CIRCLE: "gift_circles/_invite.html"}
+# A new one invites who lives this close to it (km), if its host ticks it
+NEARBY_KM = 25
 
 # On its page: the offers and wishes people bring, and how who comes or hosts brings theirs
 BRINGING = {GIFT_CIRCLE: "gift_circles/_bring.html"}
@@ -98,6 +100,9 @@ PRESETS = {GIFT_CIRCLE: "gift_economy.gift_circles.skill_sharing.start"}
 
 # A short guide for whoever invites, beside the form
 GUIDES = {GIFT_CIRCLE: "gift_circles/_host_guide.html"}
+
+# A link to the help page that explains it, wherever one shows (a template taking `colour`)
+HELP_LINKS = {GIFT_CIRCLE: "gift_circles/_what_link.html"}
 
 # Pages of an add-on for whoever may edit one, as buttons on its page: (URL name taking
 # its slug, what the button says, icon)
