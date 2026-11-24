@@ -73,16 +73,16 @@
 </section>
 
 {# The search goes through all lists, or straight to the one with hits. On the orange paper of the old ecobasa.org #}
-<section id="explore" class="paper-orange py-10 px-6 text-center text-secondary font-bold scroll-mt-16">
+<section id="explore" class="paper-orange py-12 px-6 text-center text-secondary font-bold scroll-mt-16">
   <h2 class="text-secondary mt-0">{% trans "Explore our global gift-economy network" %}</h2>
   {% include "homepage/_search_form.html" %}
   <p class="mt-4 mb-0">{% url 'gifts:search' as gifts_url %}{% url 'communities:list' as communities_url %}{% url 'events:list' as events_url %}{% url 'tours:list' as tours_url %}{% blocktrans %}Find <a href="{{ gifts_url }}?type=offer">offers</a>, <a href="{{ gifts_url }}?type=wish">wishes</a> and <a href="{{ gifts_url }}?type=skill">skills</a> on the map, or browse <a href="{{ communities_url }}">communities</a>, <a href="{{ events_url }}">events</a> and <a href="{{ tours_url }}">Community-Tours</a>.{% endblocktrans %}{% if user.is_authenticated %} {% url 'pioneers:list' as pioneers_url %}{% blocktrans %}Or meet <a href="{{ pioneers_url }}">pioneers</a> to invite or travel with.{% endblocktrans %}{% endif %}</p>
 </section>
 
-<div class="container-page !pb-0">
+<div class="container-page">
 
     {# What ecobasa is for: who it serves in the intro, what is shared in three boxes #}
-  <section id="features" class="mt-12">
+  <section id="features">
     <h1 class="text-center">{% trans "ecobasa is made for" %}</h1>
     <div class="max-w-3xl mx-auto text-center mb-8">
       <p>{% url 'communities:list' as communities_url %}{% url 'events:list' as events_url %}{% url 'communities:create' as create_url %}{% blocktrans %}Communities, permaculture projects and farms – and everyone who wants to <a href="{{ communities_url }}">visit them</a>, <a href="{{ communities_url }}?looking=1">join them</a>, <a href="{{ events_url }}">support them</a> or <a href="{{ create_url }}">start something of their own</a>.{% endblocktrans %}</p>
@@ -135,12 +135,13 @@
       </div>
     </div>
   </section>
+</div>
 
-
-  {# The video comes from YouTube only after a click: until then a local still, no request to Google #}
-  <section id="donate" class="mt-12 grid gap-8 md:grid-cols-2 items-center">
+{# The video comes from YouTube only after a click: until then a local still, no request to Google #}
+<section id="donate" class="paper-orange py-12 text-secondary font-bold scroll-mt-16">
+  <div class="container-page !mt-0 !pb-0 grid gap-10 md:grid-cols-2 items-center">
     <div>
-      <h2>{% trans "Your gifts keep us giving!" %}</h2>
+      <h2 class="text-secondary mt-0">{% trans "Your gifts keep us giving!" %}</h2>
       <p>{% trans "We are a dedicated team of volunteers working for the vision of a gift-economy network that connects people and sustainable communities: a network that brings wishes together with gifts and makes it easy to share knowledge, skills, services and resources." %}</p>
       <p>{% trans "ecobasa started in 2011. In 2014 we relaunched the platform, and since then we have co-organised many Community-Tours and Communities-Convergences, all based on the gift economy. Now in 2026 we have rebuilt ecobasa from the ground up once again: with Matches nearby, sharing of seeds & plants, food, tools and vehicles, gift-circles, and Community-Tours anyone can organise." %}</p>
       <p>{% trans "ecobasa is free for everyone, without ads and without selling your data. Our business model is the gift economy itself, so to keep the platform running and growing, we need your support." %}</p>
@@ -162,11 +163,12 @@
       </div>
       <p class="text-sm text-brown mt-2" x-show="!play">{% trans "The video plays from YouTube." %}</p>
     </div>
-  </section>
+  </div>
+</section>
 
-
+<div class="container-page">
   {# Online gift-circles are not on the map: anyone anywhere can come #}
-  <section id="online-gift-circles" class="text-center mt-12">
+  <section id="online-gift-circles" class="text-center">
     <h2>{% trans "Gift-circles you can join from anywhere" %}</h2>
     <div class="max-w-3xl mx-auto">
       <p>{% trans "People sit in a circle and share what they wish for and what they can give. Things, time, skills, knowledge, contacts. Nothing is bought or sold." %} {% trans "Anyone can host one: in a living room, a park, a café, at a community, on a tour, or online as a video call." %}</p>
@@ -185,24 +187,31 @@
     {% endif %}
   </section>
 
-  {% if featured_references %}
-    <section id="success-stories" class="text-center mt-12">
-      <h2>{% trans "Success stories from the gift network" %}</h2>
-      <p class="text-brown mb-6">{% trans "What people gave and received on ecobasa, in their own words." %}</p>
+</div>
+
+{% if featured_references or user.is_staff %}
+<section id="success-stories" class="paper-orange py-10 text-secondary text-center scroll-mt-16">
+  <div class="container-page !mt-0 !pb-0">
+    {% if featured_references %}
+      <h2 class="text-secondary mt-0">{% trans "Success stories from the gift network" %}</h2>
+      <p class="font-bold mb-6">{% trans "What people gave and received on ecobasa, in their own words." %}</p>
       <div class="card-slider mt-2" x-data="cardSlider()">
         <div x-ref="track" class="card-slider-track" @scroll.debounce.50ms="update()">
           {% for ref in featured_references %}<div>{% include "references/_featured_card.html" %}</div>{% endfor %}
         </div>
         {% include "homepage/_slider_arrows.html" %}
       </div>
-    </section>
-  {% endif %}
-  {% if user.is_staff %}
-    <p class="mt-4 text-sm"><a href="{% url 'references:featured' %}" class="text-primary"><i class="fa fa-star mr-1"></i>{% trans "Choose stories for the homepage" %}</a></p>
-  {% endif %}
+    {% endif %}
+    {% if user.is_staff %}
+      <p class="mt-4 mb-0 text-sm"><a href="{% url 'references:featured' %}"><i class="fa fa-star mr-1"></i>{% trans "Choose stories for the homepage" %}</a></p>
+    {% endif %}
+  </div>
+</section>
+{% endif %}
 
+<div class="container-page !pb-0">
   {# Last, after the gifting: the next tours in the list, dated ones first, then tour ideas, and the drawing from the old ecobasa.org to close the page #}
-  <section id="community-tours" class="mt-12">
+  <section id="community-tours">
     <div class="max-w-3xl mx-auto text-center">
       <h2>{% trans "The Community-Tours: a gift-economy experience" %}</h2>
       <p>{% trans "The Community-Tours empower an alternative economy based on trust and sharing. Start travelling between ecovillages and other sustainable communities across the planet and experience sustainable ways of living through volunteering. By bringing spare resources and experts from one community to the next place where they are needed, we grow the gift-economy network together!" %}</p>

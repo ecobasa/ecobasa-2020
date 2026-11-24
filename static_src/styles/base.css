@@ -91,10 +91,10 @@ nav {
  	}
 }
 
-/* Bands on the orange paper of the old ecobasa.org: light links for contrast */
+/* Bands on the orange paper of the old ecobasa.org: light links for contrast, but not on buttons and cards */
 .paper-orange {
 	background-image: url('../img/paper-orange.webp');
-	a {
+	a:not(.btn, .card *) {
 		@apply text-secondary underline;
 		&:hover, &:focus, &:active {
 			@apply text-brown;
